@@ -2490,15 +2490,27 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
 
   useEffect(() => { loadGateData(); }, [isContractor, isReviewer, currentUser?.username]);
 
-  const scoped = (isContractor && myContractorName
+  const scopedByContractor = isContractor && myContractorName
     ? anomalies.filter((a) => (a.contractor || "").trim().toLowerCase() === myContractorName)
-    : anomalies
-  ).filter((a) => !isContractor || !pendingGateRecordIds || !pendingGateRecordIds.has(a.id));
+    : anomalies;
+  const scoped = scopedByContractor.filter((a) => !isContractor || !pendingGateRecordIds || !pendingGateRecordIds.has(a.id));
 
   // برای پرکردن dropdown فیلتر پیمانکار (فقط ادمین/کارفرما می‌بینند) — از
   // کل لیست بارگذاری‌شده مشتق می‌شود، نه از نتیجه‌ی فیلترشده، تا با انتخاب
   // یک فیلتر دیگر، گزینه‌های این dropdown خودش کوچک نشود
   const contractorNamesInList = [...new Set(anomalies.map((a) => (a.contractor || "").trim()).filter(Boolean))].sort();
+
+  // TEMP DEBUG — برای پیداکردن علت خالی‌بودن لیست پیمانکار؛ بعد از عیب‌یابی حذف می‌شود.
+  if (isContractor && typeof window !== "undefined") {
+    console.log("[DEBUG anomaly list/contractor]", {
+      totalAnomaliesFetched: anomalies.length,
+      myContractorName,
+      distinctContractorValuesInData: contractorNamesInList,
+      afterContractorNameFilter: scopedByContractor.length,
+      afterGateFilter: scoped.length,
+      pendingGateCount: pendingGateRecordIds ? pendingGateRecordIds.size : null,
+    });
+  }
 
   const filtered = scoped.filter((a) => {
     if (statusFilter === "not_closed" && a.status === "Closed") return false;
