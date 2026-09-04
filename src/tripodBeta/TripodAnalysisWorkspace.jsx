@@ -319,10 +319,15 @@ function RootCauseTab({ analysisId, incident, rootCause, correctiveActions, curr
         <h4 style={{ fontSize: 13.5, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>خروجی ۱ — مجموع تکرار هر دسته اصلی (BRF)</h4>
         <SimpleTable
           headers={["کد", "نام دسته", "تعداد تکرار", ""]}
-          rows={rootCause.byBrfCategory.map((item) => [
-            item.brfCode || "-", item.brfNameFa || item.brfNameEn || "-", item.occurrences,
-            <button key="btn" type="button" style={{ ...styles.smallButton, fontSize: 11 }} onClick={() => setModalSrc({ sourceType: "brf_category", brfCode: item.brfCode, titleFa: item.brfNameFa || item.brfNameEn, repeatCount: item.occurrences })}>صدور اقدام اصلاحی</button>,
-          ])}
+          rows={rootCause.byBrfCategory.map((item) => {
+            const issued = correctiveActions.some((ca) => ca.sourceType === "brf_category" && ca.brfCode === item.brfCode);
+            return [
+              item.brfCode || "-", item.brfNameFa || item.brfNameEn || "-", item.occurrences,
+              issued
+                ? <IssuedBadge key="issued" />
+                : <button key="btn" type="button" style={{ ...styles.smallButton, fontSize: 11 }} onClick={() => setModalSrc({ sourceType: "brf_category", brfCode: item.brfCode, titleFa: item.brfNameFa || item.brfNameEn, repeatCount: item.occurrences })}>صدور اقدام اصلاحی</button>,
+            ];
+          })}
           emptyText="هنوز اشکال پنهانی ثبت نشده."
         />
       </div>
@@ -337,10 +342,15 @@ function RootCauseTab({ analysisId, incident, rootCause, correctiveActions, curr
               <p style={{ fontSize: 12, fontWeight: 700, color: THEME.navy, marginBottom: 6 }}>{items.length} مورد — {tier.label}</p>
               <SimpleTable
                 headers={["کد", "شرح", "تعداد", ""]}
-                rows={items.map((it) => [
-                  it.code, it.textFa, it.branchCount,
-                  <button key="btn" type="button" style={{ ...styles.smallButton, fontSize: 11 }} onClick={() => setModalSrc({ sourceType: "hidden_failure_code", hiddenFailureCode: it.code, titleFa: it.textFa, repeatCount: it.branchCount, classification: it.classification })}>صدور اقدام اصلاحی</button>,
-                ])}
+                rows={items.map((it) => {
+                  const issued = correctiveActions.some((ca) => ca.sourceType === "hidden_failure_code" && ca.hiddenFailureCode === it.code);
+                  return [
+                    it.code, it.textFa, it.branchCount,
+                    issued
+                      ? <IssuedBadge key="issued" />
+                      : <button key="btn" type="button" style={{ ...styles.smallButton, fontSize: 11 }} onClick={() => setModalSrc({ sourceType: "hidden_failure_code", hiddenFailureCode: it.code, titleFa: it.textFa, repeatCount: it.branchCount, classification: it.classification })}>صدور اقدام اصلاحی</button>,
+                  ];
+                })}
               />
             </div>
           );
@@ -356,7 +366,10 @@ function RootCauseTab({ analysisId, incident, rootCause, correctiveActions, curr
             <div style={{ flex: 1, minWidth: 200 }}>
               <p style={{ fontSize: 12.5, margin: 0 }}><b>{ca.titleFa}</b> <span style={{ color: THEME.text3, fontSize: 11 }}>({ca.sourceType === "brf_category" ? `دسته BRF: ${ca.brfCode}` : `کد: ${ca.hiddenFailureCode}`}, تکرار: {ca.repeatCount})</span></p>
               <p style={{ fontSize: 11.5, color: THEME.text2, margin: "4px 0" }}>{ca.description}</p>
-              <p style={{ fontSize: 11, color: THEME.text3, margin: 0 }}>مسئول: {ca.responsiblePerson}{ca.dueDate && ` · مهلت: ${toJalaliSafe(ca.dueDate)}`}</p>
+              <p style={{ fontSize: 11, color: THEME.text3, margin: 0 }}>
+                مسئول: {ca.responsiblePerson}{ca.dueDate && ` · مهلت: ${toJalaliSafe(ca.dueDate)}`}
+                {ca.responsibleContractorName && ` · ارجاع‌شده به: ${ca.responsibleContractorName}`}
+              </p>
             </div>
             <select
               style={{ ...styles.input, marginTop: 0, width: 130 }} value={ca.status} dir="rtl"
@@ -376,6 +389,16 @@ function RootCauseTab({ analysisId, incident, rootCause, correctiveActions, curr
         />
       )}
     </div>
+  );
+}
+
+// جای دکمه‌ی «صدور اقدام اصلاحی» وقتی از قبل برای همین علت/کد صادر شده —
+// از تکرار/دوباره‌کاری صدور اقدام اصلاحی برای یک مورد جلوگیری می‌کند
+function IssuedBadge() {
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10.5, fontWeight: 700, color: "#166534", background: "#dcfce7", padding: "4px 9px", borderRadius: 999 }}>
+      <CheckCircle2 size={12} /> اقدام اصلاحی صادر شد
+    </span>
   );
 }
 

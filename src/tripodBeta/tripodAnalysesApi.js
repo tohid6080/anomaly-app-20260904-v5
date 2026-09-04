@@ -289,6 +289,7 @@ export async function loadTripodCorrectiveActions(analysisId) {
     id: r.id, sourceType: r.source_type, brfCode: r.brf_code || "", hiddenFailureCode: r.hidden_failure_code || "",
     titleFa: r.title_fa, repeatCount: r.repeat_count, classification: r.classification || "",
     description: r.description, responsiblePerson: r.responsible_person, dueDate: r.due_date, status: r.status, createdAt: r.created_at,
+    responsibleContractorId: r.responsible_contractor_id || "", responsibleContractorName: r.responsible_contractor_name || "",
   })) : [];
 }
 
@@ -311,6 +312,19 @@ export async function createTripodCorrectiveAction(analysisId, rec, createdBy) {
 export async function updateTripodCorrectiveActionStatus(caId, status) {
   const rows = await sb(`tripod_corrective_actions?id=eq.${caId}`, { method: "PATCH", body: JSON.stringify({ status, updated_at: new Date().toISOString() }) });
   if (!sbOk(rows)) return { __error: true, message: "خطا در بروزرسانی وضعیت" };
+  return { ok: true };
+}
+
+// ارجاع اقدام اصلاحی Tripod Beta به یک شرکت/پیمانکار مشخص جهت پیگیری —
+// contractorId=null یعنی لغو ارجاع (بدون‌مسئول)
+export async function assignTripodCorrectiveActionContractor(caId, contractorId, contractorName) {
+  const payload = {
+    responsible_contractor_id: contractorId || null,
+    responsible_contractor_name: contractorId ? (contractorName || "") : null,
+    updated_at: new Date().toISOString(),
+  };
+  const rows = await sb(`tripod_corrective_actions?id=eq.${caId}`, { method: "PATCH", body: JSON.stringify(payload) });
+  if (!sbOk(rows)) return { __error: true, message: "خطا در ارجاع به پیمانکار" };
   return { ok: true };
 }
 
@@ -355,6 +369,8 @@ export async function loadTripodCorrectiveActionsForCompany() {
       titleFa: r.title_fa || "",
       description: r.description || "",
       responsiblePerson: r.responsible_person || "",
+      responsibleContractorId: r.responsible_contractor_id || "",
+      responsibleContractorName: r.responsible_contractor_name || "",
       dueDate: r.due_date || "",
       status: r.status || "OPEN",
       createdAt: r.created_at,
