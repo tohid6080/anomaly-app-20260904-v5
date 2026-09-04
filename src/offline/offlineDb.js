@@ -1,0 +1,209 @@
+/**
+ * Offline-first local database layer.
+ *
+ * Uses IndexedDB — the real, browser-native transactional database available
+ * inside a WebView (unlike SQLite, which requires a native bridge this
+ * WebIntoApp-wrapped PWA does not have). Three object stores:
+ *
+ *   records     — local cache of every module's records, keyed by
+ *                 "<module>:<id>", tagged with a sync status.
+ *   sync_queue  — pending write operations waiting to reach Supabase.
+ *   files       — photo/document blobs captured offline, referenced by id
+ *                 from a record's payload until they're uploaded.
+ *
+ * This file has zero knowledge of any specific IHMS module — every module
+ * (existing or future) uses the same generic API, which is what makes the
+ * architecture scalable without per-module rework.
+ */
+
+const DB_NAME = "ihms-offline";
+const DB_VERSION = 1;
+
+let dbPromise = null;
+
+export function openDb() {
+  if (dbPromise) return dbPromise;
+  dbPromise = new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+
+    req.onupgradeneeded = () => {
+      const db = req.result;
+
+      if (!db.objectStoreNames.contains("records")) {
+        const records = db.createObjectStore("records", { keyPath: "key" });
+        records.createIndex("module", "module", { unique: false });
+        records.createIndex("syncStatus", "syncStatus", { unique: false });
+      }
+
+      if (!db.objectStoreNames.contains("sync_queue")) {
+        const queue = db.createObjectStore("sync_queue", { keyPath: "queueId", autoIncrement: true });
+        queue.createIndex("status", "status", { unique: false });
+        queue.createIndex("module", "module", { unique: false });
+      }
+
+      if (!db.objectStoreNames.contains("files")) {
+        db.createObjectStore("files", { keyPath: "fileId" });
+      }
+    };
+
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+  return dbPromise;
+}
+
+function tx(db, storeNames, mode) {
+  return db.transaction(storeNames, mode);
+}
+
+function promisify(request) {
+  return new Promise((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// ---------- records ----------
+
+export async function putRecord(module, id, data, syncStatus = "synced") {
+  const db = await openDb();
+  const t = tx(db, ["records"], "readwrite");
+  const key = `${module}:${id}`;
+  await promisify(t.objectStore("records").put({ key, module, id, data, syncStatus, localUpdatedAt: new Date().toISOString() }));
+  return new Promise((resolve, reject) => { t.oncomplete = () => resolve(); t.onerror = () => reject(t.error); });
+}
+
+export async function getRecord(module, id) {
+  const db = await openDb();
+  const t = tx(db, ["records"], "readonly");
+  const row = await promisify(t.objectStore("records").get(`${module}:${id}`));
+  return row || null;
+}
+
+export async function getRecordsByModule(module) {
+  const db = await openDb();
+  const t = tx(db, ["records"], "readonly");
+  const idx = t.objectStore("records").index("module");
+  const rows = await promisify(idx.getAll(module));
+  return rows || [];
+}
+
+export async function deleteRecord(module, id) {
+  const db = await openDb();
+  const t = tx(db, ["records"], "readwrite");
+  await promisify(t.objectStore("records").delete(`${module}:${id}`));
+  return new Promise((resolve, reject) => { t.oncomplete = () => resolve(); t.onerror = () => reject(t.error); });
+}
+
+// ---------- sync queue ----------
+
+// action: "insert" | "update" | "delete"
+// fileUpload (اختیاری): { bucket, path, base64Data, contentType, fieldName } — وقتی این
+// آیتم شامل یک فایل base64 است که باید قبل از insert به Storage آپلود شود
+export async function enqueueSync({ module, recordId, action, payload, fileUpload }) {
+  const db = await openDb();
+  const t = tx(db, ["sync_queue"], "readwrite");
+  const item = {
+    module, recordId, action, payload, fileUpload: fileUpload || null,
+    status: "pending", attempts: 0, lastError: "",
+    createdAt: new Date().toISOString(), nextRetryAt: new Date().toISOString(),
+  };
+  const queueId = await promisify(t.objectStore("sync_queue").add(item));
+  return new Promise((resolve, reject) => {
+    t.oncomplete = () => resolve({ ...item, queueId });
+    t.onerror = () => reject(t.error);
+  });
+}
+
+export async function getQueue() {
+  const db = await openDb();
+  const t = tx(db, ["sync_queue"], "readonly");
+  const rows = await promisify(t.objectStore("sync_queue").getAll());
+  return (rows || []).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+export async function updateQueueItem(queueId, patch) {
+  const db = await openDb();
+  const t = tx(db, ["sync_queue"], "readwrite");
+  const store = t.objectStore("sync_queue");
+  const existing = await promisify(store.get(queueId));
+  if (existing) await promisify(store.put({ ...existing, ...patch }));
+  return new Promise((resolve, reject) => { t.oncomplete = () => resolve(); t.onerror = () => reject(t.error); });
+}
+
+export async function removeQueueItem(queueId) {
+  const db = await openDb();
+  const t = tx(db, ["sync_queue"], "readwrite");
+  await promisify(t.objectStore("sync_queue").delete(queueId));
+  return new Promise((resolve, reject) => { t.oncomplete = () => resolve(); t.onerror = () => reject(t.error); });
+}
+
+// ---------- files (photos/documents captured offline) ----------
+
+export async function putFile(fileId, blob, meta = {}) {
+  const db = await openDb();
+  const t = tx(db, ["files"], "readwrite");
+  await promisify(t.objectStore("files").put({ fileId, blob, ...meta, createdAt: new Date().toISOString() }));
+  return new Promise((resolve, reject) => { t.oncomplete = () => resolve(); t.onerror = () => reject(t.error); });
+}
+
+export async function getFile(fileId) {
+  const db = await openDb();
+  const t = tx(db, ["files"], "readonly");
+  return (await promisify(t.objectStore("files").get(fileId))) || null;
+}
+
+export async function deleteFile(fileId) {
+  const db = await openDb();
+  const t = tx(db, ["files"], "readwrite");
+  await promisify(t.objectStore("files").delete(fileId));
+  return new Promise((resolve, reject) => { t.oncomplete = () => resolve(); t.onerror = () => reject(t.error); });
+}
+
+export function newLocalId(prefix = "local") {
+  return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+}
+
+// ============================================================
+// جداسازی کش محلی بین شرکت‌ها — رفع باگ واقعی: این فایل تا اینجا هیچ
+// شناخت از «شرکت» نداشت، فقط «ماژول» — یعنی روی یک دستگاه/مرورگر
+// مشترک، کش یک شرکت می‌توانست برای شرکت دیگری هم نمایش داده شود.
+// این تابع باید بلافاصله بعد از هر تغییر شرکت جاری (setCurrentCompanyId)
+// صدا زده شود؛ اگر شرکت واقعاً عوض شده باشد (یا برای اولین بار بعد از
+// این اصلاح اجرا شود — که یعنی کش قبلی ممکن است قبلاً آلوده شده باشد)،
+// هم کش خواندنی («records») هم صف نوشتن‌های آفلاین («sync_queue») کامل
+// پاک می‌شوند تا هیچ داده یا نوشتار در‌انتظاری از شرکت قبلی باقی نماند.
+// فایل‌های محلی («files») هم چون به رکوردهای همان شرکت وابسته‌اند، با
+// هم پاک می‌شوند.
+const COMPANY_SCOPE_KEY = "ihms_offline_cache_company_scope";
+
+export async function syncOfflineCacheCompanyScope(companyId) {
+  const normalized = companyId || null;
+  let previous;
+  try {
+    previous = localStorage.getItem(COMPANY_SCOPE_KEY);
+  } catch {
+    return; // localStorage در دسترس نیست (مثلاً حالت Private برخی مرورگرها) — بی‌خطر صرف‌نظر می‌کنیم
+  }
+  // previous === null یعنی این اولین اجرای این نسخه از کد است — چون کش
+  // قبلی ممکن است قبل از این اصلاح آلوده شده باشد، برای اطمینان کامل
+  // همان‌طور که با تعویض واقعی شرکت رفتار می‌کنیم: پاک‌سازی می‌کنیم.
+  if (previous === normalized) return; // همان شرکت قبلی — چیزی پاک نمی‌شود، نوشتارهای در‌انتظار حفظ می‌شوند
+
+  try {
+    const db = await openDb();
+    const t = tx(db, ["records", "sync_queue", "files"], "readwrite");
+    t.objectStore("records").clear();
+    t.objectStore("sync_queue").clear();
+    t.objectStore("files").clear();
+    await new Promise((resolve, reject) => { t.oncomplete = () => resolve(); t.onerror = () => reject(t.error); });
+  } catch {
+    // اگر پاک‌سازی خودش شکست بخورد، بی‌خطرتر از رها‌کردن کش آلوده نیست —
+    // ولی خطای IndexedDB نباید کل ورود کاربر را متوقف کند
+  }
+
+  try {
+    if (normalized) localStorage.setItem(COMPANY_SCOPE_KEY, normalized);
+    else localStorage.removeItem(COMPANY_SCOPE_KEY);
+  } catch { /* بی‌اهمیت */ }
+}
