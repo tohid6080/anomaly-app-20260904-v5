@@ -1108,7 +1108,7 @@ function LoginScreen({ onLogin }) {
               <LanguageToggle lang={lang} setLang={setLang} />
             </div>
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
-              <IhmsLogo size={100} src={appearance?.logoUrl} />
+              <IhmsLogo size={200} src={appearance?.logoUrl} />
             </div>
             <h2 style={{ textAlign: "center", marginBottom: 2, fontSize: 18, direction: "ltr", color: THEME.navy, fontWeight: 700, letterSpacing: "-0.01em" }}>{appearance?.systemName || APP_NAME}</h2>
             <p style={{ textAlign: "center", color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 22, fontWeight: 500 }}>
