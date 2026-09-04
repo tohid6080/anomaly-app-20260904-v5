@@ -128,7 +128,7 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: THEME.bg, padding: "40px 20px" }}>
+    <div style={{ minHeight: "100vh", background: THEME.bg, padding: "40px 20px", fontFamily: THEME.font }}>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
           <div>
