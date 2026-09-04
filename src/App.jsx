@@ -2501,17 +2501,18 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
   const contractorNamesInList = [...new Set(anomalies.map((a) => (a.contractor || "").trim()).filter(Boolean))].sort();
 
   // TEMP DEBUG — برای پیداکردن علت خالی‌بودن لیست پیمانکار؛ بعد از عیب‌یابی
-  // حذف می‌شود. عمداً console.error (نه console.log) چون فیلتر Console
-  // بعضی کاربران فقط روی سطح خطا تنظیم است و console.log دیده نمی‌شود.
+  // حذف می‌شود. به‌صورت رشته‌ی کامل چاپ می‌شود (نه object خام) چون یک
+  // object در کپی متنی ساده‌ی کنسول به‌صورت [{…}] جمع‌شده و غیرقابل‌خواندن
+  // می‌ماند — دقیقاً همان مشکلی که در تشخیص گزارش خطا پیش آمد.
   if (isContractor && typeof window !== "undefined") {
-    console.error("[DEBUG anomaly list/contractor]", {
+    console.error(`[DEBUG anomaly list/contractor]\n${JSON.stringify({
       totalAnomaliesFetched: anomalies.length,
       myContractorName,
       distinctContractorValuesInData: contractorNamesInList,
       afterContractorNameFilter: scopedByContractor.length,
       afterGateFilter: scoped.length,
       pendingGateCount: pendingGateRecordIds ? pendingGateRecordIds.size : null,
-    });
+    }, null, 2)}`);
   }
 
   const filtered = scoped.filter((a) => {

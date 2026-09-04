@@ -12,12 +12,16 @@ export async function submitErrorReport({ currentUser, moduleKey, pageLabel, des
   const companyId = getCurrentCompanyId();
   if (!companyId) return { __error: true, message: "شرکت جاری مشخص نیست — لطفاً دوباره وارد شوید." };
   // TEMP DEBUG — برای پیداکردن علت 42501؛ بعد از عیب‌یابی حذف می‌شود.
-  // عمداً console.error (نه console.log) چون فیلتر Console بعضی کاربران
-  // فقط روی سطح خطا تنظیم است و console.log دیده نمی‌شود.
+  // عمداً به‌صورت رشته‌ی JSON کامل (نه یک object خام) چاپ می‌شود — object
+  // خام در کنسول به‌صورت [{…}] جمع‌شده نشان داده می‌شود و در کپی متنی
+  // ساده (بدون کلیک برای بازکردن) قابل‌خواندن نیست؛ همچنین یک alert هم
+  // نشان داده می‌شود تا بدون نیاز به باز کردن Console هم قابل‌مشاهده و کپی باشد.
   try {
     const dbg = await sb("rpc/debug_company_check", { method: "POST", body: JSON.stringify({ p_company_id: companyId }) });
-    console.error("[DEBUG error_reports] client companyId:", companyId, "server check:", dbg);
-  } catch (e) { console.error("[DEBUG error_reports] debug call failed", e); }
+    const dbgText = `[DEBUG error_reports]\nclient companyId: ${companyId}\nserver check: ${JSON.stringify(dbg, null, 2)}`;
+    console.error(dbgText);
+    alert(dbgText);
+  } catch (e) { console.error("[DEBUG error_reports] debug call failed", String(e)); }
   const payload = {
     company_id: companyId,
     reported_by_username: currentUser?.username || "",
