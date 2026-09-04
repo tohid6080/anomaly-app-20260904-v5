@@ -64,7 +64,7 @@ export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
         <div style={styles.backLink} onClick={onBack}>بازگشت به منو</div>
         <a
-          href="/hse_guide.html" target="_blank" rel="noopener noreferrer"
+          href={`${import.meta.env.BASE_URL}hse_guide.html`} target="_blank" rel="noopener noreferrer"
           style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600, color: THEME.teal, textDecoration: "none", background: THEME.tealSoft, padding: "7px 14px", borderRadius: 8 }}
         >
           <BookOpen size={14} /> راهنمای تکمیل و ارزیابی
