@@ -115,7 +115,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
     { key: "auditLog", label: "گزارش تغییرات", icon: FileClock },
     { key: "errorReports", label: "گزارش‌های خطا", icon: AlertTriangle },
     { key: "cardTransferPayments", label: "رسیدهای پرداخت", icon: CreditCard },
-    { key: "trialRequests", label: "درخواست‌های ارزیابی و پلن آزمایشی", icon: ClipboardList },
+    { key: "trialRequests", label: "درخواست پلن آزمایشی", icon: ClipboardList },
   ];
 
   return (
@@ -1825,7 +1825,7 @@ function TrialRequestsPage({ currentAdmin }) {
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
         <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
-          <ClipboardList size={14} color={THEME.teal} /> درخواست‌های ارزیابی و پلن آزمایشی
+          <ClipboardList size={14} color={THEME.teal} /> درخواست پلن آزمایشی
           {pendingCount > 0 && (
             <span style={{ background: THEME.danger, color: "#fff", fontSize: 10.5, fontWeight: 700, borderRadius: 999, minWidth: 19, height: 19, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>
               {pendingCount}
