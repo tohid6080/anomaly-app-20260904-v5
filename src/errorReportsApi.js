@@ -24,7 +24,13 @@ export async function submitErrorReport({ currentUser, moduleKey, pageLabel, des
     user_agent: typeof navigator !== "undefined" ? navigator.userAgent : "",
   };
   const rows = await sb("error_reports", { method: "POST", body: JSON.stringify([payload]) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ارسال گزارش خطا — لطفاً بعداً دوباره تلاش کنید." };
+  if (!sbOk(rows)) {
+    // پیام واقعی PostgREST/RLS هم لاگ و هم برگردانده می‌شود — قبلاً اینجا
+    // یک پیام عمومی ثابت بود و جزئیات واقعی خطا (که خودِ دیباگ همین
+    // قابلیت بهش نیاز داشت) گم می‌شد.
+    console.error("ثبت گزارش خطا ناموفق بود", rows);
+    return { __error: true, message: `خطا در ارسال گزارش خطا: ${rows?.message || "نامشخص"}` };
+  }
   return { ok: true };
 }
 

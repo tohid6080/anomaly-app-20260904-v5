@@ -30,6 +30,7 @@ import { loadActiveJobPositions, loadJobPositionTitle } from "./jobpositions/job
 import NotificationPanel from "./personnel/NotificationPanel.jsx";
 import { loadNotifications, loadPersonnelList, checkAndUpdateDeadlines, markNotificationRead } from "./personnel/personnelApi.js";
 import OnlineIndicator from "./offline/OnlineIndicator.jsx";
+import { isOnline } from "./offline/networkStatus.js";
 import { offlineWrite, offlineWriteFile } from "./offline/offlineWrite.js";
 import DbSizeWarningBanner from "./offline/DbSizeWarningBanner.jsx";
 import { checkUploadAllowed } from "./offline/dbSizeMonitor.js";
