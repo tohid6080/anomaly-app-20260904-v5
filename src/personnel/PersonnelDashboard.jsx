@@ -7,6 +7,7 @@ import { exportPersonnelPdf, exportPersonnelExcel } from "./personnelExport.js";
 import PersonnelForm from "./PersonnelForm.jsx";
 import PersonnelDetail from "./PersonnelDetail.jsx";
 import SyncStatusBadge from "../offline/SyncStatusBadge.jsx";
+import { loadPendingGateItems, loadAssignedGateItems, loadAssignedReviewItemsForModule, loadCompanyStaffOptions } from "../hseGateApi.js";
 
 const SORT_OPTIONS = [
   { value: "name", label: "نام (الفبا)" },
@@ -38,6 +39,29 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
     if (!isContractor) loadContractorOptions().then(setContractorOptions);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // گیت سرپرست/مدیر HSE — فقط برای نمایش «ارجاع به کارشناس: X» در ستون
+  // وضعیت خودِ لیست (نه اقدام؛ اقدام واقعی در PersonnelDetail انجام
+  // می‌شود). دقیقاً همان رفعِ Anomaly/Machinery: هر کاربر غیرپیمانکار
+  // شرکت باید وضعیت واقعی هر ارجاع را ببیند، صرف‌نظر از اینکه چه کسی
+  // ارجاع داده یا گرفته — نه فقط گیت‌کیپر یا خودِ کارشناسِ گیرنده.
+  const [gateMap, setGateMap] = useState({});
+  const [gateStaff, setGateStaff] = useState([]);
+  useEffect(() => {
+    if (isContractor) return;
+    Promise.all([
+      loadPendingGateItems("personnelAccess"),
+      loadAssignedGateItems(currentUser?.username).then((rows) => rows.filter((r) => r.moduleKey === "personnelAccess")),
+      loadAssignedReviewItemsForModule("personnelAccess"),
+      loadCompanyStaffOptions(),
+    ]).then(([pending, mine, assignedReviewAll, staff]) => {
+      const map = {};
+      [...pending, ...assignedReviewAll, ...mine].forEach((it) => { map[it.recordId] = it; });
+      setGateMap(map);
+      setGateStaff(staff);
+    }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isContractor, currentUser?.username]);
 
   const load = async () => {
     // اگر بارگذاری با خطا مواجه شود، صفحه نباید برای همیشه روی «در حال
@@ -242,12 +266,17 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
             key: "status", label: "وضعیت",
             render: (p) => {
               const sm = personnelStatusMeta(p.status);
+              const gi = gateMap[p.id];
+              const assignedExpertName = gi?.status === "assigned_review" ? (gateStaff.find((s) => s.username === gi.assignedTo)?.name || gi.assignedTo) : null;
               return (
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                   {showTerminated && (
                     <StatusPill label={employmentStatusMeta(p.employmentStatus).label} color={employmentStatusMeta(p.employmentStatus).color} bg={employmentStatusMeta(p.employmentStatus).bg} />
                   )}
                   <StatusPill label={sm.label} color={sm.color} bg={sm.bg} />
+                  {assignedExpertName && (
+                    <span style={{ fontSize: 10.5, color: "#1d4ed8", fontWeight: 600 }}>ارجاع به کارشناس: {assignedExpertName}</span>
+                  )}
                   {p.syncStatus && p.syncStatus !== "synced" && <SyncStatusBadge status={p.syncStatus} onRetry={() => load()} />}
                 </div>
               );
@@ -259,19 +288,26 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
         )}
         renderCard={(p) => {
           const sm = personnelStatusMeta(p.status);
+          const giCard = gateMap[p.id];
+          const assignedExpertNameCard = giCard?.status === "assigned_review" ? (gateStaff.find((s) => s.username === giCard.assignedTo)?.name || giCard.assignedTo) : null;
           return (
             <div style={{ ...styles.card, width: "auto", margin: 0, borderInlineStart: `4px solid ${sm.color}`, cursor: "pointer", height: "100%" }} onClick={() => setSelected(p)}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 6 }}>
                 <div>
                   <div style={{ fontWeight: 700, color: THEME.navy, fontSize: 14 }}>{p.fullName}</div>
                   <div style={{ fontSize: 11.5, color: THEME.text3, marginTop: 4 }}>{p.jobTitle} · {p.contractorName}</div>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  {showTerminated && (
-                    <StatusPill label={employmentStatusMeta(p.employmentStatus).label} color={employmentStatusMeta(p.employmentStatus).color} bg={employmentStatusMeta(p.employmentStatus).bg} />
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    {showTerminated && (
+                      <StatusPill label={employmentStatusMeta(p.employmentStatus).label} color={employmentStatusMeta(p.employmentStatus).color} bg={employmentStatusMeta(p.employmentStatus).bg} />
+                    )}
+                    <StatusPill label={sm.label} color={sm.color} bg={sm.bg} />
+                    {p.syncStatus && p.syncStatus !== "synced" && <SyncStatusBadge status={p.syncStatus} onRetry={() => load()} />}
+                  </div>
+                  {assignedExpertNameCard && (
+                    <span style={{ fontSize: 10.5, color: "#1d4ed8", fontWeight: 600 }}>ارجاع به کارشناس: {assignedExpertNameCard}</span>
                   )}
-                  <StatusPill label={sm.label} color={sm.color} bg={sm.bg} />
-                  {p.syncStatus && p.syncStatus !== "synced" && <SyncStatusBadge status={p.syncStatus} onRetry={() => load()} />}
                 </div>
               </div>
             </div>

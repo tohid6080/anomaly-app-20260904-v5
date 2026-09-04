@@ -57,9 +57,12 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
 
   const loadGate = () => {
     if (role === "CONTRACTOR") return;
+    // نمایش «ارجاع به کارشناس: X» باید برای هر کاربر غیرپیمانکار دیده
+    // شود، نه فقط گیت‌کیپر — پس gateStaff دیگر مشروط به isGatekeeper نیست
+    // (فقط دکمه‌های اقدام پایین‌تر همچنان محدودند). همان رفعِ Anomaly/Machinery.
     Promise.all([
       loadGateStatusForRecord("personnelAccess", personnel.id),
-      isGatekeeper ? loadCompanyStaffOptions() : Promise.resolve([]),
+      loadCompanyStaffOptions(),
     ]).then(([item, staff]) => { setGateItem(item); setGateStaff(staff); });
   };
   useEffect(() => { loadGate(); }, [personnel.id]);
@@ -240,6 +243,11 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
           <p style={{ fontSize: 12, fontWeight: 700, color: "#1d4ed8", margin: "0 0 8px" }}>
             گیت بازبینی سرپرست/مدیر HSE — {GATE_STATUS_LABELS[gateItem.status] || gateItem.status}
           </p>
+          {gateItem.status === "assigned_review" && (
+            <p style={{ fontSize: 12, fontWeight: 600, color: "#1d4ed8", margin: "0 0 8px" }}>
+              ارجاع به کارشناس: {gateStaff.find((s) => s.username === gateItem.assignedTo)?.name || gateItem.assignedTo}
+            </p>
+          )}
           {gateItem.reviewerComment && (
             <p style={{ fontSize: 12, color: "#374151", margin: "0 0 8px", lineHeight: 1.8 }}>
               <b>نظر کارشناس:</b> {gateItem.reviewerComment}

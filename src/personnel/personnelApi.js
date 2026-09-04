@@ -3,6 +3,7 @@ import { offlineWrite, offlineWriteFile } from "../offline/offlineWrite.js";
 import { isOnline } from "../offline/networkStatus.js";
 import { checkUploadAllowed } from "../offline/dbSizeMonitor.js";
 import { getRecordsByModule, putRecord } from "../offline/offlineDb.js";
+import { deleteGateItemsForRecord } from "../hseGateApi.js";
 
 /**
  * Personnel Access Management — data access layer.
@@ -220,6 +221,9 @@ export async function updatePersonnelDB(id, patch, performedBy) {
 export async function deletePersonnelDB(id, performedBy) {
   await offlineWrite({ module: "personnel", table: "personnel", action: "delete", id, payload: {} });
   if (performedBy) insertAuditLog(id, "deleted", "حذف پرسنل", performedBy);
+  // طبق همان رفعِ Machinery/Anomaly: رکورد گیت مربوطه هم پاک شود — وگرنه
+  // یتیم می‌ماند و برای همیشه در «کارهای در دست اقدام من» باقی می‌ماند.
+  deleteGateItemsForRecord("personnelAccess", id).catch(() => {});
 }
 
 // ---------- Documents ----------
