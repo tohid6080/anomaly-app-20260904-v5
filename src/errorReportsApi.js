@@ -11,6 +11,11 @@ import { sb, sbOk, getCurrentCompanyId } from "./shared.js";
 export async function submitErrorReport({ currentUser, moduleKey, pageLabel, description, technicalMessage, technicalStack }) {
   const companyId = getCurrentCompanyId();
   if (!companyId) return { __error: true, message: "شرکت جاری مشخص نیست — لطفاً دوباره وارد شوید." };
+  // TEMP DEBUG — برای پیداکردن علت 42501؛ بعد از عیب‌یابی حذف می‌شود.
+  try {
+    const dbg = await sb("rpc/debug_company_check", { method: "POST", body: JSON.stringify({ p_company_id: companyId }) });
+    console.log("[DEBUG error_reports] client companyId:", companyId, "server check:", dbg);
+  } catch (e) { console.log("[DEBUG error_reports] debug call failed", e); }
   const payload = {
     company_id: companyId,
     reported_by_username: currentUser?.username || "",

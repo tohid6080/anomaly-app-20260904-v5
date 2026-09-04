@@ -168,7 +168,12 @@ export async function loadLatestAccidentPronenessAssessment(personnelId) {
 
 export async function loadAllAssessments(indicatorKey) {
   const filter = indicatorKey ? `&indicator_key=eq.${indicatorKey}` : "";
-  const rows = await sb(`proactive_indicator_assessments?select=*,personnel(name,job_title)&order=assessment_date.desc${filter}`);
+  // ستون واقعی جدول personnel «full_name» است، نه «name» (نگاه کنید به
+  // personnelFromRow در personnelApi.js) — «name» یک ستون واقعی روی جدول
+  // contractors است، نه personnel؛ همین باعث خطای PostgREST
+  // «column personnel_1.name does not exist» و در نتیجه خالی ماندن کامل
+  // این لیست می‌شد (چون sbOk(rows) با خطای ۴۰۰ همیشه false برمی‌گشت).
+  const rows = await sb(`proactive_indicator_assessments?select=*,personnel(full_name,job_title)&order=assessment_date.desc${filter}`);
   return sbOk(rows) ? rows.map(assessmentFromRow) : [];
 }
 
@@ -177,7 +182,7 @@ function assessmentFromRow(r) {
     id: r.id,
     indicatorKey: r.indicator_key,
     personnelId: r.personnel_id,
-    personnelName: r.personnel?.name || "",
+    personnelName: r.personnel?.full_name || "",
     jobTitle: r.job_title_snapshot || r.personnel?.job_title || "",
     assessmentDate: r.assessment_date,
     assessorName: r.assessor_name,
