@@ -316,6 +316,52 @@ export async function updateTripodCorrectiveActionStatus(caId, status) {
 
 export const CA_STATUS_LABELS = { OPEN: "باز", IN_PROGRESS: "در حال انجام", DONE: "انجام‌شده", CANCELLED: "لغوشده" };
 
+// ---------- خلاصه‌ی سراسریِ اقدامات اصلاحیِ Tripod Beta برای کل شرکت ----------
+// برخلاف loadTripodCorrectiveActions (مخصوص یک تحلیل)، این تابع همه‌ی
+// اقدامات اصلاحی Tripod Beta شرکت را می‌خواند تا در ماژول «مدیریت عدم
+// انطباق‌ها ← لیست اقدامات اصلاحی» هم دیده شوند. برای هر ردیف شماره‌ی
+// حادثه/محل را هم (با دو کوئری دسته‌ای، بدون N+1) ضمیمه می‌کند.
+export async function loadTripodCorrectiveActionsForCompany() {
+  const companyId = getCurrentCompanyId();
+  const filter = companyId ? `&company_id=eq.${companyId}` : "";
+  const rows = await sb(`tripod_corrective_actions?select=*&order=created_at.desc${filter}`);
+  if (!sbOk(rows) || rows.length === 0) return [];
+
+  const analysisIds = [...new Set(rows.map((r) => r.analysis_id).filter(Boolean))];
+  const analysisToIncident = {};
+  if (analysisIds.length > 0) {
+    const idList = analysisIds.map((id) => `"${id}"`).join(",");
+    const analysisRows = await sb(`tripod_analyses?id=in.(${idList})&select=id,incident_id`);
+    if (sbOk(analysisRows)) analysisRows.forEach((a) => { analysisToIncident[a.id] = a.incident_id; });
+  }
+
+  const incidentIds = [...new Set(Object.values(analysisToIncident).filter(Boolean))];
+  let incidentById = {};
+  if (incidentIds.length > 0) {
+    const idList = incidentIds.map((id) => `"${id}"`).join(",");
+    const incidentRows = await sb(`incidents?id=in.(${idList})&select=id,incident_no,location`);
+    if (sbOk(incidentRows)) incidentById = Object.fromEntries(incidentRows.map((i) => [i.id, i]));
+  }
+
+  return rows.map((r) => {
+    const incidentId = analysisToIncident[r.analysis_id] || null;
+    const incident = incidentId ? incidentById[incidentId] : null;
+    return {
+      id: r.id,
+      analysisId: r.analysis_id,
+      incidentId,
+      incidentNo: incident?.incident_no || "",
+      incidentLocation: incident?.location || "",
+      titleFa: r.title_fa || "",
+      description: r.description || "",
+      responsiblePerson: r.responsible_person || "",
+      dueDate: r.due_date || "",
+      status: r.status || "OPEN",
+      createdAt: r.created_at,
+    };
+  });
+}
+
 // معادل تابع قدیمی «درخواست» — نگه داشته شده برای سازگاری با صفحه‌ی جزئیات حادثه
 export async function requestTripodAnalysis(analysisId, requestedBy) {
   return transitionAnalysis(analysisId, "request", "EMPLOYER", requestedBy);
