@@ -579,6 +579,62 @@ export async function saveCardTransferSettings({ cardNumber, holderName, descrip
   return { ok: true };
 }
 
+// ---------- درخواست‌های ارزیابی و پلن آزمایشی ----------
+// ثبت (فرم عمومی صفحه‌ی ورود) از طریق Edge Function submit-trial-request
+// انجام می‌شود (نگاه کنید به trialRequestApi.js) — اینجا فقط خواندن و
+// تصمیم‌گیری (تأیید/رد) سمت SuperAdmin است. طبق طراحی صریح: تأیید فقط
+// تصمیم + مدت پلن آزمایشی انتخابی را ثبت می‌کند (تا SuperAdmin بتواند از
+// همین‌جا بداند برای چند روز تأیید کرده)؛ ساخت واقعی شرکت/حساب کاربری
+// همچنان از همان مسیر موجود «شرکت‌ها» (createCompany + createCompanyUserAccount
+// + activateTrialForCompany) به‌صورت دستی انجام می‌شود — این فرم یک ابزار
+// ثبت/بررسی سرنخ (Lead) است، نه ساخت خودکار حساب با رمز عبور.
+
+function trialRequestFromRow(r) {
+  return {
+    id: r.id, fullName: r.full_name, phone: r.phone, companyName: r.company_name,
+    position: r.position || "", industry: r.industry || "",
+    personnelCount: r.personnel_count != null ? Number(r.personnel_count) : null,
+    projectName: r.project_name || "", projectCity: r.project_city || "", email: r.email || "",
+    desiredModules: Array.isArray(r.desired_modules) ? r.desired_modules : [],
+    description: r.description || "", status: r.status || "pending",
+    approvedTrialDays: r.approved_trial_days != null ? Number(r.approved_trial_days) : null,
+    adminNote: r.admin_note || "", reviewedBy: r.reviewed_by || "", reviewedAt: r.reviewed_at || "",
+    createdAt: r.created_at,
+  };
+}
+
+export async function loadTrialRequests(statusFilter) {
+  const filter = statusFilter && statusFilter !== "all" ? `&status=eq.${statusFilter}` : "";
+  const rows = await sb(`trial_requests?select=*&order=created_at.desc${filter}`, {}, "super_admin");
+  return sbOk(rows) ? rows.map(trialRequestFromRow) : [];
+}
+
+export async function approveTrialRequest(id, approvedTrialDays, reviewedBy, note) {
+  const days = Number(approvedTrialDays);
+  if (!days || days <= 0) return { __error: true, message: "مدت پلن آزمایشی نامعتبر است" };
+  const rows = await sb(`trial_requests?id=eq.${id}&status=eq.pending`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      status: "approved", approved_trial_days: days, admin_note: note || "",
+      reviewed_by: reviewedBy || "", reviewed_at: new Date().toISOString(),
+    }),
+  }, "super_admin");
+  if (!sbOk(rows)) return { __error: true, message: "خطا در تأیید درخواست" };
+  if (rows.length === 0) return { __error: true, message: "این درخواست قبلاً تأیید/رد شده یا پیدا نشد" };
+  return { ok: true };
+}
+
+export async function rejectTrialRequest(id, reviewedBy, note) {
+  if (!note || !note.trim()) return { __error: true, message: "برای رد یک درخواست، ذکر دلیل الزامی است" };
+  const rows = await sb(`trial_requests?id=eq.${id}&status=eq.pending`, {
+    method: "PATCH",
+    body: JSON.stringify({ status: "rejected", admin_note: note.trim(), reviewed_by: reviewedBy || "", reviewed_at: new Date().toISOString() }),
+  }, "super_admin");
+  if (!sbOk(rows)) return { __error: true, message: "خطا در رد درخواست" };
+  if (rows.length === 0) return { __error: true, message: "این درخواست قبلاً تأیید/رد شده یا پیدا نشد" };
+  return { ok: true };
+}
+
 // عناوین شغلی یک شرکت خاص — برخلاف loadActiveJobPositions در ماژول عادی
 // (که به company_id همان کاربر واردشده وابسته است)، اینجا سوپرادمین باید
 // بتواند عناوین شغلی هر شرکتی که در فرم انتخاب کرده را ببیند.

@@ -57,6 +57,7 @@ import SuperAdminLogin from "./superadmin/SuperAdminLogin.jsx";
 import SuperAdminPanel from "./superadmin/SuperAdminPanel.jsx";
 import DataView, { StatusPill } from "./shared/DataView.jsx";
 import ReportErrorModal from "./shared/ReportErrorModal.jsx";
+import TrialRequestModal from "./TrialRequestModal.jsx";
 import MachineryDashboard from "./machinery/MachineryDashboard.jsx";
 import { loadMachineryListOfflineFirst } from "./machinery/machineryApi.js";
 import ScaffoldDashboard from "./scaffold/ScaffoldDashboard.jsx";
@@ -1010,6 +1011,7 @@ function LoginScreen({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const [bioAvailable, setBioAvailable] = useState(false);
   const [bioChecking, setBioChecking] = useState(false);
+  const [showTrialRequest, setShowTrialRequest] = useState(false);
 
   // دکمه‌ی «ورود سریع با اثر انگشت» فقط وقتی نشون داده می‌شه که هم روی
   // این دستگاه از قبل برای یکی فعال شده، هم واقعاً سخت‌افزارش پشتیبانی
@@ -1144,10 +1146,24 @@ function LoginScreen({ onLogin }) {
               </button>
             )}
 
+            {/* درخواست ارزیابی و پلن آزمایشی — طبق خواسته‌ی صریح، در همین
+                صفحه‌ی اصلی (ورود) قابل‌دسترسی، بدون نیاز به حساب کاربری */}
+            <button
+              type="button"
+              onClick={() => setShowTrialRequest(true)}
+              style={{
+                width: "100%", marginTop: 10, padding: "11px", borderRadius: 9, cursor: "pointer", fontFamily: THEME.font,
+                fontSize: 13, fontWeight: 600, background: "transparent", border: `1.5px solid ${THEME.teal}`, color: THEME.tealDeep,
+              }}
+            >
+              درخواست ارزیابی و پلن آزمایشی رایگان
+            </button>
+
             <p style={styles.hint}>{t("designedBy")}</p>
           </div>
         </div>
       </div>
+      {showTrialRequest && <TrialRequestModal onClose={() => setShowTrialRequest(false)} />}
     </div>
   );
 }

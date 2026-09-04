@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ShieldAlert, Plus, LogOut, Send, CreditCard, AlertTriangle, UserPlus, KeyRound, Layers, Trash2, History, Activity, TrendingDown, Clock, LogIn, ShieldX, LayoutDashboard, Building2, Users, FileClock, ChevronLeft, HardDrive, RefreshCw, Settings2, Copy, GripVertical, ArrowUp, ArrowDown, RotateCcw, Eye, EyeOff, LayoutGrid, PanelsTopLeft, Bell, Palette, Megaphone, Sparkles, Gift, Info, ImagePlus, X } from "lucide-react";
+import { ShieldAlert, Plus, LogOut, Send, CreditCard, AlertTriangle, UserPlus, KeyRound, Layers, Trash2, History, Activity, TrendingDown, Clock, LogIn, ShieldX, LayoutDashboard, Building2, Users, FileClock, ChevronLeft, HardDrive, RefreshCw, Settings2, Copy, GripVertical, ArrowUp, ArrowDown, RotateCcw, Eye, EyeOff, LayoutGrid, PanelsTopLeft, Bell, Palette, Megaphone, Sparkles, Gift, Info, ImagePlus, X, ClipboardList } from "lucide-react";
 import { THEME } from "../shared.js";
 import { changeMyPassword } from "../sessionToken.js";
 import { loadModuleConfig, saveModuleConfig, loadDashboardConfig, saveDashboardConfig, loadNotificationTypes, saveNotificationType, syncNotificationTypesWithPlans, loadAppearanceConfig, saveAppearanceConfig, loadAllAnnouncements, createAnnouncement, updateAnnouncement, setAnnouncementActive, deleteAnnouncement, loadDashboardWidgetConfig, saveDashboardWidgetConfig } from "../systemConfigApi.js";
@@ -18,6 +18,7 @@ import {
   loadAuditLog, loadStorageUsage, setStorageCapacity, storageUsageStatus,
   copyBowtiesToCompany, copyRiskKnowledgeToCompany,
   loadCardTransferPayments, approveCardTransferPayment, rejectCardTransferPayment, saveCardTransferSettings,
+  loadTrialRequests, approveTrialRequest, rejectTrialRequest,
 } from "./superAdminApi.js";
 import { computeSubscriptionAccess, loadOnlinePaymentsForCompany, loadCardTransferSettings } from "../subscriptionApi.js";
 import { loadErrorReports, updateErrorReportStatus } from "../errorReportsApi.js";
@@ -114,6 +115,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
     { key: "auditLog", label: "گزارش تغییرات", icon: FileClock },
     { key: "errorReports", label: "گزارش‌های خطا", icon: AlertTriangle },
     { key: "cardTransferPayments", label: "رسیدهای پرداخت", icon: CreditCard },
+    { key: "trialRequests", label: "درخواست‌های ارزیابی و پلن آزمایشی", icon: ClipboardList },
   ];
 
   return (
@@ -184,6 +186,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
           {page === "auditLog" && <AuditLogPage companies={companies} />}
           {page === "errorReports" && <ErrorReportsPage currentAdmin={currentAdmin} />}
           {page === "cardTransferPayments" && <CardTransferPaymentsPage currentAdmin={currentAdmin} />}
+          {page === "trialRequests" && <TrialRequestsPage currentAdmin={currentAdmin} />}
         </div>
       </div>
     </div>
@@ -1762,6 +1765,156 @@ function CardTransferPaymentsPage({ currentAdmin }) {
         )}
       </div>
       {viewerSrc && <DocumentViewerModal src={viewerSrc} onClose={() => setViewerSrc(null)} />}
+    </div>
+  );
+}
+
+// ---------- درخواست‌های ارزیابی و پلن آزمایشی ----------
+// از فرم عمومیِ صفحه‌ی ورود (TrialRequestModal.jsx → Edge Function
+// submit-trial-request) می‌آید. تأیید اینجا فقط تصمیم + مدت پلن آزمایشی
+// انتخابی را ثبت می‌کند؛ ساخت واقعی شرکت/حساب کاربری همچنان از همان
+// مسیر موجود «شرکت‌ها» به‌صورت دستی انجام می‌شود (طبق طراحی صریح — نگاه
+// کنید به کامنت بالای این توابع در superAdminApi.js).
+const TRIAL_REQUEST_STATUS_META = {
+  pending: { label: "در انتظار بررسی", color: "#b45309", bg: "#fef3c7" },
+  approved: { label: "تأیید شده", color: "#166534", bg: "#dcfce7" },
+  rejected: { label: "رد شده", color: "#b91c1c", bg: "#fee2e2" },
+};
+
+function TrialRequestsPage({ currentAdmin }) {
+  const [statusFilter, setStatusFilter] = useState("pending");
+  const [rows, setRows] = useState(null);
+  const [expandedId, setExpandedId] = useState(null);
+  const [trialDaysDraft, setTrialDaysDraft] = useState("14");
+  const [noteDraft, setNoteDraft] = useState("");
+  const [showRejectFor, setShowRejectFor] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  const load = () => loadTrialRequests(statusFilter).then(setRows);
+  useEffect(() => { setRows(null); load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [statusFilter]);
+
+  const openRow = (r) => {
+    if (expandedId === r.id) { setExpandedId(null); return; }
+    setExpandedId(r.id);
+    setTrialDaysDraft("14");
+    setNoteDraft("");
+    setShowRejectFor(null);
+  };
+
+  const handleApprove = async (r) => {
+    setSaving(true);
+    const result = await approveTrialRequest(r.id, trialDaysDraft, currentAdmin?.fullName || currentAdmin?.username, noteDraft);
+    setSaving(false);
+    if (result?.__error) { alert(result.message); return; }
+    setExpandedId(null);
+    load();
+  };
+
+  const handleReject = async (r) => {
+    setSaving(true);
+    const result = await rejectTrialRequest(r.id, currentAdmin?.fullName || currentAdmin?.username, noteDraft);
+    setSaving(false);
+    if (result?.__error) { alert(result.message); return; }
+    setShowRejectFor(null); setExpandedId(null);
+    load();
+  };
+
+  const pendingCount = statusFilter === "pending" ? (rows || []).length : null;
+
+  return (
+    <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
+        <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+          <ClipboardList size={14} color={THEME.teal} /> درخواست‌های ارزیابی و پلن آزمایشی
+          {pendingCount > 0 && (
+            <span style={{ background: THEME.danger, color: "#fff", fontSize: 10.5, fontWeight: 700, borderRadius: 999, minWidth: 19, height: 19, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>
+              {pendingCount}
+            </span>
+          )}
+        </h3>
+        <select style={{ ...inputStyle, width: "auto" }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir="rtl">
+          <option value="all">همه وضعیت‌ها</option>
+          <option value="pending">در انتظار بررسی</option>
+          <option value="approved">تأیید شده</option>
+          <option value="rejected">رد شده</option>
+        </select>
+      </div>
+      <p style={{ fontSize: 11, color: THEME.text3, marginBottom: 12 }}>
+        تأیید یک درخواست، فقط تصمیم و مدت پلن آزمایشیِ انتخابی را ثبت می‌کند — ساخت واقعی شرکت و حساب کاربری همچنان از بخش «شرکت‌ها» به‌صورت دستی انجام می‌شود.
+      </p>
+
+      {rows === null && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>در حال بارگذاری...</p>}
+      {rows !== null && rows.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>درخواستی با این وضعیت یافت نشد.</p>}
+
+      {rows && rows.length > 0 && (
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+            <thead>
+              <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
+                <th style={{ textAlign: "right", padding: "6px 8px" }}>شرکت / سازمان</th>
+                <th style={{ textAlign: "right", padding: "6px 8px" }}>متقاضی</th>
+                <th style={{ textAlign: "center", padding: "6px 8px" }}>تعداد پرسنل</th>
+                <th style={{ textAlign: "right", padding: "6px 8px" }}>پروژه / شهر</th>
+                <th style={{ textAlign: "center", padding: "6px 8px" }}>زمان</th>
+                <th style={{ textAlign: "center", padding: "6px 8px" }}>وضعیت</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => {
+                const sm = TRIAL_REQUEST_STATUS_META[r.status] || TRIAL_REQUEST_STATUS_META.pending;
+                return (
+                  <React.Fragment key={r.id}>
+                    <tr style={{ borderBottom: `1px solid ${THEME.border}`, cursor: "pointer" }} onClick={() => openRow(r)}>
+                      <td style={{ padding: "8px", fontWeight: 600 }}>{r.companyName}</td>
+                      <td style={{ padding: "8px" }}>
+                        {r.fullName}{r.position && <span style={{ color: THEME.text3, fontSize: 10.5 }}> — {r.position}</span>}
+                        <div style={{ fontSize: 10.5, color: THEME.text3, direction: "ltr", textAlign: "right" }}>{r.phone}</div>
+                      </td>
+                      <td style={{ padding: "8px", textAlign: "center" }}>{r.personnelCount != null ? r.personnelCount.toLocaleString("fa-IR") : "—"}</td>
+                      <td style={{ padding: "8px", color: THEME.text3 }}>{r.projectName || "—"}{r.projectCity && ` — ${r.projectCity}`}</td>
+                      <td style={{ padding: "8px", textAlign: "center", color: THEME.text3, whiteSpace: "nowrap" }}>{toJalaliDateTime(r.createdAt)}</td>
+                      <td style={{ padding: "8px", textAlign: "center" }}>
+                        <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: sm.bg, color: sm.color, fontWeight: 700 }}>{sm.label}</span>
+                      </td>
+                    </tr>
+                    {expandedId === r.id && (
+                      <tr>
+                        <td colSpan={6} style={{ padding: "10px 12px", background: THEME.bg }}>
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 6, marginBottom: 10, fontSize: 12, color: THEME.text2 }}>
+                            <p style={{ margin: 0 }}>حوزه فعالیت: <b>{r.industry || "—"}</b></p>
+                            <p style={{ margin: 0 }}>ایمیل: <b style={{ direction: "ltr", display: "inline-block" }}>{r.email || "—"}</b></p>
+                            <p style={{ margin: 0, gridColumn: "1 / -1" }}>
+                              ماژول‌های موردنظر: <b>{r.desiredModules.length > 0 ? r.desiredModules.join("، ") : "—"}</b>
+                            </p>
+                          </div>
+                          {r.description && <p style={{ fontSize: 12, color: THEME.text2, lineHeight: 1.8, margin: "0 0 10px", whiteSpace: "pre-wrap" }}>توضیحات: {r.description}</p>}
+                          {r.adminNote && <p style={{ fontSize: 11.5, color: THEME.text3, margin: "0 0 8px" }}>یادداشت بررسی: {r.adminNote}</p>}
+                          {r.status === "approved" && <p style={{ fontSize: 11.5, color: "#166534", margin: "0 0 8px", fontWeight: 700 }}>مدت پلن آزمایشی تأییدشده: {r.approvedTrialDays} روز</p>}
+                          {r.reviewedAt && <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 8px" }}>بررسی‌شده توسط {r.reviewedBy || "—"} در {toJalaliDateTime(r.reviewedAt)}</p>}
+
+                          {r.status === "pending" && (
+                            <div>
+                              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 8 }}>
+                                <label style={{ fontSize: 11.5, color: THEME.text2 }}>مدت پلن آزمایشی (روز):</label>
+                                <input type="number" min="1" style={{ ...inputStyle, width: 80 }} value={trialDaysDraft} onChange={(e) => setTrialDaysDraft(e.target.value)} />
+                              </div>
+                              <textarea style={{ ...inputStyle, minHeight: 45, marginBottom: 8 }} placeholder="یادداشت (اختیاری برای تأیید، الزامی برای رد)" value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} dir="rtl" />
+                              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                                <button type="button" style={btnStyle("#166534")} disabled={saving || !trialDaysDraft} onClick={() => handleApprove(r)}>تأیید درخواست</button>
+                                <button type="button" style={btnStyle(THEME.danger)} disabled={saving || !noteDraft.trim()} onClick={() => handleReject(r)}>رد درخواست</button>
+                              </div>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
