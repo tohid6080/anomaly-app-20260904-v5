@@ -31,7 +31,9 @@ const ADMIN_IDENTITY = { role: "ADMIN", jobPositionId: null, title: "ادمین"
  */
 export default function ChatAccessManager({ onBack }) {
   const [positions, setPositions] = useState([]);
-  const [rules, setRules] = useState([]);
+  const [rules, setRules] = useState([]); // آخرین نسخه‌ی واقعاً ذخیره‌شده در دیتابیس
+  const [draftRules, setDraftRules] = useState([]); // پیش‌نویس محلی — کاربر هرچقدر بخواهد خانه کلیک می‌کند، بدون Write
+  const [saving, setSaving] = useState(false);
   const [usedByRole, setUsedByRole] = useState({ employerJobPositionIds: new Set(), contractorJobPositionIds: new Set() });
   const [extraIdentities, setExtraIdentities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -43,6 +45,7 @@ export default function ChatAccessManager({ onBack }) {
     const [p, r, used, extra] = await Promise.all([loadActiveJobPositions(), loadVisibilityRules(), loadUsedJobPositionsByRole(), loadExtraIdentities()]);
     setPositions(p);
     setRules(r);
+    setDraftRules(r);
     setUsedByRole(used);
     setExtraIdentities(extra);
     setLoading(false);
@@ -70,21 +73,45 @@ export default function ChatAccessManager({ onBack }) {
 
   const sameIdentity = (a, b) => a.role === b.role && a.jobPositionId === b.jobPositionId;
 
-  const isBlocked = (a, b) => rules.some((r) =>
+  const isBlockedIn = (list, a, b) => list.some((r) =>
     (r.roleA === a.role && r.jobPositionIdA === a.jobPositionId && r.roleB === b.role && r.jobPositionIdB === b.jobPositionId) ||
     (r.roleA === b.role && r.jobPositionIdA === b.jobPositionId && r.roleB === a.role && r.jobPositionIdB === a.jobPositionId)
   );
+  const isBlocked = (a, b) => isBlockedIn(draftRules, a, b);
 
-  const toggleCell = async (a, b) => {
-    const currentlyBlocked = isBlocked(a, b);
-    setRules((prev) => (currentlyBlocked
+  // استاندارد سراسری ذخیره‌سازی: کلیک روی خانه‌ی ماتریس فقط پیش‌نویس محلی
+  // را عوض می‌کند — کاربر می‌تواند چند خانه را جابه‌جا کند و فقط با کلیک
+  // روی «ثبت تغییرات» همه‌ی تفاوت‌ها یک‌جا ذخیره می‌شوند
+  const toggleCell = (a, b) => {
+    const currentlyBlocked = isBlockedIn(draftRules, a, b);
+    setDraftRules((prev) => (currentlyBlocked
       ? prev.filter((r) => !(
           (r.roleA === a.role && r.jobPositionIdA === a.jobPositionId && r.roleB === b.role && r.jobPositionIdB === b.jobPositionId) ||
           (r.roleA === b.role && r.jobPositionIdA === b.jobPositionId && r.roleB === a.role && r.jobPositionIdB === a.jobPositionId)
         ))
       : [...prev, { roleA: a.role, jobPositionIdA: a.jobPositionId, roleB: b.role, jobPositionIdB: b.jobPositionId }]));
-    const result = await setVisibilityRule(a.role, a.jobPositionId, b.role, b.jobPositionId, !currentlyBlocked);
-    if (result?.__error) { alert(result.message); await load(); }
+  };
+
+  const changedPairs = () => {
+    const pairs = [];
+    for (let i = 0; i < identities.length; i++) {
+      for (let j = i + 1; j < identities.length; j++) {
+        const a = identities[i], b = identities[j];
+        const before = isBlockedIn(rules, a, b);
+        const after = isBlockedIn(draftRules, a, b);
+        if (before !== after) pairs.push({ a, b, blocked: after });
+      }
+    }
+    return pairs;
+  };
+  const isDirty = changedPairs().length > 0;
+
+  const handleSaveAll = async () => {
+    setSaving(true);
+    const results = await Promise.all(changedPairs().map((p) => setVisibilityRule(p.a.role, p.a.jobPositionId, p.b.role, p.b.jobPositionId, p.blocked)));
+    setSaving(false);
+    if (results.some((r) => r?.__error)) alert("خطا در ذخیره‌ی برخی قوانین");
+    await load();
   };
 
   const handleAddIdentity = async () => {
@@ -179,12 +206,13 @@ export default function ChatAccessManager({ onBack }) {
                       return <td key={`${colId.role}-${colId.jobPositionId}`} style={{ padding: 2, textAlign: "center", background: "#f4f6f8" }} />;
                     }
                     const blocked = isBlocked(rowId, colId);
+                    const pending = isBlockedIn(rules, rowId, colId) !== blocked;
                     return (
                       <td key={`${colId.role}-${colId.jobPositionId}`} style={{ padding: 2, textAlign: "center" }}>
                         <div
                           onClick={() => toggleCell(rowId, colId)}
                           title={blocked ? "بلاک‌شده — کلیک برای رفع" : "کلیک برای بلاک‌کردن"}
-                          style={{ width: 26, height: 26, margin: "0 auto", borderRadius: 5, cursor: "pointer", background: blocked ? THEME.danger : "#eef1f5", border: `1px solid ${THEME.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}
+                          style={{ width: 26, height: 26, margin: "0 auto", borderRadius: 5, cursor: "pointer", background: blocked ? THEME.danger : "#eef1f5", border: pending ? "2px solid #f59e0b" : `1px solid ${THEME.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}
                         >
                           {blocked && <X size={13} color="#fff" />}
                         </div>
@@ -195,6 +223,14 @@ export default function ChatAccessManager({ onBack }) {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {isDirty && (
+        <div style={{ position: "sticky", bottom: 10, display: "flex", alignItems: "center", gap: 8, background: "#fef3c7", border: "1px solid #f59e0b", borderRadius: 10, padding: "10px 14px", marginTop: 12 }}>
+          <span style={{ fontSize: 11.5, color: "#92400e", fontWeight: 600, flex: 1 }}>{changedPairs().length} تغییر هنوز ثبت نشده (خانه‌های با کادر نارنجی)</span>
+          <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setDraftRules(rules)} disabled={saving}>انصراف</button>
+          <button type="button" style={styles.smallButton} onClick={handleSaveAll} disabled={saving}>{saving ? "در حال ذخیره..." : "ثبت تغییرات"}</button>
         </div>
       )}
     </div>

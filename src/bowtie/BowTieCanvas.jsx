@@ -124,6 +124,11 @@ export default function BowTieCanvas({ bowtie, threats, consequences, barriers, 
   const dragRef = useRef(null);
   const [, forceTick] = useState(0);
   const liveOverridesRef = useRef({});
+  // استاندارد سراسری ذخیره‌سازی: رها کردن یک گره بعد از Drag دیگر بلافاصله
+  // در دیتابیس ذخیره نمی‌شود — فقط اینجا (محلی) می‌ماند. کاربر می‌تواند
+  // چندین گره را چندین بار جابه‌جا کند و فقط با کلیک روی «ثبت تغییرات
+  // موقعیت» همه‌ی موقعیت‌های نهایی یک‌جا نوشته می‌شوند.
+  const pendingPositionsRef = useRef({});
   // هر بار رندر، موقعیت و اندازه‌ی فعلی همه‌ی گره‌ها اینجا ثبت می‌شود — تا
   // موقع رها کردن یک گره (onWindowPointerUp)، بشود همه‌ی گره‌های دیگر را
   // برای رفع هم‌پوشانی بررسی کرد، بدون نیاز به محاسبه‌ی دوباره‌ی کل چیدمان
@@ -301,32 +306,57 @@ export default function BowTieCanvas({ bowtie, threats, consequences, barriers, 
       if (d.moved) {
         const rawPos = liveOverridesRef.current[d.id];
         if (rawPos) {
-          // قبل از ذخیره‌ی نهایی، اگه محل رهاشده با یه گره‌ی دیگه هم‌پوشانی
+          // قبل از نمایش نهایی، اگه محل رهاشده با یه گره‌ی دیگه هم‌پوشانی
           // داشت (دقیقاً داخلش افتاده یا روش قفل شده)، با کمترین جابه‌جایی
           // لازم از هم جدا می‌شن — خودِ کشیدن، آزاد و بدون محدودیت می‌مونه
           const half = NODE_HALF[d.nodeKind] || { w: 40, h: 24 };
           const pos = resolveOverlap(d.id, rawPos.x, rawPos.y, half, nodeBoundsRef.current);
-          liveOverridesRef.current[d.id] = pos; // تا لحظه‌ی رفرش بعدی هم همون جای تنظیم‌شده دیده بشه، نه جای خام رهاشده
-          const before = { x: d.startX, y: d.startY };
-          const updater = {
-            threat: updateThreatDB, consequence: updateConsequenceDB, barrier: updateBarrierDB,
-            escalationFactor: updateEscalationFactorDB, escalationControl: updateEscalationControlDB,
-          }[d.nodeKind];
-          setSaveStatus("saving");
-          await updater(d.id, { posX: pos.x, posY: pos.y });
-          pushHistory({
-            undo: () => updater(d.id, { posX: before.x, posY: before.y }),
-            redo: () => updater(d.id, { posX: pos.x, posY: pos.y }),
-          });
-          onDataChange();
-          flashSaved();
+          // این override دیگر پاک نمی‌شود — تا کلیک روی «ثبت تغییرات موقعیت»
+          // همان‌جا (محلی) باقی می‌ماند، هیچ Writeای هنوز انجام نشده
+          liveOverridesRef.current[d.id] = pos;
+          const existingPending = pendingPositionsRef.current[d.id];
+          pendingPositionsRef.current[d.id] = {
+            kind: d.nodeKind,
+            pos,
+            before: existingPending ? existingPending.before : { x: d.startX, y: d.startY },
+          };
         }
       } else {
         setSelected({ type: d.nodeKind, id: d.id });
       }
-      delete liveOverridesRef.current[d.id];
+      forceTick((n) => n + 1);
     }
     dragRef.current = null;
+  };
+
+  const pendingPositionCount = Object.keys(pendingPositionsRef.current).length;
+
+  const commitPositions = async () => {
+    const pending = pendingPositionsRef.current;
+    const ids = Object.keys(pending);
+    if (ids.length === 0) return;
+    setSaveStatus("saving");
+    const updater = {
+      threat: updateThreatDB, consequence: updateConsequenceDB, barrier: updateBarrierDB,
+      escalationFactor: updateEscalationFactorDB, escalationControl: updateEscalationControlDB,
+    };
+    const entries = ids.map((id) => ({ id, kind: pending[id].kind, before: pending[id].before, after: pending[id].pos }));
+    await Promise.all(entries.map((e) => updater[e.kind](e.id, { posX: e.after.x, posY: e.after.y })));
+    pushHistory({
+      undo: () => Promise.all(entries.map((e) => updater[e.kind](e.id, { posX: e.before.x, posY: e.before.y }))),
+      redo: () => Promise.all(entries.map((e) => updater[e.kind](e.id, { posX: e.after.x, posY: e.after.y }))),
+    });
+    ids.forEach((id) => { delete liveOverridesRef.current[id]; });
+    pendingPositionsRef.current = {};
+    onDataChange();
+    flashSaved();
+    forceTick((n) => n + 1);
+  };
+
+  const discardPositions = () => {
+    Object.keys(pendingPositionsRef.current).forEach((id) => { delete liveOverridesRef.current[id]; });
+    pendingPositionsRef.current = {};
+    forceTick((n) => n + 1);
   };
 
   const zoomBy = (factor) => setView((v) => ({ ...v, scale: Math.min(2.2, Math.max(0.3, v.scale * factor)) }));
@@ -417,6 +447,20 @@ export default function BowTieCanvas({ bowtie, threats, consequences, barriers, 
     flashSaved();
   };
 
+  // یک گره‌ی حذف‌شده دیگر هیچ‌جایی وجود ندارد که «ثبت تغییرات موقعیت» بخواهد
+  // برایش posX/posY بنویسد — پاک‌کردن پیش‌نویس موقعیت معلقش (اگر داشت)
+  const clearPendingPosition = (nodeId) => {
+    delete pendingPositionsRef.current[nodeId];
+    delete liveOverridesRef.current[nodeId];
+  };
+  const clearPendingForBarrierSubtree = (snap) => {
+    clearPendingPosition(snap.barrier.id);
+    snap.factors.forEach((fSnap) => {
+      clearPendingPosition(fSnap.factor.id);
+      fSnap.controls.forEach((c) => clearPendingPosition(c.id));
+    });
+  };
+
   const handleInspectorDelete = async (type, id) => {
     if (readOnly) { alert("شما مجوز حذف این المان را ندارید"); return; }
     if (!confirm("این المان حذف شود؟")) return;
@@ -425,6 +469,8 @@ export default function BowTieCanvas({ bowtie, threats, consequences, barriers, 
       const node = threatsForBowtie.find((t) => t.id === id);
       const barrierSnaps = barriersFor("preventive", id).map((b) => captureBarrierSubtree(b.id));
       await deleteThreatDB(id);
+      clearPendingPosition(id);
+      barrierSnaps.forEach(clearPendingForBarrierSubtree);
       pushHistory({
         undo: async () => { await insertThreat(bowtie.id, node.label, node.orderIndex, node.id); if (node.posX || node.posY) await updateThreatDB(node.id, { posX: node.posX, posY: node.posY }); for (const s of barrierSnaps) await restoreBarrierSubtree(s); },
         redo: () => deleteThreatDB(id),
@@ -433,6 +479,8 @@ export default function BowTieCanvas({ bowtie, threats, consequences, barriers, 
       const node = consForBowtie.find((c) => c.id === id);
       const barrierSnaps = barriersFor("recovery", id).map((b) => captureBarrierSubtree(b.id));
       await deleteConsequenceDB(id);
+      clearPendingPosition(id);
+      barrierSnaps.forEach(clearPendingForBarrierSubtree);
       pushHistory({
         undo: async () => { await insertConsequence(bowtie.id, node.label, node.orderIndex, node.id); if (node.posX || node.posY) await updateConsequenceDB(node.id, { posX: node.posX, posY: node.posY }); for (const s of barrierSnaps) await restoreBarrierSubtree(s); },
         redo: () => deleteConsequenceDB(id),
@@ -440,14 +488,18 @@ export default function BowTieCanvas({ bowtie, threats, consequences, barriers, 
     } else if (type === "barrier") {
       const snap = captureBarrierSubtree(id);
       await deleteBarrierDB(id);
+      clearPendingForBarrierSubtree(snap);
       pushHistory({ undo: () => restoreBarrierSubtree(snap), redo: () => deleteBarrierDB(id) });
     } else if (type === "escalationFactor") {
       const snap = captureFactorSubtree(id);
       await deleteEscalationFactorDB(id);
+      clearPendingPosition(id);
+      snap.controls.forEach((c) => clearPendingPosition(c.id));
       pushHistory({ undo: () => restoreFactorSubtree(snap), redo: () => deleteEscalationFactorDB(id) });
     } else if (type === "escalationControl") {
       const node = escalationControls.find((c) => c.id === id);
       await deleteEscalationControlDB(id);
+      clearPendingPosition(id);
       pushHistory({
         undo: async () => { await insertEscalationControl(node.escalationFactorId, node.label, node.orderIndex, node.id); await updateEscalationControlDB(node.id, { owner: node.owner, status: node.status, posX: node.posX, posY: node.posY }); },
         redo: () => deleteEscalationControlDB(id),
@@ -507,6 +559,16 @@ export default function BowTieCanvas({ bowtie, threats, consequences, barriers, 
             <div style={{ width: 1, height: 22, background: THEME.border, margin: "0 2px" }} />
             <button type="button" onClick={undo} disabled={!canUndo} style={{ ...iconBtnStyle, opacity: canUndo ? 1 : 0.4, cursor: canUndo ? "pointer" : "default" }} title="واگرد (Ctrl+Z)"><Undo2 size={15} /></button>
             <button type="button" onClick={redo} disabled={!canRedo} style={{ ...iconBtnStyle, opacity: canRedo ? 1 : 0.4, cursor: canRedo ? "pointer" : "default" }} title="ازنو (Ctrl+Y)"><Redo2 size={15} /></button>
+            {pendingPositionCount > 0 && (
+              <>
+                <div style={{ width: 1, height: 22, background: THEME.border, margin: "0 2px" }} />
+                <span style={{ fontSize: 11, color: "#92400e", fontWeight: 600 }}>{pendingPositionCount} جابه‌جایی ثبت‌نشده</span>
+                <button type="button" onClick={discardPositions} style={toolBtnStyle(THEME.text3)}>انصراف</button>
+                <button type="button" onClick={commitPositions} style={{ ...toolBtnStyle("#166534"), display: "flex", alignItems: "center", gap: 5 }}>
+                  <Check size={13} /> ثبت تغییرات موقعیت
+                </button>
+              </>
+            )}
             <SaveIndicator status={saveStatus} />
           </>
         )}

@@ -882,19 +882,33 @@ const WIDGET_LABELS = {
 
 function DashboardWidgetsSection({ currentAdmin }) {
   const [widgets, setWidgets] = useState(null);
+  const [draftWidgets, setDraftWidgets] = useState(null);
+  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
-  const load = () => loadDashboardWidgetConfig().then(setWidgets);
+  const load = () => loadDashboardWidgetConfig().then((rows) => { setWidgets(rows); setDraftWidgets(rows); });
   useEffect(() => { load(); }, []);
 
-  const toggle = async (widgetKey, current) => {
+  if (!draftWidgets) return null;
+
+  // استاندارد سراسری ذخیره‌سازی: کلیک روی هر پنل فقط وضعیت محلی را عوض
+  // می‌کند؛ Write واقعی فقط با کلیک روی «ذخیره تغییرات» انجام می‌شود
+  const toggleDraft = (widgetKey) => {
     setMessage("");
-    setWidgets((prev) => prev.map((w) => (w.widgetKey === widgetKey ? { ...w, isVisible: !current } : w)));
-    const result = await saveDashboardWidgetConfig(widgetKey, !current, currentAdmin?.fullName);
-    if (result?.__error) { setMessage(result.message); await load(); }
+    setDraftWidgets((prev) => prev.map((w) => (w.widgetKey === widgetKey ? { ...w, isVisible: !w.isVisible } : w)));
   };
 
-  if (!widgets) return null;
+  const isDirty = draftWidgets.some((w, idx) => widgets[idx]?.isVisible !== w.isVisible);
+
+  const handleSave = async () => {
+    setSaving(true); setMessage("");
+    const changed = draftWidgets.filter((w, idx) => widgets[idx]?.isVisible !== w.isVisible);
+    const results = await Promise.all(changed.map((w) => saveDashboardWidgetConfig(w.widgetKey, w.isVisible, currentAdmin?.fullName)));
+    setSaving(false);
+    const failed = results.find((r) => r?.__error);
+    setMessage(failed ? failed.message : "تنظیمات ماژول‌های داشبورد ذخیره شد.");
+    if (!failed) await load();
+  };
 
   return (
     <div style={{ marginTop: 22, paddingTop: 18, borderTop: `1px solid ${THEME.border}` }}>
@@ -903,17 +917,23 @@ function DashboardWidgetsSection({ currentAdmin }) {
         فعال/غیرفعال کردن هر پنل داخل ماژول «داشبورد مدیریتی» — روی همه‌ی کاربران (کارفرما/پیمانکار) اعمال می‌شود.
       </p>
       {message && <p style={{ fontSize: 11.5, color: THEME.danger, marginBottom: 10 }}>{message}</p>}
-      {widgets.map((w) => (
+      {draftWidgets.map((w) => (
         <div key={w.widgetKey} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 8px", borderBottom: `1px solid ${THEME.border}` }}>
           <span style={{ fontSize: 12.5, color: THEME.text, fontWeight: 600 }}>{WIDGET_LABELS[w.widgetKey] || w.widgetKey}</span>
           <button
-            type="button" onClick={() => toggle(w.widgetKey, w.isVisible)}
+            type="button" onClick={() => toggleDraft(w.widgetKey)}
             style={{ display: "flex", alignItems: "center", gap: 5, background: w.isVisible ? "#dcfce7" : "#eef1f5", color: w.isVisible ? "#166534" : THEME.text3, border: "none", borderRadius: 999, padding: "5px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font }}
           >
             {w.isVisible ? <Eye size={13} /> : <EyeOff size={13} />} {w.isVisible ? "نمایش داده می‌شود" : "پنهان"}
           </button>
         </div>
       ))}
+      {isDirty && (
+        <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+          <button type="button" style={btnStyle()} onClick={handleSave} disabled={saving}>{saving ? "در حال ذخیره..." : "ذخیره تغییرات"}</button>
+          <button type="button" style={{ ...btnStyle(THEME.text3) }} onClick={() => setDraftWidgets(widgets)} disabled={saving}>انصراف</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -927,19 +947,43 @@ const PRIORITY_META = {
 
 function NotificationManagementTab({ currentAdmin }) {
   const [list, setList] = useState(null);
+  const [draftList, setDraftList] = useState(null);
+  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
-  const load = () => loadNotificationTypes().then(setList);
+  const load = () => loadNotificationTypes().then((rows) => { setList(rows); setDraftList(rows); });
   useEffect(() => { load(); }, []);
 
-  if (!list) return <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 30 }}>در حال بارگذاری...</p>;
+  if (!draftList) return <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 30 }}>در حال بارگذاری...</p>;
 
-  const updateOne = async (typeKey, patch) => {
+  // استاندارد سراسری ذخیره‌سازی: هر تغییر (فعال/غیرفعال، گیرنده، اولویت،
+  // مهلت هشدار) فقط در این آرایه‌ی محلی می‌رود؛ Write واقعی فقط با کلیک
+  // روی «ذخیره تغییرات» انجام می‌شود
+  const updateDraft = (typeKey, patch) => {
     setMessage("");
-    const next = list.map((t) => (t.typeKey === typeKey ? { ...t, ...patch } : t));
-    setList(next); // به‌روزرسانی خوش‌بینانه — تجربه‌ی کاربری سریع‌تر
-    const result = await saveNotificationType(typeKey, patch, currentAdmin?.fullName);
-    if (result?.__error) { setMessage(result.message); await load(); }
+    setDraftList((prev) => prev.map((t) => (t.typeKey === typeKey ? { ...t, ...patch } : t)));
+  };
+
+  const isDirty = draftList.some((t, idx) => JSON.stringify(t) !== JSON.stringify(list[idx]));
+
+  const handleSave = async () => {
+    setSaving(true); setMessage("");
+    const writes = [];
+    draftList.forEach((t, idx) => {
+      const orig = list[idx];
+      if (!orig || orig.typeKey !== t.typeKey) return;
+      const patch = {};
+      if (orig.isEnabled !== t.isEnabled) patch.isEnabled = t.isEnabled;
+      if (orig.targetRole !== t.targetRole) patch.targetRole = t.targetRole;
+      if (orig.priority !== t.priority) patch.priority = t.priority;
+      if (orig.warningDays !== t.warningDays) patch.warningDays = t.warningDays;
+      if (Object.keys(patch).length > 0) writes.push(saveNotificationType(t.typeKey, patch, currentAdmin?.fullName));
+    });
+    const results = await Promise.all(writes);
+    setSaving(false);
+    const failed = results.find((r) => r?.__error);
+    setMessage(failed ? failed.message : "تنظیمات اعلان‌ها ذخیره شد.");
+    if (!failed) await load();
   };
 
   return (
@@ -948,7 +992,7 @@ function NotificationManagementTab({ currentAdmin }) {
         این تنظیمات مستقیم روی زنگوله‌ی اعلان همه‌ی کاربران اثر می‌گذارد — هر نوع اعلان که اینجا غیرفعال شود، دیگر برای هیچ‌کس نمایش داده نمی‌شود.
       </p>
       {message && <p style={{ fontSize: 11.5, color: THEME.danger, marginBottom: 10 }}>{message}</p>}
-      {list.map((t) => (
+      {draftList.map((t) => (
         <div key={t.typeKey} style={{ padding: "12px 8px", borderBottom: `1px solid ${THEME.border}` }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
             <div style={{ flex: 1, minWidth: 200 }}>
@@ -964,7 +1008,7 @@ function NotificationManagementTab({ currentAdmin }) {
               {t.description && <p style={{ fontSize: 11, color: THEME.text3, margin: "4px 0 0" }}>{t.description}</p>}
             </div>
             <button
-              type="button" onClick={() => updateOne(t.typeKey, { isEnabled: !t.isEnabled })}
+              type="button" onClick={() => updateDraft(t.typeKey, { isEnabled: !t.isEnabled })}
               style={{ display: "flex", alignItems: "center", gap: 5, background: t.isEnabled ? "#fee2e2" : "#dcfce7", color: t.isEnabled ? "#b91c1c" : "#166534", border: "none", borderRadius: 999, padding: "6px 14px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font, flexShrink: 0 }}
             >
               {t.isEnabled ? <EyeOff size={13} /> : <Eye size={13} />} {t.isEnabled ? "غیرفعال کن" : "فعال کن"}
@@ -973,25 +1017,31 @@ function NotificationManagementTab({ currentAdmin }) {
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
             <div>
               <label style={{ fontSize: 10.5, color: THEME.text3, display: "block", marginBottom: 3 }}>گیرنده</label>
-              <select style={{ ...inputStyle, width: 140 }} value={t.targetRole} onChange={(e) => updateOne(t.typeKey, { targetRole: e.target.value })} dir="rtl">
+              <select style={{ ...inputStyle, width: 140 }} value={t.targetRole} onChange={(e) => updateDraft(t.typeKey, { targetRole: e.target.value })} dir="rtl">
                 {Object.entries(ROLE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </select>
             </div>
             <div>
               <label style={{ fontSize: 10.5, color: THEME.text3, display: "block", marginBottom: 3 }}>اولویت</label>
-              <select style={{ ...inputStyle, width: 110 }} value={t.priority} onChange={(e) => updateOne(t.typeKey, { priority: e.target.value })} dir="rtl">
+              <select style={{ ...inputStyle, width: 110 }} value={t.priority} onChange={(e) => updateDraft(t.typeKey, { priority: e.target.value })} dir="rtl">
                 {Object.entries(PRIORITY_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
               </select>
             </div>
             {t.warningDays != null && (
               <div>
                 <label style={{ fontSize: 10.5, color: THEME.text3, display: "block", marginBottom: 3 }}>هشدار چند روز قبل از مهلت</label>
-                <input type="number" style={{ ...inputStyle, width: 100 }} value={t.warningDays} onChange={(e) => updateOne(t.typeKey, { warningDays: Number(e.target.value) || 0 })} dir="ltr" />
+                <input type="number" style={{ ...inputStyle, width: 100 }} value={t.warningDays} onChange={(e) => updateDraft(t.typeKey, { warningDays: Number(e.target.value) || 0 })} dir="ltr" />
               </div>
             )}
           </div>
         </div>
       ))}
+      {isDirty && (
+        <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+          <button type="button" style={btnStyle()} onClick={handleSave} disabled={saving}>{saving ? "در حال ذخیره..." : "ذخیره تغییرات"}</button>
+          <button type="button" style={btnStyle(THEME.text3)} onClick={() => setDraftList(list)} disabled={saving}>انصراف</button>
+        </div>
+      )}
     </div>
   );
 }

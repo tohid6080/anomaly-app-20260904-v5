@@ -24,8 +24,9 @@ export default function PermissionManager({ onBack }) {
   const [loadingAccounts, setLoadingAccounts] = useState(true);
   const [selectedAccountId, setSelectedAccountId] = useState("");
   const [permMap, setPermMap] = useState({});
+  const [draftAccess, setDraftAccess] = useState({});
   const [loadingPerms, setLoadingPerms] = useState(false);
-  const [savingKey, setSavingKey] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -44,26 +45,40 @@ export default function PermissionManager({ onBack }) {
   }, [accountType]);
 
   useEffect(() => {
-    if (!selectedAccountId) { setPermMap({}); return; }
+    if (!selectedAccountId) { setPermMap({}); setDraftAccess({}); return; }
     (async () => {
       setLoadingPerms(true);
-      setPermMap(await loadPermissionsMap(accountType, selectedAccountId));
+      const map = await loadPermissionsMap(accountType, selectedAccountId);
+      setPermMap(map);
+      setDraftAccess(Object.fromEntries(PERMISSION_MODULES.map((m) => [m.key, getModuleAccess(map, m.key)])));
       setLoadingPerms(false);
     })();
   }, [selectedAccountId, accountType]);
 
-  const handleChange = async (moduleKey, access) => {
-    setSavingKey(moduleKey);
-    const saved = await saveModuleAccess(accountType, selectedAccountId, moduleKey, access);
-    setSavingKey(null);
-    if (saved?.__error) { alert("خطا در ذخیره‌سازی"); return; }
-    setPermMap({ ...permMap, [moduleKey]: saved });
+  // استاندارد سراسری ذخیره‌سازی: تغییر سطح دسترسی هر ماژول فقط در این
+  // Draft محلی می‌رود؛ Write واقعی فقط با کلیک روی «ذخیره تغییرات» است
+  const updateDraft = (moduleKey, access) => {
+    setDraftAccess((prev) => ({ ...prev, [moduleKey]: access }));
+  };
+
+  const isDirty = PERMISSION_MODULES.some((m) => draftAccess[m.key] !== getModuleAccess(permMap, m.key));
+
+  const handleSaveAll = async () => {
+    setSaving(true);
+    const changed = PERMISSION_MODULES.filter((m) => draftAccess[m.key] !== getModuleAccess(permMap, m.key));
+    const results = await Promise.all(changed.map((m) => saveModuleAccess(accountType, selectedAccountId, m.key, draftAccess[m.key])));
+    setSaving(false);
+    if (results.some((r) => r?.__error)) { alert("خطا در ذخیره‌سازی برخی موارد"); }
+    const map = await loadPermissionsMap(accountType, selectedAccountId);
+    setPermMap(map);
+    setDraftAccess(Object.fromEntries(PERMISSION_MODULES.map((m) => [m.key, getModuleAccess(map, m.key)])));
   };
 
   const handleReset = async () => {
     if (!confirm("همه‌ی محدودیت‌های این حساب حذف شود و به دسترسی کامل بازگردد؟")) return;
     await resetAccountPermissions(accountType, selectedAccountId);
     setPermMap({});
+    setDraftAccess(Object.fromEntries(PERMISSION_MODULES.map((m) => [m.key, "edit"])));
   };
 
   const selectedAccountLabel = accounts.find((a) => a.id === selectedAccountId)?.name || "";
@@ -115,26 +130,31 @@ export default function PermissionManager({ onBack }) {
           {loadingPerms ? (
             <p style={{ fontSize: 12.5, color: THEME.text3 }}>در حال بارگذاری...</p>
           ) : (
-            PERMISSION_MODULES.map((mod) => {
-              const access = getModuleAccess(permMap, mod.key);
-              const busy = savingKey === mod.key;
-              return (
-                <div key={mod.key} style={{ ...styles.card, width: "auto", marginBottom: 10, opacity: busy ? 0.6 : 1 }}>
+            <>
+              {PERMISSION_MODULES.map((mod) => (
+                <div key={mod.key} style={{ ...styles.card, width: "auto", marginBottom: 10 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                     <span style={{ fontSize: 13.5, fontWeight: 700, color: THEME.text, flex: 1, minWidth: 160 }}>{mod.label}</span>
                     <select
                       style={{ ...styles.filterSelect, width: 140 }}
-                      value={access}
-                      onChange={(e) => handleChange(mod.key, e.target.value)}
-                      disabled={busy}
+                      value={draftAccess[mod.key] ?? getModuleAccess(permMap, mod.key)}
+                      onChange={(e) => updateDraft(mod.key, e.target.value)}
+                      disabled={saving}
                       dir="rtl"
                     >
                       {ACCESS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                     </select>
                   </div>
                 </div>
-              );
-            })
+              ))}
+              {isDirty && (
+                <div style={{ position: "sticky", bottom: 10, display: "flex", gap: 8, background: "#fef3c7", border: "1px solid #f59e0b", borderRadius: 10, padding: "10px 14px", marginTop: 4 }}>
+                  <span style={{ fontSize: 11.5, color: "#92400e", fontWeight: 600, flex: 1, alignSelf: "center" }}>تغییرات هنوز ثبت نشده‌اند</span>
+                  <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setDraftAccess(Object.fromEntries(PERMISSION_MODULES.map((m) => [m.key, getModuleAccess(permMap, m.key)])))} disabled={saving}>انصراف</button>
+                  <button type="button" style={styles.smallButton} onClick={handleSaveAll} disabled={saving}>{saving ? "در حال ذخیره..." : "ثبت تغییرات"}</button>
+                </div>
+              )}
+            </>
           )}
         </>
       )}

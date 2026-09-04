@@ -68,3 +68,23 @@ Actual APK builds run via `.github/workflows/build-android.yml`, not locally.
 - **Config/secrets**: Supabase URL and anon/publishable key are hardcoded in
   `shared.js` (no `.env` file in this project) — that's the existing pattern,
   not an oversight.
+- **Local draft, explicit commit — no writes on every interaction**: any UI
+  where the user edits data (form fields, checkboxes, selects, drag-and-drop
+  repositioning, matrix/grid toggles) must hold the edit in local component
+  state only. A backend write happens only from one explicit, visible commit
+  action (a "ذخیره"/"ثبت" button), never from `onChange`/`onDrag`/`onInput`
+  directly, and never from a `useEffect` reacting to that local state. This
+  is backend-agnostic by construction: components never call `sb()`/Supabase
+  directly, only the module's `<name>Api.js` functions, so it holds
+  regardless of what database sits behind those functions. For a matrix of
+  many independently-toggleable cells (e.g. `chat/ChatAccessManager.jsx`,
+  `training/TrainingManager.jsx`) or free repositioning on a canvas (e.g.
+  `bowtie/BowTieCanvas.jsx`'s node dragging), accumulate every local change
+  and let one commit click persist the whole batch as of that moment — see
+  those three files for the established pattern (a `draft*`/`pending*` state
+  or ref alongside the loaded baseline, a dirty check comparing the two, and
+  a commit handler that diffs and writes only what changed). A standalone,
+  single-purpose command button with its own inherent confirmation (Delete,
+  Approve/Reject with a `confirm()` dialog, "افزودن") is not a form field
+  and stays an immediate action — this rule targets edits to a record's
+  data, not already-atomic commands.

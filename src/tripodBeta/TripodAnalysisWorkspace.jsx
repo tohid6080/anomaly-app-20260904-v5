@@ -305,8 +305,20 @@ function PreconditionItem({ pc, branchId, refGroups, editable, onRefresh }) {
 
 function RootCauseTab({ analysisId, incident, rootCause, correctiveActions, currentUser, onRefresh }) {
   const [modalSrc, setModalSrc] = useState(null);
+  // پیش‌نویس محلی وضعیت هر اقدام اصلاحی — تا کلیک روی «ثبت» هیچ Writeای
+  // به دیتابیس نمی‌رود (استاندارد سراسری: تغییر کاربر فقط Local می‌ماند)
+  const [statusDraft, setStatusDraft] = useState({});
+  const [statusSaving, setStatusSaving] = useState(null);
 
   if (!rootCause) return null;
+
+  const commitStatus = async (caId) => {
+    setStatusSaving(caId);
+    await updateTripodCorrectiveActionStatus(caId, statusDraft[caId]);
+    setStatusSaving(null);
+    setStatusDraft((prev) => { const next = { ...prev }; delete next[caId]; return next; });
+    await onRefresh();
+  };
   const tiers = [
     { key: "root_cause", label: "علل ریشه‌ای (۴ بار یا بیشتر تکرار)" },
     { key: "major_issue", label: "اشکالات مهم (۳ بار تکرار)" },
@@ -371,12 +383,19 @@ function RootCauseTab({ analysisId, incident, rootCause, correctiveActions, curr
                 {ca.responsibleContractorName && ` · ارجاع‌شده به: ${ca.responsibleContractorName}`}
               </p>
             </div>
-            <select
-              style={{ ...styles.input, marginTop: 0, width: 130 }} value={ca.status} dir="rtl"
-              onChange={async (e) => { await updateTripodCorrectiveActionStatus(ca.id, e.target.value); await onRefresh(); }}
-            >
-              {Object.entries(CA_STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-            </select>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <select
+                style={{ ...styles.input, marginTop: 0, width: 130 }} value={statusDraft[ca.id] ?? ca.status} dir="rtl"
+                onChange={(e) => setStatusDraft((prev) => ({ ...prev, [ca.id]: e.target.value }))}
+              >
+                {Object.entries(CA_STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              </select>
+              {statusDraft[ca.id] !== undefined && statusDraft[ca.id] !== ca.status && (
+                <button type="button" style={{ ...styles.smallButton, fontSize: 11, padding: "6px 10px" }} onClick={() => commitStatus(ca.id)} disabled={statusSaving === ca.id}>
+                  {statusSaving === ca.id ? "..." : "ثبت"}
+                </button>
+              )}
+            </div>
           </div>
         ))}
       </div>

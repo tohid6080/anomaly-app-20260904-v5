@@ -17,7 +17,9 @@ import {
 export default function TrainingManager({ onBack }) {
   const [courses, setCourses] = useState([]);
   const [positions, setPositions] = useState([]);
-  const [matrix, setMatrix] = useState([]); // [{trainingId, jobPositionId}]
+  const [matrix, setMatrix] = useState([]); // [{trainingId, jobPositionId}] — آخرین نسخه‌ی واقعاً ذخیره‌شده
+  const [draftMatrix, setDraftMatrix] = useState([]); // پیش‌نویس محلی — تا کلیک روی «ثبت تغییرات» چیزی Write نمی‌شود
+  const [matrixSaving, setMatrixSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [newTitle, setNewTitle] = useState("");
   const [newDesc, setNewDesc] = useState("");
@@ -29,18 +31,40 @@ export default function TrainingManager({ onBack }) {
     setCourses(c);
     setPositions(p);
     setMatrix(m);
+    setDraftMatrix(m);
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
 
-  const isRequired = (trainingId, jobPositionId) => matrix.some((m) => m.trainingId === trainingId && m.jobPositionId === jobPositionId);
+  const isRequiredIn = (list, trainingId, jobPositionId) => list.some((m) => m.trainingId === trainingId && m.jobPositionId === jobPositionId);
+  const isRequired = (trainingId, jobPositionId) => isRequiredIn(draftMatrix, trainingId, jobPositionId);
 
-  const toggleCell = async (trainingId, jobPositionId) => {
-    const currentlyRequired = isRequired(trainingId, jobPositionId);
-    // به‌روزرسانی خوش‌بینانه — بدون معطلی صفحه به‌روز می‌شود
-    setMatrix((prev) => (currentlyRequired ? prev.filter((m) => !(m.trainingId === trainingId && m.jobPositionId === jobPositionId)) : [...prev, { trainingId, jobPositionId }]));
-    const result = await setRequirement(trainingId, jobPositionId, !currentlyRequired);
-    if (result?.__error) { alert(result.message); await load(); }
+  // استاندارد سراسری ذخیره‌سازی: کلیک روی خانه‌ی ماتریس فقط پیش‌نویس محلی
+  // را تغییر می‌دهد؛ Write واقعی فقط با کلیک روی «ثبت تغییرات» انجام می‌شود
+  const toggleCell = (trainingId, jobPositionId) => {
+    const currentlyRequired = isRequiredIn(draftMatrix, trainingId, jobPositionId);
+    setDraftMatrix((prev) => (currentlyRequired ? prev.filter((m) => !(m.trainingId === trainingId && m.jobPositionId === jobPositionId)) : [...prev, { trainingId, jobPositionId }]));
+  };
+
+  const changedCells = () => {
+    const cells = [];
+    courses.forEach((c) => {
+      positions.forEach((p) => {
+        const before = isRequiredIn(matrix, c.id, p.id);
+        const after = isRequiredIn(draftMatrix, c.id, p.id);
+        if (before !== after) cells.push({ trainingId: c.id, jobPositionId: p.id, required: after });
+      });
+    });
+    return cells;
+  };
+  const isMatrixDirty = changedCells().length > 0;
+
+  const handleSaveMatrix = async () => {
+    setMatrixSaving(true);
+    const results = await Promise.all(changedCells().map((cell) => setRequirement(cell.trainingId, cell.jobPositionId, cell.required)));
+    setMatrixSaving(false);
+    if (results.some((r) => r?.__error)) alert("خطا در ذخیره‌ی برخی موارد ماتریس");
+    await load();
   };
 
   const handleCreate = async () => {
@@ -132,11 +156,12 @@ export default function TrainingManager({ onBack }) {
                     <td style={{ position: "sticky", insetInlineStart: 0, background: THEME.surface, padding: "6px 10px", fontWeight: 600, whiteSpace: "nowrap" }}>{c.title}</td>
                     {positions.map((p) => {
                       const req = isRequired(c.id, p.id);
+                      const pending = isRequiredIn(matrix, c.id, p.id) !== req;
                       return (
                         <td key={p.id} style={{ padding: 2, textAlign: "center" }}>
                           <div
                             onClick={() => toggleCell(c.id, p.id)}
-                            style={{ width: 26, height: 26, margin: "0 auto", borderRadius: 5, cursor: "pointer", background: req ? THEME.teal : "#eef1f5", border: `1px solid ${THEME.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}
+                            style={{ width: 26, height: 26, margin: "0 auto", borderRadius: 5, cursor: "pointer", background: req ? THEME.teal : "#eef1f5", border: pending ? "2px solid #f59e0b" : `1px solid ${THEME.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}
                           >
                             {req && <X size={13} color="#fff" style={{ transform: "rotate(45deg)" }} />}
                           </div>
@@ -147,6 +172,13 @@ export default function TrainingManager({ onBack }) {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+        {isMatrixDirty && (
+          <div style={{ position: "sticky", bottom: 10, display: "flex", alignItems: "center", gap: 8, background: "#fef3c7", border: "1px solid #f59e0b", borderRadius: 10, padding: "10px 14px", marginTop: 12 }}>
+            <span style={{ fontSize: 11.5, color: "#92400e", fontWeight: 600, flex: 1 }}>{changedCells().length} تغییر هنوز ثبت نشده (خانه‌های با کادر نارنجی)</span>
+            <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setDraftMatrix(matrix)} disabled={matrixSaving}>انصراف</button>
+            <button type="button" style={styles.smallButton} onClick={handleSaveMatrix} disabled={matrixSaving}>{matrixSaving ? "در حال ذخیره..." : "ثبت تغییرات"}</button>
           </div>
         )}
       </div>
