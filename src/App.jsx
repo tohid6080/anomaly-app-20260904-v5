@@ -2500,9 +2500,11 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
   // یک فیلتر دیگر، گزینه‌های این dropdown خودش کوچک نشود
   const contractorNamesInList = [...new Set(anomalies.map((a) => (a.contractor || "").trim()).filter(Boolean))].sort();
 
-  // TEMP DEBUG — برای پیداکردن علت خالی‌بودن لیست پیمانکار؛ بعد از عیب‌یابی حذف می‌شود.
+  // TEMP DEBUG — برای پیداکردن علت خالی‌بودن لیست پیمانکار؛ بعد از عیب‌یابی
+  // حذف می‌شود. عمداً console.error (نه console.log) چون فیلتر Console
+  // بعضی کاربران فقط روی سطح خطا تنظیم است و console.log دیده نمی‌شود.
   if (isContractor && typeof window !== "undefined") {
-    console.log("[DEBUG anomaly list/contractor]", {
+    console.error("[DEBUG anomaly list/contractor]", {
       totalAnomaliesFetched: anomalies.length,
       myContractorName,
       distinctContractorValuesInData: contractorNamesInList,
