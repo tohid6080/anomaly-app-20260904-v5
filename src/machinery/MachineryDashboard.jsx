@@ -278,7 +278,151 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
     );
   };
 
-  const expandedItem = sorted.find((m) => m.id === expandedId || m.id === docsExpandedId);
+  // پنل جزئیات/بررسی که قبلاً انتهای کل لیست باز می‌شد — حالا از طریق
+  // renderExpanded دقیقاً زیر همان ردیف انتخاب‌شده رندر می‌شود.
+  const renderExpandedPanel = (expandedItem) => (
+    <div style={{ ...styles.card, width: "auto", margin: 0 }}>
+      <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 8px", fontWeight: 700 }}>
+        {expandedItem.machineName} — {expandedItem.plateNumber}
+      </h3>
+
+      {docsExpandedId === expandedItem.id && (
+        <div style={{ marginBottom: expandedId === expandedItem.id ? 14 : 0 }}>
+          {docsLoading && !docsMap[expandedItem.id] ? (
+            <p style={{ fontSize: 11.5, color: THEME.text3 }}>در حال بارگذاری مدارک...</p>
+          ) : (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+              {MACHINERY_DOC_TYPES.map((dt) => {
+                const doc = (docsMap[expandedItem.id] || []).find((d) => d.docType === dt.value);
+                return (
+                  <div key={dt.value} style={{ width: 88, textAlign: "center" }}>
+                    {doc ? (
+                      isPdfDataUrl(doc.fileData) ? (
+                        <button type="button" onClick={() => setViewerSrc(doc.fileData)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                          <FileText size={40} color={THEME.text2} />
+                        </button>
+                      ) : (
+                        <img
+                          src={doc.fileData}
+                          alt=""
+                          onClick={() => setViewerSrc(doc.fileData)}
+                          style={{ width: 56, height: 56, objectFit: "cover", borderRadius: 8, cursor: "pointer", border: `1px solid ${THEME.border}` }}
+                        />
+                      )
+                    ) : (
+                      <div style={{ width: 56, height: 56, borderRadius: 8, border: `1px dashed ${THEME.border}`, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Paperclip size={16} color={THEME.text3} />
+                      </div>
+                    )}
+                    <div style={{ fontSize: 9.5, color: doc ? THEME.text2 : THEME.text3, marginTop: 4, lineHeight: 1.4 }}>{dt.label}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {gateMap[expandedItem.id] && (gateMap[expandedItem.id].status === "pending_approval" || gateMap[expandedItem.id].status === "assigned_review" || gateMap[expandedItem.id].status === "reviewed") && (
+        <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 9, padding: 12, marginBottom: 10 }}>
+          <p style={{ fontSize: 12, fontWeight: 700, color: "#1d4ed8", margin: "0 0 8px" }}>
+            گیت بازبینی سرپرست/مدیر HSE — {GATE_STATUS_LABELS[gateMap[expandedItem.id].status] || gateMap[expandedItem.id].status}
+          </p>
+          {gateMap[expandedItem.id].status === "assigned_review" && (
+            <p style={{ fontSize: 12, color: "#1d4ed8", fontWeight: 600, margin: "0 0 8px" }}>
+              ارجاع به کارشناس: {gateStaff.find((s) => s.username === gateMap[expandedItem.id].assignedTo)?.name || gateMap[expandedItem.id].assignedTo}
+            </p>
+          )}
+          {gateMap[expandedItem.id].reviewerComment && (
+            <p style={{ fontSize: 12, color: "#374151", margin: "0 0 8px", lineHeight: 1.8 }}>
+              <b>نظر کارشناس:</b> {gateMap[expandedItem.id].reviewerComment}
+            </p>
+          )}
+          {gateMessage && <p style={styles.error}>{gateMessage}</p>}
+
+          {/* سمت سرپرست/مدیر HSE — ارجاع به کارشناس، یا تأیید مستقیم
+              (که همان دکمه‌های «تأیید شد» پایین‌تر انجامش می‌دهند) */}
+          {isGatekeeper && gateMap[expandedItem.id].status === "pending_approval" && (
+            <div>
+              {assigningGateId === expandedItem.id ? (
+                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                  <select style={{ ...styles.input, marginTop: 0, maxWidth: 220 }} value={assignGateTo} onChange={(e) => setAssignGateTo(e.target.value)} dir="rtl">
+                    <option value="">انتخاب کارشناس</option>
+                    {gateStaff.filter((s) => s.username !== currentUser?.username).map((s) => <option key={s.username} value={s.username}>{s.name}</option>)}
+                  </select>
+                  <button type="button" style={styles.smallButton} onClick={() => handleAssignForReview(expandedItem)} disabled={gateBusy === expandedItem.id || !assignGateTo}>ثبت ارجاع</button>
+                  <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setAssigningGateId(null)}>انصراف</button>
+                </div>
+              ) : (
+                <button type="button" style={styles.smallButton} onClick={() => { setAssigningGateId(expandedItem.id); setAssignGateTo(""); }} disabled={gateBusy === expandedItem.id}>
+                  ارجاع به کارشناس برای بررسی
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* سمت کارشناسی که این ماشین به او ارجاع شده — فقط نتیجه‌ی
+              بررسی را برای سرپرست می‌فرستد، خودش نهایی تأیید نمی‌کند */}
+          {gateMap[expandedItem.id].status === "assigned_review" && gateMap[expandedItem.id].assignedTo === currentUser?.username && (
+            <div>
+              {reviewingGateId !== expandedItem.id ? (
+                <button type="button" style={styles.smallButton} onClick={() => { setReviewingGateId(expandedItem.id); setGateReviewComment(""); }} disabled={gateBusy === expandedItem.id}>
+                  ارسال نتیجه‌ی بررسی برای سرپرست/مدیر HSE
+                </button>
+              ) : (
+                <div>
+                  <label style={styles.label}>نظر یا توضیح (اختیاری)</label>
+                  <textarea style={{ ...styles.input, minHeight: 50 }} value={gateReviewComment} onChange={(e) => setGateReviewComment(e.target.value)} dir="rtl" />
+                  <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                    <button type="button" style={styles.smallButton} onClick={() => handleSubmitGateReview(expandedItem)} disabled={gateBusy === expandedItem.id}>ارسال</button>
+                    <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setReviewingGateId(null)}>انصراف</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {expandedId === expandedItem.id && expandedItem.deleteRequestedBy && (
+        <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 9, padding: 12, marginBottom: 10 }}>
+          <p style={{ fontSize: 12, fontWeight: 700, color: THEME.danger, margin: "0 0 6px" }}>
+            درخواست حذف در انتظار تأیید سرپرست/مدیر HSE
+          </p>
+          <p style={{ fontSize: 11.5, color: "#374151", margin: "0 0 8px" }}>
+            درخواست‌دهنده: {expandedItem.deleteRequestedBy} — {toJalaliSafe(expandedItem.deleteRequestedAt)}
+            {expandedItem.deleteRequestNote && <> — علت: {expandedItem.deleteRequestNote}</>}
+          </p>
+          {isGatekeeper && !readOnly && (
+            <div style={{ display: "flex", gap: 8 }}>
+              <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => handleApproveDeleteRequest(expandedItem)}>
+                تأیید و حذف قطعی
+              </button>
+              <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => handleRejectDeleteRequest(expandedItem)}>
+                رد درخواست حذف
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {expandedId === expandedItem.id && isGatekeeper && !readOnly && (
+        <div style={{ borderTop: docsExpandedId === expandedItem.id ? `1px solid ${THEME.border}` : "none", paddingTop: docsExpandedId === expandedItem.id ? 10 : 0 }}>
+          <label style={styles.label}>توضیحات (برای رد یا نیاز به اصلاح الزامی است)</label>
+          <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={reviewNoteDraft} onChange={(e) => setReviewNoteDraft(e.target.value)} dir="rtl" />
+          <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+            <button type="button" style={{ ...styles.smallButton, background: "#166534" }} onClick={() => submitReview(expandedItem, "approved")} disabled={savingReview}>تأیید شد</button>
+            <button type="button" style={{ ...styles.smallButton, background: "#b45309" }} onClick={() => submitReview(expandedItem, "needs_correction")} disabled={savingReview}>نیاز به اصلاح</button>
+            <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => submitReview(expandedItem, "rejected")} disabled={savingReview}>رد شد</button>
+            <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => { setExpandedId(null); setDocsExpandedId(null); }} disabled={savingReview}>بستن</button>
+          </div>
+        </div>
+      )}
+      {docsExpandedId === expandedItem.id && expandedId !== expandedItem.id && (
+        <button type="button" style={{ ...styles.smallButton, background: THEME.text3, marginTop: 10 }} onClick={() => setDocsExpandedId(null)}>بستن مدارک</button>
+      )}
+    </div>
+  );
 
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", padding: 24 }}>
@@ -368,6 +512,8 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
           },
         ]}
         renderRowActions={rowActions}
+        expandedId={docsExpandedId || expandedId}
+        renderExpanded={renderExpandedPanel}
         renderCard={(m) => {
           const sm = approvalStatusMeta(m.approvalStatus);
           const giCard = gateMap[m.id];
@@ -416,150 +562,6 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
           );
         }}
       />
-
-      {expandedItem && (docsExpandedId === expandedItem.id || expandedId === expandedItem.id) && (
-        <div style={{ ...styles.card, width: "auto", marginTop: 14 }}>
-          <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 8px", fontWeight: 700 }}>
-            {expandedItem.machineName} — {expandedItem.plateNumber}
-          </h3>
-
-          {docsExpandedId === expandedItem.id && (
-            <div style={{ marginBottom: expandedId === expandedItem.id ? 14 : 0 }}>
-              {docsLoading && !docsMap[expandedItem.id] ? (
-                <p style={{ fontSize: 11.5, color: THEME.text3 }}>در حال بارگذاری مدارک...</p>
-              ) : (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-                  {MACHINERY_DOC_TYPES.map((dt) => {
-                    const doc = (docsMap[expandedItem.id] || []).find((d) => d.docType === dt.value);
-                    return (
-                      <div key={dt.value} style={{ width: 88, textAlign: "center" }}>
-                        {doc ? (
-                          isPdfDataUrl(doc.fileData) ? (
-                            <button type="button" onClick={() => setViewerSrc(doc.fileData)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                              <FileText size={40} color={THEME.text2} />
-                            </button>
-                          ) : (
-                            <img
-                              src={doc.fileData}
-                              alt=""
-                              onClick={() => setViewerSrc(doc.fileData)}
-                              style={{ width: 56, height: 56, objectFit: "cover", borderRadius: 8, cursor: "pointer", border: `1px solid ${THEME.border}` }}
-                            />
-                          )
-                        ) : (
-                          <div style={{ width: 56, height: 56, borderRadius: 8, border: `1px dashed ${THEME.border}`, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <Paperclip size={16} color={THEME.text3} />
-                          </div>
-                        )}
-                        <div style={{ fontSize: 9.5, color: doc ? THEME.text2 : THEME.text3, marginTop: 4, lineHeight: 1.4 }}>{dt.label}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          {gateMap[expandedItem.id] && (gateMap[expandedItem.id].status === "pending_approval" || gateMap[expandedItem.id].status === "assigned_review" || gateMap[expandedItem.id].status === "reviewed") && (
-            <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 9, padding: 12, marginBottom: 10 }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: "#1d4ed8", margin: "0 0 8px" }}>
-                گیت بازبینی سرپرست/مدیر HSE — {GATE_STATUS_LABELS[gateMap[expandedItem.id].status] || gateMap[expandedItem.id].status}
-              </p>
-              {gateMap[expandedItem.id].status === "assigned_review" && (
-                <p style={{ fontSize: 12, color: "#1d4ed8", fontWeight: 600, margin: "0 0 8px" }}>
-                  ارجاع به کارشناس: {gateStaff.find((s) => s.username === gateMap[expandedItem.id].assignedTo)?.name || gateMap[expandedItem.id].assignedTo}
-                </p>
-              )}
-              {gateMap[expandedItem.id].reviewerComment && (
-                <p style={{ fontSize: 12, color: "#374151", margin: "0 0 8px", lineHeight: 1.8 }}>
-                  <b>نظر کارشناس:</b> {gateMap[expandedItem.id].reviewerComment}
-                </p>
-              )}
-              {gateMessage && <p style={styles.error}>{gateMessage}</p>}
-
-              {/* سمت سرپرست/مدیر HSE — ارجاع به کارشناس، یا تأیید مستقیم
-                  (که همان دکمه‌های «تأیید شد» پایین‌تر انجامش می‌دهند) */}
-              {isGatekeeper && gateMap[expandedItem.id].status === "pending_approval" && (
-                <div>
-                  {assigningGateId === expandedItem.id ? (
-                    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                      <select style={{ ...styles.input, marginTop: 0, maxWidth: 220 }} value={assignGateTo} onChange={(e) => setAssignGateTo(e.target.value)} dir="rtl">
-                        <option value="">انتخاب کارشناس</option>
-                        {gateStaff.filter((s) => s.username !== currentUser?.username).map((s) => <option key={s.username} value={s.username}>{s.name}</option>)}
-                      </select>
-                      <button type="button" style={styles.smallButton} onClick={() => handleAssignForReview(expandedItem)} disabled={gateBusy === expandedItem.id || !assignGateTo}>ثبت ارجاع</button>
-                      <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setAssigningGateId(null)}>انصراف</button>
-                    </div>
-                  ) : (
-                    <button type="button" style={styles.smallButton} onClick={() => { setAssigningGateId(expandedItem.id); setAssignGateTo(""); }} disabled={gateBusy === expandedItem.id}>
-                      ارجاع به کارشناس برای بررسی
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {/* سمت کارشناسی که این ماشین به او ارجاع شده — فقط نتیجه‌ی
-                  بررسی را برای سرپرست می‌فرستد، خودش نهایی تأیید نمی‌کند */}
-              {gateMap[expandedItem.id].status === "assigned_review" && gateMap[expandedItem.id].assignedTo === currentUser?.username && (
-                <div>
-                  {reviewingGateId !== expandedItem.id ? (
-                    <button type="button" style={styles.smallButton} onClick={() => { setReviewingGateId(expandedItem.id); setGateReviewComment(""); }} disabled={gateBusy === expandedItem.id}>
-                      ارسال نتیجه‌ی بررسی برای سرپرست/مدیر HSE
-                    </button>
-                  ) : (
-                    <div>
-                      <label style={styles.label}>نظر یا توضیح (اختیاری)</label>
-                      <textarea style={{ ...styles.input, minHeight: 50 }} value={gateReviewComment} onChange={(e) => setGateReviewComment(e.target.value)} dir="rtl" />
-                      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                        <button type="button" style={styles.smallButton} onClick={() => handleSubmitGateReview(expandedItem)} disabled={gateBusy === expandedItem.id}>ارسال</button>
-                        <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setReviewingGateId(null)}>انصراف</button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {expandedId === expandedItem.id && expandedItem.deleteRequestedBy && (
-            <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 9, padding: 12, marginBottom: 10 }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: THEME.danger, margin: "0 0 6px" }}>
-                درخواست حذف در انتظار تأیید سرپرست/مدیر HSE
-              </p>
-              <p style={{ fontSize: 11.5, color: "#374151", margin: "0 0 8px" }}>
-                درخواست‌دهنده: {expandedItem.deleteRequestedBy} — {toJalaliSafe(expandedItem.deleteRequestedAt)}
-                {expandedItem.deleteRequestNote && <> — علت: {expandedItem.deleteRequestNote}</>}
-              </p>
-              {isGatekeeper && !readOnly && (
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => handleApproveDeleteRequest(expandedItem)}>
-                    تأیید و حذف قطعی
-                  </button>
-                  <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => handleRejectDeleteRequest(expandedItem)}>
-                    رد درخواست حذف
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {expandedId === expandedItem.id && isGatekeeper && !readOnly && (
-            <div style={{ borderTop: docsExpandedId === expandedItem.id ? `1px solid ${THEME.border}` : "none", paddingTop: docsExpandedId === expandedItem.id ? 10 : 0 }}>
-              <label style={styles.label}>توضیحات (برای رد یا نیاز به اصلاح الزامی است)</label>
-              <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={reviewNoteDraft} onChange={(e) => setReviewNoteDraft(e.target.value)} dir="rtl" />
-              <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
-                <button type="button" style={{ ...styles.smallButton, background: "#166534" }} onClick={() => submitReview(expandedItem, "approved")} disabled={savingReview}>تأیید شد</button>
-                <button type="button" style={{ ...styles.smallButton, background: "#b45309" }} onClick={() => submitReview(expandedItem, "needs_correction")} disabled={savingReview}>نیاز به اصلاح</button>
-                <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => submitReview(expandedItem, "rejected")} disabled={savingReview}>رد شد</button>
-                <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => { setExpandedId(null); setDocsExpandedId(null); }} disabled={savingReview}>بستن</button>
-              </div>
-            </div>
-          )}
-          {docsExpandedId === expandedItem.id && expandedId !== expandedItem.id && (
-            <button type="button" style={{ ...styles.smallButton, background: THEME.text3, marginTop: 10 }} onClick={() => setDocsExpandedId(null)}>بستن مدارک</button>
-          )}
-        </div>
-      )}
 
       {viewerSrc && <DocumentViewerModal src={viewerSrc} onClose={() => setViewerSrc(null)} />}
     </div>

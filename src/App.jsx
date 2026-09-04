@@ -19,6 +19,7 @@ import { loadHomeKpiSummary } from "./dashboard/homeKpiApi.js";
 import { loadModuleConfig, loadDashboardConfig, loadNotificationTypes, loadAppearanceConfig, applyAppearanceToDom, loadActiveAnnouncements } from "./systemConfigApi.js";
 import { submitToGate, loadPendingGateItems, loadAssignedGateItems, loadCompanyStaffOptions, assignForReview, submitReview, approveGateItem, rejectGateItem, GATE_STATUS_LABELS } from "./hseGateApi.js";
 import SubscriptionGate from "./subscription/SubscriptionGate.jsx";
+import { checkMyAccountActive } from "./subscriptionApi.js";
 import { AppearanceProvider, useAppearance } from "./shared/AppearanceContext.jsx";
 import PublicHseClimateSurvey from "./proactiveIndicators/PublicHseClimateSurvey.jsx";
 import HomeDashboard from "./dashboard/HomeDashboard.jsx";
@@ -1312,6 +1313,30 @@ function BiometricGateScreen({ currentUser, onUnlocked, onFallbackToPassword }) 
             <button type="button" style={{ ...styles.button, background: THEME.text3 }} onClick={onFallbackToPassword}>{t("biometricUsePassword")}</button>
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+// صفحه‌ی مسدودکننده وقتی حساب کاربر توسط مدیر سامانه غیرفعال (یا حذف)
+// شده و نشست باز او باید فوراً بسته شود. تصمیمِ «غیرفعال است» سمت سرور
+// گرفته شده (Edge Function check-account-active)؛ اینجا فقط پیام واضح و
+// راه خروج نمایش داده می‌شود. توکن نشست پیش از رندر این صفحه پاک می‌شود،
+// پس هیچ درخواست داده‌ای دیگری با اعتبار قبلی انجام نمی‌شود.
+function AccountDeactivatedScreen({ onExit }) {
+  return (
+    <div style={{ ...styles.centerScreen, direction: "rtl" }}>
+      <div style={{ ...styles.card, width: 360, textAlign: "center" }}>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
+          <div style={{ width: 60, height: 60, borderRadius: "50%", background: THEME.dangerBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <ShieldOff size={30} color={THEME.danger} />
+          </div>
+        </div>
+        <h3 style={{ margin: "0 0 8px", color: THEME.navy, fontSize: 16 }}>دسترسی قطع شد</h3>
+        <p style={{ color: THEME.text2, fontSize: 13.5, lineHeight: 1.9, marginBottom: 20 }}>
+          دسترسی حساب کاربری شما توسط مدیر سامانه غیرفعال شده است.
+        </p>
+        <button type="button" style={styles.button} onClick={onExit}>بازگشت به صفحه ورود</button>
       </div>
     </div>
   );
@@ -2896,16 +2921,13 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
             </div>
           );
         }}
-      />
-
-      {expandedId && (() => {
-        const a = sorted.find((x) => x.id === expandedId);
-        if (!a) return null;
-        const photos = photosMap[a.id] || [];
-        const reportPhotos = photos.filter((p) => p.stage !== "fix");
-        const fixPhotos = photos.filter((p) => p.stage === "fix");
-        return (
-          <div style={{ ...styles.card, width: "auto", marginTop: 14, padding: "20px 22px" }}>
+        expandedId={expandedId}
+        renderExpanded={(a) => {
+          const photos = photosMap[a.id] || [];
+          const reportPhotos = photos.filter((p) => p.stage !== "fix");
+          const fixPhotos = photos.filter((p) => p.stage === "fix");
+          return (
+          <div style={{ ...styles.card, width: "auto", margin: 0, padding: "20px 22px" }}>
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12, gap: 10, flexWrap: "wrap" }}>
               <div>
                 <h3 style={{ margin: "0 0 4px", fontSize: 14.5, color: THEME.navy, fontWeight: 700 }}>{a.trackingNumber}</h3>
@@ -3194,8 +3216,9 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
               </div>
             )}
           </div>
-        );
-      })()}
+          );
+        }}
+      />
 
       {viewerSrc && (
         <div style={styles.photoViewerOverlay} onClick={() => setViewerSrc(null)}>
@@ -4476,6 +4499,9 @@ function AppInner() {
   // (ورود جدید یا خروج) دوباره false می‌شود، پس هر نشست تازه دوباره از
   // گیت بیومتریک رد می‌شود.
   const [biometricUnlocked, setBiometricUnlocked] = useState(false);
+  // وقتی Super Admin حساب این کاربر را غیرفعال/حذف کند، این پرچم true
+  // می‌شود و به‌جای داشبورد، صفحه‌ی «دسترسی قطع شد» نمایش داده می‌شود.
+  const [accountDeactivated, setAccountDeactivated] = useState(false);
 
   // «شرکت فعلی» باید قبل از رندرشدن هر فرزندی (مثل SubscriptionGate که
   // بلافاصله در اولین افکتش این مقدار را می‌خواند) درست باشد — برای
@@ -4496,6 +4522,38 @@ function AppInner() {
     syncOfflineCacheCompanyScope(companyId).catch(() => {});
   }, [currentUser]);
 
+  // ---------- خروج اجباری وقتی حساب توسط مدیر سامانه غیرفعال شود ----------
+  // تصمیمِ «هنوز فعال است؟» سمت سرور گرفته می‌شود (Edge Function
+  // check-account-active که امضای توکن را بررسی و is_active را با
+  // service_role می‌خواند) — نه صرفاً یک بررسیِ قابل‌دورزدن در Frontend.
+  // هر ~۲۰ ثانیه و همچنین با برگشتن تمرکز به پنجره بررسی می‌شود؛ به‌محضِ
+  // منفی‌شدن نتیجه، توکن نشست فوراً پاک می‌شود تا هیچ درخواست داده‌ای
+  // دیگری با اعتبار قبلی نرود، و صفحه‌ی مسدودکننده نمایش داده می‌شود.
+  useEffect(() => {
+    if (!currentUser) return;
+    let cancelled = false;
+    const runCheck = async () => {
+      const result = await checkMyAccountActive();
+      if (cancelled) return;
+      // فقط سیگنال‌های صریحِ سمت‌سرورِ «این حساب دیگر معتبر نیست» صفحه‌ی
+      // مسدودکننده را نشان می‌دهند — نه یک توکنِ منقضی/خطای گذرا (که مسیر
+      // عادیِ نشستِ تمام‌شده را دارند و پیامشان فرق می‌کند).
+      if (!result.active && (result.reason === "deactivated" || result.reason === "not_found")) {
+        clearSessionToken();
+        setAccountDeactivated(true);
+      }
+    };
+    runCheck();
+    const timer = setInterval(runCheck, 20000);
+    const onFocus = () => runCheck();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [currentUser]);
+
   // ورود تازه و صریح با رمز عبور، خودش یک احراز هویت کامل است — نیازی
   // نیست بلافاصله بعدش دوباره گیت بیومتریک هم نشان داده شود. گیت
   // بیومتریک فقط برای زمانی است که نشست، بدون تایپ دوباره‌ی رمز، از
@@ -4503,6 +4561,7 @@ function AppInner() {
   // با مقدار اولیه‌ی false شروع می‌شود).
   const handleLogin = (user) => {
     setBiometricUnlocked(true);
+    setAccountDeactivated(false);
     setCurrentUser(user);
     // طبق خواسته‌ی صریح: با هر ورود تازه (نه رفرش صفحه)، کاربر باید از
     // صفحه‌ی اصلی شروع کند — نه جایی که کاربر قبلی (با همان نقش) رهایش
@@ -4526,11 +4585,18 @@ function AppInner() {
   const handleLogout = () => {
     trackLogout(currentUser);
     setBiometricUnlocked(false);
+    setAccountDeactivated(false);
     clearSessionToken();
     setCurrentUser(null);
   };
 
   if (!currentUser) return <LoginScreen onLogin={handleLogin} />;
+
+  // حساب توسط مدیر سامانه غیرفعال/حذف شده — نشست باز فوراً بسته می‌شود و
+  // پیش از هر داشبورد یا گیتی، صفحه‌ی مسدودکننده نمایش داده می‌شود.
+  if (accountDeactivated) {
+    return <AccountDeactivatedScreen onExit={handleLogout} />;
+  }
 
   // نشستِ ذخیره‌شده وجود دارد؛ اگر برای همین کاربر بیومتریک فعال است و
   // هنوز در این اجرای برنامه تأیید نشده، به‌جای رفتن مستقیم به داشبورد،

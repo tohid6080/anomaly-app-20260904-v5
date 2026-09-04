@@ -45,6 +45,33 @@ export function computeSubscriptionAccess(company) {
   return { status: "active", isLocked: false, daysLeft, subscriptionStartDate: company.subscriptionStartDate, subscriptionEndDate: company.subscriptionEndDate, label: daysLeft <= 7 ? `${daysLeft.toLocaleString("fa-IR")} روز تا پایان اشتراک شما باقی مانده است` : "اشتراک فعال" };
 }
 
+// ---------- بررسی فعال‌بودن حساب کاربرِ واردشده (Forced Logout) ----------
+// وقتی Super Admin یک حساب را غیرفعال (یا حذف) می‌کند، باید نشستِ باز آن
+// کاربر فوراً بسته شود. چون توکن نشست یک JWT بدون‌حالت با عمر ۲۴ ساعت
+// است و صرفِ غیرفعال‌شدن حساب توکن را باطل نمی‌کند، «تصمیم» سمت سرور
+// گرفته می‌شود: Edge Function check-account-active امضای همین توکن را
+// بررسی و ستون is_active همان حساب را با service_role می‌خواند — کلاینت
+// نمی‌تواند نتیجه‌ی active=true را جعل کند.
+//
+// در صورت خطای شبکه/سرور عمداً { active: true } برمی‌گردد (fail-open) تا
+// یک اختلال گذرا کاربرِ معتبر را از سامانه بیرون نیندازد.
+export async function checkMyAccountActive() {
+  const token = getSessionToken("customer");
+  if (!token) return { active: false, reason: "no_token" };
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/check-account-active`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, apikey: SUPABASE_ANON_KEY },
+      body: "{}",
+    });
+    if (!res.ok) return { active: true, reason: "check_failed" };
+    const data = await res.json();
+    return { active: data?.active !== false, reason: data?.reason || "" };
+  } catch {
+    return { active: true, reason: "network_error" };
+  }
+}
+
 // اطلاعات اشتراک شرکت جاری — customer scope عادی (RLS خودش company
 // isolation را تضمین می‌کند)؛ این همان چیزی است که بلافاصله بعد از ورود
 // خوانده می‌شود تا مشخص شود کاربر باید به داشبورد برود یا صفحه‌ی انتخاب پلن.

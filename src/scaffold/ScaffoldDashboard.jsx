@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Tag, Plus, Trash2, Printer } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import DataView, { StatusPill } from "../shared/DataView.jsx";
@@ -28,7 +28,6 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
   const [statusFilter, setStatusFilter] = useState(initialStatusFilter || "all");
   const [showForm, setShowForm] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
-  const expandedPanelRef = useRef(null);
   const [correctionNote, setCorrectionNote] = useState("");
   const [correctionDeadline, setCorrectionDeadline] = useState("");
   const [correctionDeadlineTime, setCorrectionDeadlineTime] = useState("18:00");
@@ -48,18 +47,9 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
   };
   useEffect(() => { load(); }, []);
 
-  // پنل جزئیات (درخواست برچیدن / ثبت اصلاح) همیشه زیر کل لیست رندر می‌شود؛
-  // اگر کاربر روی کارتی وسط یک لیست بلند کلیک کند، بدون این اسکرول خودکار،
-  // پنل باز می‌شود ولی بیرون از دید کاربر می‌ماند و به‌نظر می‌رسد «هیچ
-  // اتفاقی نیفتاده». این useEffect عمداً همین‌جا، کنار بقیه‌ی hookها و قبل
-  // از هر return شرطی قرار دارد — قرار دادنش بعد از یک early return باعث
-  // نقض قانون Hooks در ری‌اکت می‌شود (تعداد hookهای فراخوانی‌شده بین
-  // رندرهای مختلف فرق می‌کند) که دقیقاً همان خطای #310 را ایجاد می‌کرد.
-  useEffect(() => {
-    if (expandedId && expandedPanelRef.current) {
-      expandedPanelRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, [expandedId]);
+  // پنل جزئیات (درخواست برچیدن / ثبت اصلاح) حالا از طریق renderExpanded
+  // دقیقاً زیر همان ردیف انتخاب‌شده باز می‌شود، نه انتهای کل لیست — پس
+  // دیگر نیازی به اسکرول خودکار برای پیداکردن پنل نیست.
 
   const myName = (currentUser?.name || "").trim().toLowerCase();
   const scoped = isContractor ? list.filter((t) => (t.contractorName || "").trim().toLowerCase() === myName) : list;
@@ -239,7 +229,49 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
     </>
   );
 
+  // شناسه‌ی ردیفی که پنلش باز است — expandedId می‌تواند خودِ id یا
+  // `removal-<id>` باشد؛ اینجا به id واقعی ردیف نرمال می‌شود تا DataView
+  // بتواند پنل را دقیقاً زیر همان ردیف رندر کند.
   const expandedItem = sorted.find((t) => t.id === expandedId || `removal-${t.id}` === expandedId);
+
+  // پنلی که قبلاً انتهای کل لیست بود — حالا دقیقاً زیر همان ردیف
+  const renderExpandedPanel = (t) => (
+    <div style={{ ...styles.card, width: "auto", margin: 0 }}>
+      <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 10px", fontWeight: 700, direction: "ltr", textAlign: "right" }}>{t.tagNumber}</h3>
+
+      {expandedId === t.id && !isContractor && (
+        <div>
+          <label style={styles.label}>شرح ایرادات / عدم انطباق</label>
+          <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={correctionNote} onChange={(e) => setCorrectionNote(e.target.value)} dir="rtl" />
+          <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ flex: 1 }}>
+              <label style={styles.label}>تاریخ مهلت رفع</label>
+              <JalaliDateInput value={correctionDeadline} onChange={setCorrectionDeadline} />
+            </div>
+            <div style={{ width: 110 }}>
+              <label style={styles.label}>ساعت</label>
+              <input type="time" style={styles.input} value={correctionDeadlineTime} onChange={(e) => setCorrectionDeadlineTime(e.target.value)} />
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+            <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => submitCorrection(t)} disabled={saving}>ثبت و ارسال به پیمانکار</button>
+            <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setExpandedId(null)}>انصراف</button>
+          </div>
+        </div>
+      )}
+
+      {expandedId === `removal-${t.id}` && isContractor && (
+        <div>
+          <label style={styles.label}>تاریخ برچیدن داربست</label>
+          <JalaliDateInput value={removalDate} onChange={setRemovalDate} />
+          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+            <button type="button" style={{ ...styles.smallButton, background: "#7c3aed" }} onClick={() => submitRemovalRequest(t)} disabled={saving}>ثبت درخواست برچیدن</button>
+            <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setExpandedId(null)}>انصراف</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", padding: 24 }}>
@@ -300,6 +332,8 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
           </select>
         }
         emptyMessage="موردی یافت نشد"
+        expandedId={expandedItem?.id}
+        renderExpanded={renderExpandedPanel}
         columns={[
           { key: "tag", label: "شماره تگ", render: (t) => <span style={{ direction: "ltr", display: "inline-block", fontWeight: 600 }}>{t.tagNumber}</span> },
           ...(!isContractor ? [{ key: "contractor", label: "پیمانکار", render: (t) => t.contractorName || "—" }] : []),
@@ -351,44 +385,6 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
           );
         }}
       />
-
-      {expandedItem && (
-        <div ref={expandedPanelRef} style={{ ...styles.card, width: "auto", marginTop: 14 }}>
-          <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 10px", fontWeight: 700, direction: "ltr", textAlign: "right" }}>{expandedItem.tagNumber}</h3>
-
-          {expandedId === expandedItem.id && !isContractor && (
-            <div>
-              <label style={styles.label}>شرح ایرادات / عدم انطباق</label>
-              <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={correctionNote} onChange={(e) => setCorrectionNote(e.target.value)} dir="rtl" />
-              <div style={{ display: "flex", gap: 8 }}>
-                <div style={{ flex: 1 }}>
-                  <label style={styles.label}>تاریخ مهلت رفع</label>
-                  <JalaliDateInput value={correctionDeadline} onChange={setCorrectionDeadline} />
-                </div>
-                <div style={{ width: 110 }}>
-                  <label style={styles.label}>ساعت</label>
-                  <input type="time" style={styles.input} value={correctionDeadlineTime} onChange={(e) => setCorrectionDeadlineTime(e.target.value)} />
-                </div>
-              </div>
-              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => submitCorrection(expandedItem)} disabled={saving}>ثبت و ارسال به پیمانکار</button>
-                <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setExpandedId(null)}>انصراف</button>
-              </div>
-            </div>
-          )}
-
-          {expandedId === `removal-${expandedItem.id}` && isContractor && (
-            <div>
-              <label style={styles.label}>تاریخ برچیدن داربست</label>
-              <JalaliDateInput value={removalDate} onChange={setRemovalDate} />
-              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                <button type="button" style={{ ...styles.smallButton, background: "#7c3aed" }} onClick={() => submitRemovalRequest(expandedItem)} disabled={saving}>ثبت درخواست برچیدن</button>
-                <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setExpandedId(null)}>انصراف</button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }

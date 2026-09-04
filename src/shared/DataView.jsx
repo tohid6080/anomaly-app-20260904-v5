@@ -27,6 +27,13 @@ const VIEW_MODE_KEY = "ihms_view_mode";
  *   columns           — [{ key, label, render(item), width? }] for List view
  *   renderCard(item, {selected, onToggleSelect}) — Grid view card renderer
  *   renderRowActions(item) — action buttons, List view (row-end) + Grid (card footer)
+ *   expandedId         — id (matched against getId(item)) of the row whose
+ *                        detail/action panel is currently open, or null
+ *   renderExpanded(item) — detail panel content; rendered inline *directly
+ *                        under the matching row* (List: a full-width row right
+ *                        after it; Grid: a full-width block right after the
+ *                        card) instead of after the whole list, so the panel
+ *                        always stays next to the record it belongs to
  *   searchQuery / onSearchChange / searchPlaceholder
  *   sortOptions       — [{ value, label }] (omit to hide the sort control)
  *   sortValue / onSortChange
@@ -40,6 +47,8 @@ export default function DataView({
   columns,
   renderCard,
   renderRowActions,
+  expandedId = null,
+  renderExpanded,
   searchQuery,
   onSearchChange,
   searchPlaceholder = "جستجو...",
@@ -151,6 +160,8 @@ export default function DataView({
           getId={getId}
           columns={columns}
           renderRowActions={renderRowActions}
+          expandedId={expandedId}
+          renderExpanded={renderExpanded}
           hasBulk={hasBulk}
           selected={selected}
           toggleSelect={toggleSelect}
@@ -162,18 +173,25 @@ export default function DataView({
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
           {items.map((item) => {
             const id = getId(item);
+            const isExpanded = renderExpanded && expandedId != null && id === expandedId;
             return (
-              <div key={id} style={{ position: "relative" }}>
-                {hasBulk && (
-                  <input
-                    type="checkbox"
-                    checked={selected.has(id)}
-                    onChange={() => toggleSelect(id)}
-                    style={{ position: "absolute", top: 10, insetInlineStart: 10, zIndex: 2, width: 16, height: 16 }}
-                  />
+              <React.Fragment key={id}>
+                <div style={{ position: "relative" }}>
+                  {hasBulk && (
+                    <input
+                      type="checkbox"
+                      checked={selected.has(id)}
+                      onChange={() => toggleSelect(id)}
+                      style={{ position: "absolute", top: 10, insetInlineStart: 10, zIndex: 2, width: 16, height: 16 }}
+                    />
+                  )}
+                  {renderCard(item, { selected: selected.has(id) })}
+                </div>
+                {isExpanded && (
+                  // درست زیر همان کارت انتخاب‌شده، تمام‌عرض — نه انتهای کل لیست
+                  <div style={{ gridColumn: "1 / -1" }}>{renderExpanded(item)}</div>
                 )}
-                {renderCard(item, { selected: selected.has(id) })}
-              </div>
+              </React.Fragment>
             );
           })}
         </div>
@@ -198,7 +216,9 @@ function ViewToggleButton({ active, onClick, icon: Icon, title }) {
   );
 }
 
-function ListTable({ items, getId, columns, renderRowActions, hasBulk, selected, toggleSelect, toggleSelectAll }) {
+function ListTable({ items, getId, columns, renderRowActions, expandedId, renderExpanded, hasBulk, selected, toggleSelect, toggleSelectAll }) {
+  // تعداد ستون‌های واقعی جدول — برای colSpan ردیفِ جزئیاتِ تمام‌عرض
+  const totalCols = (hasBulk ? 1 : 0) + 1 /* # */ + columns.length + (renderRowActions ? 1 : 0);
   return (
     <div style={{ background: "#fff", border: `1px solid ${THEME.border}`, borderRadius: 10, overflow: "hidden" }}>
       {/* دسکتاپ: جدول واقعی. موبایل: همون ساختار با اسکرول افقی برای اطلاعات کم‌اهمیت */}
@@ -223,27 +243,38 @@ function ListTable({ items, getId, columns, renderRowActions, hasBulk, selected,
           <tbody>
             {items.map((item, idx) => {
               const id = getId(item);
+              const isExpanded = renderExpanded && expandedId != null && id === expandedId;
               return (
-                <tr key={id} style={{ borderBottom: `1px solid ${THEME.border}` }}>
-                  {hasBulk && (
-                    <td style={{ padding: "8px", textAlign: "center" }}>
-                      <input type="checkbox" checked={selected.has(id)} onChange={() => toggleSelect(id)} />
-                    </td>
+                <React.Fragment key={id}>
+                  <tr style={{ borderBottom: isExpanded ? "none" : `1px solid ${THEME.border}` }}>
+                    {hasBulk && (
+                      <td style={{ padding: "8px", textAlign: "center" }}>
+                        <input type="checkbox" checked={selected.has(id)} onChange={() => toggleSelect(id)} />
+                      </td>
+                    )}
+                    <td style={{ padding: "8px", textAlign: "center", color: THEME.text3 }}>{idx + 1}</td>
+                    {columns.map((col) => (
+                      <td key={col.key} style={{ padding: "8px 10px", color: THEME.text, verticalAlign: "middle" }}>
+                        {col.render(item)}
+                      </td>
+                    ))}
+                    {renderRowActions && (
+                      <td style={{ padding: "8px 10px" }}>
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                          {renderRowActions(item)}
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                  {isExpanded && (
+                    // پنل جزئیات/عملیات دقیقاً زیر همان ردیف، تمام‌عرض جدول
+                    <tr style={{ borderBottom: `1px solid ${THEME.border}`, background: THEME.bg }}>
+                      <td colSpan={totalCols} style={{ padding: 0 }}>
+                        <div style={{ padding: 12 }}>{renderExpanded(item)}</div>
+                      </td>
+                    </tr>
                   )}
-                  <td style={{ padding: "8px", textAlign: "center", color: THEME.text3 }}>{idx + 1}</td>
-                  {columns.map((col) => (
-                    <td key={col.key} style={{ padding: "8px 10px", color: THEME.text, verticalAlign: "middle" }}>
-                      {col.render(item)}
-                    </td>
-                  ))}
-                  {renderRowActions && (
-                    <td style={{ padding: "8px 10px" }}>
-                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                        {renderRowActions(item)}
-                      </div>
-                    </td>
-                  )}
-                </tr>
+                </React.Fragment>
               );
             })}
           </tbody>
