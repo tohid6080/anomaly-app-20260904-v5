@@ -75,6 +75,33 @@ export async function loadAssignedGateItems(username) {
   return sbOk(rows) ? rows.map(gateItemFromRow) : [];
 }
 
+// همه‌ی موارد «ارجاع‌شده برای بررسی» (assigned_review) یک ماژول، صرف‌نظر
+// از اینکه به چه کسی واگذار شده — طبق گزارش صریح: خودِ سرپرست/مدیری که
+// ارجاع داده، بعد از ارجاع دیگر آن مورد را نه در loadPendingGateItems
+// می‌بیند (چون از pending_approval خارج شده) و نه در loadAssignedGateItems
+// خودش (چون به شخص دیگری واگذار شده، نه به خودش) — یعنی از دیدش کل
+// اطلاعات گیت (و برچسب «ارجاع به کارشناس: X») ناپدید می‌شود. این تابع
+// آن شکاف را می‌بندد: هر کاربر غیرپیمانکار شرکت (RLS خودش company
+// isolation را تضمین می‌کند) وضعیت واقعی را می‌بیند، نه فقط گیرنده‌ی ارجاع.
+export async function loadAssignedReviewItemsForModule(moduleKey) {
+  const rows = await sb(`hse_gate_items?module_key=eq.${moduleKey}&status=eq.assigned_review&select=*&order=created_at.asc`);
+  return sbOk(rows) ? rows.map(gateItemFromRow) : [];
+}
+
+// وقتی خودِ رکورد مرتبط (مثلاً یک ماشین یا آنومالی) حذف می‌شود، هر موردِ
+// بازِ گیت که به آن اشاره می‌کند باید هم حذف شود — hse_gate_items هیچ
+// پیوند/قید خارجی واقعی به جدول‌های ماژول‌ها ندارد (module_key + record_id
+// فقط یک اشاره‌ی متنی است)، پس بدون این پاک‌سازی، رکورد گیت یتیم برای
+// همیشه در «کارهای در دست اقدام من» و لیست‌های مشابه باقی می‌ماند —
+// دقیقاً همان گزارش صریح (کمپکتور حذف‌شده ولی هنوز «در انتظار تأیید»).
+export async function deleteGateItemsForRecord(moduleKey, recordId) {
+  try {
+    await sb(`hse_gate_items?module_key=eq.${moduleKey}&record_id=eq.${recordId}`, { method: "DELETE", prefer: "return=minimal" });
+  } catch {
+    // بی‌اهمیت — حذف خودِ رکورد اصلی نباید به این پاک‌سازیِ فرعی وابسته باشد
+  }
+}
+
 // ---------- تصمیم‌گیری — فقط سرپرست/مدیر HSE یا ادمین (طبق RLS) ----------
 
 // سرپرست/مدیر HSE یک مورد را برای بررسی به یک کارشناس ارجاع می‌دهد —

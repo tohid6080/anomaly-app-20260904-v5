@@ -14,7 +14,7 @@ import {
 } from "./machineryApi.js";
 import MachineryForm from "./MachineryForm.jsx";
 import {
-  loadPendingGateItems, loadAssignedGateItems, loadCompanyStaffOptions, assignForReview,
+  loadPendingGateItems, loadAssignedGateItems, loadAssignedReviewItemsForModule, loadCompanyStaffOptions, assignForReview,
   submitReview as submitGateReview, approveGateItem, rejectGateItem, GATE_STATUS_LABELS,
 } from "../hseGateApi.js";
 
@@ -68,13 +68,20 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
     // کارفرمایی که خودش سرپرست/مدیر HSE نیست — نه فقط برای کسی که مجاز
     // به اقدام (ارجاع/تأیید) است؛ پس pending و gateStaff دیگر مشروط به
     // isGatekeeper نیستند (فقط دکمه‌های اقدام پایین‌تر همچنان محدودند).
-    const [pending, mine, staff] = await Promise.all([
+    // طبق گزارش صریح: بعد از اینکه سرپرست موردی را به کارشناسی ارجاع
+    // می‌دهد، آن مورد دیگر نه در pending (چون از pending_approval خارج
+    // شده) و نه در mine خودِ سرپرست (چون به شخص دیگری واگذار شده) نیست —
+    // یعنی از دید ارجاع‌دهنده کاملاً ناپدید می‌شود. assignedReviewAll این
+    // شکاف را می‌بندد: همه‌ی موارد «ارجاع‌شده» شرکت را می‌آورد، صرف‌نظر از
+    // اینکه چه کسی ارجاع داده یا به چه کسی ارجاع شده.
+    const [pending, mine, staff, assignedReviewAll] = await Promise.all([
       loadPendingGateItems("machineryManagement"),
       loadAssignedGateItems(currentUser?.username).then((rows) => rows.filter((r) => r.moduleKey === "machineryManagement")),
       loadCompanyStaffOptions(),
+      loadAssignedReviewItemsForModule("machineryManagement"),
     ]);
     const map = {};
-    [...pending, ...mine].forEach((it) => { map[it.recordId] = it; });
+    [...pending, ...assignedReviewAll, ...mine].forEach((it) => { map[it.recordId] = it; });
     setGateMap(map);
     setGateStaff(staff);
   };

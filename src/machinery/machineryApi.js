@@ -4,6 +4,7 @@ import { isOnline } from "../offline/networkStatus.js";
 import { getRecordsByModule, putRecord } from "../offline/offlineDb.js";
 import { checkUploadAllowed } from "../offline/dbSizeMonitor.js";
 import { parseStorageUrl, deleteFromStorage } from "../offline/storageUpload.js";
+import { deleteGateItemsForRecord } from "../hseGateApi.js";
 
 export const MACHINE_TYPES = [
   { value: "heavy", label: "سنگین" },
@@ -214,6 +215,10 @@ export async function deleteMachineryDB(id) {
   }
   const result = await offlineWrite({ module: "machinery", table: "machinery", action: "delete", id, payload: {} });
   if (!result.ok) return { __error: true, message: result.error || "خطا در حذف" };
+  // طبق گزارش صریح: بعد از حذف خودِ ماشین، رکورد گیت مربوطه (در انتظار
+  // تأیید/ارجاع‌شده) هم پاک شود — وگرنه یتیم می‌ماند و برای همیشه در
+  // «کارهای در دست اقدام من» با پلاک/نام ماشینِ حذف‌شده باقی می‌ماند.
+  deleteGateItemsForRecord("machineryManagement", id).catch(() => {});
   return { ok: true };
 }
 

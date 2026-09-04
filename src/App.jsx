@@ -17,7 +17,7 @@ import ProactiveIndicatorsDashboard from "./proactiveIndicators/ProactiveIndicat
 import IncidentsListPage from "./incidents/IncidentsListPage.jsx";
 import { loadHomeKpiSummary } from "./dashboard/homeKpiApi.js";
 import { loadModuleConfig, loadDashboardConfig, loadNotificationTypes, loadAppearanceConfig, applyAppearanceToDom, loadActiveAnnouncements } from "./systemConfigApi.js";
-import { submitToGate, loadPendingGateItems, loadAssignedGateItems, loadCompanyStaffOptions, assignForReview, submitReview, approveGateItem, rejectGateItem, GATE_STATUS_LABELS } from "./hseGateApi.js";
+import { submitToGate, loadPendingGateItems, loadAssignedGateItems, loadAssignedReviewItemsForModule, deleteGateItemsForRecord, loadCompanyStaffOptions, assignForReview, submitReview, approveGateItem, rejectGateItem, GATE_STATUS_LABELS } from "./hseGateApi.js";
 import SubscriptionGate from "./subscription/SubscriptionGate.jsx";
 import { checkMyAccountActive } from "./subscriptionApi.js";
 import { AppearanceProvider, useAppearance } from "./shared/AppearanceContext.jsx";
@@ -2539,7 +2539,13 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
   const handleBulkDelete = async (ids) => {
     if (readOnly) { alert("شما مجوز حذف را ندارید"); return; }
     if (!confirm(`${ids.length} مورد حذف شود؟`)) return;
-    for (const id of ids) await offlineWrite({ module: "anomalies", table: "anomalies", action: "delete", id, payload: {} });
+    for (const id of ids) {
+      await offlineWrite({ module: "anomalies", table: "anomalies", action: "delete", id, payload: {} });
+      // طبق گزارش صریح: بعد از حذف خودِ رکورد، رکورد گیت (در انتظار
+      // تأیید/ارجاع‌شده) مربوطه هم پاک شود — وگرنه یتیم می‌ماند و برای
+      // همیشه در «کارهای در دست اقدام من» باقی می‌ماند.
+      deleteGateItemsForRecord("anomalyReport", id).catch(() => {});
+    }
     setAnomalies(anomalies.filter((a) => !ids.includes(a.id)));
   };
 
@@ -2599,6 +2605,10 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
     if (readOnly) { alert("شما مجوز حذف را ندارید"); return; }
     if (confirm(`آیا از حذف آنومالی «${trackingNumber}» مطمئن هستید؟`)) {
       await offlineWrite({ module: "anomalies", table: "anomalies", action: "delete", id, payload: {} });
+      // طبق گزارش صریح: بعد از حذف خودِ رکورد، رکورد گیت مربوطه هم پاک
+      // شود — وگرنه یتیم می‌ماند و برای همیشه در «کارهای در دست اقدام
+      // من» باقی می‌ماند (دقیقاً همان گزارش کمپکتور حذف‌شده).
+      deleteGateItemsForRecord("anomalyReport", id).catch(() => {});
       setAnomalies(anomalies.filter((a) => a.id !== id));
     }
   };
@@ -2718,13 +2728,20 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
     // اگر خودش isReviewer نباشد) — نه فقط کسی که مجاز به اقدام است؛ پس
     // pending و gateStaff دیگر مشروط به isReviewer نیستند (فقط دکمه‌های
     // اقدام پایین‌تر همچنان محدودند). دقیقاً همان رفعِ MachineryDashboard.
-    const [pending, mine, staff] = await Promise.all([
+    // طبق گزارش صریح: بعد از اینکه سرپرست موردی را به کارشناسی ارجاع
+    // می‌دهد، آن مورد دیگر نه در pending (چون از pending_approval خارج
+    // شده) و نه در mine خودِ سرپرست (چون به شخص دیگری واگذار شده) نیست —
+    // یعنی از دید ارجاع‌دهنده کاملاً ناپدید می‌شود. assignedReviewAll این
+    // شکاف را می‌بندد: همه‌ی موارد «ارجاع‌شده» شرکت را می‌آورد، صرف‌نظر از
+    // اینکه چه کسی ارجاع داده یا به چه کسی ارجاع شده.
+    const [pending, mine, staff, assignedReviewAll] = await Promise.all([
       loadPendingGateItems("anomalyReport"),
       loadAssignedGateItems(currentUser?.username).then((rows) => rows.filter((r) => r.moduleKey === "anomalyReport")),
       loadCompanyStaffOptions(),
+      loadAssignedReviewItemsForModule("anomalyReport"),
     ]);
     const map = {};
-    [...pending, ...mine].forEach((it) => { map[it.recordId] = it; });
+    [...pending, ...assignedReviewAll, ...mine].forEach((it) => { map[it.recordId] = it; });
     setGateMap(map);
     setGateStaff(staff);
   };
