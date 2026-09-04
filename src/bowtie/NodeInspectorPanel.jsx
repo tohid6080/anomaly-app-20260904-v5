@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { X, Trash2 } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { CRITICALITY_LEVELS, BARRIER_STATUS, EFFECTIVENESS_STATUS } from "./bowtieApi.js";
+import { JalaliDateInput } from "../personnel/jalaliDate.jsx";
 
 export default function NodeInspectorPanel({ type, node, readOnly, onClose, onSave, onDelete }) {
   const [form, setForm] = useState({});
@@ -90,7 +91,7 @@ export default function NodeInspectorPanel({ type, node, readOnly, onClose, onSa
                 </div>
 
                 <label style={styles.label}>تاریخ آخرین راستی‌آزمایی</label>
-                <input type="date" style={styles.input} value={form.verificationDate || ""} onChange={(e) => setForm({ ...form, verificationDate: e.target.value })} disabled={readOnly} />
+                <JalaliDateInput value={form.verificationDate || ""} onChange={(v) => setForm({ ...form, verificationDate: v })} allowEmpty disabled={readOnly} />
 
                 <label style={styles.label}>وضعیت اثربخشی (محاسبه‌شده — قابل بازنویسی دستی)</label>
                 <select style={styles.input} value={form.effectivenessStatus || "not_assessed"} onChange={(e) => setForm({ ...form, effectivenessStatus: e.target.value })} dir="rtl" disabled={readOnly}>

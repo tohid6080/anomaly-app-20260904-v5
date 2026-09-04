@@ -101,7 +101,7 @@ export function jalaliFileTimestamp() {
 
 export const JALALI_MONTHS = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"];
 
-export function JalaliDateInput({ value, onChange, allowEmpty }) {
+export function JalaliDateInput({ value, onChange, allowEmpty, disabled, style }) {
   const todayParts = todayJalaliParts();
   const parsed = isoToJalali(value);
   const jy = parsed ? parsed[0] : todayParts[0];
@@ -129,14 +129,14 @@ export function JalaliDateInput({ value, onChange, allowEmpty }) {
   };
 
   return (
-    <div style={{ display: "flex", gap: 6 }} dir="rtl">
-      <select style={{ ...styles.input, flex: 1.2 }} value={jy} onChange={(e) => emit(Number(e.target.value), jm, jd)}>
+    <div style={{ display: "flex", gap: 6, ...style }} dir="rtl">
+      <select style={{ ...styles.input, flex: 1.2 }} value={jy} onChange={(e) => emit(Number(e.target.value), jm, jd)} disabled={disabled}>
         {years.map((y) => <option key={y} value={y}>{y}</option>)}
       </select>
-      <select style={{ ...styles.input, flex: 1.4 }} value={jm} onChange={(e) => emit(jy, Number(e.target.value), jd)}>
+      <select style={{ ...styles.input, flex: 1.4 }} value={jm} onChange={(e) => emit(jy, Number(e.target.value), jd)} disabled={disabled}>
         {JALALI_MONTHS.map((m, idx) => <option key={idx} value={idx + 1}>{m}</option>)}
       </select>
-      <select style={{ ...styles.input, flex: 1 }} value={jd} onChange={(e) => emit(jy, jm, Number(e.target.value))}>
+      <select style={{ ...styles.input, flex: 1 }} value={jd} onChange={(e) => emit(jy, jm, Number(e.target.value))} disabled={disabled}>
         {days.map((d) => <option key={d} value={d}>{d}</option>)}
       </select>
     </div>

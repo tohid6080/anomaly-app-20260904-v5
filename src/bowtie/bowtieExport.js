@@ -1,6 +1,7 @@
 import * as XLSX from "xlsx";
 import { bowtieStatusMeta } from "./bowtieApi.js";
 import { isNativeApp, writeAndShare, exportWorkbookNativeAware, exportHtmlReportNativeAware } from "../offline/nativeFile.js";
+import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
 
 /**
  * Export helpers for the BowTie canvas.
@@ -120,7 +121,7 @@ export async function exportBowtieExcel(bowtie, threats, consequences, barriers,
     "بحرانی بودن": b.criticality,
     "وضعیت": bowtieStatusMeta(b.status)?.label || b.status,
     "کنترل بحرانی": b.isCriticalControl ? "بله" : "خیر",
-    "تاریخ راستی‌آزمایی": b.verificationDate || "",
+    "تاریخ راستی‌آزمایی": toJalaliSafe(b.verificationDate) || "—",
   }));
 
   const escalationRows = [];

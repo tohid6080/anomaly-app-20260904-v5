@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { GitBranch, Target as TargetIcon, History as HistoryIcon, Send, Play, CheckCircle2, XCircle, RotateCcw, Trash2 } from "lucide-react";
 import { styles, THEME } from "../shared.js";
-import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
+import { toJalaliSafe, JalaliDateInput } from "../personnel/jalaliDate.jsx";
 import { loadReferenceGroups, loadTargetCategories, flattenChecklist } from "./tripodReferenceApi.js";
 import {
   loadAnalysisById, transitionAnalysis, loadHistory, updateAnalysisFields,
@@ -460,7 +460,7 @@ function CorrectiveActionModal({ src, incident, analysisId, currentUser, onClose
         <label style={styles.label}>مسئول اقدام</label>
         <input style={styles.input} value={responsible} onChange={(e) => setResponsible(e.target.value)} dir="rtl" />
         <label style={styles.label}>مهلت انجام</label>
-        <input type="date" style={styles.input} value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+        <JalaliDateInput value={dueDate} onChange={setDueDate} allowEmpty />
         {error && <p style={styles.error}>{error}</p>}
         <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
           <button type="button" style={styles.smallButton} onClick={handleSave} disabled={saving}>{saving ? "در حال ثبت..." : "ثبت اقدام اصلاحی"}</button>

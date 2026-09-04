@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { AlertTriangle, CheckCircle2, Send } from "lucide-react";
 import { styles, THEME } from "../shared.js";
-import { toJalaliSafe } from "./jalaliDate.jsx";
+import { toJalaliSafe, JalaliDateInput } from "./jalaliDate.jsx";
 import { needsAccidentPronenessAssessment, isAccidentPronenessEnabledForCompany, loadLatestAccidentPronenessAssessment, accidentPronenessLevel } from "../proactiveIndicators/proactiveIndicatorsApi.js";
 import { createCorrectiveAction, loadCorrectiveActionForAssessment, STATUS_META } from "../correctiveActions/correctiveActionsApi.js";
 
@@ -142,7 +142,7 @@ export default function AccidentPronenessSection({ personnel, role, currentUser,
               <option value="high">اولویت زیاد</option>
               <option value="critical">بحرانی</option>
             </select>
-            <input type="date" style={{ ...styles.input, flex: 1 }} value={caDueDate} onChange={(e) => setCaDueDate(e.target.value)} />
+            <JalaliDateInput value={caDueDate} onChange={setCaDueDate} allowEmpty style={{ flex: 1 }} />
           </div>
           {error && <p style={styles.error}>{error}</p>}
           <div style={{ display: "flex", gap: 8, marginTop: 8 }}>

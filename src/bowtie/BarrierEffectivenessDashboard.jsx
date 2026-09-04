@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { ShieldCheck, AlertTriangle, TrendingDown, TrendingUp, Minus, RefreshCw, Sliders, Link2, ChevronLeft, Send } from "lucide-react";
 import { styles, THEME } from "../shared.js";
-import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
+import { toJalaliSafe, JalaliDateInput } from "../personnel/jalaliDate.jsx";
 import { effectivenessMeta } from "./bowtieApi.js";
 import { loadDashboardData, loadBarrierHistory, loadBarrierEvidence, recalculateBarrierDbee, recalculateAllBarriersDbee } from "./dbeeEngine.js";
 import { createCorrectiveAction } from "../correctiveActions/correctiveActionsApi.js";
@@ -348,7 +348,7 @@ function BarrierDetailView({ barrier, bowtieTitle, currentUser, isEmployerSide, 
               <label style={styles.label}>مسئول اقدام</label>
               <input style={styles.input} value={caForm.responsible} onChange={(e) => setCaForm({ ...caForm, responsible: e.target.value })} dir="rtl" />
               <label style={styles.label}>مهلت انجام</label>
-              <input type="date" style={styles.input} value={caForm.dueDate} onChange={(e) => setCaForm({ ...caForm, dueDate: e.target.value })} />
+              <JalaliDateInput value={caForm.dueDate} onChange={(v) => setCaForm({ ...caForm, dueDate: v })} allowEmpty />
               {caMessage && <p style={styles.error}>{caMessage}</p>}
               <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
                 <button type="button" style={styles.smallButton} onClick={handleSaveCa} disabled={caSaving}>{caSaving ? "در حال ثبت..." : "ثبت و اتصال به CAPA"}</button>
