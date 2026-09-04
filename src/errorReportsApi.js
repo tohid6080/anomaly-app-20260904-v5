@@ -11,17 +11,6 @@ import { sb, sbOk, getCurrentCompanyId } from "./shared.js";
 export async function submitErrorReport({ currentUser, moduleKey, pageLabel, description, technicalMessage, technicalStack }) {
   const companyId = getCurrentCompanyId();
   if (!companyId) return { __error: true, message: "شرکت جاری مشخص نیست — لطفاً دوباره وارد شوید." };
-  // TEMP DEBUG — برای پیداکردن علت 42501؛ بعد از عیب‌یابی حذف می‌شود.
-  // عمداً به‌صورت رشته‌ی JSON کامل (نه یک object خام) چاپ می‌شود — object
-  // خام در کنسول به‌صورت [{…}] جمع‌شده نشان داده می‌شود و در کپی متنی
-  // ساده (بدون کلیک برای بازکردن) قابل‌خواندن نیست؛ همچنین یک alert هم
-  // نشان داده می‌شود تا بدون نیاز به باز کردن Console هم قابل‌مشاهده و کپی باشد.
-  try {
-    const dbg = await sb("rpc/debug_company_check", { method: "POST", body: JSON.stringify({ p_company_id: companyId }) });
-    const dbgText = `[DEBUG error_reports]\nclient companyId: ${companyId}\nserver check: ${JSON.stringify(dbg, null, 2)}`;
-    console.error(dbgText);
-    alert(dbgText);
-  } catch (e) { console.error("[DEBUG error_reports] debug call failed", String(e)); }
   const payload = {
     company_id: companyId,
     reported_by_username: currentUser?.username || "",
@@ -34,7 +23,17 @@ export async function submitErrorReport({ currentUser, moduleKey, pageLabel, des
     technical_stack: (technicalStack || "").slice(0, 4000),
     user_agent: typeof navigator !== "undefined" ? navigator.userAgent : "",
   };
-  const rows = await sb("error_reports", { method: "POST", body: JSON.stringify([payload]) });
+  // ریشه‌ی واقعی 42501 پیدا شد: با تشخیص مستقیم روی دیتابیس تأیید شد که
+  // policy درج (INSERT) کاملاً درست است (would_match=true) — اما چون
+  // sb() پیش‌فرض «Prefer: return=representation» می‌فرستد (برای برگرداندن
+  // ردیف تازه‌درج‌شده)، Postgres/PostgREST علاوه بر policy درج، policy
+  // SELECT همان ردیف را هم چک می‌کند تا بتواند RETURNING بدهد — و چون
+  // policy انتخاب این جدول عمداً فقط SuperAdmin است (نه صاحب رکورد)،
+  // همین باعث رد کل درخواست با همان خطای RLS می‌شد، با اینکه شرط درج
+  // خودش کاملاً برقرار بود. راه‌حل: return=minimal بخواهیم — کلاینت به
+  // ردیف تازه‌درج‌شده نیازی ندارد (فقط موفقیت/خطا مهم است)، پس دیگر
+  // نیازی به عبور از policy SELECT نیست.
+  const rows = await sb("error_reports", { method: "POST", body: JSON.stringify([payload]), prefer: "return=minimal" });
   if (!sbOk(rows)) {
     // پیام واقعی PostgREST/RLS هم لاگ و هم برگردانده می‌شود — قبلاً اینجا
     // یک پیام عمومی ثابت بود و جزئیات واقعی خطا (که خودِ دیباگ همین
