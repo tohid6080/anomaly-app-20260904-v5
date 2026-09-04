@@ -2490,30 +2490,15 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
 
   useEffect(() => { loadGateData(); }, [isContractor, isReviewer, currentUser?.username]);
 
-  const scopedByContractor = isContractor && myContractorName
+  const scoped = (isContractor && myContractorName
     ? anomalies.filter((a) => (a.contractor || "").trim().toLowerCase() === myContractorName)
-    : anomalies;
-  const scoped = scopedByContractor.filter((a) => !isContractor || !pendingGateRecordIds || !pendingGateRecordIds.has(a.id));
+    : anomalies
+  ).filter((a) => !isContractor || !pendingGateRecordIds || !pendingGateRecordIds.has(a.id));
 
   // برای پرکردن dropdown فیلتر پیمانکار (فقط ادمین/کارفرما می‌بینند) — از
   // کل لیست بارگذاری‌شده مشتق می‌شود، نه از نتیجه‌ی فیلترشده، تا با انتخاب
   // یک فیلتر دیگر، گزینه‌های این dropdown خودش کوچک نشود
   const contractorNamesInList = [...new Set(anomalies.map((a) => (a.contractor || "").trim()).filter(Boolean))].sort();
-
-  // TEMP DEBUG — برای پیداکردن علت خالی‌بودن لیست پیمانکار؛ بعد از عیب‌یابی
-  // حذف می‌شود. به‌صورت رشته‌ی کامل چاپ می‌شود (نه object خام) چون یک
-  // object در کپی متنی ساده‌ی کنسول به‌صورت [{…}] جمع‌شده و غیرقابل‌خواندن
-  // می‌ماند — دقیقاً همان مشکلی که در تشخیص گزارش خطا پیش آمد.
-  if (isContractor && typeof window !== "undefined") {
-    console.error(`[DEBUG anomaly list/contractor]\n${JSON.stringify({
-      totalAnomaliesFetched: anomalies.length,
-      myContractorName,
-      distinctContractorValuesInData: contractorNamesInList,
-      afterContractorNameFilter: scopedByContractor.length,
-      afterGateFilter: scoped.length,
-      pendingGateCount: pendingGateRecordIds ? pendingGateRecordIds.size : null,
-    }, null, 2)}`);
-  }
 
   const filtered = scoped.filter((a) => {
     if (statusFilter === "not_closed" && a.status === "Closed") return false;
@@ -2727,10 +2712,16 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
 
   const loadGateData = async () => {
     if (isContractor) return; // این گیت فقط سمت کارفرما معناداراست
+    // نمایش وضعیت ارجاع (نام کارشناس + برچسب «ارجاع‌شده برای بررسی») باید
+    // برای هر کاربر غیرپیمانکار دیده شود — هم برای سرپرست HSE‌ای که خودش
+    // ارجاع داده، هم برای کارشناس کارفرمایی که ارجاع به او انجام شده (حتی
+    // اگر خودش isReviewer نباشد) — نه فقط کسی که مجاز به اقدام است؛ پس
+    // pending و gateStaff دیگر مشروط به isReviewer نیستند (فقط دکمه‌های
+    // اقدام پایین‌تر همچنان محدودند). دقیقاً همان رفعِ MachineryDashboard.
     const [pending, mine, staff] = await Promise.all([
-      isReviewer ? loadPendingGateItems("anomalyReport") : Promise.resolve([]),
+      loadPendingGateItems("anomalyReport"),
       loadAssignedGateItems(currentUser?.username).then((rows) => rows.filter((r) => r.moduleKey === "anomalyReport")),
-      isReviewer ? loadCompanyStaffOptions() : Promise.resolve([]),
+      loadCompanyStaffOptions(),
     ]);
     const map = {};
     [...pending, ...mine].forEach((it) => { map[it.recordId] = it; });
@@ -2915,7 +2906,16 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
             key: "status", label: "وضعیت",
             render: (a) => {
               const sm = statusMeta(a.status);
-              return <StatusPill label={sm.label} color={sm.color} bg={sm.bg} />;
+              const gi = gateMap[a.id];
+              const assignedExpertName = gi?.status === "assigned_review" ? (gateStaff.find((s) => s.username === gi.assignedTo)?.name || gi.assignedTo) : null;
+              return (
+                <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                  <StatusPill label={sm.label} color={sm.color} bg={sm.bg} />
+                  {assignedExpertName && (
+                    <span style={{ fontSize: 10.5, color: "#1d4ed8", fontWeight: 600 }}>ارجاع به کارشناس: {assignedExpertName}</span>
+                  )}
+                </div>
+              );
             },
           },
         ]}
@@ -2928,6 +2928,8 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
           const rm = riskMeta(a.riskLevel);
           const sm = statusMeta(a.status);
           const isOpenCard = expandedId === a.id;
+          const giCard = gateMap[a.id];
+          const assignedExpertNameCard = giCard?.status === "assigned_review" ? (gateStaff.find((s) => s.username === giCard.assignedTo)?.name || giCard.assignedTo) : null;
           return (
             <div style={{ ...styles.card, width: "auto", margin: 0, borderInlineStart: `4px solid ${rm.color}`, padding: "18px 20px", height: "100%" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", cursor: "pointer" }} onClick={() => startExpand(a)}>
@@ -2952,6 +2954,9 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
                       />
                     )}
                   </div>
+                  {assignedExpertNameCard && (
+                    <div style={{ fontSize: 10.5, color: "#1d4ed8", fontWeight: 600, marginTop: 4 }}>ارجاع به کارشناس: {assignedExpertNameCard}</div>
+                  )}
                   <div style={{ fontSize: 14, marginTop: 9, color: THEME.text }}>{a.description}</div>
                   <div style={{ fontSize: 11.5, color: THEME.text3, marginTop: 7, fontWeight: 500 }}>
                     {a.area} {a.contractor && `· ${a.contractor}`} {a.date && `· ${isoToJalaliDisplay(a.date)}`} {a.sender && `· ثبت توسط ${a.sender}`}
@@ -3123,6 +3128,11 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
                 <p style={{ fontSize: 11.5, fontWeight: 700, color: "#1d4ed8", margin: "0 0 8px" }}>
                   گیت تأیید سرپرست/مدیر HSE — {GATE_STATUS_LABELS[gateMap[a.id].status] || gateMap[a.id].status}
                 </p>
+                {gateMap[a.id].status === "assigned_review" && (
+                  <p style={{ fontSize: 11.5, fontWeight: 600, color: "#1d4ed8", margin: "0 0 8px" }}>
+                    ارجاع به کارشناس: {gateStaff.find((s) => s.username === gateMap[a.id].assignedTo)?.name || gateMap[a.id].assignedTo}
+                  </p>
+                )}
                 {gateMap[a.id].reviewerComment && (
                   <p style={{ fontSize: 11.5, color: "#374151", margin: "0 0 8px", lineHeight: 1.8 }}>
                     <b>نظر کارشناس:</b> {gateMap[a.id].reviewerComment}
