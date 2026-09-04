@@ -149,14 +149,21 @@ export async function loadPersonnelListOfflineFirst() {
   if (isOnline()) {
     const rows = await sb(`personnel?select=*&order=created_at.desc${filter}`);
     if (sbOk(rows)) {
-      for (const r of rows) await putRecord("personnel", r.id, r, "synced");
-      const cached = await getRecordsByModule("personnel");
-      const serverIds = new Set(rows.map((r) => r.id));
-      const localOnly = cached.filter((c) => c.syncStatus !== "synced" && !serverIds.has(c.id) && !c.data?.deleted);
-      return [
-        ...localOnly.map((c) => personnelFromRow({ ...c.data, __syncStatus: c.syncStatus })),
-        ...rows.map((r) => personnelFromRow({ ...r, __syncStatus: "synced" })),
-      ];
+      // نوشتن/خواندن کش محلی نباید کل بارگذاری را خراب کند — در صورت خطا،
+      // دست‌کم داده‌ی تازه‌ی سرور برگردانده شود.
+      try {
+        for (const r of rows) await putRecord("personnel", r.id, r, "synced");
+        const cached = await getRecordsByModule("personnel");
+        const serverIds = new Set(rows.map((r) => r.id));
+        const localOnly = cached.filter((c) => c.syncStatus !== "synced" && !serverIds.has(c.id) && !c.data?.deleted);
+        return [
+          ...localOnly.map((c) => personnelFromRow({ ...c.data, __syncStatus: c.syncStatus })),
+          ...rows.map((r) => personnelFromRow({ ...r, __syncStatus: "synced" })),
+        ];
+      } catch (e) {
+        console.error("همگام‌سازی کش محلی پرسنل ناموفق بود", e);
+        return rows.map((r) => personnelFromRow({ ...r, __syncStatus: "synced" }));
+      }
     }
   }
   const cached = await getRecordsByModule("personnel");

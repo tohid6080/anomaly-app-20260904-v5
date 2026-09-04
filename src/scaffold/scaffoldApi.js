@@ -64,14 +64,21 @@ export async function loadScaffoldTagsOfflineFirst() {
   if (isOnline()) {
     const rows = await sb(`scaffold_tags?select=*&order=created_at.desc${filter}`);
     if (sbOk(rows)) {
-      for (const r of rows) await putRecord("scaffoldTags", r.id, r, "synced");
-      const cached = await getRecordsByModule("scaffoldTags");
-      const serverIds = new Set(rows.map((r) => r.id));
-      const localOnly = cached.filter((c) => c.syncStatus !== "synced" && !serverIds.has(c.id) && !c.data?.deleted);
-      return [
-        ...localOnly.map((c) => scaffoldFromRow({ ...c.data, __syncStatus: c.syncStatus })),
-        ...rows.map((r) => scaffoldFromRow({ ...r, __syncStatus: "synced" })),
-      ];
+      // نوشتن/خواندن کش محلی نباید کل بارگذاری را خراب کند — در صورت خطا،
+      // دست‌کم داده‌ی تازه‌ی سرور برگردانده شود.
+      try {
+        for (const r of rows) await putRecord("scaffoldTags", r.id, r, "synced");
+        const cached = await getRecordsByModule("scaffoldTags");
+        const serverIds = new Set(rows.map((r) => r.id));
+        const localOnly = cached.filter((c) => c.syncStatus !== "synced" && !serverIds.has(c.id) && !c.data?.deleted);
+        return [
+          ...localOnly.map((c) => scaffoldFromRow({ ...c.data, __syncStatus: c.syncStatus })),
+          ...rows.map((r) => scaffoldFromRow({ ...r, __syncStatus: "synced" })),
+        ];
+      } catch (e) {
+        console.error("همگام‌سازی کش محلی داربست ناموفق بود", e);
+        return rows.map((r) => scaffoldFromRow({ ...r, __syncStatus: "synced" }));
+      }
     }
   }
   const cached = await getRecordsByModule("scaffoldTags");

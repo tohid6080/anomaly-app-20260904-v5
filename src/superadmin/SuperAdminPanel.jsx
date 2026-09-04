@@ -19,9 +19,11 @@ import {
   copyBowtiesToCompany, copyRiskKnowledgeToCompany,
 } from "./superAdminApi.js";
 import { computeSubscriptionAccess, loadOnlinePaymentsForCompany } from "../subscriptionApi.js";
+import { loadErrorReports, updateErrorReportStatus } from "../errorReportsApi.js";
 
 const inputStyle = { width: "100%", padding: "8px 10px", borderRadius: 8, border: `1.5px solid ${THEME.border}`, fontSize: 12.5, fontFamily: THEME.font, boxSizing: "border-box" };
 const btnStyle = (bg) => ({ padding: "7px 14px", borderRadius: 8, border: "none", background: bg || THEME.teal, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font });
+const smallLabelStyle = { display: "block", marginBottom: 4, fontSize: 11.5, fontWeight: 600, color: THEME.text2 };
 
 export default function SuperAdminPanel({ currentAdmin, onLogout }) {
   const [page, setPage] = useState("overview");
@@ -108,6 +110,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
     { key: "monitoring", label: "مانیتورینگ و تحلیل", icon: Activity },
     { key: "systemConfig", label: "پیکربندی سامانه", icon: Settings2 },
     { key: "auditLog", label: "گزارش تغییرات", icon: FileClock },
+    { key: "errorReports", label: "گزارش‌های خطا", icon: AlertTriangle },
   ];
 
   return (
@@ -176,6 +179,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
           {page === "monitoring" && <SystemInsights companies={companies} />}
           {page === "systemConfig" && <SystemConfigPage currentAdmin={currentAdmin} companies={companies} />}
           {page === "auditLog" && <AuditLogPage companies={companies} />}
+          {page === "errorReports" && <ErrorReportsPage currentAdmin={currentAdmin} />}
         </div>
       </div>
     </div>
@@ -1445,6 +1449,132 @@ function AuditLogPage({ companies }) {
                   <td style={{ padding: "8px", textAlign: "center", color: THEME.text3 }}>{toJalaliSafe(r.created_at)}</td>
                 </tr>
               ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------- گزارش‌های خطای کاربران — قابلیت عمومی «گزارش خطا» ----------
+// هر کاربر (ادمین/کارفرما/سرپرست HSE/پیمانکار) از هر جای سامانه می‌تواند
+// یک خطا را گزارش کند (نگاه کنید به ReportErrorModal در src/shared/) —
+// اینجا SuperAdmin همه‌ی گزارش‌های همه‌ی شرکت‌ها را می‌بیند و پیگیری
+// (تغییر وضعیت + یادداشت داخلی) می‌کند.
+const ERROR_REPORT_STATUS_META = {
+  open: { label: "باز", color: "#b45309", bg: "#fef3c7" },
+  reviewed: { label: "بررسی‌شده", color: "#1d4ed8", bg: "#dbeafe" },
+  resolved: { label: "برطرف‌شده", color: "#166534", bg: "#dcfce7" },
+};
+const ERROR_REPORT_ROLE_LABELS = { ADMIN: "ادمین", EMPLOYER: "کارفرما", HSE_SUPERVISOR: "سرپرست HSE", CONTRACTOR: "پیمانکار" };
+
+function ErrorReportsPage({ currentAdmin }) {
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [rows, setRows] = useState(null);
+  const [expandedId, setExpandedId] = useState(null);
+  const [noteDraft, setNoteDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const load = () => loadErrorReports(statusFilter).then(setRows);
+  useEffect(() => { setRows(null); load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [statusFilter]);
+
+  const openRow = (r) => {
+    if (expandedId === r.id) { setExpandedId(null); return; }
+    setExpandedId(r.id);
+    setNoteDraft(r.adminNote || "");
+  };
+
+  const handleSetStatus = async (r, status) => {
+    setSaving(true);
+    const result = await updateErrorReportStatus(r.id, status, noteDraft, currentAdmin?.fullName || currentAdmin?.username);
+    setSaving(false);
+    if (result?.__error) { alert(result.message); return; }
+    setExpandedId(null);
+    load();
+  };
+
+  const openCount = (rows || []).filter((r) => r.status === "open").length;
+
+  return (
+    <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
+        <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+          <AlertTriangle size={14} color="#b45309" /> گزارش‌های خطای کاربران
+          {openCount > 0 && (
+            <span style={{ background: THEME.danger, color: "#fff", fontSize: 10.5, fontWeight: 700, borderRadius: 999, minWidth: 19, height: 19, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>
+              {openCount}
+            </span>
+          )}
+        </h3>
+        <select style={{ ...inputStyle, width: "auto" }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir="rtl">
+          <option value="all">همه وضعیت‌ها</option>
+          <option value="open">باز</option>
+          <option value="reviewed">بررسی‌شده</option>
+          <option value="resolved">برطرف‌شده</option>
+        </select>
+      </div>
+      <p style={{ fontSize: 11, color: THEME.text3, marginBottom: 12 }}>
+        هر گزارشی که کاربران از هر جای سامانه ارسال کرده‌اند — شامل کاربر، زمان، ماژول/صفحه، شرح خطا و (در صورت وجود) اطلاعات فنی.
+      </p>
+
+      {rows === null && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>در حال بارگذاری...</p>}
+      {rows !== null && rows.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>گزارشی با این وضعیت یافت نشد.</p>}
+
+      {rows && rows.length > 0 && (
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+            <thead>
+              <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
+                <th style={{ textAlign: "right", padding: "6px 8px" }}>شرکت</th>
+                <th style={{ textAlign: "right", padding: "6px 8px" }}>گزارش‌دهنده</th>
+                <th style={{ textAlign: "center", padding: "6px 8px" }}>ماژول/صفحه</th>
+                <th style={{ textAlign: "right", padding: "6px 8px" }}>شرح خطا</th>
+                <th style={{ textAlign: "center", padding: "6px 8px" }}>زمان</th>
+                <th style={{ textAlign: "center", padding: "6px 8px" }}>وضعیت</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => {
+                const sm = ERROR_REPORT_STATUS_META[r.status] || ERROR_REPORT_STATUS_META.open;
+                return (
+                  <React.Fragment key={r.id}>
+                    <tr style={{ borderBottom: `1px solid ${THEME.border}`, cursor: "pointer" }} onClick={() => openRow(r)}>
+                      <td style={{ padding: "8px", fontWeight: 600 }}>{r.companyName || "—"}</td>
+                      <td style={{ padding: "8px" }}>{r.reportedByName} <span style={{ color: THEME.text3, fontSize: 10.5 }}>({ERROR_REPORT_ROLE_LABELS[r.reportedByRole] || r.reportedByRole})</span></td>
+                      <td style={{ padding: "8px", textAlign: "center", color: THEME.text3 }}>{r.pageLabel || r.moduleKey || "—"}</td>
+                      <td style={{ padding: "8px", maxWidth: 260, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.description}</td>
+                      <td style={{ padding: "8px", textAlign: "center", color: THEME.text3, whiteSpace: "nowrap" }}>{toJalaliDateTime(r.createdAt)}</td>
+                      <td style={{ padding: "8px", textAlign: "center" }}>
+                        <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: sm.bg, color: sm.color, fontWeight: 700 }}>{sm.label}</span>
+                      </td>
+                    </tr>
+                    {expandedId === r.id && (
+                      <tr>
+                        <td colSpan={6} style={{ padding: "10px 12px", background: THEME.bg }}>
+                          <p style={{ fontSize: 12.5, color: THEME.text2, margin: "0 0 8px", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>{r.description}</p>
+                          {(r.technicalMessage || r.technicalStack) && (
+                            <pre style={{ whiteSpace: "pre-wrap", fontSize: 10.5, color: "#991b1b", background: "#fee2e2", padding: 10, borderRadius: 8, marginBottom: 8, maxHeight: 160, overflow: "auto", direction: "ltr", textAlign: "left" }}>
+                              {r.technicalMessage}{r.technicalStack ? `\n${r.technicalStack}` : ""}
+                            </pre>
+                          )}
+                          {r.userAgent && <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 8px" }}>User Agent: {r.userAgent}</p>}
+                          <label style={smallLabelStyle}>یادداشت داخلی / پاسخ</label>
+                          <textarea style={{ ...inputStyle, minHeight: 60 }} value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} dir="rtl" />
+                          {r.resolvedAt && (
+                            <p style={{ fontSize: 10.5, color: THEME.text3, margin: "6px 0" }}>برطرف‌شده توسط {r.resolvedBy || "—"} در {toJalaliDateTime(r.resolvedAt)}</p>
+                          )}
+                          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                            <button type="button" style={btnStyle("#1d4ed8")} disabled={saving} onClick={() => handleSetStatus(r, "reviewed")}>علامت‌گذاری: بررسی‌شده</button>
+                            <button type="button" style={btnStyle("#166534")} disabled={saving} onClick={() => handleSetStatus(r, "resolved")}>علامت‌گذاری: برطرف‌شده</button>
+                            {r.status !== "open" && <button type="button" style={btnStyle(THEME.text3)} disabled={saving} onClick={() => handleSetStatus(r, "open")}>بازگرداندن به باز</button>}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>

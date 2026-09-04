@@ -63,10 +63,15 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
 
   const loadGateData = async () => {
     if (isContractor) return;
+    // نمایش وضعیت ارجاع (نام کارشناس + برچسب «ارجاع‌شده برای بررسی»)
+    // باید برای هر کاربر غیرپیمانکار دیده شود — از جمله کارفرما/سرپرست
+    // کارفرمایی که خودش سرپرست/مدیر HSE نیست — نه فقط برای کسی که مجاز
+    // به اقدام (ارجاع/تأیید) است؛ پس pending و gateStaff دیگر مشروط به
+    // isGatekeeper نیستند (فقط دکمه‌های اقدام پایین‌تر همچنان محدودند).
     const [pending, mine, staff] = await Promise.all([
-      isGatekeeper ? loadPendingGateItems("machineryManagement") : Promise.resolve([]),
+      loadPendingGateItems("machineryManagement"),
       loadAssignedGateItems(currentUser?.username).then((rows) => rows.filter((r) => r.moduleKey === "machineryManagement")),
-      isGatekeeper ? loadCompanyStaffOptions() : Promise.resolve([]),
+      loadCompanyStaffOptions(),
     ]);
     const map = {};
     [...pending, ...mine].forEach((it) => { map[it.recordId] = it; });
@@ -102,9 +107,16 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
   const [viewerSrc, setViewerSrc] = useState(null);
 
   const load = async () => {
-    const all = await loadMachineryListOfflineFirst();
-    setList(all);
-    setLoading(false);
+    // اگر بارگذاری با خطا مواجه شود، صفحه نباید برای همیشه روی «در حال
+    // بارگذاری» بماند — finally تضمین می‌کند setLoading(false) در هر
+    // حالتی اجرا شود.
+    try {
+      setList(await loadMachineryListOfflineFirst());
+    } catch (e) {
+      console.error("بارگذاری لیست ماشین‌آلات ناموفق بود", e);
+    } finally {
+      setLoading(false);
+    }
   };
   useEffect(() => { load(); }, []);
 
@@ -219,8 +231,16 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
   const handleBulkApprove = async (ids) => {
     if (readOnly) { alert("شما مجوز تصمیم‌گیری را ندارید"); return; }
     if (!confirm(`${ids.length} مورد تأیید شود؟`)) return;
-    for (const id of ids) await setMachineryApproval(id, "approved", "");
+    for (const id of ids) {
+      await setMachineryApproval(id, "approved", "");
+      // طبق همان رفعِ ناهماهنگی که در تأیید تکی (submitReview) هست: اگر
+      // رکورد گیت باز برای همین مورد وجود دارد، همان‌جا هم بسته شود —
+      // وگرنه با اینکه ماشین‌آلات تأیید شده، در «کارهای در دست اقدام من»
+      // و برچسب «ارجاع به کارشناس» برای همیشه باقی می‌ماند.
+      if (gateMap[id]) approveGateItem(gateMap[id].id, currentUser?.name).catch(() => {});
+    }
     await load();
+    await loadGateData();
   };
 
   if (showForm) {

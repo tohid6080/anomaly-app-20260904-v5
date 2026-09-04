@@ -40,19 +40,27 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
   }, []);
 
   const load = async () => {
-    const all = await loadPersonnelListOfflineFirst();
-    await checkAndUpdateDeadlines(all); // فقط برای انتقال خودکار به «منقضی»
-    const refreshed = await loadPersonnelListOfflineFirst();
-    setList(refreshed);
-    setLoading(false);
-    // بازکردن خودکار پرونده‌ی همان پرسنلی که از آنجا به فرم ارزیابی رفته
-    // بودیم — چون این کامپوننت هر بار که کاربر بین این ماژول و ماژول
-    // شاخص‌های پیش‌نگر جابه‌جا می‌شود، کامل remount می‌شود و state داخلی‌اش
-    // (از جمله «کدام پرسنل انتخاب شده») پاک می‌شود؛ بدون این، کاربر بعد از
-    // تکمیل ارزیابی فقط به لیست کلی برمی‌گشت، نه به همان پرونده.
-    if (initialSelectedPersonnelId) {
-      const found = refreshed.find((p) => p.id === initialSelectedPersonnelId);
-      if (found) setSelected(found);
+    // اگر بارگذاری با خطا مواجه شود، صفحه نباید برای همیشه روی «در حال
+    // بارگذاری» بماند — finally تضمین می‌کند setLoading(false) در هر
+    // حالتی اجرا شود.
+    try {
+      const all = await loadPersonnelListOfflineFirst();
+      await checkAndUpdateDeadlines(all); // فقط برای انتقال خودکار به «منقضی»
+      const refreshed = await loadPersonnelListOfflineFirst();
+      setList(refreshed);
+      // بازکردن خودکار پرونده‌ی همان پرسنلی که از آنجا به فرم ارزیابی رفته
+      // بودیم — چون این کامپوننت هر بار که کاربر بین این ماژول و ماژول
+      // شاخص‌های پیش‌نگر جابه‌جا می‌شود، کامل remount می‌شود و state داخلی‌اش
+      // (از جمله «کدام پرسنل انتخاب شده») پاک می‌شود؛ بدون این، کاربر بعد از
+      // تکمیل ارزیابی فقط به لیست کلی برمی‌گشت، نه به همان پرونده.
+      if (initialSelectedPersonnelId) {
+        const found = refreshed.find((p) => p.id === initialSelectedPersonnelId);
+        if (found) setSelected(found);
+      }
+    } catch (e) {
+      console.error("بارگذاری لیست پرسنل ناموفق بود", e);
+    } finally {
+      setLoading(false);
     }
   };
   useEffect(() => { load(); }, []);

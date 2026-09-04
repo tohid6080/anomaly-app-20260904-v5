@@ -35,15 +35,23 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
-    const all = await loadScaffoldTagsOfflineFirst();
-    setList(all);
-    if (isContractor) {
-      const contractors = await loadContractorsWithScaffoldCode();
-      const myName = (currentUser?.name || "").trim().toLowerCase();
-      const mine = contractors.find((c) => c.name.trim().toLowerCase() === myName);
-      setMyContractorCode(mine?.scaffoldTagCode || "");
+    // اگر بارگذاری با خطا مواجه شود، صفحه نباید برای همیشه روی «در حال
+    // بارگذاری» بماند — finally تضمین می‌کند setLoading(false) در هر
+    // حالتی اجرا شود.
+    try {
+      const all = await loadScaffoldTagsOfflineFirst();
+      setList(all);
+      if (isContractor) {
+        const contractors = await loadContractorsWithScaffoldCode();
+        const myName = (currentUser?.name || "").trim().toLowerCase();
+        const mine = contractors.find((c) => c.name.trim().toLowerCase() === myName);
+        setMyContractorCode(mine?.scaffoldTagCode || "");
+      }
+    } catch (e) {
+      console.error("بارگذاری لیست داربست ناموفق بود", e);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
   useEffect(() => { load(); }, []);
 

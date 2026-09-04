@@ -55,6 +55,7 @@ import { trackLogin, trackLogout, trackPageView, trackFailedLogin } from "./admi
 import SuperAdminLogin from "./superadmin/SuperAdminLogin.jsx";
 import SuperAdminPanel from "./superadmin/SuperAdminPanel.jsx";
 import DataView, { StatusPill } from "./shared/DataView.jsx";
+import ReportErrorModal from "./shared/ReportErrorModal.jsx";
 import MachineryDashboard from "./machinery/MachineryDashboard.jsx";
 import { loadMachineryListOfflineFirst } from "./machinery/machineryApi.js";
 import ScaffoldDashboard from "./scaffold/ScaffoldDashboard.jsx";
@@ -397,14 +398,24 @@ async function loadAnomaliesOfflineFirst() {
   if (isOnline()) {
     const rows = await sb(`anomalies?select=*&order=created_at.desc${filter}`);
     if (sbOk(rows)) {
-      for (const r of rows) await putRecord("anomalies", r.id, r, "synced");
-      const cached = await getRecordsByModule("anomalies");
-      const serverIds = new Set(rows.map((r) => r.id));
-      const localOnly = cached.filter((c) => c.syncStatus !== "synced" && !serverIds.has(c.id) && !c.data?.deleted);
-      return [
-        ...localOnly.map((c) => anomalyFromRow({ ...c.data, __syncStatus: c.syncStatus })),
-        ...rows.map((r) => anomalyFromRow({ ...r, __syncStatus: "synced" })),
-      ];
+      // نوشتن/خواندن کش محلی (IndexedDB) نباید کل بارگذاری را خراب کند —
+      // اگر به هر دلیلی (Private Browsing، پر شدن Quota) خطا بدهد، دست‌کم
+      // داده‌ی تازه‌ی سرور نمایش داده شود، نه اینکه صفحه برای همیشه روی
+      // «در حال بارگذاری» بماند (چون load() بالادست این تابع را await
+      // می‌کند و بدون catch، خطا یعنی setLoading(false) هرگز اجرا نشود).
+      try {
+        for (const r of rows) await putRecord("anomalies", r.id, r, "synced");
+        const cached = await getRecordsByModule("anomalies");
+        const serverIds = new Set(rows.map((r) => r.id));
+        const localOnly = cached.filter((c) => c.syncStatus !== "synced" && !serverIds.has(c.id) && !c.data?.deleted);
+        return [
+          ...localOnly.map((c) => anomalyFromRow({ ...c.data, __syncStatus: c.syncStatus })),
+          ...rows.map((r) => anomalyFromRow({ ...r, __syncStatus: "synced" })),
+        ];
+      } catch (e) {
+        console.error("همگام‌سازی کش محلی آنومالی‌ها ناموفق بود", e);
+        return rows.map((r) => anomalyFromRow({ ...r, __syncStatus: "synced" }));
+      }
     }
   }
   // آفلاین یا خطای شبکه → فقط از حافظه‌ی محلی بخوان
@@ -2439,8 +2450,16 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
   const [reviewSaving, setReviewSaving] = useState(false);
 
   const load = async () => {
-    setAnomalies(await loadAnomaliesOfflineFirst());
-    setLoading(false);
+    // طبق گزارش صریح: اگر بارگذاری با خطا مواجه شود، صفحه نباید برای
+    // همیشه روی «در حال بارگذاری» بماند — finally تضمین می‌کند
+    // setLoading(false) در هر حالتی (موفق یا ناموفق) اجرا شود.
+    try {
+      setAnomalies(await loadAnomaliesOfflineFirst());
+    } catch (e) {
+      console.error("بارگذاری لیست آنومالی‌ها ناموفق بود", e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, []);
@@ -2506,7 +2525,13 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
       const order = { High: 0, Med: 1, Low: 2 };
       return (order[a.riskLevel] ?? 1) - (order[b.riskLevel] ?? 1);
     }
-    const at = a.date || a.createdAt || "", bt = b.date || b.createdAt || "";
+    // طبق خواسته‌ی صریح: رکورد تازه‌ثبت‌شده باید بالای لیست بیاید — یعنی
+    // ترتیب باید بر اساس زمان واقعیِ ثبت (createdAt) باشد، نه تاریخ وقوع
+    // (a.date) که کاربر دستی وارد می‌کند. قبلاً a.date اولویت داشت، پس یک
+    // آنومالیِ تازه‌ثبت‌شده ولی با تاریخ وقوعِ قدیمی‌تر (مثلاً گزارش دیرهنگام)
+    // در وسط/پایین لیست گم می‌شد. این دقیقاً همان الگویی است که در
+    // Personnel/Machinery/Scaffold از قبل درست پیاده‌سازی شده بود.
+    const at = a.createdAt || a.date || "", bt = b.createdAt || b.date || "";
     return sort === "oldest" ? at.localeCompare(bt) : bt.localeCompare(at);
   });
 
@@ -3260,26 +3285,49 @@ const headerIconBtnStyle = {
   background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.22)", borderRadius: 9, cursor: "pointer",
 };
 
-function DashboardHeader({ panelLabelKey, currentUser, onLogout, onOpenSettings, smartItems, onNavigate }) {
+function DashboardHeader({ panelLabelKey, currentUser, onLogout, onOpenSettings, smartItems, onNavigate, currentModuleKey }) {
   const { t, dir } = useLanguage();
   const appearance = useAppearance();
+  // قابلیت عمومی «گزارش خطا» — طبق خواسته‌ی صریح، از هر جای سامانه (نه
+  // فقط وقتی اپ کرش می‌کند) هر کاربر باید بتواند مشکلی که می‌بیند را
+  // مستقیم به مدیر سامانه گزارش کند.
+  const [showReportError, setShowReportError] = useState(false);
   return (
     <div style={{ ...styles.topBar, direction: dir }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: "1 1 auto" }}>
         <Avatar name={currentUser?.name} size={38} bg="rgba(255,255,255,0.18)" />
         <div style={{ minWidth: 0, lineHeight: 1.35 }}>
-          <div style={{ fontSize: 14.5, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "60vw" }}>{t(panelLabelKey)}</div>
-          {currentUser?.companyName && appearance?.headerShowCompanyName !== false && (
-            <div style={{ fontSize: 11.5, color: "rgba(255,255,255,0.75)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "60vw" }}>{currentUser.companyName}</div>
-          )}
+          {/* طبق خواسته‌ی صریح: نام شرکت درست جلوی عنوان پنل (همان خط، نه
+              خط جدا) نمایش داده شود. */}
+          <div style={{ display: "flex", alignItems: "baseline", gap: 6, minWidth: 0 }}>
+            <span style={{ fontSize: 14.5, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "60vw" }}>{t(panelLabelKey)}</span>
+            {currentUser?.companyName && appearance?.headerShowCompanyName !== false && (
+              <span style={{ fontSize: 11.5, color: "rgba(255,255,255,0.75)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "40vw" }}>— {currentUser.companyName}</span>
+            )}
+          </div>
           {currentUser?.name && (
-            <div style={{ fontSize: 10.5, color: "rgba(255,255,255,0.6)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "60vw" }}>{currentUser.name}</div>
+            <div style={{ fontSize: 10.5, color: "rgba(255,255,255,0.6)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "60vw" }}>
+              {currentUser.name}
+              {/* سمت/شغلی که برای این کاربر در پنل SuperAdmin تعریف شده — طبق خواسته‌ی صریح، کنار نام او */}
+              {currentUser?.jobPositionTitle && <span style={{ color: "rgba(255,255,255,0.45)" }}> · {currentUser.jobPositionTitle}</span>}
+            </div>
           )}
         </div>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
         <OnlineIndicator />
         {smartItems && <NotificationPanel smartItems={smartItems} onNavigate={onNavigate} />}
+        <button type="button" onClick={() => setShowReportError(true)} style={headerIconBtnStyle} title="گزارش خطا به مدیر سامانه">
+          <AlertTriangle size={16} color="#fff" />
+        </button>
+        {showReportError && (
+          <ReportErrorModal
+            currentUser={currentUser}
+            moduleKey={currentModuleKey || ""}
+            pageLabel={t(panelLabelKey)}
+            onClose={() => setShowReportError(false)}
+          />
+        )}
         <button type="button" onClick={onOpenSettings} style={headerIconBtnStyle} title={t("settingsTooltip")}>
           <Settings size={16} color="#fff" />
         </button>
@@ -3516,7 +3564,7 @@ function ResponsiveDashboardShell({ panelLabelKey, currentUser, onLogout, onOpen
     // موبایل — عیناً همان ساختار قبلی، بدون کوچک‌ترین تغییر
     return (
       <div style={{ ...styles.dashboardWrapper, direction: dir }}>
-        <DashboardHeader panelLabelKey={panelLabelKey} currentUser={currentUser} onLogout={onLogout} onOpenSettings={onOpenSettings} smartItems={smartItems} onNavigate={onNavigate} />
+        <DashboardHeader panelLabelKey={panelLabelKey} currentUser={currentUser} onLogout={onLogout} onOpenSettings={onOpenSettings} smartItems={smartItems} onNavigate={onNavigate} currentModuleKey={view} />
         {children}
       </div>
     );
@@ -3529,7 +3577,7 @@ function ResponsiveDashboardShell({ panelLabelKey, currentUser, onLogout, onOpen
 
   return (
     <div style={{ direction: dir, fontFamily: THEME.font, minHeight: "100vh", background: THEME.bg, display: "flex", flexDirection: "column" }}>
-      <DashboardHeader panelLabelKey={panelLabelKey} currentUser={currentUser} onLogout={onLogout} onOpenSettings={onOpenSettings} smartItems={smartItems} onNavigate={onNavigate} />
+      <DashboardHeader panelLabelKey={panelLabelKey} currentUser={currentUser} onLogout={onLogout} onOpenSettings={onOpenSettings} smartItems={smartItems} onNavigate={onNavigate} currentModuleKey={view} />
       <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
         <Sidebar modules={sidebarModules} view={view} setView={setView} collapsed={collapsed} onToggleCollapse={() => setCollapsed((v) => !v)} />
         <main style={{ flex: 1, minWidth: 0, overflowY: "auto", padding: "28px clamp(20px, 3vw, 40px)" }}>
@@ -3636,9 +3684,15 @@ function WelcomeCard({ currentUser }) {
 }
 
 function TasksCard({ tasks, onTaskClick }) {
+  // طبق گزارش صریح: اندازه‌ی این باکس باید ثابت بماند (هم‌تراز با کارت
+  // خوش‌آمدگویی کنارش) و با زیاد شدن آیتم‌ها، خودِ باکس بزرگ نشود — فقط
+  // ناحیه‌ی داخلی‌اش اسکرول بخورد. برای همین کل کارت یک ارتفاعِ ثابت
+  // می‌گیرد (نه height:100% که به ارتفاعِ محتوا وابسته بود)، هدر با
+  // flexShrink:0 ثابت می‌ماند، و فقط ناحیه‌ی لیست (flex:1, minHeight:0)
+  // در صورت نیاز اسکرول داخلی پیدا می‌کند.
   return (
-    <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 14, padding: 16, height: "100%" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: tasks && tasks.length > 0 ? 12 : 0 }}>
+    <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 14, padding: 16, height: 280, display: "flex", flexDirection: "column" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: tasks && tasks.length > 0 ? 12 : 0, flexShrink: 0 }}>
         <h3 style={{ fontSize: 13.5, fontWeight: 700, color: THEME.navy, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
           <ClipboardList size={15} color={THEME.teal} /> کارهای در دست اقدام من
         </h3>
@@ -3651,7 +3705,7 @@ function TasksCard({ tasks, onTaskClick }) {
         <p style={{ fontSize: 12, color: THEME.text3, margin: 0 }}>در حال حاضر هیچ کاری در دست اقدام شما نیست.</p>
       )}
       {tasks && tasks.length > 0 && (
-        <div style={{ maxHeight: 320, overflowY: "auto" }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
           {tasks.map((it) => (
             <div
               key={`${it.kind}-${it.id}`}
@@ -4467,16 +4521,30 @@ function ContractorDashboard({ onLogout, currentUser }) {
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { error: null };
+    this.state = { error: null, info: null, showReport: false };
   }
   static getDerivedStateFromError(error) {
     return { error };
   }
   componentDidCatch(error, info) {
     console.error("App error:", error, info);
+    this.setState({ info });
+  }
+  // ErrorBoundary یک کامپوننت کلاسی بیرون از درخت AppInner است، پس به
+  // currentUser از طریق props/context دسترسی ندارد — مستقیم همان کلید
+  // localStorage که usePersistedState برای «کاربر واردشده» استفاده می‌کند
+  // خوانده می‌شود تا گزارش خطا بتواند کاربر را شناسایی کند.
+  getCurrentUserForReport() {
+    try {
+      const raw = localStorage.getItem("ihms_current_user");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
   }
   render() {
     if (this.state.error) {
+      const currentUser = this.getCurrentUserForReport();
       return (
         <div style={{ padding: 24, fontFamily: "Tahoma, Arial, sans-serif", direction: "rtl", maxWidth: 560, margin: "40px auto" }}>
           <h3 style={{ color: "#c92a2a" }}>مشکلی در اجرای اپلیکیشن پیش آمد</h3>
@@ -4484,6 +4552,25 @@ class ErrorBoundary extends React.Component {
           <pre style={{ whiteSpace: "pre-wrap", fontSize: 12, color: "#991b1b", background: "#fee2e2", padding: 12, borderRadius: 8 }}>
             {String((this.state.error && this.state.error.message) || this.state.error)}
           </pre>
+          {currentUser && (
+            <button
+              type="button"
+              onClick={() => this.setState({ showReport: true })}
+              style={{ marginTop: 8, padding: "9px 16px", borderRadius: 8, border: "none", background: "#c92a2a", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Tahoma, Arial, sans-serif" }}
+            >
+              گزارش این خطا به مدیر سامانه
+            </button>
+          )}
+          {this.state.showReport && currentUser && (
+            <ReportErrorModal
+              currentUser={currentUser}
+              moduleKey="app_crash"
+              pageLabel="خطای بحرانی برنامه (ErrorBoundary)"
+              technicalMessage={String((this.state.error && this.state.error.message) || this.state.error)}
+              technicalStack={String((this.state.error && this.state.error.stack) || "") + "\n" + String((this.state.info && this.state.info.componentStack) || "")}
+              onClose={() => this.setState({ showReport: false })}
+            />
+          )}
         </div>
       );
     }
