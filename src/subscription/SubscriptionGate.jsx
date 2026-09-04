@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { CreditCard, Clock, CheckCircle2, XCircle, LogOut, Loader2 } from "lucide-react";
+import { CheckCircle2, XCircle, LogOut, Loader2, Clock } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { toJalaliDateTime } from "../personnel/jalaliDate.jsx";
 import {
   computeSubscriptionAccess, loadMySubscriptionInfo, loadPurchasablePlans,
-  initiatePayment, verifyPayment,
+  verifyPayment,
 } from "../subscriptionApi.js";
+import PaymentMethodsSection from "./CardTransferPayment.jsx";
 
 /**
  * گیت اشتراک — درست بعد از ورود موفق (و بیومتریک، اگر فعال باشد) و قبل
@@ -115,8 +116,6 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
   const [plans, setPlans] = useState(null);
   const [selectedPlanId, setSelectedPlanId] = useState("");
   const [billingCycle, setBillingCycle] = useState("yearly");
-  const [paying, setPaying] = useState(false);
-  const [error, setError] = useState("");
 
   useEffect(() => { loadPurchasablePlans().then(setPlans); }, []);
 
@@ -126,15 +125,6 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
   const handleSelectPlan = (p, cycle) => {
     setSelectedPlanId(p.id);
     setBillingCycle(cycle);
-  };
-
-  const handlePay = async () => {
-    if (!selectedPlanId) { setError("لطفاً یک پلن را انتخاب کنید"); return; }
-    setPaying(true); setError("");
-    const result = await initiatePayment(selectedPlanId, billingCycle);
-    setPaying(false);
-    if (result?.__error) { setError(result.message); return; }
-    window.location.href = result.redirectUrl; // انتقال کامل به درگاه زرین‌پال
   };
 
   return (
@@ -218,15 +208,12 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
         </div>
 
         {selectedPlan && (
-          <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 14, padding: 20, maxWidth: 420, margin: "0 auto" }}>
+          <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 14, padding: 20, maxWidth: 460, margin: "0 auto" }}>
             <h4 style={{ fontSize: 13, fontWeight: 700, color: THEME.navy, margin: "0 0 10px" }}>خلاصه‌ی خرید</h4>
             <p style={{ fontSize: 12.5, color: THEME.text2, margin: "0 0 4px" }}>پلن: <b>{selectedPlan.name}</b></p>
             <p style={{ fontSize: 12.5, color: THEME.text2, margin: "0 0 4px" }}>دوره: <b>{billingCycle === "monthly" ? "ماهانه" : "سالانه"}</b></p>
             <p style={{ fontSize: 15, fontWeight: 800, color: THEME.teal, margin: "10px 0" }}>مبلغ نهایی: {amount.toLocaleString("fa-IR")} تومان</p>
-            {error && <p style={styles.error}>{error}</p>}
-            <button type="button" style={{ ...styles.button, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={handlePay} disabled={paying}>
-              <CreditCard size={15} /> {paying ? "در حال انتقال به درگاه..." : "پرداخت و فعال‌سازی"}
-            </button>
+            <PaymentMethodsSection currentUser={currentUser} selectedPlan={selectedPlan} billingCycle={billingCycle} amount={amount} />
           </div>
         )}
       </div>

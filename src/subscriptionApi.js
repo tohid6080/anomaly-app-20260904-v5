@@ -1,4 +1,4 @@
-import { sb, sbOk, SUPABASE_URL, SUPABASE_ANON_KEY, getCurrentCompanyId } from "./shared.js";
+import { sb, sbOk, uid, SUPABASE_URL, SUPABASE_ANON_KEY, getCurrentCompanyId } from "./shared.js";
 import { getSessionToken } from "./sessionToken.js";
 
 /**
@@ -186,4 +186,59 @@ export async function activateTrialForCompany(companyId, planId, changedBy, star
   }, "super_admin");
 
   return { ok: true, trialEnd: end.toISOString() };
+}
+
+// ---------- پرداخت کارت‌به‌کارت — مسیر دوم موازی با پرداخت آنلاین زرین‌پال ----------
+// روی همان جدول payments موجود (نه جدول جدا) با method='card_transfer'،
+// تا تاریخچه‌ی پرداخت هر شرکت یکپارچه بماند. منطق پرداخت آنلاین
+// (initiatePayment/verifyPayment بالا) کاملاً دست‌نخورده است.
+
+// اطلاعات نمایشی کارت (شماره کارت/نام صاحب کارت/توضیحات) — روی همان
+// system_settings موجود (با پیشوند payment_cardtransfer_*)، دقیقاً همان
+// الگوی appearance config در systemConfigApi.js. customer scope چون
+// همین صفحه‌ی قفل (SubscriptionGate) بعد از لاگین عادی خوانده می‌شود.
+const CARD_TRANSFER_KEYS = ["payment_cardtransfer_card_number", "payment_cardtransfer_holder_name", "payment_cardtransfer_description"];
+
+export async function loadCardTransferSettings() {
+  const rows = await sb(`system_settings?key=in.(${CARD_TRANSFER_KEYS.map((k) => `"${k}"`).join(",")})&select=key,value_text`);
+  const map = {};
+  if (sbOk(rows)) rows.forEach((r) => { map[r.key] = r.value_text; });
+  return {
+    cardNumber: map.payment_cardtransfer_card_number || "",
+    holderName: map.payment_cardtransfer_holder_name || "",
+    description: map.payment_cardtransfer_description || "",
+  };
+}
+
+// ثبت رسید پرداخت — وضعیت اولیه همیشه «در انتظار تأیید» است (خودِ RLS هم
+// این را در with_check اجبار می‌کند، پس این فقط یک لایه‌ی اطمینانِ دوم
+// سمت کلاینت است، نه مرز امنیتی واقعی).
+export async function submitCardTransferReceipt({ planId, billingCycle, amount, payerName, payerPhone, trackingNumber, receiptImage }, requestedBy) {
+  const companyId = getCurrentCompanyId();
+  if (!companyId) return { __error: true, message: "شرکت جاری مشخص نیست — لطفاً دوباره وارد شوید." };
+  if (!planId || !billingCycle) return { __error: true, message: "پلن یا دوره‌ی پرداخت نامعتبر است" };
+  if (!payerName?.trim() || !payerPhone?.trim() || !trackingNumber?.trim()) {
+    return { __error: true, message: "نام، شماره موبایل و شماره پیگیری الزامی است" };
+  }
+  const id = uid("card");
+  const payload = {
+    id, company_id: companyId, plan_id: planId, billing_cycle: billingCycle,
+    amount: Math.round(Number(amount) || 0), order_id: id,
+    method: "card_transfer", status: "awaiting_review",
+    payer_name: payerName.trim(), payer_phone: payerPhone.trim(),
+    tracking_number: trackingNumber.trim(), receipt_image: receiptImage || null,
+    requested_by: requestedBy || "",
+  };
+  const rows = await sb("payments", { method: "POST", body: JSON.stringify([payload]) });
+  if (!sbOk(rows)) return { __error: true, message: `خطا در ثبت رسید: ${rows?.message || "نامشخص"}` };
+  return { ok: true };
+}
+
+// تاریخچه‌ی پرداخت‌های کارت‌به‌کارتِ خودِ شرکت جاری — برای نمایش وضعیت
+// («در انتظار تأیید»/رد/تأیید) بعد از ثبت.
+export async function loadMyCardTransferPayments() {
+  const companyId = getCurrentCompanyId();
+  if (!companyId) return [];
+  const rows = await sb(`payments?company_id=eq.${companyId}&method=eq.card_transfer&select=*&order=created_at.desc`);
+  return sbOk(rows) ? rows : [];
 }

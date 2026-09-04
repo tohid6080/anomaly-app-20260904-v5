@@ -68,7 +68,7 @@ import { retryItemNow } from "./offline/syncEngine.js";
 import { exportWorkbookNativeAware, exportHtmlReportNativeAware } from "./offline/nativeFile.js";
 import { saveBlobNativeAware } from "./offline/archiveZip.js";
 import { toJalaliDateTime, toJalaliSafe } from "./personnel/jalaliDate.jsx";
-import { APP_NAME, sb, sbOk, sbErrMsg, uid, todayISO, THEME, styles, usePersistedState, setCurrentCompanyId, getCurrentCompanyId, loadCurrentCompanyPlanFeatures, isModuleInPlan } from "./shared.js";
+import { APP_NAME, sb, sbOk, sbErrMsg, uid, todayISO, THEME, styles, usePersistedState, setCurrentCompanyId, getCurrentCompanyId, loadCurrentCompanyPlanFeatures, isModuleInPlan, resizeImageFile } from "./shared.js";
 
 /**
  * اپلیکیشن کارفرما / پیمانکار / ادمین + ماژول ثبت و پیگیری آنومالی HSE
@@ -952,30 +952,6 @@ async function exportAnomaliesPdf(list, title) {
 }
 
 
-function resizeImageFile(file, maxDim = 1280, quality = 0.72) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error("خطا در خواندن فایل"));
-    reader.onload = () => {
-      const img = new Image();
-      img.onerror = () => reject(new Error("فایل تصویر معتبر نیست"));
-      img.onload = () => {
-        let { width, height } = img;
-        if (width > maxDim || height > maxDim) {
-          if (width > height) { height = Math.round((height * maxDim) / width); width = maxDim; }
-          else { width = Math.round((width * maxDim) / height); height = maxDim; }
-        }
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL("image/jpeg", quality));
-      };
-      img.src = reader.result;
-    };
-    reader.readAsDataURL(file);
-  });
-}
 
 // ---------- صفحه ورود ----------
 // ---------- لوگوی سامانه (بارگذاری از public/logo.png) ----------

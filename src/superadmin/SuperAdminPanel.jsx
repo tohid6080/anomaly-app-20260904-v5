@@ -17,9 +17,11 @@ import {
   loadCompanyUsageStats, loadRecentLogins, loadRecentFailedLogins, computeInactiveCompanies,
   loadAuditLog, loadStorageUsage, setStorageCapacity, storageUsageStatus,
   copyBowtiesToCompany, copyRiskKnowledgeToCompany,
+  loadCardTransferPayments, approveCardTransferPayment, rejectCardTransferPayment, saveCardTransferSettings,
 } from "./superAdminApi.js";
-import { computeSubscriptionAccess, loadOnlinePaymentsForCompany } from "../subscriptionApi.js";
+import { computeSubscriptionAccess, loadOnlinePaymentsForCompany, loadCardTransferSettings } from "../subscriptionApi.js";
 import { loadErrorReports, updateErrorReportStatus } from "../errorReportsApi.js";
+import DocumentViewerModal from "../personnel/DocumentViewerModal.jsx";
 
 const inputStyle = { width: "100%", padding: "8px 10px", borderRadius: 8, border: `1.5px solid ${THEME.border}`, fontSize: 12.5, fontFamily: THEME.font, boxSizing: "border-box" };
 const btnStyle = (bg) => ({ padding: "7px 14px", borderRadius: 8, border: "none", background: bg || THEME.teal, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font });
@@ -111,6 +113,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
     { key: "systemConfig", label: "پیکربندی سامانه", icon: Settings2 },
     { key: "auditLog", label: "گزارش تغییرات", icon: FileClock },
     { key: "errorReports", label: "گزارش‌های خطا", icon: AlertTriangle },
+    { key: "cardTransferPayments", label: "رسیدهای پرداخت", icon: CreditCard },
   ];
 
   return (
@@ -180,6 +183,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
           {page === "systemConfig" && <SystemConfigPage currentAdmin={currentAdmin} companies={companies} />}
           {page === "auditLog" && <AuditLogPage companies={companies} />}
           {page === "errorReports" && <ErrorReportsPage currentAdmin={currentAdmin} />}
+          {page === "cardTransferPayments" && <CardTransferPaymentsPage currentAdmin={currentAdmin} />}
         </div>
       </div>
     </div>
@@ -1579,6 +1583,185 @@ function ErrorReportsPage({ currentAdmin }) {
           </table>
         </div>
       )}
+    </div>
+  );
+}
+
+// ---------- رسیدهای پرداخت کارت‌به‌کارت ----------
+// روی همان جدول payments موجود (method='card_transfer') — پرداخت آنلاین
+// زرین‌پال جای دیگری (loadOnlinePaymentsForCompany، داخل جزئیات هر
+// شرکت) نمایش داده می‌شود و اینجا کاملاً دست‌نخورده می‌ماند.
+const CARD_PAYMENT_STATUS_META = {
+  awaiting_review: { label: "در انتظار تأیید", color: "#b45309", bg: "#fef3c7" },
+  paid: { label: "تأیید شده", color: "#166534", bg: "#dcfce7" },
+  rejected: { label: "رد شده", color: "#b91c1c", bg: "#fee2e2" },
+};
+
+function CardTransferSettingsForm({ currentAdmin }) {
+  const [settings, setSettings] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const load = () => loadCardTransferSettings().then(setSettings);
+  useEffect(() => { load(); }, []);
+
+  const handleSave = async () => {
+    setSaving(true); setMessage("");
+    const result = await saveCardTransferSettings(settings, currentAdmin?.fullName || currentAdmin?.username);
+    setSaving(false);
+    setMessage(result?.__error ? result.message : "تنظیمات پرداخت ذخیره شد.");
+  };
+
+  if (!settings) return <p style={{ fontSize: 12, color: THEME.text3, padding: 12 }}>در حال بارگذاری...</p>;
+
+  return (
+    <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16, marginBottom: 16 }}>
+      <h3 style={{ fontSize: 13.5, fontWeight: 700, color: THEME.navy, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
+        <CreditCard size={14} color={THEME.teal} /> تنظیمات نمایشی پرداخت کارت‌به‌کارت
+      </h3>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
+        <div>
+          <label style={smallLabelStyle}>شماره کارت</label>
+          <input style={{ ...inputStyle, direction: "ltr", textAlign: "left" }} value={settings.cardNumber} onChange={(e) => setSettings({ ...settings, cardNumber: e.target.value })} placeholder="6037-XXXX-XXXX-XXXX" />
+        </div>
+        <div>
+          <label style={smallLabelStyle}>نام صاحب کارت</label>
+          <input style={inputStyle} value={settings.holderName} onChange={(e) => setSettings({ ...settings, holderName: e.target.value })} dir="rtl" />
+        </div>
+      </div>
+      <label style={smallLabelStyle}>توضیحات (زیر مشخصات کارت، برای کاربر نمایش داده می‌شود)</label>
+      <textarea style={{ ...inputStyle, minHeight: 60 }} value={settings.description} onChange={(e) => setSettings({ ...settings, description: e.target.value })} dir="rtl" />
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
+        <button type="button" style={btnStyle()} onClick={handleSave} disabled={saving}>{saving ? "در حال ذخیره..." : "ذخیره‌ی تنظیمات"}</button>
+        {message && <span style={{ fontSize: 11.5, color: THEME.text3 }}>{message}</span>}
+      </div>
+    </div>
+  );
+}
+
+function CardTransferPaymentsPage({ currentAdmin }) {
+  const [statusFilter, setStatusFilter] = useState("awaiting_review");
+  const [rows, setRows] = useState(null);
+  const [expandedId, setExpandedId] = useState(null);
+  const [rejectNote, setRejectNote] = useState("");
+  const [showRejectFor, setShowRejectFor] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [viewerSrc, setViewerSrc] = useState(null);
+
+  const load = () => loadCardTransferPayments(statusFilter).then(setRows);
+  useEffect(() => { setRows(null); load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [statusFilter]);
+
+  const handleApprove = async (r) => {
+    if (!confirm(`تأیید پرداخت و فعال‌سازی خودکار اشتراک شرکت «${r.companyName}»؟`)) return;
+    setSaving(true);
+    const result = await approveCardTransferPayment(r.id, currentAdmin?.fullName || currentAdmin?.username);
+    setSaving(false);
+    if (result?.__error) { alert(result.message); return; }
+    setExpandedId(null);
+    load();
+  };
+
+  const handleReject = async (r) => {
+    setSaving(true);
+    const result = await rejectCardTransferPayment(r.id, currentAdmin?.fullName || currentAdmin?.username, rejectNote);
+    setSaving(false);
+    if (result?.__error) { alert(result.message); return; }
+    setShowRejectFor(null); setRejectNote(""); setExpandedId(null);
+    load();
+  };
+
+  const awaitingCount = statusFilter === "awaiting_review" ? (rows || []).length : null;
+
+  return (
+    <div>
+      <CardTransferSettingsForm currentAdmin={currentAdmin} />
+      <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
+          <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+            <CreditCard size={14} color={THEME.teal} /> رسیدهای پرداخت کارت‌به‌کارت
+            {awaitingCount > 0 && (
+              <span style={{ background: THEME.danger, color: "#fff", fontSize: 10.5, fontWeight: 700, borderRadius: 999, minWidth: 19, height: 19, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>
+                {awaitingCount}
+              </span>
+            )}
+          </h3>
+          <select style={{ ...inputStyle, width: "auto" }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir="rtl">
+            <option value="all">همه وضعیت‌ها</option>
+            <option value="awaiting_review">در انتظار تأیید</option>
+            <option value="paid">تأیید شده</option>
+            <option value="rejected">رد شده</option>
+          </select>
+        </div>
+
+        {rows === null && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>در حال بارگذاری...</p>}
+        {rows !== null && rows.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>رسیدی با این وضعیت یافت نشد.</p>}
+
+        {rows && rows.length > 0 && (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+              <thead>
+                <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
+                  <th style={{ textAlign: "right", padding: "6px 8px" }}>شرکت</th>
+                  <th style={{ textAlign: "right", padding: "6px 8px" }}>پلن / دوره</th>
+                  <th style={{ textAlign: "center", padding: "6px 8px" }}>مبلغ</th>
+                  <th style={{ textAlign: "right", padding: "6px 8px" }}>واریزکننده</th>
+                  <th style={{ textAlign: "center", padding: "6px 8px" }}>زمان</th>
+                  <th style={{ textAlign: "center", padding: "6px 8px" }}>وضعیت</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => {
+                  const sm = CARD_PAYMENT_STATUS_META[r.status] || CARD_PAYMENT_STATUS_META.awaiting_review;
+                  return (
+                    <React.Fragment key={r.id}>
+                      <tr style={{ borderBottom: `1px solid ${THEME.border}`, cursor: "pointer" }} onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}>
+                        <td style={{ padding: "8px", fontWeight: 600 }}>{r.companyName || "—"}</td>
+                        <td style={{ padding: "8px" }}>{r.planName || "—"} — {r.billingCycle === "monthly" ? "ماهانه" : "سالانه"}</td>
+                        <td style={{ padding: "8px", textAlign: "center", fontWeight: 700, color: THEME.navy }}>{r.amount.toLocaleString("fa-IR")}</td>
+                        <td style={{ padding: "8px" }}>{r.payerName} <span style={{ color: THEME.text3, fontSize: 10.5, direction: "ltr", display: "inline-block" }}>({r.payerPhone})</span></td>
+                        <td style={{ padding: "8px", textAlign: "center", color: THEME.text3, whiteSpace: "nowrap" }}>{toJalaliDateTime(r.createdAt)}</td>
+                        <td style={{ padding: "8px", textAlign: "center" }}>
+                          <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: sm.bg, color: sm.color, fontWeight: 700 }}>{sm.label}</span>
+                        </td>
+                      </tr>
+                      {expandedId === r.id && (
+                        <tr>
+                          <td colSpan={6} style={{ padding: "10px 12px", background: THEME.bg }}>
+                            <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 10 }}>
+                              <p style={{ fontSize: 12, color: THEME.text2, margin: 0 }}>شماره پیگیری: <b style={{ direction: "ltr", display: "inline-block" }}>{r.trackingNumber || "—"}</b></p>
+                              {r.receiptImage && (
+                                <button type="button" style={btnStyle(THEME.navyMid)} onClick={() => setViewerSrc(r.receiptImage)}>مشاهده‌ی تصویر رسید</button>
+                              )}
+                            </div>
+                            {r.adminNote && <p style={{ fontSize: 11.5, color: "#b91c1c", margin: "0 0 8px" }}>دلیل رد: {r.adminNote}</p>}
+                            {r.reviewedAt && <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 8px" }}>بررسی‌شده توسط {r.reviewedBy || "—"} در {toJalaliDateTime(r.reviewedAt)}</p>}
+
+                            {r.status === "awaiting_review" && (
+                              <div>
+                                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                                  <button type="button" style={btnStyle("#166534")} disabled={saving} onClick={() => handleApprove(r)}>تأیید و فعال‌سازی اشتراک</button>
+                                  <button type="button" style={btnStyle(THEME.danger)} disabled={saving} onClick={() => setShowRejectFor(showRejectFor === r.id ? null : r.id)}>رد رسید</button>
+                                </div>
+                                {showRejectFor === r.id && (
+                                  <div style={{ marginTop: 8 }}>
+                                    <textarea style={{ ...inputStyle, minHeight: 50 }} placeholder="دلیل رد (الزامی)" value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} dir="rtl" />
+                                    <button type="button" style={{ ...btnStyle(THEME.danger), marginTop: 6 }} disabled={saving || !rejectNote.trim()} onClick={() => handleReject(r)}>ثبت رد رسید</button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+      {viewerSrc && <DocumentViewerModal src={viewerSrc} onClose={() => setViewerSrc(null)} />}
     </div>
   );
 }

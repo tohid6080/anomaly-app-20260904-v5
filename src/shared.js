@@ -83,6 +83,36 @@ export function uid(prefix) {
   return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 }
 
+// تغییر اندازه/فشرده‌سازی یک فایل تصویر سمت مرورگر قبل از ذخیره‌ی base64 —
+// جابه‌جا شده به اینجا (از App.jsx) چون یک کامپوننت زیرپوشه‌ای مستقل از
+// App.jsx (فرم ثبت رسید پرداخت کارت‌به‌کارت) هم به همین تابع نیاز داشت؛
+// اگر مستقیم از App.jsx وارد می‌شد، چون App.jsx خودش SubscriptionGate را
+// وارد می‌کند، یک وابستگی حلقوی ایجاد می‌شد.
+export function resizeImageFile(file, maxDim = 1280, quality = 0.72) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("خطا در خواندن فایل"));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("فایل تصویر معتبر نیست"));
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) { height = Math.round((height * maxDim) / width); width = maxDim; }
+          else { width = Math.round((width * maxDim) / height); height = maxDim; }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 export function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }

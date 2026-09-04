@@ -490,6 +490,95 @@ export async function loadCompanySubscriptionHistory(companyId) {
   return sbOk(rows) ? rows : [];
 }
 
+// ---------- تأیید/رد رسیدهای پرداخت کارت‌به‌کارت ----------
+// روی همان جدول payments موجود (method='card_transfer') — منطق تأیید
+// آنلاین زرین‌پال (Edge Function) کاملاً دست‌نخورده می‌ماند؛ این فقط یک
+// مسیر دوم مشابه است، برای وقتی سوپرادمین یک رسید دستی را تأیید می‌کند.
+
+function cardTransferPaymentFromRow(r) {
+  return {
+    id: r.id, companyId: r.company_id, companyName: r.companies?.name || "",
+    planId: r.plan_id, planName: r.plans?.name || "", billingCycle: r.billing_cycle,
+    amount: Number(r.amount) || 0, status: r.status,
+    payerName: r.payer_name || "", payerPhone: r.payer_phone || "",
+    trackingNumber: r.tracking_number || "", receiptImage: r.receipt_image || "",
+    adminNote: r.admin_note || "", reviewedBy: r.reviewed_by || "", reviewedAt: r.reviewed_at || "",
+    requestedBy: r.requested_by || "", createdAt: r.created_at,
+  };
+}
+
+export async function loadCardTransferPayments(statusFilter) {
+  const filter = statusFilter && statusFilter !== "all" ? `&status=eq.${statusFilter}` : "";
+  const rows = await sb(`payments?method=eq.card_transfer&select=*,companies(name),plans(name)&order=created_at.desc${filter}`, {}, "super_admin");
+  return sbOk(rows) ? rows.map(cardTransferPaymentFromRow) : [];
+}
+
+// تأیید — وضعیت رسید paid می‌شود و اشتراک شرکت دقیقاً به همان شکلِ
+// activateSubscription در Edge Function زرین‌پال فعال می‌شود (همان
+// ستون‌ها، همان قاعده‌ی تاریخ پایان، فقط با action متفاوت در تاریخچه
+// برای تفکیک از پرداخت آنلاین). فیلتر status=eq.awaiting_review روی خودِ
+// PATCH یعنی اگر رسید قبلاً تأیید/رد شده، این تابع بی‌اثر است (idempotent
+// — دوبار کلیک تأیید، اشتراک را دوبار تمدید نمی‌کند).
+export async function approveCardTransferPayment(paymentId, reviewedBy) {
+  const rows = await sb(`payments?id=eq.${paymentId}&status=eq.awaiting_review`, {
+    method: "PATCH",
+    body: JSON.stringify({ status: "paid", reviewed_by: reviewedBy || "", reviewed_at: new Date().toISOString() }),
+  }, "super_admin");
+  if (!sbOk(rows)) return { __error: true, message: "خطا در تأیید پرداخت" };
+  if (rows.length === 0) return { __error: true, message: "این رسید قبلاً تأیید/رد شده یا پیدا نشد" };
+  const payment = rows[0];
+
+  const endDate = computeSubscriptionEndDate(payment.billing_cycle);
+  const companyRows = await sb(`companies?id=eq.${payment.company_id}&select=plan_id`, {}, "super_admin");
+  const previousPlanId = sbOk(companyRows) && companyRows.length > 0 ? companyRows[0].plan_id : null;
+
+  await sb(`companies?id=eq.${payment.company_id}`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      plan_id: payment.plan_id, subscription_type: payment.billing_cycle, subscription_status: "active",
+      subscription_start_date: new Date().toISOString(), subscription_end_date: endDate,
+    }),
+  }, "super_admin");
+
+  await sb("company_subscription_history", {
+    method: "POST", prefer: "return=minimal",
+    body: JSON.stringify([{
+      company_id: payment.company_id, plan_id: payment.plan_id, previous_plan_id: previousPlanId,
+      action: "auto_activated_card_transfer",
+      note: `تأیید رسید کارت‌به‌کارت — دوره‌ی ${payment.billing_cycle === "monthly" ? "ماهانه" : "سالانه"} — پیگیری: ${payment.tracking_number || "—"}`,
+      changed_by: reviewedBy || "",
+    }]),
+  }, "super_admin");
+
+  return { ok: true };
+}
+
+export async function rejectCardTransferPayment(paymentId, reviewedBy, note) {
+  if (!note || !note.trim()) return { __error: true, message: "برای رد یک رسید، ذکر دلیل الزامی است" };
+  const rows = await sb(`payments?id=eq.${paymentId}&status=eq.awaiting_review`, {
+    method: "PATCH",
+    body: JSON.stringify({ status: "rejected", admin_note: note.trim(), reviewed_by: reviewedBy || "", reviewed_at: new Date().toISOString() }),
+  }, "super_admin");
+  if (!sbOk(rows)) return { __error: true, message: "خطا در رد پرداخت" };
+  if (rows.length === 0) return { __error: true, message: "این رسید قبلاً تأیید/رد شده یا پیدا نشد" };
+  return { ok: true };
+}
+
+// ---------- تنظیمات نمایشی پرداخت کارت‌به‌کارت (شماره کارت/نام/توضیحات) ----------
+// روی همان system_settings موجود، دقیقاً همان الگوی saveAppearanceConfig
+// در systemConfigApi.js — تا «از ساختارهای موجود استفاده کن» رعایت شود.
+export async function saveCardTransferSettings({ cardNumber, holderName, description }, updatedBy) {
+  const entries = [
+    ["payment_cardtransfer_card_number", cardNumber || ""],
+    ["payment_cardtransfer_holder_name", holderName || ""],
+    ["payment_cardtransfer_description", description || ""],
+  ];
+  const payload = entries.map(([key, value]) => ({ key, value_text: value, updated_at: new Date().toISOString(), updated_by: updatedBy || "" }));
+  const rows = await sb("system_settings?on_conflict=key", { method: "POST", body: JSON.stringify(payload), prefer: "resolution=merge-duplicates,return=representation" }, "super_admin");
+  if (!sbOk(rows)) return { __error: true, message: "خطا در ذخیره‌ی تنظیمات پرداخت" };
+  return { ok: true };
+}
+
 // عناوین شغلی یک شرکت خاص — برخلاف loadActiveJobPositions در ماژول عادی
 // (که به company_id همان کاربر واردشده وابسته است)، اینجا سوپرادمین باید
 // بتواند عناوین شغلی هر شرکتی که در فرم انتخاب کرده را ببیند.
