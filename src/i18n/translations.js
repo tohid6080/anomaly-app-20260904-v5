@@ -7355,6 +7355,11 @@ export const translations = {
   "bowtieDbeeEngineCard": { "fa": "موتور هوشمند اثربخشی Barrierها (DBEE)", "en": "Smart barrier-effectiveness engine (DBEE)" },
   "bowtiePendingPositionCount": { "fa": "{count} جابه‌جایی ثبت‌نشده", "en": "{count} unsaved move(s)" },
   "bowtieCommitPositions": { "fa": "ثبت تغییرات موقعیت", "en": "Commit position changes" },
+  "email": { "fa": "ایمیل", "en": "Email" },
+  "amTabAdmin": { "fa": "حساب‌های ادمین", "en": "Admin Accounts" },
+  "amTabHseSupervisor": { "fa": "حساب‌های سرپرست/مدیر HSE", "en": "HSE Supervisor/Manager Accounts" },
+  "amTabEmployer": { "fa": "حساب‌های کارفرما", "en": "Employer Accounts" },
+  "amTabContractor": { "fa": "حساب‌های پیمانکار", "en": "Contractor Accounts" },
 
   // --- corrective actions: Tripod Beta / incident-origin integration (project-specific) ---
   "cadTripodOriginBadge": { "fa": "🔗 مدیریت حوادث / Tripod Beta", "en": "🔗 Incident Management / Tripod Beta" },
