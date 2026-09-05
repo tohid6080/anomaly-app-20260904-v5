@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Briefcase, Plus, Pencil, Check, X, ArrowUp, ArrowDown } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { loadAllJobPositions, insertJobPosition, updateJobPosition } from "./jobPositionsApi.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 // استاندارد سراسری ذخیره‌سازی: تغییر وضعیت فعال/غیرفعال و ترتیب فقط در
 // این آرایه‌ی محلی (Draft) اعمال می‌شوند؛ هیچ Writeای تا کلیک روی «ثبت
@@ -12,6 +13,7 @@ function draftKey(list) {
 }
 
 export default function JobPositionManager({ onBack }) {
+  const { t, dir } = useLanguage();
   const [positions, setPositions] = useState([]);
   const [draftPositions, setDraftPositions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -86,23 +88,23 @@ export default function JobPositionManager({ onBack }) {
     await load();
   };
 
-  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>در حال بارگذاری...</div>;
+  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</div>;
 
   return (
-    <div style={{ maxWidth: 520, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>← بازگشت به منو</div>}
+    <div style={{ maxWidth: 520, margin: "0 auto", padding: 24, direction: dir }}>
+      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
         <Briefcase size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>مدیریت عناوین شغلی</h2>
+        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("jobPositionsTitle")}</h2>
       </div>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 18 }}>
-        عناوین شغلی که هنگام ساخت حساب کارفرما/پیمانکار قابل انتخاب هستند. غیرفعال کردن یک عنوان، حساب‌های قبلی را تغییر نمی‌دهد؛ فقط از لیست انتخاب برای حساب‌های جدید حذف می‌شود.
+        {t("jobPositionsDesc")}
       </p>
 
       <div style={styles.card}>
-        <label style={styles.label}>افزودن عنوان شغلی جدید</label>
+        <label style={styles.label}>{t("jobPositionsAddNew")}</label>
         <div style={{ display: "flex", gap: 8 }}>
-          <input style={{ ...styles.input, flex: 1 }} value={newTitle} onChange={(e) => setNewTitle(e.target.value)} dir="rtl" placeholder="مثال: HSE Manager" />
+          <input style={{ ...styles.input, flex: 1 }} value={newTitle} onChange={(e) => setNewTitle(e.target.value)} dir={dir} placeholder="e.g. HSE Manager" />
           <button type="button" style={{ ...styles.smallButton, background: THEME.teal }} onClick={handleAdd} disabled={adding}>
             <Plus size={14} />
           </button>
@@ -112,10 +114,10 @@ export default function JobPositionManager({ onBack }) {
 
       {isDirty && (
         <div style={{ position: "sticky", top: 8, zIndex: 5, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, background: "#fef3c7", border: "1px solid #f59e0b", borderRadius: 10, padding: "8px 14px", marginBottom: 10 }}>
-          <span style={{ fontSize: 11.5, color: "#92400e", fontWeight: 600 }}>تغییرات ترتیب/وضعیت هنوز ثبت نشده‌اند</span>
+          <span style={{ fontSize: 11.5, color: "#92400e", fontWeight: 600 }}>{t("jpUnsavedOrderStatusBar")}</span>
           <div style={{ display: "flex", gap: 8 }}>
-            <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={discardDraft} disabled={committing}>انصراف</button>
-            <button type="button" style={styles.smallButton} onClick={commitChanges} disabled={committing}>{committing ? "در حال ثبت..." : "ثبت تغییرات"}</button>
+            <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={discardDraft} disabled={committing}>{t("commonCancel")}</button>
+            <button type="button" style={styles.smallButton} onClick={commitChanges} disabled={committing}>{committing ? t("draftCommitting") : t("draftCommitChanges")}</button>
           </div>
         </div>
       )}
@@ -125,7 +127,7 @@ export default function JobPositionManager({ onBack }) {
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
             {editingId === pos.id ? (
               <>
-                <input style={{ ...styles.input, flex: 1 }} value={editTitle} onChange={(e) => setEditTitle(e.target.value)} dir="rtl" />
+                <input style={{ ...styles.input, flex: 1 }} value={editTitle} onChange={(e) => setEditTitle(e.target.value)} dir={dir} />
                 <button type="button" onClick={() => saveEdit(pos.id)} style={{ background: "none", border: "none", cursor: "pointer" }}><Check size={16} color={THEME.teal} /></button>
                 <button type="button" onClick={() => setEditingId(null)} style={{ background: "none", border: "none", cursor: "pointer" }}><X size={16} color={THEME.text3} /></button>
               </>
@@ -143,7 +145,7 @@ export default function JobPositionManager({ onBack }) {
                 <button type="button" onClick={() => startEdit(pos)} style={{ background: "none", border: "none", cursor: "pointer" }}><Pencil size={14} color={THEME.text3} /></button>
                 <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11.5, color: THEME.text2, cursor: "pointer" }}>
                   <input type="checkbox" checked={pos.isActive} onChange={() => toggleActiveDraft(pos.id)} />
-                  فعال
+                  {t("commonActive")}
                 </label>
               </>
             )}

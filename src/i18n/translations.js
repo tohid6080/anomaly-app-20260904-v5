@@ -7345,7 +7345,17 @@ export const translations = {
   "cadTripodAssignContractorLabel": { "fa": "شرکت / پیمانکار مسئول پیگیری", "en": "Company / contractor responsible for follow-up" },
   "cadTripodNoAssignment": { "fa": "— بدون ارجاع —", "en": "— No assignment —" },
   "cadTripodFollowUpStatus": { "fa": "وضعیت پیگیری", "en": "Follow-up status" },
-  "cadTripodEditNote": { "fa": "ویرایش شرح اقدام اصلاحی و علت ریشه‌ای فقط از ماژول «مدیریت حوادث ← Tripod Beta» امکان‌پذیر است.", "en": "The corrective action description and root cause can only be edited from the Incident Management → Tripod Beta module." }
+  "cadTripodEditNote": { "fa": "ویرایش شرح اقدام اصلاحی و علت ریشه‌ای فقط از ماژول «مدیریت حوادث ← Tripod Beta» امکان‌پذیر است.", "en": "The corrective action description and root cause can only be edited from the Incident Management → Tripod Beta module." },
+
+  // --- local-draft / explicit-commit UI (project-specific; job positions, training matrix, chat access matrix) ---
+  "draftCommitChanges": { "fa": "ثبت تغییرات", "en": "Commit Changes" },
+  "draftCommitting": { "fa": "در حال ثبت...", "en": "Committing..." },
+  "draftUnsavedCellsBar": { "fa": "{count} تغییر هنوز ثبت نشده (خانه‌های با کادر نارنجی)", "en": "{count} change(s) not yet committed (cells with an orange border)" },
+  "jpUnsavedOrderStatusBar": { "fa": "تغییرات ترتیب/وضعیت هنوز ثبت نشده‌اند", "en": "Order/status changes have not been committed yet" },
+  "errSaveSomeRules": { "fa": "خطا در ذخیره‌ی برخی قوانین", "en": "Error saving some rules" },
+  "errSaveSomeItems": { "fa": "خطا در ذخیره‌سازی برخی موارد", "en": "Error saving some items" },
+  "draftUnsavedChangesBar": { "fa": "تغییرات هنوز ثبت نشده‌اند", "en": "Changes have not been committed yet" },
+  "errSaveSomeMatrixItems": { "fa": "خطا در ذخیره‌ی برخی موارد ماتریس", "en": "Error saving some matrix items" }
 };
 
 // برای فایل‌های غیر React (لایه‌ی داده / api.js) که به Hook دسترسی ندارند اما

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { List, LayoutGrid, ArrowUpDown, Search } from "lucide-react";
 import { styles, THEME } from "../shared.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 const VIEW_MODE_KEY = "ihms_view_mode";
 
@@ -51,14 +52,17 @@ export default function DataView({
   renderExpanded,
   searchQuery,
   onSearchChange,
-  searchPlaceholder = "جستجو...",
+  searchPlaceholder,
   sortOptions,
   sortValue,
   onSortChange,
   filterSlot,
   bulkActions,
-  emptyMessage = "موردی یافت نشد",
+  emptyMessage,
 }) {
+  const { t, dir } = useLanguage();
+  const finalSearchPlaceholder = searchPlaceholder ?? t("dvSearchDefault");
+  const finalEmptyMessage = emptyMessage ?? t("dvNoItemsFoundDefault");
   const [viewMode, setViewMode] = useState(() => {
     try {
       return localStorage.getItem(VIEW_MODE_KEY) || "list";
@@ -107,8 +111,8 @@ export default function DataView({
               style={{ ...styles.input, paddingInlineStart: 30 }}
               value={searchQuery || ""}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder={searchPlaceholder}
-              dir="rtl"
+              placeholder={finalSearchPlaceholder}
+              dir={dir}
             />
           </div>
         )}
@@ -119,7 +123,7 @@ export default function DataView({
               style={{ ...styles.filterSelect, paddingInlineStart: 26 }}
               value={sortValue}
               onChange={(e) => onSortChange(e.target.value)}
-              dir="rtl"
+              dir={dir}
             >
               {sortOptions.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
             </select>
@@ -127,15 +131,15 @@ export default function DataView({
           </div>
         )}
         <div style={{ display: "flex", background: "#fff", border: `1.5px solid ${THEME.border}`, borderRadius: 9, overflow: "hidden" }}>
-          <ViewToggleButton active={viewMode === "list"} onClick={() => setViewMode("list")} icon={List} title="نمایش ردیفی" />
-          <ViewToggleButton active={viewMode === "grid"} onClick={() => setViewMode("grid")} icon={LayoutGrid} title="نمایش کارتی" />
+          <ViewToggleButton active={viewMode === "list"} onClick={() => setViewMode("list")} icon={List} title={t("dvListView")} />
+          <ViewToggleButton active={viewMode === "grid"} onClick={() => setViewMode("grid")} icon={LayoutGrid} title={t("dvGridView")} />
         </div>
       </div>
 
       {/* نوار عملیات گروهی */}
       {hasBulk && selected.size > 0 && (
         <div style={{ display: "flex", alignItems: "center", gap: 10, background: THEME.tealSoft, border: `1px solid ${THEME.teal}`, borderRadius: 9, padding: "8px 12px", marginBottom: 10, flexWrap: "wrap" }}>
-          <span style={{ fontSize: 12.5, fontWeight: 600, color: THEME.tealDeep }}>{selected.size} مورد انتخاب شده</span>
+          <span style={{ fontSize: 12.5, fontWeight: 600, color: THEME.tealDeep }}>{t("dvItemsSelected", { count: selected.size })}</span>
           {bulkActions.map((a) => (
             <button
               key={a.label}
@@ -147,12 +151,12 @@ export default function DataView({
             </button>
           ))}
           <button type="button" onClick={clearSelection} style={{ ...styles.smallButton, background: THEME.text3, marginInlineStart: "auto" }}>
-            لغو انتخاب
+            {t("dvCancelSelection")}
           </button>
         </div>
       )}
 
-      {items.length === 0 && <p style={{ color: THEME.text3, textAlign: "center", padding: "24px 0" }}>{emptyMessage}</p>}
+      {items.length === 0 && <p style={{ color: THEME.text3, textAlign: "center", padding: "24px 0" }}>{finalEmptyMessage}</p>}
 
       {items.length > 0 && viewMode === "list" && (
         <ListTable

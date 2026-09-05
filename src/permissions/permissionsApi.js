@@ -22,13 +22,13 @@ import { sb, sbOk } from "../shared.js";
  */
 
 export const PERMISSION_MODULES = [
-  { key: "anomalyReport", label: "مدیریت عدم انطباق‌ها (Anomaly Report)" },
-  { key: "riskAssessment", label: "مدیریت ارزیابی ریسک (Risk Assessment)" },
-  { key: "personnelAccess", label: "مدیریت ورود و تردد پرسنل" },
-  { key: "proactiveIndicators", label: "اندازه‌گیری شاخص‌های Proactive HSE" },
-  { key: "machineryManagement", label: "مدیریت ماشین‌آلات" },
-  { key: "scaffoldManagement", label: "مدیریت داربست" },
-  { key: "managementDashboard", label: "داشبورد مدیریتی و گزارش‌های تحلیلی" },
+  { key: "anomalyReport", labelKey: "moduleAnomalyReport" },
+  { key: "riskAssessment", labelKey: "moduleRiskAssessment" },
+  { key: "personnelAccess", labelKey: "modulePersonnelAccess" },
+  { key: "proactiveIndicators", labelKey: "moduleProactiveIndicators" },
+  { key: "machineryManagement", labelKey: "moduleMachinery" },
+  { key: "scaffoldManagement", labelKey: "moduleScaffold" },
+  { key: "managementDashboard", labelKey: "moduleManagementDashboard" },
 ];
 
 function rowFromDb(r) {

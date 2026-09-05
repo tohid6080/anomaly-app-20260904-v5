@@ -6,6 +6,7 @@ import {
   loadTrainingCourses, createTrainingCourse, updateTrainingCourse, deleteTrainingCourse,
   loadRequirementsMatrix, setRequirement,
 } from "./trainingApi.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 /**
  * "مدیریت آموزش‌های تخصصی" — lives under مدیریت سیستم. Two things happen
@@ -15,6 +16,7 @@ import {
  * matrix live to show each person's required trainings.
  */
 export default function TrainingManager({ onBack }) {
+  const { t, dir } = useLanguage();
   const [courses, setCourses] = useState([]);
   const [positions, setPositions] = useState([]);
   const [matrix, setMatrix] = useState([]); // [{trainingId, jobPositionId}] — آخرین نسخه‌ی واقعاً ذخیره‌شده
@@ -63,7 +65,7 @@ export default function TrainingManager({ onBack }) {
     setMatrixSaving(true);
     const results = await Promise.all(changedCells().map((cell) => setRequirement(cell.trainingId, cell.jobPositionId, cell.required)));
     setMatrixSaving(false);
-    if (results.some((r) => r?.__error)) alert("خطا در ذخیره‌ی برخی موارد ماتریس");
+    if (results.some((r) => r?.__error)) alert(t("errSaveSomeMatrixItems"));
     await load();
   };
 
@@ -84,45 +86,45 @@ export default function TrainingManager({ onBack }) {
   };
 
   const handleDelete = async (course) => {
-    if (!confirm(`دوره‌ی «${course.title}» و تمام ارتباط‌هایش با عناوین شغلی حذف شود؟`)) return;
+    if (!confirm(t("trainingDeleteConfirm", { title: course.title }))) return;
     const result = await deleteTrainingCourse(course.id);
     if (result?.__error) { alert(result.message); return; }
     await load();
   };
 
-  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>در حال بارگذاری...</div>;
+  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</div>;
 
   return (
-    <div style={{ maxWidth: 1000, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>← بازگشت به مدیریت سیستم</div>}
+    <div style={{ maxWidth: 1000, margin: "0 auto", padding: 24, direction: dir }}>
+      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToSystemManagement")}</div>}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
         <GraduationCap size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>مدیریت آموزش‌های تخصصی</h2>
+        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("trainingTitle")}</h2>
       </div>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 18 }}>
-        دوره‌های آموزشی موردنیاز سازمان را تعریف کن و مشخص کن هر عنوان شغلی به کدام دوره‌ها نیاز دارد. این ماتریس در ثبت/ویرایش پرسنل به‌صورت خودکار استفاده می‌شود.
+        {t("trainingDesc")}
       </p>
 
       <div style={{ ...styles.card, width: "auto", marginBottom: 18 }}>
-        <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>دوره‌ی آموزشی جدید</h3>
+        <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>{t("trainingNewCourse")}</h3>
         <div style={styles.formGrid}>
-          <input style={styles.input} placeholder="عنوان دوره (مثال: آموزش کار در ارتفاع)" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} dir="rtl" />
-          <input style={styles.input} placeholder="توضیحات (اختیاری)" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} dir="rtl" />
+          <input style={styles.input} placeholder={t("trainingCourseTitlePlaceholder")} value={newTitle} onChange={(e) => setNewTitle(e.target.value)} dir={dir} />
+          <input style={styles.input} placeholder={t("trainingCourseDescPlaceholder")} value={newDesc} onChange={(e) => setNewDesc(e.target.value)} dir={dir} />
         </div>
         {error && <p style={styles.error}>{error}</p>}
         <button type="button" style={{ ...styles.button, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }} onClick={handleCreate} disabled={saving || !newTitle.trim()}>
-          <Plus size={15} /> {saving ? "در حال ثبت..." : "افزودن دوره"}
+          <Plus size={15} /> {saving ? t("trainingSubmitting") : t("trainingAddCourse")}
         </button>
       </div>
 
       <div style={{ ...styles.card, width: "auto", marginBottom: 18 }}>
-        <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>دوره‌های تعریف‌شده ({courses.length})</h3>
-        {courses.length === 0 && <p style={{ color: THEME.text3, fontSize: 12.5 }}>هنوز دوره‌ای ثبت نشده است.</p>}
+        <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>{t("trainingDefinedCourses", { count: courses.length })}</h3>
+        {courses.length === 0 && <p style={{ color: THEME.text3, fontSize: 12.5 }}>{t("trainingNoCoursesYet")}</p>}
         {courses.map((c) => (
           <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${THEME.border}` }}>
             <span style={{ flex: 1, fontSize: 13, color: c.isActive ? THEME.text : THEME.text3, textDecoration: c.isActive ? "none" : "line-through" }}>{c.title}</span>
             <button type="button" style={{ ...styles.smallButton, background: c.isActive ? THEME.text3 : "#166534" }} onClick={() => handleToggleActive(c)}>
-              {c.isActive ? "غیرفعال کردن" : "فعال کردن"}
+              {c.isActive ? t("trainingDeactivate") : t("trainingActivate")}
             </button>
             <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => handleDelete(c)}>
               <Trash2 size={13} />
@@ -132,17 +134,17 @@ export default function TrainingManager({ onBack }) {
       </div>
 
       <div style={{ ...styles.card, width: "auto" }}>
-        <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 4px", fontWeight: 700 }}>ماتریس آموزش بر اساس عنوان شغلی</h3>
-        <p style={{ fontSize: 11.5, color: THEME.text3, margin: "0 0 12px" }}>روی هر خانه کلیک کن تا الزامی/غیرالزامی شدن آن دوره برای آن شغل تغییر کند.</p>
+        <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 4px", fontWeight: 700 }}>{t("trainingMatrixTitle")}</h3>
+        <p style={{ fontSize: 11.5, color: THEME.text3, margin: "0 0 12px" }}>{t("trainingMatrixHint")}</p>
         {(courses.length === 0 || positions.length === 0) && (
-          <p style={{ color: THEME.text3, fontSize: 12.5 }}>برای نمایش ماتریس، حداقل یک دوره و یک عنوان شغلی (از «مدیریت عناوین شغلی») لازم است.</p>
+          <p style={{ color: THEME.text3, fontSize: 12.5 }}>{t("trainingMatrixNeedsData")}</p>
         )}
         {courses.length > 0 && positions.length > 0 && (
           <div style={{ overflowX: "auto" }}>
             <table style={{ borderCollapse: "collapse", fontSize: 11, minWidth: "100%" }}>
               <thead>
                 <tr>
-                  <th style={{ position: "sticky", insetInlineStart: 0, background: THEME.surface, padding: "6px 10px", textAlign: "right", borderBottom: `1.5px solid ${THEME.border}`, whiteSpace: "nowrap" }}>عنوان آموزش</th>
+                  <th style={{ position: "sticky", insetInlineStart: 0, background: THEME.surface, padding: "6px 10px", textAlign: dir === "rtl" ? "right" : "left", borderBottom: `1.5px solid ${THEME.border}`, whiteSpace: "nowrap" }}>{t("trainingColCourseTitle")}</th>
                   {positions.map((p) => (
                     <th key={p.id} style={{ padding: "6px 8px", borderBottom: `1.5px solid ${THEME.border}`, minWidth: 70 }}>
                       <div style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", fontSize: 10.5, color: THEME.text2, whiteSpace: "nowrap", margin: "0 auto", height: 90 }}>{p.title}</div>
@@ -176,9 +178,9 @@ export default function TrainingManager({ onBack }) {
         )}
         {isMatrixDirty && (
           <div style={{ position: "sticky", bottom: 10, display: "flex", alignItems: "center", gap: 8, background: "#fef3c7", border: "1px solid #f59e0b", borderRadius: 10, padding: "10px 14px", marginTop: 12 }}>
-            <span style={{ fontSize: 11.5, color: "#92400e", fontWeight: 600, flex: 1 }}>{changedCells().length} تغییر هنوز ثبت نشده (خانه‌های با کادر نارنجی)</span>
-            <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setDraftMatrix(matrix)} disabled={matrixSaving}>انصراف</button>
-            <button type="button" style={styles.smallButton} onClick={handleSaveMatrix} disabled={matrixSaving}>{matrixSaving ? "در حال ذخیره..." : "ثبت تغییرات"}</button>
+            <span style={{ fontSize: 11.5, color: "#92400e", fontWeight: 600, flex: 1 }}>{t("draftUnsavedCellsBar", { count: changedCells().length })}</span>
+            <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setDraftMatrix(matrix)} disabled={matrixSaving}>{t("commonCancel")}</button>
+            <button type="button" style={styles.smallButton} onClick={handleSaveMatrix} disabled={matrixSaving}>{matrixSaving ? t("saSavingEllipsis") : t("draftCommitChanges")}</button>
           </div>
         )}
       </div>

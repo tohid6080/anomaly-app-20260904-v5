@@ -6,12 +6,13 @@ import {
   loadVisibilityRules, setVisibilityRule, loadUsedJobPositionsByRole,
   loadExtraIdentities, addExtraIdentity, removeExtraIdentity,
 } from "./chatApi.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
-const ROLE_LABEL = { ADMIN: "ادمین", EMPLOYER: "کارفرما", CONTRACTOR: "پیمانکار" };
+const ROLE_LABEL_KEY = { ADMIN: "roleLabelAdmin", EMPLOYER: "roleLabelEmployer", CONTRACTOR: "roleLabelContractor" };
 
 // ادمین معمولاً عنوان شغلی مشخصی ندارد، برای همین هویتش یک ردیف/ستون ثابت
 // در ماتریس است (jobPositionId=null)، نه چیزی که از «مدیریت عناوین شغلی» بیاید.
-const ADMIN_IDENTITY = { role: "ADMIN", jobPositionId: null, title: "ادمین" };
+const ADMIN_IDENTITY_TITLE_KEY = "camAdminIdentityLabel";
 
 /**
  * "مدیریت دسترسی چت" — ماتریس (نقش + عنوان‌شغلی) × (نقش + عنوان‌شغلی).
@@ -30,6 +31,8 @@ const ADMIN_IDENTITY = { role: "ADMIN", jobPositionId: null, title: "ادمین"
  * جدید» ادمین را نمی‌بینند و برعکس.
  */
 export default function ChatAccessManager({ onBack }) {
+  const { t, dir } = useLanguage();
+  const ADMIN_IDENTITY = { role: "ADMIN", jobPositionId: null, title: t(ADMIN_IDENTITY_TITLE_KEY) };
   const [positions, setPositions] = useState([]);
   const [rules, setRules] = useState([]); // آخرین نسخه‌ی واقعاً ذخیره‌شده در دیتابیس
   const [draftRules, setDraftRules] = useState([]); // پیش‌نویس محلی — کاربر هرچقدر بخواهد خانه کلیک می‌کند، بدون Write
@@ -110,7 +113,7 @@ export default function ChatAccessManager({ onBack }) {
     setSaving(true);
     const results = await Promise.all(changedPairs().map((p) => setVisibilityRule(p.a.role, p.a.jobPositionId, p.b.role, p.b.jobPositionId, p.blocked)));
     setSaving(false);
-    if (results.some((r) => r?.__error)) alert("خطا در ذخیره‌ی برخی قوانین");
+    if (results.some((r) => r?.__error)) alert(t("errSaveSomeRules"));
     await load();
   };
 
@@ -124,7 +127,7 @@ export default function ChatAccessManager({ onBack }) {
   };
 
   const handleRemoveExtra = async (jobPositionId, role) => {
-    if (!confirm("این عنوان از ماتریس حذف شود؟ (قوانین بلاک ثبت‌شده برایش هم پاک می‌شود چون دیگر در جدول نیست)")) return;
+    if (!confirm(t("confirmRemoveFromMatrix"))) return;
     await removeExtraIdentity(jobPositionId, role);
     await load();
   };
@@ -133,46 +136,46 @@ export default function ChatAccessManager({ onBack }) {
   const isExtra = (id) => id.role !== "ADMIN" && extraIdentities.some((e) => e.jobPositionId === id.jobPositionId && e.role === id.role)
     && !((id.role === "EMPLOYER" && usedByRole.employerJobPositionIds.has(id.jobPositionId)) || (id.role === "CONTRACTOR" && usedByRole.contractorJobPositionIds.has(id.jobPositionId)));
 
-  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>در حال بارگذاری...</div>;
+  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</div>;
 
   return (
-    <div style={{ maxWidth: 1000, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>← بازگشت به مدیریت سیستم</div>}
+    <div style={{ maxWidth: 1000, margin: "0 auto", padding: 24, direction: dir }}>
+      {onBack && <div style={styles.backLink} onClick={onBack}>{t("rkBackToSystemManagement")}</div>}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 6 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <ShieldOff size={20} color={THEME.teal} />
-          <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>مدیریت دسترسی چت</h2>
+          <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("camTitle")}</h2>
         </div>
         <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6 }} onClick={() => setShowAdd((v) => !v)}>
-          <Plus size={14} /> افزودن عنوان به ماتریس
+          <Plus size={14} /> {t("camAddTitleToMatrix")}
         </button>
       </div>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 14 }}>
-        روی خانه‌ی تلاقی دو مورد کلیک کن تا آن‌ها نتوانند برای همدیگر «گفتگوی جدید» شروع کنند. «ادمین» یک ردیف/ستون ثابت است (چون معمولاً عنوان شغلی ندارد) و — برخلاف قبل — قابل‌بلاک‌شدن است. عناوینی که حساب واقعی دارند خودکار نشان داده می‌شوند؛ عناوینی که هنوز حسابی باهاشون نیست را می‌توانی با دکمه‌ی بالا دستی اضافه کنی.
+        {t("camDesc")}
       </p>
 
       {showAdd && (
         <div style={{ ...styles.card, width: "auto", marginBottom: 16, display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
           <div style={{ flex: 1, minWidth: 160 }}>
-            <label style={styles.label}>عنوان شغلی</label>
-            <select style={styles.input} value={addPositionId} onChange={(e) => setAddPositionId(e.target.value)} dir="rtl">
-              <option value="">— انتخاب کنید —</option>
+            <label style={styles.label}>{t("camJobTitle")}</label>
+            <select style={styles.input} value={addPositionId} onChange={(e) => setAddPositionId(e.target.value)} dir={dir}>
+              <option value="">{t("fieldSelectPlaceholder")}</option>
               {positions.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
             </select>
           </div>
           <div>
-            <label style={styles.label}>سمت</label>
-            <select style={styles.input} value={addRole} onChange={(e) => setAddRole(e.target.value)} dir="rtl">
-              <option value="EMPLOYER">کارفرما</option>
-              <option value="CONTRACTOR">پیمانکار</option>
+            <label style={styles.label}>{t("camPosition")}</label>
+            <select style={styles.input} value={addRole} onChange={(e) => setAddRole(e.target.value)} dir={dir}>
+              <option value="EMPLOYER">{t("roleLabelEmployer")}</option>
+              <option value="CONTRACTOR">{t("roleLabelContractor")}</option>
             </select>
           </div>
-          <button type="button" style={styles.button} onClick={handleAddIdentity} disabled={!addPositionId}>افزودن</button>
+          <button type="button" style={styles.button} onClick={handleAddIdentity} disabled={!addPositionId}>{t("commonAdd")}</button>
         </div>
       )}
 
       {identities.length < 2 && (
-        <p style={{ color: THEME.text3, fontSize: 12.5 }}>برای تعریف قانون، حداقل به دو مورد در ماتریس نیاز است — از دکمه‌ی «افزودن عنوان به ماتریس» استفاده کن.</p>
+        <p style={{ color: THEME.text3, fontSize: 12.5 }}>{t("camNeedsTwoEntries")}</p>
       )}
 
       {identities.length >= 2 && (
@@ -180,11 +183,11 @@ export default function ChatAccessManager({ onBack }) {
           <table style={{ borderCollapse: "collapse", fontSize: 11, minWidth: "100%" }}>
             <thead>
               <tr>
-                <th style={{ position: "sticky", insetInlineStart: 0, background: THEME.surface, padding: "6px 10px", textAlign: "right", borderBottom: `1.5px solid ${THEME.border}`, whiteSpace: "nowrap" }} />
+                <th style={{ position: "sticky", insetInlineStart: 0, background: THEME.surface, padding: "6px 10px", textAlign: dir === "rtl" ? "right" : "left", borderBottom: `1.5px solid ${THEME.border}`, whiteSpace: "nowrap" }} />
                 {identities.map((id) => (
                   <th key={`${id.role}-${id.jobPositionId}`} style={{ padding: "6px 8px", borderBottom: `1.5px solid ${THEME.border}`, minWidth: 70 }}>
                     <div style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", fontSize: 10, color: THEME.text2, whiteSpace: "nowrap", margin: "0 auto", height: 110 }}>
-                      {id.title} {id.role !== "ADMIN" ? `(${ROLE_LABEL[id.role]})` : ""}
+                      {id.title} {id.role !== "ADMIN" ? `(${t(ROLE_LABEL_KEY[id.role])})` : ""}
                     </div>
                   </th>
                 ))}
@@ -194,9 +197,9 @@ export default function ChatAccessManager({ onBack }) {
               {identities.map((rowId) => (
                 <tr key={`${rowId.role}-${rowId.jobPositionId}`} style={{ borderBottom: `1px solid ${THEME.border}` }}>
                   <td style={{ position: "sticky", insetInlineStart: 0, background: THEME.surface, padding: "6px 10px", fontWeight: 600, whiteSpace: "nowrap" }}>
-                    {rowId.title} {rowId.role !== "ADMIN" ? `(${ROLE_LABEL[rowId.role]})` : ""}
+                    {rowId.title} {rowId.role !== "ADMIN" ? `(${t(ROLE_LABEL_KEY[rowId.role])})` : ""}
                     {isExtra(rowId) && (
-                      <button type="button" onClick={() => handleRemoveExtra(rowId.jobPositionId, rowId.role)} title="حذف از ماتریس" style={{ background: "none", border: "none", cursor: "pointer", marginRight: 6, color: THEME.text3 }}>
+                      <button type="button" onClick={() => handleRemoveExtra(rowId.jobPositionId, rowId.role)} title={t("camRemoveFromMatrix")} style={{ background: "none", border: "none", cursor: "pointer", marginRight: 6, color: THEME.text3 }}>
                         <X size={11} />
                       </button>
                     )}
@@ -211,7 +214,7 @@ export default function ChatAccessManager({ onBack }) {
                       <td key={`${colId.role}-${colId.jobPositionId}`} style={{ padding: 2, textAlign: "center" }}>
                         <div
                           onClick={() => toggleCell(rowId, colId)}
-                          title={blocked ? "بلاک‌شده — کلیک برای رفع" : "کلیک برای بلاک‌کردن"}
+                          title={blocked ? t("camBlockedClickToUnblock") : t("camClickToBlock")}
                           style={{ width: 26, height: 26, margin: "0 auto", borderRadius: 5, cursor: "pointer", background: blocked ? THEME.danger : "#eef1f5", border: pending ? "2px solid #f59e0b" : `1px solid ${THEME.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}
                         >
                           {blocked && <X size={13} color="#fff" />}
@@ -228,9 +231,9 @@ export default function ChatAccessManager({ onBack }) {
 
       {isDirty && (
         <div style={{ position: "sticky", bottom: 10, display: "flex", alignItems: "center", gap: 8, background: "#fef3c7", border: "1px solid #f59e0b", borderRadius: 10, padding: "10px 14px", marginTop: 12 }}>
-          <span style={{ fontSize: 11.5, color: "#92400e", fontWeight: 600, flex: 1 }}>{changedPairs().length} تغییر هنوز ثبت نشده (خانه‌های با کادر نارنجی)</span>
-          <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setDraftRules(rules)} disabled={saving}>انصراف</button>
-          <button type="button" style={styles.smallButton} onClick={handleSaveAll} disabled={saving}>{saving ? "در حال ذخیره..." : "ثبت تغییرات"}</button>
+          <span style={{ fontSize: 11.5, color: "#92400e", fontWeight: 600, flex: 1 }}>{t("draftUnsavedCellsBar", { count: changedPairs().length })}</span>
+          <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setDraftRules(rules)} disabled={saving}>{t("commonCancel")}</button>
+          <button type="button" style={styles.smallButton} onClick={handleSaveAll} disabled={saving}>{saving ? t("saSavingEllipsis") : t("draftCommitChanges")}</button>
         </div>
       )}
     </div>
