@@ -30,7 +30,7 @@ import { loadActiveJobPositions, loadJobPositionTitle } from "./jobpositions/job
 import NotificationPanel from "./personnel/NotificationPanel.jsx";
 import { loadNotifications, loadPersonnelList, checkAndUpdateDeadlines, markNotificationRead } from "./personnel/personnelApi.js";
 import OnlineIndicator from "./offline/OnlineIndicator.jsx";
-import { isOnline } from "./offline/networkStatus.js";
+import { isOnline, subscribeNetworkStatus } from "./offline/networkStatus.js";
 import { offlineWrite, offlineWriteFile } from "./offline/offlineWrite.js";
 import DbSizeWarningBanner from "./offline/DbSizeWarningBanner.jsx";
 import { checkUploadAllowed } from "./offline/dbSizeMonitor.js";
@@ -4345,7 +4345,31 @@ function EmployerDashboard({ onLogout, currentUser }) {
     ];
     setSmartItems(filterSmartItemsByConfig(rawItems, notifTypes, "employer"));
   };
-  useEffect(() => { loadNotifs(); }, []);
+  // اعلان‌ها «زنده» هستند و باید مثل chatUnread خودشان را تازه کنند — نه
+  // فقط یک‌بار در mount. علتِ باگِ «اول ۳ مورد، بعد از رفرش ۱۰ مورد»:
+  // loadNotifs فقط یک‌بار اجرا می‌شد و اگر آن لحظه کشِ آفلاین تازه
+  // پاک‌سازی شده بود یا probeِ شبکه هنوز ننشسته بود، عددِ ناقص برای همیشه
+  // منجمد می‌ماند. حالا در mount، هر ۲۰ ثانیه، با برگشتِ focus/دیدنِ تب،
+  // و به‌محضِ آنلاین‌شدنِ واقعی دوباره محاسبه می‌شود.
+  useEffect(() => {
+    let alive = true;
+    const run = () => { if (alive) loadNotifs(); };
+    run();
+    const timer = setInterval(run, 20000);
+    const onFocus = () => run();
+    const onVisible = () => { if (document.visibilityState === "visible") run(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisible);
+    const unsub = subscribeNetworkStatus((s) => { if (s.online) run(); });
+    return () => {
+      alive = false;
+      clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
+      unsub();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id]);
 
   const openModule = (mod) => {
     if (mod.key === "profile") { setView("profile"); return; }
@@ -4558,7 +4582,31 @@ function ContractorDashboard({ onLogout, currentUser }) {
     ];
     setSmartItems(filterSmartItemsByConfig(rawItems, notifTypes, "contractor"));
   };
-  useEffect(() => { loadNotifs(); }, []);
+  // اعلان‌ها «زنده» هستند و باید مثل chatUnread خودشان را تازه کنند — نه
+  // فقط یک‌بار در mount. علتِ باگِ «اول ۳ مورد، بعد از رفرش ۱۰ مورد»:
+  // loadNotifs فقط یک‌بار اجرا می‌شد و اگر آن لحظه کشِ آفلاین تازه
+  // پاک‌سازی شده بود یا probeِ شبکه هنوز ننشسته بود، عددِ ناقص برای همیشه
+  // منجمد می‌ماند. حالا در mount، هر ۲۰ ثانیه، با برگشتِ focus/دیدنِ تب،
+  // و به‌محضِ آنلاین‌شدنِ واقعی دوباره محاسبه می‌شود.
+  useEffect(() => {
+    let alive = true;
+    const run = () => { if (alive) loadNotifs(); };
+    run();
+    const timer = setInterval(run, 20000);
+    const onFocus = () => run();
+    const onVisible = () => { if (document.visibilityState === "visible") run(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisible);
+    const unsub = subscribeNetworkStatus((s) => { if (s.online) run(); });
+    return () => {
+      alive = false;
+      clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
+      unsub();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id]);
 
   const openModule = (mod) => {
     if (mod.key === "profile") { setView("profile"); return; }
