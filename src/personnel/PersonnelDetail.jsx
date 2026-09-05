@@ -15,7 +15,7 @@ import {
 } from "./personnelApi.js";
 import {
   loadGateStatusForRecord, loadCompanyStaffOptions, assignForReview, submitReview,
-  approveGateItem, rejectGateItem, GATE_STATUS_LABELS,
+  approveGateItem, rejectGateItem, submitToGate, GATE_STATUS_LABELS,
 } from "../hseGateApi.js";
 
 /**
@@ -53,17 +53,17 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
   const [gateRejectNote, setGateRejectNote] = useState("");
   const [gateBusy, setGateBusy] = useState(false);
   const [gateMessage, setGateMessage] = useState("");
+  const [contractorSubmitMsg, setContractorSubmitMsg] = useState("");
   const isGatekeeper = (currentUser?.role === "HSE_SUPERVISOR" || role === "ADMIN") && !readOnly;
 
   const loadGate = () => {
-    if (role === "CONTRACTOR") return;
-    // نمایش «ارجاع به کارشناس: X» باید برای هر کاربر غیرپیمانکار دیده
-    // شود، نه فقط گیت‌کیپر — پس gateStaff دیگر مشروط به isGatekeeper نیست
-    // (فقط دکمه‌های اقدام پایین‌تر همچنان محدودند). همان رفعِ Anomaly/Machinery.
-    Promise.all([
-      loadGateStatusForRecord("personnelAccess", personnel.id),
-      loadCompanyStaffOptions(),
-    ]).then(([item, staff]) => { setGateItem(item); setGateStaff(staff); });
+    // وضعیتِ گیت برای پیمانکار هم خوانده می‌شود تا دکمهٔ «ثبت و ارسال به
+    // سرپرست کارفرما» بداند آیا ارسالِ در جریانی هست یا نه. فهرستِ کارکنانِ
+    // کارفرما فقط برای غیرِ پیمانکار (نیازمند دسترسی به employer_accounts).
+    loadGateStatusForRecord("personnelAccess", personnel.id).then(setGateItem);
+    if (role !== "CONTRACTOR") {
+      loadCompanyStaffOptions().then(setGateStaff).catch(() => {});
+    }
   };
   useEffect(() => { loadGate(); }, [personnel.id]);
 
@@ -99,6 +99,21 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
     const result = await rejectGateItem(gateItem.id, currentUser?.name, note);
     setGateBusy(false);
     if (result?.__error) { setGateMessage(result.message); return; }
+    loadGate();
+  };
+
+  // پیمانکار: بعد از بارگذاری/جایگزینیِ مدارک، یک ارسالِ صریح به گیتِ
+  // «سرپرست کارفرما» می‌کند (دقیقاً همان مسیرِ MachineryForm/PersonnelForm).
+  const handleSubmitToSupervisor = async () => {
+    setGateBusy(true); setContractorSubmitMsg("");
+    const result = await submitToGate({
+      moduleKey: "personnelAccess", recordId: personnel.id,
+      recordLabel: `${personnel.fullName} — ${personnel.jobTitle || ""}`.trim(),
+      direction: "contractor_to_employer",
+    }, currentUser?.name || currentUser?.username);
+    setGateBusy(false);
+    if (result?.__error) { setContractorSubmitMsg(result.message); return; }
+    setContractorSubmitMsg("برای بررسیِ سرپرست کارفرما ارسال شد.");
     loadGate();
   };
 
@@ -238,7 +253,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
         </div>
       </div>
 
-      {gateItem && (gateItem.status === "pending_approval" || gateItem.status === "assigned_review" || gateItem.status === "reviewed") && (
+      {!isContractor && gateItem && (gateItem.status === "pending_approval" || gateItem.status === "assigned_review" || gateItem.status === "reviewed") && (
         <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 9, padding: 14, marginBottom: 14 }}>
           <p style={{ fontSize: 12, fontWeight: 700, color: "#1d4ed8", margin: "0 0 8px" }}>
             گیت بازبینی سرپرست/مدیر HSE — {GATE_STATUS_LABELS[gateItem.status] || gateItem.status}
@@ -450,10 +465,11 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
                   <DocUploadField
                     existingDoc={doc}
                     onConfirm={(data, name, mime) => handleConfirmUpload(dt.value, data, name, mime)}
-                    onDelete={isContractor ? handleDeleteDoc : null}
+                    onDelete={isContractor && doc.status !== "approved" ? handleDeleteDoc : null}
                     onView={setViewerSrc}
                     disabled={isEmployer}
-                    allowReplace={isContractor && (doc.status === "rejected" || doc.status === "needs_correction")}
+                    allowDelete={isContractor && doc.status !== "approved"}
+                    allowReplace={isContractor && doc.status !== "approved"}
                   />
                 </div>
               )}
@@ -495,6 +511,35 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
           );
         })}
       </div>
+
+      {isContractor && (
+        <div style={{ ...styles.card, width: "auto" }}>
+          <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 8px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+            <ShieldCheck size={16} color={THEME.teal} /> ارسال به سرپرست کارفرما
+          </h3>
+          {gateItem && (gateItem.status === "pending_approval" || gateItem.status === "assigned_review" || gateItem.status === "reviewed") ? (
+            <p style={{ fontSize: 12.5, color: "#166534", margin: 0, fontWeight: 600 }}>
+              ارسال شد — {GATE_STATUS_LABELS[gateItem.status] || "در انتظار بررسی"}
+            </p>
+          ) : documents.length === 0 ? (
+            <p style={{ fontSize: 12, color: THEME.text3, margin: 0 }}>ابتدا مدارک را بارگذاری کنید، سپس برای بررسی ارسال نمایید.</p>
+          ) : (
+            <>
+              {gateItem?.status === "rejected" && (
+                <p style={{ fontSize: 11.5, color: THEME.danger, margin: "0 0 8px" }}>
+                  درخواستِ قبلی رد شد{gateItem.reviewNote ? `: ${gateItem.reviewNote}` : ""}. پس از اصلاح، دوباره ارسال کنید.
+                </p>
+              )}
+              <button type="button" style={styles.button} onClick={handleSubmitToSupervisor} disabled={gateBusy}>
+                {gateBusy ? "در حال ارسال..." : "ثبت و ارسال به سرپرست کارفرما"}
+              </button>
+            </>
+          )}
+          {contractorSubmitMsg && (
+            <p style={{ fontSize: 11.5, color: contractorSubmitMsg.includes("ارسال شد") ? "#166534" : THEME.danger, marginTop: 8 }}>{contractorSubmitMsg}</p>
+          )}
+        </div>
+      )}
 
       {personnel.occHealthPath === "no_certificate" && (
         <div style={{ ...styles.card, width: "auto" }}>

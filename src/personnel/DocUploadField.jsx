@@ -9,7 +9,7 @@ import { fileToBase64, isPdfDataUrl } from "./fileHelpers.js";
  * replace/cancel → explicit "تأیید و بارگذاری" commits via onConfirm().
  * Nothing is sent anywhere until the user confirms the staged file.
  */
-export default function DocUploadField({ existingDoc, onConfirm, onDelete, onView, disabled, allowReplace = true }) {
+export default function DocUploadField({ existingDoc, onConfirm, onDelete, onView, disabled, allowReplace = true, allowDelete = true }) {
   const [staged, setStaged] = useState(null); // { data, name, mime }
   const [stage, setStage] = useState("idle"); // idle | compressing | uploading | error
   const [error, setError] = useState("");
@@ -55,24 +55,33 @@ export default function DocUploadField({ existingDoc, onConfirm, onDelete, onVie
     <div>
       {displayDoc && (
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-          {isPdfDataUrl(displayDoc.data) ? (
-            <button type="button" onClick={() => onView(displayDoc.data)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-              <FileText size={44} color={THEME.text2} />
-            </button>
-          ) : (
-            <img
-              src={displayDoc.data}
-              alt=""
-              onClick={() => onView(displayDoc.data)}
-              style={{ width: 56, height: 56, objectFit: "cover", borderRadius: 8, cursor: "pointer", border: `1px solid ${THEME.border}` }}
-            />
-          )}
+          {/* × روی خودِ تصویر/آیکن — «جلوی هر عکس»: در حالتِ استیج «لغو»، و
+              در حالتِ مدرکِ آپلودشده «حذف» (اگر مجاز باشد) */}
+          <div style={{ position: "relative", flexShrink: 0, lineHeight: 0 }}>
+            {isPdfDataUrl(displayDoc.data) ? (
+              <button type="button" onClick={() => onView(displayDoc.data)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                <FileText size={44} color={THEME.text2} />
+              </button>
+            ) : (
+              <img
+                src={displayDoc.data}
+                alt=""
+                onClick={() => onView(displayDoc.data)}
+                style={{ width: 56, height: 56, objectFit: "cover", borderRadius: 8, cursor: "pointer", border: `1px solid ${THEME.border}` }}
+              />
+            )}
+            {!disabled && staged && (
+              <button type="button" onClick={cancelStaged} title="لغو" style={styles.photoRemoveBtn}>
+                <X size={13} color="#fff" />
+              </button>
+            )}
+            {!disabled && !staged && existingDoc && onDelete && allowDelete && (
+              <button type="button" onClick={() => onDelete(existingDoc)} title="حذف" style={styles.photoRemoveBtn}>
+                <X size={13} color="#fff" />
+              </button>
+            )}
+          </div>
           <span style={{ fontSize: 11, color: THEME.text3, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayDoc.name}</span>
-          {staged && (
-            <button type="button" onClick={cancelStaged} style={{ background: "none", border: "none", cursor: "pointer" }} title="لغو">
-              <X size={16} color={THEME.danger} />
-            </button>
-          )}
         </div>
       )}
 
@@ -97,7 +106,7 @@ export default function DocUploadField({ existingDoc, onConfirm, onDelete, onVie
         </div>
       )}
 
-      {!disabled && existingDoc && !staged && allowReplace && onDelete && (
+      {!disabled && existingDoc && !staged && allowDelete && onDelete && (
         <button type="button" onClick={() => onDelete(existingDoc)} style={{ ...styles.smallButton, background: THEME.danger, marginTop: 8, display: "inline-flex", alignItems: "center", gap: 6 }}>
           <X size={13} /> حذف مدرک
         </button>
