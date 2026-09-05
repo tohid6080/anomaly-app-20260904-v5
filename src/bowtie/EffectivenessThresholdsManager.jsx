@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Sliders } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { loadThresholds, saveThresholds } from "./effectivenessApi.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 /**
  * ادمین/HSE از اینجا مقادیر برش (Threshold) تبدیل امتیاز عددی اثربخشی به
@@ -11,6 +12,7 @@ import { loadThresholds, saveThresholds } from "./effectivenessApi.js";
  * — هرچیز پایین‌تر از weakMin به‌طور خودکار «شکست‌خورده» حساب می‌شود.
  */
 export default function EffectivenessThresholdsManager({ onBack, currentUser }) {
+  const { t, dir } = useLanguage();
   const [thresholds, setThresholds] = useState({ effectiveMin: 85, reducingMin: 65, weakMin: 40, id: null });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -24,7 +26,7 @@ export default function EffectivenessThresholdsManager({ onBack, currentUser }) 
   const handleSave = async () => {
     setError("");
     if (!(thresholds.effectiveMin > thresholds.reducingMin && thresholds.reducingMin > thresholds.weakMin)) {
-      setError("مقادیر باید نزولی باشند: مؤثر > کاهش‌یافته > ضعیف");
+      setError(t("errThresholdsDescending"));
       return;
     }
     setSaving(true);
@@ -35,29 +37,28 @@ export default function EffectivenessThresholdsManager({ onBack, currentUser }) 
     setTimeout(() => setSaved(false), 2500);
   };
 
-  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>در حال بارگذاری...</div>;
+  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</div>;
 
   return (
-    <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>← بازگشت به مدیریت سیستم</div>}
+    <div style={{ maxWidth: 480, margin: "0 auto", padding: 24, direction: dir }}>
+      {onBack && <div style={styles.backLink} onClick={onBack}>{t("rkBackToSystemManagement")}</div>}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
         <Sliders size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>Threshold اثربخشی Barrier</h2>
+        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("effThresholdsTitle")}</h2>
       </div>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 18, lineHeight: 1.8 }}>
-        این سه عدد تعیین می‌کنند امتیاز عددی محاسبه‌شده‌ی اثربخشی هر Barrier (۰ تا ۱۰۰)، به کدام رنگ نگاشت شود.
-        هر عدد، مرز پایین همان سطح است.
+        {t("effThresholdsDesc")}
       </p>
 
       <div style={styles.card}>
-        <ThresholdRow label="🟢 مؤثر (Effective) — حداقل" value={thresholds.effectiveMin} onChange={(v) => setThresholds({ ...thresholds, effectiveMin: v })} color="#16a34a" />
-        <ThresholdRow label="🟡 در حال کاهش اثربخشی — حداقل" value={thresholds.reducingMin} onChange={(v) => setThresholds({ ...thresholds, reducingMin: v })} color="#eab308" />
-        <ThresholdRow label="🟠 ضعیف / نیازمند اقدام — حداقل" value={thresholds.weakMin} onChange={(v) => setThresholds({ ...thresholds, weakMin: v })} color="#f97316" />
-        <p style={{ fontSize: 11, color: THEME.text3, margin: "6px 0 14px" }}>🔴 شکست‌خورده: هر امتیازی کمتر از عدد بالا</p>
+        <ThresholdRow label={t("effThresholdEffectiveMin")} value={thresholds.effectiveMin} onChange={(v) => setThresholds({ ...thresholds, effectiveMin: v })} color="#16a34a" />
+        <ThresholdRow label={t("effThresholdReducingMin")} value={thresholds.reducingMin} onChange={(v) => setThresholds({ ...thresholds, reducingMin: v })} color="#eab308" />
+        <ThresholdRow label={t("effThresholdWeakMin")} value={thresholds.weakMin} onChange={(v) => setThresholds({ ...thresholds, weakMin: v })} color="#f97316" />
+        <p style={{ fontSize: 11, color: THEME.text3, margin: "6px 0 14px" }}>{t("effThresholdFailedNote")}</p>
 
         {error && <p style={styles.error}>{error}</p>}
-        {saved && <p style={{ color: "#166534", fontSize: 12.5, marginBottom: 8 }}>ذخیره شد.</p>}
-        <button type="button" style={styles.button} onClick={handleSave} disabled={saving}>{saving ? "در حال ذخیره..." : "ذخیره‌ی تنظیمات"}</button>
+        {saved && <p style={{ color: "#166534", fontSize: 12.5, marginBottom: 8 }}>{t("commonSavedDone")}</p>}
+        <button type="button" style={styles.button} onClick={handleSave} disabled={saving}>{saving ? t("saSavingEllipsis") : t("saSaveChanges")}</button>
       </div>
     </div>
   );

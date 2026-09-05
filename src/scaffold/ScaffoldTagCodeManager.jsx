@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Tag } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { loadContractorsWithScaffoldCode, setContractorScaffoldCode } from "./scaffoldApi.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 /**
  * Every contractor already registered in "مدیریت پیمانکاران" shows up here
@@ -10,6 +11,7 @@ import { loadContractorsWithScaffoldCode, setContractorScaffoldCode } from "./sc
  * (Md1-XX-SC-01). No separate contractor list to maintain.
  */
 export default function ScaffoldTagCodeManager({ onBack }) {
+  const { t, dir } = useLanguage();
   const [contractors, setContractors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [drafts, setDrafts] = useState({});
@@ -28,7 +30,7 @@ export default function ScaffoldTagCodeManager({ onBack }) {
   const handleSave = async (contractorId) => {
     const code = (drafts[contractorId] || "").trim();
     if (code.length !== 2) {
-      alert("کد باید دقیقاً ۲ حرف انگلیسی باشد (مثال: NN)");
+      alert(t("errScaffCodeLength"));
       return;
     }
     setSavingId(contractorId);
@@ -38,20 +40,20 @@ export default function ScaffoldTagCodeManager({ onBack }) {
     await load();
   };
 
-  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>در حال بارگذاری...</div>;
+  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</div>;
 
   return (
-    <div style={{ maxWidth: 520, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>← بازگشت به منو</div>}
+    <div style={{ maxWidth: 520, margin: "0 auto", padding: 24, direction: dir }}>
+      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
         <Tag size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>کد تگ داربست پیمانکاران</h2>
+        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("scaffCodeManagerTitle")}</h2>
       </div>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 16 }}>
-        هر پیمانکار برای اخذ تگ داربست به یک کد دوحرفی نیاز دارد (مثال: نصب نیرو = NN). تا این کد تعریف نشود، آن پیمانکار نمی‌تواند تگ جدید درخواست کند.
+        {t("scaffCodeManagerDesc")}
       </p>
 
-      {contractors.length === 0 && <p style={{ color: THEME.text3 }}>هنوز پیمانکاری در سامانه ثبت نشده است.</p>}
+      {contractors.length === 0 && <p style={{ color: THEME.text3 }}>{t("scaffNoContractorsYet")}</p>}
 
       {contractors.map((c) => (
         <div key={c.id} style={{ ...styles.card, width: "auto", marginBottom: 8, padding: "12px 16px", display: "flex", alignItems: "center", gap: 10 }}>
@@ -65,7 +67,7 @@ export default function ScaffoldTagCodeManager({ onBack }) {
             dir="ltr"
           />
           <button type="button" style={styles.smallButton} onClick={() => handleSave(c.id)} disabled={savingId === c.id}>
-            {savingId === c.id ? "..." : "ذخیره"}
+            {savingId === c.id ? "..." : t("commonSave")}
           </button>
         </div>
       ))}

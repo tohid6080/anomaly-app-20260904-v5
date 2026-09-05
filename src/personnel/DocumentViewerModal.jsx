@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import { X, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 import { isPdfDataUrl } from "./fileHelpers.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 /**
  * Full-screen in-app document viewer.
@@ -8,6 +9,7 @@ import { isPdfDataUrl } from "./fileHelpers.js";
  * PDFs: rendered inline via <iframe> on the base64 data URL (no new tab).
  */
 export default function DocumentViewerModal({ src, onClose }) {
+  const { t } = useLanguage();
   const [scale, setScale] = useState(1);
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const dragRef = useRef(null);
@@ -48,14 +50,14 @@ export default function DocumentViewerModal({ src, onClose }) {
       {isPdf ? (
         <iframe
           src={src}
-          title="پیش‌نمایش PDF"
+          title={t("docViewerPdfPreview")}
           style={{ width: "94vw", height: "88vh", border: "none", borderRadius: 8, background: "#fff" }}
           onClick={(e) => e.stopPropagation()}
         />
       ) : (
         <img
           src={src}
-          alt="پیش‌نمایش مدرک"
+          alt={t("docViewerDocPreview")}
           onClick={(e) => e.stopPropagation()}
           onWheel={onWheel}
           onPointerDown={onPointerDown}

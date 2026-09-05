@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import { Lock, ShieldAlert } from "lucide-react";
 import { THEME } from "../shared.js";
 import { superAdminLogin } from "./superAdminApi.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 export default function SuperAdminLogin({ onLogin }) {
+  const { t, dir } = useLanguage();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -26,17 +28,17 @@ export default function SuperAdminLogin({ onLogin }) {
           <ShieldAlert size={26} color="#fff" />
         </div>
         <h2 style={{ fontSize: 17, color: THEME.navy, fontWeight: 700, margin: "0 0 4px" }}>Super Admin</h2>
-        <p style={{ fontSize: 12, color: THEME.text3, margin: "0 0 24px" }}>پنل مالک سامانه — دسترسی محدود</p>
+        <p style={{ fontSize: 12, color: THEME.text3, margin: "0 0 24px" }}>{t("superAdminLoginTagline")}</p>
 
-        <div style={{ textAlign: "right", marginBottom: 12 }}>
-          <label style={{ fontSize: 12, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 6 }}>نام کاربری</label>
+        <div style={{ textAlign: dir === "rtl" ? "right" : "left", marginBottom: 12 }}>
+          <label style={{ fontSize: 12, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 6 }}>{t("username")}</label>
           <input
             style={{ width: "100%", padding: "10px 12px", borderRadius: 9, border: `1.5px solid ${THEME.border}`, fontSize: 14, fontFamily: THEME.font, boxSizing: "border-box" }}
             value={username} onChange={(e) => setUsername(e.target.value)} dir="ltr"
           />
         </div>
-        <div style={{ textAlign: "right", marginBottom: 18 }}>
-          <label style={{ fontSize: 12, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 6 }}>رمز عبور</label>
+        <div style={{ textAlign: dir === "rtl" ? "right" : "left", marginBottom: 18 }}>
+          <label style={{ fontSize: 12, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 6 }}>{t("password")}</label>
           <input
             type="password" style={{ width: "100%", padding: "10px 12px", borderRadius: 9, border: `1.5px solid ${THEME.border}`, fontSize: 14, fontFamily: THEME.font, boxSizing: "border-box" }}
             value={password} onChange={(e) => setPassword(e.target.value)} dir="ltr"
@@ -50,7 +52,7 @@ export default function SuperAdminLogin({ onLogin }) {
           type="button" onClick={handleSubmit} disabled={loading}
           style={{ width: "100%", padding: "12px 0", borderRadius: 9, border: "none", background: THEME.navyDeep, color: "#fff", fontWeight: 700, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontFamily: THEME.font }}
         >
-          <Lock size={14} /> {loading ? "در حال بررسی..." : "ورود"}
+          <Lock size={14} /> {loading ? t("loggingIn") : t("loginButton")}
         </button>
       </div>
     </div>

@@ -5,10 +5,12 @@ import { toJalaliDateTime } from "../personnel/jalaliDate.jsx";
 import { isPdfDataUrl, fileToBase64 } from "../personnel/fileHelpers.js";
 import DocumentViewerModal from "../personnel/DocumentViewerModal.jsx";
 import { loadMessages, loadParticipants, sendMessage, markConversationRead, leaveConversation } from "./chatApi.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 const MSG_POLL_MS = 4000;
 
 export default function ChatThread({ conversationId, currentUser, onBack }) {
+  const { t, dir } = useLanguage();
   const [messages, setMessages] = useState([]);
   const [participants, setParticipants] = useState([]);
   const [text, setText] = useState("");
@@ -20,7 +22,7 @@ export default function ChatThread({ conversationId, currentUser, onBack }) {
   const me = { username: currentUser?.username, name: currentUser?.name, role: currentUser?.role };
 
   const handleLeave = async () => {
-    if (!confirm("از این گفتگو خارج می‌شوی؛ دیگر توی لیست چت‌هایت نمایش داده نمی‌شود. ادامه می‌دهی؟")) return;
+    if (!confirm(t("confirmLeaveConversation"))) return;
     setLeaving(true);
     const result = await leaveConversation(conversationId, me);
     setLeaving(false);
@@ -66,7 +68,7 @@ export default function ChatThread({ conversationId, currentUser, onBack }) {
     try {
       base64 = await fileToBase64(file);
     } catch (e) {
-      setError(e?.message || "خطا در خواندن فایل");
+      setError(e?.message || t("errReadingFileGeneric"));
       return;
     }
     await handleSend({ data: base64, mimeType: file.type, name: file.name });
@@ -74,7 +76,7 @@ export default function ChatThread({ conversationId, currentUser, onBack }) {
 
   const other = participants.find((p) => p.username !== me.username);
   const isGroup = participants.length > 2;
-  const title = isGroup ? `گروه (${participants.length} عضو)` : (other?.fullName || "گفتگو");
+  const title = isGroup ? t("chatGroupWithCount", { count: participants.length }) : (other?.fullName || t("chatFallbackTitle"));
 
   // آخرین پیام هرکس دیگری که last_read_at آن بعد از این پیام باشد یعنی خوانده
   const isReadByOthers = (msg) => participants.some((p) => p.username !== me.username && p.lastReadAt && new Date(p.lastReadAt) >= new Date(msg.createdAt));
@@ -82,18 +84,18 @@ export default function ChatThread({ conversationId, currentUser, onBack }) {
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: 24, display: "flex", flexDirection: "column", height: "calc(100vh - 48px)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-        <div style={styles.backLink} onClick={onBack}>← بازگشت</div>
+        <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginRight: "auto" }}>
           {isGroup && <UsersIcon size={15} color={THEME.text3} />}
           <span style={{ fontWeight: 700, color: THEME.navy, fontSize: 14.5 }}>{title}</span>
         </div>
-        <button type="button" onClick={handleLeave} disabled={leaving} title="خروج از گفتگو" style={{ background: "none", border: "none", cursor: "pointer", padding: 6, display: "flex", alignItems: "center" }}>
+        <button type="button" onClick={handleLeave} disabled={leaving} title={t("chatLeaveConversationTitle")} style={{ background: "none", border: "none", cursor: "pointer", padding: 6, display: "flex", alignItems: "center" }}>
           <LogOut size={16} color={THEME.danger} />
         </button>
       </div>
 
       <div style={{ flex: 1, overflowY: "auto", background: THEME.bg, borderRadius: 10, padding: 14, marginBottom: 10 }}>
-        {messages.length === 0 && <p style={{ color: THEME.text3, textAlign: "center", padding: 20 }}>هنوز پیامی ارسال نشده — اولین پیام را بفرست</p>}
+        {messages.length === 0 && <p style={{ color: THEME.text3, textAlign: "center", padding: 20 }}>{t("chatNoMessagesSentYet")}</p>}
         {messages.map((m) => {
           if (m.isSystem) {
             return (
@@ -109,7 +111,7 @@ export default function ChatThread({ conversationId, currentUser, onBack }) {
               <div style={{ maxWidth: "75%", background: isMine ? THEME.teal : "#fff", color: isMine ? "#fff" : THEME.text, borderRadius: 12, padding: "8px 12px", border: isMine ? "none" : `1px solid ${THEME.border}` }}>
                 {m.attachmentUrl && (
                   isPdfDataUrl(m.attachmentUrl) || (m.attachmentType || "").includes("pdf") ? (
-                    <a href={m.attachmentUrl} target="_blank" rel="noreferrer" style={{ color: isMine ? "#fff" : THEME.teal, fontSize: 12.5, textDecoration: "underline" }}>📎 {m.attachmentName || "فایل PDF"}</a>
+                    <a href={m.attachmentUrl} target="_blank" rel="noreferrer" style={{ color: isMine ? "#fff" : THEME.teal, fontSize: 12.5, textDecoration: "underline" }}>📎 {m.attachmentName || t("chatPdfFile")}</a>
                   ) : (
                     <img src={m.attachmentUrl} alt={m.attachmentName} onClick={() => setViewerSrc(m.attachmentUrl)} style={{ maxWidth: 200, borderRadius: 8, cursor: "pointer", display: "block", marginBottom: m.body ? 6 : 0 }} />
                   )
@@ -134,8 +136,8 @@ export default function ChatThread({ conversationId, currentUser, onBack }) {
           <input type="file" accept="image/*,application/pdf" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} onChange={(e) => { handleAttach(e.target.files?.[0]); e.target.value = ""; }} />
         </label>
         <input
-          style={{ ...styles.input, flex: 1 }} placeholder="پیام بنویس..." value={text}
-          onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSend()} dir="rtl"
+          style={{ ...styles.input, flex: 1 }} placeholder={t("chatMessagePlaceholder")} value={text}
+          onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSend()} dir={dir}
         />
         <button type="button" style={{ ...styles.smallButton, padding: "9px 14px" }} onClick={() => handleSend()} disabled={sending || !text.trim()}>
           <Send size={15} />
