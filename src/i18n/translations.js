@@ -7310,7 +7310,33 @@ export const translations = {
   "pidStatusCompletedSent": { "fa": "تکمیل‌شده و ارسال‌شده برای کارفرما", "en": "Completed and sent to the employer" },
   "pidGuideTitle": { "fa": "راهنمای تکمیل و ارزیابی", "en": "Completion & Assessment Guide" },
   "pidGuideCloseTitle": { "fa": "بستن راهنما", "en": "Close guide" },
-  "pidGuideIframeTitle": { "fa": "راهنمای اجرایی شاخص‌های HSE", "en": "HSE Indicators Operational Guide" }
+  "pidGuideIframeTitle": { "fa": "راهنمای اجرایی شاخص‌های HSE", "en": "HSE Indicators Operational Guide" },
+
+  // --- machinery deletion-request (project-specific additions) ---
+  "errSubmitDeleteRequest": { "fa": "خطا در ثبت درخواست حذف", "en": "Error submitting the deletion request" },
+  "errRejectDeleteRequest": { "fa": "خطا در رد درخواست حذف", "en": "Error rejecting the deletion request" },
+  "errNoApproveDeletePermission": { "fa": "شما مجوز تأیید حذف را ندارید", "en": "You do not have permission to approve deletion" },
+  "errNoRejectDeletePermission": { "fa": "شما مجوز رد درخواست حذف را ندارید", "en": "You do not have permission to reject the deletion request" },
+  "mdStatusDeleteRequestPending": { "fa": "درخواست حذف در انتظار", "en": "Deletion request pending" },
+  "mdDeleteRequestApprovedPrompt": { "fa": "این ماشین قبلاً توسط کارفرما تأیید شده است. علت درخواست حذف را بنویسید (اختیاری) — درخواست شما برای تأیید سرپرست/مدیر HSE ارسال می‌شود:", "en": "This machine has already been approved by the employer. Enter the reason for the deletion request (optional) — your request will be sent to the HSE supervisor/manager for approval:" },
+  "mdDeleteRequestSubmittedAlert": { "fa": "درخواست حذف ثبت شد و برای تأیید سرپرست/مدیر HSE ارسال شد.", "en": "The deletion request has been submitted and sent to the HSE supervisor/manager for approval." },
+  "mdConfirmPermanentDelete": { "fa": "ماشین «{name}» برای همیشه حذف شود؟", "en": "Permanently delete the machine \"{name}\"?" },
+  "mdDeleteRequestPendingTitle": { "fa": "درخواست حذف در انتظار تأیید سرپرست/مدیر HSE", "en": "Deletion request awaiting HSE supervisor/manager approval" },
+  "mdDeleteRequestedBy": { "fa": "درخواست‌دهنده: {name} — {date}", "en": "Requested by: {name} — {date}" },
+  "mdDeleteRequestReason": { "fa": "علت: {note}", "en": "reason: {note}" },
+  "mdApproveAndDeletePermanently": { "fa": "تأیید و حذف قطعی", "en": "Approve and delete permanently" },
+  "mdRejectDeleteRequest": { "fa": "رد درخواست حذف", "en": "Reject deletion request" },
+
+  // --- HSE review gate (project-specific; shared by App.jsx, PersonnelDetail, MachineryDashboard) ---
+  "gateReviewGateHeading": { "fa": "گیت بازبینی سرپرست/مدیر HSE — {status}", "en": "HSE supervisor/manager review gate — {status}" },
+  "gateAssignedToExpert": { "fa": "ارجاع به کارشناس: {name}", "en": "Assigned to expert: {name}" },
+  "gateExpertComment": { "fa": "نظر کارشناس:", "en": "Expert's comment:" },
+  "gateSelectExpert": { "fa": "انتخاب کارشناس", "en": "Select expert" },
+  "gateSubmitAssignment": { "fa": "ثبت ارجاع", "en": "Submit assignment" },
+  "gateAssignToExpertForReview": { "fa": "ارجاع به کارشناس برای بررسی", "en": "Assign to an expert for review" },
+  "gateSendReviewResultToSupervisor": { "fa": "ارسال نتیجه‌ی بررسی برای سرپرست/مدیر HSE", "en": "Send review result to the HSE supervisor/manager" },
+  "gateCommentOptional": { "fa": "نظر یا توضیح (اختیاری)", "en": "Comment or note (optional)" },
+  "gateSend": { "fa": "ارسال", "en": "Send" }
 };
 
 // برای فایل‌های غیر React (لایه‌ی داده / api.js) که به Hook دسترسی ندارند اما

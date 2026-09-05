@@ -5,30 +5,31 @@ import { getRecordsByModule, putRecord } from "../offline/offlineDb.js";
 import { checkUploadAllowed } from "../offline/dbSizeMonitor.js";
 import { parseStorageUrl, deleteFromStorage } from "../offline/storageUpload.js";
 import { deleteGateItemsForRecord } from "../hseGateApi.js";
+import { translate, getCurrentLang } from "../i18n/translations.js";
 
 export const MACHINE_TYPES = [
-  { value: "heavy", label: "سنگین" },
-  { value: "light", label: "سبک" },
+  { value: "heavy", labelKey: "machineTypeHeavy" },
+  { value: "light", labelKey: "machineTypeLight" },
 ];
 export const OWNERSHIP_STATUSES = [
-  { value: "owned", label: "مالک" },
-  { value: "rented", label: "استیجاری" },
+  { value: "owned", labelKey: "ownershipOwned" },
+  { value: "rented", labelKey: "ownershipRented" },
 ];
 export const LICENSE_TYPES = [
-  { value: "special", label: "ویژه" },
-  { value: "grade_one", label: "پایه یک" },
-  { value: "grade_three", label: "پایه سوم" },
+  { value: "special", labelKey: "licenseSpecial" },
+  { value: "grade_one", labelKey: "licenseGradeOne" },
+  { value: "grade_three", labelKey: "licenseGradeThree" },
 ];
 export const TRAFFIC_STATUSES = [
-  { value: "active", label: "فعال", color: "#166534", bg: "#dcfce7" },
-  { value: "inactive", label: "غیرفعال", color: "#5b6b7d", bg: "#eef1f5" },
+  { value: "active", labelKey: "trafficActive", color: "#166534", bg: "#dcfce7" },
+  { value: "inactive", labelKey: "trafficInactive", color: "#5b6b7d", bg: "#eef1f5" },
 ];
 export const APPROVAL_STATUSES = [
-  { value: "draft", label: "پیش‌نویس (هنوز ارسال نشده)", color: "#5b6b7d", bg: "#eef1f5" },
-  { value: "pending", label: "در انتظار تأیید", color: "#b45309", bg: "#fef3c7" },
-  { value: "approved", label: "تأیید شده", color: "#166534", bg: "#dcfce7" },
-  { value: "needs_correction", label: "نیاز به اصلاح", color: "#b45309", bg: "#fef3c7" },
-  { value: "rejected", label: "رد شده", color: "#c92a2a", bg: "#fdecec" },
+  { value: "draft", labelKey: "approvalDraft", color: "#5b6b7d", bg: "#eef1f5" },
+  { value: "pending", labelKey: "approvalPending", color: "#b45309", bg: "#fef3c7" },
+  { value: "approved", labelKey: "approvalApproved", color: "#166534", bg: "#dcfce7" },
+  { value: "needs_correction", labelKey: "approvalNeedsCorrection", color: "#b45309", bg: "#fef3c7" },
+  { value: "rejected", labelKey: "approvalRejected", color: "#c92a2a", bg: "#fdecec" },
 ];
 export function approvalStatusMeta(v) {
   return APPROVAL_STATUSES.find((s) => s.value === v) || APPROVAL_STATUSES[0];
@@ -38,15 +39,15 @@ export function approvalStatusMeta(v) {
 // ارسال درخواست برای تأیید کارفرما را ندارد. بقیه («در صورت نیاز»/«در صورت
 // وجود»/سایر مدارک) اختیاری‌اند.
 export const MACHINERY_DOC_TYPES = [
-  { value: "card_image", label: "تصویر کارت ماشین", required: true },
-  { value: "insurance", label: "تصویر بیمه‌نامه", required: true },
-  { value: "inspection", label: "تصویر معاینه فنی", required: true },
-  { value: "health_certificate", label: "تصویر سرتیفیکیت سلامت ماشین‌آلات (در صورت نیاز)", required: false },
-  { value: "driver_license_front", label: "تصویر روی گواهینامه راننده", required: true },
-  { value: "driver_license_back", label: "تصویر پشت گواهینامه راننده", required: true },
-  { value: "backup_driver_license_front", label: "تصویر روی گواهینامه جانشین راننده (در صورت وجود)", required: false },
-  { value: "backup_driver_license_back", label: "تصویر پشت گواهینامه جانشین راننده (در صورت وجود)", required: false },
-  { value: "other", label: "سایر مدارک", required: false },
+  { value: "card_image", labelKey: "mdocCardImage", required: true },
+  { value: "insurance", labelKey: "mdocInsurance", required: true },
+  { value: "inspection", labelKey: "mdocInspection", required: true },
+  { value: "health_certificate", labelKey: "mdocHealthCert", required: false },
+  { value: "driver_license_front", labelKey: "mdocDriverLicenseFront", required: true },
+  { value: "driver_license_back", labelKey: "mdocDriverLicenseBack", required: true },
+  { value: "backup_driver_license_front", labelKey: "mdocBackupDriverLicenseFront", required: false },
+  { value: "backup_driver_license_back", labelKey: "mdocBackupDriverLicenseBack", required: false },
+  { value: "other", labelKey: "mdocOther", required: false },
 ];
 export const REQUIRED_MACHINERY_DOC_TYPES = MACHINERY_DOC_TYPES.filter((t) => t.required);
 
@@ -172,8 +173,8 @@ export async function insertMachinery(rec) {
   const id = uid("machine");
   const payload = { ...machineryToDb(rec), approval_status: "draft", review_note: "", company_id: getCurrentCompanyId() };
   const result = await offlineWrite({ module: "machinery", table: "machinery", action: "insert", id, payload });
-  if (!result.ok) return { __error: true, message: result.error || "خطا در ثبت" };
-  if (!result.record) return { __error: true, message: "سرور پاسخ نامعتبر برگرداند — لطفاً دوباره تلاش کنید" };
+  if (!result.ok) return { __error: true, message: result.error || translate(getCurrentLang(), "errCreate") };
+  if (!result.record) return { __error: true, message: translate(getCurrentLang(), "errServerInvalidResponse") };
   return { ...machineryFromRow(result.record), syncStatus: result.offline ? "pending" : "synced" };
 }
 
@@ -182,8 +183,8 @@ export async function insertMachinery(rec) {
 export async function updateMachineryInfo(id, rec) {
   const payload = { ...machineryToDb(rec), updated_at: new Date().toISOString() };
   const result = await offlineWrite({ module: "machinery", table: "machinery", action: "update", id, payload });
-  if (!result.ok) return { __error: true, message: result.error || "خطا در ذخیره‌سازی" };
-  if (!result.record) return { __error: true, message: "سرور پاسخ نامعتبر برگرداند — لطفاً دوباره تلاش کنید" };
+  if (!result.ok) return { __error: true, message: result.error || translate(getCurrentLang(), "commonErrorSave") };
+  if (!result.record) return { __error: true, message: translate(getCurrentLang(), "errServerInvalidResponse") };
   return { ...machineryFromRow(result.record), syncStatus: result.offline ? "pending" : "synced" };
 }
 
@@ -193,12 +194,12 @@ export async function updateMachineryInfo(id, rec) {
 export async function submitMachineryForReview(id, rec, uploadedDocTypes) {
   const missing = getMissingRequiredDocs(uploadedDocTypes || []);
   if (missing.length > 0) {
-    return { __error: true, message: `مدارک الزامی زیر بارگذاری نشده‌اند: ${missing.map((d) => d.label).join("، ")}` };
+    return { __error: true, message: translate(getCurrentLang(), "errMissingRequiredDocs", { list: missing.map((d) => translate(getCurrentLang(), d.labelKey)).join(getCurrentLang() === "en" ? ", " : "، ") }) };
   }
   const payload = { ...machineryToDb(rec), approval_status: "pending", review_note: "", updated_at: new Date().toISOString() };
   const result = await offlineWrite({ module: "machinery", table: "machinery", action: "update", id, payload });
-  if (!result.ok) return { __error: true, message: result.error || "خطا در ذخیره‌سازی" };
-  if (!result.record) return { __error: true, message: "سرور پاسخ نامعتبر برگرداند — لطفاً دوباره تلاش کنید" };
+  if (!result.ok) return { __error: true, message: result.error || translate(getCurrentLang(), "commonErrorSave") };
+  if (!result.record) return { __error: true, message: translate(getCurrentLang(), "errServerInvalidResponse") };
   return { ...machineryFromRow(result.record), syncStatus: result.offline ? "pending" : "synced" };
 }
 
@@ -214,7 +215,7 @@ export async function deleteMachineryDB(id) {
     await offlineWrite({ module: "machineryDocuments", table: "machinery_documents", action: "delete", id: doc.id, payload: {} });
   }
   const result = await offlineWrite({ module: "machinery", table: "machinery", action: "delete", id, payload: {} });
-  if (!result.ok) return { __error: true, message: result.error || "خطا در حذف" };
+  if (!result.ok) return { __error: true, message: result.error || translate(getCurrentLang(), "commonErrorDelete") };
   // طبق گزارش صریح: بعد از حذف خودِ ماشین، رکورد گیت مربوطه (در انتظار
   // تأیید/ارجاع‌شده) هم پاک شود — وگرنه یتیم می‌ماند و برای همیشه در
   // «کارهای در دست اقدام من» با پلاک/نام ماشینِ حذف‌شده باقی می‌ماند.
@@ -230,7 +231,7 @@ export async function deleteMachineryDB(id) {
 export async function requestMachineryDeletion(id, note, requestedBy) {
   const payload = { delete_requested_by: requestedBy || "", delete_requested_at: new Date().toISOString(), delete_request_note: note || "" };
   const result = await offlineWrite({ module: "machinery", table: "machinery", action: "update", id, payload });
-  if (!result.ok) return { __error: true, message: result.error || "خطا در ثبت درخواست حذف" };
+  if (!result.ok) return { __error: true, message: result.error || translate(getCurrentLang(), "errSubmitDeleteRequest") };
   return { ...machineryFromRow(result.record), syncStatus: result.offline ? "pending" : "synced" };
 }
 
@@ -244,7 +245,7 @@ export async function approveMachineryDeletion(id) {
 export async function rejectMachineryDeletion(id) {
   const payload = { delete_requested_by: null, delete_requested_at: null, delete_request_note: null };
   const result = await offlineWrite({ module: "machinery", table: "machinery", action: "update", id, payload });
-  if (!result.ok) return { __error: true, message: result.error || "خطا در رد درخواست حذف" };
+  if (!result.ok) return { __error: true, message: result.error || translate(getCurrentLang(), "errRejectDeleteRequest") };
   return { ...machineryFromRow(result.record), syncStatus: result.offline ? "pending" : "synced" };
 }
 
@@ -252,8 +253,8 @@ export async function rejectMachineryDeletion(id) {
 export async function setMachineryApproval(id, status, reviewNote) {
   const payload = { approval_status: status, review_note: reviewNote || "", updated_at: new Date().toISOString() };
   const result = await offlineWrite({ module: "machinery", table: "machinery", action: "update", id, payload });
-  if (!result.ok) return { __error: true, message: result.error || "خطا در ذخیره‌سازی" };
-  if (!result.record) return { __error: true, message: "سرور پاسخ نامعتبر برگرداند — لطفاً دوباره تلاش کنید" };
+  if (!result.ok) return { __error: true, message: result.error || translate(getCurrentLang(), "commonErrorSave") };
+  if (!result.record) return { __error: true, message: translate(getCurrentLang(), "errServerInvalidResponse") };
   return { ...machineryFromRow(result.record), syncStatus: result.offline ? "pending" : "synced" };
 }
 
@@ -280,7 +281,7 @@ export async function uploadMachineryDocument(machineryId, docType, fileData, fi
   if (isOnline()) {
     const { allowed, storageMb } = await checkUploadAllowed();
     if (!allowed) {
-      return { __error: true, message: `فضای ذخیره‌سازی پر شده است (${storageMb} مگابایت). لطفاً ابتدا از بخش «آرشیو فایل‌ها» مدارک قدیمی را حذف کنید.` };
+      return { __error: true, message: translate(getCurrentLang(), "errStorageFullDeleteOldDocs", { mb: storageMb }) };
     }
   }
   // آپلود جدید جایگزین مدرک قبلی همان نوع می‌شود (مثل مدارک پرسنل)
@@ -296,14 +297,14 @@ export async function uploadMachineryDocument(machineryId, docType, fileData, fi
     base64Data: fileData, contentType: mimeType, fileFieldName: "file_data",
     extraFields: { machinery_id: machineryId, doc_type: docType, file_name: fileName, mime_type: mimeType },
   });
-  if (!result.ok) return { __error: true, message: result.error || "خطا در آپلود مدرک" };
-  if (!result.record) return { __error: true, message: "سرور پاسخ نامعتبر برگرداند — لطفاً دوباره تلاش کنید" };
+  if (!result.ok) return { __error: true, message: result.error || translate(getCurrentLang(), "errUploadDoc") };
+  if (!result.record) return { __error: true, message: translate(getCurrentLang(), "errServerInvalidResponse") };
   return machineryDocFromRow(result.record);
 }
 
 export async function deleteMachineryDocument(id) {
   const result = await offlineWrite({ module: "machineryDocuments", table: "machinery_documents", action: "delete", id, payload: {} });
-  if (!result.ok) return { __error: true, message: result.error || "خطا در حذف مدرک" };
+  if (!result.ok) return { __error: true, message: result.error || translate(getCurrentLang(), "errDeleteDoc") };
   return { ok: true };
 }
 

@@ -17,11 +17,12 @@ import {
   loadPendingGateItems, loadAssignedGateItems, loadAssignedReviewItemsForModule, loadCompanyStaffOptions, assignForReview,
   submitReview as submitGateReview, approveGateItem, rejectGateItem, GATE_STATUS_LABELS,
 } from "../hseGateApi.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
-const SORT_OPTIONS = [
-  { value: "newest", label: "جدیدترین" },
-  { value: "oldest", label: "قدیمی‌ترین" },
-  { value: "name", label: "نام ماشین (الفبا)" },
+const SORT_OPTIONS_KEYS = [
+  { value: "newest", labelKey: "sortNewest" },
+  { value: "oldest", labelKey: "sortOldest" },
+  { value: "name", labelKey: "sortMachineNameAlpha" },
 ];
 
 /**
@@ -31,6 +32,8 @@ const SORT_OPTIONS = [
  * this file only supplies columns, the card, and the actions.
  */
 export default function MachineryDashboard({ onBack, currentUser, role, initialApprovalFilter, initialContractorFilter, readOnly }) {
+  const { t, dir } = useLanguage();
+  const SORT_OPTIONS = SORT_OPTIONS_KEYS.map((o) => ({ value: o.value, label: t(o.labelKey) }));
   const isContractor = role === "CONTRACTOR";
   // طبق همان تصمیم تأییدشده که برای پرسنل و آنومالی اعمال شد: تأیید
   // ماشین‌آلات فقط برای سرپرست/مدیر HSE و ادمین مجاز است، نه هر
@@ -160,40 +163,40 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
   const handleSaved = async () => { setShowForm(false); await load(); };
 
   const handleDelete = async (m) => {
-    if (readOnly) { alert("شما مجوز حذف را ندارید"); return; }
+    if (readOnly) { alert(t("errNoDeletePermission")); return; }
     if (isContractor && m.approvalStatus === "approved") {
       // پیمانکار نمی‌تواند ماشین تأییدشده را مستقیم حذف کند — این
       // محدودیت سمت RLS هم اعمال شده، اینجا فقط تجربه‌ی کاربری بهتری
       // برای همان محدودیت است. فقط می‌تواند درخواست حذف ثبت کند.
-      const note = prompt("این ماشین قبلاً توسط کارفرما تأیید شده است. علت درخواست حذف را بنویسید (اختیاری) — درخواست شما برای تأیید سرپرست/مدیر HSE ارسال می‌شود:");
+      const note = prompt(t("mdDeleteRequestApprovedPrompt"));
       if (note === null) return; // انصراف از prompt
       const result = await requestMachineryDeletion(m.id, note, currentUser?.name);
       if (result?.__error) { alert(result.message); return; }
-      alert("درخواست حذف ثبت شد و برای تأیید سرپرست/مدیر HSE ارسال شد.");
+      alert(t("mdDeleteRequestSubmittedAlert"));
       await load();
       return;
     }
-    if (!confirm("این ماشین حذف شود؟")) return;
+    if (!confirm(t("confirmDeleteMachine"))) return;
     const result = await deleteMachineryDB(m.id);
     if (result?.__error) { alert(result.message); return; }
     await load();
   };
   const handleApproveDeleteRequest = async (m) => {
-    if (!isGatekeeper) { alert("شما مجوز تأیید حذف را ندارید"); return; }
-    if (!confirm(`ماشین «${m.machineName} — ${m.plateNumber}» برای همیشه حذف شود؟`)) return;
+    if (!isGatekeeper) { alert(t("errNoApproveDeletePermission")); return; }
+    if (!confirm(t("mdConfirmPermanentDelete", { name: `${m.machineName} — ${m.plateNumber}` }))) return;
     const result = await approveMachineryDeletion(m.id);
     if (result?.__error) { alert(result.message); return; }
     await load();
   };
   const handleRejectDeleteRequest = async (m) => {
-    if (!isGatekeeper) { alert("شما مجوز رد درخواست حذف را ندارید"); return; }
+    if (!isGatekeeper) { alert(t("errNoRejectDeletePermission")); return; }
     const result = await rejectMachineryDeletion(m.id);
     if (result?.__error) { alert(result.message); return; }
     await load();
   };
   const handleBulkDelete = async (ids) => {
-    if (readOnly) { alert("شما مجوز حذف را ندارید"); return; }
-    if (!confirm(`${ids.length} مورد حذف شود؟`)) return;
+    if (readOnly) { alert(t("errNoDeletePermission")); return; }
+    if (!confirm(t("confirmDeleteCount", { count: ids.length }))) return;
     for (const id of ids) await deleteMachineryDB(id);
     await load();
   };
@@ -216,9 +219,9 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
     if (docsExpandedId !== m.id) await toggleDocs(m);
   };
   const submitReview = async (m, status) => {
-    if (readOnly) { alert("شما مجوز تصمیم‌گیری را ندارید"); return; }
+    if (readOnly) { alert(t("errNoDecisionPermission")); return; }
     if ((status === "rejected" || status === "needs_correction") && !reviewNoteDraft.trim()) {
-      alert("برای رد یا نیاز به اصلاح، ثبت توضیحات الزامی است");
+      alert(t("errNoteRequiredForRejection"));
       return;
     }
     setSavingReview(true);
@@ -236,8 +239,8 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
     await loadGateData();
   };
   const handleBulkApprove = async (ids) => {
-    if (readOnly) { alert("شما مجوز تصمیم‌گیری را ندارید"); return; }
-    if (!confirm(`${ids.length} مورد تأیید شود؟`)) return;
+    if (readOnly) { alert(t("errNoDecisionPermission")); return; }
+    if (!confirm(t("confirmBulkApprove", { count: ids.length }))) return;
     for (const id of ids) {
       await setMachineryApproval(id, "approved", "");
       // طبق همان رفعِ ناهماهنگی که در تأیید تکی (submitReview) هست: اگر
@@ -262,7 +265,7 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
     );
   }
 
-  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>در حال بارگذاری...</div>;
+  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</div>;
 
   const expiryWarning = (m) => {
     const insuranceDays = daysUntil(m.insuranceExpiry);
@@ -287,19 +290,19 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
     return (
       <>
         <button type="button" style={{ ...styles.smallButton, background: THEME.navyMid, display: "inline-flex", alignItems: "center", gap: 4 }} onClick={() => toggleDocs(m)}>
-          <Paperclip size={12} /> مدارک{docsMap[m.id] ? ` (${docs.length})` : ""}
+          <Paperclip size={12} /> {t("mdDocsLabel")}{docsMap[m.id] ? ` (${docs.length})` : ""}
         </button>
         {isContractor && !readOnly && (
           <>
-            <button type="button" style={styles.smallButton} onClick={() => startEdit(m)}>ویرایش</button>
+            <button type="button" style={styles.smallButton} onClick={() => startEdit(m)}>{t("commonEdit")}</button>
             <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => handleDelete(m)}><Trash2 size={12} /></button>
           </>
         )}
         {isGatekeeper && !readOnly && m.approvalStatus === "pending" && (
-          <button type="button" style={styles.smallButton} onClick={() => startReview(m)}>بررسی</button>
+          <button type="button" style={styles.smallButton} onClick={() => startReview(m)}>{t("mdReview")}</button>
         )}
         {isGatekeeper && !readOnly && m.approvalStatus !== "pending" && (
-          <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => startReview(m)}>تغییر تصمیم</button>
+          <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => startReview(m)}>{t("mdChangeDecision")}</button>
         )}
       </>
     );
@@ -316,7 +319,7 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
       {docsExpandedId === expandedItem.id && (
         <div style={{ marginBottom: expandedId === expandedItem.id ? 14 : 0 }}>
           {docsLoading && !docsMap[expandedItem.id] ? (
-            <p style={{ fontSize: 11.5, color: THEME.text3 }}>در حال بارگذاری مدارک...</p>
+            <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("mdLoadingDocs")}</p>
           ) : (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
               {MACHINERY_DOC_TYPES.map((dt) => {
@@ -341,7 +344,7 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
                         <Paperclip size={16} color={THEME.text3} />
                       </div>
                     )}
-                    <div style={{ fontSize: 9.5, color: doc ? THEME.text2 : THEME.text3, marginTop: 4, lineHeight: 1.4 }}>{dt.label}</div>
+                    <div style={{ fontSize: 9.5, color: doc ? THEME.text2 : THEME.text3, marginTop: 4, lineHeight: 1.4 }}>{t(dt.labelKey)}</div>
                   </div>
                 );
               })}
@@ -353,16 +356,16 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
       {gateMap[expandedItem.id] && (gateMap[expandedItem.id].status === "pending_approval" || gateMap[expandedItem.id].status === "assigned_review" || gateMap[expandedItem.id].status === "reviewed") && (
         <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 9, padding: 12, marginBottom: 10 }}>
           <p style={{ fontSize: 12, fontWeight: 700, color: "#1d4ed8", margin: "0 0 8px" }}>
-            گیت بازبینی سرپرست/مدیر HSE — {GATE_STATUS_LABELS[gateMap[expandedItem.id].status] || gateMap[expandedItem.id].status}
+            {t("gateReviewGateHeading", { status: GATE_STATUS_LABELS[gateMap[expandedItem.id].status] || gateMap[expandedItem.id].status })}
           </p>
           {gateMap[expandedItem.id].status === "assigned_review" && (
             <p style={{ fontSize: 12, color: "#1d4ed8", fontWeight: 600, margin: "0 0 8px" }}>
-              ارجاع به کارشناس: {gateStaff.find((s) => s.username === gateMap[expandedItem.id].assignedTo)?.name || gateMap[expandedItem.id].assignedTo}
+              {t("gateAssignedToExpert", { name: gateStaff.find((s) => s.username === gateMap[expandedItem.id].assignedTo)?.name || gateMap[expandedItem.id].assignedTo })}
             </p>
           )}
           {gateMap[expandedItem.id].reviewerComment && (
             <p style={{ fontSize: 12, color: "#374151", margin: "0 0 8px", lineHeight: 1.8 }}>
-              <b>نظر کارشناس:</b> {gateMap[expandedItem.id].reviewerComment}
+              <b>{t("gateExpertComment")}</b> {gateMap[expandedItem.id].reviewerComment}
             </p>
           )}
           {gateMessage && <p style={styles.error}>{gateMessage}</p>}
@@ -373,16 +376,16 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
             <div>
               {assigningGateId === expandedItem.id ? (
                 <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                  <select style={{ ...styles.input, marginTop: 0, maxWidth: 220 }} value={assignGateTo} onChange={(e) => setAssignGateTo(e.target.value)} dir="rtl">
-                    <option value="">انتخاب کارشناس</option>
+                  <select style={{ ...styles.input, marginTop: 0, maxWidth: 220 }} value={assignGateTo} onChange={(e) => setAssignGateTo(e.target.value)} dir={dir}>
+                    <option value="">{t("gateSelectExpert")}</option>
                     {gateStaff.filter((s) => s.username !== currentUser?.username).map((s) => <option key={s.username} value={s.username}>{s.name}</option>)}
                   </select>
-                  <button type="button" style={styles.smallButton} onClick={() => handleAssignForReview(expandedItem)} disabled={gateBusy === expandedItem.id || !assignGateTo}>ثبت ارجاع</button>
-                  <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setAssigningGateId(null)}>انصراف</button>
+                  <button type="button" style={styles.smallButton} onClick={() => handleAssignForReview(expandedItem)} disabled={gateBusy === expandedItem.id || !assignGateTo}>{t("gateSubmitAssignment")}</button>
+                  <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setAssigningGateId(null)}>{t("commonCancel")}</button>
                 </div>
               ) : (
                 <button type="button" style={styles.smallButton} onClick={() => { setAssigningGateId(expandedItem.id); setAssignGateTo(""); }} disabled={gateBusy === expandedItem.id}>
-                  ارجاع به کارشناس برای بررسی
+                  {t("gateAssignToExpertForReview")}
                 </button>
               )}
             </div>
@@ -394,15 +397,15 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
             <div>
               {reviewingGateId !== expandedItem.id ? (
                 <button type="button" style={styles.smallButton} onClick={() => { setReviewingGateId(expandedItem.id); setGateReviewComment(""); }} disabled={gateBusy === expandedItem.id}>
-                  ارسال نتیجه‌ی بررسی برای سرپرست/مدیر HSE
+                  {t("gateSendReviewResultToSupervisor")}
                 </button>
               ) : (
                 <div>
-                  <label style={styles.label}>نظر یا توضیح (اختیاری)</label>
-                  <textarea style={{ ...styles.input, minHeight: 50 }} value={gateReviewComment} onChange={(e) => setGateReviewComment(e.target.value)} dir="rtl" />
+                  <label style={styles.label}>{t("gateCommentOptional")}</label>
+                  <textarea style={{ ...styles.input, minHeight: 50 }} value={gateReviewComment} onChange={(e) => setGateReviewComment(e.target.value)} dir={dir} />
                   <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                    <button type="button" style={styles.smallButton} onClick={() => handleSubmitGateReview(expandedItem)} disabled={gateBusy === expandedItem.id}>ارسال</button>
-                    <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setReviewingGateId(null)}>انصراف</button>
+                    <button type="button" style={styles.smallButton} onClick={() => handleSubmitGateReview(expandedItem)} disabled={gateBusy === expandedItem.id}>{t("gateSend")}</button>
+                    <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setReviewingGateId(null)}>{t("commonCancel")}</button>
                   </div>
                 </div>
               )}
@@ -414,19 +417,19 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
       {expandedId === expandedItem.id && expandedItem.deleteRequestedBy && (
         <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 9, padding: 12, marginBottom: 10 }}>
           <p style={{ fontSize: 12, fontWeight: 700, color: THEME.danger, margin: "0 0 6px" }}>
-            درخواست حذف در انتظار تأیید سرپرست/مدیر HSE
+            {t("mdDeleteRequestPendingTitle")}
           </p>
           <p style={{ fontSize: 11.5, color: "#374151", margin: "0 0 8px" }}>
-            درخواست‌دهنده: {expandedItem.deleteRequestedBy} — {toJalaliSafe(expandedItem.deleteRequestedAt)}
-            {expandedItem.deleteRequestNote && <> — علت: {expandedItem.deleteRequestNote}</>}
+            {t("mdDeleteRequestedBy", { name: expandedItem.deleteRequestedBy, date: toJalaliSafe(expandedItem.deleteRequestedAt) })}
+            {expandedItem.deleteRequestNote && <> — {t("mdDeleteRequestReason", { note: expandedItem.deleteRequestNote })}</>}
           </p>
           {isGatekeeper && !readOnly && (
             <div style={{ display: "flex", gap: 8 }}>
               <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => handleApproveDeleteRequest(expandedItem)}>
-                تأیید و حذف قطعی
+                {t("mdApproveAndDeletePermanently")}
               </button>
               <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => handleRejectDeleteRequest(expandedItem)}>
-                رد درخواست حذف
+                {t("mdRejectDeleteRequest")}
               </button>
             </div>
           )}
@@ -435,36 +438,36 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
 
       {expandedId === expandedItem.id && isGatekeeper && !readOnly && (
         <div style={{ borderTop: docsExpandedId === expandedItem.id ? `1px solid ${THEME.border}` : "none", paddingTop: docsExpandedId === expandedItem.id ? 10 : 0 }}>
-          <label style={styles.label}>توضیحات (برای رد یا نیاز به اصلاح الزامی است)</label>
-          <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={reviewNoteDraft} onChange={(e) => setReviewNoteDraft(e.target.value)} dir="rtl" />
+          <label style={styles.label}>{t("mdReviewNoteLabel")}</label>
+          <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={reviewNoteDraft} onChange={(e) => setReviewNoteDraft(e.target.value)} dir={dir} />
           <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
-            <button type="button" style={{ ...styles.smallButton, background: "#166534" }} onClick={() => submitReview(expandedItem, "approved")} disabled={savingReview}>تأیید شد</button>
-            <button type="button" style={{ ...styles.smallButton, background: "#b45309" }} onClick={() => submitReview(expandedItem, "needs_correction")} disabled={savingReview}>نیاز به اصلاح</button>
-            <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => submitReview(expandedItem, "rejected")} disabled={savingReview}>رد شد</button>
-            <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => { setExpandedId(null); setDocsExpandedId(null); }} disabled={savingReview}>بستن</button>
+            <button type="button" style={{ ...styles.smallButton, background: "#166534" }} onClick={() => submitReview(expandedItem, "approved")} disabled={savingReview}>{t("mdApproved")}</button>
+            <button type="button" style={{ ...styles.smallButton, background: "#b45309" }} onClick={() => submitReview(expandedItem, "needs_correction")} disabled={savingReview}>{t("mdNeedsCorrectionBtn")}</button>
+            <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => submitReview(expandedItem, "rejected")} disabled={savingReview}>{t("mdRejectedBtn")}</button>
+            <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => { setExpandedId(null); setDocsExpandedId(null); }} disabled={savingReview}>{t("commonClose")}</button>
           </div>
         </div>
       )}
       {docsExpandedId === expandedItem.id && expandedId !== expandedItem.id && (
-        <button type="button" style={{ ...styles.smallButton, background: THEME.text3, marginTop: 10 }} onClick={() => setDocsExpandedId(null)}>بستن مدارک</button>
+        <button type="button" style={{ ...styles.smallButton, background: THEME.text3, marginTop: 10 }} onClick={() => setDocsExpandedId(null)}>{t("mdCloseDocs")}</button>
       )}
     </div>
   );
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>← بازگشت به منو</div>}
+    <div style={{ maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
+      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
         <Truck size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>مدیریت ماشین‌آلات</h2>
+        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("mdModuleTitle")}</h2>
       </div>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 14 }}>
-        {isContractor ? "ثبت و پیگیری ماشین‌آلات شرکت شما" : "مشاهده و تأیید ماشین‌آلات ثبت‌شده توسط تمام پیمانکاران"}
+        {isContractor ? t("mdContractorSubtitle") : t("mdEmployerSubtitle")}
       </p>
 
       {isContractor && !readOnly && (
         <button type="button" style={{ ...styles.button, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 14 }} onClick={startCreate}>
-          <Plus size={15} /> ثبت ماشین‌آلات جدید
+          <Plus size={15} /> {t("mdRegisterNewMachinery")}
         </button>
       )}
 
@@ -473,33 +476,33 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
         getId={(m) => m.id}
         searchQuery={search}
         onSearchChange={setSearch}
-        searchPlaceholder="جستجو (نام، پلاک، پیمانکار)..."
+        searchPlaceholder={t("mdSearchPlaceholder")}
         sortOptions={SORT_OPTIONS}
         sortValue={sort}
         onSortChange={setSort}
         filterSlot={
           <>
-            <select style={styles.filterSelect} value={approvalFilter} onChange={(e) => setApprovalFilter(e.target.value)} dir="rtl">
-              <option value="all">همه وضعیت‌ها</option>
-              {APPROVAL_STATUSES.filter((s) => isContractor || s.value !== "draft").map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+            <select style={styles.filterSelect} value={approvalFilter} onChange={(e) => setApprovalFilter(e.target.value)} dir={dir}>
+              <option value="all">{t("filterAllStatuses")}</option>
+              {APPROVAL_STATUSES.filter((s) => isContractor || s.value !== "draft").map((s) => <option key={s.value} value={s.value}>{t(s.labelKey)}</option>)}
             </select>
-            <select style={styles.filterSelect} value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} dir="rtl">
-              <option value="all">همه انواع</option>
-              {MACHINE_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+            <select style={styles.filterSelect} value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} dir={dir}>
+              <option value="all">{t("filterAllTypes")}</option>
+              {MACHINE_TYPES.map((mt) => <option key={mt.value} value={mt.value}>{t(mt.labelKey)}</option>)}
             </select>
           </>
         }
         bulkActions={
           isGatekeeper && !readOnly
-            ? [{ label: "تأیید گروهی", onClick: handleBulkApprove }]
+            ? [{ label: t("mdBulkApprove"), onClick: handleBulkApprove }]
             : isContractor && !readOnly
-              ? [{ label: "حذف گروهی", danger: true, onClick: handleBulkDelete }]
+              ? [{ label: t("bulkDelete"), danger: true, onClick: handleBulkDelete }]
               : null
         }
-        emptyMessage="ماشین‌آلاتی یافت نشد"
+        emptyMessage={t("mdNoMachineryFound")}
         columns={[
           {
-            key: "name", label: "نام ماشین / پلاک",
+            key: "name", label: t("colMachineNamePlate"),
             render: (m) => (
               <div>
                 <div style={{ fontWeight: 600 }}>{m.machineName}</div>
@@ -507,30 +510,30 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
               </div>
             ),
           },
-          ...(!isContractor ? [{ key: "contractor", label: "پیمانکار", render: (m) => m.contractorName || "—" }] : []),
-          { key: "type", label: "نوع", render: (m) => MACHINE_TYPES.find((t) => t.value === m.machineType)?.label || "—" },
+          ...(!isContractor ? [{ key: "contractor", label: t("fieldContractor"), render: (m) => m.contractorName || "—" }] : []),
+          { key: "type", label: t("colType"), render: (m) => { const mtm = MACHINE_TYPES.find((x) => x.value === m.machineType); return mtm ? t(mtm.labelKey) : "—"; } },
           {
-            key: "expiry", label: "انقضا",
+            key: "expiry", label: t("colExpiry"),
             render: (m) => {
               const { anyWarn } = expiryWarning(m);
               if (!anyWarn) return <span style={{ color: THEME.text3 }}>—</span>;
-              return <span style={{ color: "#b45309", fontSize: 11 }}>⚠ مدارک نزدیک/منقضی</span>;
+              return <span style={{ color: "#b45309", fontSize: 11 }}>{t("mdDocsNearExpiry")}</span>;
             },
           },
           {
-            key: "status", label: "وضعیت",
+            key: "status", label: t("commonStatus"),
             render: (m) => {
               const sm = approvalStatusMeta(m.approvalStatus);
               const gi = gateMap[m.id];
               const assignedExpertName = gi?.status === "assigned_review" ? (gateStaff.find((s) => s.username === gi.assignedTo)?.name || gi.assignedTo) : null;
               return (
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                  <StatusPill label={sm.label} color={sm.color} bg={sm.bg} />
+                  <StatusPill label={t(sm.labelKey)} color={sm.color} bg={sm.bg} />
                   {assignedExpertName && (
-                    <span style={{ fontSize: 10.5, color: "#1d4ed8", fontWeight: 600 }}>ارجاع به کارشناس: {assignedExpertName}</span>
+                    <span style={{ fontSize: 10.5, color: "#1d4ed8", fontWeight: 600 }}>{t("gateAssignedToExpert", { name: assignedExpertName })}</span>
                   )}
                   {m.deleteRequestedBy && (
-                    <span style={{ fontSize: 10.5, color: THEME.danger, fontWeight: 600 }}>درخواست حذف در انتظار</span>
+                    <span style={{ fontSize: 10.5, color: THEME.danger, fontWeight: 600 }}>{t("mdStatusDeleteRequestPending")}</span>
                   )}
                   {m.syncStatus && m.syncStatus !== "synced" && <SyncStatusBadge status={m.syncStatus} onRetry={() => load()} />}
                 </div>
@@ -556,32 +559,32 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
                   <div style={{ fontWeight: 700, color: THEME.navy, fontSize: 14 }}>{m.machineName} — {m.plateNumber}</div>
                   <div style={{ fontSize: 11.5, color: THEME.text3, marginTop: 4 }}>
                     {!isContractor && <>{m.contractorName} · </>}
-                    {MACHINE_TYPES.find((t) => t.value === m.machineType)?.label} {m.project && `· ${m.project}`}
+                    {(() => { const mtm = MACHINE_TYPES.find((x) => x.value === m.machineType); return mtm ? t(mtm.labelKey) : ""; })()} {m.project && `· ${m.project}`}
                   </div>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <StatusPill label={sm.label} color={sm.color} bg={sm.bg} />
+                    <StatusPill label={t(sm.labelKey)} color={sm.color} bg={sm.bg} />
                     {m.syncStatus && m.syncStatus !== "synced" && <SyncStatusBadge status={m.syncStatus} onRetry={() => load()} />}
                   </div>
                   {assignedExpertNameCard && (
-                    <span style={{ fontSize: 10.5, color: "#1d4ed8", fontWeight: 600 }}>ارجاع به کارشناس: {assignedExpertNameCard}</span>
+                    <span style={{ fontSize: 10.5, color: "#1d4ed8", fontWeight: 600 }}>{t("gateAssignedToExpert", { name: assignedExpertNameCard })}</span>
                   )}
                 </div>
               </div>
 
               {anyWarn && (
                 <div style={{ marginTop: 8, fontSize: 11.5, color: "#b45309" }}>
-                  {insuranceWarn && <div>⚠ بیمه‌نامه {insuranceDays < 0 ? "منقضی شده" : `تا ${insuranceDays} روز دیگر منقضی می‌شود`} ({toJalaliSafe(m.insuranceExpiry)})</div>}
-                  {inspectionWarn && <div>⚠ معاینه فنی {inspectionDays < 0 ? "منقضی شده" : `تا ${inspectionDays} روز دیگر منقضی می‌شود`} ({toJalaliSafe(m.inspectionExpiry)})</div>}
-                  {healthCertWarn && <div>⚠ سرتیفیکیت سلامت {healthCertDays < 0 ? "منقضی شده" : `تا ${healthCertDays} روز دیگر منقضی می‌شود`} ({toJalaliSafe(m.healthCertExpiry)})</div>}
-                  {driverLicenseWarn && <div>⚠ گواهینامه راننده {driverLicenseDays < 0 ? "منقضی شده" : `تا ${driverLicenseDays} روز دیگر منقضی می‌شود`} ({toJalaliSafe(m.driverLicenseExpiry)})</div>}
-                  {backupDriverLicenseWarn && <div>⚠ گواهینامه جانشین راننده {backupDriverLicenseDays < 0 ? "منقضی شده" : `تا ${backupDriverLicenseDays} روز دیگر منقضی می‌شود`} ({toJalaliSafe(m.backupDriverLicenseExpiry)})</div>}
+                  {insuranceWarn && <div>{t("mdWarnInsurance", { status: insuranceDays < 0 ? t("mdWarnExpired") : t("mdWarnDaysLeft", { days: insuranceDays }), date: toJalaliSafe(m.insuranceExpiry) })}</div>}
+                  {inspectionWarn && <div>{t("mdWarnInspection", { status: inspectionDays < 0 ? t("mdWarnExpired") : t("mdWarnDaysLeft", { days: inspectionDays }), date: toJalaliSafe(m.inspectionExpiry) })}</div>}
+                  {healthCertWarn && <div>{t("mdWarnHealthCert", { status: healthCertDays < 0 ? t("mdWarnExpired") : t("mdWarnDaysLeft", { days: healthCertDays }), date: toJalaliSafe(m.healthCertExpiry) })}</div>}
+                  {driverLicenseWarn && <div>{t("mdWarnDriverLicense", { status: driverLicenseDays < 0 ? t("mdWarnExpired") : t("mdWarnDaysLeft", { days: driverLicenseDays }), date: toJalaliSafe(m.driverLicenseExpiry) })}</div>}
+                  {backupDriverLicenseWarn && <div>{t("mdWarnBackupDriverLicense", { status: backupDriverLicenseDays < 0 ? t("mdWarnExpired") : t("mdWarnDaysLeft", { days: backupDriverLicenseDays }), date: toJalaliSafe(m.backupDriverLicenseExpiry) })}</div>}
                 </div>
               )}
 
               {m.reviewNote && (m.approvalStatus === "rejected" || m.approvalStatus === "needs_correction") && (
-                <p style={{ fontSize: 11.5, color: THEME.danger, marginTop: 8 }}><b>یادداشت کارفرما:</b> {m.reviewNote}</p>
+                <p style={{ fontSize: 11.5, color: THEME.danger, marginTop: 8 }}><b>{t("mdEmployerNoteLabel")}</b> {m.reviewNote}</p>
               )}
 
               <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>{rowActions(m)}</div>

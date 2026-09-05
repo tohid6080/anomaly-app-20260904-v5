@@ -5,6 +5,7 @@ import { JalaliDateInput } from "../personnel/jalaliDate.jsx";
 import DocUploadField from "../personnel/DocUploadField.jsx";
 import DocumentViewerModal from "../personnel/DocumentViewerModal.jsx";
 import { submitToGate } from "../hseGateApi.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 import {
   MACHINE_TYPES, OWNERSHIP_STATUSES, LICENSE_TYPES, TRAFFIC_STATUSES, MACHINERY_DOC_TYPES,
   insertMachinery, updateMachineryInfo, submitMachineryForReview,
@@ -27,6 +28,7 @@ import {
  *     the machine visible/actionable to the employer.
  */
 export default function MachineryForm({ existingMachinery, existingDocuments, currentUser, onSaved, onBack }) {
+  const { t, dir } = useLanguage();
   const [machinery, setMachinery] = useState(existingMachinery || null);
   const [project, setProject] = useState(existingMachinery?.project || "");
   const [machineName, setMachineName] = useState(existingMachinery?.machineName || "");
@@ -80,7 +82,7 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
 
   const validateBasics = () => {
     if (!machineName.trim() || !plateNumber.trim()) {
-      setError("نام ماشین‌آلات و شماره پلاک الزامی است");
+      setError(t("errMachineNamePlateRequired"));
       return false;
     }
     return true;
@@ -104,7 +106,7 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
   const handleSubmitForReview = async () => {
     if (!validateBasics()) return;
     if (missingRequired.length > 0) {
-      setError(`قبل از ارسال، این مدارک الزامی را بارگذاری کنید: ${missingRequired.map((d) => d.label).join("، ")}`);
+      setError(t("errUploadRequiredBefore", { list: missingRequired.map((d) => t(d.labelKey)).join("، ") }));
       return;
     }
     setSubmitting(true);
@@ -124,7 +126,7 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
 
   const handleUploadDoc = async (docType, fileData, fileName, mimeType) => {
     if (!machinery?.id) {
-      return { __error: true, message: "ابتدا دکمه‌ی «ذخیره‌ی اطلاعات» را بزنید، سپس مدارک را بارگذاری نمایید." };
+      return { __error: true, message: t("errSaveInfoFirst") };
     }
     const result = await uploadMachineryDocument(machinery.id, docType, fileData, fileName, mimeType);
     if (!result?.__error) setDocs((prev) => ({ ...prev, [docType]: result }));
@@ -132,7 +134,7 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
   };
 
   const handleDeleteDoc = async (docType, doc) => {
-    if (!confirm("این مدرک حذف شود؟")) return;
+    if (!confirm(t("confirmDeleteDoc"))) return;
     await deleteMachineryDocument(doc.id);
     setDocs((prev) => {
       const next = { ...prev };
@@ -142,170 +144,170 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
   };
 
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>← بازگشت</div>}
+    <div style={{ maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
+      {onBack && <div style={styles.backLink} onClick={onBack}>{t("mfBack")}</div>}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
         <Truck size={20} color={THEME.teal} />
         <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>
-          {machinery ? "ویرایش ماشین‌آلات" : "ثبت ماشین‌آلات جدید"}
+          {machinery ? t("mfEditTitle") : t("mfNewTitle")}
         </h2>
       </div>
 
       {machinery?.reviewNote && (
         <div style={{ ...styles.card, width: "auto", marginBottom: 14, background: "#fef3c7", border: "1px solid #fde68a" }}>
-          <p style={{ fontSize: 12.5, color: "#92400e", margin: 0 }}><b>یادداشت کارفرما:</b> {machinery.reviewNote}</p>
+          <p style={{ fontSize: 12.5, color: "#92400e", margin: 0 }}><b>{t("mfEmployerNote")}</b> {machinery.reviewNote}</p>
         </div>
       )}
 
       <div style={{ ...styles.card, width: "auto" }}>
         <div style={styles.formGrid}>
           <div>
-            <label style={styles.label}>پروژه / شرکت</label>
-            <input style={styles.input} value={project} onChange={(e) => setProject(e.target.value)} dir="rtl" />
+            <label style={styles.label}>{t("mfSiteCompany")}</label>
+            <input style={styles.input} value={project} onChange={(e) => setProject(e.target.value)} dir={dir} />
           </div>
           <div>
-            <label style={styles.label}>نام ماشین‌آلات *</label>
-            <input style={styles.input} value={machineName} onChange={(e) => setMachineName(e.target.value)} dir="rtl" />
+            <label style={styles.label}>{t("mfMachineNameRequired")}</label>
+            <input style={styles.input} value={machineName} onChange={(e) => setMachineName(e.target.value)} dir={dir} />
           </div>
         </div>
 
         <div style={styles.formGrid}>
           <div>
-            <label style={styles.label}>نوع ماشین‌آلات</label>
-            <select style={styles.input} value={machineType} onChange={(e) => setMachineType(e.target.value)} dir="rtl">
-              {MACHINE_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+            <label style={styles.label}>{t("mfMachineType")}</label>
+            <select style={styles.input} value={machineType} onChange={(e) => setMachineType(e.target.value)} dir={dir}>
+              {MACHINE_TYPES.map((mt) => <option key={mt.value} value={mt.value}>{t(mt.labelKey)}</option>)}
             </select>
           </div>
           <div>
-            <label style={styles.label}>شماره پلاک *</label>
-            <input style={styles.input} value={plateNumber} onChange={(e) => setPlateNumber(e.target.value)} dir="rtl" />
+            <label style={styles.label}>{t("mfPlateRequired")}</label>
+            <input style={styles.input} value={plateNumber} onChange={(e) => setPlateNumber(e.target.value)} dir={dir} />
           </div>
         </div>
 
         <div style={styles.formGrid}>
           <div>
-            <label style={styles.label}>شماره شاسی (مطابق کارت ماشین)</label>
-            <input style={styles.input} value={chassisNumber} onChange={(e) => setChassisNumber(e.target.value)} dir="rtl" />
+            <label style={styles.label}>{t("mfChassisNumber")}</label>
+            <input style={styles.input} value={chassisNumber} onChange={(e) => setChassisNumber(e.target.value)} dir={dir} />
           </div>
           <div>
-            <label style={styles.label}>سال ساخت</label>
-            <input style={styles.input} value={manufactureYear} onChange={(e) => setManufactureYear(e.target.value)} dir="rtl" />
+            <label style={styles.label}>{t("mfManufactureYear")}</label>
+            <input style={styles.input} value={manufactureYear} onChange={(e) => setManufactureYear(e.target.value)} dir={dir} />
           </div>
         </div>
 
         <div style={styles.formGrid}>
           <div>
-            <label style={styles.label}>وضعیت مالکیت</label>
-            <select style={styles.input} value={ownershipStatus} onChange={(e) => setOwnershipStatus(e.target.value)} dir="rtl">
-              {OWNERSHIP_STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+            <label style={styles.label}>{t("mfOwnershipStatus")}</label>
+            <select style={styles.input} value={ownershipStatus} onChange={(e) => setOwnershipStatus(e.target.value)} dir={dir}>
+              {OWNERSHIP_STATUSES.map((s) => <option key={s.value} value={s.value}>{t(s.labelKey)}</option>)}
             </select>
           </div>
           <div>
-            <label style={styles.label}>وضعیت تردد</label>
-            <select style={styles.input} value={trafficStatus} onChange={(e) => setTrafficStatus(e.target.value)} dir="rtl">
-              {TRAFFIC_STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+            <label style={styles.label}>{t("mfTrafficStatus")}</label>
+            <select style={styles.input} value={trafficStatus} onChange={(e) => setTrafficStatus(e.target.value)} dir={dir}>
+              {TRAFFIC_STATUSES.map((s) => <option key={s.value} value={s.value}>{t(s.labelKey)}</option>)}
             </select>
           </div>
         </div>
 
         <div style={styles.formGrid}>
           <div>
-            <label style={styles.label}>تاریخ صدور بیمه‌نامه</label>
+            <label style={styles.label}>{t("mfInsuranceIssueDate")}</label>
             <JalaliDateInput value={insuranceIssueDate} onChange={setInsuranceIssueDate} allowEmpty />
           </div>
           <div>
-            <label style={styles.label}>تاریخ انقضای بیمه‌نامه</label>
+            <label style={styles.label}>{t("mfInsuranceExpiryDate")}</label>
             <JalaliDateInput value={insuranceExpiry} onChange={setInsuranceExpiry} allowEmpty />
           </div>
         </div>
 
         <div style={styles.formGrid}>
           <div>
-            <label style={styles.label}>تاریخ صدور معاینه فنی</label>
+            <label style={styles.label}>{t("mfInspectionIssueDate")}</label>
             <JalaliDateInput value={inspectionIssueDate} onChange={setInspectionIssueDate} allowEmpty />
           </div>
           <div>
-            <label style={styles.label}>تاریخ انقضای معاینه فنی</label>
+            <label style={styles.label}>{t("mfInspectionExpiryDate")}</label>
             <JalaliDateInput value={inspectionExpiry} onChange={setInspectionExpiry} allowEmpty />
           </div>
         </div>
 
         <div style={styles.formGrid}>
           <div>
-            <label style={styles.label}>تاریخ صدور سرتیفیکیت سلامت (ماشین‌آلات سنگین)</label>
+            <label style={styles.label}>{t("mfHealthCertIssueDate")}</label>
             <JalaliDateInput value={healthCertIssueDate} onChange={setHealthCertIssueDate} allowEmpty />
           </div>
           <div>
-            <label style={styles.label}>تاریخ انقضای سرتیفیکیت سلامت</label>
+            <label style={styles.label}>{t("mfHealthCertExpiryDate")}</label>
             <JalaliDateInput value={healthCertExpiry} onChange={setHealthCertExpiry} allowEmpty />
           </div>
         </div>
 
         <div style={styles.formGrid}>
           <div>
-            <label style={styles.label}>نام راننده</label>
-            <input style={styles.input} value={driverName} onChange={(e) => setDriverName(e.target.value)} dir="rtl" />
+            <label style={styles.label}>{t("mfDriverName")}</label>
+            <input style={styles.input} value={driverName} onChange={(e) => setDriverName(e.target.value)} dir={dir} />
           </div>
           <div>
-            <label style={styles.label}>نوع گواهینامه راننده</label>
-            <select style={styles.input} value={driverLicenseType} onChange={(e) => setDriverLicenseType(e.target.value)} dir="rtl">
-              {LICENSE_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+            <label style={styles.label}>{t("mfDriverLicenseType")}</label>
+            <select style={styles.input} value={driverLicenseType} onChange={(e) => setDriverLicenseType(e.target.value)} dir={dir}>
+              {LICENSE_TYPES.map((lt) => <option key={lt.value} value={lt.value}>{t(lt.labelKey)}</option>)}
             </select>
           </div>
         </div>
 
         <div style={styles.formGrid}>
           <div>
-            <label style={styles.label}>تاریخ صدور گواهینامه راننده</label>
+            <label style={styles.label}>{t("mfDriverLicenseIssueDate")}</label>
             <JalaliDateInput value={driverLicenseIssueDate} onChange={setDriverLicenseIssueDate} allowEmpty />
           </div>
           <div>
-            <label style={styles.label}>تاریخ انقضای گواهینامه راننده</label>
+            <label style={styles.label}>{t("mfDriverLicenseExpiryDate")}</label>
             <JalaliDateInput value={driverLicenseExpiry} onChange={setDriverLicenseExpiry} allowEmpty />
           </div>
         </div>
 
         <div style={styles.formGrid}>
           <div>
-            <label style={styles.label}>نام جانشین راننده (دارای گواهینامه)</label>
-            <input style={styles.input} value={backupDriverName} onChange={(e) => setBackupDriverName(e.target.value)} dir="rtl" />
+            <label style={styles.label}>{t("mfBackupDriverName")}</label>
+            <input style={styles.input} value={backupDriverName} onChange={(e) => setBackupDriverName(e.target.value)} dir={dir} />
           </div>
           <div>
-            <label style={styles.label}>کد دستگاه</label>
-            <input style={styles.input} value={deviceCode} onChange={(e) => setDeviceCode(e.target.value)} dir="rtl" />
+            <label style={styles.label}>{t("mfDeviceCode")}</label>
+            <input style={styles.input} value={deviceCode} onChange={(e) => setDeviceCode(e.target.value)} dir={dir} />
           </div>
         </div>
 
         <div style={styles.formGrid}>
           <div>
-            <label style={styles.label}>تاریخ صدور گواهینامه جانشین راننده</label>
+            <label style={styles.label}>{t("mfBackupDriverLicenseIssueDate")}</label>
             <JalaliDateInput value={backupDriverLicenseIssueDate} onChange={setBackupDriverLicenseIssueDate} allowEmpty />
           </div>
           <div>
-            <label style={styles.label}>تاریخ انقضای گواهینامه جانشین راننده</label>
+            <label style={styles.label}>{t("mfBackupDriverLicenseExpiryDate")}</label>
             <JalaliDateInput value={backupDriverLicenseExpiry} onChange={setBackupDriverLicenseExpiry} allowEmpty />
           </div>
         </div>
 
         <div>
-          <label style={styles.label}>رفتار ناایمن (در صورت مشاهده)</label>
-          <textarea style={{ ...styles.input, minHeight: 50, fontFamily: "inherit" }} value={unsafeBehavior} onChange={(e) => setUnsafeBehavior(e.target.value)} dir="rtl" />
+          <label style={styles.label}>{t("mfUnsafeBehavior")}</label>
+          <textarea style={{ ...styles.input, minHeight: 50, fontFamily: "inherit" }} value={unsafeBehavior} onChange={(e) => setUnsafeBehavior(e.target.value)} dir={dir} />
         </div>
 
         {error && <p style={styles.error}>{error}</p>}
         <button type="button" style={{ ...styles.button, background: THEME.text3 }} onClick={handleSave} disabled={saving}>
-          {saving ? "در حال ذخیره..." : machinery ? "ذخیره‌ی تغییرات" : "ذخیره‌ی اطلاعات و افزودن مدارک"}
+          {saving ? t("saSavingEllipsis") : machinery ? t("saSaveChanges") : t("mfSaveInfoAddDocs")}
         </button>
       </div>
 
       {machinery && (
         <div style={{ ...styles.card, width: "auto", marginTop: 14 }}>
-          <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 4px", fontWeight: 700 }}>مدارک</h3>
-          <p style={{ fontSize: 11.5, color: THEME.text3, margin: "0 0 12px" }}>موارد ستاره‌دار برای ارسال به کارفرما الزامی هستند.</p>
+          <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 4px", fontWeight: 700 }}>{t("mfDocuments")}</h3>
+          <p style={{ fontSize: 11.5, color: THEME.text3, margin: "0 0 12px" }}>{t("mfStarredRequiredNote")}</p>
           {MACHINERY_DOC_TYPES.map((dt) => (
             <div key={dt.value} style={{ marginBottom: 14 }}>
               <label style={styles.label}>
-                {dt.label}{dt.required && <span style={{ color: THEME.danger }}> *</span>}
+                {t(dt.labelKey)}{dt.required && <span style={{ color: THEME.danger }}> *</span>}
                 {docs[dt.value] && <CheckCircle2 size={13} color="#166534" style={{ marginInlineStart: 6, verticalAlign: "middle" }} />}
               </label>
               <DocUploadField
@@ -319,7 +321,7 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
 
           {missingRequired.length > 0 && (
             <p style={{ fontSize: 11.5, color: THEME.danger, marginBottom: 10 }}>
-              مدارک الزامی باقی‌مانده: {missingRequired.map((d) => d.label).join("، ")}
+              {t("mfRemainingRequiredDocs", { list: missingRequired.map((d) => t(d.labelKey)).join("، ") })}
             </p>
           )}
 
@@ -329,7 +331,7 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
             onClick={handleSubmitForReview}
             disabled={submitting}
           >
-            {submitting ? "در حال ارسال..." : "ارسال برای تأیید کارفرما"}
+            {submitting ? t("sendingEllipsis") : t("hcmsSendForEmployerApproval")}
           </button>
         </div>
       )}
