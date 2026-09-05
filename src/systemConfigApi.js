@@ -47,13 +47,31 @@ export async function saveDashboardConfig(list, updatedBy) {
 // مستقل از KPIهای بالا — این‌ها پنل‌های داخل خودِ ماژول «داشبورد مدیریتی» هستند.
 
 export async function loadDashboardWidgetConfig() {
-  const rows = await sb("system_dashboard_widgets?select=*");
-  return sbOk(rows) ? rows.map((r) => ({ widgetKey: r.widget_key, isVisible: r.is_visible !== false })) : [];
+  const rows = await sb("system_dashboard_widgets?select=*&order=sort_order.asc.nullslast");
+  return sbOk(rows)
+    ? rows.map((r) => ({ widgetKey: r.widget_key, isVisible: r.is_visible !== false, sortOrder: r.sort_order != null ? r.sort_order : null }))
+    : [];
 }
 
-export async function saveDashboardWidgetConfig(widgetKey, isVisible, updatedBy) {
-  const rows = await sb(`system_dashboard_widgets?widget_key=eq.${widgetKey}`, { method: "PATCH", body: JSON.stringify({ is_visible: isVisible, updated_at: new Date().toISOString(), updated_by: updatedBy || "" }) }, "super_admin");
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ذخیره‌ی تنظیمات ویجت" };
+// ذخیره‌ی دسته‌ایِ نمایش/ترتیبِ پنل‌های داشبورد — یک upsert روی همان جدول.
+// list: [{ widgetKey, isVisible, sortOrder }]. فقط ردیف‌های واقعاً
+// تغییرکرده باید ارسال شوند (تصمیمِ diff سمت فراخوان است).
+export async function saveDashboardWidgetsBulk(list, updatedBy) {
+  if (!Array.isArray(list) || list.length === 0) return { ok: true };
+  const nowIso = new Date().toISOString();
+  const payload = list.map((w) => ({
+    widget_key: w.widgetKey,
+    is_visible: w.isVisible !== false,
+    sort_order: w.sortOrder,
+    updated_at: nowIso,
+    updated_by: updatedBy || "",
+  }));
+  const rows = await sb(
+    "system_dashboard_widgets?on_conflict=widget_key",
+    { method: "POST", body: JSON.stringify(payload), prefer: "resolution=merge-duplicates,return=representation" },
+    "super_admin",
+  );
+  if (!sbOk(rows)) return { __error: true, message: "خطا در ذخیره‌ی تنظیمات پنل‌های داشبورد" };
   return { ok: true };
 }
 

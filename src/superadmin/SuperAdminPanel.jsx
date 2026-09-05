@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { ShieldAlert, Plus, LogOut, Send, CreditCard, AlertTriangle, UserPlus, KeyRound, Layers, Trash2, History, Activity, TrendingDown, Clock, LogIn, ShieldX, LayoutDashboard, Building2, Users, FileClock, ChevronLeft, HardDrive, RefreshCw, Settings2, Copy, GripVertical, ArrowUp, ArrowDown, RotateCcw, Eye, EyeOff, LayoutGrid, PanelsTopLeft, Bell, Palette, Megaphone, Sparkles, Gift, Info, ImagePlus, X, ClipboardList } from "lucide-react";
 import { THEME } from "../shared.js";
 import { changeMyPassword } from "../sessionToken.js";
-import { loadModuleConfig, saveModuleConfig, loadNotificationTypes, saveNotificationType, syncNotificationTypesWithPlans, loadAppearanceConfig, saveAppearanceConfig, loadAllAnnouncements, createAnnouncement, updateAnnouncement, setAnnouncementActive, deleteAnnouncement, loadDashboardWidgetConfig, saveDashboardWidgetConfig } from "../systemConfigApi.js";
+import { loadModuleConfig, saveModuleConfig, loadNotificationTypes, saveNotificationType, syncNotificationTypesWithPlans, loadAppearanceConfig, saveAppearanceConfig, loadAllAnnouncements, createAnnouncement, updateAnnouncement, setAnnouncementActive, deleteAnnouncement, loadDashboardWidgetConfig, saveDashboardWidgetsBulk } from "../systemConfigApi.js";
+import { DASHBOARD_WIDGET_GROUPS, mergeWidgetConfig, defaultWidgetConfig } from "../dashboard/dashboardWidgets.js";
 import { uploadBase64ToStorage, deleteFromStorage, parseStorageUrl } from "../offline/storageUpload.js";
 import AccountManagement from "./AccountManagement.jsx";
 import { toJalaliSafe, toJalaliDateTime, JalaliDateInput } from "../personnel/jalaliDate.jsx";
@@ -812,64 +813,114 @@ function DashboardManagementTab({ currentAdmin }) {
   );
 }
 
-const WIDGET_LABELS = {
-  contractorHse: "جدول وضعیت HSE پیمانکاران", urgentAlerts: "هشدارهای فوری", smartInsights: "بینش‌های هوشمند",
-  anomalyTrend: "روند عدم انطباق‌ها", healthStatus: "وضعیت سلامت پرسنل", machineryStatus: "وضعیت ماشین‌آلات",
-  anomalyByRisk: "عدم انطباق بر اساس ریسک", contractorPerformance: "عملکرد پیمانکاران",
-};
+// امضای مقایسه‌ای برای تشخیص «تغییر کرده؟» — ترتیب + وضعیت نمایش.
+const widgetSignature = (list) => list.map((w) => `${w.key}:${w.isVisible ? 1 : 0}`).join("|");
 
 function DashboardWidgetsSection({ currentAdmin }) {
-  const [widgets, setWidgets] = useState(null);
-  const [draftWidgets, setDraftWidgets] = useState(null);
+  const [baseline, setBaseline] = useState(null);
+  const [draft, setDraft] = useState(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
-  const load = () => loadDashboardWidgetConfig().then((rows) => { setWidgets(rows); setDraftWidgets(rows); });
+  const load = () => loadDashboardWidgetConfig().then((rows) => {
+    const merged = mergeWidgetConfig(rows);
+    setBaseline(merged);
+    setDraft(merged.map((w) => ({ ...w })));
+  });
   useEffect(() => { load(); }, []);
 
-  if (!draftWidgets) return null;
+  if (!draft) return <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>در حال بارگذاری...</p>;
 
-  // استاندارد سراسری ذخیره‌سازی: کلیک روی هر پنل فقط وضعیت محلی را عوض
-  // می‌کند؛ Write واقعی فقط با کلیک روی «ذخیره تغییرات» انجام می‌شود
-  const toggleDraft = (widgetKey) => {
+  // استاندارد سراسری ذخیره‌سازی: هر تغییر فقط در draft می‌رود؛ Write واقعی
+  // فقط با «ذخیره تغییرات».
+  const toggle = (key) => {
     setMessage("");
-    setDraftWidgets((prev) => prev.map((w) => (w.widgetKey === widgetKey ? { ...w, isVisible: !w.isVisible } : w)));
+    setDraft((prev) => prev.map((w) => (w.key === key ? { ...w, isVisible: !w.isVisible } : w)));
+  };
+  const setAll = (isVisible) => {
+    setMessage("");
+    setDraft((prev) => prev.map((w) => ({ ...w, isVisible })));
+  };
+  const resetToDefault = () => {
+    setMessage("");
+    setDraft(defaultWidgetConfig());
+  };
+  // جابه‌جایی فقط داخل همان گروه (بالا/پایین‌بردن یک KPI به میان نمودارها بی‌معناست).
+  const move = (key, dir) => {
+    setMessage("");
+    setDraft((prev) => {
+      const arr = prev.map((w) => ({ ...w }));
+      const i = arr.findIndex((w) => w.key === key);
+      if (i < 0) return prev;
+      let j = i + dir;
+      while (j >= 0 && j < arr.length && arr[j].group !== arr[i].group) j += dir;
+      if (j < 0 || j >= arr.length) return prev;
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+      return arr;
+    });
   };
 
-  const isDirty = draftWidgets.some((w, idx) => widgets[idx]?.isVisible !== w.isVisible);
+  const isDirty = baseline && widgetSignature(baseline) !== widgetSignature(draft);
 
   const handleSave = async () => {
     setSaving(true); setMessage("");
-    const changed = draftWidgets.filter((w, idx) => widgets[idx]?.isVisible !== w.isVisible);
-    const results = await Promise.all(changed.map((w) => saveDashboardWidgetConfig(w.widgetKey, w.isVisible, currentAdmin?.fullName)));
+    const list = draft.map((w, idx) => ({ widgetKey: w.key, isVisible: w.isVisible, sortOrder: idx + 1 }));
+    const result = await saveDashboardWidgetsBulk(list, currentAdmin?.fullName);
     setSaving(false);
-    const failed = results.find((r) => r?.__error);
-    setMessage(failed ? failed.message : "تنظیمات ماژول‌های داشبورد ذخیره شد.");
-    if (!failed) await load();
+    setMessage(result?.__error ? result.message : "تنظیمات پنل‌های داشبورد ذخیره شد.");
+    if (!result?.__error) await load();
   };
 
   return (
     <div>
-      <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 6px" }}>مدیریت ماژول‌های داشبورد مدیریتی</h4>
-      <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 12, lineHeight: 1.8 }}>
-        فعال/غیرفعال کردن هر پنل داخل ماژول «داشبورد مدیریتی» — روی همه‌ی کاربران (کارفرما/پیمانکار) اعمال می‌شود.
+      <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 6px" }}>مدیریت پنل‌های داشبورد مدیریتی</h4>
+      <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 10, lineHeight: 1.8 }}>
+        نمایش/پنهان و ترتیبِ هر پنل داخل ماژول «داشبورد مدیریتی» — روی همه‌ی کاربران (کارفرما/پیمانکار) اعمال می‌شود.
+        جابه‌جایی ترتیب فقط داخل هر بخش امکان‌پذیر است. پنل‌های «مقایسه و رتبه‌بندی پیمانکاران» هرگز برای نقش پیمانکار نمایش داده نمی‌شوند.
       </p>
-      {message && <p style={{ fontSize: 11.5, color: THEME.danger, marginBottom: 10 }}>{message}</p>}
-      {draftWidgets.map((w) => (
-        <div key={w.widgetKey} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 8px", borderBottom: `1px solid ${THEME.border}` }}>
-          <span style={{ fontSize: 12.5, color: THEME.text, fontWeight: 600 }}>{WIDGET_LABELS[w.widgetKey] || w.widgetKey}</span>
-          <button
-            type="button" onClick={() => toggleDraft(w.widgetKey)}
-            style={{ display: "flex", alignItems: "center", gap: 5, background: w.isVisible ? "#dcfce7" : "#eef1f5", color: w.isVisible ? "#166534" : THEME.text3, border: "none", borderRadius: 999, padding: "5px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font }}
-          >
-            {w.isVisible ? <Eye size={13} /> : <EyeOff size={13} />} {w.isVisible ? "نمایش داده می‌شود" : "پنهان"}
-          </button>
-        </div>
-      ))}
+
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+        <button type="button" style={{ ...btnStyle(THEME.navyMid), fontSize: 11 }} onClick={() => setAll(true)}>همه روشن</button>
+        <button type="button" style={{ ...btnStyle(THEME.text3), fontSize: 11 }} onClick={() => setAll(false)}>همه خاموش</button>
+        <button type="button" style={{ ...btnStyle(THEME.text3), fontSize: 11, display: "flex", alignItems: "center", gap: 5 }} onClick={resetToDefault}>
+          <RotateCcw size={12} /> بازگردانی پیش‌فرض
+        </button>
+      </div>
+
+      {message && <p style={{ fontSize: 11.5, color: message.includes("خطا") ? THEME.danger : "#166534", marginBottom: 10 }}>{message}</p>}
+
+      {DASHBOARD_WIDGET_GROUPS.map((group) => {
+        const rows = draft.filter((w) => w.group === group.key);
+        if (rows.length === 0) return null;
+        return (
+          <div key={group.key} style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: THEME.teal, margin: "0 0 4px" }}>{group.label}</div>
+            {rows.map((w, gi) => (
+              <div key={w.key} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px", borderBottom: `1px solid ${THEME.border}` }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 2, flexShrink: 0 }}>
+                  <button type="button" onClick={() => move(w.key, -1)} disabled={gi === 0} style={{ background: "none", border: "none", cursor: gi === 0 ? "default" : "pointer", opacity: gi === 0 ? 0.3 : 1, padding: 1 }}><ArrowUp size={13} color={THEME.text2} /></button>
+                  <button type="button" onClick={() => move(w.key, 1)} disabled={gi === rows.length - 1} style={{ background: "none", border: "none", cursor: gi === rows.length - 1 ? "default" : "pointer", opacity: gi === rows.length - 1 ? 0.3 : 1, padding: 1 }}><ArrowDown size={13} color={THEME.text2} /></button>
+                </div>
+                <span style={{ flex: 1, fontSize: 12.5, color: THEME.text, fontWeight: 600 }}>
+                  {w.label}
+                  {w.employerOnly && <span style={{ fontSize: 10, color: THEME.text3, fontWeight: 400 }}> — فقط کارفرما</span>}
+                </span>
+                <button
+                  type="button" onClick={() => toggle(w.key)}
+                  style={{ display: "flex", alignItems: "center", gap: 5, background: w.isVisible ? "#dcfce7" : "#eef1f5", color: w.isVisible ? "#166534" : THEME.text3, border: "none", borderRadius: 999, padding: "5px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font }}
+                >
+                  {w.isVisible ? <Eye size={13} /> : <EyeOff size={13} />} {w.isVisible ? "نمایش داده می‌شود" : "پنهان"}
+                </button>
+              </div>
+            ))}
+          </div>
+        );
+      })}
+
       {isDirty && (
-        <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+        <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
           <button type="button" style={btnStyle()} onClick={handleSave} disabled={saving}>{saving ? "در حال ذخیره..." : "ذخیره تغییرات"}</button>
-          <button type="button" style={{ ...btnStyle(THEME.text3) }} onClick={() => setDraftWidgets(widgets)} disabled={saving}>انصراف</button>
+          <button type="button" style={{ ...btnStyle(THEME.text3) }} onClick={() => setDraft(baseline.map((w) => ({ ...w })))} disabled={saving}>انصراف</button>
         </div>
       )}
     </div>

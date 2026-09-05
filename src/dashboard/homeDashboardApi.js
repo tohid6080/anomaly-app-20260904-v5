@@ -56,3 +56,34 @@ export async function loadDashboardBowties() {
   const rows = await sb(`bowties?select=id,status,site,department,created_at${filter}`);
   return sbOk(rows) ? rows : [];
 }
+
+// --- منابع داده‌ی افزوده‌ی داشبورد مدیریتی (همه company-scoped، فقط
+// ستون‌های موردنیاز؛ هیچ نوشتنی در IndexedDB، صرفاً خواندن برای شمارش) ---
+
+export async function loadDashboardIncidents() {
+  const companyId = getCurrentCompanyId();
+  const filter = companyId ? `&company_id=eq.${companyId}` : "";
+  const rows = await sb(`incidents?select=id,incident_type,is_disabling,lost_days,occurred_at,contractor_org,created_at&order=occurred_at.desc&limit=2000${filter}`);
+  return sbOk(rows) ? rows : [];
+}
+
+export async function loadDashboardCorrectiveActions() {
+  const companyId = getCurrentCompanyId();
+  const filter = companyId ? `&company_id=eq.${companyId}` : "";
+  const rows = await sb(`corrective_actions?select=id,status,due_date,priority,source,responsible_contractor_id,responsible_contractor_name,created_at&order=created_at.desc&limit=2000${filter}`);
+  return sbOk(rows) ? rows : [];
+}
+
+export async function loadDashboardTripod() {
+  const companyId = getCurrentCompanyId();
+  const filter = companyId ? `&company_id=eq.${companyId}` : "";
+  const rows = await sb(`tripod_analyses?select=id,status,contractor_org,created_at&limit=2000${filter}`);
+  return sbOk(rows) ? rows : [];
+}
+
+export async function loadDashboardProactive() {
+  const companyId = getCurrentCompanyId();
+  const filter = companyId ? `&company_id=eq.${companyId}` : "";
+  const rows = await sb(`proactive_indicator_assessments?select=id,indicator_key,final_score,total_level,assessment_date,created_at&order=assessment_date.desc&limit=2000${filter}`);
+  return sbOk(rows) ? rows : [];
+}

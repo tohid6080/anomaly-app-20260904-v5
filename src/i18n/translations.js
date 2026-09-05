@@ -129,6 +129,25 @@ export const translations = {
   chartLow: { fa: "پایین", en: "Low" },
   loadingDashboard: { fa: "در حال بارگذاری داشبورد...", en: "Loading dashboard..." },
 
+  // ---------- پنل‌های افزوده‌ی داشبورد مدیریتی ----------
+  panelIncidentSafety: { fa: "آمار ایمنی حوادث", en: "Incident Safety Stats" },
+  panelRcaStatus: { fa: "وضعیت تحلیل ریشه‌ای (Tripod Beta)", en: "Root-Cause Analysis Status (Tripod Beta)" },
+  panelProactiveScores: { fa: "شاخص‌های پراکتیو HSE", en: "Proactive HSE Indicators" },
+  panelCorrectiveActionPerf: { fa: "عملکرد اقدامات اصلاحی پیمانکاران", en: "Contractor Corrective-Action Performance" },
+  kpiIncidents12m: { fa: "حوادث (۱۲ ماه)", en: "Incidents (12 mo)" },
+  kpiOpenCorrectiveActions: { fa: "اقدام اصلاحی باز", en: "Open Corrective Actions" },
+  kpiOverdueCorrectiveActions: { fa: "اقدام معوق", en: "Overdue Actions" },
+  dashboardExportExcel: { fa: "خروجی Excel", en: "Export Excel" },
+  colOpenCorrectiveActions: { fa: "اقدام باز", en: "Open Actions" },
+  colOverdueActions: { fa: "اقدام معوق", en: "Overdue" },
+  colIncidents: { fa: "حوادث", en: "Incidents" },
+  dashLostDays: { fa: "مجموع روزهای ازدست‌رفته", en: "Total Lost Days" },
+  dashCloseRate: { fa: "نرخ بسته‌شدن", en: "Closure Rate" },
+  dashLatestClimate: { fa: "آخرین امتیاز جو ایمنی", en: "Latest Safety Climate Score" },
+  dashAvgProneness: { fa: "میانگین استعداد حادثه‌پذیری", en: "Avg. Accident Proneness" },
+  dashAssessmentCount: { fa: "تعداد ارزیابی", en: "Assessments" },
+  dashUnassigned: { fa: "بدون تخصیص", en: "Unassigned" },
+
   // ---------- ورود با اثر انگشت (Biometric Login) ----------
   securitySectionTitle: { fa: "امنیت", en: "Security" },
   biometricToggleLabel: { fa: "ورود با اثر انگشت", en: "Fingerprint Login" },
