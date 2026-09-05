@@ -6,9 +6,6 @@ import { needsAccidentPronenessAssessment, isAccidentPronenessEnabledForCompany,
 import { createCorrectiveAction, loadCorrectiveActionForAssessment, STATUS_META } from "../correctiveActions/correctiveActionsApi.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
-// نگاشتِ سطحِ فارسیِ برگشتی از accidentPronenessLevel به کلیدِ i18n
-const AP_LEVEL_KEY = { "پایین": "apLevelLow", "متوسط": "apLevelMedium", "بالا": "apLevelHigh", "بسیار بالا": "apLevelVeryHigh" };
-
 /**
  * وضعیت ارزیابی استعداد حادثه‌پذیری برای یک پرسنل خاص — سه حالت ممکن:
  * ۱. شغل بحرانی + هنوز ارزیابی‌نشده → بنر نارنجی «نیاز به ارزیابی»
@@ -68,8 +65,8 @@ export default function AccidentPronenessSection({ personnel, role, currentUser,
   // طبق آستانه‌ی درخواستی: از سطح «متوسط» به بالا، لازم است اقدام اصلاحی
   // برای پیمانکار صادر شود — اینجا فقط با یک هشدار برجسته پیشنهاد می‌شود؛
   // صدور نهایی همچنان با تأیید صریح کارفرما/ادمین (زدن دکمه) انجام می‌شود.
-  const suggestsCorrectiveAction = levelInfo.level !== "پایین";
-  const levelLabel = t(AP_LEVEL_KEY[levelInfo.level] || "apLevelMedium");
+  const suggestsCorrectiveAction = levelInfo.levelCode !== "low";
+  const levelLabel = levelInfo.level;
 
   const handleSendCorrectiveAction = async () => {
     if (!caDescription.trim()) { setError(t("apActionDescriptionRequired")); return; }

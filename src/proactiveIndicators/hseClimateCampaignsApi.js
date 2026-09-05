@@ -1,4 +1,5 @@
-import { sb, sbOk, getCurrentCompanyId, SUPABASE_URL, SUPABASE_ANON_KEY, PUBLIC_APP_URL } from "../shared.js";
+import { sb, sbOk, getCurrentCompanyId, SUPABASE_URL, SUPABASE_ANON_KEY } from "../shared.js";
+import { translate, getCurrentLang } from "../i18n/translations.js";
 
 /**
  * مدیریت دوره‌های ارزیابی (کمپین) HSE Climate — طرف احراز هویت‌شده.
@@ -17,7 +18,7 @@ export async function createHseClimateCampaign({ projectName, orgType, contracto
     status: "active", created_by: createdBy || "",
   };
   const rows = await sb("hse_climate_campaigns", { method: "POST", body: JSON.stringify([payload]) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ایجاد دوره‌ی ارزیابی" };
+  if (!sbOk(rows)) return { __error: true, message: translate(getCurrentLang(), "errCreateCampaign") };
   return campaignFromRow(rows[0]);
 }
 
@@ -31,12 +32,12 @@ export async function loadHseClimateCampaigns(scopeToContractorId) {
 
 export async function closeHseClimateCampaign(id) {
   const rows = await sb(`hse_climate_campaigns?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ status: "closed" }) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در بستن دوره" };
+  if (!sbOk(rows)) return { __error: true, message: translate(getCurrentLang(), "errCloseCampaign") };
   return campaignFromRow(rows[0]);
 }
 export async function reopenHseClimateCampaign(id) {
   const rows = await sb(`hse_climate_campaigns?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ status: "active" }) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در فعال‌سازی مجدد دوره" };
+  if (!sbOk(rows)) return { __error: true, message: translate(getCurrentLang(), "errReactivateCampaign") };
   return campaignFromRow(rows[0]);
 }
 
@@ -49,23 +50,9 @@ function campaignFromRow(r) {
   };
 }
 
-// لینک عمومی قابل‌اشتراک — صفحه‌ی مستقل و بدون نیاز به ورود.
-// این لینک قرار است بیرونِ اپ (روی گوشیِ کارگران، تلگرام، ...) باز شود،
-// پس نباید از window.location ساخته شود: در اپ اندروید origin برابر
-// http://localhost و در dev هم localhost است و لینک از اینترنت باز
-// نمی‌شود. فقط وقتی واقعاً روی یک دامنه‌ی وبِ عمومی هستیم از همان
-// origin/pathname استفاده می‌کنیم (تا دامنه‌ی سفارشی احتمالی هم کار کند)؛
-// در غیر این صورت به آدرس ثابتِ عمومیِ سامانه برمی‌گردیم.
+// لینک عمومی قابل‌اشتراک — صفحه‌ی مستقل و بدون نیاز به ورود
 export function buildHseClimateSurveyLink(publicToken) {
-  let base = "";
-  if (typeof window !== "undefined") {
-    const { protocol, hostname, origin, pathname } = window.location;
-    const isRealWebHost = (protocol === "https:" || protocol === "http:")
-      && hostname && hostname !== "localhost" && hostname !== "127.0.0.1";
-    if (isRealWebHost) base = origin + pathname;
-  }
-  if (!base) base = PUBLIC_APP_URL;
-  if (!base.endsWith("/") && !base.endsWith(".html")) base += "/";
+  const base = typeof window !== "undefined" ? window.location.origin + window.location.pathname : "";
   return `${base}#hse-climate-survey/${publicToken}`;
 }
 
@@ -101,10 +88,10 @@ export async function loadPublicCampaignInfo(publicToken) {
       body: JSON.stringify({ publicToken }),
     });
     const data = await res.json();
-    if (!res.ok) return { __error: true, message: data?.error || "خطا در دریافت اطلاعات پرسشنامه" };
+    if (!res.ok) return { __error: true, message: data?.error || translate(getCurrentLang(), "errFetchSurveyInfo") };
     return data;
   } catch {
-    return { __error: true, message: "خطا در برقراری ارتباط با سرور" };
+    return { __error: true, message: translate(getCurrentLang(), "errServerConnection") };
   }
 }
 
@@ -116,9 +103,9 @@ export async function submitHseClimateResponse(publicToken, answers) {
       body: JSON.stringify({ publicToken, answers }),
     });
     const data = await res.json();
-    if (!res.ok) return { __error: true, message: data?.error || "خطا در ثبت پرسشنامه" };
+    if (!res.ok) return { __error: true, message: data?.error || translate(getCurrentLang(), "errSubmitSurvey") };
     return { ok: true };
   } catch {
-    return { __error: true, message: "خطا در برقراری ارتباط با سرور" };
+    return { __error: true, message: translate(getCurrentLang(), "errServerConnection") };
   }
 }

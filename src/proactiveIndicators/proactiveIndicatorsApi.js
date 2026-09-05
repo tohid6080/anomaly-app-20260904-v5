@@ -1,5 +1,6 @@
 import { sb, sbOk, getCurrentCompanyId, loadCurrentCompanyPlanFeatures, isModuleInPlan } from "../shared.js";
 import { scoreHseClimate, isCompleteHseClimate } from "./hseClimateScoring.js";
+import { translate, getCurrentLang } from "../i18n/translations.js";
 
 /**
  * ماژول شاخص‌های Proactive HSE — طراحی Dynamic:
@@ -31,10 +32,11 @@ export function needsAccidentPronenessAssessment(jobTitle) {
 // پلکان دقیق سطح‌بندی امتیاز — طبق مقادیر صریح اعلام‌شده (بازه‌ی کل ۳۹..۱۹۵):
 // ۳۹-۷۸ پایین (سبز)، ۷۹-۱۱۷ متوسط (آبی)، ۱۱۸-۱۵۶ بالا (نارنجی)، ۱۵۷-۱۹۵ بسیار بالا (قرمز)
 export function accidentPronenessLevel(score) {
-  if (score >= 157) return { level: "بسیار بالا", color: "#dc2626", bg: "#fee2e2" };
-  if (score >= 118) return { level: "بالا", color: "#ea580c", bg: "#ffedd5" };
-  if (score >= 79) return { level: "متوسط", color: "#2563eb", bg: "#dbeafe" };
-  return { level: "پایین", color: "#16a34a", bg: "#dcfce7" };
+  const lang = getCurrentLang();
+  if (score >= 157) return { level: translate(lang, "accidentPronenessVeryHigh"), levelCode: "veryHigh", color: "#dc2626", bg: "#fee2e2" };
+  if (score >= 118) return { level: translate(lang, "accidentPronenessHigh"), levelCode: "high", color: "#ea580c", bg: "#ffedd5" };
+  if (score >= 79) return { level: translate(lang, "accidentPronenessMedium"), levelCode: "medium", color: "#2563eb", bg: "#dbeafe" };
+  return { level: translate(lang, "accidentPronenessLow"), levelCode: "low", color: "#16a34a", bg: "#dcfce7" };
 }
 
 // بررسی جداگانه‌ی فعال‌بودن شاخص برای شرکت — چون needsAccidentPronenessAssessment
@@ -101,14 +103,14 @@ export async function submitAssessment(indicatorKey, personnelId, jobTitle, asse
     status: "completed", final_score: finalScore, created_by: createdBy || "",
   };
   const assessmentRows = await sb("proactive_indicator_assessments", { method: "POST", body: JSON.stringify([assessmentPayload]) });
-  if (!sbOk(assessmentRows)) return { __error: true, message: "خطا در ثبت ارزیابی" };
+  if (!sbOk(assessmentRows)) return { __error: true, message: translate(getCurrentLang(), "errAssessmentSubmit") };
   const assessment = assessmentRows[0];
 
   const answerPayload = questions.map((q) => ({
     assessment_id: assessment.id, question_id: q.id, raw_score: Number(answersByQuestionId[q.id]), company_id: companyId,
   }));
   const answerRows = await sb("proactive_indicator_answers", { method: "POST", body: JSON.stringify(answerPayload), prefer: "return=minimal" });
-  if (!sbOk(answerRows)) return { __error: true, message: "ارزیابی ثبت شد اما ذخیره‌ی پاسخ‌ها با خطا مواجه شد" };
+  if (!sbOk(answerRows)) return { __error: true, message: translate(getCurrentLang(), "errAssessmentSavedAnswersFailed") };
 
   return { ok: true, finalScore, assessmentId: assessment.id };
 }
@@ -118,7 +120,7 @@ export async function submitAssessment(indicatorKey, personnelId, jobTitle, asse
 // شماره‌ی سؤال، نه UUID) — همان قالبی که scoreHseClimate از فایل مرجع انتظار دارد.
 export async function submitHseClimateAssessment(answersByQuestionNumber, assessorName, createdBy) {
   if (!isCompleteHseClimate(answersByQuestionNumber)) {
-    return { __error: true, message: "همه‌ی ۴۳ سؤال باید پاسخ داده شوند" };
+    return { __error: true, message: translate(getCurrentLang(), "errAllQuestionsRequired", { count: 43 }) };
   }
   const companyId = getCurrentCompanyId();
   // محاسبه‌ی دقیق از موتور ارائه‌شده — نه بازنویسی
@@ -131,7 +133,7 @@ export async function submitHseClimateAssessment(answersByQuestionNumber, assess
     dimension_scores: result.dimensions, created_by: createdBy || "",
   };
   const assessmentRows = await sb("proactive_indicator_assessments", { method: "POST", body: JSON.stringify([assessmentPayload]) });
-  if (!sbOk(assessmentRows)) return { __error: true, message: "خطا در ثبت ارزیابی" };
+  if (!sbOk(assessmentRows)) return { __error: true, message: translate(getCurrentLang(), "errAssessmentSubmit") };
   const assessment = assessmentRows[0];
 
   // پاسخ‌های خام هم ذخیره می‌شوند (طبق questions هر کدام question_id UUID خودشان را دارند)
