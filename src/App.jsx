@@ -3351,27 +3351,58 @@ function DashboardHeader({ panelLabelKey, currentUser, onLogout, onOpenSettings,
   // فقط وقتی اپ کرش می‌کند) هر کاربر باید بتواند مشکلی که می‌بیند را
   // مستقیم به مدیر سامانه گزارش کند.
   const [showReportError, setShowReportError] = useState(false);
+
+  // هویت هدر (طبق خواستهٔ صریح):
+  //   خط اول → «[عنوان پنل]: [نام شرکت]»
+  //   خط دوم → «[نام و نام خانوادگی] - [سمت/شغل]»
+  // نام شرکت و سمت/شغل ممکن است در توکن نشست نیامده باشند (حساب‌هایی که
+  // از پنل SuperAdmin ساخته شده‌اند فقط company_id / job_position_id
+  // دارند، نه company_name / job_position_title). پس اینجا در صورت نبود،
+  // از روی همان id از دیتابیس خوانده و کامل می‌شوند — بدون نیاز به ورود
+  // دوباره یا مهاجرت دیتابیس.
+  const isContractorUser = currentUser?.role === "CONTRACTOR";
+  const personName = isContractorUser
+    ? (currentUser?.contactPersonName || currentUser?.name || "")
+    : (currentUser?.name || "");
+  const [companyName, setCompanyName] = useState(
+    isContractorUser ? (currentUser?.companyName || currentUser?.name || "") : (currentUser?.companyName || "")
+  );
+  const [jobTitle, setJobTitle] = useState(currentUser?.jobPositionTitle || "");
+  useEffect(() => {
+    if (!currentUser) return;
+    if (isContractorUser) {
+      setCompanyName(currentUser.companyName || currentUser.name || "");
+    } else if (currentUser.companyName) {
+      setCompanyName(currentUser.companyName);
+    } else if (currentUser.companyId) {
+      loadMyCompanyName(currentUser.companyId).then((n) => setCompanyName(n || "")).catch(() => {});
+    }
+    if (currentUser.jobPositionTitle) {
+      setJobTitle(currentUser.jobPositionTitle);
+    } else if (currentUser.jobPositionId) {
+      loadJobPositionTitle(currentUser.jobPositionId).then((tt) => setJobTitle(tt || "")).catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id]);
+  const showCompany = companyName && appearance?.headerShowCompanyName !== false;
+
   return (
     <div style={{ ...styles.topBar, direction: dir }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: "1 1 auto" }}>
-        <Avatar name={currentUser?.name} size={38} bg="rgba(255,255,255,0.18)" />
+        <Avatar name={personName || currentUser?.name} size={38} bg="rgba(255,255,255,0.18)" />
         <div style={{ minWidth: 0, lineHeight: 1.35 }}>
-          {/* طبق خواسته‌ی صریح، الگوی ثابت هدر برای پیمانکار و کارفرما:
-              خط اول → «[عنوان پنل]: [نام شرکت]»
-              خط دوم → «[نام و نام خانوادگی] - [سمت/شغل]» */}
           <div style={{ display: "flex", alignItems: "baseline", gap: 6, minWidth: 0 }}>
             <span style={{ fontSize: 14.5, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "60vw" }}>
-              {t(panelLabelKey)}{currentUser?.companyName && appearance?.headerShowCompanyName !== false ? ":" : ""}
+              {t(panelLabelKey)}{showCompany ? ":" : ""}
             </span>
-            {currentUser?.companyName && appearance?.headerShowCompanyName !== false && (
-              <span style={{ fontSize: 12.5, fontWeight: 700, color: "rgba(255,255,255,0.92)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "45vw" }}>{currentUser.companyName}</span>
+            {showCompany && (
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: "rgba(255,255,255,0.92)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "45vw" }}>{companyName}</span>
             )}
           </div>
-          {currentUser?.name && (
+          {personName && (
             <div style={{ fontSize: 10.5, color: "rgba(255,255,255,0.6)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "60vw" }}>
-              {currentUser.name}
-              {/* سمت/شغلی که برای این کاربر در پنل SuperAdmin تعریف شده — طبق خواسته‌ی صریح، کنار نام او با جداکنندهٔ خط تیره */}
-              {currentUser?.jobPositionTitle && <span style={{ color: "rgba(255,255,255,0.45)" }}> - {currentUser.jobPositionTitle}</span>}
+              {personName}
+              {jobTitle && <span style={{ color: "rgba(255,255,255,0.45)" }}> - {jobTitle}</span>}
             </div>
           )}
         </div>
