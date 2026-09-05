@@ -6,11 +6,13 @@ import { sb, sbOk, styles, THEME, getCurrentCompanyId } from "../shared.js";
 import { uploadBase64ToStorage, deleteFromStorage, parseStorageUrl } from "./storageUpload.js";
 import { fetchStorageSizeMB } from "./dbSizeMonitor.js";
 import { DOC_TYPES } from "../personnel/personnelApi.js";
+import { translate, getCurrentLang } from "../i18n/translations.js";
 import { loadBowtieCanvas } from "../bowtie/bowtieApi.js";
 import { MACHINERY_DOC_TYPES, MACHINE_TYPES, OWNERSHIP_STATUSES, LICENSE_TYPES, TRAFFIC_STATUSES } from "../machinery/machineryApi.js";
 import { scaffoldStatusMeta } from "../scaffold/scaffoldApi.js";
 import { toJalaliSafe, toJalaliDateTime, jalaliFileTimestamp } from "../personnel/jalaliDate.jsx";
 import { buildArchiveZip, fetchAttachmentBytes, safeFileName } from "./archiveZip.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 function extFromMime(mime) {
   return (mime || "").includes("pdf") ? "pdf" : "jpg";
@@ -64,7 +66,7 @@ async function loadLastArchiveLogs() {
   return sbOk(rows) ? rows : [];
 }
 
-const MODULE_LABELS = { personnel: "پرسنل", anomaly: "آنومالی", bowtie: "BowTie", machinery: "ماشین‌آلات", scaffold: "داربست", hcms: "HCMS" };
+const MODULE_LABEL_KEYS = { personnel: "amModulePersonnel", anomaly: "amModuleAnomaly", bowtie: "BowTie", machinery: "amModuleMachinery", scaffold: "amModuleScaffold", hcms: "HCMS" };
 
 // ================= Personnel =================
 
@@ -96,7 +98,7 @@ async function buildPersonnelArchive(setProgress, performedBy, currentUser) {
 
   for (let i = 0; i < docs.length; i++) {
     const d = docs[i];
-    setProgress(`آماده‌سازی مدارک پرسنل (${i + 1}/${docs.length})...`);
+    setProgress(translate(getCurrentLang(), "amProgressPersonnelDocs", { n: i + 1, total: docs.length }));
     if (d.status !== "approved") { docUrls[d.id] = null; continue; }
     if (isLegacyBase64(d.file_data)) {
       try {
@@ -112,7 +114,8 @@ async function buildPersonnelArchive(setProgress, performedBy, currentUser) {
       const bytes = await fetchAttachmentBytes(docUrls[d.id]);
       if (bytes) {
         const person = personnel.find((p) => p.id === d.personnel_id);
-        const docLabel = DOC_TYPES.find((t) => t.value === d.doc_type)?.label || d.doc_type;
+        const dtMeta = DOC_TYPES.find((t) => t.value === d.doc_type);
+        const docLabel = dtMeta ? translate(getCurrentLang(), dtMeta.labelKey) : d.doc_type;
         const ext = extFromMime(d.mime_type);
         const relPath = `files/${safeFileName(person?.full_name || d.personnel_id)}-${safeFileName(docLabel)}-${d.id.slice(-6)}.${ext}`;
         attachments.push({ relativePath: relPath, content: bytes });
@@ -122,30 +125,30 @@ async function buildPersonnelArchive(setProgress, performedBy, currentUser) {
     }
   }
 
-  setProgress("در حال ساخت فایل اکسل پرسنل...");
+  setProgress(translate(getCurrentLang(), "amProgressBuildingExcel", { module: translate(getCurrentLang(), "amModulePersonnel") }));
 
   const headers = [
-    "ردیف", "نام و نام خانوادگی", "کد ملی", "پیمانکار", "عنوان شغلی", "شماره تماس",
-    "تاریخ شروع به کار", "وضعیت", "وضعیت اشتغال", "تاریخ ترک کار / تسویه حساب",
-    "نیازمند تأیید صلاحیت", "وضعیت صلاحیت", "یادداشت صلاحیت",
-    "مسیر طب کار", "تاریخ طب کار", "تاریخ انقضای طب کار", "مهلت مراجعه", "مهلت نتیجه",
-    "ثبت‌کننده", "تاریخ ایجاد", "تاریخ آخرین تغییر",
-    ...DOC_TYPES.map((t) => t.label),
+    translate(getCurrentLang(), "exportColRow"), translate(getCurrentLang(), "amPColFullName"), translate(getCurrentLang(), "amPColNationalCode"), translate(getCurrentLang(), "amPColContractor"), translate(getCurrentLang(), "amPColJobTitle"), translate(getCurrentLang(), "amPColPhone"),
+    translate(getCurrentLang(), "amPColStartDate"), translate(getCurrentLang(), "amPColStatus"), translate(getCurrentLang(), "amPColEmploymentStatus"), translate(getCurrentLang(), "amPColTerminationDate"),
+    translate(getCurrentLang(), "amPColQualificationRequired"), translate(getCurrentLang(), "amPColQualificationStatus"), translate(getCurrentLang(), "amPColQualificationNote"),
+    translate(getCurrentLang(), "amPColHealthPath"), translate(getCurrentLang(), "amPColHealthDate"), translate(getCurrentLang(), "amPColHealthExpiry"), translate(getCurrentLang(), "amPColVisitDeadline"), translate(getCurrentLang(), "amPColResultDeadline"),
+    translate(getCurrentLang(), "amPColSubmitter"), translate(getCurrentLang(), "amPColCreatedAt"), translate(getCurrentLang(), "amPColUpdatedAt"),
+    ...DOC_TYPES.map((t) => translate(getCurrentLang(), t.labelKey)),
   ];
 
   const aoa = [headers, ...personnel.map((p, idx) => [
     idx + 1, p.full_name, p.national_code, p.contractor_name, p.job_title, p.phone,
     toJalaliSafe(p.start_date) || "—", p.status,
-    p.employment_status === "terminated" ? "ترک کار / تسویه حساب" : "فعال",
+    p.employment_status === "terminated" ? translate(getCurrentLang(), "amEmploymentTerminated") : translate(getCurrentLang(), "commonActive"),
     p.employment_status === "terminated" ? (toJalaliSafe(p.termination_date) || "—") : "—",
-    p.qualification_required ? "بله" : "خیر", p.qualification_status || "—", p.qualification_note || "—",
+    p.qualification_required ? translate(getCurrentLang(), "commonYes") : translate(getCurrentLang(), "commonNo"), p.qualification_status || "—", p.qualification_note || "—",
     p.occ_health_path || "—", toJalaliSafe(p.occ_health_date) || "—", toJalaliSafe(p.occ_health_expiry) || "—",
     toJalaliSafe(p.occ_health_visit_deadline) || "—", toJalaliSafe(p.occ_health_result_deadline) || "—",
     p.created_by || "—", toJalaliSafe(p.created_at) || "—", toJalaliSafe(p.updated_at) || "—",
     ...DOC_TYPES.map((t) => {
       const d = docsByPersonnel[p.id]?.[t.value];
       if (!d) return "—";
-      return docRelativePaths[d.id] ? "مشاهده مدرک" : "تأییدنشده";
+      return docRelativePaths[d.id] ? translate(getCurrentLang(), "amViewDocument") : translate(getCurrentLang(), "amNotApproved");
     }),
   ])];
 
@@ -163,10 +166,10 @@ async function buildPersonnelArchive(setProgress, performedBy, currentUser) {
   ws["!cols"] = headers.map(() => ({ wch: 16 }));
 
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "پرسنل");
+  XLSX.utils.book_append_sheet(wb, ws, translate(getCurrentLang(), "amModulePersonnel"));
   const stamp = jalaliFileTimestamp();
   const excelFileName = `Personnel_Archive_${stamp}.xlsx`;
-  setProgress("در حال ساخت فایل ZIP آرشیو...");
+  setProgress(translate(getCurrentLang(), "amProgressBuildingZip"));
   await buildArchiveZip({ workbook: wb, excelFileName, attachments, zipFileName: `Personnel_Archive_${stamp}.zip` });
 
   const fileCount = attachments.length;
@@ -177,14 +180,14 @@ async function buildPersonnelArchive(setProgress, performedBy, currentUser) {
 
 async function deletePersonnelArchive(archived, setProgress) {
   for (const id of archived.docIds) {
-    setProgress("در حال حذف مدارک...");
+    setProgress(translate(getCurrentLang(), "amProgressDeletingDocs"));
     const url = archived.docUrls[id];
     const parsed = url ? parseStorageUrl(url) : null;
     if (parsed) { try { await deleteFromStorage(parsed.bucket, parsed.path); } catch { /* continue */ } }
     await sb(`personnel_documents?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" });
   }
   for (const id of archived.recordIds) {
-    setProgress("در حال حذف پرسنل...");
+    setProgress(translate(getCurrentLang(), "amProgressDeletingPersonnel"));
     await sb(`personnel?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" });
   }
 }
@@ -218,7 +221,7 @@ async function buildAnomalyArchive(setProgress, performedBy, currentUser) {
   let totalBytes = 0;
   for (let i = 0; i < photos.length; i++) {
     const p = photos[i];
-    setProgress(`آماده‌سازی عکس‌های آنومالی (${i + 1}/${photos.length})...`);
+    setProgress(translate(getCurrentLang(), "amProgressAnomalyPhotos", { n: i + 1, total: photos.length }));
     let url;
     if (isLegacyBase64(p.photo)) {
       try {
@@ -233,7 +236,7 @@ async function buildAnomalyArchive(setProgress, performedBy, currentUser) {
       const bytes = await fetchAttachmentBytes(url);
       if (bytes) {
         const anomaly = anomalies.find((a) => a.id === p.anomaly_id);
-        const stageLabel = p.stage === "report" ? "گزارش" : "اصلاح";
+        const stageLabel = p.stage === "report" ? translate(getCurrentLang(), "amStageReport") : translate(getCurrentLang(), "amStageCorrection");
         const relPath = `files/${safeFileName(anomaly?.tracking_number || p.anomaly_id)}-${stageLabel}-${p.id.slice(-6)}.jpg`;
         attachments.push({ relativePath: relPath, content: bytes });
         photoRelativePaths[p.id] = relPath;
@@ -242,15 +245,15 @@ async function buildAnomalyArchive(setProgress, performedBy, currentUser) {
     }
   }
 
-  setProgress("در حال ساخت فایل اکسل آنومالی...");
+  setProgress(translate(getCurrentLang(), "amProgressBuildingExcel", { module: translate(getCurrentLang(), "amModuleAnomaly") }));
 
   // دقیقاً همان ۲۳ ستون و همان ترتیب فایل نمونه‌ی پیوستی — بدون «زیرپیمانکار»
   // و «موانع» که در فرمت درخواستی وجود نداشتند.
   const headers = [
-    "ردیف", "شماره پیگیری", "پروژه", "پیمانکار", "محل/ناحیه", "تاریخ", "ساعت",
-    "سطح ریسک", "دسته‌بندی", "فرمت", "شرح کامل آنومالی", "اقدام اصلاحی (پیمانکار)",
-    "پیگیری‌کننده", "ثبت‌کننده", "وضعیت", "تاریخ بسته‌شدن", "اثربخشی", "یادداشت بررسی", "تاریخ ثبت",
-    "عکس گزارش ۱", "عکس گزارش ۲", "عکس اقدام اصلاحی ۱", "عکس اقدام اصلاحی ۲",
+    translate(getCurrentLang(), "exportColRow"), translate(getCurrentLang(), "expTrackingNumber"), translate(getCurrentLang(), "expXlsProject"), translate(getCurrentLang(), "expContractor"), translate(getCurrentLang(), "expXlsLocationArea"), translate(getCurrentLang(), "expDate"), translate(getCurrentLang(), "expXlsTime"),
+    translate(getCurrentLang(), "expRiskLevel"), translate(getCurrentLang(), "expCategory"), translate(getCurrentLang(), "expXlsFormat"), translate(getCurrentLang(), "expXlsFullDesc"), translate(getCurrentLang(), "expXlsCorrectiveAction"),
+    translate(getCurrentLang(), "expXlsFollower"), translate(getCurrentLang(), "expXlsSubmitter"), translate(getCurrentLang(), "expStatus"), translate(getCurrentLang(), "expCloseDate"), translate(getCurrentLang(), "expXlsEffectiveness"), translate(getCurrentLang(), "expXlsReviewNote"), translate(getCurrentLang(), "expXlsCreatedAt"),
+    translate(getCurrentLang(), "expXlsReportPhoto1"), translate(getCurrentLang(), "expXlsReportPhoto2"), translate(getCurrentLang(), "expXlsActionPhoto1"), translate(getCurrentLang(), "expXlsActionPhoto2"),
   ];
   // عرض هر ستون، دقیقاً برداشت‌شده از فایل نمونه (واحد «character width» اکسل)
   const colWidths = [9.86, 25, 21.71, 15.29, 19, 15.71, 21.71, 14.29, 18.71, 16.86, 41.71, 15.71, 19.43, 10, 27.71, 20.43, 19.86, 27.57, 23.14, 25.14, 14.86, 18, 18];
@@ -259,17 +262,19 @@ async function buildAnomalyArchive(setProgress, performedBy, currentUser) {
   // ندارد؛ برای تطبیق دقیق ظاهری با فایل نمونه (تیتر خاکستری، هدر نارنجی،
   // جهت راست‌به‌چپ واقعی شیت) از ExcelJS استفاده می‌شود — فقط همین‌جا،
   // بقیه‌ی ماژول‌های آرشیو دست‌نخورده با همان xlsx قبلی کار می‌کنند.
+  const lang = getCurrentLang();
+  const isEn = lang === "en";
   const wb = new ExcelJS.Workbook();
-  const ws = wb.addWorksheet("لیست آنومالی ها", { views: [{ rightToLeft: true, state: "frozen", xSplit: 3, ySplit: 2 }] });
+  const ws = wb.addWorksheet(translate(lang, "expXlsSheetName"), { views: [{ rightToLeft: !isEn, state: "frozen", xSplit: 3, ySplit: 2 }] });
 
   ws.columns = colWidths.map((w) => ({ width: w }));
 
   // ردیف ۱: عنوان — دقیقاً متن فایل نمونه، پس‌زمینه‌ی خاکستری، فونت درشت
   ws.mergeCells(1, 1, 1, headers.length);
   const titleCell = ws.getCell(1, 1);
-  titleCell.value = "لیست  گزارش شرایط و اعمال ناایمن شرکت ........";
-  titleCell.font = { name: "B Mitra", bold: true, size: 22 };
-  titleCell.alignment = { horizontal: "center", vertical: "middle", wrapText: true, readingOrder: "rtl" };
+  titleCell.value = translate(lang, "expXlsTitle", { company: "........" });
+  titleCell.font = { name: isEn ? "Calibri" : "B Mitra", bold: true, size: 22 };
+  titleCell.alignment = { horizontal: "center", vertical: "middle", wrapText: true, readingOrder: isEn ? "ltr" : "rtl" };
   titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFBFBFBF" } };
   ws.getRow(1).height = 55;
 
@@ -278,8 +283,8 @@ async function buildAnomalyArchive(setProgress, performedBy, currentUser) {
   headers.forEach((h, i) => {
     const cell = headerRow.getCell(i + 1);
     cell.value = h;
-    cell.font = { name: "B Nazanin", bold: true, size: 12 };
-    cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true, readingOrder: "rtl" };
+    cell.font = { name: isEn ? "Calibri" : "B Nazanin", bold: true, size: 12 };
+    cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true, readingOrder: isEn ? "ltr" : "rtl" };
     cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF4B183" } };
     cell.border = { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } };
   });
@@ -298,7 +303,7 @@ async function buildAnomalyArchive(setProgress, performedBy, currentUser) {
     values.forEach((v, i) => {
       const cell = row.getCell(i + 1);
       cell.value = v ?? "—";
-      cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true, readingOrder: "rtl" };
+      cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true, readingOrder: isEn ? "ltr" : "rtl" };
       cell.border = { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } };
     });
 
@@ -314,7 +319,7 @@ async function buildAnomalyArchive(setProgress, performedBy, currentUser) {
       cell.border = { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } };
       cell.alignment = { horizontal: "center", vertical: "middle" };
       if (relPath) {
-        cell.value = { text: "مشاهده عکس", hyperlink: relPath };
+        cell.value = { text: translate(lang, "expXlsViewPhoto"), hyperlink: relPath };
         cell.font = { color: { argb: "FF0563C1" }, underline: true };
       } else {
         cell.value = "—";
@@ -325,7 +330,7 @@ async function buildAnomalyArchive(setProgress, performedBy, currentUser) {
   const excelBuffer = await wb.xlsx.writeBuffer();
   const stamp = jalaliFileTimestamp();
   const excelFileName = `Anomaly_Archive_${stamp}.xlsx`;
-  setProgress("در حال ساخت فایل ZIP آرشیو...");
+  setProgress(translate(getCurrentLang(), "amProgressBuildingZip"));
   await buildArchiveZip({ excelBuffer, excelFileName, attachments, zipFileName: `Anomaly_Archive_${stamp}.zip` });
 
   const fileCount = photos.filter((p) => photoUrls[p.id]).length;
@@ -336,14 +341,14 @@ async function buildAnomalyArchive(setProgress, performedBy, currentUser) {
 
 async function deleteAnomalyArchive(archived, setProgress) {
   for (const id of archived.photoIds) {
-    setProgress("در حال حذف عکس‌ها...");
+    setProgress(translate(getCurrentLang(), "amProgressDeletingPhotos"));
     const url = archived.photoUrls[id];
     const parsed = url ? parseStorageUrl(url) : null;
     if (parsed) { try { await deleteFromStorage(parsed.bucket, parsed.path); } catch { /* continue */ } }
     await sb(`anomaly_photos?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" });
   }
   for (const id of archived.recordIds) {
-    setProgress("در حال حذف آنومالی‌ها...");
+    setProgress(translate(getCurrentLang(), "amProgressDeletingAnomalies"));
     await sb(`anomalies?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" });
   }
 }
@@ -362,7 +367,7 @@ async function buildBowtieArchive(setProgress, diagramUrls, performedBy) {
 
   for (let i = 0; i < bowties.length; i++) {
     const b = bowties[i];
-    setProgress(`بارگذاری اجزای BowTie (${i + 1}/${bowties.length})...`);
+    setProgress(translate(getCurrentLang(), "amProgressBowtieParts", { n: i + 1, total: bowties.length }));
     const canvas = await loadBowtieCanvas(b.id);
     canvas.threats.forEach((t) => allThreats.push({ bowtieTitle: b.title, ...t }));
     canvas.consequences.forEach((c) => allCons.push({ bowtieTitle: b.title, ...c }));
@@ -371,7 +376,7 @@ async function buildBowtieArchive(setProgress, diagramUrls, performedBy) {
     canvas.escalationControls.forEach((c) => allControls.push({ bowtieTitle: b.title, ...c }));
   }
 
-  setProgress("در حال آماده‌سازی دیاگرام‌های ضمیمه‌شده...");
+  setProgress(translate(getCurrentLang(), "amProgressPreparingDiagrams"));
 
   const diagramRelativePaths = {};
   const attachments = [];
@@ -380,20 +385,20 @@ async function buildBowtieArchive(setProgress, diagramUrls, performedBy) {
     if (!diagramUrls[b.id]) continue;
     const bytes = await fetchAttachmentBytes(diagramUrls[b.id]);
     if (bytes) {
-      const relPath = `files/${safeFileName(b.title)}-دیاگرام-${b.id.slice(-6)}.pdf`;
+      const relPath = `files/${safeFileName(b.title)}-${translate(getCurrentLang(), "amDiagramFilePart")}-${b.id.slice(-6)}.pdf`;
       attachments.push({ relativePath: relPath, content: bytes });
       diagramRelativePaths[b.id] = relPath;
       totalBytes += bytes.byteLength || 0;
     }
   }
 
-  setProgress("در حال ساخت فایل اکسل BowTie...");
+  setProgress(translate(getCurrentLang(), "amProgressBuildingExcel", { module: "BowTie" }));
 
-  const mainHeaders = ["ردیف", "عنوان", "خطر (Hazard)", "رویداد اصلی (Top Event)", "سایت", "بخش", "وضعیت", "نسخه", "ثبت‌کننده", "تاریخ ایجاد", "تاریخ آخرین تغییر", "دیاگرام PDF"];
+  const mainHeaders = [translate(getCurrentLang(), "exportColRow"), translate(getCurrentLang(), "bxColTitle"), translate(getCurrentLang(), "bxColHazardParen"), translate(getCurrentLang(), "bxColTopEventParen"), translate(getCurrentLang(), "bxColSite"), translate(getCurrentLang(), "amBColSection"), translate(getCurrentLang(), "commonStatus"), translate(getCurrentLang(), "amBColVersion"), translate(getCurrentLang(), "amPColSubmitter"), translate(getCurrentLang(), "amPColCreatedAt"), translate(getCurrentLang(), "amPColUpdatedAt"), translate(getCurrentLang(), "amDiagramFilePart") + " PDF"];
   const mainAoa = [mainHeaders, ...bowties.map((b, idx) => [
     idx + 1, b.title, b.hazard, b.top_event, b.site || "—", b.department || "—", b.status, b.version, b.created_by || "—",
     toJalaliDateTime(b.created_at) || "—", toJalaliDateTime(b.updated_at) || "—",
-    diagramRelativePaths[b.id] ? "مشاهده دیاگرام" : "—",
+    diagramRelativePaths[b.id] ? translate(getCurrentLang(), "amViewDiagram") : "—",
   ])];
   const wsMain = XLSX.utils.aoa_to_sheet(mainAoa);
   bowties.forEach((b, rowIdx) => {
@@ -404,27 +409,28 @@ async function buildBowtieArchive(setProgress, diagramUrls, performedBy) {
   });
   wsMain["!cols"] = mainHeaders.map(() => ({ wch: 16 }));
 
-  const wsThreats = XLSX.utils.json_to_sheet(allThreats.map((t) => ({ "BowTie": t.bowtieTitle, "تهدید": t.label, "ترتیب": t.orderIndex })));
-  const wsCons = XLSX.utils.json_to_sheet(allCons.map((c) => ({ "BowTie": c.bowtieTitle, "پیامد": c.label, "ترتیب": c.orderIndex })));
+  const wsThreats = XLSX.utils.json_to_sheet(allThreats.map((t) => ({ "BowTie": t.bowtieTitle, [translate(getCurrentLang(), "amBSheetThreat")]: t.label, [translate(getCurrentLang(), "amBColOrder")]: t.orderIndex })));
+  const wsCons = XLSX.utils.json_to_sheet(allCons.map((c) => ({ "BowTie": c.bowtieTitle, [translate(getCurrentLang(), "amBSheetConsequence")]: c.label, [translate(getCurrentLang(), "amBColOrder")]: c.orderIndex })));
+  const lang2 = getCurrentLang();
   const wsBarriers = XLSX.utils.json_to_sheet(allBarriers.map((b) => ({
-    "BowTie": b.bowtieTitle, "طرف": b.side === "preventive" ? "پیشگیرانه" : "بازیابی", "عنوان مانع": b.label,
-    "مسئول": b.owner || "—", "درجه اهمیت": b.criticality, "وضعیت": b.status,
-    "کنترل بحرانی": b.isCriticalControl ? "بله" : "خیر", "تاریخ آخرین راستی‌آزمایی": toJalaliSafe(b.verificationDate) || "—",
+    "BowTie": b.bowtieTitle, [translate(lang2, "bxColType")]: b.side === "preventive" ? translate(lang2, "barrierSidePreventive") : translate(lang2, "barrierSideRecovery"), [translate(lang2, "bxColBarrierTitle")]: b.label,
+    [translate(lang2, "bxColOwner")]: b.owner || "—", [translate(lang2, "amBColImportanceDegree")]: b.criticality, [translate(lang2, "commonStatus")]: b.status,
+    [translate(lang2, "bxColCriticalControl")]: b.isCriticalControl ? translate(lang2, "commonYes") : translate(lang2, "commonNo"), [translate(lang2, "amBColLastVerificationDate")]: toJalaliSafe(b.verificationDate) || "—",
   })));
   const wsEscalation = XLSX.utils.json_to_sheet([
-    ...allFactors.map((f) => ({ "BowTie": f.bowtieTitle, "نوع": "عامل تشدیدکننده", "عنوان": f.label, "مسئول/وضعیت": "—" })),
-    ...allControls.map((c) => ({ "BowTie": c.bowtieTitle, "نوع": "کنترل تشدید", "عنوان": c.label, "مسئول/وضعیت": `${c.owner || "—"} / ${c.status || "—"}` })),
+    ...allFactors.map((f) => ({ "BowTie": f.bowtieTitle, [translate(lang2, "amBColType")]: translate(lang2, "amBTypeEscalationFactor"), [translate(lang2, "commonTitle")]: f.label, [translate(lang2, "amBColOwnerStatus")]: "—" })),
+    ...allControls.map((c) => ({ "BowTie": c.bowtieTitle, [translate(lang2, "amBColType")]: translate(lang2, "amBTypeEscalationControl"), [translate(lang2, "commonTitle")]: c.label, [translate(lang2, "amBColOwnerStatus")]: `${c.owner || "—"} / ${c.status || "—"}` })),
   ]);
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, wsMain, "BowTie");
-  XLSX.utils.book_append_sheet(wb, wsThreats, "تهدیدها");
-  XLSX.utils.book_append_sheet(wb, wsCons, "پیامدها");
-  XLSX.utils.book_append_sheet(wb, wsBarriers, "موانع");
-  XLSX.utils.book_append_sheet(wb, wsEscalation, "عوامل و کنترل تشدید");
+  XLSX.utils.book_append_sheet(wb, wsThreats, translate(lang2, "amSheetThreats"));
+  XLSX.utils.book_append_sheet(wb, wsCons, translate(lang2, "amSheetConsequences"));
+  XLSX.utils.book_append_sheet(wb, wsBarriers, translate(lang2, "amSheetBarriers"));
+  XLSX.utils.book_append_sheet(wb, wsEscalation, translate(lang2, "amSheetEscalation"));
   const stamp = jalaliFileTimestamp();
   const excelFileName = `BowTie_Archive_${stamp}.xlsx`;
-  setProgress("در حال ساخت فایل ZIP آرشیو...");
+  setProgress(translate(getCurrentLang(), "amProgressBuildingZip"));
   await buildArchiveZip({ workbook: wb, excelFileName, attachments, zipFileName: `BowTie_Archive_${stamp}.zip` });
 
   const fileCount = bowties.filter((b) => diagramUrls[b.id]).length;
@@ -435,7 +441,7 @@ async function buildBowtieArchive(setProgress, diagramUrls, performedBy) {
 
 async function deleteBowtieArchive(archived, setProgress) {
   for (const id of archived.recordIds) {
-    setProgress("در حال حذف BowTie و اجزای آن...");
+    setProgress(translate(getCurrentLang(), "amProgressDeletingBowtie"));
     const barrierRows = await sb(`bowtie_barriers?bowtie_id=eq.${id}&select=id`);
     const barrierIds = (sbOk(barrierRows) ? barrierRows : []).map((r) => r.id);
     if (barrierIds.length > 0) {
@@ -486,7 +492,7 @@ async function buildMachineryArchive(setProgress, performedBy, currentUser) {
 
   for (let i = 0; i < docs.length; i++) {
     const d = docs[i];
-    setProgress(`آماده‌سازی مدارک ماشین‌آلات (${i + 1}/${docs.length})...`);
+    setProgress(translate(getCurrentLang(), "amProgressMachineryDocs", { n: i + 1, total: docs.length }));
     let url = d.file_data;
     if (isLegacyBase64(d.file_data)) {
       try {
@@ -499,7 +505,8 @@ async function buildMachineryArchive(setProgress, performedBy, currentUser) {
       const bytes = await fetchAttachmentBytes(url);
       if (bytes) {
         const machine = machinery.find((m) => m.id === d.machinery_id);
-        const docLabel = MACHINERY_DOC_TYPES.find((t) => t.value === d.doc_type)?.label || d.doc_type;
+        const mdtMeta = MACHINERY_DOC_TYPES.find((t) => t.value === d.doc_type);
+        const docLabel = mdtMeta ? translate(getCurrentLang(), mdtMeta.labelKey) : d.doc_type;
         const ext = extFromMime(d.mime_type);
         const relPath = `files/${safeFileName(machine?.plate_number || machine?.machine_name || d.machinery_id)}-${safeFileName(docLabel)}-${d.id.slice(-6)}.${ext}`;
         attachments.push({ relativePath: relPath, content: bytes });
@@ -509,18 +516,18 @@ async function buildMachineryArchive(setProgress, performedBy, currentUser) {
     }
   }
 
-  setProgress("در حال ساخت فایل اکسل ماشین‌آلات...");
+  setProgress(translate(getCurrentLang(), "amProgressBuildingExcel", { module: translate(getCurrentLang(), "amModuleMachinery") }));
 
   // ستون‌های ۱ تا ۱۳ دقیقاً مطابق فایل Master List HSE پروژه (ترتیب و عناوین
   // بدون تغییر)؛ ستون‌های بعدی (نوع ماشین، جانشین راننده، تأیید، مدارک) طبق
   // درخواست، بدون به‌هم‌زدن ساختار اصلی، به انتهای فایل اضافه شده‌اند.
   const headers = [
-    "ردیف", "پروژه/ شرکت", "نام ماشین آلات", "شماره پلاک-شاسی(کارت ماشین)", "سال ساخت",
-    "وضعیت مالکیت", "تاریخ بیمه نامه", "تاریخ معاینه فنی یا اخذ سرتیفیکیت", "نام راننده",
-    "نوع گواهینامه(ویژه/پایه یک)", "کد دستگاه", "وضعیت تردد", "رفتار ناایمن",
-    "نوع ماشین‌آلات", "جانشین راننده", "وضعیت تأیید کارفرما", "یادداشت کارفرما",
-    ...MACHINERY_DOC_TYPES.map((t) => t.label),
-    "ثبت‌کننده", "تاریخ ایجاد", "تاریخ آخرین تغییر",
+    translate(getCurrentLang(), "exportColRow"), translate(getCurrentLang(), "amMColProjectCompany"), translate(getCurrentLang(), "amMColMachineName"), translate(getCurrentLang(), "amMColPlateChassis"), translate(getCurrentLang(), "amMColManufactureYear"),
+    translate(getCurrentLang(), "amMColOwnershipStatus"), translate(getCurrentLang(), "amMColInsuranceDate"), translate(getCurrentLang(), "amMColInspectionDate"), translate(getCurrentLang(), "amMColDriverName"),
+    translate(getCurrentLang(), "amMColLicenseType"), translate(getCurrentLang(), "amMColDeviceCode"), translate(getCurrentLang(), "amMColTrafficStatus"), translate(getCurrentLang(), "amMColUnsafeBehavior"),
+    translate(getCurrentLang(), "amMColMachineType"), translate(getCurrentLang(), "amMColBackupDriver"), translate(getCurrentLang(), "amMColEmployerApprovalStatus"), translate(getCurrentLang(), "amMColEmployerNote"),
+    ...MACHINERY_DOC_TYPES.map((t) => translate(getCurrentLang(), t.labelKey)),
+    translate(getCurrentLang(), "amPColSubmitter"), translate(getCurrentLang(), "amPColCreatedAt"), translate(getCurrentLang(), "amPColUpdatedAt"),
   ];
 
   const docsStartCol = 17; // ۰-ایندکس ستون اول مدارک (بعد از ۱۷ ستون قبلی)
@@ -528,16 +535,16 @@ async function buildMachineryArchive(setProgress, performedBy, currentUser) {
   const aoa = [headers, ...machinery.map((m, idx) => [
     idx + 1, m.project, m.machine_name,
     `${m.plate_number || "—"} - ${m.chassis_number || "—"}`,
-    m.manufacture_year, OWNERSHIP_STATUSES.find((s) => s.value === m.ownership_status)?.label || m.ownership_status,
+    m.manufacture_year, (() => { const om = OWNERSHIP_STATUSES.find((s) => s.value === m.ownership_status); return om ? translate(getCurrentLang(), om.labelKey) : m.ownership_status; })(),
     toJalaliSafe(m.insurance_expiry) || "—", toJalaliSafe(m.inspection_expiry) || "—",
-    m.driver_name, LICENSE_TYPES.find((t) => t.value === m.driver_license_type)?.label || m.driver_license_type,
-    m.device_code, TRAFFIC_STATUSES.find((s) => s.value === m.traffic_status)?.label || m.traffic_status,
+    m.driver_name, (() => { const lm = LICENSE_TYPES.find((t) => t.value === m.driver_license_type); return lm ? translate(getCurrentLang(), lm.labelKey) : m.driver_license_type; })(),
+    m.device_code, (() => { const tm = TRAFFIC_STATUSES.find((s) => s.value === m.traffic_status); return tm ? translate(getCurrentLang(), tm.labelKey) : m.traffic_status; })(),
     m.unsafe_behavior || "—",
-    MACHINE_TYPES.find((t) => t.value === m.machine_type)?.label || m.machine_type,
-    m.backup_driver_name || "—", "تأیید شده", m.review_note || "—",
+    (() => { const mtm = MACHINE_TYPES.find((t) => t.value === m.machine_type); return mtm ? translate(getCurrentLang(), mtm.labelKey) : m.machine_type; })(),
+    m.backup_driver_name || "—", translate(getCurrentLang(), "amMColApprovedStatus"), m.review_note || "—",
     ...MACHINERY_DOC_TYPES.map((t) => {
       const d = docsByMachine[m.id]?.[t.value];
-      return d && docRelativePaths[d.id] ? "مشاهده مدرک" : "—";
+      return d && docRelativePaths[d.id] ? translate(getCurrentLang(), "amViewDocument") : "—";
     }),
     m.created_by || "—", toJalaliDateTime(m.created_at) || "—", toJalaliDateTime(m.updated_at) || "—",
   ])];
@@ -556,10 +563,10 @@ async function buildMachineryArchive(setProgress, performedBy, currentUser) {
   ws["!cols"] = headers.map(() => ({ wch: 16 }));
 
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "ماشین‌آلات");
+  XLSX.utils.book_append_sheet(wb, ws, translate(getCurrentLang(), "amModuleMachinery"));
   const stamp = jalaliFileTimestamp();
   const excelFileName = `Machinery_Archive_${stamp}.xlsx`;
-  setProgress("در حال ساخت فایل ZIP آرشیو...");
+  setProgress(translate(getCurrentLang(), "amProgressBuildingZip"));
   await buildArchiveZip({ workbook: wb, excelFileName, attachments, zipFileName: `Machinery_Archive_${stamp}.zip` });
 
   const fileCount = attachments.length;
@@ -570,7 +577,7 @@ async function buildMachineryArchive(setProgress, performedBy, currentUser) {
 
 async function deleteMachineryArchive(archived, setProgress) {
   for (const id of archived.docIds) {
-    setProgress("در حال حذف مدارک ماشین‌آلات...");
+    setProgress(translate(getCurrentLang(), "amProgressDeletingMachineryDocs"));
     const docRows = await sb(`machinery_documents?id=eq.${id}&select=file_data`);
     const url = sbOk(docRows) && docRows[0] ? docRows[0].file_data : null;
     const parsed = url ? parseStorageUrl(url) : null;
@@ -578,7 +585,7 @@ async function deleteMachineryArchive(archived, setProgress) {
     await sb(`machinery_documents?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" });
   }
   for (const id of archived.recordIds) {
-    setProgress("در حال حذف ماشین‌آلات...");
+    setProgress(translate(getCurrentLang(), "amProgressDeletingMachinery"));
     await sb(`machinery?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" });
   }
 }
@@ -614,7 +621,7 @@ async function buildScaffoldArchive(setProgress, performedBy, currentUser) {
   let totalBytes = 0;
   for (let i = 0; i < photos.length; i++) {
     const p = photos[i];
-    setProgress(`آماده‌سازی عکس‌های داربست (${i + 1}/${photos.length})...`);
+    setProgress(translate(getCurrentLang(), "amProgressScaffoldPhotos", { n: i + 1, total: photos.length }));
     let url = p.file_data;
     if (isLegacyBase64(p.file_data)) {
       try {
@@ -636,7 +643,7 @@ async function buildScaffoldArchive(setProgress, performedBy, currentUser) {
     }
   }
 
-  setProgress("در حال ساخت فایل اکسل داربست...");
+  setProgress(translate(getCurrentLang(), "amProgressBuildingExcel", { module: translate(getCurrentLang(), "amModuleScaffold") }));
 
   // نام واقعی شرکت برای تیتر فایل — دقیقاً همان چیزی که در فایل نمونه
   // خواسته شده («لیست تگ داربست شرکت .....» → نام واقعی به‌جای نقطه‌چین‌ها)
@@ -647,10 +654,12 @@ async function buildScaffoldArchive(setProgress, performedBy, currentUser) {
     companyName = sbOk(companyRows) && companyRows.length > 0 ? companyRows[0].name : "";
   }
 
+  const lang = getCurrentLang();
+  const isEn = lang === "en";
   // ستون‌ها دقیقاً مطابق فایل نمونه‌ی پیوستی — همان ترتیب قبلی، بدون تغییر محتوایی
   const headers = [
-    "ردیف", "شماره تگ", "موقعیت", "نام شرکت", "تاریخ برپایی داربست", "OK/NOT OK", "تاریخ برچیدن داربست", "توضیحات",
-    "وضعیت فعلی", "تاریخ تأیید اولیه", "شرح ایرادات (در صورت وجود)", "عکس‌های محل", "ثبت‌کننده", "تاریخ ایجاد", "تاریخ آخرین تغییر",
+    translate(lang, "exportColRow"), translate(lang, "amSColTagNumber"), translate(lang, "amSColLocation"), translate(lang, "amSColCompanyName"), translate(lang, "amSColErectionDate"), translate(lang, "amSColOkNotOk"), translate(lang, "amSColRemovalDate"), translate(lang, "amSColDescription"),
+    translate(lang, "amSColCurrentStatus"), translate(lang, "amSColInitialApprovalDate"), translate(lang, "amSColFaultDesc"), translate(lang, "amSColSitePhotos"), translate(lang, "amPColSubmitter"), translate(lang, "amPColCreatedAt"), translate(lang, "amPColUpdatedAt"),
   ];
   // عرض هر ستون، برداشت‌شده از فایل نمونه — ستون I («وضعیت فعلی») در خودِ
   // فایل نمونه هم عمداً تقریباً صفر عرض دارد (جمع‌شده، نه حذف‌شده)
@@ -658,15 +667,15 @@ async function buildScaffoldArchive(setProgress, performedBy, currentUser) {
   const photoStartCol = 12; // «عکس‌های محل»
 
   const wb = new ExcelJS.Workbook();
-  const ws = wb.addWorksheet("Scaff tag", { views: [{ rightToLeft: true, state: "frozen", xSplit: 2, ySplit: 2 }] });
+  const ws = wb.addWorksheet("Scaff tag", { views: [{ rightToLeft: !isEn, state: "frozen", xSplit: 2, ySplit: 2 }] });
   ws.columns = colWidths.map((w) => ({ width: w }));
 
   // ردیف ۱: عنوان با نام واقعی شرکت، پس‌زمینه‌ی خاکستری روشن
   ws.mergeCells(1, 1, 1, headers.length);
   const titleCell = ws.getCell(1, 1);
-  titleCell.value = `لیست تگ داربست شرکت ${companyName || "....."}`;
-  titleCell.font = { name: "B Nazanin", bold: true, size: 16 };
-  titleCell.alignment = { horizontal: "center", vertical: "middle", readingOrder: "rtl" };
+  titleCell.value = translate(lang, "amXlsScaffoldTitle", { company: companyName || "....." });
+  titleCell.font = { name: isEn ? "Calibri" : "B Nazanin", bold: true, size: 16 };
+  titleCell.alignment = { horizontal: "center", vertical: "middle", readingOrder: isEn ? "ltr" : "rtl" };
   titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD9D9D9" } };
   ws.getRow(1).height = 40;
 
@@ -675,8 +684,8 @@ async function buildScaffoldArchive(setProgress, performedBy, currentUser) {
   headers.forEach((h, i) => {
     const cell = headerRow.getCell(i + 1);
     cell.value = h;
-    cell.font = { name: "B Nazanin", bold: true, size: 11 };
-    cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true, readingOrder: "rtl" };
+    cell.font = { name: isEn ? "Calibri" : "B Nazanin", bold: true, size: 11 };
+    cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true, readingOrder: isEn ? "ltr" : "rtl" };
     cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFDDEBF7" } };
     cell.border = { top: { style: "medium" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } };
   });
@@ -689,13 +698,13 @@ async function buildScaffoldArchive(setProgress, performedBy, currentUser) {
     const values = [
       idx + 1, t.tag_number, t.location, t.contractor_name, toJalaliSafe(t.erection_date) || "—",
       "OK", toJalaliSafe(t.removal_date) || "—", t.purpose || "—",
-      scaffoldStatusMeta(t.status).label, toJalaliDateTime(t.initial_approved_at) || "—", t.correction_note || "—",
+      translate(lang, scaffoldStatusMeta(t.status).labelKey), toJalaliDateTime(t.initial_approved_at) || "—", t.correction_note || "—",
     ];
     const row = ws.getRow(rowIdx);
     values.forEach((v, i) => {
       const cell = row.getCell(i + 1);
       cell.value = v ?? "—";
-      cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true, readingOrder: "rtl" };
+      cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true, readingOrder: isEn ? "ltr" : "rtl" };
       cell.border = { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } };
     });
 
@@ -703,13 +712,13 @@ async function buildScaffoldArchive(setProgress, performedBy, currentUser) {
     photoCell.border = { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } };
     photoCell.alignment = { horizontal: "center", vertical: "middle" };
     if (ph.length > 0 && photoRelativePaths[ph[0].id]) {
-      photoCell.value = { text: "مشاهده عکس", hyperlink: photoRelativePaths[ph[0].id] };
+      photoCell.value = { text: translate(lang, "expXlsViewPhoto"), hyperlink: photoRelativePaths[ph[0].id] };
       photoCell.font = { color: { argb: "FF0563C1" }, underline: true };
     } else {
       photoCell.value = "—";
     }
 
-    ["ثبت‌کننده", "تاریخ ایجاد", "تاریخ آخرین تغییر"].forEach((_, offset) => {
+    [translate(lang, "amPColSubmitter"), translate(lang, "amPColCreatedAt"), translate(lang, "amPColUpdatedAt")].forEach((_, offset) => {
       const col = photoStartCol + 1 + offset;
       const cell = row.getCell(col);
       cell.value = [t.created_by || "—", toJalaliDateTime(t.created_at) || "—", toJalaliDateTime(t.updated_at) || "—"][offset];
@@ -721,19 +730,19 @@ async function buildScaffoldArchive(setProgress, performedBy, currentUser) {
   // فوتر — دقیقاً متن کنترل‌سندی فایل نمونه
   const footerStart = tags.length + 4;
   ws.mergeCells(footerStart, 1, footerStart, headers.length);
-  ws.getCell(footerStart, 1).value = "تهیه کننده: سرپرست HSE";
-  ws.getCell(footerStart, 1).font = { name: "B Nazanin", bold: true, size: 10 };
-  ws.getCell(footerStart, 1).alignment = { horizontal: "right", readingOrder: "rtl" };
+  ws.getCell(footerStart, 1).value = translate(lang, "amFooterPreparedBy");
+  ws.getCell(footerStart, 1).font = { name: isEn ? "Calibri" : "B Nazanin", bold: true, size: 10 };
+  ws.getCell(footerStart, 1).alignment = { horizontal: isEn ? "left" : "right", readingOrder: isEn ? "ltr" : "rtl" };
 
   ws.mergeCells(footerStart + 1, 1, footerStart + 1, headers.length);
-  ws.getCell(footerStart + 1, 1).value = "توجه : این فرم تحت کنترل واحد QA می‌باشد و هرگونه تغییر در آن غیرمجاز بوده و منوط به اخذ مجوز از واحد QA می‌باشد.";
-  ws.getCell(footerStart + 1, 1).font = { name: "B Nazanin", size: 9 };
-  ws.getCell(footerStart + 1, 1).alignment = { horizontal: "right", readingOrder: "rtl" };
+  ws.getCell(footerStart + 1, 1).value = translate(lang, "amFooterQaNote");
+  ws.getCell(footerStart + 1, 1).font = { name: isEn ? "Calibri" : "B Nazanin", size: 9 };
+  ws.getCell(footerStart + 1, 1).alignment = { horizontal: isEn ? "left" : "right", readingOrder: isEn ? "ltr" : "rtl" };
 
   const excelBuffer = await wb.xlsx.writeBuffer();
   const stamp = jalaliFileTimestamp();
   const excelFileName = `Scaffold_Archive_${stamp}.xlsx`;
-  setProgress("در حال ساخت فایل ZIP آرشیو...");
+  setProgress(translate(getCurrentLang(), "amProgressBuildingZip"));
   await buildArchiveZip({ excelBuffer, excelFileName, attachments, zipFileName: `Scaffold_Archive_${stamp}.zip` });
 
   const fileCount = attachments.length;
@@ -744,7 +753,7 @@ async function buildScaffoldArchive(setProgress, performedBy, currentUser) {
 
 async function deleteScaffoldArchive(archived, setProgress) {
   for (const id of archived.photoIds) {
-    setProgress("در حال حذف عکس‌های داربست...");
+    setProgress(translate(getCurrentLang(), "amProgressDeletingScaffoldPhotos"));
     const photoRows = await sb(`scaffold_tag_photos?id=eq.${id}&select=file_data`);
     const url = sbOk(photoRows) && photoRows[0] ? photoRows[0].file_data : null;
     const parsed = url ? parseStorageUrl(url) : null;
@@ -752,7 +761,7 @@ async function deleteScaffoldArchive(archived, setProgress) {
     await sb(`scaffold_tag_photos?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" });
   }
   for (const id of archived.recordIds) {
-    setProgress("در حال حذف تگ‌های داربست...");
+    setProgress(translate(getCurrentLang(), "amProgressDeletingScaffoldTags"));
     await sb(`scaffold_tags?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" });
   }
 }
@@ -772,17 +781,17 @@ async function loadArchivableHcms() {
 
 async function buildHcmsArchive(setProgress, performedBy) {
   const records = await loadArchivableHcms();
-  setProgress("در حال ساخت فایل اکسل ارزیابی ریسک...");
+  setProgress(translate(getCurrentLang(), "amProgressBuildingRiskExcel"));
 
   const headers = [
-    "ردیف", "فرآیند", "فعالیت", "واحد", "تجهیز", "خطر", "جنبه‌های زیست‌محیطی", "علت", "پیامد",
-    "کنترل‌های موجود", "الزام قانونی",
-    "RPN اولیه - انسان", "RPN اولیه - تجهیزات", "RPN اولیه - محیط‌زیست", "RPN اولیه - اعتبار",
-    "سطح ریسک اولیه (کلی)",
-    "Permit to Work", "کنترل‌های پیشنهادی", "برنامه بازیابی", "مسئول اجرا",
-    "RPN باقیمانده - انسان", "RPN باقیمانده - تجهیزات", "RPN باقیمانده - محیط‌زیست", "RPN باقیمانده - اعتبار",
-    "سطح ریسک باقیمانده (کلی)",
-    "شرایط اضطرار", "Critical Element", "ثبت‌کننده", "تاریخ ایجاد", "تاریخ آخرین تغییر",
+    translate(getCurrentLang(), "exportColRow"), translate(getCurrentLang(), "amHColProcess"), translate(getCurrentLang(), "amHColActivity"), translate(getCurrentLang(), "amHColUnit"), translate(getCurrentLang(), "amHColEquipment"), translate(getCurrentLang(), "amHColHazard"), translate(getCurrentLang(), "amHColEnvironmentalAspects"), translate(getCurrentLang(), "amHColCause"), translate(getCurrentLang(), "amHColConsequence"),
+    translate(getCurrentLang(), "amHColExistingControls"), translate(getCurrentLang(), "amHColLegalRequirement"),
+    translate(getCurrentLang(), "amHColInitialRpnHuman"), translate(getCurrentLang(), "amHColInitialRpnEquipment"), translate(getCurrentLang(), "amHColInitialRpnEnvironment"), translate(getCurrentLang(), "amHColInitialRpnReputation"),
+    translate(getCurrentLang(), "amHColInitialOverallLevel"),
+    translate(getCurrentLang(), "amHColPermitToWork"), translate(getCurrentLang(), "amHColProposedControls"), translate(getCurrentLang(), "amHColRecoveryPlan"), translate(getCurrentLang(), "amHColResponsibleExecutor"),
+    translate(getCurrentLang(), "amHColResidualRpnHuman"), translate(getCurrentLang(), "amHColResidualRpnEquipment"), translate(getCurrentLang(), "amHColResidualRpnEnvironment"), translate(getCurrentLang(), "amHColResidualRpnReputation"),
+    translate(getCurrentLang(), "amHColResidualOverallLevel"),
+    translate(getCurrentLang(), "amHColEmergencyCondition"), translate(getCurrentLang(), "amHColCriticalElement"), translate(getCurrentLang(), "amPColSubmitter"), translate(getCurrentLang(), "amPColCreatedAt"), translate(getCurrentLang(), "amPColUpdatedAt"),
   ];
 
   const aoa = [headers, ...records.map((r, idx) => [
@@ -801,10 +810,10 @@ async function buildHcmsArchive(setProgress, performedBy) {
   const ws = XLSX.utils.aoa_to_sheet(aoa);
   ws["!cols"] = headers.map(() => ({ wch: 16 }));
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "ارزیابی ریسک HCMS");
+  XLSX.utils.book_append_sheet(wb, ws, translate(getCurrentLang(), "amXlsSheetRiskAssessment"));
   const stamp = jalaliFileTimestamp();
   const excelFileName = `HCMS_Archive_${stamp}.xlsx`;
-  setProgress("در حال ساخت فایل ZIP آرشیو...");
+  setProgress(translate(getCurrentLang(), "amProgressBuildingZip"));
   await buildArchiveZip({ workbook: wb, excelFileName, attachments: [], zipFileName: `HCMS_Archive_${stamp}.zip` });
 
   await logArchiveOperation({ module: "hcms", performedBy, recordCount: records.length, fileCount: 0, totalSizeMb: 0 });
@@ -814,7 +823,7 @@ async function buildHcmsArchive(setProgress, performedBy) {
 
 async function deleteHcmsArchive(archived, setProgress) {
   for (const id of archived.recordIds) {
-    setProgress("در حال حذف ارزیابی‌های ریسک...");
+    setProgress(translate(getCurrentLang(), "amProgressDeletingAssessments"));
     await sb(`hcms_risk_assessments?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" });
   }
 }
@@ -822,15 +831,22 @@ async function deleteHcmsArchive(archived, setProgress) {
 // ================= UI =================
 
 const TABS = [
-  { key: "personnel", label: "پرسنل", icon: Users },
-  { key: "anomaly", label: "آنومالی", icon: AlertTriangle },
+  { key: "personnel", labelKey: "amModulePersonnel", icon: Users },
+  { key: "anomaly", labelKey: "amModuleAnomaly", icon: AlertTriangle },
   { key: "bowtie", label: "BowTie", icon: GitBranch },
-  { key: "machinery", label: "ماشین‌آلات", icon: Truck },
-  { key: "scaffold", label: "داربست", icon: Tag },
+  { key: "machinery", labelKey: "amModuleMachinery", icon: Truck },
+  { key: "scaffold", labelKey: "amModuleScaffold", icon: Tag },
   { key: "hcms", label: "HCMS", icon: ShieldAlert },
 ];
 
 export default function ArchiveManager({ onBack, currentUser }) {
+  const { t, dir } = useLanguage();
+  const moduleLabelFor = (key) => {
+    const lk = MODULE_LABEL_KEYS[key];
+    if (!lk) return key;
+    // مقادیر "BowTie" و "HCMS" کلید ترجمه نیستند، متن نمایشی ثابت‌اند (نام محصول)
+    return (key === "bowtie" || key === "hcms") ? lk : t(lk);
+  };
   const isAdmin = currentUser?.role === "ADMIN";
   const [tab, setTab] = useState("personnel");
   const [counts, setCounts] = useState({ personnel: 0, anomaly: 0, bowtie: 0, machinery: 0, scaffold: 0, hcms: 0 });
@@ -855,7 +871,7 @@ export default function ArchiveManager({ onBack, currentUser }) {
   };
   useEffect(() => { load(); }, []);
 
-  const performedByLabel = currentUser?.name || currentUser?.username || "نامشخص";
+  const performedByLabel = currentUser?.name || currentUser?.username || translate(getCurrentLang(), "amDefaultUnknown");
 
   const attachDiagram = async (bowtieId, file) => {
     if (!file) return;
@@ -869,7 +885,7 @@ export default function ArchiveManager({ onBack, currentUser }) {
       const url = await uploadBase64ToStorage("anomaly-photos", `bowtie-diagram-${bowtieId}.pdf`, base64, "application/pdf");
       setDiagramUrls((prev) => ({ ...prev, [bowtieId]: url }));
     } catch {
-      alert("آپلود فایل دیاگرام ناموفق بود.");
+      alert(translate(getCurrentLang(), "errDiagramUploadFailed"));
     }
   };
 
@@ -887,7 +903,7 @@ export default function ArchiveManager({ onBack, currentUser }) {
       setExported({ module: tab, ...result });
       setLastLogs(await loadLastArchiveLogs());
     } catch (e) {
-      alert(`خطا در ساخت آرشیو: ${e?.message || "نامشخص"}`);
+      alert(translate(getCurrentLang(), "errArchiveCreateWithReason", { reason: e?.message || translate(getCurrentLang(), "commonErrorUnknown") }));
     }
     setProcessing(false);
     setProgressText("");
@@ -895,10 +911,10 @@ export default function ArchiveManager({ onBack, currentUser }) {
   };
 
   const runDelete = async () => {
-    if (!isAdmin) { alert("حذف رکوردهای آرشیوشده فقط توسط ادمین قابل‌انجام است."); return; }
+    if (!isAdmin) { alert(translate(getCurrentLang(), "errOnlyAdminDeleteArchived")); return; }
     if (!exported) return;
     const n = (exported.recordIds || []).length;
-    if (!confirm(`${n} رکورد به‌همراه فایل‌های مرتبط از سرور حذف شود؟ لطفاً مطمئن شوید فایل اکسل را ذخیره کرده‌اید — این عمل قابل بازگشت نیست.`)) return;
+    if (!confirm(translate(getCurrentLang(), "confirmDeleteArchivedRecords", { count: n }))) return;
     setProcessing(true);
     try {
       if (exported.module === "personnel") await deletePersonnelArchive(exported, setProgressText);
@@ -908,45 +924,45 @@ export default function ArchiveManager({ onBack, currentUser }) {
       else if (exported.module === "scaffold") await deleteScaffoldArchive(exported, setProgressText);
       else await deleteHcmsArchive(exported, setProgressText);
     } catch (e) {
-      alert(`خطا در حذف: ${e?.message || "نامشخص"}`);
+      alert(translate(getCurrentLang(), "errArchiveDeleteWithReason", { reason: e?.message || translate(getCurrentLang(), "commonErrorUnknown") }));
     }
     setProcessing(false);
     setProgressText("");
     await load();
   };
 
-  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>در حال بارگذاری...</div>;
+  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</div>;
 
   const currentCount = counts[tab];
   const lastForTab = lastLogs.find((l) => l.module === tab);
 
   return (
-    <div style={{ maxWidth: 680, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>← بازگشت به منو</div>}
+    <div style={{ maxWidth: 680, margin: "0 auto", padding: 24, direction: dir }}>
+      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
         <Archive size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>آرشیو حرفه‌ای</h2>
+        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("amPageTitle")}</h2>
       </div>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 14, lineHeight: 1.8 }}>
-        فقط رکوردهای با تأیید نهایی وارد آرشیو می‌شوند (پرسنل: وضعیت «فعال»؛ آنومالی: وضعیت «بسته‌شده»؛ BowTie: «تأییدشده»/«بایگانی»).
-        کلیک روی هر لینک، همان فایل را دانلود می‌کند. {isAdmin ? "حذف از سرور فقط بعد از دانلود موفق اکسل و تأیید شما انجام می‌شود." : "خروجی‌گیری برای همه در دسترس است؛ حذف رکوردها از سرور فقط توسط ادمین انجام می‌شود."}
-        {storageMb !== null && <> فضای فعلی Storage: <b style={{ color: THEME.text2 }}>{storageMb} مگابایت</b>.</>}
+        {t("amPageDescApproved")}
+        {" "}{t("amPageDescClickDownload")} {isAdmin ? t("amAdminDeleteNote") : t("amNonAdminExportNote")}
+        {storageMb !== null && <>{t("amCurrentStorageLabel")} <b style={{ color: THEME.text2 }}>{storageMb} {t("amMbUnit")}</b>.</>}
       </p>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
-        {TABS.map((t) => (
+        {TABS.map((tabDef) => (
           <button
-            key={t.key}
+            key={tabDef.key}
             type="button"
-            onClick={() => { setTab(t.key); setExported(null); }}
+            onClick={() => { setTab(tabDef.key); setExported(null); }}
             style={{
               display: "flex", alignItems: "center", gap: 6, flex: "1 1 auto", minWidth: 108, justifyContent: "center",
-              background: tab === t.key ? THEME.teal : "#fff", color: tab === t.key ? "#fff" : THEME.text2,
-              border: `1.5px solid ${tab === t.key ? THEME.teal : THEME.border}`, borderRadius: 9,
+              background: tab === tabDef.key ? THEME.teal : "#fff", color: tab === tabDef.key ? "#fff" : THEME.text2,
+              border: `1.5px solid ${tab === tabDef.key ? THEME.teal : THEME.border}`, borderRadius: 9,
               padding: "9px 8px", fontSize: 12.5, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font, whiteSpace: "nowrap",
             }}
           >
-            <t.icon size={14} /> {t.label} ({counts[t.key]})
+            <tabDef.icon size={14} /> {tabDef.labelKey ? t(tabDef.labelKey) : tabDef.label} ({counts[tabDef.key]})
           </button>
         ))}
       </div>
@@ -955,13 +971,13 @@ export default function ArchiveManager({ onBack, currentUser }) {
         <div style={{ ...styles.card, width: "auto", marginBottom: 12, background: THEME.tealSoft, border: `1px solid ${THEME.teal}` }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
             <History size={14} color={THEME.tealDeep} />
-            <span style={{ fontSize: 12.5, fontWeight: 700, color: THEME.tealDeep }}>آخرین آرشیو انجام‌شده ({MODULE_LABELS[tab]})</span>
+            <span style={{ fontSize: 12.5, fontWeight: 700, color: THEME.tealDeep }}>{t("amLastArchiveDone", { module: moduleLabelFor(tab) })}</span>
           </div>
           <div style={{ fontSize: 11.5, color: THEME.text2, lineHeight: 2 }}>
-            <div>تاریخ و ساعت: <b>{toJalaliDateTime(lastForTab.created_at)}</b></div>
-            <div>کاربر انجام‌دهنده: <b>{lastForTab.performed_by || "—"}</b></div>
-            <div>تعداد رکورد آرشیوشده: <b>{lastForTab.record_count}</b> · تعداد فایل: <b>{lastForTab.file_count}</b></div>
-            <div>حجم فایل‌های آرشیوشده: <b>{lastForTab.total_size_mb} مگابایت</b></div>
+            <div>{t("amDateTimeLabel")} <b>{toJalaliDateTime(lastForTab.created_at)}</b></div>
+            <div>{t("amPerformedByLabel")} <b>{lastForTab.performed_by || "—"}</b></div>
+            <div>{t("amArchivedRecordCount")} <b>{lastForTab.record_count}</b> {t("amFileCountLabel")} <b>{lastForTab.file_count}</b></div>
+            <div>{t("amArchivedFileSize")} <b>{lastForTab.total_size_mb} {t("amMbUnit")}</b></div>
           </div>
         </div>
       )}
@@ -969,13 +985,13 @@ export default function ArchiveManager({ onBack, currentUser }) {
       {tab === "bowtie" && counts.bowtie > 0 && (
         <div style={{ ...styles.card, width: "auto", marginBottom: 12 }}>
           <p style={{ fontSize: 11.5, color: THEME.text3, margin: 0, lineHeight: 1.8 }}>
-            دیاگرام BowTie یک کامپوننت تعاملیه که نمی‌تونیم خودکار به PDF تبدیلش کنیم. اگه می‌خوای لینک دیاگرام هم توی اکسل باشه،
-            اول از داخل خودِ BowTie (دکمه‌ی «خروجی PDF» که از قبل هست) دیاگرامش رو دستی export کن، بعد اینجا ضمیمه‌ش کن:
+            {t("amBowtieDiagramNote")}
+            {t("amBowtieDiagramNote2")}
           </p>
           <label style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 8, fontSize: 12, color: THEME.teal, cursor: "pointer" }}>
-            انتخاب PDF دیاگرام برای یک BowTie خاص (با شناسه‌ی آن در اکسل مطابقت می‌دهیم)
+            {t("amSelectPdfForBowtie")}
             <input type="file" accept="application/pdf" style={{ display: "none" }} onChange={(e) => {
-              const bowtieId = prompt("شناسه یا عنوان دقیق BowTie را وارد کنید (باید با ردیف اکسل مطابقت داشته باشد):");
+              const bowtieId = prompt(t("promptBowtieIdOrTitle"));
               if (bowtieId) attachDiagram(bowtieId, e.target.files[0]);
             }} />
           </label>
@@ -984,7 +1000,7 @@ export default function ArchiveManager({ onBack, currentUser }) {
 
       <div style={{ ...styles.card, width: "auto" }}>
         <div style={{ fontSize: 13, color: THEME.text2, marginBottom: 12 }}>
-          <b>{currentCount}</b> رکورد آماده‌ی آرشیو در این ماژول موجود است.
+          <b>{currentCount}</b> {t("amRecordsReadyCount")}
         </div>
 
         <button
@@ -993,7 +1009,7 @@ export default function ArchiveManager({ onBack, currentUser }) {
           onClick={runBuild}
           disabled={processing || currentCount === 0}
         >
-          <FileSpreadsheet size={15} /> {processing && !exported ? progressText : "ساخت و دانلود فایل اکسل آرشیو"}
+          <FileSpreadsheet size={15} /> {processing && !exported ? progressText : t("amBuildDownloadExcel")}
         </button>
 
         {isAdmin && exported && exported.module === tab && (
@@ -1003,19 +1019,19 @@ export default function ArchiveManager({ onBack, currentUser }) {
             onClick={runDelete}
             disabled={processing}
           >
-            <Trash2 size={15} /> {processing ? progressText : `حذف موارد آرشیوشده از سرور (${(exported.recordIds || []).length})`}
+            <Trash2 size={15} /> {processing ? progressText : t("amDeleteArchivedFromServerCount", { count: (exported.recordIds || []).length })}
           </button>
         )}
         {!isAdmin && exported && exported.module === tab && (
           <p style={{ fontSize: 11.5, color: THEME.text3, marginTop: 10, lineHeight: 1.8 }}>
-            فایل با موفقیت دانلود شد. حذف رکوردهای آرشیوشده از سرور فقط توسط ادمین انجام می‌شود.
+            {t("amDownloadSuccessNote")}
           </p>
         )}
       </div>
 
       {currentCount === 0 && (
         <p style={{ color: THEME.text3, marginTop: 14, fontSize: 12.5 }}>
-          هیچ رکورد تأییدشده‌ی نهایی در این ماژول برای آرشیو موجود نیست.
+          {t("amNoApprovedRecords")}
         </p>
       )}
     </div>

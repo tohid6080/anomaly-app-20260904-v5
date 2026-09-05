@@ -3,21 +3,25 @@ import { Users, Filter } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { JalaliDateInput, toJalaliSafe } from "../personnel/jalaliDate.jsx";
 import { loadActivitySummary } from "./activityApi.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { translate, getCurrentLang } from "../i18n/translations.js";
 
-const ROLE_LABEL = { ADMIN: "ادمین", EMPLOYER: "کارفرما", CONTRACTOR: "پیمانکار" };
+const ROLE_LABEL_KEY = { ADMIN: "roleLabelAdmin", EMPLOYER: "roleLabelEmployer", CONTRACTOR: "roleLabelContractor" };
 
 function formatTime(iso) {
   if (!iso) return "—";
   const d = new Date(iso);
-  return d.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" });
+  const lang = getCurrentLang();
+  return d.toLocaleTimeString(lang === "en" ? "en-US" : "fa-IR", { hour: "2-digit", minute: "2-digit" });
 }
 function formatDuration(ms) {
   if (ms === null || ms === undefined) return "—";
   const totalMin = Math.round(ms / 60000);
   const h = Math.floor(totalMin / 60);
   const m = totalMin % 60;
-  if (h === 0) return `${m} دقیقه`;
-  return `${h} ساعت و ${m} دقیقه`;
+  const lang = getCurrentLang();
+  if (h === 0) return translate(lang, "adminAnalyticsMinutes", { m });
+  return translate(lang, "adminAnalyticsHoursMinutes", { h, m });
 }
 
 /**
@@ -76,6 +80,7 @@ function computeRecentFailedAttempts(rows) {
 }
 
 export default function AdminAnalytics({ onBack, currentUser }) {
+  const { t, dir } = useLanguage();
   const [rawRows, setRawRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fromDate, setFromDate] = useState("");
@@ -101,56 +106,56 @@ export default function AdminAnalytics({ onBack, currentUser }) {
   const filtered = userFilter === "all" ? attendance : attendance.filter((a) => a.username === userFilter);
 
   return (
-    <div style={{ maxWidth: 1000, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>← بازگشت به منو</div>}
+    <div style={{ maxWidth: 1000, margin: "0 auto", padding: 24, direction: dir }}>
+      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
         <Users size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>حضور و فعالیت کاربران</h2>
+        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("adminAnalyticsTitle")}</h2>
       </div>
-      <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 16 }}>میزان حضور هر کاربر در سامانه، بر اساس آخرین نشست ورود/خروج</p>
+      <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 16 }}>{t("adminAnalyticsDesc")}</p>
 
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 16, background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 10, padding: 14 }}>
         <div>
-          <label style={{ ...styles.label, display: "flex", alignItems: "center", gap: 4 }}><Filter size={12} /> کاربر</label>
-          <select style={styles.filterSelect} value={userFilter} onChange={(e) => setUserFilter(e.target.value)} dir="rtl">
-            <option value="all">همه کاربران</option>
+          <label style={{ ...styles.label, display: "flex", alignItems: "center", gap: 4 }}><Filter size={12} /> {t("adminAnalyticsUserLabel")}</label>
+          <select style={styles.filterSelect} value={userFilter} onChange={(e) => setUserFilter(e.target.value)} dir={dir}>
+            <option value="all">{t("adminAnalyticsAllUsers")}</option>
             {userOptions.map(([username, name]) => <option key={username} value={username}>{name}</option>)}
           </select>
         </div>
         <div>
-          <label style={styles.label}>از تاریخ</label>
+          <label style={styles.label}>{t("adminAnalyticsFromDate")}</label>
           <JalaliDateInput value={fromDate} onChange={setFromDate} allowEmpty />
         </div>
         <div>
-          <label style={styles.label}>تا تاریخ</label>
+          <label style={styles.label}>{t("adminAnalyticsToDate")}</label>
           <JalaliDateInput value={toDate} onChange={setToDate} allowEmpty />
         </div>
-        <button type="button" style={styles.smallButton} onClick={load}>اعمال فیلتر</button>
+        <button type="button" style={styles.smallButton} onClick={load}>{t("adminAnalyticsApplyFilter")}</button>
       </div>
 
-      {loading && <p style={{ color: THEME.text3, textAlign: "center", padding: 30 }}>در حال بارگذاری...</p>}
+      {loading && <p style={{ color: THEME.text3, textAlign: "center", padding: 30 }}>{t("commonLoading")}</p>}
 
       {!loading && (
         <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead>
               <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
-                <th style={{ textAlign: "right", padding: "8px 10px" }}>نام کاربر</th>
-                <th style={{ textAlign: "center", padding: "8px 10px" }}>نقش</th>
-                <th style={{ textAlign: "center", padding: "8px 10px" }}>تاریخ آخرین ورود</th>
-                <th style={{ textAlign: "center", padding: "8px 10px" }}>ساعت ورود</th>
-                <th style={{ textAlign: "center", padding: "8px 10px" }}>تاریخ خروج</th>
-                <th style={{ textAlign: "center", padding: "8px 10px" }}>ساعت خروج</th>
-                <th style={{ textAlign: "center", padding: "8px 10px" }}>مدت حضور</th>
-                <th style={{ textAlign: "center", padding: "8px 10px" }}>تعداد دفعات ورود</th>
-                <th style={{ textAlign: "center", padding: "8px 10px" }}>تلاش ناموفق</th>
+                <th style={{ textAlign: dir === "rtl" ? "right" : "left", padding: "8px 10px" }}>{t("adminAnalyticsColUsername")}</th>
+                <th style={{ textAlign: "center", padding: "8px 10px" }}>{t("adminAnalyticsColRole")}</th>
+                <th style={{ textAlign: "center", padding: "8px 10px" }}>{t("adminAnalyticsColLastLoginDate")}</th>
+                <th style={{ textAlign: "center", padding: "8px 10px" }}>{t("adminAnalyticsColLoginTime")}</th>
+                <th style={{ textAlign: "center", padding: "8px 10px" }}>{t("adminAnalyticsColLogoutDate")}</th>
+                <th style={{ textAlign: "center", padding: "8px 10px" }}>{t("adminAnalyticsColLogoutTime")}</th>
+                <th style={{ textAlign: "center", padding: "8px 10px" }}>{t("adminAnalyticsColDuration")}</th>
+                <th style={{ textAlign: "center", padding: "8px 10px" }}>{t("adminAnalyticsColLoginCount")}</th>
+                <th style={{ textAlign: "center", padding: "8px 10px" }}>{t("adminAnalyticsColFailedAttempts")}</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((a) => (
                 <tr key={a.username} style={{ borderBottom: `1px solid ${THEME.border}` }}>
                   <td style={{ padding: "8px 10px", fontWeight: 600 }}>{a.fullName}</td>
-                  <td style={{ padding: "8px 10px", textAlign: "center" }}>{ROLE_LABEL[a.role] || a.role || "—"}</td>
+                  <td style={{ padding: "8px 10px", textAlign: "center" }}>{(ROLE_LABEL_KEY[a.role] ? t(ROLE_LABEL_KEY[a.role]) : null) || a.role || "—"}</td>
                   <td style={{ padding: "8px 10px", textAlign: "center" }}>{toJalaliSafe(a.lastLoginAt) || "—"}</td>
                   <td style={{ padding: "8px 10px", textAlign: "center" }}>{formatTime(a.lastLoginAt)}</td>
                   <td style={{ padding: "8px 10px", textAlign: "center" }}>{a.lastLogoutAt ? toJalaliSafe(a.lastLogoutAt) : "—"}</td>
@@ -161,7 +166,7 @@ export default function AdminAnalytics({ onBack, currentUser }) {
                 </tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={9} style={{ padding: 20, textAlign: "center", color: THEME.text3 }}>در این بازه فعالیتی ثبت نشده است</td></tr>
+                <tr><td colSpan={9} style={{ padding: 20, textAlign: "center", color: THEME.text3 }}>{t("adminAnalyticsNoActivity")}</td></tr>
               )}
             </tbody>
           </table>
@@ -170,7 +175,7 @@ export default function AdminAnalytics({ onBack, currentUser }) {
 
       {!loading && recentFailed.length > 0 && (
         <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, marginTop: 16, padding: 14 }}>
-          <p style={{ fontSize: 12.5, fontWeight: 700, color: THEME.navy, marginTop: 0, marginBottom: 10 }}>تلاش‌های ناموفق ورود اخیر</p>
+          <p style={{ fontSize: 12.5, fontWeight: 700, color: THEME.navy, marginTop: 0, marginBottom: 10 }}>{t("adminAnalyticsRecentFailed")}</p>
           {recentFailed.map((r, i) => (
             <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: i < recentFailed.length - 1 ? `1px solid ${THEME.border}` : "none", fontSize: 12 }}>
               <span style={{ color: THEME.text, fontWeight: 600 }}>{r.username}</span>
