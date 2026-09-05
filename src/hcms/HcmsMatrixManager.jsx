@@ -2,14 +2,10 @@ import React, { useState, useEffect } from "react";
 import { Grid3x3 } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { loadFullMatrix, setMatrixCell, RISK_LEVEL_META, SEVERITY_CODES, PROBABILITY_LETTERS } from "./hcmsApi.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
-const SEVERITY_LABELS = {
-  0: "۰ — بدون هیچ آسیب/تاثیری",
-  1: "۱ — جراحت جزئی (استعلاجی <۳ روز)",
-  2: "۲ — شکستگی/جراحت شدید (>۳ روز)",
-  3: "۳ — نقض عضو / ناتوانی بخشی",
-  4: "۴ — یک کشته یا ناتوانی کلی",
-  5: "۵ — بیش از یک کشته",
+const SEVERITY_LABEL_KEYS = {
+  0: "hcmsSev0", 1: "hcmsSev1", 2: "hcmsSev2", 3: "hcmsSev3", 4: "hcmsSev4", 5: "hcmsSev5",
 };
 
 const LEVEL_CYCLE = ["Low", "Medium", "High"];
@@ -21,6 +17,7 @@ const LEVEL_CYCLE = ["Low", "Medium", "High"];
  * پیش‌فرض) برای آن خانه استفاده می‌شود.
  */
 export default function HcmsMatrixManager({ onBack }) {
+  const { t, dir } = useLanguage();
   const [grid, setGrid] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -42,17 +39,17 @@ export default function HcmsMatrixManager({ onBack }) {
     if (result?.__error) { setError(result.message); await load(); }
   };
 
-  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>در حال بارگذاری...</div>;
+  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</div>;
 
   return (
-    <div style={{ maxWidth: 800, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>← بازگشت</div>}
+    <div style={{ maxWidth: 800, margin: "0 auto", padding: 24, direction: dir }}>
+      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
         <Grid3x3 size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>ماتریس ریسک HCMS</h2>
+        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("hcmsMatrixTitle")}</h2>
       </div>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 16 }}>
-        روی هر خانه کلیک کن تا بین کم (زرد) / متوسط (نارنجی) / زیاد (قرمز) بچرخد. ستون‌ها احتمال وقوع (A تا E)، ردیف‌ها شدت پیامد (۰ تا ۵) هستند — دقیقاً مطابق فایل مرجع.
+        {t("hcmsMatrixDesc")}
       </p>
       {error && <p style={styles.error}>{error}</p>}
 
@@ -60,7 +57,7 @@ export default function HcmsMatrixManager({ onBack }) {
         <table style={{ borderCollapse: "collapse", width: "100%" }}>
           <thead>
             <tr>
-              <th style={{ padding: "8px 10px", textAlign: "right", fontSize: 12, color: THEME.text3 }}>شدت \ احتمال</th>
+              <th style={{ padding: "8px 10px", textAlign: dir === "rtl" ? "right" : "left", fontSize: 12, color: THEME.text3 }}>{t("hcmsSeverityProbabilityHeader")}</th>
               {PROBABILITY_LETTERS.map((l) => (
                 <th key={l} style={{ padding: "8px 10px", fontSize: 13, fontWeight: 700, color: THEME.navy }}>{l}</th>
               ))}
@@ -69,7 +66,7 @@ export default function HcmsMatrixManager({ onBack }) {
           <tbody>
             {SEVERITY_CODES.map((s) => (
               <tr key={s}>
-                <td style={{ padding: "6px 10px", fontSize: 11.5, color: THEME.text2, whiteSpace: "nowrap" }}>{SEVERITY_LABELS[s]}</td>
+                <td style={{ padding: "6px 10px", fontSize: 11.5, color: THEME.text2, whiteSpace: "nowrap" }}>{t(SEVERITY_LABEL_KEYS[s])}</td>
                 {PROBABILITY_LETTERS.map((l) => {
                   const cell = cellFor(s, l);
                   const meta = RISK_LEVEL_META[cell?.level] || RISK_LEVEL_META.Low;
@@ -77,7 +74,7 @@ export default function HcmsMatrixManager({ onBack }) {
                     <td key={l} style={{ padding: 3, textAlign: "center" }}>
                       <div
                         onClick={() => cycleCell(s, l)}
-                        title={`${s}${l} — کلیک برای تغییر سطح`}
+                        title={t("hcmsClickToChangeLevel", { code: `${s}${l}` })}
                         style={{
                           width: 56, height: 40, margin: "0 auto", borderRadius: 6, cursor: "pointer",
                           background: meta.bg, color: meta.color, display: "flex", alignItems: "center", justifyContent: "center",
@@ -96,11 +93,11 @@ export default function HcmsMatrixManager({ onBack }) {
       </div>
 
       <div style={{ display: "flex", gap: 14, marginTop: 16, fontSize: 11.5, color: THEME.text2 }}>
-        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: RISK_LEVEL_META.Low.bg, display: "inline-block" }} /> کم (Low)</span>
-        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: RISK_LEVEL_META.Medium.bg, display: "inline-block" }} /> متوسط (Medium)</span>
-        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: RISK_LEVEL_META.High.bg, display: "inline-block" }} /> زیاد (High)</span>
+        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: RISK_LEVEL_META.Low.bg, display: "inline-block" }} /> {t("hcmsLevelLow")}</span>
+        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: RISK_LEVEL_META.Medium.bg, display: "inline-block" }} /> {t("hcmsLevelMedium")}</span>
+        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: RISK_LEVEL_META.High.bg, display: "inline-block" }} /> {t("hcmsLevelHigh")}</span>
       </div>
-      <p style={{ fontSize: 10.5, color: THEME.text3, marginTop: 8 }}>خانه‌هایی با کادر پررنگ‌تر یعنی به‌صورت دستی تنظیم شده‌اند؛ بقیه هنوز مقدار پیش‌فرض فرمولی دارند.</p>
+      <p style={{ fontSize: 10.5, color: THEME.text3, marginTop: 8 }}>{t("hcmsOverrideNote")}</p>
     </div>
   );
 }

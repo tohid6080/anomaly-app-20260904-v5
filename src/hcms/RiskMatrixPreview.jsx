@@ -2,14 +2,10 @@ import React, { useState, useEffect } from "react";
 import { X, Grid3x3 } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { loadFullMatrix, RISK_LEVEL_META, SEVERITY_CODES, PROBABILITY_LETTERS } from "./hcmsApi.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
-const SEVERITY_LABELS = {
-  0: "۰ — بدون هیچ آسیب/تاثیری",
-  1: "۱ — جراحت جزئی (استعلاجی <۳ روز)",
-  2: "۲ — شکستگی/جراحت شدید (>۳ روز)",
-  3: "۳ — نقض عضو / ناتوانی بخشی",
-  4: "۴ — یک کشته یا ناتوانی کلی",
-  5: "۵ — بیش از یک کشته",
+const SEVERITY_LABEL_KEYS = {
+  0: "hcmsSev0", 1: "hcmsSev1", 2: "hcmsSev2", 3: "hcmsSev3", 4: "hcmsSev4", 5: "hcmsSev5",
 };
 
 /**
@@ -24,6 +20,7 @@ const SEVERITY_LABELS = {
  * این کامپوننت mount می‌شود، دوباره از دیتابیس می‌خواند، نه از یک کپی محلی.
  */
 export default function RiskMatrixPreview() {
+  const { t, dir } = useLanguage();
   const [grid, setGrid] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -42,12 +39,12 @@ export default function RiskMatrixPreview() {
           display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", marginBottom: 10,
           border: `1px solid ${THEME.border}`, borderRadius: 8, cursor: loading ? "default" : "pointer", width: "fit-content", maxWidth: "100%",
         }}
-        title="کلیک برای مشاهده‌ی کامل ماتریس ریسک سازمان"
+        title={t("hcmsClickForFullMatrix")}
       >
         <MiniGrid grid={grid} loading={loading} />
         <div>
-          <div style={{ fontSize: 11.5, fontWeight: 700, color: THEME.navy }}>ماتریس ریسک سازمان</div>
-          <div style={{ fontSize: 9.5, color: THEME.text3 }}>{loading ? "در حال بارگذاری..." : "برای بزرگ‌نمایی کلیک کنید"}</div>
+          <div style={{ fontSize: 11.5, fontWeight: 700, color: THEME.navy }}>{t("hcmsOrgMatrixTitle")}</div>
+          <div style={{ fontSize: 9.5, color: THEME.text3 }}>{loading ? t("commonLoading") : t("hcmsClickToEnlarge")}</div>
         </div>
       </div>
 
@@ -69,16 +66,16 @@ export default function RiskMatrixPreview() {
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <Grid3x3 size={18} color={THEME.teal} />
-              <h3 style={{ margin: 0, fontSize: 16, color: THEME.navy, fontWeight: 700 }}>ماتریس ریسک سازمان</h3>
+              <h3 style={{ margin: 0, fontSize: 16, color: THEME.navy, fontWeight: 700 }}>{t("hcmsOrgMatrixTitle")}</h3>
             </div>
             <p style={{ color: THEME.text3, fontSize: 11.5, marginBottom: 14 }}>
-              ستون‌ها احتمال وقوع (A تا E)، ردیف‌ها شدت پیامد (۰ تا ۵) — همان ماتریسی که در «مدیریت سیستم» تعریف شده.
+              {t("hcmsModalDesc")}
             </p>
             <div style={{ overflowX: "auto" }}>
               <table style={{ borderCollapse: "collapse" }}>
                 <thead>
                   <tr>
-                    <th style={{ padding: "8px 10px", textAlign: "right", fontSize: 12, color: THEME.text3 }}>شدت \ احتمال</th>
+                    <th style={{ padding: "8px 10px", textAlign: dir === "rtl" ? "right" : "left", fontSize: 12, color: THEME.text3 }}>{t("hcmsSeverityProbabilityHeader")}</th>
                     {PROBABILITY_LETTERS.map((l) => (
                       <th key={l} style={{ padding: "8px 10px", fontSize: 13, fontWeight: 700, color: THEME.navy }}>{l}</th>
                     ))}
@@ -87,7 +84,7 @@ export default function RiskMatrixPreview() {
                 <tbody>
                   {SEVERITY_CODES.map((s) => (
                     <tr key={s}>
-                      <td style={{ padding: "6px 10px", fontSize: 11.5, color: THEME.text2, whiteSpace: "nowrap" }}>{SEVERITY_LABELS[s]}</td>
+                      <td style={{ padding: "6px 10px", fontSize: 11.5, color: THEME.text2, whiteSpace: "nowrap" }}>{t(SEVERITY_LABEL_KEYS[s])}</td>
                       {PROBABILITY_LETTERS.map((l) => {
                         const cell = cellFor(s, l);
                         const meta = RISK_LEVEL_META[cell?.level] || RISK_LEVEL_META.Low;
@@ -109,9 +106,9 @@ export default function RiskMatrixPreview() {
               </table>
             </div>
             <div style={{ display: "flex", gap: 14, marginTop: 14, fontSize: 11.5, color: THEME.text2 }}>
-              <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: RISK_LEVEL_META.Low.bg, display: "inline-block" }} /> کم (Low)</span>
-              <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: RISK_LEVEL_META.Medium.bg, display: "inline-block" }} /> متوسط (Medium)</span>
-              <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: RISK_LEVEL_META.High.bg, display: "inline-block" }} /> زیاد (High)</span>
+              <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: RISK_LEVEL_META.Low.bg, display: "inline-block" }} /> {t("hcmsLevelLow")}</span>
+              <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: RISK_LEVEL_META.Medium.bg, display: "inline-block" }} /> {t("hcmsLevelMedium")}</span>
+              <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: RISK_LEVEL_META.High.bg, display: "inline-block" }} /> {t("hcmsLevelHigh")}</span>
             </div>
           </div>
         </div>

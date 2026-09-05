@@ -4,10 +4,12 @@ import { styles, THEME } from "../shared.js";
 import { toJalaliDateTime } from "../personnel/jalaliDate.jsx";
 import { loadMyConversations, loadChatDirectory, findOrCreateDirectConversation, createConversation, deleteConversationForMe } from "./chatApi.js";
 import ChatThread from "./ChatThread.jsx";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
-const ROLE_LABEL = { ADMIN: "ادمین", EMPLOYER: "کارفرما", CONTRACTOR: "پیمانکار" };
+const ROLE_LABEL_KEY = { ADMIN: "roleLabelAdmin", EMPLOYER: "roleLabelEmployer", CONTRACTOR: "roleLabelContractor" };
 
 export default function ChatDashboard({ onBack, currentUser }) {
+  const { t, dir } = useLanguage();
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openConvId, setOpenConvId] = useState(null);
@@ -63,7 +65,7 @@ export default function ChatDashboard({ onBack, currentUser }) {
   };
 
   const startGroup = async () => {
-    if (!isAdmin) { alert("فقط ادمین می‌تواند گروه جدید بسازد"); return; }
+    if (!isAdmin) { alert(t("errOnlyAdminCreateGroup")); return; }
     if (!groupTitle.trim() || selectedPeople.length === 0) return;
     console.log("[chat-ui] startGroup: شروع", { title: groupTitle.trim(), people: selectedPeople });
     setCreating(true);
@@ -79,7 +81,7 @@ export default function ChatDashboard({ onBack, currentUser }) {
   // حذف گفتگو فقط از پنل خودِ کاربر — بی‌صدا، بدون تاثیر روی طرف مقابل یا پیام‌ها
   const handleDeleteConversation = async (e, conversationId) => {
     e.stopPropagation();
-    if (!confirm("آیا از حذف این گفتگو مطمئن هستید؟")) return;
+    if (!confirm(t("confirmDeleteConversation"))) return;
     const result = await deleteConversationForMe(conversationId, currentUser.username);
     if (result?.__error) { alert(result.message); return; }
     await load();
@@ -95,27 +97,27 @@ export default function ChatDashboard({ onBack, currentUser }) {
     );
   }
 
-  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>در حال بارگذاری...</div>;
+  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</div>;
 
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>← بازگشت به منو</div>}
+    <div style={{ maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
+      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <MessageCircle size={20} color={THEME.teal} />
-          <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>چت</h2>
+          <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("chatTitle")}</h2>
         </div>
         <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6 }} onClick={openNew}>
-          <Plus size={14} /> گفتگوی جدید
+          <Plus size={14} /> {t("chatNewConversation")}
         </button>
       </div>
 
       {showNew && (
         <div style={{ ...styles.card, width: "auto", marginBottom: 14 }}>
           <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-            <button type="button" style={{ ...styles.smallButton, background: newMode === "direct" ? THEME.teal : THEME.text3 }} onClick={() => setNewMode("direct")}>گفتگوی مستقیم</button>
+            <button type="button" style={{ ...styles.smallButton, background: newMode === "direct" ? THEME.teal : THEME.text3 }} onClick={() => setNewMode("direct")}>{t("chatDirectConversation")}</button>
             {isAdmin && (
-              <button type="button" style={{ ...styles.smallButton, background: newMode === "group" ? THEME.teal : THEME.text3 }} onClick={() => setNewMode("group")}>گروه جدید</button>
+              <button type="button" style={{ ...styles.smallButton, background: newMode === "group" ? THEME.teal : THEME.text3 }} onClick={() => setNewMode("group")}>{t("chatNewGroup")}</button>
             )}
           </div>
 
@@ -124,44 +126,44 @@ export default function ChatDashboard({ onBack, currentUser }) {
               {directory.map((p) => (
                 <div key={p.username} onClick={() => startDirect(p)} style={{ padding: "8px 6px", borderBottom: `1px solid ${THEME.border}`, cursor: "pointer", display: "flex", justifyContent: "space-between" }}>
                   <span style={{ fontSize: 13 }}>{p.name}</span>
-                  <span style={{ fontSize: 11, color: THEME.text3 }}>{ROLE_LABEL[p.role] || p.role}</span>
+                  <span style={{ fontSize: 11, color: THEME.text3 }}>{(ROLE_LABEL_KEY[p.role] ? t(ROLE_LABEL_KEY[p.role]) : null) || p.role}</span>
                 </div>
               ))}
-              {directory.length === 0 && <p style={{ fontSize: 12, color: THEME.text3 }}>همکاری برای گفتگو یافت نشد</p>}
+              {directory.length === 0 && <p style={{ fontSize: 12, color: THEME.text3 }}>{t("chatNoColleaguesFound")}</p>}
             </div>
           )}
 
           {newMode === "group" && isAdmin && (
             <>
-              <input style={styles.input} placeholder="نام گروه" value={groupTitle} onChange={(e) => setGroupTitle(e.target.value)} dir="rtl" />
+              <input style={styles.input} placeholder={t("chatGroupNamePlaceholder")} value={groupTitle} onChange={(e) => setGroupTitle(e.target.value)} dir={dir} />
               <div style={{ maxHeight: 220, overflowY: "auto", marginTop: 8 }}>
                 {directory.map((p) => {
                   const selected = selectedPeople.some((s) => s.username === p.username);
                   return (
                     <div key={p.username} onClick={() => togglePerson(p)} style={{ padding: "8px 6px", borderBottom: `1px solid ${THEME.border}`, cursor: "pointer", display: "flex", justifyContent: "space-between", background: selected ? THEME.tealSoft : "transparent" }}>
                       <span style={{ fontSize: 13 }}>{p.name}</span>
-                      <span style={{ fontSize: 11, color: THEME.text3 }}>{ROLE_LABEL[p.role] || p.role}</span>
+                      <span style={{ fontSize: 11, color: THEME.text3 }}>{(ROLE_LABEL_KEY[p.role] ? t(ROLE_LABEL_KEY[p.role]) : null) || p.role}</span>
                     </div>
                   );
                 })}
               </div>
               <button type="button" style={{ ...styles.button, marginTop: 10 }} onClick={startGroup} disabled={creating || !groupTitle.trim() || selectedPeople.length === 0}>
-                {creating ? "در حال ساخت..." : `ساخت گروه (${selectedPeople.length} عضو)`}
+                {creating ? t("chatCreatingEllipsis") : t("chatCreateGroupWithCount", { count: selectedPeople.length })}
               </button>
             </>
           )}
 
-          <div style={styles.backLink} onClick={() => setShowNew(false)}>انصراف</div>
+          <div style={styles.backLink} onClick={() => setShowNew(false)}>{t("commonCancel")}</div>
         </div>
       )}
 
       {conversations.length === 0 && !showNew && (
-        <p style={{ color: THEME.text3, textAlign: "center", padding: "30px 0" }}>هنوز گفتگویی نداری — «گفتگوی جدید» را بزن.</p>
+        <p style={{ color: THEME.text3, textAlign: "center", padding: "30px 0" }}>{t("chatNoConversationsYet")}</p>
       )}
 
       {conversations.map((c) => {
         const otherPerson = c.type === "direct" ? c.participants.find((p) => p.username !== currentUser.username) : null;
-        const displayTitle = c.type === "direct" ? (otherPerson?.fullName || otherPerson?.username || "کاربر") : (c.title || c.linkedLabel || "گروه");
+        const displayTitle = c.type === "direct" ? (otherPerson?.fullName || otherPerson?.username || t("chatDefaultUser")) : (c.title || c.linkedLabel || t("chatDefaultGroup"));
         return (
           <div key={c.id} onClick={() => setOpenConvId(c.id)} style={{ ...styles.card, width: "auto", marginBottom: 8, cursor: "pointer", display: "flex", alignItems: "center", gap: 10, padding: "12px 16px" }}>
             <div style={{ width: 38, height: 38, borderRadius: "50%", background: c.type === "group" ? THEME.navyMid : THEME.teal, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -175,7 +177,7 @@ export default function ChatDashboard({ onBack, currentUser }) {
               <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
                 {c.lastMessage?.attachmentUrl && <Paperclip size={11} color={THEME.text3} />}
                 <span style={{ fontSize: 11.5, color: THEME.text3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {c.lastMessage ? (c.lastMessage.body || "پیوست") : "هنوز پیامی نیست"}
+                  {c.lastMessage ? (c.lastMessage.body || t("chatAttachment")) : t("chatNoMessagesYet")}
                 </span>
               </div>
             </div>
@@ -186,7 +188,7 @@ export default function ChatDashboard({ onBack, currentUser }) {
             )}
             <button
               type="button"
-              title="حذف گفتگو"
+              title={t("chatDeleteConversation")}
               onClick={(e) => handleDeleteConversation(e, c.id)}
               style={{ background: "none", border: "none", cursor: "pointer", padding: 6, display: "flex", alignItems: "center", flexShrink: 0 }}
             >
