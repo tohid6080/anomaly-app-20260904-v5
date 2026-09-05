@@ -91,34 +91,113 @@ export function uid(prefix) {
   return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 }
 
-// تغییر اندازه/فشرده‌سازی یک فایل تصویر سمت مرورگر قبل از ذخیره‌ی base64 —
-// جابه‌جا شده به اینجا (از App.jsx) چون یک کامپوننت زیرپوشه‌ای مستقل از
-// App.jsx (فرم ثبت رسید پرداخت کارت‌به‌کارت) هم به همین تابع نیاز داشت؛
-// اگر مستقیم از App.jsx وارد می‌شد، چون App.jsx خودش SubscriptionGate را
-// وارد می‌کند، یک وابستگی حلقوی ایجاد می‌شد.
-export function resizeImageFile(file, maxDim = 1280, quality = 0.72) {
+// ---------- فشرده‌سازیِ هوشمندِ تصویر سمت مرورگر (قبل از ذخیره‌ی base64) ----------
+// اینجا (نه App.jsx) نگه داشته شده چون کامپوننت‌های زیرپوشه‌ای هم به آن نیاز
+// دارند و import مستقیم از App.jsx وابستگیِ حلقوی می‌سازد.
+//
+// همه‌ی تصمیم‌ها خودکار و متناسب با خودِ تصویر گرفته می‌شوند:
+//   • جهت‌گیریِ EXIF اصلاح می‌شود — عکس‌های چرخیده‌ی موبایل صاف آپلود می‌شوند.
+//   • فقط کوچک‌سازی؛ هیچ‌وقت بزرگ‌نمایی نمی‌شود. ضلعِ بلند حداکثر maxDim.
+//   • بازنموداری با کیفیتِ بالا (imageSmoothingQuality="high") تا متنِ مدرک
+//     بعد از کوچک‌شدن هم خوانا بماند.
+//   • خروجی همیشه JPEG است (سازگار با کلِ زنجیره‌ی Storage/آرشیو موجود).
+//   • کیفیت با جست‌وجوی دودویی طوری انتخاب می‌شود که حجم زیر targetBytes
+//     بماند، ولی هرگز پایین‌تر از minQuality نرود (کفِ خوانایی مدرک)، و اگر
+//     تصویر از قبل زیر بودجه باشد بی‌جهت کیفیتش کم نشود (سقفِ maxQuality).
+
+async function decodeImageWithOrientation(file) {
+  // مسیر ترجیحی: جهت‌گیریِ EXIF را هنگام رمزگشایی درست اعمال می‌کند
+  if (typeof createImageBitmap === "function") {
+    try {
+      return await createImageBitmap(file, { imageOrientation: "from-image" });
+    } catch { /* افتادن به مسیر جایگزین */ }
+  }
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error("خطا در خواندن فایل"));
     reader.onload = () => {
       const img = new Image();
       img.onerror = () => reject(new Error("فایل تصویر معتبر نیست"));
-      img.onload = () => {
-        let { width, height } = img;
-        if (width > maxDim || height > maxDim) {
-          if (width > height) { height = Math.round((height * maxDim) / width); width = maxDim; }
-          else { width = Math.round((width * maxDim) / height); height = maxDim; }
-        }
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL("image/jpeg", quality));
-      };
+      img.onload = () => resolve(img);
       img.src = reader.result;
     };
     reader.readAsDataURL(file);
   });
+}
+
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onerror = () => reject(new Error("خطا در پردازش تصویر"));
+    r.onload = () => resolve(r.result);
+    r.readAsDataURL(blob);
+  });
+}
+
+function canvasToBlobAsync(canvas, type, q) {
+  return new Promise((resolve) => {
+    if (canvas.toBlob) canvas.toBlob((b) => resolve(b), type, q);
+    else resolve(null);
+  });
+}
+
+export async function compressImage(file, opts = {}) {
+  const {
+    maxDim = 1600,
+    targetBytes = 200 * 1024,
+    minQuality = 0.6,
+    maxQuality = 0.9,
+  } = opts;
+  const type = "image/jpeg";
+
+  const src = await decodeImageWithOrientation(file);
+  const sw = src.width || src.naturalWidth;
+  const sh = src.height || src.naturalHeight;
+  if (!sw || !sh) throw new Error("فایل تصویر معتبر نیست");
+
+  let w = sw, h = sh;
+  if (Math.max(w, h) > maxDim) {
+    if (w >= h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+    else { w = Math.round((w * maxDim) / h); h = maxDim; }
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(src, 0, 0, w, h);
+  if (src.close) src.close();
+
+  // اگر با بالاترین کیفیت هم زیرِ بودجه‌ی حجم هستیم، همان را نگه می‌داریم
+  // (تصویرِ تمیز/کوچک نباید بی‌جهت افت کیفیت بدهد).
+  const topBlob = await canvasToBlobAsync(canvas, type, maxQuality);
+  if (!topBlob) return canvas.toDataURL(type, 0.8); // مرورگرِ بدون toBlob (بسیار نادر)
+  if (topBlob.size <= targetBytes) return blobToDataUrl(topBlob);
+
+  // وگرنه بینِ minQuality و maxQuality: بالاترین کیفیتی که زیرِ بودجه بماند.
+  let underBest = null;
+  let lo = minQuality, hi = maxQuality;
+  for (let i = 0; i < 6; i++) {
+    const mid = (lo + hi) / 2;
+    const blob = await canvasToBlobAsync(canvas, type, mid);
+    if (!blob) break;
+    if (blob.size <= targetBytes) { underBest = blob; lo = mid; }
+    else { hi = mid; }
+  }
+  if (underBest) return blobToDataUrl(underBest);
+
+  // هنوز زیرِ بودجه نیامده — کفِ کیفیت؛ پایین‌تر نمی‌رویم تا خواناییِ مدرک
+  // حفظ شود.
+  const floorBlob = await canvasToBlobAsync(canvas, type, minQuality);
+  return blobToDataUrl(floorBlob || topBlob);
+}
+
+// پیش‌تنظیمِ «عکسِ صحنه» (تصاویر آنومالی/اقدام‌اصلاحی/رسید پرداخت): این‌ها
+// عکسِ محیط‌اند نه اسکنِ متن، پس بودجه‌ی حجم کمی سخت‌گیرانه‌تر است ولی
+// همچنان تا ۱۶۰۰px و با کفِ کیفیتِ ۰٫۶ — بدون افت محسوس.
+export function resizeImageFile(file) {
+  return compressImage(file, { maxDim: 1600, targetBytes: 140 * 1024, minQuality: 0.6, maxQuality: 0.88 });
 }
 
 export function todayISO() {

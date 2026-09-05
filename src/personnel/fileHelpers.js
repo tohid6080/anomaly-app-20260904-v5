@@ -1,32 +1,21 @@
-const MAX_FILE_BYTES = 8 * 1024 * 1024; // 8MB خام (قبل از فشرده‌سازی)
+import { compressImage } from "../shared.js";
 
-// عکس‌ها فشرده می‌شوند (مثل بقیه‌ی اپ)، فایل‌های غیرعکسی (PDF) بدون تغییر خوانده می‌شوند
-export function fileToBase64(file, maxDim = 1600, quality = 0.8) {
+// حداکثر حجمِ خامِ ورودی (قبل از فشرده‌سازی). ۱۲ مگابایت تا عکس‌های
+// دوربینِ گوشی‌های امروزی هم بدون رد شدن به مرحله‌ی فشرده‌سازی برسند.
+const MAX_FILE_BYTES = 12 * 1024 * 1024;
+
+// عکس‌ها به‌صورت هوشمند فشرده می‌شوند (compressImage در shared.js —
+// اصلاح جهت‌گیری، خروجی WebP در صورت پشتیبانی، کیفیتِ تطبیقی زیرِ بودجه‌ی
+// حجم با حفظِ کفِ خوانایی)؛ فایل‌های غیرعکسی (PDF) بدون تغییر خوانده می‌شوند.
+export function fileToBase64(file, maxDim = 1600) {
   if (file.size > MAX_FILE_BYTES) {
-    return Promise.reject(new Error("حجم فایل بیش از حد مجاز است (حداکثر ۸ مگابایت)"));
+    return Promise.reject(new Error("حجم فایل بیش از حد مجاز است (حداکثر ۱۲ مگابایت)"));
   }
   if (file.type && file.type.startsWith("image/")) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onerror = () => reject(new Error("خطا در خواندن فایل"));
-      reader.onload = () => {
-        const img = new Image();
-        img.onerror = () => reject(new Error("فایل تصویر معتبر نیست"));
-        img.onload = () => {
-          let { width, height } = img;
-          if (width > maxDim || height > maxDim) {
-            if (width > height) { height = Math.round((height * maxDim) / width); width = maxDim; }
-            else { width = Math.round((width * maxDim) / height); height = maxDim; }
-          }
-          const canvas = document.createElement("canvas");
-          canvas.width = width; canvas.height = height;
-          canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL("image/jpeg", quality));
-        };
-        img.src = reader.result;
-      };
-      reader.readAsDataURL(file);
-    });
+    // پیش‌تنظیمِ «مدرک/اسکن» (مدارک پرسنل و ماشین‌آلات، پیوستِ اقدام اصلاحی):
+    // متن باید خوانا بماند، پس ضلعِ بلند تا ۱۶۰۰px و کفِ کیفیت ۰٫۶۲ نگه
+    // داشته می‌شود؛ بودجه‌ی حجم کمی بازتر از عکسِ صحنه.
+    return compressImage(file, { maxDim, targetBytes: 170 * 1024, minQuality: 0.62, maxQuality: 0.9 });
   }
   // PDF / other: no resize, just base64
   return new Promise((resolve, reject) => {
