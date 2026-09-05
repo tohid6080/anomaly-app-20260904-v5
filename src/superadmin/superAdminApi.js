@@ -249,9 +249,12 @@ function planFromRow(r) {
   return {
     id: r.id,
     name: r.name,
+    description: r.description || "",
     trialDays: r.trial_days ?? null,
     priceMonthly: Number(r.price_monthly) || 0,
     priceYearly: Number(r.price_yearly) || 0,
+    // «قیمت کلی» = خرید یک‌جا/دائمی (Lifetime) — جدا از ماهانه/سالانه
+    priceTotal: Number(r.price_total) || 0,
     maxUsers: r.max_users,
     maxPersonnel: r.max_personnel,
     maxStorageMb: r.max_storage_mb,
@@ -348,7 +351,8 @@ export async function createPlan(rec) {
   const existing = await sb("plans?select=sort_order&order=sort_order.desc.nullslast&limit=1", {}, "super_admin");
   const nextOrder = sbOk(existing) && existing.length > 0 ? (existing[0].sort_order ?? 0) + 1 : 1;
   const payload = {
-    name: rec.name, price_monthly: rec.priceMonthly || 0, price_yearly: rec.priceYearly || 0,
+    name: rec.name, description: rec.description || null,
+    price_monthly: rec.priceMonthly || 0, price_yearly: rec.priceYearly || 0, price_total: rec.priceTotal || 0,
     trial_days: rec.trialDays || null,
     max_users: rec.maxUsers || null, max_personnel: rec.maxPersonnel || null, max_storage_mb: rec.maxStorageMb || null,
     features: rec.features || [], is_active: true, sort_order: nextOrder,
@@ -361,8 +365,10 @@ export async function createPlan(rec) {
 export async function updatePlan(id, patch) {
   const dbPatch = { updated_at: new Date().toISOString() };
   if ("name" in patch) dbPatch.name = patch.name;
+  if ("description" in patch) dbPatch.description = patch.description || null;
   if ("priceMonthly" in patch) dbPatch.price_monthly = patch.priceMonthly;
   if ("priceYearly" in patch) dbPatch.price_yearly = patch.priceYearly;
+  if ("priceTotal" in patch) dbPatch.price_total = patch.priceTotal || 0;
   if ("trialDays" in patch) dbPatch.trial_days = patch.trialDays || null;
   if ("maxUsers" in patch) dbPatch.max_users = patch.maxUsers || null;
   if ("maxPersonnel" in patch) dbPatch.max_personnel = patch.maxPersonnel || null;
@@ -378,6 +384,11 @@ export async function updatePlan(id, patch) {
 // و تاریخچه‌اش را بی‌معنا کند؛ فقط غیرفعال می‌شود تا دیگر قابل‌انتخاب نباشد
 export async function deactivatePlan(id) {
   return updatePlan(id, { isActive: false });
+}
+
+// فعال‌سازی مجدد یک پلن غیرفعال‌شده — دوباره برای تخصیص/خرید قابل‌انتخاب می‌شود
+export async function activatePlan(id) {
+  return updatePlan(id, { isActive: true });
 }
 
 // جابه‌جایی یک پلن به بالا/پایین — با جابه‌جا کردن sort_order با همسایه‌اش

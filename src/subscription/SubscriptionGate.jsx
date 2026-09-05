@@ -164,7 +164,10 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
                 }}
               >
                 {isThisPlanSelected && <CheckCircle2 size={18} color={THEME.teal} style={{ position: "absolute", top: 14, insetInlineStart: 14 }} />}
-                <h3 style={{ fontSize: 15, fontWeight: 800, color: THEME.navy, margin: "0 0 10px" }}>{p.name}</h3>
+                <h3 style={{ fontSize: 15, fontWeight: 800, color: THEME.navy, margin: "0 0 8px" }}>{p.name}</h3>
+                {p.description && (
+                  <p style={{ fontSize: 11.5, color: THEME.text2, lineHeight: 1.9, margin: "0 0 12px", whiteSpace: "pre-wrap" }}>{p.description}</p>
+                )}
 
                 {/* هر دو قیمت (ماهانه و سالانه) با هم نمایش داده می‌شوند — نه پشت یک Toggle سراسری */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 14 }}>
@@ -196,7 +199,13 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
                       <span style={{ fontSize: 14, fontWeight: 800, color: THEME.navy }}>{p.priceYearly.toLocaleString("fa-IR")} تومان</span>
                     </button>
                   )}
-                  {!hasMonthly && !hasYearly && <span style={{ fontSize: 12, color: THEME.text3 }}>قیمتی تعریف نشده</span>}
+                  {p.priceTotal > 0 && (
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", padding: "8px 12px", borderRadius: 9, border: `1.5px dashed ${THEME.border}`, background: "transparent" }}>
+                      <span style={{ fontSize: 11.5, color: THEME.text2, fontWeight: 600 }}>قیمت کلی (یک‌جا)</span>
+                      <span style={{ fontSize: 14, fontWeight: 800, color: THEME.navy }}>{p.priceTotal.toLocaleString("fa-IR")} تومان</span>
+                    </div>
+                  )}
+                  {!hasMonthly && !hasYearly && p.priceTotal <= 0 && <span style={{ fontSize: 12, color: THEME.text3 }}>قیمتی تعریف نشده</span>}
                 </div>
 
                 {p.maxPersonnel && <p style={{ fontSize: 11.5, color: THEME.text2, margin: "0 0 4px" }}>سقف پرسنل: {p.maxPersonnel.toLocaleString("fa-IR")} نفر</p>}

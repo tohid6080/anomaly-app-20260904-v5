@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ShieldAlert, Plus, LogOut, Send, CreditCard, AlertTriangle, UserPlus, KeyRound, Layers, Trash2, History, Activity, TrendingDown, Clock, LogIn, ShieldX, LayoutDashboard, Building2, Users, FileClock, ChevronLeft, HardDrive, RefreshCw, Settings2, Copy, GripVertical, ArrowUp, ArrowDown, RotateCcw, Eye, EyeOff, LayoutGrid, PanelsTopLeft, Bell, Palette, Megaphone, Sparkles, Gift, Info, ImagePlus, X, ClipboardList } from "lucide-react";
 import { THEME } from "../shared.js";
 import { changeMyPassword } from "../sessionToken.js";
-import { loadModuleConfig, saveModuleConfig, loadDashboardConfig, saveDashboardConfig, loadNotificationTypes, saveNotificationType, syncNotificationTypesWithPlans, loadAppearanceConfig, saveAppearanceConfig, loadAllAnnouncements, createAnnouncement, updateAnnouncement, setAnnouncementActive, deleteAnnouncement, loadDashboardWidgetConfig, saveDashboardWidgetConfig } from "../systemConfigApi.js";
+import { loadModuleConfig, saveModuleConfig, loadNotificationTypes, saveNotificationType, syncNotificationTypesWithPlans, loadAppearanceConfig, saveAppearanceConfig, loadAllAnnouncements, createAnnouncement, updateAnnouncement, setAnnouncementActive, deleteAnnouncement, loadDashboardWidgetConfig, saveDashboardWidgetConfig } from "../systemConfigApi.js";
 import { uploadBase64ToStorage, deleteFromStorage, parseStorageUrl } from "../offline/storageUpload.js";
 import AccountManagement from "./AccountManagement.jsx";
 import { toJalaliSafe, toJalaliDateTime, JalaliDateInput } from "../personnel/jalaliDate.jsx";
@@ -11,7 +11,7 @@ import {
   loadCompanyPayments, addCompanyPayment, PAYMENT_TYPES,
   loadCompanyUserAccounts,
   SUBSCRIPTION_TYPES, SUBSCRIPTION_STATUSES,
-  loadPlans, createPlan, updatePlan, deactivatePlan, movePlan, deletePlan, assignPlanToCompany, loadCompanySubscriptionHistory,
+  loadPlans, createPlan, updatePlan, deactivatePlan, activatePlan, movePlan, deletePlan, assignPlanToCompany, loadCompanySubscriptionHistory,
   PLAN_FEATURES, computeContractAmount, computeMonthlyRecurringAmount,
   computePaymentStatus, isPaymentOverdue, computeMonthlyPaymentAlarm, computeSubscriptionAlertTier,
   loadCompanyUsageStats, loadRecentLogins, loadRecentFailedLogins, computeInactiveCompanies,
@@ -800,75 +800,13 @@ function ModuleManagementTab({ currentAdmin }) {
   );
 }
 
-const DEFAULT_DASHBOARD_CONFIG = [
-  { kpiKey: "incidentsList", label: "حوادث ثبت‌شده", isVisible: true },
-  { kpiKey: "personnelDashboard", label: "پرسنل فعال", isVisible: true },
-  { kpiKey: "correctiveActionsList", label: "اقدامات اصلاحی باز", isVisible: true },
-  { kpiKey: "anomalyList", label: "عدم انطباق‌های باز", isVisible: true },
-];
-const KPI_LABELS = Object.fromEntries(DEFAULT_DASHBOARD_CONFIG.map((k) => [k.kpiKey, k.label]));
-
+// بخش «کارت‌های KPI صفحه‌ی اصلی دسکتاپ» طبق خواسته‌ی صریح حذف شد — دیگر
+// هیچ کارت KPI ای در صفحه‌ی اصلی نمایش داده نمی‌شود، پس تنظیماتش هم بی‌مورد
+// بود. تب «مدیریت داشبورد» اکنون فقط مدیریت پنل‌های ماژول «داشبورد
+// مدیریتی» را نشان می‌دهد.
 function DashboardManagementTab({ currentAdmin }) {
-  const [list, setList] = useState(null);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
-
-  const load = () => loadDashboardConfig().then((rows) => setList(rows.length > 0 ? rows : DEFAULT_DASHBOARD_CONFIG.map(({ kpiKey, isVisible }) => ({ kpiKey, isVisible }))));
-  useEffect(() => { load(); }, []);
-
-  if (!list) return <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 30 }}>در حال بارگذاری...</p>;
-
-  const move = (idx, dir) => {
-    const to = idx + dir;
-    if (to < 0 || to >= list.length) return;
-    const next = [...list];
-    [next[idx], next[to]] = [next[to], next[idx]];
-    setList(next);
-  };
-
-  const toggleVisible = (idx) => {
-    const next = [...list];
-    next[idx] = { ...next[idx], isVisible: !next[idx].isVisible };
-    setList(next);
-  };
-
-  const handleSave = async () => {
-    setSaving(true); setMessage("");
-    const result = await saveDashboardConfig(list, currentAdmin?.fullName);
-    setSaving(false);
-    setMessage(result?.__error ? result.message : "تنظیمات داشبورد ذخیره شد.");
-    if (!result?.__error) await load();
-  };
-
-  const handleReset = () => setList(DEFAULT_DASHBOARD_CONFIG.map(({ kpiKey, isVisible }) => ({ kpiKey, isVisible })));
-
   return (
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
-      <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 14, lineHeight: 1.8 }}>
-        ترتیب و نمایش/عدم‌نمایش کارت‌های KPI صفحه‌ی اصلی دسکتاپ — روی همه‌ی کاربران سامانه اعمال می‌شود.
-      </p>
-      {list.map((k, idx) => (
-        <div key={k.kpiKey} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 8px", borderBottom: `1px solid ${THEME.border}` }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 2, flexShrink: 0 }}>
-            <button type="button" onClick={() => move(idx, -1)} disabled={idx === 0} style={{ background: "none", border: "none", cursor: idx === 0 ? "default" : "pointer", opacity: idx === 0 ? 0.3 : 1, padding: 1 }}><ArrowUp size={13} color={THEME.text2} /></button>
-            <button type="button" onClick={() => move(idx, 1)} disabled={idx === list.length - 1} style={{ background: "none", border: "none", cursor: idx === list.length - 1 ? "default" : "pointer", opacity: idx === list.length - 1 ? 0.3 : 1, padding: 1 }}><ArrowDown size={13} color={THEME.text2} /></button>
-          </div>
-          <span style={{ flex: 1, fontSize: 13, color: THEME.text, fontWeight: 600 }}>{KPI_LABELS[k.kpiKey] || k.kpiKey}</span>
-          <button
-            type="button" onClick={() => toggleVisible(idx)}
-            style={{ display: "flex", alignItems: "center", gap: 5, background: k.isVisible ? "#dcfce7" : "#eef1f5", color: k.isVisible ? "#166534" : THEME.text3, border: "none", borderRadius: 999, padding: "5px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font }}
-          >
-            {k.isVisible ? <Eye size={13} /> : <EyeOff size={13} />} {k.isVisible ? "نمایش داده می‌شود" : "پنهان"}
-          </button>
-        </div>
-      ))}
-      {message && <p style={{ fontSize: 11.5, color: message.includes("خطا") ? THEME.danger : "#166534", marginTop: 10 }}>{message}</p>}
-      <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-        <button type="button" style={btnStyle()} onClick={handleSave} disabled={saving}>{saving ? "در حال ذخیره..." : "ذخیره تنظیمات"}</button>
-        <button type="button" style={{ ...btnStyle(THEME.text3), display: "flex", alignItems: "center", gap: 6 }} onClick={handleReset}>
-          <RotateCcw size={13} /> بازگردانی چیدمان پیش‌فرض
-        </button>
-      </div>
       <DashboardWidgetsSection currentAdmin={currentAdmin} />
     </div>
   );
@@ -911,7 +849,7 @@ function DashboardWidgetsSection({ currentAdmin }) {
   };
 
   return (
-    <div style={{ marginTop: 22, paddingTop: 18, borderTop: `1px solid ${THEME.border}` }}>
+    <div>
       <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 6px" }}>مدیریت ماژول‌های داشبورد مدیریتی</h4>
       <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 12, lineHeight: 1.8 }}>
         فعال/غیرفعال کردن هر پنل داخل ماژول «داشبورد مدیریتی» — روی همه‌ی کاربران (کارفرما/پیمانکار) اعمال می‌شود.
@@ -2018,14 +1956,15 @@ function PlansManager({ plans, companies, currentAdmin, onChanged }) {
   const [saving, setSaving] = useState(false);
 
   function emptyPlanForm() {
-    return { name: "", priceMonthly: 0, priceYearly: 0, trialDays: "", maxUsers: "", maxPersonnel: "", maxStorageMb: "", features: [] };
+    return { name: "", description: "", priceMonthly: 0, priceYearly: 0, priceTotal: 0, trialDays: "", maxUsers: "", maxPersonnel: "", maxStorageMb: "", features: [] };
   }
 
   const handleCreate = async () => {
     if (!form.name.trim()) return;
     setSaving(true);
     await createPlan({
-      name: form.name.trim(), priceMonthly: Number(form.priceMonthly) || 0, priceYearly: Number(form.priceYearly) || 0,
+      name: form.name.trim(), description: form.description.trim(),
+      priceMonthly: Number(form.priceMonthly) || 0, priceYearly: Number(form.priceYearly) || 0, priceTotal: Number(form.priceTotal) || 0,
       trialDays: form.trialDays ? Number(form.trialDays) : null,
       maxUsers: form.maxUsers ? Number(form.maxUsers) : null, maxPersonnel: form.maxPersonnel ? Number(form.maxPersonnel) : null,
       maxStorageMb: form.maxStorageMb ? Number(form.maxStorageMb) : null, features: form.features,
@@ -2039,13 +1978,14 @@ function PlansManager({ plans, companies, currentAdmin, onChanged }) {
 
   const openEdit = (p) => {
     setExpandedId(expandedId === p.id ? null : p.id);
-    setForm({ name: p.name, priceMonthly: p.priceMonthly, priceYearly: p.priceYearly, trialDays: p.trialDays ?? "", maxUsers: p.maxUsers ?? "", maxPersonnel: p.maxPersonnel ?? "", maxStorageMb: p.maxStorageMb ?? "", features: p.features });
+    setForm({ name: p.name, description: p.description ?? "", priceMonthly: p.priceMonthly, priceYearly: p.priceYearly, priceTotal: p.priceTotal ?? 0, trialDays: p.trialDays ?? "", maxUsers: p.maxUsers ?? "", maxPersonnel: p.maxPersonnel ?? "", maxStorageMb: p.maxStorageMb ?? "", features: p.features });
   };
 
   const handleSaveEdit = async (id) => {
     setSaving(true);
     await updatePlan(id, {
-      name: form.name.trim(), priceMonthly: Number(form.priceMonthly) || 0, priceYearly: Number(form.priceYearly) || 0,
+      name: form.name.trim(), description: form.description.trim(),
+      priceMonthly: Number(form.priceMonthly) || 0, priceYearly: Number(form.priceYearly) || 0, priceTotal: Number(form.priceTotal) || 0,
       trialDays: form.trialDays ? Number(form.trialDays) : null,
       maxUsers: form.maxUsers ? Number(form.maxUsers) : null, maxPersonnel: form.maxPersonnel ? Number(form.maxPersonnel) : null,
       maxStorageMb: form.maxStorageMb ? Number(form.maxStorageMb) : null, features: form.features,
@@ -2098,6 +2038,7 @@ function PlansManager({ plans, companies, currentAdmin, onChanged }) {
               <th style={{ textAlign: "right", padding: "6px 8px" }}>نام پلن</th>
               <th style={{ textAlign: "center", padding: "6px 8px" }}>قیمت ماهانه</th>
               <th style={{ textAlign: "center", padding: "6px 8px" }}>قیمت سالانه</th>
+              <th style={{ textAlign: "center", padding: "6px 8px" }}>قیمت کلی</th>
               <th style={{ textAlign: "center", padding: "6px 8px" }}>سقف کاربر</th>
               <th style={{ textAlign: "center", padding: "6px 8px" }}>سقف پرسنل</th>
               <th style={{ textAlign: "center", padding: "6px 8px" }}>سقف فضا (MB)</th>
@@ -2116,6 +2057,7 @@ function PlansManager({ plans, companies, currentAdmin, onChanged }) {
                   <td style={{ padding: "8px", fontWeight: 600 }}>{p.name}</td>
                   <td style={{ padding: "8px", textAlign: "center" }}>{p.priceMonthly.toLocaleString("fa-IR")}</td>
                   <td style={{ padding: "8px", textAlign: "center" }}>{p.priceYearly.toLocaleString("fa-IR")}</td>
+                  <td style={{ padding: "8px", textAlign: "center" }}>{p.priceTotal ? p.priceTotal.toLocaleString("fa-IR") : "—"}</td>
                   <td style={{ padding: "8px", textAlign: "center" }}>{p.maxUsers ?? "نامحدود"}</td>
                   <td style={{ padding: "8px", textAlign: "center" }}>{p.maxPersonnel ?? "نامحدود"}</td>
                   <td style={{ padding: "8px", textAlign: "center" }}>{p.maxStorageMb ?? "نامحدود"}</td>
@@ -2128,9 +2070,13 @@ function PlansManager({ plans, companies, currentAdmin, onChanged }) {
                     <button type="button" onClick={() => openEdit(p)} style={{ ...btnStyle(THEME.navyMid), fontSize: 11, marginInlineEnd: 6 }}>
                       {expandedId === p.id ? "بستن" : "ویرایش"}
                     </button>
-                    {p.isActive && (
+                    {p.isActive ? (
                       <button type="button" onClick={() => { if (confirm(`پلن «${p.name}» غیرفعال شود؟ شرکت‌های فعلاً روی این پلن، تغییری نمی‌کنند؛ فقط دیگر برای تخصیص جدید قابل‌انتخاب نیست.`)) { deactivatePlan(p.id).then(onChanged); } }} style={{ ...btnStyle("#92400e"), fontSize: 11, marginInlineEnd: 6 }}>
                         غیرفعال کردن
+                      </button>
+                    ) : (
+                      <button type="button" onClick={() => { activatePlan(p.id).then(onChanged); }} style={{ ...btnStyle("#166534"), fontSize: 11, marginInlineEnd: 6 }}>
+                        فعال کردن پلن
                       </button>
                     )}
                     <button
@@ -2148,13 +2094,13 @@ function PlansManager({ plans, companies, currentAdmin, onChanged }) {
                   </td>
                 </tr>
                 <tr>
-                  <td colSpan={9} style={{ padding: "0 8px 8px" }}>
+                  <td colSpan={10} style={{ padding: "0 8px 8px" }}>
                     <PlanCompanyUsage plan={p} companies={companies} />
                   </td>
                 </tr>
                 {expandedId === p.id && (
                   <tr>
-                    <td colSpan={9} style={{ padding: 0 }}>
+                    <td colSpan={10} style={{ padding: 0 }}>
                       <PlanForm form={form} setForm={setForm} toggleModule={toggleModule} toggleSub={toggleSub} onSave={() => handleSaveEdit(p.id)} saving={saving} saveLabel="ذخیره‌ی تغییرات" />
                     </td>
                   </tr>
@@ -2162,7 +2108,7 @@ function PlansManager({ plans, companies, currentAdmin, onChanged }) {
               </React.Fragment>
             ))}
             {plans.length === 0 && (
-              <tr><td colSpan={9} style={{ padding: 20, textAlign: "center", color: THEME.text3 }}>هنوز پلنی ثبت نشده است</td></tr>
+              <tr><td colSpan={10} style={{ padding: 20, textAlign: "center", color: THEME.text3 }}>هنوز پلنی ثبت نشده است</td></tr>
             )}
           </tbody>
         </table>
@@ -2228,6 +2174,10 @@ function PlanForm({ form, setForm, toggleModule, toggleSub, onSave, saving, save
           <input type="number" style={inputStyle} value={form.priceYearly} onChange={(e) => setForm({ ...form, priceYearly: e.target.value })} dir="ltr" />
         </div>
         <div>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>قیمت کلی — خرید یک‌جا/دائمی (تومان)</label>
+          <input type="number" style={inputStyle} value={form.priceTotal} onChange={(e) => setForm({ ...form, priceTotal: e.target.value })} dir="ltr" placeholder="۰ = ندارد" />
+        </div>
+        <div>
           <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>مدت دوره‌ی آزمایشی — روز (خالی = این پلن Trial ندارد)</label>
           <input type="number" style={inputStyle} value={form.trialDays} onChange={(e) => setForm({ ...form, trialDays: e.target.value })} dir="ltr" placeholder="مثلاً ۷" />
         </div>
@@ -2244,6 +2194,14 @@ function PlanForm({ form, setForm, toggleModule, toggleSub, onSave, saving, save
           <input type="number" style={inputStyle} value={form.maxStorageMb} onChange={(e) => setForm({ ...form, maxStorageMb: e.target.value })} dir="ltr" />
         </div>
       </div>
+      <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>توضیحات پلن (در صفحه‌ی «حساب شرکت غیرفعال شده است» زیر همین پلن نمایش داده می‌شود)</label>
+      <textarea
+        style={{ ...inputStyle, minHeight: 60, resize: "vertical", marginBottom: 12 }}
+        value={form.description}
+        onChange={(e) => setForm({ ...form, description: e.target.value })}
+        dir="rtl"
+        placeholder="مثلاً: مناسب پیمانکاران متوسط؛ شامل ماژول‌های ارزیابی ریسک و مدیریت پرسنل..."
+      />
       <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 6 }}>ماژول‌ها و زیرماژول‌های فعال این پلن</label>
       <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 12, background: THEME.surface, borderRadius: 8, padding: 10 }}>
         {PLAN_FEATURES.map((mod) => (

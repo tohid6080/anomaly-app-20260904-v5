@@ -96,7 +96,8 @@ export async function loadPurchasablePlans() {
   const rows = await sb("plans?is_active=eq.true&select=*&order=sort_order.asc.nullslast,price_monthly.asc");
   if (!sbOk(rows)) return [];
   return rows.map((r) => ({
-    id: r.id, name: r.name, priceMonthly: Number(r.price_monthly) || 0, priceYearly: Number(r.price_yearly) || 0,
+    id: r.id, name: r.name, description: r.description || "",
+    priceMonthly: Number(r.price_monthly) || 0, priceYearly: Number(r.price_yearly) || 0, priceTotal: Number(r.price_total) || 0,
     maxUsers: r.max_users, maxPersonnel: r.max_personnel, maxStorageMb: r.max_storage_mb,
     features: Array.isArray(r.features) ? r.features : [], trialDays: r.trial_days || null,
   }));

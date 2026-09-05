@@ -16,6 +16,14 @@ export const SUPABASE_ANON_KEY = "sb_publishable_pvobGcp2snOD3oFTX2LVMg_bZx2A9CR
 // استفاده در offline/networkStatus.js برای تست واقعی در دسترس‌بودن (نه فقط navigator.onLine)
 export const SUPABASE_PING_URL = `${SUPABASE_URL}/rest/v1/`;
 
+// آدرس عمومی و قابل‌اشتراک نسخه‌ی وب سامانه (GitHub Pages). لینک‌هایی که
+// قرار است بیرونِ اپ باز شوند (مثل پرسشنامه‌ی عمومی HSE Climate) باید
+// همیشه به این آدرس اشاره کنند، نه به window.location — چون در اپ اندروید
+// (Capacitor) مقدار window.location.origin برابر http://localhost است و
+// در محیط dev هم localhost؛ لینکِ ساخته‌شده در آن حالت‌ها از اینترنت
+// قابل‌دسترسی نیست. اگر روزی دامنه عوض شود، فقط همین‌جا تغییر کند.
+export const PUBLIC_APP_URL = "https://tohid6080.github.io/anomaly-app-20260904-v5/";
+
 export async function sb(path, options = {}, scope = "customer") {
   try {
     // از وقتی RLS واقعی روی اکثر جدول‌ها فعال شد، این دیگر فقط یک بهبود

@@ -1,4 +1,4 @@
-import { sb, sbOk, getCurrentCompanyId, SUPABASE_URL, SUPABASE_ANON_KEY } from "../shared.js";
+import { sb, sbOk, getCurrentCompanyId, SUPABASE_URL, SUPABASE_ANON_KEY, PUBLIC_APP_URL } from "../shared.js";
 
 /**
  * مدیریت دوره‌های ارزیابی (کمپین) HSE Climate — طرف احراز هویت‌شده.
@@ -49,9 +49,23 @@ function campaignFromRow(r) {
   };
 }
 
-// لینک عمومی قابل‌اشتراک — صفحه‌ی مستقل و بدون نیاز به ورود
+// لینک عمومی قابل‌اشتراک — صفحه‌ی مستقل و بدون نیاز به ورود.
+// این لینک قرار است بیرونِ اپ (روی گوشیِ کارگران، تلگرام، ...) باز شود،
+// پس نباید از window.location ساخته شود: در اپ اندروید origin برابر
+// http://localhost و در dev هم localhost است و لینک از اینترنت باز
+// نمی‌شود. فقط وقتی واقعاً روی یک دامنه‌ی وبِ عمومی هستیم از همان
+// origin/pathname استفاده می‌کنیم (تا دامنه‌ی سفارشی احتمالی هم کار کند)؛
+// در غیر این صورت به آدرس ثابتِ عمومیِ سامانه برمی‌گردیم.
 export function buildHseClimateSurveyLink(publicToken) {
-  const base = typeof window !== "undefined" ? window.location.origin + window.location.pathname : "";
+  let base = "";
+  if (typeof window !== "undefined") {
+    const { protocol, hostname, origin, pathname } = window.location;
+    const isRealWebHost = (protocol === "https:" || protocol === "http:")
+      && hostname && hostname !== "localhost" && hostname !== "127.0.0.1";
+    if (isRealWebHost) base = origin + pathname;
+  }
+  if (!base) base = PUBLIC_APP_URL;
+  if (!base.endsWith("/") && !base.endsWith(".html")) base += "/";
   return `${base}#hse-climate-survey/${publicToken}`;
 }
 

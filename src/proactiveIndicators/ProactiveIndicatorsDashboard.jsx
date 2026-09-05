@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ChevronRight, TrendingUp, ClipboardList, BookOpen } from "lucide-react";
+import { ChevronRight, TrendingUp, ClipboardList, BookOpen, X } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
 import { loadActiveIndicators, loadAllAssessments, accidentPronenessLevel } from "./proactiveIndicatorsApi.js";
@@ -8,6 +8,37 @@ import { loadCorrectiveActionsForAssessments, STATUS_META } from "../correctiveA
 import AccidentPronenessAssessmentForm from "./AccidentPronenessAssessmentForm.jsx";
 import HseClimateCampaignManager from "./HseClimateCampaignManager.jsx";
 import SbsSubmodule from "./SbsSubmodule.jsx";
+
+// لایه‌ی تمام‌صفحه‌ی «راهنمای اجرایی» — فایل استاتیک public/hse_guide.html
+// را داخل یک iframe نشان می‌دهد و همیشه یک دکمه‌ی × برای بستن دارد
+// (روی موبایل، بازکردن با target=_blank راه خروج نداشت).
+function HseGuideOverlay({ onClose }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 3000, background: "#fff", display: "flex", flexDirection: "column" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderBottom: `1px solid ${THEME.border}`, background: THEME.surface, flexShrink: 0 }}>
+        <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 700, color: THEME.navy }}>
+          <BookOpen size={15} color={THEME.teal} /> راهنمای تکمیل و ارزیابی
+        </span>
+        <button
+          type="button" onClick={onClose} title="بستن راهنما"
+          style={{ display: "flex", alignItems: "center", gap: 5, border: "none", cursor: "pointer", fontFamily: THEME.font, fontSize: 12, fontWeight: 700, color: "#fff", background: THEME.navy, padding: "7px 14px", borderRadius: 8 }}
+        >
+          <X size={15} /> بستن
+        </button>
+      </div>
+      <iframe
+        src={`${import.meta.env.BASE_URL}hse_guide.html`}
+        title="راهنمای اجرایی شاخص‌های HSE"
+        style={{ flex: 1, width: "100%", border: "none" }}
+      />
+    </div>
+  );
+}
 
 /**
  * نقطه‌ی ورود ماژول — طراحی Dynamic: لیست شاخص‌ها از دیتابیس خوانده می‌شود
@@ -27,6 +58,10 @@ export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role
   // اگر SuperAdmin نام ماژول را عوض کند، این صفحه هم (در موبایل و دسکتاپ)
   // همان نام را نشان بدهد — نه یک رشته‌ی هاردکدشده.
   const [moduleTitle, setModuleTitle] = useState("اندازه‌گیری شاخص‌های Proactive HSE");
+  // راهنمای اجرایی به‌صورت یک لایه‌ی تمام‌صفحه‌ی داخل خودِ اپ باز می‌شود
+  // (نه tab جدید با target=_blank) تا در موبایل هم همیشه یک راه خروج/بستن
+  // با دکمه‌ی × داشته باشد.
+  const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
     loadActiveIndicators().then((rows) => { setIndicators(rows); setLoading(false); });
@@ -72,13 +107,14 @@ export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role
     <div style={{ maxWidth: 640, margin: "0 auto", padding: 24 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
         <div style={styles.backLink} onClick={onBack}>بازگشت به منو</div>
-        <a
-          href={`${import.meta.env.BASE_URL}hse_guide.html`} target="_blank" rel="noopener noreferrer"
-          style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600, color: THEME.teal, textDecoration: "none", background: THEME.tealSoft, padding: "7px 14px", borderRadius: 8 }}
+        <button
+          type="button" onClick={() => setShowGuide(true)}
+          style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600, color: THEME.teal, border: "none", cursor: "pointer", fontFamily: THEME.font, background: THEME.tealSoft, padding: "7px 14px", borderRadius: 8 }}
         >
           <BookOpen size={14} /> راهنمای تکمیل و ارزیابی
-        </a>
+        </button>
       </div>
+      {showGuide && <HseGuideOverlay onClose={() => setShowGuide(false)} />}
       <h3 style={{ marginBottom: 4, color: THEME.navy }}>{moduleTitle}</h3>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 0, marginBottom: 16 }}>
         شاخص‌های پیش‌نگر ایمنی — اندازه‌گیری استعداد و رفتار قبل از وقوع حادثه، نه فقط پس از آن.
