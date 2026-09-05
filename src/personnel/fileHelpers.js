@@ -15,9 +15,10 @@ export function fileToBase64(file, maxDim = 1600) {
   }
   if (file.type && file.type.startsWith("image/")) {
     // پیش‌تنظیمِ «مدرک/اسکن» (مدارک پرسنل و ماشین‌آلات، پیوستِ اقدام اصلاحی):
-    // متن باید خوانا بماند، پس ضلعِ بلند تا ۱۶۰۰px و کفِ کیفیت ۰٫۶۲ نگه
-    // داشته می‌شود؛ بودجه‌ی حجم کمی بازتر از عکسِ صحنه.
-    return compressImage(file, { maxDim, targetBytes: 170 * 1024, minQuality: 0.62, maxQuality: 0.9 });
+    // متن باید خوانا بماند، پس ضلعِ بلند تا ۱۲۸۰px و کفِ کیفیت ۰٫۶ نگه
+    // داشته می‌شود؛ بودجه‌ی حجم فقط کمی بازتر از عکسِ صحنه تا فضای Storage
+    // بیهوده اشغال نشود.
+    return compressImage(file, { maxDim: Math.min(maxDim, 1280), targetBytes: 110 * 1024, minQuality: 0.6, maxQuality: 0.86 });
   }
   // PDF / other: no resize, just base64
   return new Promise((resolve, reject) => {

@@ -143,10 +143,10 @@ function canvasToBlobAsync(canvas, type, q) {
 
 export async function compressImage(file, opts = {}) {
   const {
-    maxDim = 1600,
-    targetBytes = 200 * 1024,
-    minQuality = 0.6,
-    maxQuality = 0.9,
+    maxDim = 1280,
+    targetBytes = 110 * 1024,
+    minQuality = 0.58,
+    maxQuality = 0.85,
   } = opts;
   const type = "image/jpeg";
 
@@ -194,10 +194,10 @@ export async function compressImage(file, opts = {}) {
 }
 
 // پیش‌تنظیمِ «عکسِ صحنه» (تصاویر آنومالی/اقدام‌اصلاحی/رسید پرداخت): این‌ها
-// عکسِ محیط‌اند نه اسکنِ متن، پس بودجه‌ی حجم کمی سخت‌گیرانه‌تر است ولی
-// همچنان تا ۱۶۰۰px و با کفِ کیفیتِ ۰٫۶ — بدون افت محسوس.
+// عکسِ محیط‌اند نه اسکنِ متن؛ برای اشغال‌نکردنِ فضای Storage بودجه‌ی حجم
+// کوچک‌تر و ضلعِ حداکثر ۱۲۸۰px — همچنان برای دیدنِ موضوعِ عکس کاملاً واضح.
 export function resizeImageFile(file) {
-  return compressImage(file, { maxDim: 1600, targetBytes: 140 * 1024, minQuality: 0.6, maxQuality: 0.88 });
+  return compressImage(file, { maxDim: 1280, targetBytes: 85 * 1024, minQuality: 0.55, maxQuality: 0.82 });
 }
 
 export function todayISO() {
