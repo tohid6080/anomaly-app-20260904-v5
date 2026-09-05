@@ -1,4 +1,5 @@
 import { sb, sbOk, getCurrentCompanyId } from "../shared.js";
+import { translate, getCurrentLang } from "../i18n/translations.js";
 
 /**
  * HCMS (سیستم مدیریت و کنترل خطرات) — پیاده‌سازی دقیق ساختار فایل مرجع
@@ -40,9 +41,9 @@ function formulaLevel(severity, letter) {
 }
 
 export const RISK_LEVEL_META = {
-  Low: { label: "کم (Low)", color: "#92400e", bg: "#fef9c3" },        // زرد
-  Medium: { label: "متوسط (Medium)", color: "#9a3412", bg: "#fed7aa" }, // نارنجی
-  High: { label: "زیاد (High)", color: "#991b1b", bg: "#fecaca" },      // قرمز
+  Low: { labelKey: "hcmsLevelLow", color: "#92400e", bg: "#fef9c3" },        // زرد
+  Medium: { labelKey: "hcmsLevelMedium", color: "#9a3412", bg: "#fed7aa" }, // نارنجی
+  High: { labelKey: "hcmsLevelHigh", color: "#991b1b", bg: "#fecaca" },      // قرمز
 };
 
 let _matrixCache = null;
@@ -85,12 +86,12 @@ export async function setMatrixCell(severity, letter, level) {
   if (sbOk(existing) && existing.length > 0) {
     const result = await sb(`hcms_risk_matrix?id=eq.${existing[0].id}`, { method: "PATCH", body: JSON.stringify({ risk_level: level }) });
     invalidateMatrixCache();
-    if (!sbOk(result)) return { __error: true, message: "خطا در ذخیره‌سازی" };
+    if (!sbOk(result)) return { __error: true, message: translate(getCurrentLang(), "commonErrorSave") };
     return { ok: true };
   }
   const result = await sb("hcms_risk_matrix", { method: "POST", body: JSON.stringify([{ severity_code: severity, probability_letter: letter, risk_level: level, company_id: companyId }]) });
   invalidateMatrixCache();
-  if (!sbOk(result)) return { __error: true, message: "خطا در ذخیره‌سازی" };
+  if (!sbOk(result)) return { __error: true, message: translate(getCurrentLang(), "commonErrorSave") };
   return { ok: true };
 }
 
@@ -239,7 +240,7 @@ export async function saveHcmsAssessment(rec) {
 
   if (rec.id) {
     const rows = await sb(`hcms_risk_assessments?id=eq.${rec.id}`, { method: "PATCH", body: JSON.stringify(payload) });
-    if (!sbOk(rows)) return { __error: true, message: "خطا در ذخیره‌سازی: " + (rows?.message || "نامشخص") };
+    if (!sbOk(rows)) return { __error: true, message: translate(getCurrentLang(), "errSaveWithReason", { reason: rows?.message || translate(getCurrentLang(), "commonErrorUnknown") }) };
     return rowFromDb(rows[0]);
   }
   // id عمداً اینجا ست نمی‌شود — ستون id در جدول از نوع uuid است و خودش با
@@ -249,13 +250,13 @@ export async function saveHcmsAssessment(rec) {
   payload.created_by = rec.createdBy || "";
   payload.company_id = getCurrentCompanyId();
   const rows = await sb("hcms_risk_assessments", { method: "POST", body: JSON.stringify([payload]) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ثبت: " + (rows?.message || "نامشخص") };
+  if (!sbOk(rows)) return { __error: true, message: translate(getCurrentLang(), "errCaCreate", { reason: rows?.message || translate(getCurrentLang(), "commonErrorUnknown") }) };
   return rowFromDb(rows[0]);
 }
 
 export async function deleteHcmsAssessment(id) {
   const result = await sb(`hcms_risk_assessments?id=eq.${id}`, { method: "DELETE" });
-  if (!sbOk(result)) return { __error: true, message: "خطا در حذف: " + (result?.message || "نامشخص") };
+  if (!sbOk(result)) return { __error: true, message: translate(getCurrentLang(), "errHcmsDeleteWithReason", { reason: result?.message || translate(getCurrentLang(), "commonErrorUnknown") }) };
   return { ok: true };
 }
 
@@ -302,7 +303,7 @@ export async function createSuggestedHcmsFromAnomaly(anomaly, hazardText, create
 
 export async function approveHcmsAssessment(id) {
   const rows = await sb(`hcms_risk_assessments?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ status: "active" }) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در تأیید نهایی" };
+  if (!sbOk(rows)) return { __error: true, message: translate(getCurrentLang(), "errHcmsApproveFinal") };
   return rowFromDb(rows[0]);
 }
 

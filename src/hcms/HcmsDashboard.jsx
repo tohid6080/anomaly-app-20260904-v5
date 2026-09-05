@@ -8,6 +8,7 @@ import {
 } from "./hcmsApi.js";
 import { loadFieldSuggestions, learnFromApprovedAssessment } from "../riskknowledge/riskKnowledgeApi.js";
 import RiskMatrixPreview from "./RiskMatrixPreview.jsx";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 const EMPTY_FORM = {
   process: "", activity: "", activityType: "", unit: "", equipment: "",
@@ -19,9 +20,11 @@ const EMPTY_FORM = {
   emergencyCondition: "", criticalElement: "", status: "active",
 };
 
-const CATEGORY_LABELS = { human: "انسان", equipment: "تجهیزات", environment: "محیط‌زیست", reputation: "اعتبار" };
+const CATEGORY_LABEL_KEYS = { human: "hcmsCatHuman", equipment: "hcmsCatEquipment", environment: "hcmsCatEnvironment", reputation: "hcmsCatReputation" };
 
 export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId }) {
+  const { t, dir } = useLanguage();
+  const CATEGORY_LABELS = Object.fromEntries(Object.entries(CATEGORY_LABEL_KEYS).map(([k, v]) => [k, t(v)]));
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -120,12 +123,12 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId }) {
   };
 
   const handleSave = async () => {
-    if (!form.activity.trim()) { setError("عنوان فعالیت الزامی است"); return; }
+    if (!form.activity.trim()) { setError(t("errActivityTitleRequired")); return; }
     for (const [k, v] of Object.entries(form.initialRpn)) {
-      if (v && !parseRpnCode(v)) { setError(`کد RPN اولیه (${CATEGORY_LABELS[k]}) نامعتبر است — فرمت درست مثل «4C» (عدد ۰ تا ۵ + حرف A تا E)`); return; }
+      if (v && !parseRpnCode(v)) { setError(t("errInitialRpnInvalid", { category: CATEGORY_LABELS[k] })); return; }
     }
     for (const [k, v] of Object.entries(form.residualRpn)) {
-      if (v && !parseRpnCode(v)) { setError(`کد RPN باقیمانده (${CATEGORY_LABELS[k]}) نامعتبر است`); return; }
+      if (v && !parseRpnCode(v)) { setError(t("errResidualRpnInvalid", { category: CATEGORY_LABELS[k] })); return; }
     }
     setSaving(true);
     setError("");
@@ -137,7 +140,7 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId }) {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("این ارزیابی ریسک حذف شود؟")) return;
+    if (!confirm(t("confirmDeleteRiskAssessment"))) return;
     const result = await deleteHcmsAssessment(id);
     if (result?.__error) { alert(result.message); return; }
     await load();
@@ -151,7 +154,7 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId }) {
   };
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return;
-    if (!confirm(`${selectedIds.length} ارزیابی ریسک انتخاب‌شده کامل حذف شوند؟ این عملیات قابل بازگشت نیست.`)) return;
+    if (!confirm(t("confirmBulkDeleteAssessments", { count: selectedIds.length }))) return;
     setBulkDeleting(true);
     // از همان تابع حذف تکی موجود استفاده می‌شود — بدون افزودن مسیر جدید در لایه‌ی داده
     for (const id of selectedIds) {
@@ -182,118 +185,118 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId }) {
     await load();
   };
 
-  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>در حال بارگذاری...</div>;
+  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</div>;
 
   if (showForm) {
     return (
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: 24 }}>
-        <div style={styles.backLink} onClick={() => setShowForm(false)}>← انصراف</div>
-        <h2 style={{ fontSize: 17, color: THEME.navy, fontWeight: 700, marginBottom: 4 }}>{editingId ? "ویرایش ارزیابی ریسک HCMS" : "ارزیابی ریسک HCMS جدید"}</h2>
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: 24, direction: dir }}>
+        <div style={styles.backLink} onClick={() => setShowForm(false)}>{t("hcmsCancel")}</div>
+        <h2 style={{ fontSize: 17, color: THEME.navy, fontWeight: 700, marginBottom: 4 }}>{editingId ? t("hcmsEditAssessment") : t("hcmsNewAssessment")}</h2>
         {form.linkedAnomalyId && (
           <p style={{ fontSize: 11.5, color: THEME.teal, display: "flex", alignItems: "center", gap: 4, marginBottom: 8 }}>
-            <LinkIcon size={12} /> این ارزیابی به یک آنومالی متصل است
+            <LinkIcon size={12} /> {t("hcmsLinkedToAnomaly")}
           </p>
         )}
         {form.status === "pending_review" && (
           <div style={{ background: "#fef3c7", border: "1px solid #fde68a", borderRadius: 8, padding: "10px 14px", marginBottom: 14 }}>
             <p style={{ fontSize: 12, color: "#92400e", margin: 0, lineHeight: 1.8 }}>
               {isContractor
-                ? <>این ارزیابی پس از ذخیره برای بررسی و <b>تأیید کارفرما</b> ارسال می‌شود.</>
-                : <>این رکورد یا خودکار (از یک آنومالی) ساخته شده یا توسط پیمانکار ارسال شده و <b>هنوز نهایی نیست</b>. لطفاً همه‌ی فیلدها را بررسی، در صورت نیاز اصلاح کن، سپس «تأیید نهایی» را بزن.</>}
+                ? <>{t("hcmsPendingContractorNote", { approval: "" })}<b>{t("hcmsEmployerApproval")}</b></>
+                : <>{t("hcmsPendingReviewerNote", { notFinal: "" })}<b>{t("hcmsNotFinalYet")}</b></>}
             </p>
           </div>
         )}
 
         <div style={{ ...styles.card, width: "auto", marginBottom: 14 }}>
-          <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>اطلاعات فعالیت</h3>
+          <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>{t("hcmsActivityInfo")}</h3>
           <div style={styles.formGrid}>
-            <div><label style={styles.label}>فرآیند</label><input style={styles.input} value={form.process} onChange={(e) => setForm({ ...form, process: e.target.value })} dir="rtl" /></div>
-            <div><label style={styles.label}>فعالیت *</label><input style={styles.input} value={form.activity} onChange={(e) => setForm({ ...form, activity: e.target.value })} dir="rtl" /></div>
+            <div><label style={styles.label}>{t("hcmsProcess")}</label><input style={styles.input} value={form.process} onChange={(e) => setForm({ ...form, process: e.target.value })} dir={dir} /></div>
+            <div><label style={styles.label}>{t("hcmsActivityRequired")}</label><input style={styles.input} value={form.activity} onChange={(e) => setForm({ ...form, activity: e.target.value })} dir={dir} /></div>
           </div>
           <div style={styles.formGrid}>
-            <div><label style={styles.label}>واحد</label><input style={styles.input} value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} dir="rtl" /></div>
-            <div><label style={styles.label}>تجهیز</label><input style={styles.input} value={form.equipment} onChange={(e) => setForm({ ...form, equipment: e.target.value })} dir="rtl" /></div>
+            <div><label style={styles.label}>{t("hcmsUnit")}</label><input style={styles.input} value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} dir={dir} /></div>
+            <div><label style={styles.label}>{t("hcmsEquipmentField")}</label><input style={styles.input} value={form.equipment} onChange={(e) => setForm({ ...form, equipment: e.target.value })} dir={dir} /></div>
           </div>
         </div>
 
         <div style={{ ...styles.card, width: "auto", marginBottom: 14 }}>
-          <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>شناسایی خطر</h3>
-          <label style={styles.label}>خطر (ایمنی و بهداشت)</label>
-          <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={form.hazard} onChange={(e) => setForm({ ...form, hazard: e.target.value })} dir="rtl" />
-          <label style={styles.label}>جنبه‌های زیست‌محیطی</label>
-          <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={form.environmentalAspect} onChange={(e) => setForm({ ...form, environmentalAspect: e.target.value })} dir="rtl" />
+          <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>{t("hcmsHazardIdentification")}</h3>
+          <label style={styles.label}>{t("hcmsHazardSafetyHealth")}</label>
+          <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={form.hazard} onChange={(e) => setForm({ ...form, hazard: e.target.value })} dir={dir} />
+          <label style={styles.label}>{t("hcmsEnvironmentalAspects")}</label>
+          <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={form.environmentalAspect} onChange={(e) => setForm({ ...form, environmentalAspect: e.target.value })} dir={dir} />
 
-          <label style={styles.label}>علت</label>
-          <textarea style={{ ...styles.input, minHeight: 50, fontFamily: "inherit" }} value={form.cause} onChange={(e) => setForm({ ...form, cause: e.target.value })} dir="rtl" />
+          <label style={styles.label}>{t("hcmsCause")}</label>
+          <textarea style={{ ...styles.input, minHeight: 50, fontFamily: "inherit" }} value={form.cause} onChange={(e) => setForm({ ...form, cause: e.target.value })} dir={dir} />
           <SuggestionChips items={suggestions.cause} onPick={(v) => applySuggestion("cause", v)} />
-          <label style={styles.label}>پیامد</label>
-          <input style={styles.input} value={form.consequence} onChange={(e) => setForm({ ...form, consequence: e.target.value })} dir="rtl" />
+          <label style={styles.label}>{t("hcmsConsequence")}</label>
+          <input style={styles.input} value={form.consequence} onChange={(e) => setForm({ ...form, consequence: e.target.value })} dir={dir} />
           <SuggestionChips items={suggestions.consequence} onPick={(v) => applySuggestion("consequence", v)} />
-          <label style={styles.label}>کنترل‌های موجود</label>
-          <textarea style={{ ...styles.input, minHeight: 50, fontFamily: "inherit" }} value={form.existingControls} onChange={(e) => setForm({ ...form, existingControls: e.target.value })} dir="rtl" />
+          <label style={styles.label}>{t("hcmsExistingControls")}</label>
+          <textarea style={{ ...styles.input, minHeight: 50, fontFamily: "inherit" }} value={form.existingControls} onChange={(e) => setForm({ ...form, existingControls: e.target.value })} dir={dir} />
           <SuggestionChips items={suggestions.existingControls} onPick={(v) => applySuggestion("existingControls", v)} />
         </div>
 
         <div style={{ ...styles.card, width: "auto", marginBottom: 14 }}>
-          <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 4px", fontWeight: 700 }}>ریسک اولیه</h3>
-          <p style={{ fontSize: 11, color: THEME.text3, margin: "0 0 10px" }}>فقط کد RPN را وارد کن (مثال: «4C» = شدت ۴، احتمال C) — سطح ریسک خودکار محاسبه می‌شود.</p>
+          <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 4px", fontWeight: 700 }}>{t("hcmsInitialRisk")}</h3>
+          <p style={{ fontSize: 11, color: THEME.text3, margin: "0 0 10px" }}>{t("hcmsRpnHint")}</p>
           <RiskMatrixPreview />
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
             {Object.keys(CATEGORY_LABELS).map((k) => (
               <div key={k}>
                 <label style={styles.label}>{CATEGORY_LABELS[k]}</label>
-                <input style={{ ...styles.input, direction: "ltr", textAlign: "center" }} value={form.initialRpn[k]} onChange={(e) => setRpnField("initialRpn", k, e.target.value)} placeholder="مثال: 4C" />
+                <input style={{ ...styles.input, direction: "ltr", textAlign: "center" }} value={form.initialRpn[k]} onChange={(e) => setRpnField("initialRpn", k, e.target.value)} placeholder={t("hcmsRpnExample4C")} />
                 {initialLevels[k] && <LevelBadge level={initialLevels[k]} />}
               </div>
             ))}
           </div>
-          {initialOverall && <div style={{ marginTop: 10 }}>سطح کلی: <LevelBadge level={initialOverall} /></div>}
+          {initialOverall && <div style={{ marginTop: 10 }}>{t("hcmsOverallLevel")} <LevelBadge level={initialOverall} /></div>}
         </div>
 
         <div style={{ ...styles.card, width: "auto", marginBottom: 14 }}>
-          <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>اقدامات کنترلی</h3>
+          <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>{t("hcmsControlActions")}</h3>
           <div style={styles.formGrid}>
             <div>
               <label style={styles.label}>Permit to Work?</label>
-              <select style={styles.input} value={form.permitToWork} onChange={(e) => setForm({ ...form, permitToWork: e.target.value })} dir="rtl">
+              <select style={styles.input} value={form.permitToWork} onChange={(e) => setForm({ ...form, permitToWork: e.target.value })} dir={dir}>
                 <option value="">—</option><option value="YES">YES</option><option value="NO">NO</option>
               </select>
             </div>
-            <div><label style={styles.label}>مسئول اجرا</label><input style={styles.input} value={form.responsiblePerson} onChange={(e) => setForm({ ...form, responsiblePerson: e.target.value })} dir="rtl" /></div>
+            <div><label style={styles.label}>{t("hcmsResponsibleExecutor")}</label><input style={styles.input} value={form.responsiblePerson} onChange={(e) => setForm({ ...form, responsiblePerson: e.target.value })} dir={dir} /></div>
           </div>
-          <label style={styles.label}>کنترل‌های پیشنهادی</label>
-          <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={form.proposedControls} onChange={(e) => setForm({ ...form, proposedControls: e.target.value })} dir="rtl" />
+          <label style={styles.label}>{t("hcmsProposedControls")}</label>
+          <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={form.proposedControls} onChange={(e) => setForm({ ...form, proposedControls: e.target.value })} dir={dir} />
           <SuggestionChips items={suggestions.proposedControls} onPick={(v) => applySuggestion("proposedControls", v)} />
-          <label style={styles.label}>برنامه بازیابی (Recovery Plan)</label>
-          <textarea style={{ ...styles.input, minHeight: 50, fontFamily: "inherit" }} value={form.recoveryPlan} onChange={(e) => setForm({ ...form, recoveryPlan: e.target.value })} dir="rtl" />
+          <label style={styles.label}>{t("hcmsRecoveryPlan")}</label>
+          <textarea style={{ ...styles.input, minHeight: 50, fontFamily: "inherit" }} value={form.recoveryPlan} onChange={(e) => setForm({ ...form, recoveryPlan: e.target.value })} dir={dir} />
         </div>
 
         <div style={{ ...styles.card, width: "auto", marginBottom: 14 }}>
-          <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 4px", fontWeight: 700 }}>ریسک باقیمانده (بعد از کنترل‌های پیشنهادی)</h3>
+          <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 4px", fontWeight: 700 }}>{t("hcmsResidualRisk")}</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginTop: 10 }}>
             {Object.keys(CATEGORY_LABELS).map((k) => (
               <div key={k}>
                 <label style={styles.label}>{CATEGORY_LABELS[k]}</label>
-                <input style={{ ...styles.input, direction: "ltr", textAlign: "center" }} value={form.residualRpn[k]} onChange={(e) => setRpnField("residualRpn", k, e.target.value)} placeholder="مثال: 1B" />
+                <input style={{ ...styles.input, direction: "ltr", textAlign: "center" }} value={form.residualRpn[k]} onChange={(e) => setRpnField("residualRpn", k, e.target.value)} placeholder={t("hcmsRpnExample1B")} />
                 {residualLevels[k] && <LevelBadge level={residualLevels[k]} />}
               </div>
             ))}
           </div>
-          {residualOverall && <div style={{ marginTop: 10 }}>سطح کلی: <LevelBadge level={residualOverall} /></div>}
+          {residualOverall && <div style={{ marginTop: 10 }}>{t("hcmsOverallLevel")} <LevelBadge level={residualOverall} /></div>}
         </div>
 
         <div style={{ ...styles.card, width: "auto", marginBottom: 14 }}>
           <div style={styles.formGrid}>
             <div>
-              <label style={styles.label}>شرایط اضطرار</label>
-              <select style={styles.input} value={form.emergencyCondition} onChange={(e) => setForm({ ...form, emergencyCondition: e.target.value })} dir="rtl">
-                <option value="">—</option><option value="Yes">دارد</option><option value="No">ندارد</option>
+              <label style={styles.label}>{t("hcmsEmergencyCondition")}</label>
+              <select style={styles.input} value={form.emergencyCondition} onChange={(e) => setForm({ ...form, emergencyCondition: e.target.value })} dir={dir}>
+                <option value="">—</option><option value="Yes">{t("hcmsHasIt")}</option><option value="No">{t("hcmsDoesNotHaveIt")}</option>
               </select>
             </div>
             <div>
               <label style={styles.label}>Critical Element?</label>
-              <select style={styles.input} value={form.criticalElement} onChange={(e) => setForm({ ...form, criticalElement: e.target.value })} dir="rtl">
-                <option value="">—</option><option value="Yes">بله</option><option value="No">خیر</option>
+              <select style={styles.input} value={form.criticalElement} onChange={(e) => setForm({ ...form, criticalElement: e.target.value })} dir={dir}>
+                <option value="">—</option><option value="Yes">{t("commonYesBtn")}</option><option value="No">{t("commonNoBtn")}</option>
               </select>
             </div>
           </div>
@@ -302,10 +305,10 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId }) {
         {error && <p style={styles.error}>{error}</p>}
         <div style={{ display: "flex", gap: 8 }}>
           <button type="button" style={styles.button} onClick={handleSave} disabled={saving}>
-            {saving ? "در حال ذخیره..." : (isContractor && form.status === "pending_review" ? "ارسال برای تأیید کارفرما" : "ذخیره‌ی ارزیابی ریسک")}
+            {saving ? t("saSavingEllipsis") : (isContractor && form.status === "pending_review" ? t("hcmsSendForEmployerApproval") : t("hcmsSaveAssessment"))}
           </button>
           {!isContractor && form.status === "pending_review" && (
-            <button type="button" style={{ ...styles.button, background: "#166534" }} onClick={handleApprove} disabled={saving}>تأیید نهایی</button>
+            <button type="button" style={{ ...styles.button, background: "#166534" }} onClick={handleApprove} disabled={saving}>{t("hcmsFinalApproval")}</button>
           )}
         </div>
       </div>
@@ -313,25 +316,25 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId }) {
   }
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>← بازگشت به مدیریت ارزیابی ریسک</div>}
+    <div style={{ maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
+      {onBack && <div style={styles.backLink} onClick={onBack}>{t("hcmsBackToRiskManagement")}</div>}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <ShieldAlert size={20} color={THEME.teal} />
-          <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>HCMS — سیستم مدیریت و کنترل خطرات</h2>
+          <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("hcmsDashboardTitle")}</h2>
         </div>
         <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6 }} onClick={openNew}>
-          <Plus size={14} /> ارزیابی جدید
+          <Plus size={14} /> {t("hcmsNewAssessmentBtn")}
         </button>
       </div>
 
-      {list.length === 0 && <p style={{ color: THEME.text3, textAlign: "center", padding: "30px 0" }}>هنوز ارزیابی ریسکی ثبت نشده است</p>}
+      {list.length === 0 && <p style={{ color: THEME.text3, textAlign: "center", padding: "30px 0" }}>{t("hcmsNoAssessmentsYet")}</p>}
 
       {list.length > 0 && (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, padding: "0 4px" }}>
           <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, color: THEME.text2, cursor: "pointer" }}>
             <input type="checkbox" checked={selectedIds.length === list.length && list.length > 0} onChange={toggleSelectAll} />
-            انتخاب همه ({list.length})
+            {t("hcmsSelectAllCount", { count: list.length })}
           </label>
           {selectedIds.length > 0 && (
             <button
@@ -340,7 +343,7 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId }) {
               onClick={handleBulkDelete}
               disabled={bulkDeleting}
             >
-              <Trash2 size={12} /> {bulkDeleting ? "در حال حذف..." : `حذف ${selectedIds.length} مورد انتخاب‌شده`}
+              <Trash2 size={12} /> {bulkDeleting ? t("hcmsDeletingEllipsis") : t("hcmsDeleteSelectedCount", { count: selectedIds.length })}
             </button>
           )}
         </div>
@@ -361,7 +364,7 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId }) {
                   {rec.activity}
                   {rec.linkedAnomalyId && <LinkIcon size={12} color={THEME.teal} style={{ marginRight: 6, display: "inline" }} />}
                   {rec.status === "pending_review" && (
-                    <span style={{ fontSize: 10, background: "#fef3c7", color: "#92400e", padding: "2px 8px", borderRadius: 999, fontWeight: 600, marginRight: 6 }}>در انتظار بررسی کارفرما</span>
+                    <span style={{ fontSize: 10, background: "#fef3c7", color: "#92400e", padding: "2px 8px", borderRadius: 999, fontWeight: 600, marginRight: 6 }}>{t("hcmsPendingEmployerReview")}</span>
                   )}
                 </div>
                 <div style={{ fontSize: 11.5, color: THEME.text3, marginTop: 4 }}>{rec.hazard || rec.environmentalAspect || "—"}</div>
@@ -369,8 +372,8 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId }) {
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              {rec.initialLevelOverall && <LevelBadge level={rec.initialLevelOverall} label="اولیه" />}
-              {rec.residualLevelOverall && <LevelBadge level={rec.residualLevelOverall} label="باقیمانده" />}
+              {rec.initialLevelOverall && <LevelBadge level={rec.initialLevelOverall} label={t("hcmsInitialLabel")} />}
+              {rec.residualLevelOverall && <LevelBadge level={rec.residualLevelOverall} label={t("hcmsResidualLabel")} />}
               <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={(e) => { e.stopPropagation(); handleDelete(rec.id); }}>
                 <Trash2 size={12} />
               </button>
@@ -386,7 +389,7 @@ function SuggestionChips({ items, onPick }) {
   if (!items || items.length === 0) return null;
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 6, marginBottom: 10 }}>
-      <span style={{ fontSize: 10, color: THEME.text3, alignSelf: "center" }}>پیشنهاد بانک اطلاعاتی:</span>
+      <span style={{ fontSize: 10, color: THEME.text3, alignSelf: "center" }}>{t("hcmsKnowledgeBankSuggestion")}</span>
       {items.map((item, i) => (
         <button
           key={i}
@@ -406,11 +409,12 @@ function SuggestionChips({ items, onPick }) {
 }
 
 function LevelBadge({ level, label }) {
+  const { t } = useLanguage();
   const meta = RISK_LEVEL_META[level];
   if (!meta) return null;
   return (
     <span style={{ fontSize: 10.5, padding: "3px 8px", borderRadius: 999, background: meta.bg, color: meta.color, fontWeight: 600, display: "inline-block", marginTop: 4 }}>
-      {label ? `${label}: ` : ""}{meta.label}
+      {label ? `${label}: ` : ""}{t(meta.labelKey)}
     </span>
   );
 }
