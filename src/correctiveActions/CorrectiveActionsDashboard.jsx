@@ -12,6 +12,7 @@ import {
   loadTripodCorrectiveActionsForCompany, assignTripodCorrectiveActionContractor,
   updateTripodCorrectiveActionStatus, CA_STATUS_LABELS,
 } from "../tripodBeta/tripodAnalysesApi.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 // نگاشت وضعیت‌های Tripod Beta (OPEN/IN_PROGRESS/DONE/CANCELLED) به واژگان
 // همین لیست، فقط برای نمایش یکدست بج وضعیت — چیزی در دیتابیس تغییر نمی‌کند
@@ -58,6 +59,7 @@ const EMPTY_FORM = {
 const EMPTY_FILTERS = { contractorId: "", projectName: "", responsiblePerson: "", status: "", priority: "", search: "" };
 
 export default function CorrectiveActionsDashboard({ onBack, currentUser }) {
+  const { t, dir } = useLanguage();
   const [list, setList] = useState([]);
   const [contractors, setContractors] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -121,7 +123,7 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser }) {
   };
 
   const handleSave = async () => {
-    if (!form.nonconformanceDescription.trim()) { setError("شرح عدم انطباق الزامی است"); return; }
+    if (!form.nonconformanceDescription.trim()) { setError(t("errNonconformanceDescRequired")); return; }
     setSaving(true);
     setError("");
     const result = editingId
@@ -157,7 +159,7 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser }) {
       setForm((prev) => ({ ...prev, attachments: [...prev.attachments, result] }));
     } catch (e) {
       setUploading(false);
-      setError(e?.message || "خطا در آپلود فایل");
+      setError(e?.message || t("errCaUploadFile"));
     }
   };
 
@@ -165,48 +167,48 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser }) {
     setForm((prev) => ({ ...prev, attachments: prev.attachments.filter((_, i) => i !== idx) }));
   };
 
-  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>در حال بارگذاری...</div>;
+  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</div>;
 
   // ---------- فرم ثبت/ویرایش ----------
   if (showForm) {
     return (
-      <div style={{ maxWidth: 640, margin: "0 auto", padding: 24 }}>
-        <div style={styles.backLink} onClick={() => setShowForm(false)}>← انصراف</div>
+      <div style={{ maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
+        <div style={styles.backLink} onClick={() => setShowForm(false)}>{t("cadCancel")}</div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-          <h2 style={{ fontSize: 17, color: THEME.navy, fontWeight: 700, margin: 0 }}>{editingId ? "ویرایش اقدام اصلاحی" : "اقدام اصلاحی جدید"}</h2>
+          <h2 style={{ fontSize: 17, color: THEME.navy, fontWeight: 700, margin: 0 }}>{editingId ? t("cadEditTitle") : t("cadNewTitle")}</h2>
           {editingId && <StatusBadge status={form.status} />}
         </div>
 
         <div style={{ ...styles.card, width: "auto", marginBottom: 14 }}>
-          <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>اطلاعات اصلی</h3>
+          <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>{t("cadMainInfo")}</h3>
           <div style={styles.formGrid}>
             <div>
-              <label style={styles.label}>شماره اقدام اصلاحی</label>
-              <input style={styles.input} value={form.actionNumber} onChange={(e) => setForm({ ...form, actionNumber: e.target.value })} dir="ltr" placeholder="خودکار در صورت خالی‌بودن" />
+              <label style={styles.label}>{t("cadActionNumber")}</label>
+              <input style={styles.input} value={form.actionNumber} onChange={(e) => setForm({ ...form, actionNumber: e.target.value })} dir="ltr" placeholder={t("cadAutoIfEmpty")} />
             </div>
             <div>
-              <label style={styles.label}>منبع شناسایی عدم انطباق</label>
-              <select style={styles.input} value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })} dir="rtl">
-                {SOURCE_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+              <label style={styles.label}>{t("cadSourceLabel")}</label>
+              <select style={styles.input} value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })} dir={dir}>
+                {SOURCE_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.labelKey ? t(s.labelKey) : s.label}</option>)}
               </select>
             </div>
           </div>
 
-          <label style={styles.label}>شرح عدم انطباق</label>
-          <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={form.nonconformanceDescription} onChange={(e) => setForm({ ...form, nonconformanceDescription: e.target.value })} dir="rtl" />
+          <label style={styles.label}>{t("cadNonconformanceDesc")}</label>
+          <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={form.nonconformanceDescription} onChange={(e) => setForm({ ...form, nonconformanceDescription: e.target.value })} dir={dir} />
 
-          <label style={styles.label}>علت ریشه‌ای</label>
-          <textarea style={{ ...styles.input, minHeight: 50, fontFamily: "inherit" }} value={form.rootCause} onChange={(e) => setForm({ ...form, rootCause: e.target.value })} dir="rtl" />
+          <label style={styles.label}>{t("cadRootCause")}</label>
+          <textarea style={{ ...styles.input, minHeight: 50, fontFamily: "inherit" }} value={form.rootCause} onChange={(e) => setForm({ ...form, rootCause: e.target.value })} dir={dir} />
 
-          <label style={styles.label}>شرح اقدام اصلاحی / پیشگیرانه</label>
-          <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={form.actionDescription} onChange={(e) => setForm({ ...form, actionDescription: e.target.value })} dir="rtl" />
+          <label style={styles.label}>{t("cadActionDesc")}</label>
+          <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={form.actionDescription} onChange={(e) => setForm({ ...form, actionDescription: e.target.value })} dir={dir} />
         </div>
 
         <div style={{ ...styles.card, width: "auto", marginBottom: 14 }}>
-          <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>مسئولیت و زمان‌بندی</h3>
+          <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>{t("cadResponsibilityTiming")}</h3>
           <div style={styles.formGrid}>
             <div>
-              <label style={styles.label}>شرکت / پیمانکار مسئول</label>
+              <label style={styles.label}>{t("cadResponsibleContractor")}</label>
               <select
                 style={styles.input}
                 value={form.responsibleContractorId}
@@ -214,51 +216,51 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser }) {
                   const c = contractors.find((x) => x.id === e.target.value);
                   setForm({ ...form, responsibleContractorId: e.target.value, responsibleContractorName: c?.name || "" });
                 }}
-                dir="rtl"
+                dir={dir}
               >
-                <option value="">— انتخاب کنید —</option>
+                <option value="">{t("fieldSelectPlaceholder")}</option>
                 {contractors.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
             <div>
-              <label style={styles.label}>مسئول اجرا (نام شخص)</label>
-              <input style={styles.input} value={form.responsiblePerson} onChange={(e) => setForm({ ...form, responsiblePerson: e.target.value })} dir="rtl" />
+              <label style={styles.label}>{t("cadResponsibleExecutorName")}</label>
+              <input style={styles.input} value={form.responsiblePerson} onChange={(e) => setForm({ ...form, responsiblePerson: e.target.value })} dir={dir} />
             </div>
           </div>
           <div style={styles.formGrid}>
             <div>
-              <label style={styles.label}>پروژه</label>
-              <input style={styles.input} value={form.projectName} onChange={(e) => setForm({ ...form, projectName: e.target.value })} dir="rtl" />
+              <label style={styles.label}>{t("cadProject")}</label>
+              <input style={styles.input} value={form.projectName} onChange={(e) => setForm({ ...form, projectName: e.target.value })} dir={dir} />
             </div>
             <div>
-              <label style={styles.label}>اولویت</label>
-              <select style={styles.input} value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })} dir="rtl">
-                {PRIORITY_OPTIONS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+              <label style={styles.label}>{t("cadPriority")}</label>
+              <select style={styles.input} value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })} dir={dir}>
+                {PRIORITY_OPTIONS.map((p) => <option key={p.value} value={p.value}>{t(p.labelKey)}</option>)}
               </select>
             </div>
           </div>
           <div style={styles.formGrid}>
             <div>
-              <label style={styles.label}>مهلت انجام</label>
+              <label style={styles.label}>{t("cadDueDate")}</label>
               <JalaliDateInput value={form.dueDate} onChange={(v) => setForm({ ...form, dueDate: v })} allowEmpty />
             </div>
             <div>
-              <label style={styles.label}>وضعیت اقدام</label>
-              <select style={styles.input} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} dir="rtl">
-                {STATUS_ORDER.map((s) => <option key={s} value={s}>{STATUS_META[s].emoji} {STATUS_META[s].label}</option>)}
+              <label style={styles.label}>{t("cadActionStatus")}</label>
+              <select style={styles.input} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} dir={dir}>
+                {STATUS_ORDER.map((s) => <option key={s} value={s}>{STATUS_META[s].emoji} {t(STATUS_META[s].labelKey)}</option>)}
               </select>
             </div>
           </div>
         </div>
 
         <div style={{ ...styles.card, width: "auto", marginBottom: 14 }}>
-          <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>اجرا و مستندسازی</h3>
-          <label style={styles.label}>تاریخ انجام</label>
+          <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>{t("cadExecutionDocumentation")}</h3>
+          <label style={styles.label}>{t("cadCompletionDate")}</label>
           <JalaliDateInput value={form.completedAt} onChange={(v) => setForm({ ...form, completedAt: v })} allowEmpty />
-          <label style={styles.label}>توضیحات مسئول اجرا</label>
-          <textarea style={{ ...styles.input, minHeight: 50, fontFamily: "inherit" }} value={form.executorNotes} onChange={(e) => setForm({ ...form, executorNotes: e.target.value })} dir="rtl" />
+          <label style={styles.label}>{t("cadExecutorNotes")}</label>
+          <textarea style={{ ...styles.input, minHeight: 50, fontFamily: "inherit" }} value={form.executorNotes} onChange={(e) => setForm({ ...form, executorNotes: e.target.value })} dir={dir} />
 
-          <label style={styles.label}>مستندات و تصاویر</label>
+          <label style={styles.label}>{t("cadDocsAndPhotos")}</label>
           {form.attachments.length > 0 && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
               {form.attachments.map((att, i) => (
@@ -270,28 +272,28 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser }) {
             </div>
           )}
           <label style={{ ...styles.smallButton, display: "inline-flex", alignItems: "center", gap: 6, background: THEME.navyMid, cursor: "pointer" }}>
-            <Paperclip size={13} /> {uploading ? "در حال آپلود..." : "افزودن فایل"}
+            <Paperclip size={13} /> {uploading ? t("cadUploading") : t("cadAddFile")}
             <input type="file" accept="image/*,.pdf" style={{ display: "none" }} onChange={(e) => { handleFileUpload(e.target.files?.[0]); e.target.value = ""; }} disabled={uploading} />
           </label>
         </div>
 
         {!isContractor && (
           <div style={{ ...styles.card, width: "auto", marginBottom: 14 }}>
-            <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>تأیید HSE / کارفرما</h3>
+            <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>{t("cadHseApproval")}</h3>
             {form.approvedBy
-              ? <p style={{ fontSize: 11.5, color: THEME.text2 }}>تأییدشده توسط <b>{form.approvedBy}</b> در تاریخ {toJalaliSafe(form.approvedAt)}</p>
-              : <p style={{ fontSize: 11.5, color: THEME.text3 }}>هنوز تأیید نشده</p>}
-            <label style={styles.label}>توضیحات تأییدکننده</label>
-            <textarea style={{ ...styles.input, minHeight: 50, fontFamily: "inherit" }} value={form.approverNotes} onChange={(e) => setForm({ ...form, approverNotes: e.target.value })} dir="rtl" />
+              ? <p style={{ fontSize: 11.5, color: THEME.text2 }}>{t("cadApprovedByOn", { name: form.approvedBy, date: toJalaliSafe(form.approvedAt) })}</p>
+              : <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("cadNotApprovedYet")}</p>}
+            <label style={styles.label}>{t("cadApproverNotes")}</label>
+            <textarea style={{ ...styles.input, minHeight: 50, fontFamily: "inherit" }} value={form.approverNotes} onChange={(e) => setForm({ ...form, approverNotes: e.target.value })} dir={dir} />
           </div>
         )}
 
         {error && <p style={styles.error}>{error}</p>}
         <div style={{ display: "flex", gap: 8 }}>
-          <button type="button" style={styles.button} onClick={handleSave} disabled={saving}>{saving ? "در حال ذخیره..." : "ذخیره"}</button>
+          <button type="button" style={styles.button} onClick={handleSave} disabled={saving}>{saving ? t("saSavingEllipsis") : t("commonSave")}</button>
           {!isContractor && editingId && form.status !== "closed" && (
             <button type="button" style={{ ...styles.button, background: "#166534", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }} onClick={handleApprove} disabled={saving}>
-              <CheckCircle2 size={15} /> تأیید و بستن
+              <CheckCircle2 size={15} /> {t("cadApproveAndClose")}
             </button>
           )}
         </div>
@@ -301,76 +303,76 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser }) {
 
   // ---------- لیست + داشبورد ----------
   return (
-    <div style={{ maxWidth: 1000, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>← بازگشت</div>}
+    <div style={{ maxWidth: 1000, margin: "0 auto", padding: 24, direction: dir }}>
+      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>لیست اقدامات اصلاحی</h2>
+        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("cadListTitle")}</h2>
         <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6 }} onClick={openNew}>
-          <Plus size={13} /> اقدام جدید
+          <Plus size={13} /> {t("cadNewAction")}
         </button>
       </div>
 
       {/* کارت‌های آماری KPI */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 8, marginBottom: 16 }}>
-        <KpiCard label="کل اقدامات" value={kpis.total} active={kpiFilter === ""} onClick={() => setKpiFilter("")} color={THEME.navy} />
-        <KpiCard label="باز" value={kpis.open} active={kpiFilter === "open"} onClick={() => setKpiFilter("open")} color={STATUS_META.open.bg} />
-        <KpiCard label="در حال انجام" value={kpis.in_progress} active={kpiFilter === "in_progress"} onClick={() => setKpiFilter("in_progress")} color={STATUS_META.in_progress.bg} />
-        <KpiCard label="منتظر تأیید" value={kpis.done_pending_approval} active={kpiFilter === "done_pending_approval"} onClick={() => setKpiFilter("done_pending_approval")} color="#b45309" />
-        <KpiCard label="بسته شده" value={kpis.closed} active={kpiFilter === "closed"} onClick={() => setKpiFilter("closed")} color={STATUS_META.closed.bg} />
-        <KpiCard label="منقضی شده" value={kpis.expired} active={kpiFilter === "expired"} onClick={() => setKpiFilter("expired")} color={STATUS_META.expired.bg} />
-        <KpiCard label="سررسید شده" value={kpis.overdue} active={kpiFilter === "overdue"} onClick={() => setKpiFilter("overdue")} color="#7c2d12" />
+        <KpiCard label={t("cadKpiTotal")} value={kpis.total} active={kpiFilter === ""} onClick={() => setKpiFilter("")} color={THEME.navy} />
+        <KpiCard label={t("statusOpen")} value={kpis.open} active={kpiFilter === "open"} onClick={() => setKpiFilter("open")} color={STATUS_META.open.bg} />
+        <KpiCard label={t("caStatusInProgress")} value={kpis.in_progress} active={kpiFilter === "in_progress"} onClick={() => setKpiFilter("in_progress")} color={STATUS_META.in_progress.bg} />
+        <KpiCard label={t("cadKpiPendingApproval")} value={kpis.done_pending_approval} active={kpiFilter === "done_pending_approval"} onClick={() => setKpiFilter("done_pending_approval")} color="#b45309" />
+        <KpiCard label={t("statusClosed")} value={kpis.closed} active={kpiFilter === "closed"} onClick={() => setKpiFilter("closed")} color={STATUS_META.closed.bg} />
+        <KpiCard label={t("caStatusExpired")} value={kpis.expired} active={kpiFilter === "expired"} onClick={() => setKpiFilter("expired")} color={STATUS_META.expired.bg} />
+        <KpiCard label={t("cadKpiOverdue")} value={kpis.overdue} active={kpiFilter === "overdue"} onClick={() => setKpiFilter("overdue")} color="#7c2d12" />
       </div>
 
       {/* فیلترها */}
       <button type="button" onClick={() => setShowFilters((v) => !v)} style={{ ...styles.smallButton, background: THEME.navyMid, display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-        <Filter size={13} /> فیلترها
+        <Filter size={13} /> {t("pmdFilters")}
       </button>
       {showFilters && (
         <div style={{ ...styles.card, width: "auto", marginBottom: 14 }}>
           <div style={styles.formGrid}>
             <div>
-              <label style={styles.label}>پیمانکار</label>
-              <select style={styles.input} value={filters.contractorId} onChange={(e) => setFilters({ ...filters, contractorId: e.target.value })} dir="rtl">
-                <option value="">همه</option>
+              <label style={styles.label}>{t("fieldContractor")}</label>
+              <select style={styles.input} value={filters.contractorId} onChange={(e) => setFilters({ ...filters, contractorId: e.target.value })} dir={dir}>
+                <option value="">{t("cadEveryone")}</option>
                 {contractors.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
             <div>
-              <label style={styles.label}>پروژه</label>
-              <input style={styles.input} value={filters.projectName} onChange={(e) => setFilters({ ...filters, projectName: e.target.value })} dir="rtl" />
+              <label style={styles.label}>{t("cadProject")}</label>
+              <input style={styles.input} value={filters.projectName} onChange={(e) => setFilters({ ...filters, projectName: e.target.value })} dir={dir} />
             </div>
           </div>
           <div style={styles.formGrid}>
             <div>
-              <label style={styles.label}>مسئول اقدام</label>
-              <input style={styles.input} value={filters.responsiblePerson} onChange={(e) => setFilters({ ...filters, responsiblePerson: e.target.value })} dir="rtl" />
+              <label style={styles.label}>{t("cadResponsiblePersonLabel")}</label>
+              <input style={styles.input} value={filters.responsiblePerson} onChange={(e) => setFilters({ ...filters, responsiblePerson: e.target.value })} dir={dir} />
             </div>
             <div>
-              <label style={styles.label}>وضعیت</label>
-              <select style={styles.input} value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })} dir="rtl">
-                <option value="">همه</option>
-                {STATUS_ORDER.map((s) => <option key={s} value={s}>{STATUS_META[s].emoji} {STATUS_META[s].label}</option>)}
+              <label style={styles.label}>{t("cadStatusLabel")}</label>
+              <select style={styles.input} value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })} dir={dir}>
+                <option value="">{t("cadEveryone")}</option>
+                {STATUS_ORDER.map((s) => <option key={s} value={s}>{STATUS_META[s].emoji} {t(STATUS_META[s].labelKey)}</option>)}
               </select>
             </div>
           </div>
           <div style={styles.formGrid}>
             <div>
-              <label style={styles.label}>اولویت</label>
-              <select style={styles.input} value={filters.priority} onChange={(e) => setFilters({ ...filters, priority: e.target.value })} dir="rtl">
-                <option value="">همه</option>
-                {PRIORITY_OPTIONS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+              <label style={styles.label}>{t("cadPriority")}</label>
+              <select style={styles.input} value={filters.priority} onChange={(e) => setFilters({ ...filters, priority: e.target.value })} dir={dir}>
+                <option value="">{t("cadEveryone")}</option>
+                {PRIORITY_OPTIONS.map((p) => <option key={p.value} value={p.value}>{t(p.labelKey)}</option>)}
               </select>
             </div>
             <div>
-              <label style={styles.label}>جستجو (شماره / شرح عدم انطباق)</label>
-              <input style={styles.input} value={filters.search} onChange={(e) => setFilters({ ...filters, search: e.target.value })} dir="rtl" />
+              <label style={styles.label}>{t("cadSearchNumberDesc")}</label>
+              <input style={styles.input} value={filters.search} onChange={(e) => setFilters({ ...filters, search: e.target.value })} dir={dir} />
             </div>
           </div>
-          <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setFilters(EMPTY_FILTERS)}>پاک‌کردن فیلترها</button>
+          <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setFilters(EMPTY_FILTERS)}>{t("cadClearFilters")}</button>
         </div>
       )}
 
-      {filtered.length === 0 && <p style={{ color: THEME.text3, textAlign: "center", padding: "30px 0" }}>موردی پیدا نشد</p>}
+      {filtered.length === 0 && <p style={{ color: THEME.text3, textAlign: "center", padding: "30px 0" }}>{t("cadNoItemsFound")}</p>}
 
       {filtered.map((a) => (
         <div
@@ -383,27 +385,27 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser }) {
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                 <span style={{ fontWeight: 700, color: THEME.navy, fontSize: 13, direction: "ltr" }}>{a.actionNumber}</span>
                 <StatusBadge status={a.status} />
-                {isOverdue(a) && <span style={{ fontSize: 10, background: "#7c2d12", color: "#fff", padding: "2px 8px", borderRadius: 999 }}>سررسید شده</span>}
-                {a.autoGenerated && <span style={{ fontSize: 10, background: THEME.tealSoft, color: THEME.tealDeep, padding: "2px 8px", borderRadius: 999 }}>⚙️ خودکار (BowTie)</span>}
-                {a.__tripodOrigin && <span style={{ fontSize: 10, background: THEME.tealSoft, color: THEME.tealDeep, padding: "2px 8px", borderRadius: 999 }}>🔗 مدیریت حوادث / Tripod Beta</span>}
+                {isOverdue(a) && <span style={{ fontSize: 10, background: "#7c2d12", color: "#fff", padding: "2px 8px", borderRadius: 999 }}>{t("cadOverdueBadge")}</span>}
+                {a.autoGenerated && <span style={{ fontSize: 10, background: THEME.tealSoft, color: THEME.tealDeep, padding: "2px 8px", borderRadius: 999 }}>{t("cadAutoBadge")}</span>}
+                {a.__tripodOrigin && <span style={{ fontSize: 10, background: THEME.tealSoft, color: THEME.tealDeep, padding: "2px 8px", borderRadius: 999 }}>{t("cadTripodOriginBadge")}</span>}
               </div>
               <div style={{ fontSize: 12, color: THEME.text2, marginTop: 5 }}>{a.nonconformanceDescription.slice(0, 130)}{a.nonconformanceDescription.length > 130 ? "…" : ""}</div>
               <div style={{ fontSize: 10.5, color: THEME.text3, marginTop: 5 }}>
-                {a.responsibleContractorName && <>پیمانکار: {a.responsibleContractorName} · </>}
-                {a.responsiblePerson && <>مسئول: {a.responsiblePerson} · </>}
-                {a.dueDate && <>مهلت: {toJalaliSafe(a.dueDate)} · </>}
-                {a.createdAt && <>ایجاد: {toJalaliSafe(a.createdAt)}</>}
+                {a.responsibleContractorName && <>{t("cadContractorInline", { name: a.responsibleContractorName })}</>}
+                {a.responsiblePerson && <>{t("cadResponsibleInline", { name: a.responsiblePerson })}</>}
+                {a.dueDate && <>{t("cadDueInline", { date: toJalaliSafe(a.dueDate) })}</>}
+                {a.createdAt && <>{t("cadCreatedInline", { date: toJalaliSafe(a.createdAt) })}</>}
               </div>
               {a.__tripodOrigin ? (
                 <div style={{ fontSize: 10.5, color: THEME.text3, marginTop: 3 }}>
-                  کلیک برای ارجاع به پیمانکار جهت پیگیری — شرح اقدام و علت ریشه‌ای فقط از ماژول «مدیریت حوادث ← Tripod Beta» قابل‌ویرایش است.
+                  {t("cadTripodOriginHint")}
                 </div>
               ) : (
                 <div style={{ fontSize: 10.5, color: THEME.text3, marginTop: 3 }}>
-                  {a.completedAt && <>تاریخ انجام (پیمانکار): {toJalaliSafe(a.completedAt)} · </>}
+                  {a.completedAt && <>{t("cadExecutionDateInline", { date: toJalaliSafe(a.completedAt) })}</>}
                   {a.approvedAt
-                    ? <>تأیید کارفرما: {toJalaliSafe(a.approvedAt)}{a.approvedBy && ` (${a.approvedBy})`}</>
-                    : <span style={{ color: "#b45309" }}>هنوز توسط کارفرما تأیید نشده</span>}
+                    ? <>{t("cadEmployerApprovalInline", { date: toJalaliSafe(a.approvedAt) })}{a.approvedBy && ` (${a.approvedBy})`}</>
+                    : <span style={{ color: "#b45309" }}>{t("cadNotApprovedByEmployerYet")}</span>}
                 </div>
               )}
             </div>
@@ -428,6 +430,7 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser }) {
 // tripod_corrective_actions (بدون ساخت رکورد موازی در corrective_actions،
 // تا دو نسخه‌ی متفاوت از یک اقدام از هم واگرا نشوند)
 function TripodActionAssignModal({ action, contractors, onClose, onSaved }) {
+  const { t, dir } = useLanguage();
   const [contractorId, setContractorId] = useState(action.responsibleContractorId || "");
   const [status, setStatus] = useState(action.__tripodRawStatus || "OPEN");
   const [saving, setSaving] = useState(false);
@@ -448,31 +451,31 @@ function TripodActionAssignModal({ action, contractors, onClose, onSaved }) {
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(15,42,63,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={onClose}>
-      <div style={{ background: THEME.surface, borderRadius: 14, padding: 22, maxWidth: 440, width: "100%", maxHeight: "85vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
-        <h3 style={{ fontSize: 15, color: THEME.navy, fontWeight: 800, margin: "0 0 12px" }}>ارجاع اقدام اصلاحی به پیمانکار</h3>
+      <div style={{ background: THEME.surface, borderRadius: 14, padding: 22, maxWidth: 440, width: "100%", maxHeight: "85vh", overflowY: "auto", direction: dir }} onClick={(e) => e.stopPropagation()}>
+        <h3 style={{ fontSize: 15, color: THEME.navy, fontWeight: 800, margin: "0 0 12px" }}>{t("cadTripodAssignTitle")}</h3>
         <div style={{ background: THEME.bg, borderRadius: 8, padding: 10, marginBottom: 12, fontSize: 11.5, color: THEME.text2, lineHeight: 1.9 }}>
           {action.nonconformanceDescription}
         </div>
 
-        <label style={styles.label}>شرکت / پیمانکار مسئول پیگیری</label>
-        <select style={styles.input} value={contractorId} onChange={(e) => setContractorId(e.target.value)} dir="rtl">
-          <option value="">— بدون ارجاع —</option>
+        <label style={styles.label}>{t("cadTripodAssignContractorLabel")}</label>
+        <select style={styles.input} value={contractorId} onChange={(e) => setContractorId(e.target.value)} dir={dir}>
+          <option value="">{t("cadTripodNoAssignment")}</option>
           {contractors.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
 
-        <label style={styles.label}>وضعیت پیگیری</label>
-        <select style={styles.input} value={status} onChange={(e) => setStatus(e.target.value)} dir="rtl">
+        <label style={styles.label}>{t("cadTripodFollowUpStatus")}</label>
+        <select style={styles.input} value={status} onChange={(e) => setStatus(e.target.value)} dir={dir}>
           {Object.entries(CA_STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
 
         <p style={{ fontSize: 10.5, color: THEME.text3, marginTop: 10 }}>
-          ویرایش شرح اقدام اصلاحی و علت ریشه‌ای فقط از ماژول «مدیریت حوادث ← Tripod Beta» امکان‌پذیر است.
+          {t("cadTripodEditNote")}
         </p>
 
         {error && <p style={styles.error}>{error}</p>}
         <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-          <button type="button" style={styles.smallButton} onClick={handleSave} disabled={saving}>{saving ? "در حال ذخیره..." : "ذخیره"}</button>
-          <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={onClose}>انصراف</button>
+          <button type="button" style={styles.smallButton} onClick={handleSave} disabled={saving}>{saving ? t("saSavingEllipsis") : t("commonSave")}</button>
+          <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={onClose}>{t("commonCancel")}</button>
         </div>
       </div>
     </div>
@@ -495,10 +498,11 @@ function KpiCard({ label, value, color, active, onClick }) {
 }
 
 function StatusBadge({ status }) {
+  const { t } = useLanguage();
   const meta = STATUS_META[status] || STATUS_META.open;
   return (
     <span style={{ fontSize: 10.5, fontWeight: 700, background: meta.bg, color: meta.color, padding: "3px 9px", borderRadius: 999, whiteSpace: "nowrap" }}>
-      {meta.emoji} {meta.label}
+      {meta.emoji} {t(meta.labelKey)}
     </span>
   );
 }

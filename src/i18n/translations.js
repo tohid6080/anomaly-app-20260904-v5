@@ -7336,7 +7336,16 @@ export const translations = {
   "gateAssignToExpertForReview": { "fa": "ارجاع به کارشناس برای بررسی", "en": "Assign to an expert for review" },
   "gateSendReviewResultToSupervisor": { "fa": "ارسال نتیجه‌ی بررسی برای سرپرست/مدیر HSE", "en": "Send review result to the HSE supervisor/manager" },
   "gateCommentOptional": { "fa": "نظر یا توضیح (اختیاری)", "en": "Comment or note (optional)" },
-  "gateSend": { "fa": "ارسال", "en": "Send" }
+  "gateSend": { "fa": "ارسال", "en": "Send" },
+
+  // --- corrective actions: Tripod Beta / incident-origin integration (project-specific) ---
+  "cadTripodOriginBadge": { "fa": "🔗 مدیریت حوادث / Tripod Beta", "en": "🔗 Incident Management / Tripod Beta" },
+  "cadTripodOriginHint": { "fa": "کلیک برای ارجاع به پیمانکار جهت پیگیری — شرح اقدام و علت ریشه‌ای فقط از ماژول «مدیریت حوادث ← Tripod Beta» قابل‌ویرایش است.", "en": "Click to assign to a contractor for follow-up — the action description and root cause can only be edited from the Incident Management → Tripod Beta module." },
+  "cadTripodAssignTitle": { "fa": "ارجاع اقدام اصلاحی به پیمانکار", "en": "Assign corrective action to a contractor" },
+  "cadTripodAssignContractorLabel": { "fa": "شرکت / پیمانکار مسئول پیگیری", "en": "Company / contractor responsible for follow-up" },
+  "cadTripodNoAssignment": { "fa": "— بدون ارجاع —", "en": "— No assignment —" },
+  "cadTripodFollowUpStatus": { "fa": "وضعیت پیگیری", "en": "Follow-up status" },
+  "cadTripodEditNote": { "fa": "ویرایش شرح اقدام اصلاحی و علت ریشه‌ای فقط از ماژول «مدیریت حوادث ← Tripod Beta» امکان‌پذیر است.", "en": "The corrective action description and root cause can only be edited from the Incident Management → Tripod Beta module." }
 };
 
 // برای فایل‌های غیر React (لایه‌ی داده / api.js) که به Hook دسترسی ندارند اما

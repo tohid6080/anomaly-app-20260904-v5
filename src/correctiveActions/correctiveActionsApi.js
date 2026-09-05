@@ -1,36 +1,37 @@
 import { sb, sbOk, getCurrentCompanyId } from "../shared.js";
 import { uploadBase64ToStorage } from "../offline/storageUpload.js";
+import { translate, getCurrentLang } from "../i18n/translations.js";
 
 // ---------- ثابت‌ها ----------
 
 export const SOURCE_OPTIONS = [
   { value: "bowtie", label: "BowTie" },
-  { value: "risk_assessment", label: "ارزیابی ریسک" },
-  { value: "incident", label: "حوادث" },
-  { value: "near_miss", label: "شبه حوادث" },
-  { value: "medical_exam", label: "معاینات پزشکی" },
-  { value: "workplace_hazard", label: "عوامل زیان‌آور محیط کار" },
-  { value: "proactive_indicator", label: "شاخص‌های Proactive HSE" },
-  { value: "audit", label: "ممیزی" },
-  { value: "other", label: "سایر" },
+  { value: "risk_assessment", labelKey: "caSourceRiskAssessment" },
+  { value: "incident", labelKey: "caSourceIncident" },
+  { value: "near_miss", labelKey: "caSourceNearMiss" },
+  { value: "medical_exam", labelKey: "caSourceMedicalExam" },
+  { value: "workplace_hazard", labelKey: "caSourceWorkplaceHazard" },
+  { value: "proactive_indicator", labelKey: "caSourceProactiveIndicator" },
+  { value: "audit", labelKey: "caSourceAudit" },
+  { value: "other", labelKey: "caSourceOther" },
 ];
 
 export const PRIORITY_OPTIONS = [
-  { value: "low", label: "پایین", color: "#166534", bg: "#dcfce7" },
-  { value: "medium", label: "متوسط", color: "#92400e", bg: "#fef3c7" },
-  { value: "high", label: "بالا", color: "#c92a2a", bg: "#fee2e2" },
-  { value: "critical", label: "بحرانی", color: "#fff", bg: "#7c2d12" },
+  { value: "low", labelKey: "caPriorityLow", color: "#166534", bg: "#dcfce7" },
+  { value: "medium", labelKey: "caPriorityMedium", color: "#92400e", bg: "#fef3c7" },
+  { value: "high", labelKey: "caPriorityHigh", color: "#c92a2a", bg: "#fee2e2" },
+  { value: "critical", labelKey: "caPriorityCritical", color: "#fff", bg: "#7c2d12" },
 ];
 
 // ترتیب عمداً همان ترتیب گردش‌کار طبیعی است: باز → در حال انجام → انجام‌شده
 // منتظر تأیید → بسته‌شده. «منقضی‌شده» جدا نگه داشته شده چون یک وضعیتِ
 // «به‌جای» است، نه ادامه‌ی طبیعی گردش‌کار.
 export const STATUS_META = {
-  open: { label: "باز / انجام نشده", emoji: "🔴", color: "#fff", bg: "#dc2626" },
-  in_progress: { label: "در حال انجام", emoji: "🟠", color: "#fff", bg: "#f97316" },
-  done_pending_approval: { label: "انجام شده، منتظر تأیید HSE", emoji: "🟡", color: "#1f2937", bg: "#facc15" },
-  closed: { label: "تأیید و بسته شده", emoji: "🟢", color: "#fff", bg: "#16a34a" },
-  expired: { label: "منقضی شده", emoji: "⚫", color: "#fff", bg: "#374151" },
+  open: { labelKey: "caStatusOpen", emoji: "🔴", color: "#fff", bg: "#dc2626" },
+  in_progress: { labelKey: "caStatusInProgress", emoji: "🟠", color: "#fff", bg: "#f97316" },
+  done_pending_approval: { labelKey: "caStatusDonePendingApproval", emoji: "🟡", color: "#1f2937", bg: "#facc15" },
+  closed: { labelKey: "caStatusClosed", emoji: "🟢", color: "#fff", bg: "#16a34a" },
+  expired: { labelKey: "caStatusExpired", emoji: "⚫", color: "#fff", bg: "#374151" },
 };
 export const STATUS_ORDER = ["open", "in_progress", "done_pending_approval", "closed", "expired"];
 
@@ -150,7 +151,7 @@ export async function createCorrectiveAction(rec, createdBy, explicitCompanyId) 
   }
   const payload = { ...toDb({ ...rec, actionNumber }), company_id: companyId, created_by: createdBy || "" };
   const rows = await sb("corrective_actions", { method: "POST", body: JSON.stringify([payload]) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ثبت: " + (rows?.message || "نامشخص") };
+  if (!sbOk(rows)) return { __error: true, message: translate(getCurrentLang(), "errCaCreate", { reason: rows?.message || translate(getCurrentLang(), "commonErrorUnknown") }) };
   return fromRow(rows[0]);
 }
 
@@ -158,13 +159,13 @@ export async function updateCorrectiveAction(id, rec) {
   const payload = toDb(rec);
   payload.updated_at = new Date().toISOString();
   const rows = await sb(`corrective_actions?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(payload) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ذخیره‌سازی: " + (rows?.message || "نامشخص") };
+  if (!sbOk(rows)) return { __error: true, message: translate(getCurrentLang(), "errCaSave", { reason: rows?.message || translate(getCurrentLang(), "commonErrorUnknown") }) };
   return fromRow(rows[0]);
 }
 
 export async function deleteCorrectiveAction(id) {
   const result = await sb(`corrective_actions?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" });
-  if (!sbOk(result)) return { __error: true, message: "خطا در حذف" };
+  if (!sbOk(result)) return { __error: true, message: translate(getCurrentLang(), "commonErrorDelete") };
   return { ok: true };
 }
 
@@ -225,7 +226,7 @@ export async function uploadCorrectiveActionFile(base64Data, fileName, contentTy
     const url = await uploadBase64ToStorage("corrective-action-files", path, base64Data, contentType);
     return { name: fileName, url };
   } catch (e) {
-    return { __error: true, message: e?.message || "خطا در آپلود فایل" };
+    return { __error: true, message: e?.message || translate(getCurrentLang(), "errCaUploadFile") };
   }
 }
 
