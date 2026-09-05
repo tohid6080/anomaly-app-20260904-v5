@@ -3,8 +3,10 @@ import { THEME, styles } from "../shared.js";
 import { loadBowtieCanvas } from "./bowtieApi.js";
 import { BARRIER_STATUS, EFFECTIVENESS_STATUS } from "./bowtieApi.js";
 import BowTieCanvas from "./BowTieCanvas.jsx";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 export default function BowTieEditor({ bowtie, onBack, readOnly }) {
+  const { t, dir } = useLanguage();
   const [data, setData] = useState({ threats: [], consequences: [], barriers: [], escalationFactors: [], escalationControls: [] });
   const [loading, setLoading] = useState(true);
 
@@ -15,11 +17,11 @@ export default function BowTieEditor({ bowtie, onBack, readOnly }) {
 
   useEffect(() => { load(); }, [bowtie.id]);
 
-  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>در حال بارگذاری Canvas...</div>;
+  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>{t("bowtieLoadingCanvas")}</div>;
 
   return (
-    <div style={{ maxWidth: 1000, margin: "0 auto", padding: 20 }}>
-      <div style={styles.backLink} onClick={onBack}>← بازگشت به لیست BowTie</div>
+    <div style={{ maxWidth: 1000, margin: "0 auto", padding: 20, direction: dir }}>
+      <div style={styles.backLink} onClick={onBack}>{t("bowtieBackToList")}</div>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 4 }}>
         <div>
           <h3 style={{ margin: "0 0 4px", color: THEME.navy, fontSize: 17, fontWeight: 700 }}>{bowtie.title}</h3>
@@ -41,7 +43,7 @@ export default function BowTieEditor({ bowtie, onBack, readOnly }) {
         readOnly={readOnly}
       />
       <p style={{ fontSize: 11, color: THEME.text3, marginTop: 10, textAlign: "center" }}>
-        برای جابه‌جایی نودها آن‌ها را بکشید؛ برای ویرایش روی هرکدام کلیک کنید. اسکرول = زوم، کشیدن پس‌زمینه = جابه‌جایی نما.
+        {t("bowtieCanvasHint")}
       </p>
     </div>
   );
@@ -52,22 +54,23 @@ export default function BowTieEditor({ bowtie, onBack, readOnly }) {
 // دستی و فوری HSE) و دایره‌ی کوچک بالای همان کارت (اثربخشی محاسبه‌شده بر
 // اساس شواهد Anomaly) — هر دو اینجا توضیح داده می‌شوند تا کاربر گیج نشود.
 function ColorLegend() {
+  const { t } = useLanguage();
   return (
     <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 8, padding: "8px 12px", fontSize: 10.5 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 4 }}>
-        <span style={{ color: THEME.text3, fontWeight: 700, whiteSpace: "nowrap" }}>وضعیت Barrier:</span>
+        <span style={{ color: THEME.text3, fontWeight: 700, whiteSpace: "nowrap" }}>{t("bowtieBarrierStatusLabel")}</span>
         {BARRIER_STATUS.map((s) => (
           <span key={s.value} style={{ display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap" }}>
             <span style={{ width: 9, height: 9, borderRadius: 3, background: s.color, display: "inline-block" }} />
-            {s.label}
+            {t(s.labelKey)}
           </span>
         ))}
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-        <span style={{ color: THEME.text3, fontWeight: 700, whiteSpace: "nowrap" }}>اثربخشی محاسبه‌شده:</span>
+        <span style={{ color: THEME.text3, fontWeight: 700, whiteSpace: "nowrap" }}>{t("bowtieCalculatedEffectivenessLabel")}</span>
         {EFFECTIVENESS_STATUS.map((s) => (
           <span key={s.value} style={{ display: "flex", alignItems: "center", gap: 3, whiteSpace: "nowrap" }}>
-            {s.emoji} {s.label}
+            {s.emoji} {t(s.labelKey)}
           </span>
         ))}
       </div>

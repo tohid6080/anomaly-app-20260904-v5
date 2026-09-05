@@ -2,6 +2,7 @@ import { sb, sbOk, sbErrMsg, uid, getCurrentCompanyId } from "../shared.js";
 import { offlineWrite } from "../offline/offlineWrite.js";
 import { isOnline } from "../offline/networkStatus.js";
 import { getRecordsByModule, putRecord } from "../offline/offlineDb.js";
+import { translate, getCurrentLang } from "../i18n/translations.js";
 
 /**
  * BowTie Risk Analysis — data access layer.
@@ -14,10 +15,10 @@ import { getRecordsByModule, putRecord } from "../offline/offlineDb.js";
  */
 
 export const BOWTIE_STATUSES = [
-  { value: "draft", label: "پیش‌نویس", color: "#5b6b7d", bg: "#eef1f5" },
-  { value: "in_review", label: "در حال بررسی", color: "#b45309", bg: "#fef3c7" },
-  { value: "approved", label: "تأیید شده", color: "#166534", bg: "#dcfce7" },
-  { value: "archived", label: "بایگانی", color: "#475569", bg: "#f1f5f9" },
+  { value: "draft", labelKey: "bowtieStatusDraft", color: "#5b6b7d", bg: "#eef1f5" },
+  { value: "in_review", labelKey: "bowtieStatusInReview", color: "#b45309", bg: "#fef3c7" },
+  { value: "approved", labelKey: "bowtieStatusApproved", color: "#166534", bg: "#dcfce7" },
+  { value: "archived", labelKey: "bowtieStatusArchived", color: "#475569", bg: "#f1f5f9" },
 ];
 
 export function bowtieStatusMeta(status) {
@@ -88,7 +89,7 @@ export async function insertBowtie(rec) {
     company_id: getCurrentCompanyId(),
   };
   const result = await offlineWrite({ module: "bowties", table: "bowties", action: "insert", id, payload: dbPayload });
-  if (!result.ok) return { __error: true, message: "خطا در ذخیره‌سازی" };
+  if (!result.ok) return { __error: true, message: translate(getCurrentLang(), "commonErrorSave") };
   return { ...bowtieFromRow(result.record), syncStatus: result.offline ? "pending" : "synced" };
 }
 
@@ -102,7 +103,7 @@ export async function updateBowtieDB(id, patch) {
   if ("status" in patch) dbPatch.status = patch.status;
   if ("version" in patch) dbPatch.version = patch.version;
   const result = await offlineWrite({ module: "bowties", table: "bowties", action: "update", id, payload: dbPatch });
-  if (!result.ok) return { __error: true, message: "خطا در ذخیره‌سازی" };
+  if (!result.ok) return { __error: true, message: translate(getCurrentLang(), "commonErrorSave") };
   return { ...bowtieFromRow(result.record), syncStatus: result.offline ? "pending" : "synced" };
 }
 
@@ -115,15 +116,15 @@ export async function deleteBowtieDB(id) {
 // ==========================================================
 
 export const CRITICALITY_LEVELS = [
-  { value: "low", label: "پایین", color: "#166534" },
-  { value: "medium", label: "متوسط", color: "#b45309" },
-  { value: "high", label: "بالا", color: "#c92a2a" },
+  { value: "low", labelKey: "criticalityLow", color: "#166534" },
+  { value: "medium", labelKey: "criticalityMedium", color: "#b45309" },
+  { value: "high", labelKey: "criticalityHigh", color: "#c92a2a" },
 ];
 
 export const BARRIER_STATUS = [
-  { value: "green", label: "سالم", color: "#16a34a" },
-  { value: "yellow", label: "نیازمند بررسی", color: "#d97706" },
-  { value: "red", label: "ناقص/خراب", color: "#dc2626" },
+  { value: "green", labelKey: "barrierStatusGreen", color: "#16a34a" },
+  { value: "yellow", labelKey: "barrierStatusYellow", color: "#d97706" },
+  { value: "red", labelKey: "barrierStatusRed", color: "#dc2626" },
 ];
 
 // وضعیت پنج‌رنگی «اثربخشی» — مستقل از BARRIER_STATUS بالا (که قضاوت
@@ -131,11 +132,11 @@ export const BARRIER_STATUS = [
 // (بر اساس Anomalyهای مرتبط) پر می‌شود؛ فعلاً فقط ساختار دیتابیسش را
 // اضافه می‌کنیم تا چیزی در آینده نشکند. پیش‌فرض هر بریر تازه: ارزیابی‌نشده.
 export const EFFECTIVENESS_STATUS = [
-  { value: "effective", label: "مؤثر", emoji: "🟢", color: "#16a34a" },
-  { value: "reducing", label: "در حال کاهش اثربخشی", emoji: "🟡", color: "#eab308" },
-  { value: "weak", label: "ضعیف / نیازمند اقدام", emoji: "🟠", color: "#f97316" },
-  { value: "failed", label: "شکست‌خورده", emoji: "🔴", color: "#dc2626" },
-  { value: "not_assessed", label: "ارزیابی نشده", emoji: "⚪", color: "#9ca3af" },
+  { value: "effective", labelKey: "effStatusEffective", emoji: "🟢", color: "#16a34a" },
+  { value: "reducing", labelKey: "effStatusReducing", emoji: "🟡", color: "#eab308" },
+  { value: "weak", labelKey: "effStatusWeak", emoji: "🟠", color: "#f97316" },
+  { value: "failed", labelKey: "effStatusFailed", emoji: "🔴", color: "#dc2626" },
+  { value: "not_assessed", labelKey: "effStatusNotAssessed", emoji: "⚪", color: "#9ca3af" },
 ];
 export function effectivenessMeta(v) {
   return EFFECTIVENESS_STATUS.find((s) => s.value === v) || EFFECTIVENESS_STATUS[4];

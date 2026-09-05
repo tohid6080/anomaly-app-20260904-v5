@@ -15,6 +15,7 @@ import { isOnline } from "../offline/networkStatus.js";
 import SyncStatusBadge from "../offline/SyncStatusBadge.jsx";
 import BowTieEditor from "./BowTieEditor.jsx";
 import BarrierEffectivenessDashboard from "./BarrierEffectivenessDashboard.jsx";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 /**
  * BowTie Risk Analysis — Dashboard.
@@ -31,6 +32,7 @@ import BarrierEffectivenessDashboard from "./BarrierEffectivenessDashboard.jsx";
  * message when there's no connection.
  */
 export default function BowTieDashboard({ onBack, currentUser, readOnly, role }) {
+  const { t, dir } = useLanguage();
   const [openBowtie, setOpenBowtie] = useState(null);
   const [showEffectivenessDashboard, setShowEffectivenessDashboard] = useState(false);
   const [bowties, setBowties] = useState([]);
@@ -41,7 +43,7 @@ export default function BowTieDashboard({ onBack, currentUser, readOnly, role })
   const [linkedChatBusy, setLinkedChatBusy] = useState(false);
   const openLinkedChat = async (b) => {
     setLinkedChatBusy(true);
-    const convId = await findOrCreateLinkedConversation(currentUser, "bowtie", b.id, `ریسک: ${b.title}`, []);
+    const convId = await findOrCreateLinkedConversation(currentUser, "bowtie", b.id, t("bowtieChatTitle", { title: b.title }), []);
     setLinkedChatBusy(false);
     if (convId?.__error) { alert(convId.message); return; }
     setLinkedChatId(convId);
@@ -89,9 +91,9 @@ export default function BowTieDashboard({ onBack, currentUser, readOnly, role })
   };
 
   const handleCreate = async () => {
-    if (readOnly) { alert("شما مجوز ایجاد BowTie جدید را ندارید"); return; }
+    if (readOnly) { alert(t("errNoCreateBowtiePermission")); return; }
     if (!title.trim() || !hazard.trim() || !topEvent.trim()) {
-      setFormError("عنوان، خطر (Hazard) و رویداد اصلی (Top Event) الزامی است");
+      setFormError(t("errTitleHazardTopEventRequired"));
       return;
     }
     setSaving(true);
@@ -105,7 +107,7 @@ export default function BowTieDashboard({ onBack, currentUser, readOnly, role })
     });
     setSaving(false);
     if (!inserted || inserted.__error) {
-      setFormError(`خطا در ذخیره‌سازی: ${inserted?.message || "نامشخص"}`);
+      setFormError(t("errSaveWithReason", { reason: inserted?.message || t("commonErrorUnknown") }));
       return;
     }
     setBowties([inserted, ...bowties]);
@@ -123,73 +125,73 @@ export default function BowTieDashboard({ onBack, currentUser, readOnly, role })
   };
 
   const saveEdit = async (id) => {
-    if (readOnly) { alert("شما مجوز ویرایش را ندارید"); return; }
+    if (readOnly) { alert(t("errNoEditPermission")); return; }
     if (!editData.title?.trim() || !editData.hazard?.trim() || !editData.topEvent?.trim()) {
-      alert("عنوان، خطر و رویداد اصلی نمی‌توانند خالی باشند");
+      alert(t("errTitleHazardTopEventEmpty"));
       return;
     }
     setEditSaving(true);
     const updated = await updateBowtieDB(id, editData);
     setEditSaving(false);
     if (!updated || updated.__error) {
-      alert(`خطا در ذخیره‌سازی: ${updated?.message || "نامشخص"}`);
+      alert(t("errSaveWithReason", { reason: updated?.message || t("commonErrorUnknown") }));
       return;
     }
     setBowties(bowties.map((b) => (b.id === id ? updated : b)));
     setExpandedId(null);
   };
 
-  const handleDelete = async (id, t) => {
-    if (readOnly) { alert("شما مجوز حذف را ندارید"); return; }
-    if (confirm(`آیا از حذف BowTie «${t}» مطمئن هستید؟ این عمل قابل بازگشت نیست.`)) {
+  const handleDelete = async (id, title) => {
+    if (readOnly) { alert(t("errNoDeletePermission")); return; }
+    if (confirm(t("confirmDeleteBowtie", { title }))) {
       await deleteBowtieDB(id);
       setBowties(bowties.filter((b) => b.id !== id));
       if (expandedId === id) setExpandedId(null);
     }
   };
 
-  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>در حال بارگذاری...</div>;
+  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</div>;
 
   if (openBowtie) {
     return <BowTieEditor bowtie={openBowtie} onBack={() => { setOpenBowtie(null); load(); }} readOnly={readOnly} />;
-  }
-
-  if (showEffectivenessDashboard) {
-    return <BarrierEffectivenessDashboard currentUser={currentUser} role={role} onBack={() => setShowEffectivenessDashboard(false)} />;
   }
 
   if (linkedChatId) {
     return <ChatThread conversationId={linkedChatId} currentUser={currentUser} onBack={() => setLinkedChatId(null)} />;
   }
 
+  if (showEffectivenessDashboard) {
+    return <BarrierEffectivenessDashboard currentUser={currentUser} role={role} onBack={() => setShowEffectivenessDashboard(false)} />;
+  }
+
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>← بازگشت به منو</div>}
+    <div style={{ maxWidth: 720, margin: "0 auto", padding: 24, direction: dir }}>
+      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
 
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
         <ShieldCheck size={20} color={THEME.teal} />
         <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>BowTie Risk Analysis</h2>
       </div>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 18 }}>
-        زیرماژول مدیریت ارزیابی ریسک — تحلیل خطرات به روش پروانه‌ای (BowTie)
+        {t("bowtieDashboardDesc")}
       </p>
 
       <div style={styles.statsRow}>
         <div style={styles.statBox}>
           <div style={styles.statNum}>{counts.total}</div>
-          <div style={styles.statLabel}>کل موارد</div>
+          <div style={styles.statLabel}>{t("statTotalItems")}</div>
         </div>
         <div style={{ ...styles.statBox, background: "#eef1f5" }}>
           <div style={{ ...styles.statNum, color: THEME.text2 }}>{counts.draft}</div>
-          <div style={styles.statLabel}>پیش‌نویس</div>
+          <div style={styles.statLabel}>{t("bowtieStatusDraft")}</div>
         </div>
         <div style={{ ...styles.statBox, background: "#fef3c7" }}>
           <div style={{ ...styles.statNum, color: "#b45309" }}>{counts.in_review}</div>
-          <div style={styles.statLabel}>در حال بررسی</div>
+          <div style={styles.statLabel}>{t("bowtieStatusInReview")}</div>
         </div>
         <div style={{ ...styles.statBox, background: "#dcfce7" }}>
           <div style={{ ...styles.statNum, color: "#166534" }}>{counts.approved}</div>
-          <div style={styles.statLabel}>تأیید شده</div>
+          <div style={styles.statLabel}>{t("bowtieStatusApproved")}</div>
         </div>
       </div>
 
@@ -198,7 +200,7 @@ export default function BowTieDashboard({ onBack, currentUser, readOnly, role })
         onClick={() => setShowEffectivenessDashboard(true)}
       >
         <ShieldCheck size={16} style={{ marginLeft: 6 }} />
-        موتور هوشمند اثربخشی Barrierها (DBEE)
+        {t("bowtieDbeeEngineCard")}
       </div>
 
       {!readOnly && (
@@ -207,35 +209,35 @@ export default function BowTieDashboard({ onBack, currentUser, readOnly, role })
           onClick={() => setShowForm((v) => !v)}
         >
           <Plus size={16} style={{ marginLeft: 6 }} />
-          {showForm ? "بستن فرم" : "BowTie جدید"}
+          {showForm ? t("bowtieCloseForm") : t("bowtieNewBtn")}
         </div>
       )}
 
       {showForm && !readOnly && (
         <div style={styles.card}>
-          <label style={styles.label}>عنوان</label>
-          <input style={styles.input} value={title} onChange={(e) => setTitle(e.target.value)} dir="rtl" placeholder="مثال: نشت گاز H2S در واحد فرآیندی" />
+          <label style={styles.label}>{t("commonTitle")}</label>
+          <input style={styles.input} value={title} onChange={(e) => setTitle(e.target.value)} dir={dir} placeholder={t("bowtieTitlePlaceholder")} />
 
-          <label style={styles.label}>خطر (Hazard)</label>
-          <input style={styles.input} value={hazard} onChange={(e) => setHazard(e.target.value)} dir="rtl" placeholder="مثال: گاز سمی تحت فشار" />
+          <label style={styles.label}>{t("fieldHazardParenthetical")}</label>
+          <input style={styles.input} value={hazard} onChange={(e) => setHazard(e.target.value)} dir={dir} placeholder={t("bowtieHazardPlaceholder")} />
 
-          <label style={styles.label}>رویداد اصلی (Top Event)</label>
-          <input style={styles.input} value={topEvent} onChange={(e) => setTopEvent(e.target.value)} dir="rtl" placeholder="مثال: رهاسازی ناگهانی گاز" />
+          <label style={styles.label}>{t("fieldTopEventParenthetical")}</label>
+          <input style={styles.input} value={topEvent} onChange={(e) => setTopEvent(e.target.value)} dir={dir} placeholder={t("bowtieTopEventPlaceholder")} />
 
           <div style={styles.formGrid}>
             <div>
-              <label style={styles.label}>سایت / پروژه</label>
-              <input style={styles.input} value={site} onChange={(e) => setSite(e.target.value)} dir="rtl" />
+              <label style={styles.label}>{t("fieldSiteProject")}</label>
+              <input style={styles.input} value={site} onChange={(e) => setSite(e.target.value)} dir={dir} />
             </div>
             <div>
-              <label style={styles.label}>واحد / دپارتمان</label>
-              <input style={styles.input} value={department} onChange={(e) => setDepartment(e.target.value)} dir="rtl" />
+              <label style={styles.label}>{t("fieldUnitDepartment")}</label>
+              <input style={styles.input} value={department} onChange={(e) => setDepartment(e.target.value)} dir={dir} />
             </div>
           </div>
 
           {formError && <p style={styles.error}>{formError}</p>}
           <button type="button" style={styles.button} onClick={handleCreate} disabled={saving}>
-            {saving ? "در حال ثبت..." : "ثبت BowTie"}
+            {saving ? t("trainingSubmitting") : t("bowtieSubmit")}
           </button>
         </div>
       )}
@@ -245,20 +247,20 @@ export default function BowTieDashboard({ onBack, currentUser, readOnly, role })
           <Search size={16} color={THEME.text3} />
           <input
             style={{ border: "none", outline: "none", flex: 1, fontSize: 14, fontFamily: THEME.font, background: "transparent" }}
-            placeholder="جستجو (عنوان، خطر، رویداد، سایت)..."
+            placeholder={t("bowtieSearchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            dir="rtl"
+            dir={dir}
           />
         </div>
-        <select style={styles.filterSelect} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir="rtl">
-          <option value="all">همه وضعیت‌ها</option>
-          {BOWTIE_STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+        <select style={styles.filterSelect} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir={dir}>
+          <option value="all">{t("filterAllStatuses")}</option>
+          {BOWTIE_STATUSES.map((s) => <option key={s.value} value={s.value}>{t(s.labelKey)}</option>)}
         </select>
       </div>
 
-      <h3 style={{ marginTop: 20, fontSize: 15.5, color: THEME.navy, fontWeight: 700 }}>موارد ثبت‌شده ({filtered.length})</h3>
-      {filtered.length === 0 && <p style={{ color: THEME.text3 }}>موردی یافت نشد.</p>}
+      <h3 style={{ marginTop: 20, fontSize: 15.5, color: THEME.navy, fontWeight: 700 }}>{t("registeredItemsCount", { count: filtered.length })}</h3>
+      {filtered.length === 0 && <p style={{ color: THEME.text3 }}>{t("noItemsFound")}</p>}
 
       {filtered.map((b) => {
         const sm = bowtieStatusMeta(b.status);
@@ -269,14 +271,14 @@ export default function BowTieDashboard({ onBack, currentUser, readOnly, role })
               <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                   <span style={{ fontWeight: 700, color: THEME.navy, fontSize: 14.5 }}>{b.title}</span>
-                  <span style={{ ...styles.badge, color: sm.color, background: sm.bg }}>{sm.label}</span>
+                  <span style={{ ...styles.badge, color: sm.color, background: sm.bg }}>{t(sm.labelKey)}</span>
                   {b.syncStatus && b.syncStatus !== "synced" && <SyncStatusBadge status={b.syncStatus} onRetry={() => load()} />}
                 </div>
                 <div style={{ fontSize: 13, marginTop: 8, color: THEME.text }}>
-                  <b style={{ color: THEME.text2 }}>خطر:</b> {b.hazard} &nbsp;·&nbsp; <b style={{ color: THEME.text2 }}>رویداد اصلی:</b> {b.topEvent}
+                  <b style={{ color: THEME.text2 }}>{t("bowtieHazardColon")}</b> {b.hazard} &nbsp;·&nbsp; <b style={{ color: THEME.text2 }}>{t("bowtieTopEventColon")}</b> {b.topEvent}
                 </div>
                 <div style={{ fontSize: 11.5, color: THEME.text3, marginTop: 6, fontWeight: 500 }}>
-                  {b.site && `${b.site}`} {b.department && `· ${b.department}`} {b.createdBy && `· ثبت توسط ${b.createdBy}`}
+                  {b.site && `${b.site}`} {b.department && `· ${b.department}`} {b.createdBy && `· ${t("submittedByLabel", { name: b.createdBy })}`}
                 </div>
               </div>
             </div>
@@ -285,57 +287,57 @@ export default function BowTieDashboard({ onBack, currentUser, readOnly, role })
               <div style={{ marginTop: 16, borderTop: `1px solid ${THEME.border}`, paddingTop: 16 }}>
                 {readOnly ? (
                   <div style={{ fontSize: 13, color: THEME.text2, lineHeight: 1.9 }}>
-                    <div><b>سایت/پروژه:</b> {b.site || "—"}</div>
-                    <div><b>واحد/دپارتمان:</b> {b.department || "—"}</div>
-                    <div><b>نسخه:</b> {b.version}</div>
+                    <div><b>{t("bowtieSiteProjectColon")}</b> {b.site || "—"}</div>
+                    <div><b>{t("bowtieUnitDeptColon")}</b> {b.department || "—"}</div>
+                    <div><b>{t("bowtieVersionColon")}</b> {b.version}</div>
                     <button
                       type="button"
                       style={{ ...styles.smallButton, background: THEME.navyMid, display: "flex", alignItems: "center", gap: 6, marginTop: 12 }}
-                      onClick={() => { if (!isOnline()) { alert("باز کردن Canvas نیاز به اتصال اینترنت دارد. لطفاً بعد از اتصال دوباره تلاش کنید."); return; } setOpenBowtie(b); }}
+                      onClick={() => { if (!isOnline()) { alert(t("errCanvasNeedsInternet")); return; } setOpenBowtie(b); }}
                     >
-                      <GitBranch size={14} /> مشاهده Canvas
+                      <GitBranch size={14} /> {t("bowtieViewCanvas")}
                     </button>
                   </div>
                 ) : (
                   <>
-                    <label style={styles.label}>عنوان</label>
-                    <input style={styles.input} value={editData.title} onChange={(e) => setEditData({ ...editData, title: e.target.value })} dir="rtl" />
+                    <label style={styles.label}>{t("commonTitle")}</label>
+                    <input style={styles.input} value={editData.title} onChange={(e) => setEditData({ ...editData, title: e.target.value })} dir={dir} />
 
-                    <label style={styles.label}>خطر (Hazard)</label>
-                    <input style={styles.input} value={editData.hazard} onChange={(e) => setEditData({ ...editData, hazard: e.target.value })} dir="rtl" />
+                    <label style={styles.label}>{t("fieldHazardParenthetical")}</label>
+                    <input style={styles.input} value={editData.hazard} onChange={(e) => setEditData({ ...editData, hazard: e.target.value })} dir={dir} />
 
-                    <label style={styles.label}>رویداد اصلی (Top Event)</label>
-                    <input style={styles.input} value={editData.topEvent} onChange={(e) => setEditData({ ...editData, topEvent: e.target.value })} dir="rtl" />
+                    <label style={styles.label}>{t("fieldTopEventParenthetical")}</label>
+                    <input style={styles.input} value={editData.topEvent} onChange={(e) => setEditData({ ...editData, topEvent: e.target.value })} dir={dir} />
 
                     <div style={styles.formGrid}>
                       <div>
-                        <label style={styles.label}>سایت / پروژه</label>
-                        <input style={styles.input} value={editData.site} onChange={(e) => setEditData({ ...editData, site: e.target.value })} dir="rtl" />
+                        <label style={styles.label}>{t("fieldSiteProject")}</label>
+                        <input style={styles.input} value={editData.site} onChange={(e) => setEditData({ ...editData, site: e.target.value })} dir={dir} />
                       </div>
                       <div>
-                        <label style={styles.label}>واحد / دپارتمان</label>
-                        <input style={styles.input} value={editData.department} onChange={(e) => setEditData({ ...editData, department: e.target.value })} dir="rtl" />
+                        <label style={styles.label}>{t("fieldUnitDepartment")}</label>
+                        <input style={styles.input} value={editData.department} onChange={(e) => setEditData({ ...editData, department: e.target.value })} dir={dir} />
                       </div>
                     </div>
 
-                    <label style={styles.label}>وضعیت</label>
-                    <select style={styles.input} value={editData.status} onChange={(e) => setEditData({ ...editData, status: e.target.value })} dir="rtl">
-                      {BOWTIE_STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                    <label style={styles.label}>{t("commonStatus")}</label>
+                    <select style={styles.input} value={editData.status} onChange={(e) => setEditData({ ...editData, status: e.target.value })} dir={dir}>
+                      {BOWTIE_STATUSES.map((s) => <option key={s.value} value={s.value}>{t(s.labelKey)}</option>)}
                     </select>
 
                     <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
                       <button type="button" style={styles.button} onClick={() => saveEdit(b.id)} disabled={editSaving}>
-                        {editSaving ? "در حال ذخیره..." : "ذخیره تغییرات"}
+                        {editSaving ? t("saSavingEllipsis") : t("saveChangesBtn")}
                       </button>
                       <button
                         type="button"
                         style={{ ...styles.smallButton, background: THEME.navyMid, display: "flex", alignItems: "center", gap: 6 }}
-                        onClick={() => { if (!isOnline()) { alert("باز کردن Canvas نیاز به اتصال اینترنت دارد. لطفاً بعد از اتصال دوباره تلاش کنید."); return; } setOpenBowtie(b); }}
+                        onClick={() => { if (!isOnline()) { alert(t("errCanvasNeedsInternet")); return; } setOpenBowtie(b); }}
                       >
-                        <GitBranch size={14} /> باز کردن Canvas
+                        <GitBranch size={14} /> {t("bowtieOpenCanvas")}
                       </button>
                       <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => handleDelete(b.id, b.title)}>
-                        <Trash2 size={13} style={{ display: "inline", marginLeft: 4 }} />حذف
+                        <Trash2 size={13} style={{ display: "inline", marginLeft: 4 }} />{t("commonDelete")}
                       </button>
                     </div>
                   </>

@@ -7352,6 +7352,9 @@ export const translations = {
   "apLevelMedium": { "fa": "متوسط", "en": "Medium" },
   "apLevelHigh": { "fa": "بالا", "en": "High" },
   "apLevelVeryHigh": { "fa": "بسیار بالا", "en": "Very high" },
+  "bowtieDbeeEngineCard": { "fa": "موتور هوشمند اثربخشی Barrierها (DBEE)", "en": "Smart barrier-effectiveness engine (DBEE)" },
+  "bowtiePendingPositionCount": { "fa": "{count} جابه‌جایی ثبت‌نشده", "en": "{count} unsaved move(s)" },
+  "bowtieCommitPositions": { "fa": "ثبت تغییرات موقعیت", "en": "Commit position changes" },
 
   // --- corrective actions: Tripod Beta / incident-origin integration (project-specific) ---
   "cadTripodOriginBadge": { "fa": "🔗 مدیریت حوادث / Tripod Beta", "en": "🔗 Incident Management / Tripod Beta" },

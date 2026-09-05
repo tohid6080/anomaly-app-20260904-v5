@@ -1,4 +1,5 @@
 import { sb, sbOk, getCurrentCompanyId } from "../shared.js";
+import { translate, getCurrentLang } from "../i18n/translations.js";
 
 /**
  * ارتباط Anomaly ↔ Barrier (فاز ۲ از نقشه‌ی «Living BowTie»).
@@ -43,7 +44,7 @@ export async function linkAnomalyToBarriers(anomalyId, selections, createdBy) {
     created_by: createdBy || "",
   }));
   const rows = await sb("anomaly_barrier_links", { method: "POST", body: JSON.stringify(payload) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ثبت ارتباط با Barrier: " + (rows?.message || "نامشخص") };
+  if (!sbOk(rows)) return { __error: true, message: translate(getCurrentLang(), "errLinkBarrier", { reason: rows?.message || translate(getCurrentLang(), "commonErrorUnknown") }) };
   return { ok: true, count: rows.length };
 }
 

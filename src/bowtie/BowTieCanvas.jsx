@@ -13,6 +13,7 @@ import {
 } from "./bowtieApi.js";
 import { exportCanvasPng, exportCanvasPdf, exportBowtieExcel } from "./bowtieExport.js";
 import NodeInspectorPanel from "./NodeInspectorPanel.jsx";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 /**
  * Hand-built SVG canvas (Path A: no React Flow).
@@ -118,6 +119,7 @@ function curvedPathV(x1, y1, x2, y2) {
 }
 
 export default function BowTieCanvas({ bowtie, threats, consequences, barriers, escalationFactors, escalationControls, onDataChange, readOnly }) {
+  const { t, dir } = useLanguage();
   const svgRef = useRef(null);
   const [view, setView] = useState({ scale: 0.62, tx: 40, ty: 20 });
   const [selected, setSelected] = useState(null);
@@ -364,30 +366,30 @@ export default function BowTieCanvas({ bowtie, threats, consequences, barriers, 
   const onWheel = (e) => { e.preventDefault(); zoomBy(e.deltaY < 0 ? 1.08 : 0.93); };
 
   const addThreat = async () => {
-    if (readOnly) { alert("شما مجوز ویرایش این BowTie را ندارید"); return; }
-    const label = prompt("عنوان تهدید (Threat) جدید:");
+    if (readOnly) { alert(t("errNoBowtieEditPermission")); return; }
+    const label = prompt(t("promptNewThreatTitle"));
     if (!label || !label.trim()) return;
     setSaveStatus("saving");
     const inserted = await insertThreat(bowtie.id, label.trim(), threatsForBowtie.length);
-    if (inserted?.__error) { setSaveStatus("idle"); alert(`خطا: ${inserted.message}`); return; }
+    if (inserted?.__error) { setSaveStatus("idle"); alert(t("errWithMessage", { message: inserted.message })); return; }
     pushHistory({ undo: () => deleteThreatDB(inserted.id), redo: () => insertThreat(bowtie.id, inserted.label, inserted.orderIndex, inserted.id) });
     onDataChange();
     flashSaved();
   };
   const addConsequence = async () => {
-    if (readOnly) { alert("شما مجوز ویرایش این BowTie را ندارید"); return; }
-    const label = prompt("عنوان پیامد (Consequence) جدید:");
+    if (readOnly) { alert(t("errNoBowtieEditPermission")); return; }
+    const label = prompt(t("promptNewConsequenceTitle"));
     if (!label || !label.trim()) return;
     setSaveStatus("saving");
     const inserted = await insertConsequence(bowtie.id, label.trim(), consForBowtie.length);
-    if (inserted?.__error) { setSaveStatus("idle"); alert(`خطا: ${inserted.message}`); return; }
+    if (inserted?.__error) { setSaveStatus("idle"); alert(t("errWithMessage", { message: inserted.message })); return; }
     pushHistory({ undo: () => deleteConsequenceDB(inserted.id), redo: () => insertConsequence(bowtie.id, inserted.label, inserted.orderIndex, inserted.id) });
     onDataChange();
     flashSaved();
   };
   const addBarrier = async (side, parentId) => {
-    if (readOnly) { alert("شما مجوز ویرایش این BowTie را ندارید"); return; }
-    const label = prompt(side === "preventive" ? "عنوان مانع پیشگیرانه (Preventive Barrier):" : "عنوان مانع بازیابی (Recovery Barrier):");
+    if (readOnly) { alert(t("errNoBowtieEditPermission")); return; }
+    const label = prompt(side === "preventive" ? t("promptPreventiveBarrierTitle") : t("promptRecoveryBarrierTitle"));
     if (!label || !label.trim()) return;
     setSaveStatus("saving");
     const count = barriersFor(side, parentId).length;
@@ -396,31 +398,31 @@ export default function BowTieCanvas({ bowtie, threats, consequences, barriers, 
       consequenceId: side === "recovery" ? parentId : null, orderIndex: count, label: label.trim(),
     };
     const inserted = await insertBarrier(rec);
-    if (inserted?.__error) { setSaveStatus("idle"); alert(`خطا: ${inserted.message}`); return; }
+    if (inserted?.__error) { setSaveStatus("idle"); alert(t("errWithMessage", { message: inserted.message })); return; }
     pushHistory({ undo: () => deleteBarrierDB(inserted.id), redo: () => insertBarrier({ ...rec, explicitId: inserted.id }) });
     onDataChange();
     flashSaved();
   };
   const addEscalationFactor = async (barrierId) => {
-    if (readOnly) { alert("شما مجوز ویرایش این BowTie را ندارید"); return; }
-    const label = prompt("عنوان عامل تشدیدکننده (Escalation Factor):");
+    if (readOnly) { alert(t("errNoBowtieEditPermission")); return; }
+    const label = prompt(t("promptEscalationFactorTitle"));
     if (!label || !label.trim()) return;
     setSaveStatus("saving");
     const orderIndex = factorsFor(barrierId).length;
     const inserted = await insertEscalationFactor(barrierId, label.trim(), orderIndex);
-    if (inserted?.__error) { setSaveStatus("idle"); alert(`خطا: ${inserted.message}`); return; }
+    if (inserted?.__error) { setSaveStatus("idle"); alert(t("errWithMessage", { message: inserted.message })); return; }
     pushHistory({ undo: () => deleteEscalationFactorDB(inserted.id), redo: () => insertEscalationFactor(barrierId, inserted.label, orderIndex, inserted.id) });
     onDataChange();
     flashSaved();
   };
   const addEscalationControl = async (factorId) => {
-    if (readOnly) { alert("شما مجوز ویرایش این BowTie را ندارید"); return; }
-    const label = prompt("عنوان کنترل تشدید (Escalation Control):");
+    if (readOnly) { alert(t("errNoBowtieEditPermission")); return; }
+    const label = prompt(t("promptEscalationControlTitle"));
     if (!label || !label.trim()) return;
     setSaveStatus("saving");
     const orderIndex = controlsFor(factorId).length;
     const inserted = await insertEscalationControl(factorId, label.trim(), orderIndex);
-    if (inserted?.__error) { setSaveStatus("idle"); alert(`خطا: ${inserted.message}`); return; }
+    if (inserted?.__error) { setSaveStatus("idle"); alert(t("errWithMessage", { message: inserted.message })); return; }
     pushHistory({ undo: () => deleteEscalationControlDB(inserted.id), redo: () => insertEscalationControl(factorId, inserted.label, orderIndex, inserted.id) });
     onDataChange();
     flashSaved();
@@ -432,7 +434,7 @@ export default function BowTieCanvas({ bowtie, threats, consequences, barriers, 
   }[type]);
 
   const handleInspectorSave = async (type, id, patch) => {
-    if (readOnly) { alert("شما مجوز ویرایش این BowTie را ندارید"); return; }
+    if (readOnly) { alert(t("errNoBowtieEditPermission")); return; }
     const updater = updaterFor(type);
     const before = selectedNode ? { ...selectedNode } : null;
     setSaveStatus("saving");
@@ -462,8 +464,8 @@ export default function BowTieCanvas({ bowtie, threats, consequences, barriers, 
   };
 
   const handleInspectorDelete = async (type, id) => {
-    if (readOnly) { alert("شما مجوز حذف این المان را ندارید"); return; }
-    if (!confirm("این المان حذف شود؟")) return;
+    if (readOnly) { alert(t("errNoDeleteElementPermission")); return; }
+    if (!confirm(t("confirmDeleteElement"))) return;
     setSaveStatus("saving");
     if (type === "threat") {
       const node = threatsForBowtie.find((t) => t.id === id);
@@ -554,18 +556,18 @@ export default function BowTieCanvas({ bowtie, threats, consequences, barriers, 
       <div style={{ position: "absolute", top: 10, insetInlineStart: 10, zIndex: 5, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
         {!readOnly && (
           <>
-            <button type="button" onClick={addThreat} style={toolBtnStyle(THEME.teal)}><Plus size={13} /> تهدید</button>
-            <button type="button" onClick={addConsequence} style={toolBtnStyle("#c2410c")}><Plus size={13} /> پیامد</button>
+            <button type="button" onClick={addThreat} style={toolBtnStyle(THEME.teal)}><Plus size={13} /> {t("bowtieToolThreat")}</button>
+            <button type="button" onClick={addConsequence} style={toolBtnStyle("#c2410c")}><Plus size={13} /> {t("bowtieToolConsequence")}</button>
             <div style={{ width: 1, height: 22, background: THEME.border, margin: "0 2px" }} />
-            <button type="button" onClick={undo} disabled={!canUndo} style={{ ...iconBtnStyle, opacity: canUndo ? 1 : 0.4, cursor: canUndo ? "pointer" : "default" }} title="واگرد (Ctrl+Z)"><Undo2 size={15} /></button>
-            <button type="button" onClick={redo} disabled={!canRedo} style={{ ...iconBtnStyle, opacity: canRedo ? 1 : 0.4, cursor: canRedo ? "pointer" : "default" }} title="ازنو (Ctrl+Y)"><Redo2 size={15} /></button>
+            <button type="button" onClick={undo} disabled={!canUndo} style={{ ...iconBtnStyle, opacity: canUndo ? 1 : 0.4, cursor: canUndo ? "pointer" : "default" }} title={t("bowtieUndoTitle")}><Undo2 size={15} /></button>
+            <button type="button" onClick={redo} disabled={!canRedo} style={{ ...iconBtnStyle, opacity: canRedo ? 1 : 0.4, cursor: canRedo ? "pointer" : "default" }} title={t("bowtieRedoTitle")}><Redo2 size={15} /></button>
             {pendingPositionCount > 0 && (
               <>
                 <div style={{ width: 1, height: 22, background: THEME.border, margin: "0 2px" }} />
-                <span style={{ fontSize: 11, color: "#92400e", fontWeight: 600 }}>{pendingPositionCount} جابه‌جایی ثبت‌نشده</span>
-                <button type="button" onClick={discardPositions} style={toolBtnStyle(THEME.text3)}>انصراف</button>
+                <span style={{ fontSize: 11, color: "#92400e", fontWeight: 600 }}>{t("bowtiePendingPositionCount", { count: pendingPositionCount })}</span>
+                <button type="button" onClick={discardPositions} style={toolBtnStyle(THEME.text3)}>{t("commonCancel")}</button>
                 <button type="button" onClick={commitPositions} style={{ ...toolBtnStyle("#166534"), display: "flex", alignItems: "center", gap: 5 }}>
-                  <Check size={13} /> ثبت تغییرات موقعیت
+                  <Check size={13} /> {t("bowtieCommitPositions")}
                 </button>
               </>
             )}
@@ -582,19 +584,19 @@ export default function BowTieCanvas({ bowtie, threats, consequences, barriers, 
           }}
           disabled={recalculating}
           style={{ ...toolBtnStyle(THEME.navyMid), opacity: recalculating ? 0.6 : 1 }}
-          title="اثربخشی همه‌ی بریرها را بر اساس شواهد Anomaly مرتبط دوباره محاسبه می‌کند"
+          title={t("bowtieRecalcTitle")}
         >
-          <RefreshCw size={13} /> {recalculating ? "در حال محاسبه..." : "بازمحاسبه اثربخشی"}
+          <RefreshCw size={13} /> {recalculating ? t("bowtieCalculatingEllipsis") : t("bowtieRecalcEffectiveness")}
         </button>
       </div>
       <div style={{ position: "absolute", top: 10, insetInlineEnd: 10, zIndex: 5, display: "flex", gap: 6 }}>
-        <button type="button" onClick={() => svgRef.current && exportCanvasPng(svgRef.current, bowtie.title)} style={iconBtnStyle} title="خروجی تصویر PNG"><ImageDown size={15} /></button>
-        <button type="button" onClick={() => svgRef.current && exportCanvasPdf(svgRef.current, bowtie.title)} style={iconBtnStyle} title="خروجی PDF"><FileDown size={15} /></button>
+        <button type="button" onClick={() => svgRef.current && exportCanvasPng(svgRef.current, bowtie.title)} style={iconBtnStyle} title={t("bowtieExportPngTitle")}><ImageDown size={15} /></button>
+        <button type="button" onClick={() => svgRef.current && exportCanvasPdf(svgRef.current, bowtie.title)} style={iconBtnStyle} title={t("bowtieExportPdfTitle")}><FileDown size={15} /></button>
         <button
           type="button"
           onClick={() => exportBowtieExcel(bowtie, threatsForBowtie, consForBowtie, barriers, escalationFactors, escalationControls, bowtie.title)}
           style={iconBtnStyle}
-          title="خروجی Excel (جدول موانع)"
+          title={t("bowtieExportExcelBarrierTitle")}
         >
           <FileSpreadsheet size={15} />
         </button>
@@ -746,17 +748,18 @@ export default function BowTieCanvas({ bowtie, threats, consequences, barriers, 
 }
 
 function SaveIndicator({ status }) {
+  const { t } = useLanguage();
   if (status === "idle") return null;
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11.5, color: status === "saving" ? THEME.text3 : "#166534", fontFamily: THEME.font }}>
       {status === "saving" ? (
         <>
           <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />
-          در حال ذخیره...
+          {t("bowtieSavingEllipsis")}
           <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
         </>
       ) : (
-        <><Check size={13} /> ذخیره شد</>
+        <><Check size={13} /> {t("bowtieSavedDone")}</>
       )}
     </div>
   );
@@ -788,6 +791,7 @@ function RectNode({ x, y, fill, stroke, label, selected, onDown }) {
 }
 
 function BarrierNode({ x, y, barrier, selected, onDown }) {
+  const { t } = useLanguage();
   const sm = statusMeta(barrier.status);
   const em = effectivenessMeta(barrier.effectivenessStatus);
   return (
@@ -797,7 +801,7 @@ function BarrierNode({ x, y, barrier, selected, onDown }) {
       {/* دایره‌ی پنج‌رنگی اثربخشی (🟢🟡🟠🔴⚪) — محاسبه‌شده در فاز ۳، مستقل از
           نوار وضعیت دستی سمت چپ که همان قضاوت فوری HSE باقی می‌ماند */}
       <circle cx={38} cy={-24} r={6} fill={em.color} stroke="#fff" strokeWidth={1.5} />
-      <title>{em.label}{barrier.effectivenessScore != null ? ` — ${barrier.effectivenessScore}%` : ""}</title>
+      <title>{t(em.labelKey)}{barrier.effectivenessScore != null ? ` — ${barrier.effectivenessScore}%` : ""}</title>
       {barrier.effectivenessScore != null && (
         <text x={38} y={-6} textAnchor="middle" fontSize={8.5} fontWeight="700" fill={em.color} fontFamily={THEME.font}>
           {barrier.effectivenessScore}%

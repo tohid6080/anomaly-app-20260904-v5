@@ -1,4 +1,5 @@
 import { sb, sbOk, getCurrentCompanyId } from "../shared.js";
+import { translate, getCurrentLang } from "../i18n/translations.js";
 import { loadAnomalyLinksForBarrier } from "./anomalyBarrierLinksApi.js";
 import { EFFECTIVENESS_STATUS } from "./bowtieApi.js";
 import { createAutoCorrectiveActionForBarrier } from "../correctiveActions/correctiveActionsApi.js";
@@ -56,11 +57,11 @@ export async function saveThresholds(thresholds, updatedBy) {
   };
   if (thresholds.id) {
     const rows = await sb(`bowtie_effectiveness_thresholds?id=eq.${thresholds.id}`, { method: "PATCH", body: JSON.stringify(payload) });
-    if (!sbOk(rows)) return { __error: true, message: "خطا در ذخیره‌ی تنظیمات" };
+    if (!sbOk(rows)) return { __error: true, message: translate(getCurrentLang(), "errBowtieSaveSettings") };
     return { ok: true };
   }
   const rows = await sb("bowtie_effectiveness_thresholds", { method: "POST", body: JSON.stringify([payload]) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ذخیره‌ی تنظیمات" };
+  if (!sbOk(rows)) return { __error: true, message: translate(getCurrentLang(), "errBowtieSaveSettings") };
   return { ok: true };
 }
 
@@ -201,7 +202,7 @@ export async function recalculateBarrierEffectiveness(barrier) {
 // همه‌ی بریرهای یک BowTie را یکجا بازمحاسبه می‌کند — برای دکمه‌ی «بازمحاسبه‌ی همه» در کانواس
 export async function recalculateAllBarriersForBowtie(bowtieId) {
   const rows = await sb(`bowtie_barriers?bowtie_id=eq.${bowtieId}&select=id,label,bowtie_id,is_critical_control`);
-  if (!sbOk(rows)) return { __error: true, message: "خطا در بارگذاری بریرها" };
+  if (!sbOk(rows)) return { __error: true, message: translate(getCurrentLang(), "errBowtieLoadBarriers") };
   const results = [];
   for (const r of rows) {
     const result = await recalculateBarrierEffectiveness({ id: r.id, label: r.label, bowtieId: r.bowtie_id, isCriticalControl: r.is_critical_control });
@@ -234,9 +235,9 @@ export { EFFECTIVENESS_STATUS };
 // محاسبه می‌شود؛ یعنی وقتی وضعیت درست شود، هشدار خودش ناپدید می‌شود.
 
 const ALERT_TEMPLATES = {
-  reducing: { emoji: "🟡", text: (label) => `اثربخشی Barrier «${label}» در حال کاهش است.` },
-  weak: { emoji: "🟠", text: (label) => `Barrier «${label}» نیازمند اقدام اصلاحی است.` },
-  failed: { emoji: "🔴", text: (label) => `Barrier «${label}» حیاتی اثربخشی خود را از دست داده است.` },
+  reducing: { emoji: "🟡", text: (label) => translate(getCurrentLang(), "effNotifReducing", { label }) },
+  weak: { emoji: "🟠", text: (label) => translate(getCurrentLang(), "effNotifWeak", { label }) },
+  failed: { emoji: "🔴", text: (label) => translate(getCurrentLang(), "effNotifFailed", { label }) },
 };
 
 // scopeContractorName: اگر داده شود، فقط بریرهایی نمایش داده می‌شوند که
@@ -277,7 +278,7 @@ export async function loadDegradedBarrierAlerts(scopeContractorName) {
     if (!tmpl) continue;
     items.push({
       key: `barrier-eff-${b.id}`,
-      label: `${tmpl.emoji} ${tmpl.text(b.label)} (${titleMap[b.bowtie_id] || "BowTie"} — ${b.effectiveness_score}٪)`,
+      label: `${tmpl.emoji} ${tmpl.text(b.label)} (${titleMap[b.bowtie_id] || "BowTie"} — ${b.effectiveness_score}${getCurrentLang() === "en" ? "%" : "٪"})`,
       target: { module: "bowtie", bowtieId: b.bowtie_id },
     });
   }

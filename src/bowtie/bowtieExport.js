@@ -1,7 +1,7 @@
 import * as XLSX from "xlsx";
 import { bowtieStatusMeta } from "./bowtieApi.js";
 import { isNativeApp, writeAndShare, exportWorkbookNativeAware, exportHtmlReportNativeAware } from "../offline/nativeFile.js";
-import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
+import { translate, getCurrentLang } from "../i18n/translations.js";
 
 /**
  * Export helpers for the BowTie canvas.
@@ -48,7 +48,7 @@ export function exportCanvasPng(svgEl, filename, scale = 2) {
         URL.revokeObjectURL(url);
         if (isNativeApp()) {
           const dataUrl = canvas.toDataURL("image/png");
-          writeAndShare(dataUrl, `${filename}.png`, "ذخیره یا ارسال تصویر BowTie").then(resolve).catch(reject);
+          writeAndShare(dataUrl, `${filename}.png`, translate(getCurrentLang(), "bowtieSaveOrShareImage")).then(resolve).catch(reject);
           return;
         }
         canvas.toBlob((blob) => {
@@ -92,7 +92,7 @@ export async function exportCanvasPdf(svgEl, title) {
   if (await exportHtmlReportNativeAware(html, title)) return;
 
   const win = window.open("", "_blank");
-  if (!win) { alert("اجازه‌ی باز شدن پنجره‌ی جدید داده نشد؛ لطفاً popup blocker مرورگر را غیرفعال کنید."); return; }
+  if (!win) { alert(translate(getCurrentLang(), "errPopupBlocked")); return; }
   win.document.write(html);
   win.document.close();
   win.focus();
@@ -109,19 +109,21 @@ function escapeHtml(s) {
 }
 
 export async function exportBowtieExcel(bowtie, threats, consequences, barriers, escalationFactors, escalationControls, filename) {
+  const lang = getCurrentLang();
   const nameOfThreat = (id) => threats.find((t) => t.id === id)?.label || "";
   const nameOfCons = (id) => consequences.find((c) => c.id === id)?.label || "";
+  const statusLabel = (meta) => (meta ? translate(lang, meta.labelKey) : "");
 
   const barrierRows = barriers.map((b, idx) => ({
-    "ردیف": idx + 1,
-    "نوع": b.side === "preventive" ? "پیشگیرانه" : "بازیابی",
-    "متصل به": b.side === "preventive" ? nameOfThreat(b.threatId) : nameOfCons(b.consequenceId),
-    "عنوان مانع": b.label,
-    "مسئول": b.owner,
-    "بحرانی بودن": b.criticality,
-    "وضعیت": bowtieStatusMeta(b.status)?.label || b.status,
-    "کنترل بحرانی": b.isCriticalControl ? "بله" : "خیر",
-    "تاریخ راستی‌آزمایی": toJalaliSafe(b.verificationDate) || "—",
+    [translate(lang, "bxColRow")]: idx + 1,
+    [translate(lang, "bxColType")]: b.side === "preventive" ? translate(lang, "barrierSidePreventive") : translate(lang, "barrierSideRecovery"),
+    [translate(lang, "bxColConnectedTo")]: b.side === "preventive" ? nameOfThreat(b.threatId) : nameOfCons(b.consequenceId),
+    [translate(lang, "bxColBarrierTitle")]: b.label,
+    [translate(lang, "bxColOwner")]: b.owner,
+    [translate(lang, "bxColCriticality")]: b.criticality,
+    [translate(lang, "bxColStatus")]: statusLabel(bowtieStatusMeta(b.status)) || b.status,
+    [translate(lang, "bxColCriticalControl")]: b.isCriticalControl ? translate(lang, "commonYes") : translate(lang, "commonNo"),
+    [translate(lang, "bxColVerificationDate")]: b.verificationDate || "",
   }));
 
   const escalationRows = [];
@@ -130,13 +132,13 @@ export async function exportBowtieExcel(bowtie, threats, consequences, barriers,
     const controls = escalationControls.filter((c) => c.escalationFactorId === f.id);
     if (controls.length === 0) {
       escalationRows.push({
-        "مانع مرتبط": parentBarrier?.label || "", "عامل تشدیدکننده": f.label, "کنترل تشدید": "", "مسئول": "", "وضعیت": "",
+        [translate(lang, "bxColRelatedBarrier")]: parentBarrier?.label || "", [translate(lang, "bxColEscalationFactor")]: f.label, [translate(lang, "bxColEscalationControl")]: "", [translate(lang, "bxColOwner")]: "", [translate(lang, "bxColStatus")]: "",
       });
     } else {
       controls.forEach((c) => {
         escalationRows.push({
-          "مانع مرتبط": parentBarrier?.label || "", "عامل تشدیدکننده": f.label, "کنترل تشدید": c.label,
-          "مسئول": c.owner, "وضعیت": c.status,
+          [translate(lang, "bxColRelatedBarrier")]: parentBarrier?.label || "", [translate(lang, "bxColEscalationFactor")]: f.label, [translate(lang, "bxColEscalationControl")]: c.label,
+          [translate(lang, "bxColOwner")]: c.owner, [translate(lang, "bxColStatus")]: c.status,
         });
       });
     }
@@ -145,8 +147,8 @@ export async function exportBowtieExcel(bowtie, threats, consequences, barriers,
   const wb = XLSX.utils.book_new();
 
   const infoWs = XLSX.utils.json_to_sheet([{
-    "عنوان": bowtie.title, "خطر (Hazard)": bowtie.hazard, "رویداد اصلی (Top Event)": bowtie.topEvent,
-    "سایت": bowtie.site, "دپارتمان": bowtie.department, "وضعیت": bowtieStatusMeta(bowtie.status)?.label,
+    [translate(lang, "bxColTitle")]: bowtie.title, [translate(lang, "bxColHazardParen")]: bowtie.hazard, [translate(lang, "bxColTopEventParen")]: bowtie.topEvent,
+    [translate(lang, "bxColSite")]: bowtie.site, [translate(lang, "bxColDepartment")]: bowtie.department, [translate(lang, "bxColStatus")]: statusLabel(bowtieStatusMeta(bowtie.status)),
   }]);
   XLSX.utils.book_append_sheet(wb, infoWs, "BowTie");
 
