@@ -30,7 +30,9 @@ export function LanguageProvider({ children }) {
     try { localStorage.setItem(STORAGE_KEY, value); } catch { /* بی‌اهمیت */ }
   }, []);
 
-  const t = useCallback((key) => translate(lang, key), [lang]);
+  // پارامترِ اختیاریِ params برای درون‌ریزیِ جای‌نگه‌دارهای {name} در متنِ
+  // ترجمه — سازگار با فراخوانی‌های بدونِ پارامترِ موجود.
+  const t = useCallback((key, params) => translate(lang, key, params), [lang]);
   const dir = lang === "en" ? "ltr" : "rtl";
 
   return (
