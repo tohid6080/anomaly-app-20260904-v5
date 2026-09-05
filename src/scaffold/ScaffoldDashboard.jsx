@@ -11,14 +11,18 @@ import {
   resubmitForInspection, requestScaffoldRemoval, confirmScaffoldRemoved,
 } from "./scaffoldApi.js";
 import ScaffoldRequestForm from "./ScaffoldRequestForm.jsx";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { translate as i18nTranslate, getCurrentLang } from "../i18n/translations.js";
 
-const SORT_OPTIONS = [
-  { value: "newest", label: "جدیدترین" },
-  { value: "oldest", label: "قدیمی‌ترین" },
-  { value: "tag", label: "شماره تگ" },
+const SORT_OPTIONS_KEYS = [
+  { value: "newest", labelKey: "sortNewest" },
+  { value: "oldest", labelKey: "sortOldest" },
+  { value: "tag", labelKey: "sortTagNumber" },
 ];
 
 export default function ScaffoldDashboard({ onBack, currentUser, role, initialStatusFilter, initialContractorFilter, readOnly }) {
+  const { t, dir } = useLanguage();
+  const SORT_OPTIONS = SORT_OPTIONS_KEYS.map((o) => ({ value: o.value, label: t(o.labelKey) }));
   const isContractor = role === "CONTRACTOR";
   const [list, setList] = useState([]);
   const [myContractorCode, setMyContractorCode] = useState("");
@@ -106,8 +110,8 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
     : [];
 
   const handleDelete = async (id) => {
-    if (readOnly) { alert("شما مجوز حذف را ندارید"); return; }
-    if (!confirm("این درخواست تگ حذف شود؟")) return;
+    if (readOnly) { alert(t("errNoDeletePermission")); return; }
+    if (!confirm(t("confirmDeleteTagRequest"))) return;
     await deleteScaffoldTagDB(id);
     await load();
   };
@@ -127,33 +131,33 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
   };
 
   const startCorrection = (t) => { setExpandedId(t.id); setCorrectionNote(""); setCorrectionDeadline(""); setCorrectionDeadlineTime("18:00"); };
-  const submitCorrection = async (t) => {
+  const submitCorrection = async (row) => {
     if (!correctionNote.trim() || !correctionDeadline) {
-      alert("شرح ایراد و تاریخ مهلت الزامی است");
+      alert(t("errFaultDescDeadlineRequired"));
       return;
     }
     setSaving(true);
     const deadlineIso = `${correctionDeadline}T${correctionDeadlineTime}:00`;
-    await markNeedsCorrection(t.id, correctionNote, deadlineIso, currentUser?.name || "");
+    await markNeedsCorrection(row.id, correctionNote, deadlineIso, currentUser?.name || "");
     setSaving(false);
     setExpandedId(null);
     await load();
   };
 
-  const handleResubmit = async (t) => {
-    if (readOnly) { alert("شما مجوز این اقدام را ندارید"); return; }
+  const handleResubmit = async (row) => {
+    if (readOnly) { alert(t("errNoActionPermission")); return; }
     setSaving(true);
-    await resubmitForInspection(t.id);
+    await resubmitForInspection(row.id);
     setSaving(false);
     await load();
   };
 
   const startRemovalRequest = (t) => { setExpandedId(`removal-${t.id}`); setRemovalDate(""); };
-  const submitRemovalRequest = async (t) => {
-    if (readOnly) { alert("شما مجوز این اقدام را ندارید"); return; }
-    if (!removalDate) { alert("تاریخ برچیدن الزامی است"); return; }
+  const submitRemovalRequest = async (row) => {
+    if (readOnly) { alert(t("errNoActionPermission")); return; }
+    if (!removalDate) { alert(t("errRemovalDateRequired")); return; }
     setSaving(true);
-    await requestScaffoldRemoval(t.id, removalDate);
+    await requestScaffoldRemoval(row.id, removalDate);
     setSaving(false);
     setExpandedId(null);
     await load();
@@ -167,27 +171,29 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
   };
 
   const handlePrintTag = async (t) => {
-    const html = `<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>تگ داربست ${t.tagNumber}</title>
+    const lang = getCurrentLang();
+    const isEn = lang === "en";
+    const html = `<!doctype html><html lang="${lang}" dir="${isEn ? "ltr" : "rtl"}"><head><meta charset="utf-8"><title>${i18nTranslate(lang, "scaffTagPrintTitle", { num: t.tagNumber })}</title>
     <style>
-      body { font-family: Tahoma, Arial, sans-serif; direction: rtl; padding: 30px; }
+      body { font-family: Tahoma, Arial, sans-serif; direction: ${isEn ? "ltr" : "rtl"}; padding: 30px; }
       .tag { border: 3px solid #166534; border-radius: 12px; padding: 24px; max-width: 420px; margin: 0 auto; text-align: center; }
       .num { font-size: 26px; font-weight: 700; color: #166534; direction: ltr; margin: 10px 0; }
-      .row { font-size: 13px; color: #333; margin: 6px 0; text-align: right; }
+      .row { font-size: 13px; color: #333; margin: 6px 0; text-align: ${isEn ? "left" : "right"}; }
     </style></head>
     <body>
       <div class="tag">
-        <h2>تگ داربست</h2>
+        <h2>${i18nTranslate(lang, "scaffTagHeading")}</h2>
         <div class="num">${t.tagNumber}</div>
-        <div class="row"><b>پیمانکار:</b> ${t.contractorName || "—"}</div>
-        <div class="row"><b>محل برپایی:</b> ${t.location || "—"}</div>
-        <div class="row"><b>تاریخ برپایی:</b> ${toJalaliSafe(t.erectionDate) || "—"}</div>
-        <div class="row"><b>تاریخ صدور تگ:</b> ${toJalaliSafe(t.issueDate) || "—"}</div>
-        <div class="row"><b>وضعیت:</b> ${scaffoldStatusMeta(t.status).label}</div>
+        <div class="row"><b>${i18nTranslate(lang, "scaffPrintContractor")}</b> ${t.contractorName || "—"}</div>
+        <div class="row"><b>${i18nTranslate(lang, "scaffPrintLocation")}</b> ${t.location || "—"}</div>
+        <div class="row"><b>${i18nTranslate(lang, "scaffPrintErectionDate")}</b> ${toJalaliSafe(t.erectionDate) || "—"}</div>
+        <div class="row"><b>${i18nTranslate(lang, "scaffPrintIssueDate")}</b> ${toJalaliSafe(t.issueDate) || "—"}</div>
+        <div class="row"><b>${i18nTranslate(lang, "scaffPrintStatus")}</b> ${i18nTranslate(lang, scaffoldStatusMeta(t.status).labelKey)}</div>
       </div>
     </body></html>`;
     if (await exportHtmlReportNativeAware(html, `Tag-${t.tagNumber}`)) return;
     const win = window.open("", "_blank");
-    if (!win) { alert("اجازه‌ی باز شدن پنجره‌ی جدید داده نشد؛ لطفاً popup blocker را غیرفعال کنید."); return; }
+    if (!win) { alert(i18nTranslate(lang, "errPopupBlockedShort")); return; }
     win.document.write(html);
     win.document.close();
     win.focus();
@@ -204,35 +210,36 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
     );
   }
 
-  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>در حال بارگذاری...</div>;
+  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</div>;
 
+  const t2 = t;
   const rowActions = (t) => (
     <>
       {isContractor && !readOnly && t.status === "pending_initial_approval" && (
         <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => handleDelete(t.id)}><Trash2 size={12} /></button>
       )}
       {isContractor && !readOnly && t.status === "needs_correction" && (
-        <button type="button" style={styles.smallButton} onClick={() => handleResubmit(t)} disabled={saving}>درخواست بازدید مجدد</button>
+        <button type="button" style={styles.smallButton} onClick={() => handleResubmit(t)} disabled={saving}>{t2("scaffRequestReinspection")}</button>
       )}
       {isContractor && !readOnly && t.status === "tag_issued" && (
-        <button type="button" style={{ ...styles.smallButton, background: "#7c3aed" }} onClick={() => startRemovalRequest(t)}>درخواست پرمیت برچیدن</button>
+        <button type="button" style={{ ...styles.smallButton, background: "#7c3aed" }} onClick={() => startRemovalRequest(t)}>{t2("scaffRequestRemovalPermit")}</button>
       )}
       {(t.status === "tag_issued" || t.status === "removal_requested" || t.status === "removed") && (
         <button type="button" style={{ ...styles.smallButton, background: THEME.navyMid, display: "inline-flex", alignItems: "center", gap: 4 }} onClick={() => handlePrintTag(t)}>
-          <Printer size={12} /> چاپ
+          <Printer size={12} /> {t2("scaffPrint")}
         </button>
       )}
       {!isContractor && !readOnly && t.status === "pending_initial_approval" && (
-        <button type="button" style={{ ...styles.smallButton, background: "#166534" }} onClick={() => handleApproveInitial(t)} disabled={saving}>تأیید اولیه</button>
+        <button type="button" style={{ ...styles.smallButton, background: "#166534" }} onClick={() => handleApproveInitial(t)} disabled={saving}>{t2("scaffInitialApprove")}</button>
       )}
       {!isContractor && !readOnly && t.status === "pending_installation" && (
         <>
-          <button type="button" style={{ ...styles.smallButton, background: "#166534" }} onClick={() => handleIssueTag(t)} disabled={saving}>ایمن است</button>
-          <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => startCorrection(t)}>عدم انطباق</button>
+          <button type="button" style={{ ...styles.smallButton, background: "#166534" }} onClick={() => handleIssueTag(t)} disabled={saving}>{t2("scaffSafe")}</button>
+          <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => startCorrection(t)}>{t2("scaffNonconformance")}</button>
         </>
       )}
       {!isContractor && !readOnly && t.status === "removal_requested" && (
-        <button type="button" style={{ ...styles.smallButton, background: "#166534" }} onClick={() => handleConfirmRemoved(t)} disabled={saving}>تأیید برچیده‌شدن</button>
+        <button type="button" style={{ ...styles.smallButton, background: "#166534" }} onClick={() => handleConfirmRemoved(t)} disabled={saving}>{t2("scaffConfirmRemoval")}</button>
       )}
     </>
   );
@@ -249,32 +256,32 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
 
       {expandedId === t.id && !isContractor && (
         <div>
-          <label style={styles.label}>شرح ایرادات / عدم انطباق</label>
-          <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={correctionNote} onChange={(e) => setCorrectionNote(e.target.value)} dir="rtl" />
+          <label style={styles.label}>{t2("scaffFaultDescLabel")}</label>
+          <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={correctionNote} onChange={(e) => setCorrectionNote(e.target.value)} dir={dir} />
           <div style={{ display: "flex", gap: 8 }}>
             <div style={{ flex: 1 }}>
-              <label style={styles.label}>تاریخ مهلت رفع</label>
+              <label style={styles.label}>{t2("scaffCorrectionDeadlineDate")}</label>
               <JalaliDateInput value={correctionDeadline} onChange={setCorrectionDeadline} />
             </div>
             <div style={{ width: 110 }}>
-              <label style={styles.label}>ساعت</label>
+              <label style={styles.label}>{t2("fieldTime")}</label>
               <input type="time" style={styles.input} value={correctionDeadlineTime} onChange={(e) => setCorrectionDeadlineTime(e.target.value)} />
             </div>
           </div>
           <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-            <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => submitCorrection(t)} disabled={saving}>ثبت و ارسال به پیمانکار</button>
-            <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setExpandedId(null)}>انصراف</button>
+            <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => submitCorrection(t)} disabled={saving}>{t2("scaffSubmitAndSendToContractor")}</button>
+            <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setExpandedId(null)}>{t2("commonCancel")}</button>
           </div>
         </div>
       )}
 
       {expandedId === `removal-${t.id}` && isContractor && (
         <div>
-          <label style={styles.label}>تاریخ برچیدن داربست</label>
+          <label style={styles.label}>{t2("scaffRemovalDateField")}</label>
           <JalaliDateInput value={removalDate} onChange={setRemovalDate} />
           <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-            <button type="button" style={{ ...styles.smallButton, background: "#7c3aed" }} onClick={() => submitRemovalRequest(t)} disabled={saving}>ثبت درخواست برچیدن</button>
-            <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setExpandedId(null)}>انصراف</button>
+            <button type="button" style={{ ...styles.smallButton, background: "#7c3aed" }} onClick={() => submitRemovalRequest(t)} disabled={saving}>{t2("scaffSubmitRemovalRequest")}</button>
+            <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setExpandedId(null)}>{t2("commonCancel")}</button>
           </div>
         </div>
       )}
@@ -282,33 +289,33 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
   );
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>← بازگشت به منو</div>}
+    <div style={{ maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
+      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
         <Tag size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>مدیریت داربست — لیست تگ داربست</h2>
+        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("scaffModuleTitle")}</h2>
       </div>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 14 }}>
-        {isContractor ? "درخواست تگ جدید، پیگیری بازدید، و درخواست برچیدن داربست" : "بررسی و تأیید تگ‌های داربست تمام پیمانکاران"}
+        {isContractor ? t("scaffContractorSubtitle") : t("scaffEmployerSubtitle")}
       </p>
 
       {isContractor && myStats && (
         <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
-          <StatBox label="تگ صادر شده" value={myStats.issued} color="#166534" bg="#dcfce7" />
-          <StatBox label="داربست برچیده‌نشده" value={myStats.notRemoved} color="#1d4ed8" bg="#dbeafe" />
-          <StatBox label="تگ صادر نشده" value={myStats.notIssued} color="#b45309" bg="#fef3c7" />
+          <StatBox label={t("scaffStatIssued")} value={myStats.issued} color="#166534" bg="#dcfce7" />
+          <StatBox label={t("scaffStatNotRemoved")} value={myStats.notRemoved} color="#1d4ed8" bg="#dbeafe" />
+          <StatBox label={t("scaffStatNotIssued")} value={myStats.notIssued} color="#b45309" bg="#fef3c7" />
         </div>
       )}
 
       {!isContractor && perContractorStats.length > 0 && (
         <div style={{ ...styles.card, width: "auto", marginBottom: 14 }}>
-          <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>آمار داربست به‌ازای هر پیمانکار</h3>
+          <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>{t("scaffPerContractorStats")}</h3>
           {perContractorStats.map((c) => (
             <div key={c.name} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${THEME.border}`, flexWrap: "wrap" }}>
               <span style={{ flex: 1, minWidth: 100, fontSize: 12.5, fontWeight: 600, color: THEME.text }}>{c.name}</span>
-              <span style={{ fontSize: 11, color: "#166534" }}>صادرشده: <b>{c.issued}</b></span>
-              <span style={{ fontSize: 11, color: "#1d4ed8" }}>برچیده‌نشده: <b>{c.notRemoved}</b></span>
-              <span style={{ fontSize: 11, color: "#b45309" }}>صادرنشده: <b>{c.notIssued}</b></span>
+              <span style={{ fontSize: 11, color: "#166534" }}>{t("scaffIssuedColon")} <b>{c.issued}</b></span>
+              <span style={{ fontSize: 11, color: "#1d4ed8" }}>{t("scaffNotRemovedColon")} <b>{c.notRemoved}</b></span>
+              <span style={{ fontSize: 11, color: "#b45309" }}>{t("scaffNotIssuedColon")} <b>{c.notIssued}</b></span>
             </div>
           ))}
         </div>
@@ -317,10 +324,10 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
       {isContractor && !readOnly && (
         myContractorCode ? (
           <button type="button" style={{ ...styles.button, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 14 }} onClick={() => setShowForm(true)}>
-            <Plus size={15} /> اخذ تگ داربست جدید
+            <Plus size={15} /> {t("scaffGetNewTag")}
           </button>
         ) : (
-          <p style={{ ...styles.error, marginBottom: 14 }}>کد دوحرفی شرکت شما هنوز توسط ادمین تعریف نشده — برای درخواست تگ جدید با ادمین سامانه هماهنگ کنید.</p>
+          <p style={{ ...styles.error, marginBottom: 14 }}>{t("errScaffNoCompanyCode")}</p>
         )
       )}
 
@@ -329,66 +336,66 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
         getId={(t) => t.id}
         searchQuery={search}
         onSearchChange={setSearch}
-        searchPlaceholder="جستجو (شماره تگ، پیمانکار، محل)..."
+        searchPlaceholder={t("scaffSearchPlaceholder")}
         sortOptions={SORT_OPTIONS}
         sortValue={sort}
         onSortChange={setSort}
         filterSlot={
-          <select style={styles.filterSelect} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir="rtl">
-            <option value="all">همه وضعیت‌ها</option>
-            {SCAFFOLD_STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+          <select style={styles.filterSelect} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir={dir}>
+            <option value="all">{t("filterAllStatuses")}</option>
+            {SCAFFOLD_STATUSES.map((s) => <option key={s.value} value={s.value}>{t(s.labelKey)}</option>)}
           </select>
         }
-        emptyMessage="موردی یافت نشد"
+        emptyMessage={t("noItemsFound")}
         expandedId={expandedItem?.id}
         renderExpanded={renderExpandedPanel}
         columns={[
-          { key: "tag", label: "شماره تگ", render: (t) => <span style={{ direction: "ltr", display: "inline-block", fontWeight: 600 }}>{t.tagNumber}</span> },
-          ...(!isContractor ? [{ key: "contractor", label: "پیمانکار", render: (t) => t.contractorName || "—" }] : []),
-          { key: "location", label: "محل / تاریخ برپایی", render: (t) => <span style={{ fontSize: 11.5, color: THEME.text3 }}>{t.location} · {toJalaliSafe(t.erectionDate)}</span> },
+          { key: "tag", label: t("colTagNumber"), render: (row) => <span style={{ direction: "ltr", display: "inline-block", fontWeight: 600 }}>{row.tagNumber}</span> },
+          ...(!isContractor ? [{ key: "contractor", label: t("fieldContractor"), render: (row) => row.contractorName || "—" }] : []),
+          { key: "location", label: t("colLocationErectionDate"), render: (row) => <span style={{ fontSize: 11.5, color: THEME.text3 }}>{row.location} · {toJalaliSafe(row.erectionDate)}</span> },
           {
-            key: "status", label: "وضعیت",
-            render: (t) => {
-              const sm = scaffoldStatusMeta(t.status);
+            key: "status", label: t("commonStatus"),
+            render: (row) => {
+              const sm = scaffoldStatusMeta(row.status);
               return (
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                  <StatusPill label={sm.label} color={sm.color} bg={sm.bg} />
-                  {t.syncStatus && t.syncStatus !== "synced" && <SyncStatusBadge status={t.syncStatus} onRetry={() => load()} />}
+                  <StatusPill label={t2(sm.labelKey)} color={sm.color} bg={sm.bg} />
+                  {row.syncStatus && row.syncStatus !== "synced" && <SyncStatusBadge status={row.syncStatus} onRetry={() => load()} />}
                 </div>
               );
             },
           },
         ]}
         renderRowActions={rowActions}
-        renderCard={(t) => {
-          const sm = scaffoldStatusMeta(t.status);
+        renderCard={(card) => {
+          const sm = scaffoldStatusMeta(card.status);
           return (
             <div style={{ ...styles.card, width: "auto", margin: 0, borderInlineStart: `4px solid ${sm.color}`, height: "100%" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 6 }}>
                 <div>
-                  <div style={{ fontWeight: 700, color: THEME.navy, fontSize: 14, direction: "ltr", textAlign: "right" }}>{t.tagNumber}</div>
+                  <div style={{ fontWeight: 700, color: THEME.navy, fontSize: 14, direction: "ltr", textAlign: "right" }}>{card.tagNumber}</div>
                   <div style={{ fontSize: 11.5, color: THEME.text3, marginTop: 4 }}>
-                    {!isContractor && <>{t.contractorName} · </>}{t.location} · {toJalaliSafe(t.erectionDate)}
+                    {!isContractor && <>{card.contractorName} · </>}{card.location} · {toJalaliSafe(card.erectionDate)}
                   </div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <StatusPill label={sm.label} color={sm.color} bg={sm.bg} />
-                  {t.syncStatus && t.syncStatus !== "synced" && <SyncStatusBadge status={t.syncStatus} onRetry={() => load()} />}
+                  <StatusPill label={t2(sm.labelKey)} color={sm.color} bg={sm.bg} />
+                  {card.syncStatus && card.syncStatus !== "synced" && <SyncStatusBadge status={card.syncStatus} onRetry={() => load()} />}
                 </div>
               </div>
 
-              {t.purpose && <p style={{ fontSize: 12, color: THEME.text2, marginTop: 8 }}>{t.purpose}</p>}
+              {card.purpose && <p style={{ fontSize: 12, color: THEME.text2, marginTop: 8 }}>{card.purpose}</p>}
 
-              {t.status === "needs_correction" && t.correctionNote && (
+              {card.status === "needs_correction" && card.correctionNote && (
                 <div style={{ marginTop: 8, fontSize: 11.5, color: THEME.danger }}>
-                  <p style={{ margin: "2px 0" }}><b>ایراد:</b> {t.correctionNote}</p>
-                  {t.correctionDeadline && <p style={{ margin: "2px 0" }}><b>مهلت رفع:</b> {toJalaliDateTime(t.correctionDeadline)}</p>}
+                  <p style={{ margin: "2px 0" }}><b>{t2("scaffFaultLabel")}</b> {card.correctionNote}</p>
+                  {card.correctionDeadline && <p style={{ margin: "2px 0" }}><b>{t2("scaffCorrectionDeadlineLabel")}</b> {toJalaliDateTime(card.correctionDeadline)}</p>}
                 </div>
               )}
-              {t.issueDate && <p style={{ fontSize: 11.5, color: "#166534", marginTop: 6 }}>تاریخ صدور تگ: {toJalaliSafe(t.issueDate)}</p>}
-              {t.removalDate && <p style={{ fontSize: 11.5, color: THEME.text3, marginTop: 4 }}>تاریخ برچیدن: {toJalaliSafe(t.removalDate)}</p>}
+              {card.issueDate && <p style={{ fontSize: 11.5, color: "#166534", marginTop: 6 }}>{t2("scaffTagIssueDateLabel")} {toJalaliSafe(card.issueDate)}</p>}
+              {card.removalDate && <p style={{ fontSize: 11.5, color: THEME.text3, marginTop: 4 }}>{t2("scaffRemovalDateLabel")} {toJalaliSafe(card.removalDate)}</p>}
 
-              <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>{rowActions(t)}</div>
+              <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>{rowActions(card)}</div>
             </div>
           );
         }}

@@ -3,6 +3,7 @@ import { offlineWrite, offlineWriteFile } from "../offline/offlineWrite.js";
 import { isOnline } from "../offline/networkStatus.js";
 import { getRecordsByModule, putRecord } from "../offline/offlineDb.js";
 import { checkUploadAllowed } from "../offline/dbSizeMonitor.js";
+import { translate, getCurrentLang } from "../i18n/translations.js";
 
 /**
  * Scaffold Tag Management — tag numbering: Md1-XX-SC-01
@@ -15,12 +16,12 @@ import { checkUploadAllowed } from "../offline/dbSizeMonitor.js";
  */
 
 export const SCAFFOLD_STATUSES = [
-  { value: "pending_initial_approval", label: "در انتظار تأیید اولیه", color: "#b45309", bg: "#fef3c7" },
-  { value: "pending_installation", label: "در انتظار نصب", color: "#1d4ed8", bg: "#dbeafe" },
-  { value: "needs_correction", label: "نیاز به اصلاح", color: "#c92a2a", bg: "#fdecec" },
-  { value: "tag_issued", label: "تگ صادر شد", color: "#166534", bg: "#dcfce7" },
-  { value: "removal_requested", label: "درخواست برچیدن", color: "#7c3aed", bg: "#f3e8ff" },
-  { value: "removed", label: "برچیده شد", color: "#5b6b7d", bg: "#eef1f5" },
+  { value: "pending_initial_approval", labelKey: "scaffStatusPendingInitial", color: "#b45309", bg: "#fef3c7" },
+  { value: "pending_installation", labelKey: "scaffStatusPendingInstall", color: "#1d4ed8", bg: "#dbeafe" },
+  { value: "needs_correction", labelKey: "scaffStatusNeedsCorrection", color: "#c92a2a", bg: "#fdecec" },
+  { value: "tag_issued", labelKey: "scaffStatusTagIssued", color: "#166534", bg: "#dcfce7" },
+  { value: "removal_requested", labelKey: "scaffStatusRemovalRequested", color: "#7c3aed", bg: "#f3e8ff" },
+  { value: "removed", labelKey: "scaffStatusRemoved", color: "#5b6b7d", bg: "#eef1f5" },
 ];
 export function scaffoldStatusMeta(v) {
   return SCAFFOLD_STATUSES.find((s) => s.value === v) || SCAFFOLD_STATUSES[0];
@@ -97,7 +98,7 @@ export async function loadContractorsWithScaffoldCode() {
 export async function setContractorScaffoldCode(contractorId, code) {
   const clean = (code || "").trim().toUpperCase().slice(0, 2);
   const rows = await sb(`contractors?id=eq.${contractorId}`, { method: "PATCH", body: JSON.stringify({ scaffold_tag_code: clean }) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ذخیره‌ی کد پیمانکار" };
+  if (!sbOk(rows)) return { __error: true, message: translate(getCurrentLang(), "errScaffContractorCodeSave") };
   return { ok: true, code: clean };
 }
 
@@ -129,7 +130,7 @@ async function generateNextTagNumber(contractorId, contractorCode) {
 
 export async function requestNewScaffoldTag(rec) {
   if (!rec.contractorCode) {
-    return { __error: true, message: "کد دوحرفی پیمانکار شما هنوز توسط ادمین تعریف نشده است. لطفاً با ادمین سامانه هماهنگ کنید." };
+    return { __error: true, message: translate(getCurrentLang(), "errScaffNoContractorCode") };
   }
   const tagNumber = await generateNextTagNumber(rec.contractorId, rec.contractorCode);
   const id = uid("scaffold");
@@ -145,7 +146,7 @@ export async function requestNewScaffoldTag(rec) {
     company_id: getCurrentCompanyId(),
   };
   const result = await offlineWrite({ module: "scaffoldTags", table: "scaffold_tags", action: "insert", id, payload });
-  if (!result.ok) return { __error: true, message: result.error || "خطا در ثبت درخواست" };
+  if (!result.ok) return { __error: true, message: result.error || translate(getCurrentLang(), "errScaffCreateRequest") };
   return { ...scaffoldFromRow(result.record), syncStatus: result.offline ? "pending" : "synced" };
 }
 
@@ -154,7 +155,7 @@ export async function requestNewScaffoldTag(rec) {
 export async function approveInitialRequest(id, reviewedBy) {
   const payload = { status: "pending_installation", initial_approved_by: reviewedBy || "", initial_approved_at: new Date().toISOString(), updated_at: new Date().toISOString() };
   const result = await offlineWrite({ module: "scaffoldTags", table: "scaffold_tags", action: "update", id, payload });
-  if (!result.ok) return { __error: true, message: result.error || "خطا در ذخیره‌سازی" };
+  if (!result.ok) return { __error: true, message: result.error || translate(getCurrentLang(), "commonErrorSave") };
   return { ...scaffoldFromRow(result.record), syncStatus: result.offline ? "pending" : "synced" };
 }
 
@@ -163,15 +164,15 @@ export async function approveInitialRequest(id, reviewedBy) {
 export async function issueScaffoldTag(id, reviewedBy) {
   const payload = { status: "tag_issued", issue_date: todayISO(), reviewed_by: reviewedBy || "", correction_note: "", correction_deadline: null, updated_at: new Date().toISOString() };
   const result = await offlineWrite({ module: "scaffoldTags", table: "scaffold_tags", action: "update", id, payload });
-  if (!result.ok) return { __error: true, message: result.error || "خطا در ذخیره‌سازی" };
+  if (!result.ok) return { __error: true, message: result.error || translate(getCurrentLang(), "commonErrorSave") };
   return { ...scaffoldFromRow(result.record), syncStatus: result.offline ? "pending" : "synced" };
 }
 
 export async function markNeedsCorrection(id, note, deadlineIso, reviewedBy) {
-  if (!note || !note.trim()) return { __error: true, message: "ثبت شرح ایرادات الزامی است" };
+  if (!note || !note.trim()) return { __error: true, message: translate(getCurrentLang(), "errScaffCorrectionNoteRequired") };
   const payload = { status: "needs_correction", correction_note: note.trim(), correction_deadline: deadlineIso || null, reviewed_by: reviewedBy || "", updated_at: new Date().toISOString() };
   const result = await offlineWrite({ module: "scaffoldTags", table: "scaffold_tags", action: "update", id, payload });
-  if (!result.ok) return { __error: true, message: result.error || "خطا در ذخیره‌سازی" };
+  if (!result.ok) return { __error: true, message: result.error || translate(getCurrentLang(), "commonErrorSave") };
   return { ...scaffoldFromRow(result.record), syncStatus: result.offline ? "pending" : "synced" };
 }
 
@@ -179,7 +180,7 @@ export async function markNeedsCorrection(id, note, deadlineIso, reviewedBy) {
 export async function resubmitForInspection(id) {
   const payload = { status: "pending_installation", updated_at: new Date().toISOString() };
   const result = await offlineWrite({ module: "scaffoldTags", table: "scaffold_tags", action: "update", id, payload });
-  if (!result.ok) return { __error: true, message: result.error || "خطا در ذخیره‌سازی" };
+  if (!result.ok) return { __error: true, message: result.error || translate(getCurrentLang(), "commonErrorSave") };
   return { ...scaffoldFromRow(result.record), syncStatus: result.offline ? "pending" : "synced" };
 }
 
@@ -188,14 +189,14 @@ export async function resubmitForInspection(id) {
 export async function requestScaffoldRemoval(id, removalRequestDate) {
   const payload = { status: "removal_requested", removal_request_date: removalRequestDate || todayISO(), updated_at: new Date().toISOString() };
   const result = await offlineWrite({ module: "scaffoldTags", table: "scaffold_tags", action: "update", id, payload });
-  if (!result.ok) return { __error: true, message: result.error || "خطا در ذخیره‌سازی" };
+  if (!result.ok) return { __error: true, message: result.error || translate(getCurrentLang(), "commonErrorSave") };
   return { ...scaffoldFromRow(result.record), syncStatus: result.offline ? "pending" : "synced" };
 }
 
 export async function confirmScaffoldRemoved(id, reviewedBy) {
   const payload = { status: "removed", removal_date: todayISO(), reviewed_by: reviewedBy || "", updated_at: new Date().toISOString() };
   const result = await offlineWrite({ module: "scaffoldTags", table: "scaffold_tags", action: "update", id, payload });
-  if (!result.ok) return { __error: true, message: result.error || "خطا در ذخیره‌سازی" };
+  if (!result.ok) return { __error: true, message: result.error || translate(getCurrentLang(), "commonErrorSave") };
   return { ...scaffoldFromRow(result.record), syncStatus: result.offline ? "pending" : "synced" };
 }
 
@@ -217,7 +218,7 @@ export async function loadScaffoldPhotos(scaffoldTagId) {
 export async function uploadScaffoldPhoto(scaffoldTagId, stage, fileData, fileName, mimeType) {
   if (isOnline()) {
     const { allowed, storageMb } = await checkUploadAllowed();
-    if (!allowed) return { __error: true, message: `فضای ذخیره‌سازی پر شده است (${storageMb} مگابایت). لطفاً ابتدا آرشیو بگیرید.` };
+    if (!allowed) return { __error: true, message: translate(getCurrentLang(), "errScaffStorageFull", { mb: storageMb }) };
   }
   const id = uid("sphoto");
   const result = await offlineWriteFile({
@@ -225,7 +226,7 @@ export async function uploadScaffoldPhoto(scaffoldTagId, stage, fileData, fileNa
     base64Data: fileData, contentType: mimeType, fileFieldName: "file_data",
     extraFields: { scaffold_tag_id: scaffoldTagId, stage, file_name: fileName, mime_type: mimeType },
   });
-  if (!result.ok) return { __error: true, message: result.error || "خطا در آپلود عکس" };
+  if (!result.ok) return { __error: true, message: result.error || translate(getCurrentLang(), "errScaffUploadPhoto") };
   return scaffoldPhotoFromRow(result.record);
 }
 
