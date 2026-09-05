@@ -17,6 +17,7 @@ import {
   loadGateStatusForRecord, loadCompanyStaffOptions, assignForReview, submitReview,
   approveGateItem, rejectGateItem, submitToGate, GATE_STATUS_LABELS,
 } from "../hseGateApi.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 /**
  * Personnel detail / review screen.
@@ -27,6 +28,7 @@ import {
  * progressPersonnelWorkflow() in personnelApi.js.
  */
 export default function PersonnelDetail({ personnel: initialPersonnel, role, currentUser, onBack, onUpdated, readOnly, onNavigateToAssessment }) {
+  const { t, dir } = useLanguage();
   const [personnel, setPersonnel] = useState(initialPersonnel);
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -54,6 +56,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
   const [gateBusy, setGateBusy] = useState(false);
   const [gateMessage, setGateMessage] = useState("");
   const [contractorSubmitMsg, setContractorSubmitMsg] = useState("");
+  const [contractorSubmitOk, setContractorSubmitOk] = useState(false);
   const isGatekeeper = (currentUser?.role === "HSE_SUPERVISOR" || role === "ADMIN") && !readOnly;
 
   const loadGate = () => {
@@ -105,7 +108,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
   // پیمانکار: بعد از بارگذاری/جایگزینیِ مدارک، یک ارسالِ صریح به گیتِ
   // «سرپرست کارفرما» می‌کند (دقیقاً همان مسیرِ MachineryForm/PersonnelForm).
   const handleSubmitToSupervisor = async () => {
-    setGateBusy(true); setContractorSubmitMsg("");
+    setGateBusy(true); setContractorSubmitMsg(""); setContractorSubmitOk(false);
     const result = await submitToGate({
       moduleKey: "personnelAccess", recordId: personnel.id,
       recordLabel: `${personnel.fullName} — ${personnel.jobTitle || ""}`.trim(),
@@ -113,7 +116,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
     }, currentUser?.name || currentUser?.username);
     setGateBusy(false);
     if (result?.__error) { setContractorSubmitMsg(result.message); return; }
-    setContractorSubmitMsg("برای بررسیِ سرپرست کارفرما ارسال شد.");
+    setContractorSubmitMsg(t("gateSentToEmployerSupervisor")); setContractorSubmitOk(true);
     loadGate();
   };
 
@@ -146,7 +149,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
   };
 
   const handleConfirmTermination = async () => {
-    if (!terminationDateDraft) { setTerminationError("تاریخ ترک کار / تسویه حساب الزامی است"); return; }
+    if (!terminationDateDraft) { setTerminationError(t("errTerminationDateRequired")); return; }
     setSavingEmployment(true);
     setTerminationError("");
     const result = await setEmploymentStatus(personnel.id, "terminated", terminationDateDraft, currentUser?.name || currentUser?.username);
@@ -157,7 +160,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
   };
 
   const handleReactivate = async () => {
-    if (!confirm("این پرسنل دوباره به وضعیت «فعال» بازگردانده شود؟")) return;
+    if (!confirm(t("confirmReactivate"))) return;
     setSavingEmployment(true);
     const result = await setEmploymentStatus(personnel.id, "active", "", currentUser?.name || currentUser?.username);
     setSavingEmployment(false);
@@ -165,10 +168,10 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
     refreshAfterChange({ ...personnel, ...result }, documents);
   };
 
-  const docByType = (t) => documents.find((d) => d.docType === t);
+  const docByType = (dtVal) => documents.find((d) => d.docType === dtVal);
 
   const handleConfirmUpload = async (docType, data, fileName, mimeType) => {
-    if (!isContractor) { alert("شما مجوز بارگذاری مدرک را ندارید"); return { __error: true, message: "no permission" }; }
+    if (!isContractor) { alert(t("errNoUploadPermission")); return { __error: true, message: "no permission" }; }
     const doc = await upsertDocument(personnel.id, docType, data, fileName, mimeType, (currentUser?.name || currentUser?.username));
     if (doc?.__error) return doc;
     const newDocs = [...documents.filter((d) => d.docType !== docType), doc];
@@ -178,8 +181,8 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
   };
 
   const handleDeleteDoc = async (doc) => {
-    if (!isContractor) { alert("شما مجوز حذف مدرک را ندارید"); return; }
-    if (!confirm("این مدرک حذف شود؟")) return;
+    if (!isContractor) { alert(t("errNoDeleteDocPermission")); return; }
+    if (!confirm(t("confirmDeleteDoc"))) return;
     await deleteDocumentDB(doc.id);
     setDocuments(documents.filter((d) => d.id !== doc.id));
   };
@@ -187,7 +190,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
   // مدرکِ آموزش تخصصی به‌ازای هر دوره‌ی الزامیِ عنوان شغلی — بدون سقفِ ۳؛
   // آپلودِ دوباره برای همان دوره، مدرکِ قبلیِ همان دوره را جایگزین می‌کند.
   const handleUploadTrainingDoc = async (trainingId, data, fileName, mimeType) => {
-    if (!isContractor) { alert("شما مجوز بارگذاری مدرک را ندارید"); return { __error: true, message: "no permission" }; }
+    if (!isContractor) { alert(t("errNoUploadPermission")); return { __error: true, message: "no permission" }; }
     const doc = await upsertTrainingDocument(personnel.id, trainingId, data, fileName, mimeType, (currentUser?.name || currentUser?.username));
     if (doc?.__error) return doc;
     const newDocs = [...documents.filter((d) => !(d.docType === "specialized_safety_training" && d.trainingId === trainingId)), doc];
@@ -197,7 +200,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
   };
 
   const handleReviewDoc = async (doc, status, note) => {
-    if (!isEmployer) { alert("شما مجوز بررسی مدارک را ندارید"); return; }
+    if (!isEmployer) { alert(t("errNoReviewPermission")); return; }
     const updatedDoc = await reviewDocumentDB(doc.id, status, note, (currentUser?.name || currentUser?.username));
     const newDocs = documents.map((d) => (d.id === doc.id ? updatedDoc : d));
     const updatedP = await progressPersonnelWorkflow(personnel, newDocs, (currentUser?.name || currentUser?.username));
@@ -206,7 +209,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
   };
 
   const handleQualificationDecision = async (status) => {
-    if (!isEmployer) { alert("شما مجوز تأیید صلاحیت را ندارید"); return; }
+    if (!isEmployer) { alert(t("errNoQualificationApprovalPermission")); return; }
     const updated = await updatePersonnelDB(personnel.id, { qualificationStatus: status, qualificationNote: qualNote }, (currentUser?.name || currentUser?.username));
     const finalP = await progressPersonnelWorkflow(updated, documents, (currentUser?.name || currentUser?.username));
     setShowQualReject(false);
@@ -219,11 +222,11 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
   // می‌شود و اینجا تکراری بود.
   const visibleDocTypes = DOC_TYPES.filter((dt) => dt.value !== "specialized_safety_training" && (!dt.specialOnly || personnel.qualificationRequired));
 
-  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>در حال بارگذاری...</div>;
+  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</div>;
 
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>← بازگشت به لیست</div>}
+    <div style={{ maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
+      {onBack && <div style={styles.backLink} onClick={onBack}>{t("pdetBackToList")}</div>}
 
       <div style={{ ...styles.card, width: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
@@ -232,20 +235,20 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
             <p style={{ fontSize: 12, color: THEME.text3, margin: "4px 0 0" }}>{personnel.jobTitle} · {personnel.contractorName}</p>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-            <span style={{ ...styles.badge, color: sm.color, background: sm.bg, fontSize: 12 }}>{sm.label}</span>
+            <span style={{ ...styles.badge, color: sm.color, background: sm.bg, fontSize: 12 }}>{t(sm.labelKey)}</span>
             <span style={{ ...styles.badge, color: employmentStatusMeta(personnel.employmentStatus).color, background: employmentStatusMeta(personnel.employmentStatus).bg, fontSize: 12 }}>
-              {employmentStatusMeta(personnel.employmentStatus).label}
+              {t(employmentStatusMeta(personnel.employmentStatus).labelKey)}
             </span>
             {personnel.syncStatus && personnel.syncStatus !== "synced" && <SyncStatusBadge status={personnel.syncStatus} />}
           </div>
         </div>
         <div style={{ fontSize: 12.5, color: THEME.text2, marginTop: 12, lineHeight: 2 }}>
-          <div>کد ملی: {personnel.nationalCode}</div>
-          <div>شماره تماس: {personnel.phone}</div>
-          <div>تاریخ شروع به کار: {isoToJalaliDisplay(personnel.startDate)}</div>
-          {personnel.occHealthExpiry && <div>انقضای طب کار: {isoToJalaliDisplay(personnel.occHealthExpiry)}</div>}
+          <div>{t("pdetNationalCode")} {personnel.nationalCode}</div>
+          <div>{t("pdetPhone")} {personnel.phone}</div>
+          <div>{t("pdetStartDate")} {isoToJalaliDisplay(personnel.startDate)}</div>
+          {personnel.occHealthExpiry && <div>{t("pdetHealthExpiry")} {isoToJalaliDisplay(personnel.occHealthExpiry)}</div>}
           {personnel.employmentStatus === "terminated" && personnel.terminationDate && (
-            <div style={{ color: THEME.danger, fontWeight: 600 }}>تاریخ ترک کار / تسویه حساب: {isoToJalaliDisplay(personnel.terminationDate)}</div>
+            <div style={{ color: THEME.danger, fontWeight: 600 }}>{t("pdetTerminationDate")} {isoToJalaliDisplay(personnel.terminationDate)}</div>
           )}
         </div>
       </div>
@@ -253,16 +256,16 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
       {!isContractor && gateItem && (gateItem.status === "pending_approval" || gateItem.status === "assigned_review" || gateItem.status === "reviewed") && (
         <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 9, padding: 14, marginBottom: 14 }}>
           <p style={{ fontSize: 12, fontWeight: 700, color: "#1d4ed8", margin: "0 0 8px" }}>
-            گیت بازبینی سرپرست/مدیر HSE — {GATE_STATUS_LABELS[gateItem.status] || gateItem.status}
+            {t("gateReviewGateHeading", { status: GATE_STATUS_LABELS[gateItem.status] || gateItem.status })}
           </p>
           {gateItem.status === "assigned_review" && (
             <p style={{ fontSize: 12, fontWeight: 600, color: "#1d4ed8", margin: "0 0 8px" }}>
-              ارجاع به کارشناس: {gateStaff.find((s) => s.username === gateItem.assignedTo)?.name || gateItem.assignedTo}
+              {t("gateAssignedToExpert", { name: gateStaff.find((s) => s.username === gateItem.assignedTo)?.name || gateItem.assignedTo })}
             </p>
           )}
           {gateItem.reviewerComment && (
             <p style={{ fontSize: 12, color: "#374151", margin: "0 0 8px", lineHeight: 1.8 }}>
-              <b>نظر کارشناس:</b> {gateItem.reviewerComment}
+              <b>{t("gateExpertComment")}</b> {gateItem.reviewerComment}
             </p>
           )}
           {gateMessage && <p style={styles.error}>{gateMessage}</p>}
@@ -272,34 +275,34 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
             <div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
                 <button type="button" style={{ ...styles.smallButton, background: "#166534" }} onClick={handleApproveGate} disabled={gateBusy}>
-                  تأیید بررسی اولیه
+                  {t("gateApproveInitialReview")}
                 </button>
                 {gateItem.status === "pending_approval" && (
                   <button type="button" style={styles.smallButton} onClick={() => { setAssigningGate(true); setAssignGateTo(""); }} disabled={gateBusy}>
-                    ارجاع به کارشناس برای بررسی
+                    {t("gateAssignToExpertForReview")}
                   </button>
                 )}
                 <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => setShowRejectFor("__gate__")} disabled={gateBusy}>
-                  رد
+                  {t("gateReject")}
                 </button>
               </div>
               {assigningGate && (
                 <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                  <select style={{ ...styles.input, marginTop: 0, maxWidth: 220 }} value={assignGateTo} onChange={(e) => setAssignGateTo(e.target.value)} dir="rtl">
-                    <option value="">انتخاب کارشناس</option>
+                  <select style={{ ...styles.input, marginTop: 0, maxWidth: 220 }} value={assignGateTo} onChange={(e) => setAssignGateTo(e.target.value)} dir={dir}>
+                    <option value="">{t("gateSelectExpert")}</option>
                     {gateStaff.filter((s) => s.username !== currentUser?.username).map((s) => <option key={s.username} value={s.username}>{s.name}</option>)}
                   </select>
-                  <button type="button" style={styles.smallButton} onClick={handleAssignForReview} disabled={gateBusy || !assignGateTo}>ثبت ارجاع</button>
-                  <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setAssigningGate(false)}>انصراف</button>
+                  <button type="button" style={styles.smallButton} onClick={handleAssignForReview} disabled={gateBusy || !assignGateTo}>{t("gateSubmitAssignment")}</button>
+                  <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setAssigningGate(false)}>{t("commonCancel")}</button>
                 </div>
               )}
               {showRejectFor === "__gate__" && (
                 <div style={{ marginTop: 8 }}>
-                  <label style={styles.label}>دلیل رد (اختیاری)</label>
-                  <textarea style={{ ...styles.input, minHeight: 50 }} value={gateRejectNote} onChange={(e) => setGateRejectNote(e.target.value)} dir="rtl" />
+                  <label style={styles.label}>{t("gateRejectReasonOptional")}</label>
+                  <textarea style={{ ...styles.input, minHeight: 50 }} value={gateRejectNote} onChange={(e) => setGateRejectNote(e.target.value)} dir={dir} />
                   <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                    <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => { handleRejectGate(gateRejectNote); setShowRejectFor(null); setGateRejectNote(""); }} disabled={gateBusy}>ثبت رد</button>
-                    <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setShowRejectFor(null)}>انصراف</button>
+                    <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => { handleRejectGate(gateRejectNote); setShowRejectFor(null); setGateRejectNote(""); }} disabled={gateBusy}>{t("gateSubmitReject")}</button>
+                    <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setShowRejectFor(null)}>{t("commonCancel")}</button>
                   </div>
                 </div>
               )}
@@ -311,15 +314,15 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
             <div>
               {!reviewingGate ? (
                 <button type="button" style={styles.smallButton} onClick={() => { setReviewingGate(true); setReviewComment(""); }} disabled={gateBusy}>
-                  ارسال نتیجه‌ی بررسی برای سرپرست/مدیر HSE
+                  {t("gateSendReviewResultToSupervisor")}
                 </button>
               ) : (
                 <div>
-                  <label style={styles.label}>نظر یا توضیح (اختیاری)</label>
-                  <textarea style={{ ...styles.input, minHeight: 50 }} value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} dir="rtl" />
+                  <label style={styles.label}>{t("gateCommentOptional")}</label>
+                  <textarea style={{ ...styles.input, minHeight: 50 }} value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} dir={dir} />
                   <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                    <button type="button" style={styles.smallButton} onClick={handleSubmitGateReview} disabled={gateBusy}>ارسال</button>
-                    <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setReviewingGate(false)}>انصراف</button>
+                    <button type="button" style={styles.smallButton} onClick={handleSubmitGateReview} disabled={gateBusy}>{t("gateSend")}</button>
+                    <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setReviewingGate(false)}>{t("commonCancel")}</button>
                   </div>
                 </div>
               )}
@@ -329,10 +332,10 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
       )}
 
       <div style={{ ...styles.card, width: "auto" }}>
-        <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 8px", fontWeight: 700 }}>آموزش‌های تخصصی موردنیاز (بر اساس عنوان شغلی)</h3>
-        {trainingsLoading && <p style={{ fontSize: 12, color: THEME.text3 }}>در حال بررسی...</p>}
+        <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 8px", fontWeight: 700 }}>{t("pdetRequiredTrainings")}</h3>
+        {trainingsLoading && <p style={{ fontSize: 12, color: THEME.text3 }}>{t("pdetCheckingEllipsis")}</p>}
         {!trainingsLoading && requiredTrainings.length === 0 && (
-          <p style={{ fontSize: 12, color: THEME.text3 }}>برای عنوان شغلی «{personnel.jobTitle}» آموزش الزامی‌ای در ماتریس تعریف نشده است.</p>
+          <p style={{ fontSize: 12, color: THEME.text3 }}>{t("pdetNoTrainingRequired", { job: personnel.jobTitle })}</p>
         )}
         {/* یک ردیفِ بارگذاریِ مستقل به‌ازای هر آموزشِ الزامیِ شناسایی‌شده —
             سندِ هر ردیف با همان آموزش (training_id) گره خورده است. */}
@@ -343,7 +346,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
             <div key={tr.id} style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 12, marginTop: 12 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
                 <span style={{ fontSize: 13, fontWeight: 600, color: THEME.text }} title={tr.description || ""}>{tr.title}</span>
-                {dsm && <span style={{ ...styles.badge, color: dsm.color, background: dsm.bg }}>{dsm.label}</span>}
+                {dsm && <span style={{ ...styles.badge, color: dsm.color, background: dsm.bg }}>{t(dsm.labelKey)}</span>}
               </div>
 
               <div style={{ marginTop: 8 }}>
@@ -364,26 +367,26 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
                     onView={setViewerSrc}
                   />
                 ) : (
-                  <p style={{ fontSize: 11.5, color: THEME.text3, margin: "6px 0" }}>هنوز بارگذاری نشده</p>
+                  <p style={{ fontSize: 11.5, color: THEME.text3, margin: "6px 0" }}>{t("pdetNotUploadedYet")}</p>
                 )}
               </div>
 
-              {doc?.reviewNote && <p style={{ fontSize: 11.5, color: THEME.danger, marginTop: 6 }}><b>یادداشت بررسی:</b> {doc.reviewNote}</p>}
+              {doc?.reviewNote && <p style={{ fontSize: 11.5, color: THEME.danger, marginTop: 6 }}><b>{t("pdetReviewNote")}</b> {doc.reviewNote}</p>}
 
               {isEmployer && doc && doc.status === "pending" && (
                 <div style={{ marginTop: 8 }}>
                   {showRejectFor !== doc.id ? (
                     <div style={{ display: "flex", gap: 6 }}>
-                      <button type="button" style={{ ...styles.smallButton, padding: "6px 12px" }} onClick={() => handleReviewDoc(doc, "approved", "")}>تأیید</button>
-                      <button type="button" style={{ ...styles.smallButton, background: THEME.danger, padding: "6px 12px" }} onClick={() => setShowRejectFor(doc.id)}>رد / اصلاح</button>
+                      <button type="button" style={{ ...styles.smallButton, padding: "6px 12px" }} onClick={() => handleReviewDoc(doc, "approved", "")}>{t("pdetApprove")}</button>
+                      <button type="button" style={{ ...styles.smallButton, background: THEME.danger, padding: "6px 12px" }} onClick={() => setShowRejectFor(doc.id)}>{t("pdetRejectCorrect")}</button>
                     </div>
                   ) : (
                     <>
-                      <textarea style={{ ...styles.input, minHeight: 50, fontFamily: "inherit", marginTop: 6 }} value={reviewDraft[doc.id] || ""} onChange={(e) => setReviewDraft({ ...reviewDraft, [doc.id]: e.target.value })} placeholder="توضیح رد/اصلاح" dir="rtl" />
+                      <textarea style={{ ...styles.input, minHeight: 50, fontFamily: "inherit", marginTop: 6 }} value={reviewDraft[doc.id] || ""} onChange={(e) => setReviewDraft({ ...reviewDraft, [doc.id]: e.target.value })} placeholder={t("pdetRejectCorrectionPlaceholder")} dir={dir} />
                       <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-                        <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => handleReviewDoc(doc, "rejected", reviewDraft[doc.id])}>رد</button>
-                        <button type="button" style={{ ...styles.smallButton, background: "#b45309" }} onClick={() => handleReviewDoc(doc, "needs_correction", reviewDraft[doc.id])}>نیاز به اصلاح</button>
-                        <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setShowRejectFor(null)}>انصراف</button>
+                        <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => handleReviewDoc(doc, "rejected", reviewDraft[doc.id])}>{t("pdetReject")}</button>
+                        <button type="button" style={{ ...styles.smallButton, background: "#b45309" }} onClick={() => handleReviewDoc(doc, "needs_correction", reviewDraft[doc.id])}>{t("pdetRejectNeedsCorrection")}</button>
+                        <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setShowRejectFor(null)}>{t("commonCancel")}</button>
                       </div>
                     </>
                   )}
@@ -397,26 +400,26 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
       {isEmployer && (
         <div style={{ ...styles.card, width: "auto" }}>
           <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 8px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
-            <UserX size={16} color={THEME.text2} /> وضعیت اشتغال
+            <UserX size={16} color={THEME.text2} /> {t("pdetEmploymentStatus")}
           </h3>
 
           {personnel.employmentStatus === "active" && !showTerminateForm && (
             <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => setShowTerminateForm(true)}>
-              ثبت ترک کار / تسویه حساب
+              {t("pdetRegisterTermination")}
             </button>
           )}
 
           {showTerminateForm && (
             <div>
-              <label style={styles.label}>تاریخ ترک کار / تسویه حساب</label>
+              <label style={styles.label}>{t("pdetTerminationDateLabel")}</label>
               <JalaliDateInput value={terminationDateDraft} onChange={setTerminationDateDraft} />
               {terminationError && <p style={styles.error}>{terminationError}</p>}
               <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                 <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={handleConfirmTermination} disabled={savingEmployment}>
-                  {savingEmployment ? "در حال ثبت..." : "تأیید ترک کار / تسویه حساب"}
+                  {savingEmployment ? t("savingEllipsisShort") : t("pdetConfirmTermination")}
                 </button>
                 <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => { setShowTerminateForm(false); setTerminationError(""); }}>
-                  انصراف
+                  {t("commonCancel")}
                 </button>
               </div>
             </div>
@@ -424,7 +427,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
 
           {personnel.employmentStatus === "terminated" && !showTerminateForm && (
             <button type="button" style={styles.smallButton} onClick={handleReactivate} disabled={savingEmployment}>
-              {savingEmployment ? "در حال ثبت..." : "بازگرداندن به وضعیت فعال"}
+              {savingEmployment ? t("savingEllipsisShort") : t("pdetReactivate")}
             </button>
           )}
         </div>
@@ -433,26 +436,26 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
       {personnel.qualificationRequired && (
         <div style={{ ...styles.card, width: "auto" }}>
           <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 8px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
-            <ShieldCheck size={16} color="#c2410c" /> تأیید صلاحیت کارفرما
+            <ShieldCheck size={16} color="#c2410c" /> {t("pdetEmployerQualificationApproval")}
           </h3>
           <span style={{ ...styles.badge, color: docStatusMeta(personnel.qualificationStatus || "pending").color, background: docStatusMeta(personnel.qualificationStatus || "pending").bg }}>
-            {docStatusMeta(personnel.qualificationStatus || "pending").label}
+            {t(docStatusMeta(personnel.qualificationStatus || "pending").labelKey)}
           </span>
-          {personnel.qualificationNote && <p style={{ fontSize: 12, color: THEME.text2, marginTop: 8 }}><b>یادداشت:</b> {personnel.qualificationNote}</p>}
+          {personnel.qualificationNote && <p style={{ fontSize: 12, color: THEME.text2, marginTop: 8 }}><b>{t("pdetNoteLabel")}</b> {personnel.qualificationNote}</p>}
           {isEmployer && personnel.qualificationStatus !== "approved" && (
             <div style={{ marginTop: 12 }}>
               {!showQualReject ? (
                 <div style={{ display: "flex", gap: 8 }}>
-                  <button type="button" style={styles.button} onClick={() => handleQualificationDecision("approved")}>تأیید صلاحیت</button>
-                  <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => setShowQualReject(true)}>رد / نیاز به اصلاح</button>
+                  <button type="button" style={styles.button} onClick={() => handleQualificationDecision("approved")}>{t("pdetApproveQualification")}</button>
+                  <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => setShowQualReject(true)}>{t("pdetRejectNeedsCorrection")}</button>
                 </div>
               ) : (
                 <>
-                  <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={qualNote} onChange={(e) => setQualNote(e.target.value)} placeholder="دلیل رد یا نکات اصلاحی" dir="rtl" />
+                  <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={qualNote} onChange={(e) => setQualNote(e.target.value)} placeholder={t("pdetRejectReasonPlaceholder")} dir={dir} />
                   <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                    <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => handleQualificationDecision("rejected")}>ثبت رد</button>
-                    <button type="button" style={{ ...styles.smallButton, background: "#b45309" }} onClick={() => handleQualificationDecision("needs_correction")}>نیاز به اصلاح</button>
-                    <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setShowQualReject(false)}>انصراف</button>
+                    <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => handleQualificationDecision("rejected")}>{t("pdetRegisterRejection")}</button>
+                    <button type="button" style={{ ...styles.smallButton, background: "#b45309" }} onClick={() => handleQualificationDecision("needs_correction")}>{t("pdetRejectNeedsCorrection")}</button>
+                    <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setShowQualReject(false)}>{t("commonCancel")}</button>
                   </div>
                 </>
               )}
@@ -464,15 +467,15 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
       <AccidentPronenessSection personnel={personnel} role={role} currentUser={currentUser} onNavigateToAssessment={onNavigateToAssessment} />
 
       <div style={{ ...styles.card, width: "auto" }}>
-        <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 4px", fontWeight: 700 }}>مدارک</h3>
+        <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 4px", fontWeight: 700 }}>{t("pdetDocuments")}</h3>
         {visibleDocTypes.map((dt) => {
           const doc = docByType(dt.value);
           const dsm = doc ? docStatusMeta(doc.status) : null;
           return (
             <div key={dt.value} style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 12, marginTop: 12 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: THEME.text }}>{dt.label}</span>
-                {dsm && <span style={{ ...styles.badge, color: dsm.color, background: dsm.bg }}>{dsm.label}</span>}
+                <span style={{ fontSize: 13, fontWeight: 600, color: THEME.text }}>{t(dt.labelKey)}</span>
+                {dsm && <span style={{ ...styles.badge, color: dsm.color, background: dsm.bg }}>{t(dsm.labelKey)}</span>}
               </div>
 
               {doc && (
@@ -497,26 +500,26 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
                       onView={setViewerSrc}
                     />
                   ) : (
-                    <p style={{ fontSize: 11.5, color: THEME.text3, margin: "6px 0" }}>هنوز بارگذاری نشده</p>
+                    <p style={{ fontSize: 11.5, color: THEME.text3, margin: "6px 0" }}>{t("pdetNotUploadedYet")}</p>
                   )}
                 </div>
               )}
-              {doc?.reviewNote && <p style={{ fontSize: 11.5, color: THEME.danger, marginTop: 6 }}><b>یادداشت بررسی:</b> {doc.reviewNote}</p>}
+              {doc?.reviewNote && <p style={{ fontSize: 11.5, color: THEME.danger, marginTop: 6 }}><b>{t("pdetReviewNote")}</b> {doc.reviewNote}</p>}
 
               {isEmployer && doc && doc.status === "pending" && (
                 <div style={{ marginTop: 8 }}>
                   {showRejectFor !== doc.id ? (
                     <div style={{ display: "flex", gap: 6 }}>
-                      <button type="button" style={{ ...styles.smallButton, padding: "6px 12px" }} onClick={() => handleReviewDoc(doc, "approved", "")}>تأیید</button>
-                      <button type="button" style={{ ...styles.smallButton, background: THEME.danger, padding: "6px 12px" }} onClick={() => setShowRejectFor(doc.id)}>رد / اصلاح</button>
+                      <button type="button" style={{ ...styles.smallButton, padding: "6px 12px" }} onClick={() => handleReviewDoc(doc, "approved", "")}>{t("pdetApprove")}</button>
+                      <button type="button" style={{ ...styles.smallButton, background: THEME.danger, padding: "6px 12px" }} onClick={() => setShowRejectFor(doc.id)}>{t("pdetRejectCorrect")}</button>
                     </div>
                   ) : (
                     <>
-                      <textarea style={{ ...styles.input, minHeight: 50, fontFamily: "inherit", marginTop: 6 }} value={reviewDraft[doc.id] || ""} onChange={(e) => setReviewDraft({ ...reviewDraft, [doc.id]: e.target.value })} placeholder="توضیح رد/اصلاح" dir="rtl" />
+                      <textarea style={{ ...styles.input, minHeight: 50, fontFamily: "inherit", marginTop: 6 }} value={reviewDraft[doc.id] || ""} onChange={(e) => setReviewDraft({ ...reviewDraft, [doc.id]: e.target.value })} placeholder={t("pdetRejectCorrectionPlaceholder")} dir={dir} />
                       <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-                        <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => handleReviewDoc(doc, "rejected", reviewDraft[doc.id])}>رد</button>
-                        <button type="button" style={{ ...styles.smallButton, background: "#b45309" }} onClick={() => handleReviewDoc(doc, "needs_correction", reviewDraft[doc.id])}>نیاز به اصلاح</button>
-                        <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setShowRejectFor(null)}>انصراف</button>
+                        <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => handleReviewDoc(doc, "rejected", reviewDraft[doc.id])}>{t("pdetReject")}</button>
+                        <button type="button" style={{ ...styles.smallButton, background: "#b45309" }} onClick={() => handleReviewDoc(doc, "needs_correction", reviewDraft[doc.id])}>{t("pdetRejectNeedsCorrection")}</button>
+                        <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setShowRejectFor(null)}>{t("commonCancel")}</button>
                       </div>
                     </>
                   )}
@@ -530,28 +533,28 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
       {isContractor && (
         <div style={{ ...styles.card, width: "auto" }}>
           <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 8px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
-            <ShieldCheck size={16} color={THEME.teal} /> ارسال به سرپرست کارفرما
+            <ShieldCheck size={16} color={THEME.teal} /> {t("pdetSendToEmployerSupervisor")}
           </h3>
           {gateItem && (gateItem.status === "pending_approval" || gateItem.status === "assigned_review" || gateItem.status === "reviewed") ? (
             <p style={{ fontSize: 12.5, color: "#166534", margin: 0, fontWeight: 600 }}>
-              ارسال شد — {GATE_STATUS_LABELS[gateItem.status] || "در انتظار بررسی"}
+              {t("pdetSentStatus", { status: GATE_STATUS_LABELS[gateItem.status] || t("pdetGateAwaitingReview") })}
             </p>
           ) : documents.length === 0 ? (
-            <p style={{ fontSize: 12, color: THEME.text3, margin: 0 }}>ابتدا مدارک را بارگذاری کنید، سپس برای بررسی ارسال نمایید.</p>
+            <p style={{ fontSize: 12, color: THEME.text3, margin: 0 }}>{t("pdetUploadDocsFirstThenSubmit")}</p>
           ) : (
             <>
               {gateItem?.status === "rejected" && (
                 <p style={{ fontSize: 11.5, color: THEME.danger, margin: "0 0 8px" }}>
-                  درخواستِ قبلی رد شد{gateItem.reviewNote ? `: ${gateItem.reviewNote}` : ""}. پس از اصلاح، دوباره ارسال کنید.
+                  {t("pdetPrevRequestRejected", { note: gateItem.reviewNote ? `: ${gateItem.reviewNote}` : "" })}
                 </p>
               )}
               <button type="button" style={styles.button} onClick={handleSubmitToSupervisor} disabled={gateBusy}>
-                {gateBusy ? "در حال ارسال..." : "ثبت و ارسال به سرپرست کارفرما"}
+                {gateBusy ? t("sendingEllipsis") : t("gateSubmitToEmployerSupervisor")}
               </button>
             </>
           )}
           {contractorSubmitMsg && (
-            <p style={{ fontSize: 11.5, color: contractorSubmitMsg.includes("ارسال شد") ? "#166534" : THEME.danger, marginTop: 8 }}>{contractorSubmitMsg}</p>
+            <p style={{ fontSize: 11.5, color: contractorSubmitOk ? "#166534" : THEME.danger, marginTop: 8 }}>{contractorSubmitMsg}</p>
           )}
         </div>
       )}
@@ -559,19 +562,19 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
       {personnel.occHealthPath === "no_certificate" && (
         <div style={{ ...styles.card, width: "auto" }}>
           <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 8px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
-            <Clock size={16} /> فرآیند طب کار
+            <Clock size={16} /> {t("pdetHealthWorkflow")}
           </h3>
           <p style={{ fontSize: 12, color: THEME.text2, margin: "0 0 8px" }}>
-            تاریخ شروع به کار: <b>{personnel.startDate ? isoToJalaliDisplay(personnel.startDate) : "ثبت نشده"}</b>
+            {t("pdetStartDateInline")} <b>{personnel.startDate ? isoToJalaliDisplay(personnel.startDate) : t("pdetNotRegistered")}</b>
           </p>
           {!personnel.occHealthVisitDeadline && (
-            <p style={{ fontSize: 12, color: THEME.text3 }}>پس از تأیید مدارک اولیه، مهلت ۳ روزه مراجعه به طب کار به‌صورت خودکار فعال می‌شود.</p>
+            <p style={{ fontSize: 12, color: THEME.text3 }}>{t("pdetVisitDeadlineAutoNote")}</p>
           )}
           {personnel.occHealthVisitDeadline && !docByType("health_visit_receipt") && (
-            <p style={{ fontSize: 12, color: "#b45309" }}>مهلت مراجعه تا تاریخ {isoToJalaliDisplay(personnel.occHealthVisitDeadline)}</p>
+            <p style={{ fontSize: 12, color: "#b45309" }}>{t("pdetVisitDeadlineUntil", { date: isoToJalaliDisplay(personnel.occHealthVisitDeadline) })}</p>
           )}
           {personnel.occHealthResultDeadline && !docByType("health_final_result") && (
-            <p style={{ fontSize: 12, color: "#b45309" }}>مهلت بارگذاری نتیجه تا تاریخ {isoToJalaliDisplay(personnel.occHealthResultDeadline)}</p>
+            <p style={{ fontSize: 12, color: "#b45309" }}>{t("pdetResultDeadlineUntil", { date: isoToJalaliDisplay(personnel.occHealthResultDeadline) })}</p>
           )}
           {isEmployer && (personnel.occHealthVisitDeadline || personnel.occHealthResultDeadline) && (
             <button
@@ -579,10 +582,10 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
               style={{ ...styles.smallButton, marginTop: 8 }}
               onClick={async () => {
                 await checkAndUpdateDeadlines([personnel]);
-                alert("بررسی انجام شد. اگر مهلت گذشته بود، اعلان باید همین الان توی زنگوله ظاهر شده باشد.");
+                alert(t("pdetDeadlineCheckDone"));
               }}
             >
-              بررسی مهلت و ارسال اعلان همین الان
+              {t("pdetCheckDeadlineNow")}
             </button>
           )}
         </div>

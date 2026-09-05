@@ -7337,6 +7337,21 @@ export const translations = {
   "gateSendReviewResultToSupervisor": { "fa": "ارسال نتیجه‌ی بررسی برای سرپرست/مدیر HSE", "en": "Send review result to the HSE supervisor/manager" },
   "gateCommentOptional": { "fa": "نظر یا توضیح (اختیاری)", "en": "Comment or note (optional)" },
   "gateSend": { "fa": "ارسال", "en": "Send" },
+  "gateApproveInitialReview": { "fa": "تأیید بررسی اولیه", "en": "Approve initial review" },
+  "gateReject": { "fa": "رد", "en": "Reject" },
+  "gateRejectReasonOptional": { "fa": "دلیل رد (اختیاری)", "en": "Rejection reason (optional)" },
+  "gateSubmitReject": { "fa": "ثبت رد", "en": "Submit rejection" },
+  "gateSentToEmployerSupervisor": { "fa": "برای بررسیِ سرپرست کارفرما ارسال شد.", "en": "Sent for the employer supervisor's review." },
+  "gateSubmitToEmployerSupervisor": { "fa": "ثبت و ارسال به سرپرست کارفرما", "en": "Submit and send to the employer supervisor" },
+  "pdetSendToEmployerSupervisor": { "fa": "ارسال به سرپرست کارفرما", "en": "Send to the employer supervisor" },
+  "pdetSentStatus": { "fa": "ارسال شد — {status}", "en": "Sent — {status}" },
+  "pdetUploadDocsFirstThenSubmit": { "fa": "ابتدا مدارک را بارگذاری کنید، سپس برای بررسی ارسال نمایید.", "en": "Upload the documents first, then submit for review." },
+  "pdetPrevRequestRejected": { "fa": "درخواستِ قبلی رد شد{note}. پس از اصلاح، دوباره ارسال کنید.", "en": "The previous request was rejected{note}. After correcting it, submit again." },
+  "pdetGateAwaitingReview": { "fa": "در انتظار بررسی", "en": "Awaiting review" },
+  "apLevelLow": { "fa": "پایین", "en": "Low" },
+  "apLevelMedium": { "fa": "متوسط", "en": "Medium" },
+  "apLevelHigh": { "fa": "بالا", "en": "High" },
+  "apLevelVeryHigh": { "fa": "بسیار بالا", "en": "Very high" },
 
   // --- corrective actions: Tripod Beta / incident-origin integration (project-specific) ---
   "cadTripodOriginBadge": { "fa": "🔗 مدیریت حوادث / Tripod Beta", "en": "🔗 Incident Management / Tripod Beta" },
@@ -7355,7 +7370,8 @@ export const translations = {
   "errSaveSomeRules": { "fa": "خطا در ذخیره‌ی برخی قوانین", "en": "Error saving some rules" },
   "errSaveSomeItems": { "fa": "خطا در ذخیره‌سازی برخی موارد", "en": "Error saving some items" },
   "draftUnsavedChangesBar": { "fa": "تغییرات هنوز ثبت نشده‌اند", "en": "Changes have not been committed yet" },
-  "errSaveSomeMatrixItems": { "fa": "خطا در ذخیره‌ی برخی موارد ماتریس", "en": "Error saving some matrix items" }
+  "errSaveSomeMatrixItems": { "fa": "خطا در ذخیره‌ی برخی موارد ماتریس", "en": "Error saving some matrix items" },
+  "exportColRow": { "fa": "ردیف", "en": "No." }
 };
 
 // برای فایل‌های غیر React (لایه‌ی داده / api.js) که به Hook دسترسی ندارند اما

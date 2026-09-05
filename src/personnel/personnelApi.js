@@ -4,6 +4,7 @@ import { isOnline } from "../offline/networkStatus.js";
 import { checkUploadAllowed } from "../offline/dbSizeMonitor.js";
 import { getRecordsByModule, putRecord } from "../offline/offlineDb.js";
 import { deleteGateItemsForRecord } from "../hseGateApi.js";
+import { translate, getCurrentLang } from "../i18n/translations.js";
 
 /**
  * Personnel Access Management — data access layer.
@@ -16,32 +17,32 @@ import { deleteGateItemsForRecord } from "../hseGateApi.js";
 export const SPECIAL_JOB_TITLES = ["داربست‌بند", "اپراتور جرثقیل", "ریگر", "نصاب", "برقکار"];
 
 export const DOC_TYPES = [
-  { value: "start_work_form", label: "فرم شروع به کار" },
-  { value: "general_safety_training", label: "فرم آموزش ایمنی عمومی" },
-  { value: "specialized_safety_training", label: "فرم آموزش ایمنی تخصصی" },
-  { value: "qualification_form", label: "فرم تأیید صلاحیت", specialOnly: true },
-  { value: "health_certificate", label: "گواهی طب کار" },
-  { value: "health_visit_receipt", label: "رسید مراجعه به طب کار" },
-  { value: "health_final_result", label: "نتیجه نهایی طب کار" },
+  { value: "start_work_form", labelKey: "docTypeStartWorkForm" },
+  { value: "general_safety_training", labelKey: "docTypeGeneralSafetyTraining" },
+  { value: "specialized_safety_training", labelKey: "docTypeSpecializedSafetyTraining" },
+  { value: "qualification_form", labelKey: "docTypeQualificationForm", specialOnly: true },
+  { value: "health_certificate", labelKey: "docTypeHealthCertificate" },
+  { value: "health_visit_receipt", labelKey: "docTypeHealthVisitReceipt" },
+  { value: "health_final_result", labelKey: "docTypeHealthFinalResult" },
 ];
 
 export const DOC_STATUS = [
-  { value: "pending", label: "در انتظار بررسی", color: "#b45309", bg: "#fef3c7" },
-  { value: "approved", label: "تأیید شده", color: "#166534", bg: "#dcfce7" },
-  { value: "rejected", label: "رد شده", color: "#c92a2a", bg: "#fdecec" },
-  { value: "needs_correction", label: "نیاز به اصلاح", color: "#b45309", bg: "#fef3c7" },
+  { value: "pending", labelKey: "docStatusPending", color: "#b45309", bg: "#fef3c7" },
+  { value: "approved", labelKey: "docStatusApproved", color: "#166534", bg: "#dcfce7" },
+  { value: "rejected", labelKey: "docStatusRejected", color: "#c92a2a", bg: "#fdecec" },
+  { value: "needs_correction", labelKey: "docStatusNeedsCorrection", color: "#b45309", bg: "#fef3c7" },
 ];
 
 export const PERSONNEL_STATUS = [
-  { value: "pending_documents", label: "در انتظار بارگذاری مدارک", color: "#b45309", bg: "#fef3c7" },
-  { value: "pending_employer_review", label: "در حال بررسی کارفرما", color: "#1d4ed8", bg: "#dbeafe" },
-  { value: "pending_qualification", label: "در انتظار تأیید صلاحیت", color: "#b45309", bg: "#fef3c7" },
-  { value: "pending_health_visit", label: "در انتظار مراجعه به طب کار", color: "#b45309", bg: "#fef3c7" },
-  { value: "pending_health_result", label: "در انتظار نتیجه طب کار", color: "#b45309", bg: "#fef3c7" },
-  { value: "active", label: "فعال", color: "#166534", bg: "#dcfce7" },
-  { value: "needs_correction", label: "نیاز به اصلاح", color: "#c92a2a", bg: "#fdecec" },
-  { value: "rejected", label: "رد شده", color: "#c92a2a", bg: "#fdecec" },
-  { value: "health_expired", label: "طب کار منقضی شده", color: "#c92a2a", bg: "#fdecec" },
+  { value: "pending_documents", labelKey: "psPendingDocuments", color: "#b45309", bg: "#fef3c7" },
+  { value: "pending_employer_review", labelKey: "psPendingEmployerReview", color: "#1d4ed8", bg: "#dbeafe" },
+  { value: "pending_qualification", labelKey: "psPendingQualification", color: "#b45309", bg: "#fef3c7" },
+  { value: "pending_health_visit", labelKey: "psPendingHealthVisit", color: "#b45309", bg: "#fef3c7" },
+  { value: "pending_health_result", labelKey: "psPendingHealthResult", color: "#b45309", bg: "#fef3c7" },
+  { value: "active", labelKey: "psActive", color: "#166534", bg: "#dcfce7" },
+  { value: "needs_correction", labelKey: "psNeedsCorrection", color: "#c92a2a", bg: "#fdecec" },
+  { value: "rejected", labelKey: "psRejected", color: "#c92a2a", bg: "#fdecec" },
+  { value: "health_expired", labelKey: "psHealthExpired", color: "#c92a2a", bg: "#fdecec" },
 ];
 
 export function personnelStatusMeta(status) {
@@ -53,8 +54,8 @@ export function personnelStatusMeta(status) {
 // آیا فرد الان همکاری می‌کند یا ترک‌کار/تسویه‌حساب شده — با ثبت هیچ‌کدام از
 // سوابق/مدارک/معاینات قبلی‌اش حذف نمی‌شود.
 export const EMPLOYMENT_STATUS = [
-  { value: "active", label: "فعال", color: "#166534", bg: "#dcfce7" },
-  { value: "terminated", label: "ترک کار / تسویه حساب", color: "#5b6b7d", bg: "#eef1f5" },
+  { value: "active", labelKey: "esActive", color: "#166534", bg: "#dcfce7" },
+  { value: "terminated", labelKey: "esTerminated", color: "#5b6b7d", bg: "#eef1f5" },
 ];
 export function employmentStatusMeta(value) {
   return EMPLOYMENT_STATUS.find((s) => s.value === value) || EMPLOYMENT_STATUS[0];
@@ -63,7 +64,7 @@ export function employmentStatusMeta(value) {
 // ثبت ترک‌کار/تسویه‌حساب یا بازگرداندن به فعال — تاریخ فقط برای ترک‌کار الزامی است.
 export async function setEmploymentStatus(id, employmentStatus, terminationDate, performedBy) {
   if (employmentStatus === "terminated" && !terminationDate) {
-    return { __error: true, message: "تاریخ ترک کار / تسویه حساب الزامی است" };
+    return { __error: true, message: translate(getCurrentLang(), "errTerminationDateRequired") };
   }
   const patch = { employmentStatus, terminationDate: employmentStatus === "terminated" ? terminationDate : "" };
   const result = await updatePersonnelDB(id, patch, performedBy);
@@ -189,7 +190,7 @@ export async function insertPersonnel(rec) {
     company_id: getCurrentCompanyId(),
   };
   const result = await offlineWrite({ module: "personnel", table: "personnel", action: "insert", id, payload: dbPayload });
-  if (!result.ok) return { __error: true, message: "خطا در ذخیره‌سازی" };
+  if (!result.ok) return { __error: true, message: translate(getCurrentLang(), "commonErrorSave") };
   insertAuditLog(id, "created", `ثبت پرسنل جدید: ${rec.fullName}`, rec.createdBy);
   return { ...personnelFromRow(result.record), syncStatus: result.offline ? "pending" : "synced" };
 }
@@ -213,7 +214,7 @@ export async function updatePersonnelDB(id, patch, performedBy) {
   if ("employmentStatus" in patch) dbPatch.employment_status = patch.employmentStatus;
   if ("terminationDate" in patch) dbPatch.termination_date = patch.terminationDate || null;
   const result = await offlineWrite({ module: "personnel", table: "personnel", action: "update", id, payload: dbPatch });
-  if (!result.ok) return { __error: true, message: "خطا در ذخیره‌سازی" };
+  if (!result.ok) return { __error: true, message: translate(getCurrentLang(), "commonErrorSave") };
   if (performedBy) insertAuditLog(id, "edited", `به‌روزرسانی: ${Object.keys(patch).join(", ")}`, performedBy);
   return { ...personnelFromRow(result.record), syncStatus: result.offline ? "pending" : "synced" };
 }
@@ -254,7 +255,7 @@ export async function upsertDocument(personnelId, docType, fileData, fileName, m
   if (isOnline()) {
     const { allowed, storageMb } = await checkUploadAllowed();
     if (!allowed) {
-      return { __error: true, message: `فضای ذخیره‌سازی پر شده است (${storageMb} مگابایت). لطفاً ابتدا از بخش «آرشیو فایل‌ها» مدارک قدیمی را دانلود و حذف کنید، سپس دوباره تلاش کنید.` };
+      return { __error: true, message: translate(getCurrentLang(), "errStorageFullDocs", { mb: storageMb }) };
     }
   }
   const existing = await sb(`personnel_documents?personnel_id=eq.${personnelId}&doc_type=eq.${docType}&select=id`);
@@ -269,7 +270,7 @@ export async function upsertDocument(personnelId, docType, fileData, fileName, m
     base64Data: fileData, contentType: mimeType, fileFieldName: "file_data",
     extraFields: { personnel_id: personnelId, doc_type: docType, file_name: fileName, mime_type: mimeType, status: "pending" },
   });
-  if (!result.ok) return { __error: true, message: "خطا در ذخیره‌سازی" };
+  if (!result.ok) return { __error: true, message: translate(getCurrentLang(), "commonErrorSave") };
   insertAuditLog(personnelId, "doc_uploaded", `بارگذاری مدرک: ${docType}`, performedBy);
   return { ...documentFromRow(result.record), syncStatus: result.offline ? "pending" : "synced" };
 }
@@ -283,7 +284,7 @@ export async function upsertTrainingDocument(personnelId, trainingId, fileData, 
   if (isOnline()) {
     const { allowed, storageMb } = await checkUploadAllowed();
     if (!allowed) {
-      return { __error: true, message: `فضای ذخیره‌سازی پر شده است (${storageMb} مگابایت). لطفاً ابتدا از بخش «آرشیو فایل‌ها» مدارک قدیمی را دانلود و حذف کنید، سپس دوباره تلاش کنید.` };
+      return { __error: true, message: translate(getCurrentLang(), "errStorageFullDocs", { mb: storageMb }) };
     }
   }
   const existing = await sb(`personnel_documents?personnel_id=eq.${personnelId}&doc_type=eq.specialized_safety_training&training_id=eq.${trainingId}&select=id`);
@@ -298,7 +299,7 @@ export async function upsertTrainingDocument(personnelId, trainingId, fileData, 
     base64Data: fileData, contentType: mimeType, fileFieldName: "file_data",
     extraFields: { personnel_id: personnelId, doc_type: "specialized_safety_training", training_id: trainingId, file_name: fileName, mime_type: mimeType, status: "pending" },
   });
-  if (!result.ok) return { __error: true, message: "خطا در ذخیره‌سازی" };
+  if (!result.ok) return { __error: true, message: translate(getCurrentLang(), "commonErrorSave") };
   insertAuditLog(personnelId, "doc_uploaded", "بارگذاری مدرک آموزش تخصصی", performedBy);
   return { ...documentFromRow(result.record), syncStatus: result.offline ? "pending" : "synced" };
 }
@@ -306,7 +307,7 @@ export async function upsertTrainingDocument(personnelId, trainingId, fileData, 
 export async function reviewDocumentDB(id, status, reviewNote, reviewedBy) {
   const dbPatch = { status, review_note: reviewNote || "", reviewed_by: reviewedBy || "", reviewed_at: new Date().toISOString() };
   const result = await offlineWrite({ module: "personnelDocuments", table: "personnel_documents", action: "update", id, payload: dbPatch });
-  if (!result.ok) return { __error: true, message: "خطا در ذخیره‌سازی" };
+  if (!result.ok) return { __error: true, message: translate(getCurrentLang(), "commonErrorSave") };
   const doc = { ...documentFromRow(result.record), syncStatus: result.offline ? "pending" : "synced" };
   insertAuditLog(doc.personnelId, status === "approved" ? "approved" : "rejected", `بررسی مدرک ${doc.docType}: ${status}`, reviewedBy);
   return doc;

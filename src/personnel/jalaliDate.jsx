@@ -1,8 +1,16 @@
 import React from "react";
 import { styles } from "../shared.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { getCurrentLang } from "../i18n/translations.js";
 
 // نسخه‌ی مستقل تبدیل تاریخ شمسی — عمداً کپی محلی است (نه import از App.jsx)
 // تا این ماژول کاملاً خودکفا بماند و به فایل‌های دیگر پروژه دست نخورد.
+//
+// نکته‌ی نسخه‌ی انگلیسی: مقدار ذخیره‌شده همیشه تاریخ میلادی استاندارد
+// ("YYYY-MM-DD") است — این هرگز تغییر نمی‌کند. فقط نمایش برای کاربر
+// بین شمسی (فارسی) و میلادی (انگلیسی) سوییچ می‌شود.
+
+const EN_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 function isLeapJalaliYear(jy) {
   return (((jy - (jy > 0 ? 474 : 473)) % 2820 + 474 + 38) * 682) % 2816 < 682;
@@ -59,6 +67,12 @@ export function isoToJalali(iso) {
   return gregorianToJalali(gy, gm, gd);
 }
 export function isoToJalaliDisplay(iso) {
+  if (!iso) return "";
+  if (getCurrentLang() === "en") {
+    const [gy, gm, gd] = String(iso).split("-").map(Number);
+    if (!gy || !gm || !gd) return "";
+    return `${gd} ${EN_MONTHS[gm - 1]} ${gy}`;
+  }
   const p = isoToJalali(iso);
   if (!p) return "";
   return `${p[0]}/${String(p[1]).padStart(2, "0")}/${String(p[2]).padStart(2, "0")}`;
@@ -90,18 +104,23 @@ export function toJalaliDateTime(value) {
 }
 
 // برای اسم فایل اکسل آرشیو: "1405-05-10_14-35" (خط‌تیره به‌جای اسلش، چون
-// اسلش در اسم فایل مجاز نیست)
+// اسلش در اسم فایل مجاز نیست). نسخه‌ی انگلیسی: "2026-01-15_14-35" (میلادی).
 export function jalaliFileTimestamp() {
   const now = new Date();
-  const jalaliDate = toJalaliSafe(now.toISOString()).replaceAll("/", "-");
   const hh = String(now.getHours()).padStart(2, "0");
   const mm = String(now.getMinutes()).padStart(2, "0");
+  if (getCurrentLang() === "en") {
+    const iso = now.toISOString().slice(0, 10);
+    return `${iso}_${hh}-${mm}`;
+  }
+  const jalaliDate = toJalaliSafe(now.toISOString()).replaceAll("/", "-");
   return `${jalaliDate}_${hh}-${mm}`;
 }
 
 export const JALALI_MONTHS = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"];
 
 export function JalaliDateInput({ value, onChange, allowEmpty, disabled, style }) {
+  const { lang } = useLanguage();
   const todayParts = todayJalaliParts();
   const parsed = isoToJalali(value);
   const jy = parsed ? parsed[0] : todayParts[0];
@@ -127,6 +146,21 @@ export function JalaliDateInput({ value, onChange, allowEmpty, disabled, style }
     const [gy, gm, gd] = jalaliToGregorian(ny, nm, safeD);
     onChange(`${gy}-${String(gm).padStart(2, "0")}-${String(gd).padStart(2, "0")}`);
   };
+
+  // نسخه‌ی انگلیسی: یک date input استاندارد میلادی (قرارداد مقدار همان
+  // "YYYY-MM-DD" باقی می‌ماند — فقط UI انتخاب تاریخ عوض می‌شود).
+  if (lang === "en") {
+    return (
+      <input
+        type="date"
+        style={{ ...styles.input, ...style }}
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        dir="ltr"
+      />
+    );
+  }
 
   return (
     <div style={{ display: "flex", gap: 6, ...style }} dir="rtl">

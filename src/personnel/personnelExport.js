@@ -2,6 +2,7 @@ import * as XLSX from "xlsx";
 import { DOC_TYPES, personnelStatusMeta, docStatusMeta, loadPersonnelDocuments } from "./personnelApi.js";
 import { isoToJalaliDisplay } from "./jalaliDate.jsx";
 import { exportWorkbookNativeAware, exportHtmlReportNativeAware } from "../offline/nativeFile.js";
+import { translate, getCurrentLang } from "../i18n/translations.js";
 
 /**
  * Export helpers for the Personnel module.
@@ -41,22 +42,29 @@ async function fetchAllDocuments(personnelList) {
 }
 
 function docTypeLabel(docType) {
-  return DOC_TYPES.find((t) => t.value === docType)?.label || docType;
+  const dt = DOC_TYPES.find((t) => t.value === docType);
+  return dt ? translate(getCurrentLang(), dt.labelKey) : docType;
 }
 
 function docsSummaryText(docs) {
-  if (!docs || docs.length === 0) return "بدون مدرک بارگذاری‌شده";
-  return docs.map((d) => `${docTypeLabel(d.docType)} (${docStatusMeta(d.status).label})`).join(" | ");
+  if (!docs || docs.length === 0) return translate(getCurrentLang(), "noDocsUploaded");
+  return docs.map((d) => `${docTypeLabel(d.docType)} (${translate(getCurrentLang(), docStatusMeta(d.status).labelKey)})`).join(" | ");
 }
 
 export async function exportPersonnelPdf(personnelList, title) {
   const documentsMap = await fetchAllDocuments(personnelList);
 
-  const headers = ["ردیف", "نام و نام خانوادگی", "کد ملی", "پیمانکار", "عنوان شغلی", "تماس", "تاریخ شروع", "وضعیت", "صلاحیت", "انقضای طب کار", "مدارک"];
+  const lang = getCurrentLang();
+  const isEn = lang === "en";
+  const headers = [
+    translate(lang, "exportColRow"), translate(lang, "peColFullName"), translate(lang, "peColNationalCode"), translate(lang, "peColContractor"),
+    translate(lang, "peColJobTitle"), translate(lang, "peColContact"), translate(lang, "peColStartDate"), translate(lang, "commonStatus"),
+    translate(lang, "peColQualification"), translate(lang, "peColHealthExpiry"), translate(lang, "peColDocuments"),
+  ];
 
   const rows = personnelList
     .map((p, idx) => {
-      const sm = personnelStatusMeta(p.status);
+      const sm = { ...personnelStatusMeta(p.status), label: translate(lang, personnelStatusMeta(p.status).labelKey) };
       const docs = documentsMap[p.id] || [];
       const docLinks =
         docs
@@ -71,27 +79,27 @@ export async function exportPersonnelPdf(personnelList, title) {
         <td>${escapeHtml(p.phone)}</td>
         <td>${isoToJalaliDisplay(p.startDate)}</td>
         <td>${escapeHtml(sm.label)}</td>
-        <td>${p.qualificationRequired ? escapeHtml(docStatusMeta(p.qualificationStatus || "pending").label) : "—"}</td>
+        <td>${p.qualificationRequired ? escapeHtml(translate(lang, docStatusMeta(p.qualificationStatus || "pending").labelKey)) : "—"}</td>
         <td>${p.occHealthExpiry ? isoToJalaliDisplay(p.occHealthExpiry) : "—"}</td>
         <td>${docLinks}</td>
       </tr>`;
     })
     .join("");
 
-  const html = `<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>${escapeHtml(title)}</title>
+  const html = `<!doctype html><html lang="${lang}" dir="${isEn ? "ltr" : "rtl"}"><head><meta charset="utf-8"><title>${escapeHtml(title)}</title>
   <style>
-    body { font-family: Tahoma, Arial, sans-serif; direction: rtl; padding: 16px; }
+    body { font-family: Tahoma, Arial, sans-serif; direction: ${isEn ? "ltr" : "rtl"}; padding: 16px; }
     h2 { text-align: center; margin-bottom: 4px; }
     p.meta { text-align: center; color: #666; font-size: 12px; margin-top: 0; }
     table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 14px; }
-    th, td { border: 1px solid #ccc; padding: 5px; text-align: right; vertical-align: top; }
+    th, td { border: 1px solid #ccc; padding: 5px; text-align: ${isEn ? "left" : "right"}; vertical-align: top; }
     th { background: #f1f5f9; }
     a { color: #0d8f8a; text-decoration: underline; }
     @media print { @page { size: landscape; margin: 10mm; } }
   </style></head>
   <body>
     <h2>${escapeHtml(title)}</h2>
-    <p class="meta">مدیریت ورود و تردد پرسنل — Integrated HSE Management System — تعداد: ${personnelList.length}</p>
+    <p class="meta">${translate(lang, "peMetaLine", { count: personnelList.length })}</p>
     <table><thead><tr>${headers.map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table>
   </body></html>`;
 
@@ -99,7 +107,7 @@ export async function exportPersonnelPdf(personnelList, title) {
 
   const win = window.open("", "_blank");
   if (!win) {
-    alert("اجازه‌ی باز شدن پنجره‌ی جدید داده نشد؛ لطفاً popup blocker مرورگر را غیرفعال کنید.");
+    alert(translate(lang, "errPopupBlocked"));
     return;
   }
   win.document.write(html);
@@ -110,20 +118,21 @@ export async function exportPersonnelPdf(personnelList, title) {
 
 export async function exportPersonnelExcel(personnelList, title) {
   const documentsMap = await fetchAllDocuments(personnelList);
+  const lang = getCurrentLang();
 
   const rows = personnelList.map((p, idx) => ({
-    "ردیف": idx + 1,
-    "نام و نام خانوادگی": p.fullName,
-    "کد ملی": p.nationalCode,
-    "پیمانکار": p.contractorName,
-    "عنوان شغلی": p.jobTitle,
-    "شماره تماس": p.phone,
-    "تاریخ شروع به کار": isoToJalaliDisplay(p.startDate),
-    "وضعیت": personnelStatusMeta(p.status).label,
-    "وضعیت صلاحیت": p.qualificationRequired ? docStatusMeta(p.qualificationStatus || "pending").label : "—",
-    "تاریخ انجام طب کار": p.occHealthDate ? isoToJalaliDisplay(p.occHealthDate) : "—",
-    "انقضای طب کار": p.occHealthExpiry ? isoToJalaliDisplay(p.occHealthExpiry) : "—",
-    "مدارک بارگذاری‌شده": docsSummaryText(documentsMap[p.id]),
+    [translate(lang, "exportColRow")]: idx + 1,
+    [translate(lang, "peColFullName")]: p.fullName,
+    [translate(lang, "peColNationalCode")]: p.nationalCode,
+    [translate(lang, "peColContractor")]: p.contractorName,
+    [translate(lang, "peColJobTitle")]: p.jobTitle,
+    [translate(lang, "peColContactNumber")]: p.phone,
+    [translate(lang, "peColStartDateFull")]: isoToJalaliDisplay(p.startDate),
+    [translate(lang, "commonStatus")]: translate(lang, personnelStatusMeta(p.status).labelKey),
+    [translate(lang, "peColQualificationStatus")]: p.qualificationRequired ? translate(lang, docStatusMeta(p.qualificationStatus || "pending").labelKey) : "—",
+    [translate(lang, "peColHealthVisitDate")]: p.occHealthDate ? isoToJalaliDisplay(p.occHealthDate) : "—",
+    [translate(lang, "peColHealthExpiry")]: p.occHealthExpiry ? isoToJalaliDisplay(p.occHealthExpiry) : "—",
+    [translate(lang, "peColUploadedDocs")]: docsSummaryText(documentsMap[p.id]),
   }));
 
   const wb = XLSX.utils.book_new();

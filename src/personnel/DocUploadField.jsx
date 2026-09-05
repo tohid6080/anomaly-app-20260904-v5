@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Camera, ImagePlus, X, Loader2, FileText } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { fileToBase64, isPdfDataUrl } from "./fileHelpers.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 /**
  * Reusable document upload control.
@@ -10,6 +11,7 @@ import { fileToBase64, isPdfDataUrl } from "./fileHelpers.js";
  * Nothing is sent anywhere until the user confirms the staged file.
  */
 export default function DocUploadField({ existingDoc, onConfirm, onDelete, onView, disabled, allowReplace = true, allowDelete = true }) {
+  const { t } = useLanguage();
   const [staged, setStaged] = useState(null); // { data, name, mime }
   const [stage, setStage] = useState("idle"); // idle | compressing | uploading | error
   const [error, setError] = useState("");
@@ -18,7 +20,7 @@ export default function DocUploadField({ existingDoc, onConfirm, onDelete, onVie
     if (!file) return;
     const isImage = file.type.startsWith("image/");
     const isPdf = file.type === "application/pdf";
-    if (!isImage && !isPdf) { setError("فقط فایل تصویر یا PDF مجاز است"); return; }
+    if (!isImage && !isPdf) { setError(t("docUploadOnlyImagePdf")); return; }
     setError("");
     setStage("compressing");
     try {
@@ -26,7 +28,7 @@ export default function DocUploadField({ existingDoc, onConfirm, onDelete, onVie
       setStaged({ data, name: file.name, mime: file.type });
       setStage("idle");
     } catch (e) {
-      setError(e?.message || "خطا در پردازش فایل. دوباره تلاش کنید.");
+      setError(e?.message || t("docUploadProcessError"));
       setStage("error");
     }
   };
@@ -41,7 +43,7 @@ export default function DocUploadField({ existingDoc, onConfirm, onDelete, onVie
       setStaged(null);
       setStage("idle");
     } catch (e) {
-      setError(e?.message || "خطا در بارگذاری. اتصال اینترنت را بررسی کنید.");
+      setError(e?.message || t("docUploadError"));
       setStage("error");
     }
   };
@@ -71,12 +73,12 @@ export default function DocUploadField({ existingDoc, onConfirm, onDelete, onVie
               />
             )}
             {!disabled && staged && (
-              <button type="button" onClick={cancelStaged} title="لغو" style={styles.photoRemoveBtn}>
+              <button type="button" onClick={cancelStaged} title={t("docUploadCancel")} style={styles.photoRemoveBtn}>
                 <X size={13} color="#fff" />
               </button>
             )}
             {!disabled && !staged && existingDoc && onDelete && allowDelete && (
-              <button type="button" onClick={() => onDelete(existingDoc)} title="حذف" style={styles.photoRemoveBtn}>
+              <button type="button" onClick={() => onDelete(existingDoc)} title={t("commonDelete")} style={styles.photoRemoveBtn}>
                 <X size={13} color="#fff" />
               </button>
             )}
@@ -85,22 +87,22 @@ export default function DocUploadField({ existingDoc, onConfirm, onDelete, onVie
         </div>
       )}
 
-      {stage === "compressing" && <ProgressLine label="در حال فشرده‌سازی تصویر..." />}
-      {stage === "uploading" && <ProgressLine label="در حال بارگذاری..." />}
+      {stage === "compressing" && <ProgressLine label={t("docUploadCompressing")} />}
+      {stage === "uploading" && <ProgressLine label={t("docUploadUploading")} />}
       {error && <p style={styles.error}>{error}</p>}
 
       {staged && stage !== "uploading" && !disabled && (
-        <button type="button" style={{ ...styles.smallButton, marginTop: 4 }} onClick={confirmUpload}>تأیید و بارگذاری</button>
+        <button type="button" style={{ ...styles.smallButton, marginTop: 4 }} onClick={confirmUpload}>{t("docUploadConfirm")}</button>
       )}
 
       {!disabled && showPickers && stage !== "uploading" && (
         <div style={{ display: "flex", gap: 8, marginTop: staged ? 8 : 0 }}>
           <label style={pickerBtnStyle(THEME.teal)}>
-            <Camera size={14} /> گرفتن عکس
+            <Camera size={14} /> {t("docUploadTakePhoto")}
             <input type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={(e) => { pick(e.target.files[0]); e.target.value = ""; }} />
           </label>
           <label style={pickerBtnStyle(THEME.navyMid)}>
-            <ImagePlus size={14} /> گالری / PDF
+            <ImagePlus size={14} /> {t("docUploadGalleryPdf")}
             <input type="file" accept="image/*,application/pdf" style={{ display: "none" }} onChange={(e) => { pick(e.target.files[0]); e.target.value = ""; }} />
           </label>
         </div>
@@ -108,7 +110,7 @@ export default function DocUploadField({ existingDoc, onConfirm, onDelete, onVie
 
       {!disabled && existingDoc && !staged && allowDelete && onDelete && (
         <button type="button" onClick={() => onDelete(existingDoc)} style={{ ...styles.smallButton, background: THEME.danger, marginTop: 8, display: "inline-flex", alignItems: "center", gap: 6 }}>
-          <X size={13} /> حذف مدرک
+          <X size={13} /> {t("docUploadDeleteDoc")}
         </button>
       )}
     </div>

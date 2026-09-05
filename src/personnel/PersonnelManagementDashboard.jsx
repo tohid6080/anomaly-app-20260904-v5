@@ -3,6 +3,7 @@ import { BarChart3, Filter, X } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { JalaliDateInput } from "./jalaliDate.jsx";
 import { PERSONNEL_STATUS } from "./personnelApi.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 /**
  * Management Dashboard — KPI cards + simple hand-rolled bar charts
@@ -22,6 +23,7 @@ function daysUntil(iso) {
 }
 
 export default function PersonnelManagementDashboard({ personnelList, contractorOptions, isContractor, onClose }) {
+  const { t, dir } = useLanguage();
   const [contractorFilter, setContractorFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
@@ -53,7 +55,7 @@ export default function PersonnelManagementDashboard({ personnelList, contractor
   const countBy = (keyFn) => {
     const map = {};
     filtered.forEach((p) => {
-      const key = keyFn(p) || "نامشخص";
+      const key = keyFn(p) || t("pmdUnknown");
       map[key] = (map[key] || 0) + 1;
     });
     return Object.entries(map).sort((a, b) => b[1] - a[1]);
@@ -62,50 +64,50 @@ export default function PersonnelManagementDashboard({ personnelList, contractor
   const byContractor = countBy((p) => p.contractorName);
   const byJobTitle = countBy((p) => p.jobTitle);
   const byStatus = PERSONNEL_STATUS
-    .map((s) => ({ label: s.label, count: filtered.filter((p) => p.status === s.value).length, color: s.color }))
+    .map((s) => ({ label: t(s.labelKey), count: filtered.filter((p) => p.status === s.value).length, color: s.color }))
     .filter((row) => row.count > 0);
 
   const hasDateFilter = !!(dateFrom || dateTo);
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: 24 }}>
-      <div style={styles.backLink} onClick={onClose}>← بازگشت به لیست پرسنل</div>
+    <div style={{ maxWidth: 720, margin: "0 auto", padding: 24, direction: dir }}>
+      <div style={styles.backLink} onClick={onClose}>{t("pmdBackToPersonnelList")}</div>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
         <BarChart3 size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>داشبورد مدیریتی پرسنل</h2>
+        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("pmdTitle")}</h2>
       </div>
-      <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 18 }}>نمای کلی، شاخص‌های کلیدی و نمودارهای وضعیت پرسنل</p>
+      <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 18 }}>{t("pmdSubtitle")}</p>
 
       <div style={{ ...styles.card, width: "auto" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
           <Filter size={14} color={THEME.text2} />
-          <span style={{ fontSize: 12.5, fontWeight: 600, color: THEME.text2 }}>فیلترها</span>
+          <span style={{ fontSize: 12.5, fontWeight: 600, color: THEME.text2 }}>{t("pmdFilters")}</span>
         </div>
         <div style={styles.formGrid}>
           {!isContractor && (
             <div>
-              <label style={styles.label}>پیمانکار</label>
-              <select style={styles.input} value={contractorFilter} onChange={(e) => setContractorFilter(e.target.value)} dir="rtl">
-                <option value="all">همه پیمانکاران</option>
+              <label style={styles.label}>{t("fieldContractor")}</label>
+              <select style={styles.input} value={contractorFilter} onChange={(e) => setContractorFilter(e.target.value)} dir={dir}>
+                <option value="all">{t("filterAllContractors")}</option>
                 {contractorOptions.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
           )}
           <div>
-            <label style={styles.label}>وضعیت</label>
-            <select style={styles.input} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir="rtl">
-              <option value="all">همه وضعیت‌ها</option>
-              {PERSONNEL_STATUS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+            <label style={styles.label}>{t("commonStatus")}</label>
+            <select style={styles.input} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir={dir}>
+              <option value="all">{t("filterAllStatuses")}</option>
+              {PERSONNEL_STATUS.map((s) => <option key={s.value} value={s.value}>{t(s.labelKey)}</option>)}
             </select>
           </div>
         </div>
         <div style={styles.formGrid}>
           <div>
-            <label style={styles.label}>از تاریخ شروع به کار</label>
+            <label style={styles.label}>{t("pmdFromStartDate")}</label>
             <JalaliDateInput value={dateFrom} onChange={setDateFrom} allowEmpty />
           </div>
           <div>
-            <label style={styles.label}>تا تاریخ شروع به کار</label>
+            <label style={styles.label}>{t("pmdToStartDate")}</label>
             <JalaliDateInput value={dateTo} onChange={setDateTo} allowEmpty />
           </div>
         </div>
@@ -114,25 +116,25 @@ export default function PersonnelManagementDashboard({ personnelList, contractor
             style={{ ...styles.backLink, fontSize: 11, marginTop: 8, marginBottom: 0, display: "inline-flex" }}
             onClick={() => { setDateFrom(""); setDateTo(""); }}
           >
-            <X size={12} style={{ marginLeft: 3 }} /> پاک کردن بازه تاریخ
+            <X size={12} style={{ marginLeft: 3 }} /> {t("pmdClearDateRange")}
           </div>
         )}
       </div>
 
       <div style={styles.statsRow}>
-        <KpiCard label="کل پرسنل" value={kpis.total} bg="#eef1f5" color={THEME.navy} />
-        <KpiCard label="فعال" value={kpis.active} bg="#dcfce7" color="#166534" />
-        <KpiCard label="در انتظار تأیید" value={kpis.pending} bg="#dbeafe" color="#1d4ed8" />
-        <KpiCard label="رد شده" value={kpis.rejected} bg="#fdecec" color={THEME.danger} />
-        <KpiCard label="نیاز به اصلاح" value={kpis.needsCorrection} bg="#fef3c7" color="#b45309" />
-        <KpiCard label="طب کار منقضی" value={kpis.healthExpired} bg="#fdecec" color={THEME.danger} />
-        <KpiCard label="طب کار در آستانه انقضا (۳۰ روز)" value={kpis.healthExpiringSoon} bg="#fef3c7" color="#b45309" />
-        <KpiCard label="در انتظار تأیید صلاحیت" value={kpis.pendingQualification} bg="#fef3c7" color="#b45309" />
+        <KpiCard label={t("pmdKpiTotal")} value={kpis.total} bg="#eef1f5" color={THEME.navy} />
+        <KpiCard label={t("commonActive")} value={kpis.active} bg="#dcfce7" color="#166534" />
+        <KpiCard label={t("statusPendingReview")} value={kpis.pending} bg="#dbeafe" color="#1d4ed8" />
+        <KpiCard label={t("pmdKpiRejected")} value={kpis.rejected} bg="#fdecec" color={THEME.danger} />
+        <KpiCard label={t("pmdKpiNeedsCorrection")} value={kpis.needsCorrection} bg="#fef3c7" color="#b45309" />
+        <KpiCard label={t("pmdKpiHealthExpired")} value={kpis.healthExpired} bg="#fdecec" color={THEME.danger} />
+        <KpiCard label={t("pmdKpiHealthExpiringSoon")} value={kpis.healthExpiringSoon} bg="#fef3c7" color="#b45309" />
+        <KpiCard label={t("pmdKpiPendingQualification")} value={kpis.pendingQualification} bg="#fef3c7" color="#b45309" />
       </div>
 
-      <ChartBlock title="بر اساس پیمانکار" rows={byContractor.map(([label, count]) => ({ label, count, color: THEME.teal }))} />
-      <ChartBlock title="بر اساس عنوان شغلی" rows={byJobTitle.map(([label, count]) => ({ label, count, color: THEME.navyMid }))} />
-      <ChartBlock title="بر اساس وضعیت" rows={byStatus} />
+      <ChartBlock title={t("pmdByContractor")} rows={byContractor.map(([label, count]) => ({ label, count, color: THEME.teal }))} />
+      <ChartBlock title={t("pmdByJobTitle")} rows={byJobTitle.map(([label, count]) => ({ label, count, color: THEME.navyMid }))} />
+      <ChartBlock title={t("pmdByStatus")} rows={byStatus} />
     </div>
   );
 }
@@ -147,11 +149,12 @@ function KpiCard({ label, value, bg, color }) {
 }
 
 function ChartBlock({ title, rows }) {
+  const { t } = useLanguage();
   const max = Math.max(1, ...rows.map((r) => r.count));
   return (
     <div style={{ ...styles.card, width: "auto", marginTop: 14 }}>
       <h4 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 12px", fontWeight: 700 }}>{title}</h4>
-      {rows.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, margin: 0 }}>داده‌ای موجود نیست.</p>}
+      {rows.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, margin: 0 }}>{t("pmdNoDataAvailable")}</p>}
       {rows.map((r) => (
         <div key={r.label} style={{ marginBottom: 10 }}>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11.5, color: THEME.text2, marginBottom: 3 }}>

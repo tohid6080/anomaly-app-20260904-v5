@@ -8,11 +8,12 @@ import PersonnelForm from "./PersonnelForm.jsx";
 import PersonnelDetail from "./PersonnelDetail.jsx";
 import SyncStatusBadge from "../offline/SyncStatusBadge.jsx";
 import { loadPendingGateItems, loadAssignedGateItems, loadAssignedReviewItemsForModule, loadCompanyStaffOptions } from "../hseGateApi.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
-const SORT_OPTIONS = [
-  { value: "name", label: "نام (الفبا)" },
-  { value: "newest", label: "جدیدترین" },
-  { value: "oldest", label: "قدیمی‌ترین" },
+const SORT_OPTIONS_KEYS = [
+  { value: "name", labelKey: "sortNameAlpha" },
+  { value: "newest", labelKey: "sortNewest" },
+  { value: "oldest", labelKey: "sortOldest" },
 ];
 
 /**
@@ -21,6 +22,8 @@ const SORT_OPTIONS = [
  * BowTieDashboard ⇄ BowTieEditor — App.jsx only needs one route to this file.
  */
 export default function PersonnelDashboard({ onBack, currentUser, role, initialStatusFilter, initialContractorFilter, readOnly, onNavigateToAssessment, initialSelectedPersonnelId }) {
+  const { t, dir } = useLanguage();
+  const SORT_OPTIONS = SORT_OPTIONS_KEYS.map((o) => ({ value: o.value, label: t(o.labelKey) }));
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -114,12 +117,12 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
 
   const handleExportPdf = async () => {
     setExporting(true);
-    await exportPersonnelPdf(sorted, "لیست پرسنل - IHMS");
+    await exportPersonnelPdf(sorted, t("personnelListExportTitle"));
     setExporting(false);
   };
   const handleExportExcel = async () => {
     setExporting(true);
-    await exportPersonnelExcel(sorted, "لیست پرسنل - IHMS");
+    await exportPersonnelExcel(sorted, t("personnelListExportTitle"));
     setExporting(false);
   };
 
@@ -134,11 +137,11 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
 
   const byContractor = {};
   scoped.forEach((p) => {
-    const key = p.contractorName || "نامشخص";
+    const key = p.contractorName || t("pmdUnknown");
     byContractor[key] = (byContractor[key] || 0) + 1;
   });
 
-  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>در حال بارگذاری...</div>;
+  if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</div>;
 
   if (showForm && !readOnly) {
     return <PersonnelForm onBack={() => setShowForm(false)} currentUser={currentUser} onSaved={() => { setShowForm(false); load(); }} />;
@@ -158,28 +161,28 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
   }
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>← بازگشت به منو</div>}
+    <div style={{ maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
+      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 4 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <Users size={20} color={THEME.teal} />
-          <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>مدیریت ورود و تردد پرسنل</h2>
+          <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("pdModuleTitle")}</h2>
         </div>
       </div>
-      <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 18 }}>ثبت، بررسی مدارک، تأیید صلاحیت و پیگیری طب کار پرسنل پیمانکاران</p>
+      <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 18 }}>{t("pdModuleSubtitle")}</p>
 
       <div style={styles.statsRow}>
-        <div style={{ ...styles.statBox, background: "#dcfce7" }}><div style={{ ...styles.statNum, color: "#166534" }}>{counts.active}</div><div style={styles.statLabel}>فعال</div></div>
-        <div style={{ ...styles.statBox, background: "#dbeafe" }}><div style={{ ...styles.statNum, color: "#1d4ed8" }}>{counts.pendingReview}</div><div style={styles.statLabel}>در انتظار تأیید</div></div>
-        <div style={{ ...styles.statBox, background: "#fef3c7" }}><div style={{ ...styles.statNum, color: "#b45309" }}>{counts.pendingQualification}</div><div style={styles.statLabel}>در انتظار صلاحیت</div></div>
-        <div style={{ ...styles.statBox, background: "#fef3c7" }}><div style={{ ...styles.statNum, color: "#b45309" }}>{counts.pendingHealthVisit}</div><div style={styles.statLabel}>در انتظار مراجعه طب کار</div></div>
-        <div style={{ ...styles.statBox, background: "#fef3c7" }}><div style={{ ...styles.statNum, color: "#b45309" }}>{counts.pendingHealthResult}</div><div style={styles.statLabel}>در انتظار نتیجه طب کار</div></div>
-        <div style={{ ...styles.statBox, background: "#fdecec" }}><div style={{ ...styles.statNum, color: THEME.danger }}>{counts.healthExpired}</div><div style={styles.statLabel}>طب کار منقضی</div></div>
+        <div style={{ ...styles.statBox, background: "#dcfce7" }}><div style={{ ...styles.statNum, color: "#166534" }}>{counts.active}</div><div style={styles.statLabel}>{t("commonActive")}</div></div>
+        <div style={{ ...styles.statBox, background: "#dbeafe" }}><div style={{ ...styles.statNum, color: "#1d4ed8" }}>{counts.pendingReview}</div><div style={styles.statLabel}>{t("statusPendingReview")}</div></div>
+        <div style={{ ...styles.statBox, background: "#fef3c7" }}><div style={{ ...styles.statNum, color: "#b45309" }}>{counts.pendingQualification}</div><div style={styles.statLabel}>{t("pdStatPendingQualification")}</div></div>
+        <div style={{ ...styles.statBox, background: "#fef3c7" }}><div style={{ ...styles.statNum, color: "#b45309" }}>{counts.pendingHealthVisit}</div><div style={styles.statLabel}>{t("pdStatPendingHealthVisit")}</div></div>
+        <div style={{ ...styles.statBox, background: "#fef3c7" }}><div style={{ ...styles.statNum, color: "#b45309" }}>{counts.pendingHealthResult}</div><div style={styles.statLabel}>{t("pdStatPendingHealthResult")}</div></div>
+        <div style={{ ...styles.statBox, background: "#fdecec" }}><div style={{ ...styles.statNum, color: THEME.danger }}>{counts.healthExpired}</div><div style={styles.statLabel}>{t("pdStatHealthExpired")}</div></div>
       </div>
 
       {!isContractor && Object.keys(byContractor).length > 0 && (
         <div style={{ marginTop: 14 }}>
-          <h4 style={{ fontSize: 12.5, color: THEME.text2, marginBottom: 6, fontWeight: 600 }}>آمار هر پیمانکار</h4>
+          <h4 style={{ fontSize: 12.5, color: THEME.text2, marginBottom: 6, fontWeight: 600 }}>{t("pdStatsPerContractor")}</h4>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {Object.entries(byContractor).map(([name, c]) => (
               <span key={name} style={styles.badge}>{name}: {c}</span>
@@ -191,7 +194,7 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
       <div style={{ display: "flex", gap: 8, marginTop: 18 }}>
         {!readOnly && (
           <div style={{ ...styles.menuCard, background: THEME.teal, color: "#fff", justifyContent: "center", flex: 1 }} onClick={() => setShowForm(true)}>
-            <Plus size={16} style={{ marginLeft: 6 }} /> ثبت پرسنل جدید
+            <Plus size={16} style={{ marginLeft: 6 }} /> {t("pdRegisterNewPersonnel")}
           </div>
         )}
       </div>
@@ -203,7 +206,7 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
         }}
         onClick={() => setShowTerminated((v) => !v)}
       >
-        {showTerminated ? "بازگشت به لیست پرسنل فعال" : "نمایش پرسنل ترک‌کار / تسویه‌حساب‌شده"}
+        {showTerminated ? t("pdBackToActiveList") : t("pdShowTerminated")}
       </div>
 
       <div style={{ display: "flex", gap: 8, marginTop: 10, marginBottom: 14 }}>
@@ -213,7 +216,7 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
           onClick={handleExportExcel}
           disabled={exporting || sorted.length === 0}
         >
-          <FileSpreadsheet size={15} /> خروجی Excel
+          <FileSpreadsheet size={15} /> {t("exportExcelButton")}
         </button>
         <button
           type="button"
@@ -221,38 +224,38 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
           onClick={handleExportPdf}
           disabled={exporting || sorted.length === 0}
         >
-          <FileDown size={15} /> خروجی PDF
+          <FileDown size={15} /> {t("exportPdfButton")}
         </button>
       </div>
-      {exporting && <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 10, textAlign: "center" }}>در حال آماده‌سازی گزارش و بارگذاری مدارک...</p>}
+      {exporting && <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 10, textAlign: "center" }}>{t("pdPreparingExport")}</p>}
 
       <DataView
         items={sorted}
         getId={(p) => p.id}
         searchQuery={search}
         onSearchChange={setSearch}
-        searchPlaceholder="جستجو (نام، کدملی، پیمانکار، شغل)..."
+        searchPlaceholder={t("pdSearchPlaceholder")}
         sortOptions={SORT_OPTIONS}
         sortValue={sort}
         onSortChange={setSort}
         filterSlot={
           <>
-            <select style={styles.filterSelect} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir="rtl">
-              <option value="all">همه وضعیت‌ها</option>
-              {PERSONNEL_STATUS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+            <select style={styles.filterSelect} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir={dir}>
+              <option value="all">{t("filterAllStatuses")}</option>
+              {PERSONNEL_STATUS.map((s) => <option key={s.value} value={s.value}>{t(s.labelKey)}</option>)}
             </select>
             {!isContractor && (
-              <select style={styles.filterSelect} value={contractorFilter} onChange={(e) => setContractorFilter(e.target.value)} dir="rtl">
-                <option value="all">همه پیمانکاران</option>
+              <select style={styles.filterSelect} value={contractorFilter} onChange={(e) => setContractorFilter(e.target.value)} dir={dir}>
+                <option value="all">{t("filterAllContractors")}</option>
                 {contractorOptions.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             )}
           </>
         }
-        emptyMessage="موردی یافت نشد"
+        emptyMessage={t("noItemsFound")}
         columns={[
           {
-            key: "name", label: "نام",
+            key: "name", label: t("colName"),
             render: (p) => (
               <div>
                 <div style={{ fontWeight: 600 }}>{p.fullName}</div>
@@ -260,10 +263,10 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
               </div>
             ),
           },
-          ...(!isContractor ? [{ key: "contractor", label: "پیمانکار", render: (p) => p.contractorName || "—" }] : []),
-          { key: "national", label: "کد ملی", render: (p) => p.nationalCode || "—" },
+          ...(!isContractor ? [{ key: "contractor", label: t("fieldContractor"), render: (p) => p.contractorName || "—" }] : []),
+          { key: "national", label: t("colNationalCode"), render: (p) => p.nationalCode || "—" },
           {
-            key: "status", label: "وضعیت",
+            key: "status", label: t("commonStatus"),
             render: (p) => {
               const sm = personnelStatusMeta(p.status);
               const gi = gateMap[p.id];
@@ -271,11 +274,11 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
               return (
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                   {showTerminated && (
-                    <StatusPill label={employmentStatusMeta(p.employmentStatus).label} color={employmentStatusMeta(p.employmentStatus).color} bg={employmentStatusMeta(p.employmentStatus).bg} />
+                    <StatusPill label={t(employmentStatusMeta(p.employmentStatus).labelKey)} color={employmentStatusMeta(p.employmentStatus).color} bg={employmentStatusMeta(p.employmentStatus).bg} />
                   )}
-                  <StatusPill label={sm.label} color={sm.color} bg={sm.bg} />
+                  <StatusPill label={t(sm.labelKey)} color={sm.color} bg={sm.bg} />
                   {assignedExpertName && (
-                    <span style={{ fontSize: 10.5, color: "#1d4ed8", fontWeight: 600 }}>ارجاع به کارشناس: {assignedExpertName}</span>
+                    <span style={{ fontSize: 10.5, color: "#1d4ed8", fontWeight: 600 }}>{t("gateAssignedToExpert", { name: assignedExpertName })}</span>
                   )}
                   {p.syncStatus && p.syncStatus !== "synced" && <SyncStatusBadge status={p.syncStatus} onRetry={() => load()} />}
                 </div>
@@ -284,7 +287,7 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
           },
         ]}
         renderRowActions={(p) => (
-          <button type="button" style={styles.smallButton} onClick={() => setSelected(p)}>مشاهده</button>
+          <button type="button" style={styles.smallButton} onClick={() => setSelected(p)}>{t("viewAction")}</button>
         )}
         renderCard={(p) => {
           const sm = personnelStatusMeta(p.status);
@@ -300,13 +303,13 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     {showTerminated && (
-                      <StatusPill label={employmentStatusMeta(p.employmentStatus).label} color={employmentStatusMeta(p.employmentStatus).color} bg={employmentStatusMeta(p.employmentStatus).bg} />
+                      <StatusPill label={t(employmentStatusMeta(p.employmentStatus).labelKey)} color={employmentStatusMeta(p.employmentStatus).color} bg={employmentStatusMeta(p.employmentStatus).bg} />
                     )}
-                    <StatusPill label={sm.label} color={sm.color} bg={sm.bg} />
+                    <StatusPill label={t(sm.labelKey)} color={sm.color} bg={sm.bg} />
                     {p.syncStatus && p.syncStatus !== "synced" && <SyncStatusBadge status={p.syncStatus} onRetry={() => load()} />}
                   </div>
                   {assignedExpertNameCard && (
-                    <span style={{ fontSize: 10.5, color: "#1d4ed8", fontWeight: 600 }}>ارجاع به کارشناس: {assignedExpertNameCard}</span>
+                    <span style={{ fontSize: 10.5, color: "#1d4ed8", fontWeight: 600 }}>{t("gateAssignedToExpert", { name: assignedExpertNameCard })}</span>
                   )}
                 </div>
               </div>

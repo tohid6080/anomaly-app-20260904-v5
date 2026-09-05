@@ -6,6 +6,7 @@ import DocUploadField from "./DocUploadField.jsx";
 import DocumentViewerModal from "./DocumentViewerModal.jsx";
 import { insertPersonnel, updatePersonnelDB, upsertDocument, loadContractorOptions, isSpecialJob } from "./personnelApi.js";
 import { submitToGate } from "../hseGateApi.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 /**
  * Phase 2.2 — Personnel registration form.
@@ -25,6 +26,7 @@ function isValidMobile(phone) {
 }
 
 export default function PersonnelForm({ onBack, onSaved, currentUser }) {
+  const { t, dir } = useLanguage();
   const [contractors, setContractors] = useState([]);
   const [loadingContractors, setLoadingContractors] = useState(true);
 
@@ -69,18 +71,18 @@ export default function PersonnelForm({ onBack, onSaved, currentUser }) {
 
   const validate = () => {
     const er = {};
-    if (!fullName.trim() || fullName.trim().length < 3) er.fullName = "نام و نام خانوادگی را کامل وارد کنید";
-    if (!nationalCode.trim()) er.nationalCode = "کد ملی الزامی است";
-    else if (!isValidNationalCode(nationalCode.trim())) er.nationalCode = "کد ملی معتبر نیست";
-    if (!contractorId) er.contractorId = "انتخاب شرکت پیمانکار الزامی است";
-    if (!jobTitle.trim()) er.jobTitle = "عنوان شغلی الزامی است";
-    if (!phone.trim()) er.phone = "شماره تماس الزامی است";
-    else if (!isValidMobile(phone)) er.phone = "شماره موبایل معتبر نیست (مثال: 09123456789)";
-    if (!startDate) er.startDate = "تاریخ شروع به کار الزامی است";
-    if (!occHealthPath) er.occHealthPath = "وضعیت طب کار را مشخص کنید";
+    if (!fullName.trim() || fullName.trim().length < 3) er.fullName = t("pfErrFullName");
+    if (!nationalCode.trim()) er.nationalCode = t("pfErrNationalCodeRequired");
+    else if (!isValidNationalCode(nationalCode.trim())) er.nationalCode = t("pfErrNationalCodeInvalid");
+    if (!contractorId) er.contractorId = t("pfErrContractorRequired");
+    if (!jobTitle.trim()) er.jobTitle = t("pfErrJobTitleRequired");
+    if (!phone.trim()) er.phone = t("pfErrPhoneRequired");
+    else if (!isValidMobile(phone)) er.phone = t("pfErrPhoneInvalid");
+    if (!startDate) er.startDate = t("pfErrStartDateRequired");
+    if (!occHealthPath) er.occHealthPath = t("pfErrOccHealthPathRequired");
     if (occHealthPath === "has_certificate") {
-      if (!certFile) er.cert = "بارگذاری گواهی طب کار الزامی است";
-      if (!occHealthDate) er.occHealthDate = "تاریخ انجام طب کار الزامی است";
+      if (!certFile) er.cert = t("pfErrCertRequired");
+      if (!occHealthDate) er.occHealthDate = t("pfErrOccHealthDateRequired");
     }
     setErrors(er);
     return Object.keys(er).length === 0;
@@ -88,7 +90,7 @@ export default function PersonnelForm({ onBack, onSaved, currentUser }) {
 
   const handleSubmit = async () => {
     setFormError("");
-    if (!validate()) { setFormError("لطفاً خطاهای فرم را برطرف کنید"); return; }
+    if (!validate()) { setFormError(t("pfErrFixFormErrors")); return; }
     setSaving(true);
     const contractor = contractors.find((c) => c.id === contractorId);
     const inserted = await insertPersonnel({
@@ -103,7 +105,7 @@ export default function PersonnelForm({ onBack, onSaved, currentUser }) {
     });
     if (!inserted || inserted.__error) {
       setSaving(false);
-      setFormError(`خطا در ذخیره‌سازی: ${inserted?.message || "نامشخص"}`);
+      setFormError(t("cmErrorSaveReason", { reason: inserted?.message || t("commonErrorUnknown") }));
       return;
     }
 
@@ -126,37 +128,37 @@ export default function PersonnelForm({ onBack, onSaved, currentUser }) {
   };
 
   return (
-    <div style={{ maxWidth: 560, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>← بازگشت</div>}
-      <h2 style={{ margin: "0 0 4px", color: THEME.navy, fontSize: 18, fontWeight: 700 }}>ثبت پرسنل جدید</h2>
+    <div style={{ maxWidth: 560, margin: "0 auto", padding: 24, direction: dir }}>
+      {onBack && <div style={styles.backLink} onClick={onBack}>{t("pfBack")}</div>}
+      <h2 style={{ margin: "0 0 4px", color: THEME.navy, fontSize: 18, fontWeight: 700 }}>{t("pfRegisterNewPersonnel")}</h2>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 18 }}>
-        مدیریت ورود و تردد پرسنل — اطلاعات پایه و وضعیت طب کار
+        {t("pfSubtitle")}
       </p>
 
       <div style={styles.card}>
-        <label style={styles.label}>نام و نام خانوادگی</label>
-        <input style={styles.input} value={fullName} onChange={(e) => setFullName(e.target.value)} dir="rtl" />
+        <label style={styles.label}>{t("pfFullName")}</label>
+        <input style={styles.input} value={fullName} onChange={(e) => setFullName(e.target.value)} dir={dir} />
         {errors.fullName && <p style={styles.error}>{errors.fullName}</p>}
 
-        <label style={styles.label}>کد ملی</label>
+        <label style={styles.label}>{t("pfNationalCode")}</label>
         <input style={styles.input} value={nationalCode} onChange={(e) => setNationalCode(e.target.value.replace(/\D/g, "").slice(0, 10))} dir="ltr" inputMode="numeric" />
         {errors.nationalCode && <p style={styles.error}>{errors.nationalCode}</p>}
 
-        <label style={styles.label}>شرکت پیمانکار</label>
+        <label style={styles.label}>{t("pfContractorCompany")}</label>
         {currentUser?.role === "CONTRACTOR" ? (
-          <input style={{ ...styles.input, background: THEME.bg, color: THEME.text3 }} value={currentUser?.name || ""} disabled dir="rtl" />
+          <input style={{ ...styles.input, background: THEME.bg, color: THEME.text3 }} value={currentUser?.name || ""} disabled dir={dir} />
         ) : loadingContractors ? (
-          <p style={{ fontSize: 12.5, color: THEME.text3 }}>در حال بارگذاری لیست پیمانکاران...</p>
+          <p style={{ fontSize: 12.5, color: THEME.text3 }}>{t("pfLoadingContractors")}</p>
         ) : (
-          <select style={styles.input} value={contractorId} onChange={(e) => setContractorId(e.target.value)} dir="rtl">
-            <option value="">— انتخاب کنید —</option>
+          <select style={styles.input} value={contractorId} onChange={(e) => setContractorId(e.target.value)} dir={dir}>
+            <option value="">{t("pfSelectPlaceholder")}</option>
             {contractors.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         )}
         {errors.contractorId && <p style={styles.error}>{errors.contractorId}</p>}
 
-        <label style={styles.label}>عنوان شغلی</label>
-        <input style={styles.input} list="job-title-suggestions" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} dir="rtl" placeholder="مثال: جوشکار، داربست‌بند، کارگر عمومی..." />
+        <label style={styles.label}>{t("pfJobTitle")}</label>
+        <input style={styles.input} list="job-title-suggestions" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} dir={dir} placeholder={t("pfJobTitlePlaceholder")} />
         <datalist id="job-title-suggestions">
           <option value="داربست‌بند" /><option value="اپراتور جرثقیل" /><option value="ریگر" /><option value="نصاب" /><option value="برقکار" />
         </datalist>
@@ -166,24 +168,23 @@ export default function PersonnelForm({ onBack, onSaved, currentUser }) {
           <div style={{ background: "#fff7ed", border: "1px solid #fdba74", borderRadius: 10, padding: 12, marginTop: 12, display: "flex", gap: 8 }}>
             <AlertTriangle size={17} color="#c2410c" style={{ flexShrink: 0, marginTop: 1 }} />
             <p style={{ fontSize: 12, color: "#7c2d12", margin: 0, lineHeight: 1.7 }}>
-              توجه: تأیید صلاحیت کارفرما برای مشاغل داربست‌بند، اپراتور جرثقیل، ریگر، نصاب و برقکار الزامی است و تا قبل از تأیید، شروع به کار در سایت امکان‌پذیر نخواهد بود.
-              بارگذاری فرم تأیید صلاحیت پس از ثبت، در بخش مدارک این پرسنل انجام می‌شود.
+              {t("pfSpecialJobWarning")}
             </p>
           </div>
         )}
 
-        <label style={styles.label}>شماره تماس</label>
+        <label style={styles.label}>{t("pfPhone")}</label>
         <input style={styles.input} value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 11))} dir="ltr" inputMode="numeric" placeholder="09123456789" />
         {errors.phone && <p style={styles.error}>{errors.phone}</p>}
 
-        <label style={styles.label}>تاریخ شروع به کار</label>
+        <label style={styles.label}>{t("pfStartDate")}</label>
         <JalaliDateInput value={startDate} onChange={setStartDate} />
         {errors.startDate && <p style={styles.error}>{errors.startDate}</p>}
       </div>
 
       <div style={styles.card}>
-        <h3 style={{ fontSize: 14.5, color: THEME.navy, margin: "0 0 4px", fontWeight: 700 }}>وضعیت طب کار</h3>
-        <p style={{ fontSize: 11.5, color: THEME.text3, marginTop: 0, marginBottom: 12 }}>آیا این فرد در حال حاضر گواهی معتبر طب کار دارد؟</p>
+        <h3 style={{ fontSize: 14.5, color: THEME.navy, margin: "0 0 4px", fontWeight: 700 }}>{t("pfOccHealthStatus")}</h3>
+        <p style={{ fontSize: 11.5, color: THEME.text3, marginTop: 0, marginBottom: 12 }}>{t("pfOccHealthQuestion")}</p>
 
         <div style={{ display: "flex", gap: 8 }}>
           <button
@@ -195,7 +196,7 @@ export default function PersonnelForm({ onBack, onSaved, currentUser }) {
               background: occHealthPath === "has_certificate" ? THEME.tealSoft : "#fff", color: occHealthPath === "has_certificate" ? THEME.tealDeep : THEME.text2,
             }}
           >
-            دارای گواهی معتبر
+            {t("pfHasCertificate")}
           </button>
           <button
             type="button"
@@ -206,18 +207,18 @@ export default function PersonnelForm({ onBack, onSaved, currentUser }) {
               background: occHealthPath === "no_certificate" ? "#eef1f5" : "#fff", color: occHealthPath === "no_certificate" ? THEME.navy : THEME.text2,
             }}
           >
-            فاقد گواهی
+            {t("pfNoCertificate")}
           </button>
         </div>
         {errors.occHealthPath && <p style={styles.error}>{errors.occHealthPath}</p>}
 
         {occHealthPath === "has_certificate" && (
           <div style={{ marginTop: 14 }}>
-            <label style={styles.label}>تاریخ انجام طب کار</label>
+            <label style={styles.label}>{t("pfOccHealthDate")}</label>
             <JalaliDateInput value={occHealthDate} onChange={setOccHealthDate} allowEmpty />
             {errors.occHealthDate && <p style={styles.error}>{errors.occHealthDate}</p>}
 
-            <label style={styles.label}>گواهی طب کار (عکس یا PDF)</label>
+            <label style={styles.label}>{t("pfOccHealthCert")}</label>
             <DocUploadField
               existingDoc={certFile ? { fileData: certFile.data, fileName: certFile.name } : null}
               onConfirm={handleCertConfirm}
@@ -231,14 +232,14 @@ export default function PersonnelForm({ onBack, onSaved, currentUser }) {
 
         {occHealthPath === "no_certificate" && (
           <p style={{ fontSize: 11.5, color: THEME.text3, marginTop: 12, lineHeight: 1.8 }}>
-            پس از تأیید مدارک اولیه توسط کارفرما، مهلت ۳ روزه برای مراجعه به طب کار و سپس مهلت ۷ روزه برای بارگذاری نتیجه به‌صورت خودکار برای این پرسنل فعال می‌شود.
+            {t("pfNoCertNote")}
           </p>
         )}
       </div>
 
       {formError && <p style={styles.error}>{formError}</p>}
       <button type="button" style={styles.button} onClick={handleSubmit} disabled={saving}>
-        {saving ? "در حال ثبت..." : "ثبت پرسنل"}
+        {saving ? t("pfSubmitting") : t("pfSubmitPersonnel")}
       </button>
 
       {viewerSrc && <DocumentViewerModal src={viewerSrc} onClose={() => setViewerSrc(null)} />}
