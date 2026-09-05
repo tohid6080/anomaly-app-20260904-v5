@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Clock, ShieldCheck, UserX, Trash2 } from "lucide-react";
+import { Clock, ShieldCheck, UserX } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { isoToJalaliDisplay, JalaliDateInput } from "./jalaliDate.jsx";
 import DocUploadField from "./DocUploadField.jsx";
@@ -9,7 +9,7 @@ import { loadRequiredTrainingsForJobTitle } from "../training/trainingApi.js";
 import AccidentPronenessSection from "./AccidentPronenessSection.jsx";
 import {
   DOC_TYPES, docStatusMeta, personnelStatusMeta,
-  loadPersonnelDocuments, upsertDocument, insertTrainingAttachment, reviewDocumentDB, deleteDocumentDB,
+  loadPersonnelDocuments, upsertDocument, upsertTrainingDocument, reviewDocumentDB, deleteDocumentDB,
   updatePersonnelDB, progressPersonnelWorkflow, checkAndUpdateDeadlines,
   EMPLOYMENT_STATUS, employmentStatusMeta, setEmploymentStatus,
 } from "./personnelApi.js";
@@ -184,22 +184,16 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
     setDocuments(documents.filter((d) => d.id !== doc.id));
   };
 
-  // پیوست‌های آموزش تخصصی — تا ۳ فایل هم‌زمان، افزودنی نه جایگزین‌کننده
-  const trainingAttachments = documents.filter((d) => d.docType === "specialized_safety_training");
-  const handleUploadTrainingAttachment = async (data, fileName, mimeType) => {
-    if (!isContractor) { alert("شما مجوز بارگذاری پیوست را ندارید"); return { __error: true, message: "no permission" }; }
-    const doc = await insertTrainingAttachment(personnel.id, data, fileName, mimeType, (currentUser?.name || currentUser?.username));
+  // مدرکِ آموزش تخصصی به‌ازای هر دوره‌ی الزامیِ عنوان شغلی — بدون سقفِ ۳؛
+  // آپلودِ دوباره برای همان دوره، مدرکِ قبلیِ همان دوره را جایگزین می‌کند.
+  const handleUploadTrainingDoc = async (trainingId, data, fileName, mimeType) => {
+    if (!isContractor) { alert("شما مجوز بارگذاری مدرک را ندارید"); return { __error: true, message: "no permission" }; }
+    const doc = await upsertTrainingDocument(personnel.id, trainingId, data, fileName, mimeType, (currentUser?.name || currentUser?.username));
     if (doc?.__error) return doc;
-    const newDocs = [...documents, doc];
+    const newDocs = [...documents.filter((d) => !(d.docType === "specialized_safety_training" && d.trainingId === trainingId)), doc];
     const updatedP = await progressPersonnelWorkflow(personnel, newDocs, (currentUser?.name || currentUser?.username));
     refreshAfterChange(updatedP, newDocs);
     return doc;
-  };
-  const handleDeleteTrainingAttachment = async (doc) => {
-    if (!isContractor) { alert("شما مجوز حذف پیوست را ندارید"); return; }
-    if (!confirm("این پیوست حذف شود؟")) return;
-    await deleteDocumentDB(doc.id);
-    setDocuments(documents.filter((d) => d.id !== doc.id));
   };
 
   const handleReviewDoc = async (doc, status, note) => {
@@ -220,7 +214,10 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
   };
 
   const sm = personnelStatusMeta(personnel.status);
-  const visibleDocTypes = DOC_TYPES.filter((dt) => !dt.specialOnly || personnel.qualificationRequired);
+  // «فرم آموزش ایمنی تخصصی» عمداً از کارتِ «مدارک» حذف شده — بارگذاری‌اش
+  // حالا به‌ازای هر دوره‌ی الزامی در کارتِ «آموزش‌های تخصصی موردنیاز» انجام
+  // می‌شود و اینجا تکراری بود.
+  const visibleDocTypes = DOC_TYPES.filter((dt) => dt.value !== "specialized_safety_training" && (!dt.specialOnly || personnel.qualificationRequired));
 
   if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>در حال بارگذاری...</div>;
 
@@ -337,46 +334,64 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
         {!trainingsLoading && requiredTrainings.length === 0 && (
           <p style={{ fontSize: 12, color: THEME.text3 }}>برای عنوان شغلی «{personnel.jobTitle}» آموزش الزامی‌ای در ماتریس تعریف نشده است.</p>
         )}
-        {!trainingsLoading && requiredTrainings.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {requiredTrainings.map((t) => (
-              <span key={t.id} style={{ ...styles.badge, background: "#e3f5f4", color: THEME.tealDeep }} title={t.description || ""}>{t.title}</span>
-            ))}
-          </div>
-        )}
+        {/* یک ردیفِ بارگذاریِ مستقل به‌ازای هر آموزشِ الزامیِ شناسایی‌شده —
+            سندِ هر ردیف با همان آموزش (training_id) گره خورده است. */}
+        {!trainingsLoading && requiredTrainings.map((tr) => {
+          const doc = documents.find((d) => d.docType === "specialized_safety_training" && d.trainingId === tr.id);
+          const dsm = doc ? docStatusMeta(doc.status) : null;
+          return (
+            <div key={tr.id} style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 12, marginTop: 12 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: THEME.text }} title={tr.description || ""}>{tr.title}</span>
+                {dsm && <span style={{ ...styles.badge, color: dsm.color, background: dsm.bg }}>{dsm.label}</span>}
+              </div>
 
-        <h4 style={{ fontSize: 12.5, color: THEME.navy, margin: "16px 0 8px", fontWeight: 700, borderTop: `1px solid ${THEME.border}`, paddingTop: 12 }}>
-          پیوست‌های فرم آموزش ایمنی تخصصی ({trainingAttachments.length.toLocaleString("fa-IR")} از ۳)
-        </h4>
-        {trainingAttachments.map((doc) => (
-          <div key={doc.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 10px", background: THEME.bg, borderRadius: 8, marginBottom: 6 }}>
-            <button type="button" onClick={() => setViewerSrc(doc.fileData)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 12.5, color: THEME.navy, textAlign: "start" }}>
-              {doc.fileName || "پیوست"}
-            </button>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              {docStatusMeta && (
-                <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: docStatusMeta(doc.status).bg, color: docStatusMeta(doc.status).color, fontWeight: 600 }}>
-                  {docStatusMeta(doc.status).label}
-                </span>
-              )}
-              {isContractor && (
-                <button type="button" onClick={() => handleDeleteTrainingAttachment(doc)} style={{ background: "none", border: "none", cursor: "pointer", color: THEME.danger }}>
-                  <Trash2 size={14} />
-                </button>
+              <div style={{ marginTop: 8 }}>
+                {doc ? (
+                  <DocUploadField
+                    existingDoc={doc}
+                    onConfirm={(data, name, mime) => handleUploadTrainingDoc(tr.id, data, name, mime)}
+                    onDelete={isContractor && doc.status !== "approved" ? () => handleDeleteDoc(doc) : null}
+                    onView={setViewerSrc}
+                    disabled={isEmployer}
+                    allowDelete={isContractor && doc.status !== "approved"}
+                    allowReplace={isContractor && doc.status !== "approved"}
+                  />
+                ) : isContractor ? (
+                  <DocUploadField
+                    existingDoc={null}
+                    onConfirm={(data, name, mime) => handleUploadTrainingDoc(tr.id, data, name, mime)}
+                    onView={setViewerSrc}
+                  />
+                ) : (
+                  <p style={{ fontSize: 11.5, color: THEME.text3, margin: "6px 0" }}>هنوز بارگذاری نشده</p>
+                )}
+              </div>
+
+              {doc?.reviewNote && <p style={{ fontSize: 11.5, color: THEME.danger, marginTop: 6 }}><b>یادداشت بررسی:</b> {doc.reviewNote}</p>}
+
+              {isEmployer && doc && doc.status === "pending" && (
+                <div style={{ marginTop: 8 }}>
+                  {showRejectFor !== doc.id ? (
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button type="button" style={{ ...styles.smallButton, padding: "6px 12px" }} onClick={() => handleReviewDoc(doc, "approved", "")}>تأیید</button>
+                      <button type="button" style={{ ...styles.smallButton, background: THEME.danger, padding: "6px 12px" }} onClick={() => setShowRejectFor(doc.id)}>رد / اصلاح</button>
+                    </div>
+                  ) : (
+                    <>
+                      <textarea style={{ ...styles.input, minHeight: 50, fontFamily: "inherit", marginTop: 6 }} value={reviewDraft[doc.id] || ""} onChange={(e) => setReviewDraft({ ...reviewDraft, [doc.id]: e.target.value })} placeholder="توضیح رد/اصلاح" dir="rtl" />
+                      <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                        <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => handleReviewDoc(doc, "rejected", reviewDraft[doc.id])}>رد</button>
+                        <button type="button" style={{ ...styles.smallButton, background: "#b45309" }} onClick={() => handleReviewDoc(doc, "needs_correction", reviewDraft[doc.id])}>نیاز به اصلاح</button>
+                        <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setShowRejectFor(null)}>انصراف</button>
+                      </div>
+                    </>
+                  )}
+                </div>
               )}
             </div>
-          </div>
-        ))}
-        {isContractor && trainingAttachments.length < 3 && (
-          <DocUploadField
-            existingDoc={null}
-            onConfirm={handleUploadTrainingAttachment}
-            onView={setViewerSrc}
-          />
-        )}
-        {!isContractor && trainingAttachments.length === 0 && (
-          <p style={{ fontSize: 11.5, color: THEME.text3, margin: 0 }}>هنوز پیوستی بارگذاری نشده</p>
-        )}
+          );
+        })}
       </div>
 
       {isEmployer && (

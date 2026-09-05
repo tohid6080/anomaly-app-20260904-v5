@@ -232,6 +232,7 @@ function documentFromRow(r) {
     id: r.id,
     personnelId: r.personnel_id,
     docType: r.doc_type,
+    trainingId: r.training_id || "",
     fileData: r.file_data || "",
     fileName: r.file_name || "",
     mimeType: r.mime_type || "",
@@ -273,28 +274,32 @@ export async function upsertDocument(personnelId, docType, fileData, fileName, m
   return { ...documentFromRow(result.record), syncStatus: result.offline ? "pending" : "synced" };
 }
 
-// برخلاف upsertDocument (که مدرک قبلی همان نوع را جایگزین می‌کند)، این
-// تابع برای «آموزش تخصصی» طراحی شده — تا ۳ پیوست هم‌زمان نگه می‌دارد،
-// نه جایگزینی. هر بار فراخوانی، یک رکورد جدید اضافه می‌کند.
-export async function insertTrainingAttachment(personnelId, fileData, fileName, mimeType, performedBy) {
+// مدرکِ «آموزش ایمنی تخصصی» به‌ازای یک دوره‌ی مشخص (training_courses.id).
+// دیگر سقفِ ۳تایی نیست — تعداد مدارک برابرِ تعدادِ آموزش‌های الزامیِ عنوان
+// شغلی است، و آپلودِ دوباره برای همان دوره، مدرکِ قبلیِ همان دوره را
+// جایگزین می‌کند (مثلِ upsertDocument، ولی با کلیدِ سه‌تاییِ
+// personnel_id + doc_type + training_id).
+export async function upsertTrainingDocument(personnelId, trainingId, fileData, fileName, mimeType, performedBy) {
   if (isOnline()) {
     const { allowed, storageMb } = await checkUploadAllowed();
     if (!allowed) {
       return { __error: true, message: `فضای ذخیره‌سازی پر شده است (${storageMb} مگابایت). لطفاً ابتدا از بخش «آرشیو فایل‌ها» مدارک قدیمی را دانلود و حذف کنید، سپس دوباره تلاش کنید.` };
     }
   }
-  const existing = await sb(`personnel_documents?personnel_id=eq.${personnelId}&doc_type=eq.specialized_safety_training&select=id`);
-  if (sbOk(existing) && existing.length >= 3) {
-    return { __error: true, message: "حداکثر ۳ پیوست برای آموزش تخصصی مجاز است. برای افزودن پیوست جدید، ابتدا یکی از موارد قبلی را حذف کنید." };
+  const existing = await sb(`personnel_documents?personnel_id=eq.${personnelId}&doc_type=eq.specialized_safety_training&training_id=eq.${trainingId}&select=id`);
+  if (sbOk(existing) && existing.length > 0) {
+    for (const row of existing) {
+      await offlineWrite({ module: "personnelDocuments", table: "personnel_documents", action: "delete", id: row.id, payload: {} });
+    }
   }
   const id = uid("doc");
   const result = await offlineWriteFile({
     module: "personnelDocuments", table: "personnel_documents", bucket: "personnel-documents", id,
     base64Data: fileData, contentType: mimeType, fileFieldName: "file_data",
-    extraFields: { personnel_id: personnelId, doc_type: "specialized_safety_training", file_name: fileName, mime_type: mimeType, status: "pending" },
+    extraFields: { personnel_id: personnelId, doc_type: "specialized_safety_training", training_id: trainingId, file_name: fileName, mime_type: mimeType, status: "pending" },
   });
   if (!result.ok) return { __error: true, message: "خطا در ذخیره‌سازی" };
-  insertAuditLog(personnelId, "doc_uploaded", "افزودن پیوست آموزش تخصصی", performedBy);
+  insertAuditLog(personnelId, "doc_uploaded", "بارگذاری مدرک آموزش تخصصی", performedBy);
   return { ...documentFromRow(result.record), syncStatus: result.offline ? "pending" : "synced" };
 }
 
