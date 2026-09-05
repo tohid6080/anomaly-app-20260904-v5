@@ -160,13 +160,13 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
                 key={p.id}
                 style={{
                   background: THEME.surface, border: `2px solid ${isThisPlanSelected ? THEME.teal : THEME.border}`, borderRadius: 14,
-                  padding: 20, position: "relative",
+                  padding: 20, position: "relative", minWidth: 0, overflow: "hidden",
                 }}
               >
                 {isThisPlanSelected && <CheckCircle2 size={18} color={THEME.teal} style={{ position: "absolute", top: 14, insetInlineStart: 14 }} />}
                 <h3 style={{ fontSize: 15, fontWeight: 800, color: THEME.navy, margin: "0 0 8px" }}>{p.name}</h3>
                 {p.description && (
-                  <p style={{ fontSize: 11.5, color: THEME.text2, lineHeight: 1.9, margin: "0 0 12px", whiteSpace: "pre-wrap" }}>{p.description}</p>
+                  <p style={{ fontSize: 11.5, color: THEME.text2, lineHeight: 1.9, margin: "0 0 12px", whiteSpace: "pre-wrap", overflowWrap: "anywhere", wordBreak: "break-word" }}>{p.description}</p>
                 )}
 
                 {/* هر دو قیمت (ماهانه و سالانه) با هم نمایش داده می‌شوند — نه پشت یک Toggle سراسری */}
