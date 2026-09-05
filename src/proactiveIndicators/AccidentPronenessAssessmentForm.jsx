@@ -2,18 +2,21 @@ import React, { useState, useEffect } from "react";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { loadIndicatorQuestions, computeIndicatorScore, submitAssessment } from "./proactiveIndicatorsApi.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 // دقیقاً همان مقیاس فایل مرجع — هر ۵ گزینه، همیشه به همین ترتیب و همین
 // امتیازِ خام (قبل از اعمال reverse scoring که در محاسبه‌ی نهایی انجام می‌شود)
-const SCALE_OPTIONS = [
-  { value: 5, label: "کاملاً موافقم" },
-  { value: 4, label: "موافقم" },
-  { value: 3, label: "نظری ندارم" },
-  { value: 2, label: "مخالفم" },
-  { value: 1, label: "بکلی مخالفم" },
+const SCALE_OPTIONS_KEYS = [
+  { value: 5, labelKey: "hseOptStronglyAgree" },
+  { value: 4, labelKey: "hseOptAgree" },
+  { value: 3, labelKey: "hseOptNeutral" },
+  { value: 2, labelKey: "hseOptDisagree" },
+  { value: 1, labelKey: "hseOptStronglyDisagree" },
 ];
 
 export default function AccidentPronenessAssessmentForm({ personnelId, jobTitle, personnelName, currentUser, onBack, onSaved }) {
+  const { t, dir } = useLanguage();
+  const SCALE_OPTIONS = SCALE_OPTIONS_KEYS.map((o) => ({ value: o.value, label: t(o.labelKey) }));
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
   const [assessorName, setAssessorName] = useState(currentUser?.name || "");
@@ -34,9 +37,9 @@ export default function AccidentPronenessAssessmentForm({ personnelId, jobTitle,
 
   const handleSubmit = async () => {
     setError("");
-    if (!assessorName.trim()) { setError("نام ارزیاب الزامی است"); return; }
+    if (!assessorName.trim()) { setError(t("errAssessorNameRequired")); return; }
     if (unanswered.length > 0) {
-      setError(`همه‌ی سؤالات اجباری هستند — ${unanswered.length} سؤال هنوز بی‌پاسخ مانده (سؤال شماره‌ی ${unanswered[0].number} به بعد)`);
+      setError(t("errAllQuestionsRequiredFrom", { count: unanswered.length, num: unanswered[0].number }));
       return;
     }
     setSaving(true);
@@ -46,32 +49,32 @@ export default function AccidentPronenessAssessmentForm({ personnelId, jobTitle,
     setDone(result.finalScore);
   };
 
-  if (loading) return <div style={{ padding: 40, textAlign: "center", color: THEME.text3 }}>در حال بارگذاری سؤالات...</div>;
+  if (loading) return <div style={{ padding: 40, textAlign: "center", color: THEME.text3 }}>{t("apLoadingQuestions")}</div>;
 
   if (done !== null) {
     return (
       <div style={{ maxWidth: 500, margin: "60px auto", padding: 24, textAlign: "center" }}>
         <CheckCircle2 size={48} color="#166534" style={{ marginBottom: 12 }} />
-        <h3 style={{ color: THEME.navy, marginBottom: 8 }}>ارزیابی با موفقیت ثبت شد</h3>
-        <p style={{ color: THEME.text3, fontSize: 13, marginBottom: 16 }}>امتیاز نهایی — به‌صورت خودکار محاسبه شد و قابل ویرایش دستی نیست</p>
+        <h3 style={{ color: THEME.navy, marginBottom: 8 }}>{t("apAssessmentSubmitted")}</h3>
+        <p style={{ color: THEME.text3, fontSize: 13, marginBottom: 16 }}>{t("apFinalScoreNote")}</p>
         <div style={{ fontSize: 40, fontWeight: 800, color: THEME.teal, marginBottom: 20 }}>{done}</div>
-        <button type="button" style={styles.button} onClick={onSaved}>بازگشت</button>
+        <button type="button" style={styles.button} onClick={onSaved}>{t("commonBack")}</button>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: 24 }}>
-      <div style={styles.backLink} onClick={onBack}>بازگشت</div>
-      <h3 style={{ marginBottom: 4, color: THEME.navy }}>ارزیابی استعداد حادثه‌پذیری</h3>
-      {personnelName && <p style={{ color: THEME.text3, fontSize: 13, marginTop: 0, marginBottom: 4 }}>پرسنل: <b>{personnelName}</b>{jobTitle && ` — ${jobTitle}`}</p>}
+    <div style={{ maxWidth: 720, margin: "0 auto", padding: 24, direction: dir }}>
+      <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>
+      <h3 style={{ marginBottom: 4, color: THEME.navy }}>{t("apAssessmentTitle")}</h3>
+      {personnelName && <p style={{ color: THEME.text3, fontSize: 13, marginTop: 0, marginBottom: 4 }}>{t("apPersonnelInline")} <b>{personnelName}</b>{jobTitle && ` — ${jobTitle}`}</p>}
       <p style={{ color: THEME.text3, fontSize: 12, marginTop: 0, marginBottom: 16 }}>
-        همه‌ی {questions.length} سؤال اجباری است. امتیاز نهایی پس از ثبت، خودکار محاسبه می‌شود و قابل ویرایش دستی نیست.
+        {t("apFormDesc", { count: questions.length })}
       </p>
 
       <div style={{ marginBottom: 16 }}>
-        <label style={styles.label}>نام ارزیاب</label>
-        <input style={styles.input} value={assessorName} onChange={(e) => setAssessorName(e.target.value)} dir="rtl" />
+        <label style={styles.label}>{t("hseAssessorName")}</label>
+        <input style={styles.input} value={assessorName} onChange={(e) => setAssessorName(e.target.value)} dir={dir} />
       </div>
 
       {questions.map((q) => (
@@ -107,10 +110,10 @@ export default function AccidentPronenessAssessmentForm({ personnelId, jobTitle,
 
       <div style={{ position: "sticky", bottom: 0, background: THEME.surface, padding: "12px 0", borderTop: `1px solid ${THEME.border}` }}>
         <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 8 }}>
-          {questions.length - unanswered.length} از {questions.length} سؤال پاسخ داده شده
+          {t("hseAnsweredCount", { answered: questions.length - unanswered.length, total: questions.length })}
         </p>
         <button type="button" style={styles.button} onClick={handleSubmit} disabled={saving}>
-          {saving ? "در حال ثبت..." : "ثبت نهایی ارزیابی"}
+          {saving ? t("trainingSubmitting") : t("hseSubmitFinalAssessment")}
         </button>
       </div>
     </div>

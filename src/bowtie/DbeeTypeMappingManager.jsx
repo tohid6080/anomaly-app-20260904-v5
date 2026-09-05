@@ -37,7 +37,8 @@ export default function DbeeTypeMappingManager({ currentUser, onBack }) {
       const cats = await loadSbsCategories();
       setOptions(cats.map((c) => ({ id: c.code, label: c.titleFa })));
     } else if (sourceType === "hse_climate_dimension") {
-      setOptions(HSE_CLIMATE_DIMENSIONS.map((d) => ({ id: d.id, label: d.title })));
+      // d.title اکنون شیء { fa, en } است (دوزبانه‌سازیِ داده‌ی HSE Climate)
+      setOptions(HSE_CLIMATE_DIMENSIONS.map((d) => ({ id: d.id, label: (typeof d.title === "object" && d.title !== null ? d.title.fa : d.title) })));
     } else if (sourceType === "accident_proneness_job") {
       setOptions(ACCIDENT_PRONENESS_CRITICAL_JOBS.map((j) => ({ id: `job:${j}`, label: j })));
     }

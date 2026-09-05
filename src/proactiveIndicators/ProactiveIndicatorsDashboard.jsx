@@ -8,11 +8,13 @@ import { loadCorrectiveActionsForAssessments, STATUS_META } from "../correctiveA
 import AccidentPronenessAssessmentForm from "./AccidentPronenessAssessmentForm.jsx";
 import HseClimateCampaignManager from "./HseClimateCampaignManager.jsx";
 import SbsSubmodule from "./SbsSubmodule.jsx";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 // لایه‌ی تمام‌صفحه‌ی «راهنمای اجرایی» — فایل استاتیک public/hse_guide.html
 // را داخل یک iframe نشان می‌دهد و همیشه یک دکمه‌ی × برای بستن دارد
 // (روی موبایل، بازکردن با target=_blank راه خروج نداشت).
 function HseGuideOverlay({ onClose }) {
+  const { t } = useLanguage();
   useEffect(() => {
     const onKey = (e) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
@@ -22,18 +24,18 @@ function HseGuideOverlay({ onClose }) {
     <div style={{ position: "fixed", inset: 0, zIndex: 3000, background: "#fff", display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderBottom: `1px solid ${THEME.border}`, background: THEME.surface, flexShrink: 0 }}>
         <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 700, color: THEME.navy }}>
-          <BookOpen size={15} color={THEME.teal} /> راهنمای تکمیل و ارزیابی
+          <BookOpen size={15} color={THEME.teal} /> {t("pidGuideTitle")}
         </span>
         <button
-          type="button" onClick={onClose} title="بستن راهنما"
+          type="button" onClick={onClose} title={t("pidGuideCloseTitle")}
           style={{ display: "flex", alignItems: "center", gap: 5, border: "none", cursor: "pointer", fontFamily: THEME.font, fontSize: 12, fontWeight: 700, color: "#fff", background: THEME.navy, padding: "7px 14px", borderRadius: 8 }}
         >
-          <X size={15} /> بستن
+          <X size={15} /> {t("commonClose")}
         </button>
       </div>
       <iframe
         src={`${import.meta.env.BASE_URL}hse_guide.html`}
-        title="راهنمای اجرایی شاخص‌های HSE"
+        title={t("pidGuideIframeTitle")}
         style={{ flex: 1, width: "100%", border: "none" }}
       />
     </div>
@@ -50,6 +52,7 @@ function HseGuideOverlay({ onClose }) {
  * ارزیابی استعداد حادثه‌پذیری را برای همان پرسنل باز می‌کند.
  */
 export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role, readOnly, focusPersonnelId, focusJobTitle, focusPersonnelName }) {
+  const { t, dir } = useLanguage();
   const [indicators, setIndicators] = useState([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState(focusPersonnelId ? "form" : "list"); // list | results | form
@@ -57,7 +60,7 @@ export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role
   // عنوان ماژول از همان منبع مشترکِ «پیکربندی سامانه» خوانده می‌شود تا
   // اگر SuperAdmin نام ماژول را عوض کند، این صفحه هم (در موبایل و دسکتاپ)
   // همان نام را نشان بدهد — نه یک رشته‌ی هاردکدشده.
-  const [moduleTitle, setModuleTitle] = useState("اندازه‌گیری شاخص‌های Proactive HSE");
+  const [moduleTitle, setModuleTitle] = useState("");
   // راهنمای اجرایی به‌صورت یک لایه‌ی تمام‌صفحه‌ی داخل خودِ اپ باز می‌شود
   // (نه tab جدید با target=_blank) تا در موبایل هم همیشه یک راه خروج/بستن
   // با دکمه‌ی × داشته باشد.
@@ -104,26 +107,26 @@ export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role
   }
 
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", padding: 24 }}>
+    <div style={{ maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-        <div style={styles.backLink} onClick={onBack}>بازگشت به منو</div>
+        <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>
         <button
           type="button" onClick={() => setShowGuide(true)}
           style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600, color: THEME.teal, border: "none", cursor: "pointer", fontFamily: THEME.font, background: THEME.tealSoft, padding: "7px 14px", borderRadius: 8 }}
         >
-          <BookOpen size={14} /> راهنمای تکمیل و ارزیابی
+          <BookOpen size={14} /> {t("pidGuideTitle")}
         </button>
       </div>
       {showGuide && <HseGuideOverlay onClose={() => setShowGuide(false)} />}
-      <h3 style={{ marginBottom: 4, color: THEME.navy }}>{moduleTitle}</h3>
+      <h3 style={{ marginBottom: 4, color: THEME.navy }}>{moduleTitle || t("pidModuleTitle")}</h3>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 0, marginBottom: 16 }}>
-        شاخص‌های پیش‌نگر ایمنی — اندازه‌گیری استعداد و رفتار قبل از وقوع حادثه، نه فقط پس از آن.
+        {t("pidModuleDesc")}
       </p>
 
-      {loading && <p style={{ color: THEME.text3, textAlign: "center", padding: 20 }}>در حال بارگذاری...</p>}
+      {loading && <p style={{ color: THEME.text3, textAlign: "center", padding: 20 }}>{t("commonLoading")}</p>}
       {!loading && indicators.length === 0 && (
         <p style={{ color: THEME.text3, textAlign: "center", padding: 20 }}>
-          هنوز هیچ شاخصی برای شرکت شما فعال نشده است — از سوپرادمین درخواست فعال‌سازی کنید.
+          {t("pidNoIndicatorsActive")}
         </p>
       )}
 
@@ -147,8 +150,9 @@ export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role
   );
 }
 
-// ---------- نتایج استعداد حادثه‌پذیری — جدول شخص‌محور (بدون تغییر) ----------
+// ---------- نتایج استعداد حادثه‌پذیری — جدول شخص‌محور ----------
 function ResultsList({ indicatorKey, indicatorName, currentUser, onBack }) {
+  const { t, dir } = useLanguage();
   const [rows, setRows] = useState(null);
   const [caByAssessment, setCaByAssessment] = useState({});
 
@@ -160,32 +164,32 @@ function ResultsList({ indicatorKey, indicatorName, currentUser, onBack }) {
   }, [indicatorKey]);
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto", padding: 24 }}>
-      <div style={styles.backLink} onClick={onBack}>بازگشت</div>
+    <div style={{ maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
+      <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>
       <h3 style={{ marginBottom: 4, color: THEME.navy, display: "flex", alignItems: "center", gap: 8 }}>
-        <ClipboardList size={18} /> نتایج {indicatorName}
+        <ClipboardList size={18} /> {t("pidResultsOf", { name: indicatorName })}
       </h3>
       <p style={{ color: THEME.text3, fontSize: 12, marginTop: 0, marginBottom: 16 }}>
-        ثبت ارزیابی جدید فقط از پرونده‌ی همان پرسنل، در ماژول «لیست پرسنل» انجام می‌شود.
+        {t("pidNewAssessmentNote")}
       </p>
 
-      {rows === null && <p style={{ color: THEME.text3, textAlign: "center", padding: 20 }}>در حال بارگذاری...</p>}
-      {rows !== null && rows.length === 0 && <p style={{ color: THEME.text3, textAlign: "center", padding: 20 }}>هنوز هیچ ارزیابی‌ای ثبت نشده است.</p>}
+      {rows === null && <p style={{ color: THEME.text3, textAlign: "center", padding: 20 }}>{t("commonLoading")}</p>}
+      {rows !== null && rows.length === 0 && <p style={{ color: THEME.text3, textAlign: "center", padding: 20 }}>{t("pidNoAssessmentsYet")}</p>}
 
       {rows && rows.length > 0 && (
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
             <thead>
               <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
-                <th style={{ textAlign: "right", padding: "8px" }}>شرکت</th>
-                <th style={{ textAlign: "right", padding: "8px" }}>پرسنل</th>
-                <th style={{ textAlign: "center", padding: "8px" }}>شغل</th>
-                <th style={{ textAlign: "center", padding: "8px" }}>تاریخ</th>
-                <th style={{ textAlign: "center", padding: "8px" }}>ارزیاب</th>
-                <th style={{ textAlign: "center", padding: "8px" }}>امتیاز نهایی</th>
-                <th style={{ textAlign: "center", padding: "8px" }}>سطح</th>
-                <th style={{ textAlign: "center", padding: "8px" }}>وضعیت تأیید</th>
-                <th style={{ textAlign: "center", padding: "8px" }}>اقدام اصلاحی</th>
+                <th style={{ textAlign: dir === "rtl" ? "right" : "left", padding: "8px" }}>{t("pidColCompany")}</th>
+                <th style={{ textAlign: dir === "rtl" ? "right" : "left", padding: "8px" }}>{t("pidColPersonnel")}</th>
+                <th style={{ textAlign: "center", padding: "8px" }}>{t("pidColJob")}</th>
+                <th style={{ textAlign: "center", padding: "8px" }}>{t("commonDate")}</th>
+                <th style={{ textAlign: "center", padding: "8px" }}>{t("pidColAssessor")}</th>
+                <th style={{ textAlign: "center", padding: "8px" }}>{t("pidColFinalScore")}</th>
+                <th style={{ textAlign: "center", padding: "8px" }}>{t("pidColLevel")}</th>
+                <th style={{ textAlign: "center", padding: "8px" }}>{t("pidColApprovalStatus")}</th>
+                <th style={{ textAlign: "center", padding: "8px" }}>{t("pidColCorrectiveAction")}</th>
               </tr>
             </thead>
             <tbody>
@@ -205,7 +209,7 @@ function ResultsList({ indicatorKey, indicatorName, currentUser, onBack }) {
                   </td>
                   <td style={{ padding: "8px", textAlign: "center" }}>
                     <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: r.status === "completed" ? "#dcfce7" : "#fef3c7", color: r.status === "completed" ? "#166534" : "#b45309", fontWeight: 600 }}>
-                      {r.status === "completed" ? "تکمیل‌شده و ارسال‌شده برای کارفرما" : (r.status || "—")}
+                      {r.status === "completed" ? t("pidStatusCompletedSent") : (r.status || "—")}
                     </span>
                   </td>
                   <td style={{ padding: "8px", textAlign: "center" }}>

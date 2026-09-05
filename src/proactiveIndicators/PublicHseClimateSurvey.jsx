@@ -3,6 +3,7 @@ import { CheckCircle2, AlertTriangle } from "lucide-react";
 import { THEME } from "../shared.js";
 import { HSE_CLIMATE_QUESTIONS, HSE_CLIMATE_OPTIONS } from "./hseClimateData.js";
 import { loadPublicCampaignInfo, submitHseClimateResponse } from "./hseClimateCampaignsApi.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 /**
  * صفحه‌ی مستقل و کاملاً ناشناس — از طریق آدرس هش hse-climate-survey همراه
@@ -11,6 +12,7 @@ import { loadPublicCampaignInfo, submitHseClimateResponse } from "./hseClimateCa
  * شناسایی‌کننده‌ای (نام، شماره، IP، دستگاه) نه گرفته می‌شود، نه ذخیره.
  */
 export default function PublicHseClimateSurvey({ publicToken }) {
+  const { t, dir, lang } = useLanguage();
   const [campaignInfo, setCampaignInfo] = useState(undefined); // undefined=در حال بارگذاری
   const [answers, setAnswers] = useState({});
   const [saving, setSaving] = useState(false);
@@ -30,7 +32,7 @@ export default function PublicHseClimateSurvey({ publicToken }) {
   const handleSubmit = async () => {
     setError("");
     if (unanswered.length > 0) {
-      setError(`همه‌ی سؤالات اجباری هستند — ${unanswered.length} سؤال هنوز بی‌پاسخ مانده (اولین مورد: سؤال شماره‌ی ${unanswered[0].id})`);
+      setError(t("errAllQuestionsRequiredFirst", { count: unanswered.length, num: unanswered[0].id }));
       // اسکرول خودکار به اولین سؤال بی‌پاسخ — چون با ۴۳ سؤال، پیدا کردن
       // دستی سؤال جاافتاده در وسط لیست عملاً سخت است
       const el = document.getElementById(`hse-climate-q-${unanswered[0].id}`);
@@ -45,7 +47,7 @@ export default function PublicHseClimateSurvey({ publicToken }) {
   };
 
   if (campaignInfo === undefined) {
-    return <div style={{ padding: 60, textAlign: "center", color: THEME.text3, fontFamily: THEME.font }}>در حال بارگذاری...</div>;
+    return <div style={{ padding: 60, textAlign: "center", color: THEME.text3, fontFamily: THEME.font }}>{t("commonLoading")}</div>;
   }
 
   if (campaignInfo?.__error) {
@@ -61,27 +63,27 @@ export default function PublicHseClimateSurvey({ publicToken }) {
     return (
       <div style={{ maxWidth: 480, margin: "80px auto", padding: 24, textAlign: "center", fontFamily: THEME.font }}>
         <CheckCircle2 size={48} color="#166534" style={{ marginBottom: 12 }} />
-        <h2 style={{ color: THEME.navy, fontSize: 18 }}>پرسشنامه با موفقیت ثبت شد</h2>
+        <h2 style={{ color: THEME.navy, fontSize: 18 }}>{t("hseSurveySubmittedSuccess")}</h2>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: 24, fontFamily: THEME.font, direction: "rtl" }}>
+    <div style={{ maxWidth: 720, margin: "0 auto", padding: 24, fontFamily: THEME.font, direction: dir }}>
       <div style={{ textAlign: "center", marginBottom: 20 }}>
-        <h2 style={{ color: THEME.navy, fontSize: 17, marginBottom: 4 }}>پرسشنامه جو ایمنی، بهداشت و محیط زیست</h2>
+        <h2 style={{ color: THEME.navy, fontSize: 17, marginBottom: 4 }}>{t("hsePublicSurveyTitle")}</h2>
         <p style={{ color: THEME.text3, fontSize: 12.5 }}>
           {campaignInfo.companyName}{campaignInfo.projectName && ` — ${campaignInfo.projectName}`}
         </p>
         <p style={{ color: THEME.text3, fontSize: 11.5, marginTop: 8, lineHeight: 1.8 }}>
-          پاسخ‌های شما کاملاً ناشناس ثبت می‌شود — هیچ نام، شماره پرسنلی یا اطلاعات شناسایی‌کننده‌ای ذخیره نمی‌شود.
+          {t("hseAnonymousNote")}
         </p>
       </div>
 
       {HSE_CLIMATE_QUESTIONS.map((q) => (
         <div key={q.id} id={`hse-climate-q-${q.id}`} style={{ background: THEME.surface, border: `1.5px solid ${answers[q.id] ? THEME.teal : THEME.border}`, borderRadius: 10, padding: 14, marginBottom: 10 }}>
           <p style={{ fontSize: 13, color: THEME.navy, fontWeight: 600, marginBottom: 10, lineHeight: 1.8 }}>
-            {q.id}. {q.text}
+            {q.id}. {q.text[lang] || q.text.fa}
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {HSE_CLIMATE_OPTIONS.map((opt) => (
@@ -95,7 +97,7 @@ export default function PublicHseClimateSurvey({ publicToken }) {
                 }}
               >
                 <input type="radio" name={`q-${q.id}`} checked={answers[q.id] === opt.value} onChange={() => handleAnswer(q.id, opt.value)} style={{ display: "none" }} />
-                {opt.label}
+                {opt.label[lang] || opt.label.fa}
               </label>
             ))}
           </div>
@@ -110,7 +112,7 @@ export default function PublicHseClimateSurvey({ publicToken }) {
           </div>
         )}
         <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 8, textAlign: "center" }}>
-          {HSE_CLIMATE_QUESTIONS.length - unanswered.length} از {HSE_CLIMATE_QUESTIONS.length} سؤال پاسخ داده شده
+          {t("hseAnsweredCount", { answered: HSE_CLIMATE_QUESTIONS.length - unanswered.length, total: HSE_CLIMATE_QUESTIONS.length })}
         </p>
         <button
           type="button"
@@ -118,7 +120,7 @@ export default function PublicHseClimateSurvey({ publicToken }) {
           disabled={saving}
           style={{ width: "100%", padding: "12px", borderRadius: 10, border: "none", background: THEME.teal, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: THEME.font }}
         >
-          {saving ? "در حال ثبت..." : "ثبت پرسشنامه"}
+          {saving ? t("trainingSubmitting") : t("hseSubmitQuestionnaire")}
         </button>
       </div>
     </div>

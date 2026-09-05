@@ -7302,7 +7302,15 @@ export const translations = {
   "dashUnassigned": {
     "fa": "بدون تخصیص",
     "en": "Unassigned"
-  }
+  },
+
+  // --- proactive indicators (project-specific additions) ---
+  "pidColCompany": { "fa": "شرکت", "en": "Company" },
+  "pidColApprovalStatus": { "fa": "وضعیت تأیید", "en": "Approval Status" },
+  "pidStatusCompletedSent": { "fa": "تکمیل‌شده و ارسال‌شده برای کارفرما", "en": "Completed and sent to the employer" },
+  "pidGuideTitle": { "fa": "راهنمای تکمیل و ارزیابی", "en": "Completion & Assessment Guide" },
+  "pidGuideCloseTitle": { "fa": "بستن راهنما", "en": "Close guide" },
+  "pidGuideIframeTitle": { "fa": "راهنمای اجرایی شاخص‌های HSE", "en": "HSE Indicators Operational Guide" }
 };
 
 // برای فایل‌های غیر React (لایه‌ی داده / api.js) که به Hook دسترسی ندارند اما
