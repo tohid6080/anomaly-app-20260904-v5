@@ -130,7 +130,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
           <button type="button" onClick={() => setShowChangePassword((v) => !v)} style={{ ...btnStyle("rgba(255,255,255,0.15)"), display: "flex", alignItems: "center", gap: 6 }}>
             <KeyRound size={13} /> تغییر رمز من
           </button>
-          <button type="button" onClick={onLogout} style={{ ...btnStyle("rgba(255,255,255,0.15)"), display: "flex", alignItems: "center", gap: 6 }}>
+          <button type="button" onClick={() => { if (window.confirm("آیا مطمئن هستید که می‌خواهید از سامانه خارج شوید؟")) onLogout(); }} style={{ ...btnStyle("rgba(255,255,255,0.15)"), display: "flex", alignItems: "center", gap: 6 }}>
             <LogOut size={13} /> خروج
           </button>
         </div>

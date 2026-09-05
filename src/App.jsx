@@ -44,6 +44,7 @@ import {
   verifyBiometricAndGetCredentials,
 } from "./biometricAuth.js";
 import { checkLoginLockout, recordLoginAttempt, validatePasswordLength, MIN_PASSWORD_LENGTH } from "./loginSecurity.js";
+import { useAndroidBackButton } from "./backButtonHandler.js";
 import { issueSessionToken, clearSessionToken, changeMyPassword } from "./sessionToken.js";
 import AdminAnalytics from "./admin/AdminAnalytics.jsx";
 import ChatDashboard from "./chat/ChatDashboard.jsx";
@@ -1012,6 +1013,20 @@ function LoginScreen({ onLogin }) {
   const [bioAvailable, setBioAvailable] = useState(false);
   const [bioChecking, setBioChecking] = useState(false);
   const [showTrialRequest, setShowTrialRequest] = useState(false);
+  const isDesktop = useIsDesktop();
+  // اطلاعیه‌ی صفحه‌ی ورود همین‌جا (نه داخل خودِ پنل) بارگذاری می‌شود تا
+  // بخش «ورود» و «اطلاعیه» یکجا و همزمان رندر شوند — نه اینکه اطلاعیه
+  // چند لحظه بعد از فرم، جداگانه بپرد داخل صفحه. undefined = هنوز مشخص
+  // نیست، [] = اطلاعیه‌ای نیست.
+  const [loginAnnouncements, setLoginAnnouncements] = useState(undefined);
+  useEffect(() => {
+    let done = false;
+    const settle = (v) => { if (!done) { done = true; setLoginAnnouncements(v); } };
+    loadActiveAnnouncements("login").then(settle).catch(() => settle([]));
+    // اگر شبکه کند/قطع بود، فرم ورود نباید بیش از این پشت اطلاعیه منتظر بماند.
+    const fallback = setTimeout(() => settle([]), 2500);
+    return () => { done = true; clearTimeout(fallback); };
+  }, []);
 
   // دکمه‌ی «ورود سریع با اثر انگشت» فقط وقتی نشون داده می‌شه که هم روی
   // این دستگاه از قبل برای یکی فعال شده، هم واقعاً سخت‌افزارش پشتیبانی
@@ -1095,11 +1110,22 @@ function LoginScreen({ onLogin }) {
     setBioChecking(false);
   };
 
+  // در دسکتاپ تا وضعیت اطلاعیه مشخص نشده، صفحه به‌صورت دوتکه رندر نمی‌شود
+  // تا «ورود» و «اطلاعیه» با هم ظاهر شوند. در موبایل پنل اطلاعیه اصلاً
+  // رندر نمی‌شود، پس نیازی به این انتظار نیست و فرم فوراً می‌آید.
+  if (isDesktop && loginAnnouncements === undefined) {
+    return (
+      <div style={styles.centerScreen}>
+        <IhmsLogo size={140} src={appearance?.logoUrl} />
+      </div>
+    );
+  }
+
   return (
     <div style={{ ...styles.centerScreen, alignItems: "stretch", padding: 0 }}>
       <div style={{ display: "flex", width: "100%", minHeight: "100vh", flexWrap: "wrap" }}>
         {/* پنل اطلاعیه — سمت چپ در دسکتاپ (طبق مرجع)؛ در موبایل کاملاً حذف می‌شود، نه فقط پنهان، تا هیچ فضایی از فرم ورود نگیرد */}
-        <LoginAnnouncementPanel />
+        <LoginAnnouncementPanel announcements={loginAnnouncements || []} />
 
         {/* پنل ورود — سمت راست */}
         <div style={{ flex: "1 1 380px", minWidth: 320, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 24px", background: THEME.surface }}>
@@ -1174,11 +1200,9 @@ function LoginScreen({ onLogin }) {
 // دارند (بخش ۲) تا با تغییر طول متن یا عکس، ظاهر صفحه به‌هم نریزد. اگر
 // هیچ اطلاعیه‌ی فعالی نبود، این پنل به‌طور کامل مخفی می‌شود (نه یک قاب
 // خالی) و فرم ورود در تمام عرض صفحه قرار می‌گیرد.
-function LoginAnnouncementPanel() {
+function LoginAnnouncementPanel({ announcements = [] }) {
   const isDesktop = useIsDesktop();
-  const [announcements, setAnnouncements] = useState(undefined);
   const [index, setIndex] = useState(0);
-  useEffect(() => { loadActiveAnnouncements("login").then(setAnnouncements).catch(() => setAnnouncements([])); }, []);
 
   const isSlider = announcements && announcements.length > 1;
   useEffect(() => {
@@ -3332,19 +3356,22 @@ function DashboardHeader({ panelLabelKey, currentUser, onLogout, onOpenSettings,
       <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: "1 1 auto" }}>
         <Avatar name={currentUser?.name} size={38} bg="rgba(255,255,255,0.18)" />
         <div style={{ minWidth: 0, lineHeight: 1.35 }}>
-          {/* طبق خواسته‌ی صریح: نام شرکت درست جلوی عنوان پنل (همان خط، نه
-              خط جدا) نمایش داده شود. */}
+          {/* طبق خواسته‌ی صریح، الگوی ثابت هدر برای پیمانکار و کارفرما:
+              خط اول → «[عنوان پنل]: [نام شرکت]»
+              خط دوم → «[نام و نام خانوادگی] - [سمت/شغل]» */}
           <div style={{ display: "flex", alignItems: "baseline", gap: 6, minWidth: 0 }}>
-            <span style={{ fontSize: 14.5, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "60vw" }}>{t(panelLabelKey)}</span>
+            <span style={{ fontSize: 14.5, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "60vw" }}>
+              {t(panelLabelKey)}{currentUser?.companyName && appearance?.headerShowCompanyName !== false ? ":" : ""}
+            </span>
             {currentUser?.companyName && appearance?.headerShowCompanyName !== false && (
-              <span style={{ fontSize: 11.5, color: "rgba(255,255,255,0.75)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "40vw" }}>— {currentUser.companyName}</span>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: "rgba(255,255,255,0.92)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "45vw" }}>{currentUser.companyName}</span>
             )}
           </div>
           {currentUser?.name && (
             <div style={{ fontSize: 10.5, color: "rgba(255,255,255,0.6)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "60vw" }}>
               {currentUser.name}
-              {/* سمت/شغلی که برای این کاربر در پنل SuperAdmin تعریف شده — طبق خواسته‌ی صریح، کنار نام او */}
-              {currentUser?.jobPositionTitle && <span style={{ color: "rgba(255,255,255,0.45)" }}> · {currentUser.jobPositionTitle}</span>}
+              {/* سمت/شغلی که برای این کاربر در پنل SuperAdmin تعریف شده — طبق خواسته‌ی صریح، کنار نام او با جداکنندهٔ خط تیره */}
+              {currentUser?.jobPositionTitle && <span style={{ color: "rgba(255,255,255,0.45)" }}> - {currentUser.jobPositionTitle}</span>}
             </div>
           )}
         </div>
@@ -3366,7 +3393,12 @@ function DashboardHeader({ panelLabelKey, currentUser, onLogout, onOpenSettings,
         <button type="button" onClick={onOpenSettings} style={headerIconBtnStyle} title={t("settingsTooltip")}>
           <Settings size={16} color="#fff" />
         </button>
-        <button style={{ ...styles.logoutButton, padding: "8px clamp(10px, 3vw, 16px)" }} onClick={onLogout}><LogOut size={14} style={{ marginLeft: 6 }} />{t("logout")}</button>
+        <button
+          style={{ ...styles.logoutButton, padding: "8px clamp(10px, 3vw, 16px)" }}
+          onClick={() => { if (window.confirm("آیا مطمئن هستید که می‌خواهید از سامانه خارج شوید؟")) onLogout(); }}
+        >
+          <LogOut size={14} style={{ marginLeft: 6 }} />{t("logout")}
+        </button>
       </div>
     </div>
   );
@@ -3876,32 +3908,89 @@ function AnnouncementSlider({ announcements, setView }) {
 }
 const sliderNavBtnStyle = { width: 26, height: 26, borderRadius: 8, border: "none", background: "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 1px 4px rgba(0,0,0,0.15)" };
 
-// نسخه‌ی جمع‌وجور مخصوص موبایل — طبق الزام Responsive بودن؛ بدون هیچ
-// تغییری در Layout موجود موبایل، فقط یک بنر جدید و مستقل بالای منو
-// (دقیقاً مثل الگوی موجود DbSizeWarningBanner) اضافه می‌شود.
+// اطلاعیه‌هایی که کاربر روی همین دستگاه با × بسته است — بر اساس id، تا
+// اطلاعیه‌ی بسته‌شده دوباره ظاهر نشود ولی اطلاعیه‌های جدید (id تازه)
+// همچنان نمایش داده شوند.
+const DISMISSED_ANNC_KEY = "ihms_dismissed_announcements";
+function getDismissedAnnouncementIds() {
+  try { return JSON.parse(localStorage.getItem(DISMISSED_ANNC_KEY) || "[]"); } catch { return []; }
+}
+function persistDismissedAnnouncementId(id) {
+  try {
+    const ids = getDismissedAnnouncementIds();
+    if (!ids.includes(id)) localStorage.setItem(DISMISSED_ANNC_KEY, JSON.stringify([...ids, id]));
+  } catch { /* بی‌اهمیت اگر localStorage در دسترس نبود */ }
+}
+
+// نسخه‌ی جمع‌وجور مخصوص موبایل — طبق خواسته‌ی صریح: ابتدا کوچک (یک نوار
+// تک‌خطی)، با لمس بزرگ می‌شود و در حالت باز یک × برای بستن دارد.
 function MobileAnnouncementBanner({ setView }) {
   const [announcements, setAnnouncements] = useState(undefined);
   const [index, setIndex] = useState(0);
+  const [expanded, setExpanded] = useState(false);
+  const [dismissed, setDismissed] = useState(getDismissedAnnouncementIds);
   useEffect(() => { loadActiveAnnouncements("home").then(setAnnouncements).catch(() => setAnnouncements([])); }, []);
 
-  const isSlider = announcements && announcements.length > 1;
+  const visible = (announcements || []).filter((a) => !dismissed.includes(a.id));
+  const isSlider = expanded && visible.length > 1;
   useEffect(() => {
     if (!isSlider) return;
-    const current = announcements[index];
+    const current = visible[index % visible.length];
     const ms = (current.displaySeconds || 10) * 1000;
-    const timer = setTimeout(() => setIndex((i) => (i + 1) % announcements.length), ms);
+    const timer = setTimeout(() => setIndex((i) => (i + 1) % visible.length), ms);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, isSlider, announcements]);
+  }, [index, isSlider, visible.length]);
 
-  if (!announcements || announcements.length === 0) return null;
-  const current = announcements[Math.min(index, announcements.length - 1)];
+  if (!announcements || visible.length === 0) return null;
+  const current = visible[Math.min(index, visible.length - 1)];
   const Icon = ANNOUNCEMENT_ICONS[current.iconKey] || Megaphone;
   const handleAction = announcementActionUrl(current, setView);
 
+  const handleDismiss = () => {
+    persistDismissedAnnouncementId(current.id);
+    setDismissed((d) => [...d, current.id]);
+    setIndex(0);
+  };
+
+  // حالت جمع‌شده — کوچک‌ترین شکل ممکن؛ کل نوار با لمس باز می‌شود.
+  if (!expanded) {
+    return (
+      <button
+        type="button"
+        onClick={() => setExpanded(true)}
+        style={{
+          width: "100%", display: "flex", alignItems: "center", gap: 8, textAlign: "start",
+          background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12,
+          padding: "8px 10px", marginBottom: 10, cursor: "pointer", fontFamily: THEME.font,
+        }}
+      >
+        <div style={{ width: 28, height: 28, borderRadius: 8, background: THEME.tealSoft, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <Icon size={15} color={THEME.tealDeep} />
+        </div>
+        <span style={{ flex: 1, minWidth: 0, fontSize: 12, fontWeight: 700, color: THEME.navy, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {current.title || current.message}
+        </span>
+        {visible.length > 1 && (
+          <span style={{ fontSize: 10, fontWeight: 700, color: "#fff", background: THEME.teal, borderRadius: 999, minWidth: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px", flexShrink: 0 }}>
+            {visible.length.toLocaleString("fa-IR")}
+          </span>
+        )}
+        <ChevronDown size={15} color={THEME.text3} style={{ flexShrink: 0 }} />
+      </button>
+    );
+  }
+
+  // حالت باز — محتوای کامل + دکمه‌ی × برای بستنِ همین اطلاعیه.
   return (
-    <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 14, padding: 14, marginBottom: 10 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+    <div style={{ position: "relative", background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 14, padding: 14, marginBottom: 10 }}>
+      <button
+        type="button" onClick={handleDismiss} title="بستن این اطلاعیه"
+        style={{ position: "absolute", top: 6, insetInlineEnd: 6, width: 26, height: 26, borderRadius: 8, border: "none", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+      >
+        <X size={15} color={THEME.text3} />
+      </button>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, paddingInlineEnd: 26 }}>
         <div style={{ width: 44, height: 44, borderRadius: 10, background: current.imageUrl ? "#e9eef3" : THEME.tealSoft, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
           {current.imageUrl ? <img src={current.imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Icon size={20} color={THEME.tealDeep} />}
         </div>
@@ -3927,7 +4016,7 @@ function MobileAnnouncementBanner({ setView }) {
       )}
       {isSlider && (
         <div style={{ display: "flex", justifyContent: "center", gap: 5, marginTop: 8 }}>
-          {announcements.map((a, i) => (
+          {visible.map((a, i) => (
             <button
               key={a.id} type="button" onClick={() => setIndex(i)}
               style={{ width: i === index ? 16 : 5, height: 5, borderRadius: 999, border: "none", padding: 0, cursor: "pointer", background: i === index ? THEME.teal : THEME.border, transition: "width .2s, background .2s" }}
@@ -3941,9 +4030,24 @@ function MobileAnnouncementBanner({ setView }) {
 
 function AdminDashboard({ onLogout, currentUser }) {
   const { t, dir } = useLanguage();
-  const mt = (m) => (m?.labelKey ? t(m.labelKey) : m?.label);
+  // برچسب ماژول از یک منبع مشترک خوانده می‌شود تا تغییرِ نامِ ماژول در
+  // «پیکربندی سامانه»ی SuperAdmin (جدولِ system_module_config، مشترک بین
+  // دسکتاپ و موبایل) در همه‌ی نماها یکسان اعمال شود: اول override پنل
+  // SuperAdmin، بعد ترجمه‌ی i18n، بعد برچسبِ ثابتِ کد. moduleConfig کمی
+  // پایین‌تر تعریف می‌شود ولی این تابع فقط هنگام رندر صدا زده می‌شود (پس
+  // تا آن لحظه مقداردهی شده). زیرماژول‌ها کلیدشان در این جدول نیست و
+  // خودکار به رفتار قبلی برمی‌گردند.
+  const mt = (m) => {
+    const cfg = Array.isArray(moduleConfig) ? moduleConfig.find((c) => c.moduleKey === m?.key) : null;
+    if (cfg?.displayLabel) return cfg.displayLabel;
+    return m?.labelKey ? t(m.labelKey) : m?.label;
+  };
   const [view, setView] = usePersistedState("ihms_view_admin", "menu");
   useEffect(() => { trackPageView(currentUser, view); }, [view]);
+  // دکمهٔ برگشت گوشی مثل برگشت داخلی سامانه: اگر داخل یک ماژول هستیم به
+  // منو برمی‌گردیم؛ روی خودِ منو رویداد را مصرف نمی‌کنیم تا (طبق الزام)
+  // اپ بسته نشود، بلکه فقط به پس‌زمینه برود.
+  useAndroidBackButton(() => { if (view !== "menu") { setView("menu"); return true; } return false; });
   const [navFilter, setNavFilter] = useState(null);
   const [assessmentContext, setAssessmentContext] = useState(null);
   const [planFeatures, setPlanFeatures] = useState(null);
@@ -4161,9 +4265,22 @@ function AdminDashboard({ onLogout, currentUser }) {
 // ---------- پنل کارفرما ----------
 function EmployerDashboard({ onLogout, currentUser }) {
   const { t, dir } = useLanguage();
-  const mt = (m) => (m?.labelKey ? t(m.labelKey) : m?.label);
+  // برچسب ماژول از یک منبع مشترک خوانده می‌شود تا تغییرِ نامِ ماژول در
+  // «پیکربندی سامانه»ی SuperAdmin (جدولِ system_module_config، مشترک بین
+  // دسکتاپ و موبایل) در همه‌ی نماها یکسان اعمال شود: اول override پنل
+  // SuperAdmin، بعد ترجمه‌ی i18n، بعد برچسبِ ثابتِ کد. moduleConfig کمی
+  // پایین‌تر تعریف می‌شود ولی این تابع فقط هنگام رندر صدا زده می‌شود (پس
+  // تا آن لحظه مقداردهی شده). زیرماژول‌ها کلیدشان در این جدول نیست و
+  // خودکار به رفتار قبلی برمی‌گردند.
+  const mt = (m) => {
+    const cfg = Array.isArray(moduleConfig) ? moduleConfig.find((c) => c.moduleKey === m?.key) : null;
+    if (cfg?.displayLabel) return cfg.displayLabel;
+    return m?.labelKey ? t(m.labelKey) : m?.label;
+  };
   const [view, setView] = usePersistedState("ihms_view_employer", "menu");
   useEffect(() => { trackPageView(currentUser, view); }, [view]);
+  // دکمهٔ برگشت گوشی مثل برگشت داخلی سامانه (بدون خروج از نرم‌افزار).
+  useAndroidBackButton(() => { if (view !== "menu") { setView("menu"); return true; } return false; });
   const [navFilter, setNavFilter] = useState(null);
   const [assessmentContext, setAssessmentContext] = useState(null);
   const [planFeatures, setPlanFeatures] = useState(null);
@@ -4361,9 +4478,22 @@ function EmployerDashboard({ onLogout, currentUser }) {
 // ---------- پنل پیمانکار ----------
 function ContractorDashboard({ onLogout, currentUser }) {
   const { t, dir } = useLanguage();
-  const mt = (m) => (m?.labelKey ? t(m.labelKey) : m?.label);
+  // برچسب ماژول از یک منبع مشترک خوانده می‌شود تا تغییرِ نامِ ماژول در
+  // «پیکربندی سامانه»ی SuperAdmin (جدولِ system_module_config، مشترک بین
+  // دسکتاپ و موبایل) در همه‌ی نماها یکسان اعمال شود: اول override پنل
+  // SuperAdmin، بعد ترجمه‌ی i18n، بعد برچسبِ ثابتِ کد. moduleConfig کمی
+  // پایین‌تر تعریف می‌شود ولی این تابع فقط هنگام رندر صدا زده می‌شود (پس
+  // تا آن لحظه مقداردهی شده). زیرماژول‌ها کلیدشان در این جدول نیست و
+  // خودکار به رفتار قبلی برمی‌گردند.
+  const mt = (m) => {
+    const cfg = Array.isArray(moduleConfig) ? moduleConfig.find((c) => c.moduleKey === m?.key) : null;
+    if (cfg?.displayLabel) return cfg.displayLabel;
+    return m?.labelKey ? t(m.labelKey) : m?.label;
+  };
   const [view, setView] = usePersistedState("ihms_view_contractor", "menu");
   useEffect(() => { trackPageView(currentUser, view); }, [view]);
+  // دکمهٔ برگشت گوشی مثل برگشت داخلی سامانه (بدون خروج از نرم‌افزار).
+  useAndroidBackButton(() => { if (view !== "menu") { setView("menu"); return true; } return false; });
   const [navFilter, setNavFilter] = useState(null);
   const [assessmentContext, setAssessmentContext] = useState(null);
   const [planFeatures, setPlanFeatures] = useState(null);
@@ -4663,6 +4793,18 @@ function AppInner() {
       if (!result.active && (result.reason === "deactivated" || result.reason === "not_found")) {
         clearSessionToken();
         setAccountDeactivated(true);
+        return;
+      }
+      // reason === "no_token": در همین مرورگر دیگر هیچ توکن نشستِ معتبری
+      // نیست (یا همین حالا به‌خاطر غیرفعال‌سازی پاک شد، یا منقضی شده).
+      // currentUser در localStorage (usePersistedState) ماندگار است، پس
+      // بدون این شرط، رفرشِ صفحه دوباره کاربر را — حتی بعد از اخراج توسط
+      // مدیر سامانه — با کلید anon مستقیم به داشبورد برمی‌گرداند. اینجا
+      // مسیرِ «نشستِ تمام‌شده» است: کاربر ذخیره‌شده پاک و به صفحه‌ی ورود
+      // برگردانده می‌شود (بدون پیام «حساب غیرفعال شد»، چون ممکن است صرفاً
+      // منقضی‌شدن عادی باشد، نه لزوماً غیرفعال‌سازی).
+      if (!result.active && result.reason === "no_token") {
+        setCurrentUser(null);
       }
     };
     runCheck();

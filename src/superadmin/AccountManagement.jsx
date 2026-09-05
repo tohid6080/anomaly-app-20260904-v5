@@ -253,6 +253,14 @@ function AccountForm({ tab, form, setForm, companies, onSave, saving, saveLabel,
   return (
     <div style={{ background: THEME.bg, padding: 14, borderRadius: 8, marginBottom: 14 }}>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8, marginBottom: 10 }}>
+        {isContractor && (
+          <div>
+            {/* طبق خواسته‌ی صریح: در حساب پیمانکار، «نام و نام خانوادگی»
+                کاربر باید ابتدای اطلاعات حساب باشد، پیش از نام شرکت. */}
+            <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>نام و نام خانوادگی</label>
+            <input style={inputStyle} value={form.contactPersonName} onChange={(e) => setForm({ ...form, contactPersonName: e.target.value })} dir="rtl" />
+          </div>
+        )}
         <div>
           <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{isContractor ? "نام شرکت پیمانکار" : "نام و نام خانوادگی"}</label>
           <input style={inputStyle} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} dir="rtl" />
@@ -290,16 +298,10 @@ function AccountForm({ tab, form, setForm, companies, onSave, saving, saveLabel,
           <input style={inputStyle} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} dir="ltr" placeholder="name@example.com" />
         </div>
         {isContractor && (
-          <>
-            <div>
-              <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>نام و نام خانوادگی</label>
-              <input style={inputStyle} value={form.contactPersonName} onChange={(e) => setForm({ ...form, contactPersonName: e.target.value })} dir="rtl" />
-            </div>
-            <div>
-              <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>جزئیات قرارداد</label>
-              <input style={inputStyle} value={form.contractDetails} onChange={(e) => setForm({ ...form, contractDetails: e.target.value })} dir="rtl" />
-            </div>
-          </>
+          <div>
+            <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>جزئیات قرارداد</label>
+            <input style={inputStyle} value={form.contractDetails} onChange={(e) => setForm({ ...form, contractDetails: e.target.value })} dir="rtl" />
+          </div>
         )}
       </div>
       <button type="button" onClick={onSave} disabled={saving} style={btnStyle()}>{saving ? "در حال ذخیره..." : saveLabel}</button>

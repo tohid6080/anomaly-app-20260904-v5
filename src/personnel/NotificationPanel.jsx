@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Bell, ChevronLeft, X } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 
@@ -14,14 +14,29 @@ import { styles, THEME } from "../shared.js";
  */
 export default function NotificationPanel({ smartItems = [], onNavigate }) {
   const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
 
   const handleNavigate = (target) => {
     setOpen(false);
     onNavigate(target);
   };
 
+  // بستن کادر اعلان با کلیک/لمس بیرون از آن (علاوه بر دکمه‌ی × و خودِ زنگوله).
+  useEffect(() => {
+    if (!open) return;
+    const onDocPointer = (e) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDocPointer);
+    document.addEventListener("touchstart", onDocPointer);
+    return () => {
+      document.removeEventListener("mousedown", onDocPointer);
+      document.removeEventListener("touchstart", onDocPointer);
+    };
+  }, [open]);
+
   return (
-    <div style={{ position: "relative" }}>
+    <div ref={wrapRef} style={{ position: "relative" }}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

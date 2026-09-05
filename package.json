@@ -21,6 +21,7 @@
     "jszip": "^3.10.1",
     "@capacitor/core": "^6.1.2",
     "@capacitor/android": "^6.1.2",
+    "@capacitor/app": "^6.0.2",
     "@capacitor/splash-screen": "^6.0.3",
     "@capgo/capacitor-native-biometric": "^6.0.4",
     "@capacitor/filesystem": "^6.0.1",
