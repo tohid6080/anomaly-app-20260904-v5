@@ -1,4 +1,7 @@
 import { sb, sbOk, uid, getCurrentCompanyId } from "./shared.js";
+import { translate, getCurrentLang } from "./i18n/translations.js";
+
+const tr = (key, params) => translate(getCurrentLang(), key, params);
 
 /**
  * لایه‌ی مشترک «تأیید قبل از ارسال به پیمانکار» + «واگذاری بین کارشناسا»
@@ -20,13 +23,15 @@ export async function loadCompanyStaffOptions() {
 }
 
 export const GATE_STATUS_LABELS = {
-  pending_approval: "در انتظار تأیید سرپرست/مدیر HSE",
-  assigned_review: "ارجاع‌شده برای بررسی کارشناس",
-  reviewed: "بررسی‌شده — در انتظار تأیید نهایی",
-  approved: "تأیید شده",
-  assigned: "واگذارشده",
-  rejected: "رد شده",
+  pending_approval: "gateStatusPendingApproval",
+  assigned_review: "gateStatusAssignedReview",
+  reviewed: "gateStatusReviewed",
+  approved: "gateStatusApproved",
+  assigned: "gateStatusAssigned",
+  rejected: "gateStatusRejected",
 };
+// وضعیت → متنِ محلی‌شده (مصرف‌کننده‌ها این را صدا می‌زنند، نه خودِ نگاشت را)
+export const gateStatusLabel = (status) => tr(GATE_STATUS_LABELS[status] || status);
 
 function gateItemFromRow(r) {
   return {
@@ -45,7 +50,7 @@ export async function submitToGate({ moduleKey, recordId, recordLabel, direction
     record_label: recordLabel || null, direction, status: "pending_approval", submitted_by: submittedBy || "",
   };
   const rows = await sb("hse_gate_items", { method: "POST", body: JSON.stringify([payload]) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ارسال به گیت تأیید HSE" };
+  if (!sbOk(rows)) return { __error: true, message: tr("gateErrSubmit") };
   return gateItemFromRow(rows[0]);
 }
 
@@ -108,13 +113,13 @@ export async function deleteGateItemsForRecord(moduleKey, recordId) {
 // طبق تصمیم تأییدشده، این جایگزین تأیید مستقیم نیست، یک گزینه‌ی موازی
 // است (سرپرست همچنان می‌تواند مستقیم approveGateItem را هم صدا بزند).
 export async function assignForReview(id, assignedTo, reviewedBy) {
-  if (!assignedTo) return { __error: true, message: "انتخاب کارشناس مقصد الزامی است" };
+  if (!assignedTo) return { __error: true, message: tr("gateErrAssignReviewerRequired") };
   const rows = await sb(`hse_gate_items?id=eq.${id}`, {
     method: "PATCH",
     body: JSON.stringify({ status: "assigned_review", assigned_to: assignedTo, reviewed_by: reviewedBy || "", reviewed_at: new Date().toISOString() }),
   });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ارجاع — فقط سرپرست/مدیر HSE یا ادمین مجاز است" };
-  if (rows.length === 0) return { __error: true, message: "دسترسی شما برای ارجاع این مورد کافی نیست" };
+  if (!sbOk(rows)) return { __error: true, message: tr("gateErrAssignReview") };
+  if (rows.length === 0) return { __error: true, message: tr("gateErrAssignReviewNoAccess") };
   return { ok: true };
 }
 
@@ -126,8 +131,8 @@ export async function submitReview(id, reviewerUsername, comment) {
     method: "PATCH",
     body: JSON.stringify({ status: "reviewed", reviewer_comment: comment || null }),
   });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ارسال نتیجه‌ی بررسی" };
-  if (rows.length === 0) return { __error: true, message: "این مورد به شما ارجاع نشده یا قبلاً بررسی شده است" };
+  if (!sbOk(rows)) return { __error: true, message: tr("gateErrSubmitReview") };
+  if (rows.length === 0) return { __error: true, message: tr("gateErrReviewNotAssigned") };
   return { ok: true };
 }
 
@@ -136,29 +141,29 @@ export async function approveGateItem(id, reviewedBy, reviewNote) {
     method: "PATCH",
     body: JSON.stringify({ status: "approved", reviewed_by: reviewedBy || "", reviewed_at: new Date().toISOString(), review_note: reviewNote || null }),
   });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در تأیید — فقط سرپرست/مدیر HSE یا ادمین مجاز است" };
-  if (rows.length === 0) return { __error: true, message: "دسترسی شما برای تأیید این مورد کافی نیست" };
+  if (!sbOk(rows)) return { __error: true, message: tr("gateErrApprove") };
+  if (rows.length === 0) return { __error: true, message: tr("gateErrApproveNoAccess") };
   return { ok: true };
 }
 
 export async function rejectGateItem(id, reviewedBy, reviewNote) {
-  if (!reviewNote || !reviewNote.trim()) return { __error: true, message: "برای رد یک مورد، ذکر دلیل الزامی است" };
+  if (!reviewNote || !reviewNote.trim()) return { __error: true, message: tr("gateErrRejectReasonRequired") };
   const rows = await sb(`hse_gate_items?id=eq.${id}`, {
     method: "PATCH",
     body: JSON.stringify({ status: "rejected", reviewed_by: reviewedBy || "", reviewed_at: new Date().toISOString(), review_note: reviewNote }),
   });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در رد — فقط سرپرست/مدیر HSE یا ادمین مجاز است" };
-  if (rows.length === 0) return { __error: true, message: "دسترسی شما برای رد این مورد کافی نیست" };
+  if (!sbOk(rows)) return { __error: true, message: tr("gateErrReject") };
+  if (rows.length === 0) return { __error: true, message: tr("gateErrRejectNoAccess") };
   return { ok: true };
 }
 
 export async function assignGateItem(id, assignedTo, reviewedBy) {
-  if (!assignedTo) return { __error: true, message: "انتخاب کارشناس مقصد الزامی است" };
+  if (!assignedTo) return { __error: true, message: tr("gateErrAssignReviewerRequired") };
   const rows = await sb(`hse_gate_items?id=eq.${id}`, {
     method: "PATCH",
     body: JSON.stringify({ status: "assigned", assigned_to: assignedTo, reviewed_by: reviewedBy || "", reviewed_at: new Date().toISOString() }),
   });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در واگذاری — فقط سرپرست/مدیر HSE یا ادمین مجاز است" };
-  if (rows.length === 0) return { __error: true, message: "دسترسی شما برای واگذاری این مورد کافی نیست" };
+  if (!sbOk(rows)) return { __error: true, message: tr("gateErrAssign") };
+  if (rows.length === 0) return { __error: true, message: tr("gateErrAssignNoAccess") };
   return { ok: true };
 }

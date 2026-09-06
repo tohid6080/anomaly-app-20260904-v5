@@ -17,7 +17,7 @@ import ProactiveIndicatorsDashboard from "./proactiveIndicators/ProactiveIndicat
 import IncidentsListPage from "./incidents/IncidentsListPage.jsx";
 import { loadHomeKpiSummary } from "./dashboard/homeKpiApi.js";
 import { loadModuleConfig, loadDashboardConfig, loadNotificationTypes, loadAppearanceConfig, applyAppearanceToDom, loadActiveAnnouncements } from "./systemConfigApi.js";
-import { submitToGate, loadPendingGateItems, loadAssignedGateItems, loadAssignedReviewItemsForModule, deleteGateItemsForRecord, loadCompanyStaffOptions, assignForReview, submitReview, approveGateItem, rejectGateItem, GATE_STATUS_LABELS } from "./hseGateApi.js";
+import { submitToGate, loadPendingGateItems, loadAssignedGateItems, loadAssignedReviewItemsForModule, deleteGateItemsForRecord, loadCompanyStaffOptions, assignForReview, submitReview, approveGateItem, rejectGateItem, GATE_STATUS_LABELS, gateStatusLabel } from "./hseGateApi.js";
 import SubscriptionGate from "./subscription/SubscriptionGate.jsx";
 import { checkMyAccountActive } from "./subscriptionApi.js";
 import { AppearanceProvider, useAppearance } from "./shared/AppearanceContext.jsx";
@@ -3159,7 +3159,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
             {gateMap[a.id] && (
               <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 9, padding: 12, marginTop: 10, marginBottom: 10 }}>
                 <p style={{ fontSize: 11.5, fontWeight: 700, color: "#1d4ed8", margin: "0 0 8px" }}>
-                  گیت تأیید سرپرست/مدیر HSE — {GATE_STATUS_LABELS[gateMap[a.id].status] || gateMap[a.id].status}
+                  {t("gateAppGateHeading", { status: gateStatusLabel(gateMap[a.id].status) })}
                 </p>
                 {gateMap[a.id].status === "assigned_review" && (
                   <p style={{ fontSize: 11.5, fontWeight: 600, color: "#1d4ed8", margin: "0 0 8px" }}>

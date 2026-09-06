@@ -1,5 +1,8 @@
 import { sb, sbOk, uid, getCurrentCompanyId } from "../shared.js";
 import { uploadBase64ToStorage } from "../offline/storageUpload.js";
+import { translate, getCurrentLang } from "../i18n/translations.js";
+
+const tr = (key, params) => translate(getCurrentLang(), key, params);
 
 /**
  * Internal chat — direct + group conversations, scoped to the current
@@ -136,7 +139,7 @@ export async function loadExtraIdentities() {
 
 export async function addExtraIdentity(jobPositionId, role) {
   const result = await sb("chat_matrix_extra_identities", { method: "POST", body: JSON.stringify([{ job_position_id: jobPositionId, role, company_id: getCurrentCompanyId() }]) });
-  if (!sbOk(result)) return { __error: true, message: "خطا در افزودن" };
+  if (!sbOk(result)) return { __error: true, message: tr("chatErrAdd") };
   return { ok: true };
 }
 
@@ -167,7 +170,7 @@ export async function setVisibilityRule(roleA, jobPositionIdA, roleB, jobPositio
     const reverseExisting = await sb(`chat_visibility_rules?role_a=eq.${roleB}&${jobPosCondition("job_position_id_a", jobPositionIdB)}&role_b=eq.${roleA}&${jobPosCondition("job_position_id_b", jobPositionIdA)}&select=id`);
     if (sbOk(reverseExisting) && reverseExisting.length > 0) return { ok: true };
     const result = await sb("chat_visibility_rules", { method: "POST", body: JSON.stringify([{ role_a: roleA, job_position_id_a: jobPositionIdA || null, role_b: roleB, job_position_id_b: jobPositionIdB || null, company_id: getCurrentCompanyId() }]) });
-    if (!sbOk(result)) return { __error: true, message: "خطا در ذخیره‌سازی: " + (result?.message || "نامشخص") };
+    if (!sbOk(result)) return { __error: true, message: tr("chatErrSaveDetail", { detail: result?.message || tr("chatUnknown") }) };
     return { ok: true };
   }
   await sb(`chat_visibility_rules?role_a=eq.${roleA}&${jobPosCondition("job_position_id_a", jobPositionIdA)}&role_b=eq.${roleB}&${jobPosCondition("job_position_id_b", jobPositionIdB)}`, { method: "DELETE", prefer: "return=minimal" });
@@ -259,7 +262,7 @@ export async function createConversation(me, type, { title, participants, linked
   console.log("[chat] createConversation: نتیجه‌ی INSERT روی chat_conversations", rows);
   if (!sbOk(rows)) {
     console.error("[chat] createConversation: شکست در ساخت ردیف مکالمه", rows);
-    return { __error: true, message: "خطا در ساخت مکالمه: " + (rows?.message || "نامشخص") };
+    return { __error: true, message: tr("chatErrCreateConversation", { detail: rows?.message || tr("chatUnknown") }) };
   }
   const conv = rows[0];
   console.log("[chat] createConversation: مکالمه ساخته شد با id =", conv.id);
@@ -285,7 +288,7 @@ export async function createConversation(me, type, { title, participants, linked
     // چون خودِ ردیف مکالمه بی‌فایده است، حذفش می‌کنیم تا رکورد یتیم نماند.
     console.error("[chat] createConversation: شکست در درج شرکت‌کنندگان — مکالمه‌ی یتیم در حال حذف", partResult);
     await sb(`chat_conversations?id=eq.${conv.id}`, { method: "DELETE", prefer: "return=minimal" });
-    return { __error: true, message: "خطا در افزودن اعضای گفتگو: " + (partResult?.message || "نامشخص") };
+    return { __error: true, message: tr("chatErrAddMembers", { detail: partResult?.message || tr("chatUnknown") }) };
   }
 
   console.log("[chat] createConversation: موفق — بازگشت id =", conv.id);
@@ -304,7 +307,7 @@ export async function findOrCreateLinkedConversation(me, linkedModule, linkedId,
         method: "POST",
         body: JSON.stringify([{ conversation_id: existing[0].id, username: me.username, full_name: me.name, role: me.role }]),
       });
-      if (!sbOk(addResult)) return { __error: true, message: "خطا در پیوستن به گفتگو: " + (addResult?.message || "نامشخص") };
+      if (!sbOk(addResult)) return { __error: true, message: tr("chatErrJoin", { detail: addResult?.message || tr("chatUnknown") }) };
     }
     return existing[0].id;
   }
@@ -336,7 +339,7 @@ export async function sendMessage(conversationId, me, body, attachment) {
       console.log("[chat] sendMessage: آپلود پیوست موفق", attachmentUrl);
     } catch (e) {
       console.error("[chat] sendMessage: شکست در آپلود پیوست", e);
-      return { __error: true, message: "خطا در آپلود پیوست: " + (e?.message || "") };
+      return { __error: true, message: tr("chatErrUploadAttachment", { detail: e?.message || "" }) };
     }
   }
   const payload = {
@@ -353,7 +356,7 @@ export async function sendMessage(conversationId, me, body, attachment) {
   console.log("[chat] sendMessage: نتیجه‌ی INSERT روی chat_messages", rows);
   if (!sbOk(rows)) {
     console.error("[chat] sendMessage: شکست در ثبت پیام", rows);
-    return { __error: true, message: "خطا در ارسال پیام: " + (rows?.message || "نامشخص") };
+    return { __error: true, message: tr("chatErrSendMessage", { detail: rows?.message || tr("chatUnknown") }) };
   }
   const touchResult = await sb(`chat_conversations?id=eq.${conversationId}`, { method: "PATCH", body: JSON.stringify({ updated_at: new Date().toISOString() }) });
   console.log("[chat] sendMessage: به‌روزرسانی updated_at مکالمه", touchResult);
@@ -372,7 +375,7 @@ export async function addParticipant(conversationId, person) {
     method: "POST",
     body: JSON.stringify([{ conversation_id: conversationId, username: person.username, full_name: person.fullName || person.name || "", role: person.role || "" }]),
   });
-  if (!sbOk(result)) return { __error: true, message: "خطا در افزودن عضو: " + (result?.message || "نامشخص") };
+  if (!sbOk(result)) return { __error: true, message: tr("chatErrAddMember", { detail: result?.message || tr("chatUnknown") }) };
   return { ok: true };
 }
 
@@ -393,7 +396,7 @@ export async function leaveConversation(conversationId, me) {
   await sb("chat_messages", { method: "POST", body: JSON.stringify([sysPayload]), prefer: "return=minimal" });
 
   const result = await sb(`chat_participants?conversation_id=eq.${conversationId}&username=eq.${encodeURIComponent(me.username)}`, { method: "DELETE" });
-  if (!sbOk(result)) return { __error: true, message: "خطا در خروج از گفتگو: " + (result?.message || "نامشخص") };
+  if (!sbOk(result)) return { __error: true, message: tr("chatErrLeave", { detail: result?.message || tr("chatUnknown") }) };
   return { ok: true };
 }
 
@@ -405,7 +408,7 @@ export async function leaveConversation(conversationId, me) {
 // تاریخچه‌ی گفتگو برای طرف مقابل دقیقاً دست‌نخورده باقی می‌مانند.
 export async function deleteConversationForMe(conversationId, username) {
   const result = await sb(`chat_participants?conversation_id=eq.${conversationId}&username=eq.${encodeURIComponent(username)}`, { method: "DELETE" });
-  if (!sbOk(result)) return { __error: true, message: "خطا در حذف گفتگو: " + (result?.message || "نامشخص") };
+  if (!sbOk(result)) return { __error: true, message: tr("chatErrDeleteConversation", { detail: result?.message || tr("chatUnknown") }) };
   return { ok: true };
 }
 

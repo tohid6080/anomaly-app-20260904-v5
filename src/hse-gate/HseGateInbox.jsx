@@ -3,15 +3,16 @@ import { Inbox, CheckCircle2, XCircle, UserCheck, Clock } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
 import {
-  loadPendingGateItems, approveGateItem, rejectGateItem, assignGateItem, loadCompanyStaffOptions, GATE_STATUS_LABELS,
+  loadPendingGateItems, approveGateItem, rejectGateItem, assignGateItem, loadCompanyStaffOptions,
 } from "../hseGateApi.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
-const MODULE_LABELS = {
-  anomalyReport: "مدیریت عدم انطباق‌ها",
-  personnelAccess: "مدیریت ورود و تردد پرسنل",
-  machineryManagement: "مدیریت ماشین‌آلات",
-  riskAssessment: "مدیریت ارزیابی ریسک",
-  scaffoldManagement: "مدیریت داربست",
+const MODULE_LABEL_KEYS = {
+  anomalyReport: "saDmcLabelAnomaly",
+  personnelAccess: "saDmcLabelPersonnel",
+  machineryManagement: "saDmcLabelMachinery",
+  riskAssessment: "saDmcLabelRisk",
+  scaffoldManagement: "saDmcLabelScaffold",
 };
 
 /**
@@ -22,6 +23,7 @@ const MODULE_LABELS = {
  *     HSE باید آن را به یک کارشناس مشخص کارفرما واگذار کند.
  */
 export default function HseGateInbox({ currentUser, onBack }) {
+  const { t } = useLanguage();
   const [items, setItems] = useState(null);
   const [staff, setStaff] = useState([]);
   const [tab, setTab] = useState("employer_to_contractor");
@@ -39,7 +41,7 @@ export default function HseGateInbox({ currentUser, onBack }) {
   };
   useEffect(() => { load(); }, []);
 
-  if (items === null) return <p style={{ color: THEME.text3, textAlign: "center", padding: 40 }}>در حال بارگذاری...</p>;
+  if (items === null) return <p style={{ color: THEME.text3, textAlign: "center", padding: 40 }}>{t("commonLoading")}</p>;
 
   const filtered = items.filter((it) => it.direction === tab);
 
@@ -73,12 +75,12 @@ export default function HseGateInbox({ currentUser, onBack }) {
 
   return (
     <div style={{ maxWidth: 760, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>بازگشت</div>}
+      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackPlain")}</div>}
       <h2 style={{ fontSize: 18, color: THEME.navy, fontWeight: 800, margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}>
-        <Inbox size={20} color={THEME.teal} /> صندوق ورودی سرپرست/مدیر HSE
+        <Inbox size={20} color={THEME.teal} /> {t("gateInboxTitle")}
       </h2>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 18, lineHeight: 1.9 }}>
-        هیچ موردی بدون تأیید یا واگذاری شما به سمت مقابل نمی‌رود.
+        {t("gateInboxIntro")}
       </p>
       {message && <p style={styles.error}>{message}</p>}
 
@@ -91,7 +93,7 @@ export default function HseGateInbox({ currentUser, onBack }) {
             borderBottom: tab === "employer_to_contractor" ? `2.5px solid ${THEME.teal}` : "2.5px solid transparent",
           }}
         >
-          در انتظار تأیید برای پیمانکار ({items.filter((it) => it.direction === "employer_to_contractor").length})
+          {t("gateInboxTabE2C", { count: items.filter((it) => it.direction === "employer_to_contractor").length })}
         </button>
         <button
           type="button" onClick={() => setTab("contractor_to_employer")}
@@ -101,22 +103,22 @@ export default function HseGateInbox({ currentUser, onBack }) {
             borderBottom: tab === "contractor_to_employer" ? `2.5px solid ${THEME.teal}` : "2.5px solid transparent",
           }}
         >
-          گزارش‌شده از پیمانکار — نیازمند واگذاری ({items.filter((it) => it.direction === "contractor_to_employer").length})
+          {t("gateInboxTabC2E", { count: items.filter((it) => it.direction === "contractor_to_employer").length })}
         </button>
       </div>
 
-      {filtered.length === 0 && <p style={{ fontSize: 12.5, color: THEME.text3, textAlign: "center", padding: 30 }}>موردی در این بخش نیست.</p>}
+      {filtered.length === 0 && <p style={{ fontSize: 12.5, color: THEME.text3, textAlign: "center", padding: 30 }}>{t("gateInboxNoneInSection")}</p>}
 
       {filtered.map((it) => (
         <div key={it.id} style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 16, marginBottom: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
             <div>
               <span style={{ fontSize: 11, padding: "2px 9px", borderRadius: 999, background: THEME.tealSoft, color: THEME.tealDeep, fontWeight: 700 }}>
-                {MODULE_LABELS[it.moduleKey] || it.moduleKey}
+                {MODULE_LABEL_KEYS[it.moduleKey] ? t(MODULE_LABEL_KEYS[it.moduleKey]) : it.moduleKey}
               </span>
               <p style={{ fontSize: 13.5, fontWeight: 700, color: THEME.navy, margin: "8px 0 3px" }}>{it.recordLabel || it.recordId}</p>
               <p style={{ fontSize: 11.5, color: THEME.text3, margin: 0, display: "flex", alignItems: "center", gap: 4 }}>
-                <Clock size={11} /> ارسال‌شده توسط {it.submittedBy} — {toJalaliSafe(it.createdAt)}
+                <Clock size={11} /> {t("gateInboxSentBy", { by: it.submittedBy, date: toJalaliSafe(it.createdAt) })}
               </p>
             </div>
           </div>
@@ -125,11 +127,11 @@ export default function HseGateInbox({ currentUser, onBack }) {
             <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
               <button type="button" onClick={() => handleApprove(it.id)} disabled={busy === it.id}
                 style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 5, background: "#166534" }}>
-                <CheckCircle2 size={13} /> تأیید و ارسال به پیمانکار
+                <CheckCircle2 size={13} /> {t("gateInboxApproveSend")}
               </button>
               <button type="button" onClick={() => openReject(it.id)} disabled={busy === it.id}
                 style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 5, background: THEME.danger }}>
-                <XCircle size={13} /> رد
+                <XCircle size={13} /> {t("gateInboxReject")}
               </button>
             </div>
           )}
@@ -138,32 +140,32 @@ export default function HseGateInbox({ currentUser, onBack }) {
             <div style={{ marginTop: 12 }}>
               <button type="button" onClick={() => openAssign(it.id)} disabled={busy === it.id}
                 style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 5 }}>
-                <UserCheck size={13} /> واگذاری به کارشناس
+                <UserCheck size={13} /> {t("gateInboxAssignToSpecialist")}
               </button>
             </div>
           )}
 
           {rejectingId === it.id && (
             <div style={{ background: THEME.dangerBg, borderRadius: 9, padding: 12, marginTop: 10 }}>
-              <label style={{ fontSize: 11.5, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>دلیل رد (الزامی)</label>
+              <label style={{ fontSize: 11.5, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("gateInboxRejectReason")}</label>
               <textarea style={{ ...styles.input, marginTop: 0, minHeight: 50 }} value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} dir="rtl" />
               <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                <button type="button" style={styles.smallButton} onClick={confirmReject} disabled={busy === it.id}>ثبت رد</button>
-                <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setRejectingId(null)}>انصراف</button>
+                <button type="button" style={styles.smallButton} onClick={confirmReject} disabled={busy === it.id}>{t("gateInboxSubmitReject")}</button>
+                <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setRejectingId(null)}>{t("commonCancel")}</button>
               </div>
             </div>
           )}
 
           {assigningId === it.id && (
             <div style={{ background: THEME.bg, borderRadius: 9, padding: 12, marginTop: 10 }}>
-              <label style={{ fontSize: 11.5, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>واگذاری به</label>
+              <label style={{ fontSize: 11.5, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("gateInboxAssignTo")}</label>
               <select style={{ ...styles.input, marginTop: 0 }} value={assignTo} onChange={(e) => setAssignTo(e.target.value)} dir="rtl">
-                <option value="">انتخاب کارشناس</option>
+                <option value="">{t("gateInboxSelectSpecialist")}</option>
                 {staff.map((s) => <option key={s.username} value={s.username}>{s.name}</option>)}
               </select>
               <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                <button type="button" style={styles.smallButton} onClick={confirmAssign} disabled={busy === it.id || !assignTo}>ثبت واگذاری</button>
-                <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setAssigningId(null)}>انصراف</button>
+                <button type="button" style={styles.smallButton} onClick={confirmAssign} disabled={busy === it.id || !assignTo}>{t("gateInboxSubmitAssign")}</button>
+                <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setAssigningId(null)}>{t("commonCancel")}</button>
               </div>
             </div>
           )}

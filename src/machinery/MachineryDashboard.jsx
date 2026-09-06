@@ -15,7 +15,7 @@ import {
 import MachineryForm from "./MachineryForm.jsx";
 import {
   loadPendingGateItems, loadAssignedGateItems, loadAssignedReviewItemsForModule, loadCompanyStaffOptions, assignForReview,
-  submitReview as submitGateReview, approveGateItem, rejectGateItem, GATE_STATUS_LABELS,
+  submitReview as submitGateReview, approveGateItem, rejectGateItem, gateStatusLabel,
 } from "../hseGateApi.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
@@ -356,7 +356,7 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
       {gateMap[expandedItem.id] && (gateMap[expandedItem.id].status === "pending_approval" || gateMap[expandedItem.id].status === "assigned_review" || gateMap[expandedItem.id].status === "reviewed") && (
         <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 9, padding: 12, marginBottom: 10 }}>
           <p style={{ fontSize: 12, fontWeight: 700, color: "#1d4ed8", margin: "0 0 8px" }}>
-            {t("gateReviewGateHeading", { status: GATE_STATUS_LABELS[gateMap[expandedItem.id].status] || gateMap[expandedItem.id].status })}
+            {t("gateReviewGateHeading", { status: gateStatusLabel(gateMap[expandedItem.id].status) })}
           </p>
           {gateMap[expandedItem.id].status === "assigned_review" && (
             <p style={{ fontSize: 12, color: "#1d4ed8", fontWeight: 600, margin: "0 0 8px" }}>

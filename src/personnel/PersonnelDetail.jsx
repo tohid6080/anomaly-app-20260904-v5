@@ -15,7 +15,7 @@ import {
 } from "./personnelApi.js";
 import {
   loadGateStatusForRecord, loadCompanyStaffOptions, assignForReview, submitReview,
-  approveGateItem, rejectGateItem, submitToGate, GATE_STATUS_LABELS,
+  approveGateItem, rejectGateItem, submitToGate, gateStatusLabel,
 } from "../hseGateApi.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
@@ -256,7 +256,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
       {!isContractor && gateItem && (gateItem.status === "pending_approval" || gateItem.status === "assigned_review" || gateItem.status === "reviewed") && (
         <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 9, padding: 14, marginBottom: 14 }}>
           <p style={{ fontSize: 12, fontWeight: 700, color: "#1d4ed8", margin: "0 0 8px" }}>
-            {t("gateReviewGateHeading", { status: GATE_STATUS_LABELS[gateItem.status] || gateItem.status })}
+            {t("gateReviewGateHeading", { status: gateStatusLabel(gateItem.status) })}
           </p>
           {gateItem.status === "assigned_review" && (
             <p style={{ fontSize: 12, fontWeight: 600, color: "#1d4ed8", margin: "0 0 8px" }}>
@@ -537,7 +537,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
           </h3>
           {gateItem && (gateItem.status === "pending_approval" || gateItem.status === "assigned_review" || gateItem.status === "reviewed") ? (
             <p style={{ fontSize: 12.5, color: "#166534", margin: 0, fontWeight: 600 }}>
-              {t("pdetSentStatus", { status: GATE_STATUS_LABELS[gateItem.status] || t("pdetGateAwaitingReview") })}
+              {t("pdetSentStatus", { status: GATE_STATUS_LABELS[gateItem.status] ? gateStatusLabel(gateItem.status) : t("pdetGateAwaitingReview") })}
             </p>
           ) : documents.length === 0 ? (
             <p style={{ fontSize: 12, color: THEME.text3, margin: 0 }}>{t("pdetUploadDocsFirstThenSubmit")}</p>
