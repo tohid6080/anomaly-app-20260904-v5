@@ -1,6 +1,9 @@
 import * as XLSX from "xlsx";
 import JSZip from "jszip";
 import { isNativeApp, writeAndShare } from "./nativeFile.js";
+import { translate, getCurrentLang } from "../i18n/translations.js";
+
+const tr = (key, params) => translate(getCurrentLang(), key, params);
 
 /**
  * Builds ONE zip containing the Excel file (at the root) plus a "files/"
@@ -45,7 +48,7 @@ export async function saveBlobNativeAware(blob, fileName) {
       reader.onerror = reject;
       reader.readAsDataURL(blob);
     });
-    await writeAndShare(base64, fileName, "ذخیره یا ارسال آرشیو");
+    await writeAndShare(base64, fileName, tr("shareArchiveDialog"));
     return;
   }
   const url = URL.createObjectURL(blob);

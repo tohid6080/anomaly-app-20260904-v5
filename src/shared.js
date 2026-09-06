@@ -6,6 +6,9 @@
 
 import { useState, useEffect } from "react";
 import { getSessionToken } from "./sessionToken.js";
+import { translate, getCurrentLang } from "./i18n/translations.js";
+
+const tr = (key, params) => translate(getCurrentLang(), key, params);
 
 export const APP_NAME = "Integrated HSE Management System";
 
@@ -84,7 +87,7 @@ export function sbOk(rows) {
 }
 export function sbErrMsg(rows) {
   if (rows && rows.__error) return rows.message;
-  return "خطای نامشخص";
+  return tr("sharedErrUnknown");
 }
 
 export function uid(prefix) {
@@ -114,10 +117,10 @@ async function decodeImageWithOrientation(file) {
   }
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onerror = () => reject(new Error("خطا در خواندن فایل"));
+    reader.onerror = () => reject(new Error(tr("sharedErrReadFile")));
     reader.onload = () => {
       const img = new Image();
-      img.onerror = () => reject(new Error("فایل تصویر معتبر نیست"));
+      img.onerror = () => reject(new Error(tr("sharedErrInvalidImage")));
       img.onload = () => resolve(img);
       img.src = reader.result;
     };
@@ -128,7 +131,7 @@ async function decodeImageWithOrientation(file) {
 function blobToDataUrl(blob) {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
-    r.onerror = () => reject(new Error("خطا در پردازش تصویر"));
+    r.onerror = () => reject(new Error(tr("sharedErrProcessImage")));
     r.onload = () => resolve(r.result);
     r.readAsDataURL(blob);
   });
@@ -153,7 +156,7 @@ export async function compressImage(file, opts = {}) {
   const src = await decodeImageWithOrientation(file);
   const sw = src.width || src.naturalWidth;
   const sh = src.height || src.naturalHeight;
-  if (!sw || !sh) throw new Error("فایل تصویر معتبر نیست");
+  if (!sw || !sh) throw new Error(tr("sharedErrInvalidImage"));
 
   let w = sw, h = sh;
   if (Math.max(w, h) > maxDim) {

@@ -15,6 +15,9 @@ import { sb, sbOk } from "../shared.js";
 import { getQueue, updateQueueItem, removeQueueItem, putRecord } from "./offlineDb.js";
 import { isOnline } from "./networkStatus.js";
 import { uploadBase64ToStorage } from "./storageUpload.js";
+import { translate, getCurrentLang } from "../i18n/translations.js";
+
+const tr = (key, params) => translate(getCurrentLang(), key, params);
 
 // module key → { table, idField } — add one line here to support a new module
 export const MODULE_TABLE_MAP = {
@@ -70,7 +73,7 @@ async function applyQueueItem(item) {
 
   if (item.action === "insert") {
     const rows = await sb(table, { method: "POST", body: JSON.stringify([item.payload]) });
-    if (!sbOk(rows)) return { ok: false, error: rows?.message || "خطای درج" };
+    if (!sbOk(rows)) return { ok: false, error: rows?.message || tr("owErrInsert") };
     return { ok: true, serverRow: rows[0] };
   }
 
@@ -78,11 +81,11 @@ async function applyQueueItem(item) {
     if (item.baselineUpdatedAt) {
       const serverUpdatedAt = await fetchServerUpdatedAt(table, idField, item.recordId);
       if (serverUpdatedAt && serverUpdatedAt > item.baselineUpdatedAt) {
-        return { ok: false, conflict: true, error: "این رکورد در این‌بین از جای دیگری تغییر کرده است" };
+        return { ok: false, conflict: true, error: tr("syncErrConflict") };
       }
     }
     const rows = await sb(`${table}?${idField}=eq.${item.recordId}`, { method: "PATCH", body: JSON.stringify(item.payload) });
-    if (!sbOk(rows)) return { ok: false, error: rows?.message || "خطای به‌روزرسانی" };
+    if (!sbOk(rows)) return { ok: false, error: rows?.message || tr("owErrUpdate") };
     return { ok: true, serverRow: rows[0] };
   }
 
@@ -91,7 +94,7 @@ async function applyQueueItem(item) {
     return { ok: true };
   }
 
-  return { ok: false, permanent: true, error: "نوع عملیات ناشناخته" };
+  return { ok: false, permanent: true, error: tr("syncErrUnknownOp") };
 }
 
 export async function processQueue() {
@@ -135,7 +138,7 @@ export async function processQueue() {
       await updateQueueItem(item.queueId, {
         status: "failed",
         attempts,
-        lastError: result.error || "خطای نامشخص",
+        lastError: result.error || tr("syncErrUnknown"),
         nextRetryAt: permanent ? "9999-12-31" : new Date(Date.now() + backoffDelayMs(attempts)).toISOString(),
       });
       await putRecord(item.module, item.recordId, item.payload, "failed");

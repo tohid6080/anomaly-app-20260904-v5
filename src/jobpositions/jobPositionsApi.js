@@ -1,4 +1,7 @@
 import { sb, sbOk, getCurrentCompanyId } from "../shared.js";
+import { translate, getCurrentLang } from "../i18n/translations.js";
+
+const tr = (key, params) => translate(getCurrentLang(), key, params);
 
 /**
  * Job Positions — extensible list, fully managed via DB + Admin UI (no code
@@ -34,7 +37,7 @@ export async function insertJobPosition(title) {
   const existing = await sb(`job_positions?select=order_index&order=order_index.desc&limit=1${filter}`);
   const nextOrder = sbOk(existing) && existing.length > 0 ? (existing[0].order_index || 0) + 1 : 1;
   const rows = await sb("job_positions", { method: "POST", body: JSON.stringify([{ title, order_index: nextOrder, company_id: companyId }]) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ثبت (شاید این عنوان قبلاً وجود دارد)" };
+  if (!sbOk(rows)) return { __error: true, message: tr("jpErrCreate") };
   return rowFromDb(rows[0]);
 }
 
@@ -44,7 +47,7 @@ export async function updateJobPosition(id, patch) {
   if ("isActive" in patch) dbPatch.is_active = patch.isActive;
   if ("orderIndex" in patch) dbPatch.order_index = patch.orderIndex;
   const rows = await sb(`job_positions?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(dbPatch) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در به‌روزرسانی" };
+  if (!sbOk(rows)) return { __error: true, message: tr("jpErrUpdate") };
   return rowFromDb(rows[0]);
 }
 

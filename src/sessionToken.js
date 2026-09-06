@@ -1,4 +1,7 @@
 // عمداً این دو مقدار مستقیم اینجا تکرار شده‌اند، نه import از shared.js —
+import { translate, getCurrentLang } from "./i18n/translations.js";
+
+const tr = (key, params) => translate(getCurrentLang(), key, params);
 // چون shared.js خودش این فایل را import می‌کند (برای getSessionToken داخل
 // sb())، و وارد کردن متقابل باعث وابستگی دایره‌ای بین دو ماژول می‌شد.
 const SUPABASE_URL = "https://zmmxiyqlwkqjzghbcydi.supabase.co";
@@ -75,11 +78,11 @@ export async function issueSessionToken(username, password, loginType = "custome
       body: JSON.stringify({ username, password, loginType }),
     });
     const data = await res.json();
-    if (!res.ok || !data?.token) return { error: true, message: data?.error || "نام کاربری یا رمز عبور اشتباه است" };
+    if (!res.ok || !data?.token) return { error: true, message: data?.error || tr("stokErrInvalidCredentials") };
     storeToken(data.token, loginType === "super_admin" ? "super_admin" : "customer");
     return { token: data.token, user: data.user || null };
   } catch (e) {
-    return { error: true, message: "خطا در برقراری ارتباط با سرور احراز هویت" };
+    return { error: true, message: tr("stokErrAuthServerConn") };
   }
 }
 
@@ -87,7 +90,7 @@ export async function issueSessionToken(username, password, loginType = "custome
 // دانستن رمز فعلی؛ تأیید و تنظیم رمز جدید هر دو کاملاً سمت سرور انجام می‌شود.
 export async function changeMyPassword(oldPassword, newPassword, scope = "customer") {
   const token = getSessionToken(scope);
-  if (!token) return { error: true, message: "نشست نامعتبر است — لطفاً دوباره وارد شوید." };
+  if (!token) return { error: true, message: tr("stokErrInvalidSession") };
   try {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/change-password`, {
       method: "POST",
@@ -95,9 +98,9 @@ export async function changeMyPassword(oldPassword, newPassword, scope = "custom
       body: JSON.stringify({ oldPassword, newPassword }),
     });
     const data = await res.json();
-    if (!res.ok) return { error: true, message: data?.error || "خطا در تغییر رمز عبور" };
+    if (!res.ok) return { error: true, message: data?.error || tr("stokErrChangePassword") };
     return { ok: true };
   } catch {
-    return { error: true, message: "خطا در برقراری ارتباط با سرور" };
+    return { error: true, message: tr("stokErrServerConn") };
   }
 }

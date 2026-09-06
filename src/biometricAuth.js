@@ -1,5 +1,8 @@
 import { Capacitor } from "@capacitor/core";
 import { NativeBiometric } from "@capgo/capacitor-native-biometric";
+import { translate, getCurrentLang } from "./i18n/translations.js";
+
+const tr = (key, params) => translate(getCurrentLang(), key, params);
 
 /**
  * لایه‌ی بیومتریک — کاملاً مستقل از ماژول‌های دیگر IHMS.
@@ -55,28 +58,28 @@ export function isBiometricEnabledFor(username) {
 // واقعاً کار می‌کند، نه اینکه صرفاً یک تیک زده باشیم)، بعد نام‌کاربری/
 // رمزعبور فعلی را در Keystore امن ذخیره می‌کند.
 export async function enableBiometricLogin(username, password) {
-  if (!isNative()) return { __error: true, message: "این قابلیت فقط داخل اپلیکیشن نصب‌شده روی گوشی در دسترس است، نه در مرورگر وب." };
-  if (!username || !password) return { __error: true, message: "اطلاعات ورود فعلی در دسترس نیست." };
+  if (!isNative()) return { __error: true, message: tr("bioErrNativeOnly") };
+  if (!username || !password) return { __error: true, message: tr("bioErrNoCurrentCreds") };
 
   const avail = await isBiometricAvailable();
   if (!avail.available) {
     return {
       __error: true,
       message: avail.reason === "not_available"
-        ? "این دستگاه از احراز هویت بیومتریک پشتیبانی نمی‌کند یا هیچ اثر انگشت/چهره‌ای روی آن ثبت نشده است."
-        : "خطا در بررسی سخت‌افزار بیومتریک این دستگاه.",
+        ? tr("bioErrNotSupported")
+        : tr("bioErrHardwareCheck"),
     };
   }
 
   try {
     await NativeBiometric.verifyIdentity({
-      reason: "برای فعال‌سازی ورود با اثر انگشت",
-      title: "تأیید هویت",
-      subtitle: "برای فعال‌سازی ورود سریع",
-      description: "لطفاً اثر انگشت یا چهره‌ی خود را تأیید کنید",
+      reason: tr("bioReasonEnable"),
+      title: tr("bioTitleVerify"),
+      subtitle: tr("bioSubtitleEnable"),
+      description: tr("bioDescVerify"),
     });
   } catch {
-    return { __error: true, message: "تأیید بیومتریک لغو شد یا انجام نشد — ورود سریع فعال نشد." };
+    return { __error: true, message: tr("bioErrVerifyCancelledEnable") };
   }
 
   try {
@@ -84,7 +87,7 @@ export async function enableBiometricLogin(username, password) {
     localStorage.setItem(ENABLED_FLAG_KEY, username);
     return { ok: true };
   } catch (e) {
-    return { __error: true, message: "خطا در ذخیره‌ی امن اطلاعات ورود: " + String(e?.message || e) };
+    return { __error: true, message: tr("bioErrStoreCreds", { detail: String(e?.message || e) }) };
   }
 }
 
@@ -109,20 +112,20 @@ export async function verifyBiometricAndGetCredentials() {
   if (!isNative()) return { __error: true, message: "not_native" };
   try {
     await NativeBiometric.verifyIdentity({
-      reason: "برای ورود به سامانه",
-      title: "ورود با اثر انگشت",
+      reason: tr("bioReasonLogin"),
+      title: tr("bioTitleFingerprintLogin"),
       subtitle: "IHMS",
-      description: "لطفاً اثر انگشت یا چهره‌ی خود را تأیید کنید",
+      description: tr("bioDescVerify"),
     });
   } catch (e) {
     // شامل: رد مجوز، لغو توسط کاربر، خطای سخت‌افزاری، قفل‌شدن موقت بعد از چند تلاش ناموفق
-    return { __error: true, cancelled: true, message: "تأیید بیومتریک لغو شد یا ناموفق بود." };
+    return { __error: true, cancelled: true, message: tr("bioErrVerifyCancelledLogin") };
   }
   try {
     const creds = await NativeBiometric.getCredentials({ server: BIOMETRIC_SERVER_KEY });
-    if (!creds?.username || !creds?.password) return { __error: true, message: "اطلاعات ورود ذخیره‌شده یافت نشد." };
+    if (!creds?.username || !creds?.password) return { __error: true, message: tr("bioErrNoStoredCreds") };
     return { username: creds.username, password: creds.password };
   } catch (e) {
-    return { __error: true, message: "خطا در بازیابی امن اطلاعات ورود." };
+    return { __error: true, message: tr("bioErrRetrieveCreds") };
   }
 }

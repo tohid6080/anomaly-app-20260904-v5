@@ -27,6 +27,9 @@ import { putRecord, getRecord, enqueueSync, newLocalId } from "./offlineDb.js";
 import { isOnline } from "./networkStatus.js";
 import { processQueue } from "./syncEngine.js";
 import { uploadBase64ToStorage } from "./storageUpload.js";
+import { translate, getCurrentLang } from "../i18n/translations.js";
+
+const tr = (key, params) => translate(getCurrentLang(), key, params);
 
 // true فقط برای قطعی واقعی شبکه (هیچ پاسخی از سرور نیامده) — نه برای موردی
 // که سرور واقعاً پاسخ داد و رد کرد (که آن یک خطای واقعی و قابل‌نمایش است)
@@ -46,7 +49,7 @@ export async function offlineWrite({ module, table, idField = "id", action, id, 
         await putRecord(module, rows[0][idField] || recordId, rows[0], "synced");
         return { ok: true, record: rows[0], offline: false };
       }
-      if (rows?.status !== 0) return { ok: false, error: rows?.message || "خطای درج" };
+      if (rows?.status !== 0) return { ok: false, error: rows?.message || tr("owErrInsert") };
       // status 0 → قطعی واقعی شبکه، برو به مسیر آفلاین پایین
     } else if (action === "update") {
       const rows = await sb(`${table}?${idField}=eq.${recordId}`, { method: "PATCH", body: JSON.stringify(payload) });
@@ -54,11 +57,11 @@ export async function offlineWrite({ module, table, idField = "id", action, id, 
         await putRecord(module, recordId, rows[0], "synced");
         return { ok: true, record: rows[0], offline: false };
       }
-      if (rows?.status !== 0) return { ok: false, error: rows?.message || "خطای به‌روزرسانی" };
+      if (rows?.status !== 0) return { ok: false, error: rows?.message || tr("owErrUpdate") };
     } else if (action === "delete") {
       const result = await sb(`${table}?${idField}=eq.${recordId}`, { method: "DELETE", prefer: "return=minimal" });
       if (!result?.__error) return { ok: true, offline: false };
-      if (result?.status !== 0) return { ok: false, error: result?.message || "خطای حذف" };
+      if (result?.status !== 0) return { ok: false, error: result?.message || tr("owErrDelete") };
     }
   }
 
@@ -119,11 +122,11 @@ export async function offlineWriteFile({ module, table, idField = "id", bucket, 
         await putRecord(module, rows[0][idField] || recordId, rows[0], "synced");
         return { ok: true, record: rows[0], offline: false };
       }
-      if (rows?.status !== 0) return { ok: false, error: rows?.message || "خطای درج مدرک" };
+      if (rows?.status !== 0) return { ok: false, error: rows?.message || tr("owErrInsertDoc") };
       // status 0 روی درجِ دیتابیس بعد از آپلود موفق فایل — نادر، ولی باز هم برو صف آفلاین
     } catch (e) {
       if (!isNetworkLevelFailure(e)) {
-        return { ok: false, error: e?.message || "خطا در آپلود فایل" };
+        return { ok: false, error: e?.message || tr("owErrUploadFile") };
       }
       // قطعی واقعی شبکه حین آپلود → برو مسیر آفلاین پایین
     }

@@ -1,4 +1,7 @@
 import { sb, sbOk, getCurrentCompanyId } from "../shared.js";
+import { translate, getCurrentLang } from "../i18n/translations.js";
+
+const tr = (key, params) => translate(getCurrentLang(), key, params);
 
 /**
  * Training matrix — a course × job-position grid, same shape as the paper
@@ -28,7 +31,7 @@ export async function createTrainingCourse(title, description) {
   const existing = await sb(`training_courses?select=order_index&order=order_index.desc&limit=1${companyId ? `&company_id=eq.${companyId}` : ""}`);
   const nextOrder = sbOk(existing) && existing.length > 0 ? (existing[0].order_index || 0) + 1 : 1;
   const rows = await sb("training_courses", { method: "POST", body: JSON.stringify([{ title: title.trim(), description: description || "", order_index: nextOrder, company_id: companyId }]) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ثبت دوره" };
+  if (!sbOk(rows)) return { __error: true, message: tr("trnErrCreateCourse") };
   return courseFromRow(rows[0]);
 }
 
@@ -38,14 +41,14 @@ export async function updateTrainingCourse(id, patch) {
   if ("description" in patch) dbPatch.description = patch.description;
   if ("isActive" in patch) dbPatch.is_active = patch.isActive;
   const rows = await sb(`training_courses?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(dbPatch) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ذخیره‌سازی" };
+  if (!sbOk(rows)) return { __error: true, message: tr("trnErrSave") };
   return courseFromRow(rows[0]);
 }
 
 export async function deleteTrainingCourse(id) {
   await sb(`training_requirements?training_id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" });
   const result = await sb(`training_courses?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" });
-  if (result?.__error) return { __error: true, message: result.message || "خطا در حذف" };
+  if (result?.__error) return { __error: true, message: result.message || tr("trnErrDelete") };
   return { ok: true };
 }
 
@@ -63,7 +66,7 @@ export async function setRequirement(trainingId, jobPositionId, required) {
     const existing = await sb(`training_requirements?training_id=eq.${trainingId}&job_position_id=eq.${jobPositionId}&select=id`);
     if (sbOk(existing) && existing.length > 0) return { ok: true };
     const result = await sb("training_requirements", { method: "POST", body: JSON.stringify([{ training_id: trainingId, job_position_id: jobPositionId, company_id: getCurrentCompanyId() }]), prefer: "return=minimal" });
-    if (result?.__error) return { __error: true, message: "خطا در ذخیره‌سازی" };
+    if (result?.__error) return { __error: true, message: tr("trnErrSave") };
     return { ok: true };
   }
   await sb(`training_requirements?training_id=eq.${trainingId}&job_position_id=eq.${jobPositionId}`, { method: "DELETE", prefer: "return=minimal" });

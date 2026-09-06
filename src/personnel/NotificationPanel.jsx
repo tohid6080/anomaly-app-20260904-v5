@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Bell, ChevronLeft, X } from "lucide-react";
 import { styles, THEME } from "../shared.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 /**
  * Bell + dropdown showing the live-computed status summary (open
@@ -13,6 +14,7 @@ import { styles, THEME } from "../shared.js";
  * `onNavigate(target)`.
  */
 export default function NotificationPanel({ smartItems = [], onNavigate }) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
 
@@ -68,11 +70,11 @@ export default function NotificationPanel({ smartItems = [], onNavigate }) {
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: THEME.navy }}>اعلان‌ها</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: THEME.navy }}>{t("notifPanelTitle")}</span>
             <X size={15} color={THEME.text3} style={{ cursor: "pointer" }} onClick={() => setOpen(false)} />
           </div>
 
-          {smartItems.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: "10px 0" }}>اعلان جدیدی نیست</p>}
+          {smartItems.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: "10px 0" }}>{t("notifPanelEmpty")}</p>}
 
           {smartItems.map((item) => (
             <div

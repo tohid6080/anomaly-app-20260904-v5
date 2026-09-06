@@ -1,4 +1,7 @@
 /**
+import { translate, getCurrentLang } from "../i18n/translations.js";
+
+const tr = (key, params) => translate(getCurrentLang(), key, params);
  * Native file save/share helper — only activates inside a Capacitor native
  * build (window.Capacitor.isNativePlatform() === true). In the browser
  * (GitHub Pages / `npm run dev` / any non-native context) this is a no-op
@@ -23,7 +26,7 @@ export async function writeAndShare(base64Data, fileName, dialogTitle) {
   const { Share } = await import("@capacitor/share");
   const cleanBase64 = base64Data.includes(",") ? base64Data.split(",")[1] : base64Data;
   const result = await Filesystem.writeFile({ path: fileName, data: cleanBase64, directory: Directory.Cache });
-  await Share.share({ title: fileName, url: result.uri, dialogTitle: dialogTitle || "ذخیره یا ارسال فایل" });
+  await Share.share({ title: fileName, url: result.uri, dialogTitle: dialogTitle || tr("shareFileDialog") });
 }
 
 /**
@@ -37,7 +40,7 @@ export async function exportWorkbookNativeAware(XLSX, wb, fileName) {
   }
   try {
     const base64 = XLSX.write(wb, { bookType: "xlsx", type: "base64" });
-    await writeAndShare(base64, fileName, "ذخیره یا ارسال فایل Excel");
+    await writeAndShare(base64, fileName, tr("shareExcelDialog"));
   } catch (e) {
     console.error("Native Excel export failed, falling back to browser download", e);
     XLSX.writeFile(wb, fileName);
@@ -58,7 +61,7 @@ export async function exportHtmlReportNativeAware(html, fileName) {
   if (!isNativeApp()) return false; // caller keeps using window.open()+print() as before
   try {
     const base64 = btoa(unescape(encodeURIComponent(html)));
-    await writeAndShare(base64, fileName.endsWith(".html") ? fileName : `${fileName}.html`, "ذخیره یا ارسال گزارش (باز کنید و از Chrome چاپ/PDF بگیرید)");
+    await writeAndShare(base64, fileName.endsWith(".html") ? fileName : `${fileName}.html`, tr("shareReportDialog"));
     return true;
   } catch (e) {
     console.error("Native HTML report export failed", e);
@@ -83,7 +86,7 @@ export async function downloadUrlNativeAware(url, fileName) {
       reader.onerror = reject;
       reader.readAsDataURL(blob);
     });
-    await writeAndShare(base64, fileName, "ذخیره یا ارسال فایل آرشیوشده");
+    await writeAndShare(base64, fileName, tr("shareArchivedFileDialog"));
     return;
   }
 
