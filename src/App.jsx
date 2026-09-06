@@ -1037,6 +1037,11 @@ async function attemptCredentialLogin(username, password) {
 function LoginScreen({ onLogin }) {
   const { lang, setLang, t, dir } = useLanguage();
   const appearance = useAppearance();
+  // اگر کاربر در همین صفحه‌ی ورود زبان را دستی انتخاب کند، آن انتخاب باید
+  // بعد از ورود هم بماند و با preferred_language ذخیره‌شده‌ی حساب بازنویسی
+  // نشود (نگاه کنید به finishLogin).
+  const [langPickedHere, setLangPickedHere] = useState(false);
+  const pickLang = (value) => { setLangPickedHere(true); setLang(value); };
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -1078,7 +1083,10 @@ function LoginScreen({ onLogin }) {
       setCurrentCompanyId(user.companyId);
       await syncOfflineCacheCompanyScope(user.companyId);
       trackLogin(user);
-      if (user.preferredLanguage) setLang(user.preferredLanguage);
+      // ترجیح زبانِ ذخیره‌شده‌ی حساب فقط وقتی اعمال می‌شود که کاربر همین‌جا
+      // در صفحه‌ی ورود زبان را دستی عوض نکرده باشد؛ انتخابِ صریحِ لحظه‌ی ورود
+      // اولویت دارد.
+      if (!langPickedHere && user.preferredLanguage) setLang(user.preferredLanguage);
       // توکن نشست از قبل، داخل خودِ attemptCredentialLogin (از طریق
       // issueSessionToken) گرفته و ذخیره شده — اینجا دیگر نیازی به تکرارش نیست.
       onLogin(user);
@@ -1163,7 +1171,7 @@ function LoginScreen({ onLogin }) {
         <div style={{ flex: "1 1 380px", minWidth: 320, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 24px", background: THEME.surface }}>
           <div style={{ width: 340, maxWidth: "100%", direction: dir }}>
             <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
-              <LanguageToggle lang={lang} setLang={setLang} />
+              <LanguageToggle lang={lang} setLang={pickLang} />
             </div>
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
               <IhmsLogo size={200} src={appearance?.logoUrl} />
