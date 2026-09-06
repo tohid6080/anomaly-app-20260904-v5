@@ -11,7 +11,7 @@ const COLS = { hidden: 0, precond: 1, surface: 2, event: 3 };
 const colX = (name) => 60 + COLS[name] * (NODE_W + COL_GAP);
 
 export default function TripodTree({ eventDescription, branches }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const paths = (branches || []).filter((b) => b.surfaceFailureText);
 
   const laneRows = paths.map((p) => {
@@ -84,7 +84,7 @@ export default function TripodTree({ eventDescription, branches }) {
             <g key={b.key}>
               <rect x={b.x} y={b.y} width={NODE_W} height={NODE_H} rx={8} fill={b.fill} stroke={b.stroke} strokeWidth={1.4} />
               <foreignObject x={b.x + 4} y={b.y + 2} width={NODE_W - 8} height={NODE_H - 4}>
-                <div xmlns="http://www.w3.org/1999/xhtml" style={{ direction: "rtl", fontFamily: "'Vazirmatn','Tahoma',sans-serif", fontSize: b.small ? 10 : 11, lineHeight: 1.25, color: "#16233d", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", height: "100%", overflow: "hidden", padding: "0 3px" }}>
+                <div xmlns="http://www.w3.org/1999/xhtml" style={{ direction: dir, fontFamily: "'Vazirmatn','Tahoma',sans-serif", fontSize: b.small ? 10 : 11, lineHeight: 1.25, color: "#16233d", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", height: "100%", overflow: "hidden", padding: "0 3px" }}>
                   {b.text}
                 </div>
               </foreignObject>

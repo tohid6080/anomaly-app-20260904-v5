@@ -237,7 +237,7 @@ function ListTable({ items, getId, columns, renderRowActions, expandedId, render
               )}
               <th style={{ width: 40, padding: "9px 8px", textAlign: "center", color: THEME.text3, fontWeight: 600 }}>#</th>
               {columns.map((col) => (
-                <th key={col.key} style={{ padding: "9px 10px", textAlign: "right", color: THEME.text2, fontWeight: 600, whiteSpace: "nowrap" }}>
+                <th key={col.key} style={{ padding: "9px 10px", textAlign: "start", color: THEME.text2, fontWeight: 600, whiteSpace: "nowrap" }}>
                   {col.label}
                 </th>
               ))}

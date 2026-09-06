@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import { translate, setActiveLangStorageKey } from "./translations.js";
 
 const LanguageContext = createContext(null);
@@ -39,6 +39,20 @@ export function LanguageProvider({ children, storageKey = DEFAULT_STORAGE_KEY })
   // ترجمه — سازگار با فراخوانی‌های بدونِ پارامترِ موجود.
   const t = useCallback((key, params) => translate(lang, key, params), [lang]);
   const dir = lang === "en" ? "ltr" : "rtl";
+
+  // جهت و زبانِ ریشه‌ی صفحه (<html>) را با زبان فعال هم‌گام می‌کنیم تا کلِ
+  // درخت — کارت‌ها، جدول‌ها، فرم‌ها، دکمه‌ها — در حالت انگلیسی به‌صورت LTR
+  // و در فارسی RTL بچیند، بدون اینکه لازم باشد در تک‌تک اجزا direction
+  // دستی گذاشته شود. index.html به‌صورت پیش‌فرض dir="rtl" است؛ این افکت
+  // فقط هنگام انگلیسی آن را به ltr تغییر می‌دهد، پس چیدمان فارسی هیچ
+  // تغییری نمی‌کند. در هر لحظه فقط یک LanguageProvider (سامانه XOR
+  // سوپرادمین) در درخت است، پس تداخلی پیش نمی‌آید.
+  useEffect(() => {
+    try {
+      document.documentElement.dir = dir;
+      document.documentElement.lang = lang;
+    } catch { /* بی‌اهمیت */ }
+  }, [dir, lang]);
 
   return (
     <LanguageContext.Provider value={{ lang, setLang, t, dir }}>

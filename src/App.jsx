@@ -1845,7 +1845,7 @@ function ContractorManager({ onBack }) {
                 {c.jobPositionTitle && <div style={{ fontSize: 12.5, color: "#0d8f8a", marginTop: 3, fontWeight: 600 }}>{c.jobPositionTitle}</div>}
                 {c.startDate && <div style={{ fontSize: 13, color: "#666", marginTop: 4 }}>{t("cmStartLabel", { date: isoToJalaliDisplay(c.startDate) })}</div>}
                 {c.contractDetails && <div style={{ fontSize: 13, color: "#666", marginTop: 4 }}>{t("cmContractLabel", { details: c.contractDetails })}</div>}
-                <div style={{ fontSize: 13, color: "#0d8f8a", marginTop: 4, direction: "ltr", textAlign: "right" }}>{t("cmUserLabel", { username: c.username })}</div>
+                <div style={{ fontSize: 13, color: "#0d8f8a", marginTop: 4, direction: "ltr", textAlign: "start" }}>{t("cmUserLabel", { username: c.username })}</div>
               </div>
               <div style={{ display: "flex", gap: 8 }}>
                 <button type="button" style={styles.smallButton} onClick={() => startEdit(c)}>{t("cmEdit")}</button>
@@ -1996,7 +1996,7 @@ function EmployerAccountManager({ onBack }) {
                 <div style={{ fontWeight: "bold", fontSize: 16 }}>{a.name}</div>
                 {a.companyName && <div style={{ fontSize: 13, color: "#555", marginTop: 2 }}>{t("eamCompanyLabel", { name: a.companyName })}</div>}
                 {a.jobPositionTitle && <div style={{ fontSize: 12.5, color: "#0d8f8a", marginTop: 3, fontWeight: 600 }}>{a.jobPositionTitle}</div>}
-                <div style={{ fontSize: 13, color: "#0d8f8a", marginTop: 4, direction: "ltr", textAlign: "right" }}>{t("cmUserLabel", { username: a.username })}</div>
+                <div style={{ fontSize: 13, color: "#0d8f8a", marginTop: 4, direction: "ltr", textAlign: "start" }}>{t("cmUserLabel", { username: a.username })}</div>
                 <span style={{ ...styles.badge, marginTop: 6, display: "inline-block", color: a.canEdit ? "#166534" : "#92400e", background: a.canEdit ? "#dcfce7" : "#fef3c7" }}>
                   {a.canEdit ? t("eamFullAccessShort") : t("eamViewOnly")}
                 </span>

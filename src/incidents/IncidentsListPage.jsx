@@ -136,7 +136,7 @@ export default function IncidentsListPage({ currentUser, role, readOnly }) {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, background: THEME.surface, borderRadius: 10, overflow: "hidden" }}>
             <thead>
               <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
-                <th style={{ textAlign: "right", padding: "10px" }}>{t("incColNo")}</th>
+                <th style={{ textAlign: "start", padding: "10px" }}>{t("incColNo")}</th>
                 <th style={{ textAlign: "center", padding: "10px" }}>{t("incColDate")}</th>
                 <th style={{ textAlign: "center", padding: "10px" }}>{t("incColType")}</th>
                 <th style={{ textAlign: "center", padding: "10px" }}>{t("incColDisabling")}</th>

@@ -174,7 +174,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
               <button
                 key={item.key} type="button" onClick={() => setPage(item.key)}
                 style={{
-                  display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "right",
+                  display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "start",
                   padding: "10px 12px", borderRadius: 8, border: "none", marginBottom: 4, cursor: "pointer",
                   background: active ? THEME.teal : "transparent", color: active ? "#fff" : THEME.text2,
                   fontSize: 12.5, fontWeight: active ? 700 : 500, fontFamily: THEME.font,
@@ -467,7 +467,7 @@ function StorageUsagePage() {
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                 <thead>
                   <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
-                    <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("saColCompany")}</th>
+                    <th style={{ textAlign: "start", padding: "6px 8px" }}>{t("saColCompany")}</th>
                     <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColAllocatedSpace")}</th>
                     <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColActualUsage")}</th>
                     <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saCapacityRemaining")}</th>
@@ -507,7 +507,7 @@ function StorageUsagePage() {
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                 <thead>
                   <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
-                    <th style={{ textAlign: "right", padding: "6px 8px" }}>Bucket</th>
+                    <th style={{ textAlign: "start", padding: "6px 8px" }}>Bucket</th>
                     <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColUsedVolume")}</th>
                     <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColFileCount")}</th>
                   </tr>
@@ -515,7 +515,7 @@ function StorageUsagePage() {
                 <tbody>
                   {data.byBucket.map((b) => (
                     <tr key={b.bucket} style={{ borderBottom: `1px solid ${THEME.border}` }}>
-                      <td style={{ padding: "8px", fontWeight: 600, direction: "ltr", textAlign: "right" }}>{b.bucket}</td>
+                      <td style={{ padding: "8px", fontWeight: 600, direction: "ltr", textAlign: "start" }}>{b.bucket}</td>
                       <td style={{ padding: "8px", textAlign: "center" }}>{formatBytes(b.bytesUsed)}</td>
                       <td style={{ padding: "8px", textAlign: "center" }}>{b.objectCount.toLocaleString(numLocale())}</td>
                     </tr>
@@ -538,7 +538,7 @@ function AttentionCard({ icon: Icon, color, bg, label, value, onClick }) {
   return (
     <button
       type="button" onClick={onClick}
-      style={{ display: "flex", alignItems: "center", gap: 10, background: bg, border: "none", borderRadius: 10, padding: 14, cursor: "pointer", textAlign: "right", fontFamily: THEME.font }}
+      style={{ display: "flex", alignItems: "center", gap: 10, background: bg, border: "none", borderRadius: 10, padding: 14, cursor: "pointer", textAlign: "start", fontFamily: THEME.font }}
     >
       <Icon size={18} color={color} style={{ flexShrink: 0 }} />
       <div style={{ flex: 1 }}>
@@ -628,7 +628,7 @@ function CompaniesPage({
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead>
               <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
-                <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("saColCompanyName")}</th>
+                <th style={{ textAlign: "start", padding: "6px 8px" }}>{t("saColCompanyName")}</th>
                 <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColRegisteredDate")}</th>
                 <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColPlanAndSubStatus")}</th>
                 <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColLastLogin")}</th>
@@ -908,7 +908,7 @@ function AppUpdateManagementTab({ currentAdmin }) {
                 <tr key={r.id} style={{ borderBottom: `1px solid ${THEME.border}` }}>
                   <td style={{ ...td, fontWeight: 700, color: THEME.navy, direction: "ltr" }}>
                     {r.version}
-                    {r.releaseNotes && <div style={{ fontSize: 10, color: THEME.text3, fontWeight: 400, direction: "rtl", maxWidth: 260, margin: "3px auto 0", whiteSpace: "pre-wrap" }}>{r.releaseNotes}</div>}
+                    {r.releaseNotes && <div style={{ fontSize: 10, color: THEME.text3, fontWeight: 400, direction: dir, maxWidth: 260, margin: "3px auto 0", whiteSpace: "pre-wrap" }}>{r.releaseNotes}</div>}
                   </td>
                   <td style={td}>{r.versionCode}</td>
                   <td style={td}>
@@ -1769,7 +1769,7 @@ function AuditLogPage({ companies }) {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead>
               <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
-                <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("saColAction")}</th>
+                <th style={{ textAlign: "start", padding: "6px 8px" }}>{t("saColAction")}</th>
                 <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColAccountType")}</th>
                 <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColTargetUsername")}</th>
                 <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColPerformedBy")}</th>
@@ -1864,10 +1864,10 @@ function ErrorReportsPage({ currentAdmin }) {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead>
               <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
-                <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("saColCompany")}</th>
-                <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("saErColReporter")}</th>
+                <th style={{ textAlign: "start", padding: "6px 8px" }}>{t("saColCompany")}</th>
+                <th style={{ textAlign: "start", padding: "6px 8px" }}>{t("saErColReporter")}</th>
                 <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saErColModulePage")}</th>
-                <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("saErColDescription")}</th>
+                <th style={{ textAlign: "start", padding: "6px 8px" }}>{t("saErColDescription")}</th>
                 <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColTime")}</th>
                 <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("commonStatus")}</th>
               </tr>
@@ -2037,10 +2037,10 @@ function CardTransferPaymentsPage({ currentAdmin }) {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
               <thead>
                 <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
-                  <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("saColCompany")}</th>
-                  <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("saCtColPlanPeriod")}</th>
+                  <th style={{ textAlign: "start", padding: "6px 8px" }}>{t("saColCompany")}</th>
+                  <th style={{ textAlign: "start", padding: "6px 8px" }}>{t("saCtColPlanPeriod")}</th>
                   <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saCtColAmount")}</th>
-                  <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("saCtColPayer")}</th>
+                  <th style={{ textAlign: "start", padding: "6px 8px" }}>{t("saCtColPayer")}</th>
                   <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColTime")}</th>
                   <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("commonStatus")}</th>
                 </tr>
@@ -2185,10 +2185,10 @@ function TrialRequestsPage({ currentAdmin }) {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead>
               <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
-                <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("saTrColCompany")}</th>
-                <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("saTrColApplicant")}</th>
+                <th style={{ textAlign: "start", padding: "6px 8px" }}>{t("saTrColCompany")}</th>
+                <th style={{ textAlign: "start", padding: "6px 8px" }}>{t("saTrColApplicant")}</th>
                 <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saTrColPersonnelCount")}</th>
-                <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("saTrColProjectCity")}</th>
+                <th style={{ textAlign: "start", padding: "6px 8px" }}>{t("saTrColProjectCity")}</th>
                 <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColTime")}</th>
                 <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("commonStatus")}</th>
               </tr>
@@ -2202,7 +2202,7 @@ function TrialRequestsPage({ currentAdmin }) {
                       <td style={{ padding: "8px", fontWeight: 600 }}>{r.companyName}</td>
                       <td style={{ padding: "8px" }}>
                         {r.fullName}{r.position && <span style={{ color: THEME.text3, fontSize: 10.5 }}> — {r.position}</span>}
-                        <div style={{ fontSize: 10.5, color: THEME.text3, direction: "ltr", textAlign: "right" }}>{r.phone}</div>
+                        <div style={{ fontSize: 10.5, color: THEME.text3, direction: "ltr", textAlign: "start" }}>{r.phone}</div>
                       </td>
                       <td style={{ padding: "8px", textAlign: "center" }}>{r.personnelCount != null ? r.personnelCount.toLocaleString(numLocale()) : "—"}</td>
                       <td style={{ padding: "8px", color: THEME.text3 }}>{r.projectName || "—"}{r.projectCity && ` — ${r.projectCity}`}</td>
@@ -2383,7 +2383,7 @@ function PlansManager({ plans, companies, currentAdmin, onChanged }) {
           <thead>
             <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
               <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColOrder")}</th>
-              <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("saColPlanName")}</th>
+              <th style={{ textAlign: "start", padding: "6px 8px" }}>{t("saColPlanName")}</th>
               <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColMonthlyPrice")}</th>
               <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColYearlyPrice")}</th>
               <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColTotalPrice")}</th>

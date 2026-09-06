@@ -252,7 +252,7 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
   // پنلی که قبلاً انتهای کل لیست بود — حالا دقیقاً زیر همان ردیف
   const renderExpandedPanel = (t) => (
     <div style={{ ...styles.card, width: "auto", margin: 0 }}>
-      <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 10px", fontWeight: 700, direction: "ltr", textAlign: "right" }}>{t.tagNumber}</h3>
+      <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 10px", fontWeight: 700, direction: "ltr", textAlign: "start" }}>{t.tagNumber}</h3>
 
       {expandedId === t.id && !isContractor && (
         <div>
@@ -373,7 +373,7 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
             <div style={{ ...styles.card, width: "auto", margin: 0, borderInlineStart: `4px solid ${sm.color}`, height: "100%" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 6 }}>
                 <div>
-                  <div style={{ fontWeight: 700, color: THEME.navy, fontSize: 14, direction: "ltr", textAlign: "right" }}>{card.tagNumber}</div>
+                  <div style={{ fontWeight: 700, color: THEME.navy, fontSize: 14, direction: "ltr", textAlign: "start" }}>{card.tagNumber}</div>
                   <div style={{ fontSize: 11.5, color: THEME.text3, marginTop: 4 }}>
                     {!isContractor && <>{card.contractorName} · </>}{card.location} · {toJalaliSafe(card.erectionDate)}
                   </div>

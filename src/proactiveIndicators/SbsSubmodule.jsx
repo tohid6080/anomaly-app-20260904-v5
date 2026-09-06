@@ -260,13 +260,13 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
               <thead>
                 <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
-                  <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("sbsColProject")}</th>
+                  <th style={{ textAlign: "start", padding: "6px 8px" }}>{t("sbsColProject")}</th>
                   <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("sbsColContractor")}</th>
                   <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("sbsColDate")}</th>
                   <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("sbsColSeason")}</th>
                   <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("sbsColJob")}</th>
                   <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("sbsColStatus")}</th>
-                  <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("sbsColCategoryCode")}</th>
+                  <th style={{ textAlign: "start", padding: "6px 8px" }}>{t("sbsColCategoryCode")}</th>
                   {!readOnly && <th />}
                 </tr>
               </thead>

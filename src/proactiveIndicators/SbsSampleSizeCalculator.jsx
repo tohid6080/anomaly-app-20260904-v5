@@ -161,7 +161,7 @@ export default function SbsSampleSizeCalculator({ currentUser, onClose, onSent }
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                 <thead>
                   <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
-                    <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("sbsColWorkshop")}</th>
+                    <th style={{ textAlign: "start", padding: "6px 8px" }}>{t("sbsColWorkshop")}</th>
                     <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("sbsColWorkerCount")}</th>
                     <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("sbsColShareOfTotal")}</th>
                     <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("sbsColFinalObs")}</th>
