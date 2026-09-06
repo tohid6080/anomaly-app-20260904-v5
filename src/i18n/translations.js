@@ -8675,9 +8675,21 @@ export const translations = {
 // باید پیام خطای نمایشی را متناسب با زبان فعلی کاربر برگردانند. همان کلید
 // ذخیره‌سازی LanguageContext.jsx را می‌خواند (منبع واحد).
 const LANG_STORAGE_KEY = "ihms_lang";
+
+// کدام کلیدِ localStorage «زبان فعال» را نگه می‌دارد. سامانه‌ی اصلی از
+// "ihms_lang" استفاده می‌کند و پنل Super Admin از یک کلید جدا
+// ("ihms_lang_superadmin") — تا انتخاب زبانِ سوپرادمین کاملاً مستقل از
+// کاربران عادی باشد. LanguageProvider موقع mount این مقدار را تنظیم می‌کند
+// و چون در هر لحظه فقط یکی از دو درخت (سوپرادمین یا سامانه) رندر می‌شود،
+// getCurrentLang() در کدِ غیر-React همیشه همان scope درست را می‌خواند.
+let activeLangStorageKey = LANG_STORAGE_KEY;
+export function setActiveLangStorageKey(key) {
+  activeLangStorageKey = key || LANG_STORAGE_KEY;
+}
+
 export function getCurrentLang() {
   try {
-    const v = localStorage.getItem(LANG_STORAGE_KEY);
+    const v = localStorage.getItem(activeLangStorageKey);
     return v === "en" ? "en" : "fa";
   } catch {
     return "fa";

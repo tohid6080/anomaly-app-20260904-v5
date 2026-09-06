@@ -5040,12 +5040,22 @@ export default function App() {
   // مسیر پرسشنامه‌ی عمومی HSE Climate — دقیقاً مثل super-admin، کاملاً جدا
   // از درخت اصلی و بدون هیچ نیازی به ورود؛ فقط با لینک/QR واقعی قابل‌دسترسی است.
   const hseClimateSurveyMatch = typeof window !== "undefined" ? window.location.hash.match(/^#hse-climate-survey\/(.+)$/) : null;
+  // پنل Super Admin زبانِ کاملاً جداگانه‌ای دارد (کلید localStorage:
+  // "ihms_lang_superadmin") تا انتخابِ زبانِ سوپرادمین هیچ اثری روی
+  // کاربران عادیِ سامانه نگذارد و برعکس.
+  if (isSuperAdminRoute) {
+    return (
+      <ErrorBoundary>
+        <LanguageProvider storageKey="ihms_lang_superadmin">
+          <SuperAdminRoot />
+        </LanguageProvider>
+      </ErrorBoundary>
+    );
+  }
   return (
     <ErrorBoundary>
       <LanguageProvider>
-        {isSuperAdminRoute ? (
-          <SuperAdminRoot />
-        ) : hseClimateSurveyMatch ? (
+        {hseClimateSurveyMatch ? (
           <PublicHseClimateSurvey publicToken={hseClimateSurveyMatch[1]} />
         ) : (
           <AppInnerWithAppearance />

@@ -1,13 +1,13 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
-import { translate } from "./translations.js";
+import { translate, setActiveLangStorageKey } from "./translations.js";
 
 const LanguageContext = createContext(null);
 
-const STORAGE_KEY = "ihms_lang";
+const DEFAULT_STORAGE_KEY = "ihms_lang";
 
-function readStoredLang() {
+function readStoredLang(storageKey) {
   try {
-    const v = localStorage.getItem(STORAGE_KEY);
+    const v = localStorage.getItem(storageKey || DEFAULT_STORAGE_KEY);
     return v === "en" ? "en" : "fa";
   } catch {
     return "fa";
@@ -21,14 +21,19 @@ function readStoredLang() {
  * فازهای بعد، بقیه‌ی ماژول‌ها هم بتوانند بدون تغییر ساختار، به همین یک
  * منبع وصل شوند.
  */
-export function LanguageProvider({ children }) {
-  const [lang, setLangState] = useState(readStoredLang);
+export function LanguageProvider({ children, storageKey = DEFAULT_STORAGE_KEY }) {
+  // کدِ غیر-React (لایه‌ی داده) از getCurrentLang() استفاده می‌کند؛ اینجا
+  // به آن می‌گوییم همین scope را بخواند. در هر لحظه فقط یک LanguageProvider
+  // در درخت هست (سوپرادمین XOR سامانه‌ی اصلی)، پس تداخلی رخ نمی‌دهد.
+  setActiveLangStorageKey(storageKey);
+
+  const [lang, setLangState] = useState(() => readStoredLang(storageKey));
 
   const setLang = useCallback((next) => {
     const value = next === "en" ? "en" : "fa";
     setLangState(value);
-    try { localStorage.setItem(STORAGE_KEY, value); } catch { /* بی‌اهمیت */ }
-  }, []);
+    try { localStorage.setItem(storageKey, value); } catch { /* بی‌اهمیت */ }
+  }, [storageKey]);
 
   // پارامترِ اختیاریِ params برای درون‌ریزیِ جای‌نگه‌دارهای {name} در متنِ
   // ترجمه — سازگار با فراخوانی‌های بدونِ پارامترِ موجود.

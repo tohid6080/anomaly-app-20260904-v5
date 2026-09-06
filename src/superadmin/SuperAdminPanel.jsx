@@ -37,7 +37,7 @@ const btnStyle = (bg) => ({ padding: "7px 14px", borderRadius: 8, border: "none"
 const smallLabelStyle = { display: "block", marginBottom: 4, fontSize: 11.5, fontWeight: 600, color: THEME.text2 };
 
 export default function SuperAdminPanel({ currentAdmin, onLogout }) {
-  const { t } = useLanguage();
+  const { t, dir, lang, setLang } = useLanguage();
   const [page, setPage] = useState("overview");
   const [companies, setCompanies] = useState([]);
   const [plans, setPlans] = useState([]);
@@ -127,14 +127,31 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
     { key: "trialRequests", labelKey: "saNavTrialRequests", icon: ClipboardList },
   ];
 
+  const langBtn = (value, label) => (
+    <button
+      type="button" onClick={() => setLang(value)}
+      style={{
+        padding: "5px 11px", borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: THEME.font,
+        border: `1.5px solid ${lang === value ? "#fff" : "rgba(255,255,255,0.35)"}`,
+        background: lang === value ? "#fff" : "transparent", color: lang === value ? THEME.navyDeep : "#fff",
+      }}
+    >
+      {label}
+    </button>
+  );
+
   return (
-    <div style={{ background: THEME.bg, minHeight: "100vh", fontFamily: THEME.font }}>
-      <div style={{ background: THEME.navyDeep, color: "#fff", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+    <div style={{ background: THEME.bg, minHeight: "100vh", fontFamily: THEME.font, direction: dir }}>
+      <div style={{ background: THEME.navyDeep, color: "#fff", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <ShieldAlert size={18} />
           <h1 style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>{t("saHeaderTitle")}</h1>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 5 }}>
+            {langBtn("fa", "فارسی")}
+            {langBtn("en", "English")}
+          </div>
           <button type="button" onClick={() => setShowChangePassword((v) => !v)} style={{ ...btnStyle("rgba(255,255,255,0.15)"), display: "flex", alignItems: "center", gap: 6 }}>
             <KeyRound size={13} /> {t("saChangeMyPassword")}
           </button>
