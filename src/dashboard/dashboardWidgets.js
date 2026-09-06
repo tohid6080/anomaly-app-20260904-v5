@@ -12,29 +12,29 @@
  */
 
 export const DASHBOARD_WIDGET_GROUPS = [
-  { key: "kpi", label: "شاخص‌های کلیدی (نوار بالا)" },
-  { key: "comparison", label: "مقایسه و رتبه‌بندی پیمانکاران" },
-  { key: "alerts", label: "هشدارها و تحلیل" },
-  { key: "trends", label: "روندها و توزیع‌ها" },
+  { key: "kpi", labelKey: "dwGroupKpi" },
+  { key: "comparison", labelKey: "dwGroupComparison" },
+  { key: "alerts", labelKey: "dwGroupAlerts" },
+  { key: "trends", labelKey: "dwGroupTrends" },
 ];
 
 // ترتیبِ این آرایه = ترتیبِ پیش‌فرضِ پنل‌ها روی داشبورد (تا وقتی SuperAdmin
 // چیز دیگری ذخیره نکرده باشد). employerOnly یعنی این پنل برای نقش
 // CONTRACTOR اصلاً رندر نمی‌شود (داده‌ی مقایسه‌ی بین‌پیمانکاری).
 export const DASHBOARD_WIDGETS = [
-  { key: "kpiStrip", group: "kpi", label: "نوار شاخص‌های کلیدی", defaultVisible: true },
-  { key: "contractorHse", group: "comparison", label: "جدول امتیاز HSE پیمانکاران", defaultVisible: true, employerOnly: true },
-  { key: "contractorPerformance", group: "comparison", label: "نمودار امتیاز عملکرد پیمانکاران", defaultVisible: true, employerOnly: true },
-  { key: "correctiveActionPerf", group: "comparison", label: "عملکرد اقدامات اصلاحی به تفکیک پیمانکار", defaultVisible: true, employerOnly: true },
-  { key: "urgentAlerts", group: "alerts", label: "هشدارهای فوری", defaultVisible: true },
-  { key: "smartInsights", group: "alerts", label: "تحلیل هوشمند", defaultVisible: true },
-  { key: "incidentSafety", group: "trends", label: "آمار ایمنی حوادث (هرم و روند)", defaultVisible: true },
-  { key: "rcaStatus", group: "trends", label: "وضعیت تحلیل ریشه‌ای Tripod Beta", defaultVisible: true },
-  { key: "proactiveScores", group: "trends", label: "شاخص‌های پراکتیو (استعداد حادثه‌پذیری / HSE Climate)", defaultVisible: true },
-  { key: "anomalyTrend", group: "trends", label: "روند آنومالی (۶ ماه اخیر)", defaultVisible: true },
-  { key: "healthStatus", group: "trends", label: "وضعیت طب کار", defaultVisible: true },
-  { key: "machineryStatus", group: "trends", label: "وضعیت ماشین‌آلات", defaultVisible: true },
-  { key: "anomalyByRisk", group: "trends", label: "آنومالی بر اساس ریسک", defaultVisible: true },
+  { key: "kpiStrip", group: "kpi", labelKey: "dwKpiStrip", defaultVisible: true },
+  { key: "contractorHse", group: "comparison", labelKey: "dwContractorHse", defaultVisible: true, employerOnly: true },
+  { key: "contractorPerformance", group: "comparison", labelKey: "dwContractorPerformance", defaultVisible: true, employerOnly: true },
+  { key: "correctiveActionPerf", group: "comparison", labelKey: "dwCorrectiveActionPerf", defaultVisible: true, employerOnly: true },
+  { key: "urgentAlerts", group: "alerts", labelKey: "dwUrgentAlerts", defaultVisible: true },
+  { key: "smartInsights", group: "alerts", labelKey: "dwSmartInsights", defaultVisible: true },
+  { key: "incidentSafety", group: "trends", labelKey: "dwIncidentSafety", defaultVisible: true },
+  { key: "rcaStatus", group: "trends", labelKey: "dwRcaStatus", defaultVisible: true },
+  { key: "proactiveScores", group: "trends", labelKey: "dwProactiveScores", defaultVisible: true },
+  { key: "anomalyTrend", group: "trends", labelKey: "dwAnomalyTrend", defaultVisible: true },
+  { key: "healthStatus", group: "trends", labelKey: "dwHealthStatus", defaultVisible: true },
+  { key: "machineryStatus", group: "trends", labelKey: "dwMachineryStatus", defaultVisible: true },
+  { key: "anomalyByRisk", group: "trends", labelKey: "dwAnomalyByRisk", defaultVisible: true },
 ];
 
 const WIDGET_BY_KEY = Object.fromEntries(DASHBOARD_WIDGETS.map((w) => [w.key, w]));
@@ -53,7 +53,7 @@ export function mergeWidgetConfig(dbRows = []) {
     const row = byKey[w.key];
     return {
       key: w.key,
-      label: w.label,
+      labelKey: w.labelKey,
       group: w.group,
       employerOnly: !!w.employerOnly,
       isVisible: row ? row.isVisible !== false : w.defaultVisible !== false,
@@ -66,7 +66,7 @@ export function mergeWidgetConfig(dbRows = []) {
 export function defaultWidgetConfig() {
   return DASHBOARD_WIDGETS.map((w, idx) => ({
     key: w.key,
-    label: w.label,
+    labelKey: w.labelKey,
     group: w.group,
     employerOnly: !!w.employerOnly,
     isVisible: w.defaultVisible !== false,
@@ -74,8 +74,8 @@ export function defaultWidgetConfig() {
   }));
 }
 
-export function widgetGroupLabel(groupKey) {
-  return DASHBOARD_WIDGET_GROUPS.find((g) => g.key === groupKey)?.label || groupKey;
+export function widgetGroupLabelKey(groupKey) {
+  return DASHBOARD_WIDGET_GROUPS.find((g) => g.key === groupKey)?.labelKey || groupKey;
 }
 
 export function isKnownWidget(key) {

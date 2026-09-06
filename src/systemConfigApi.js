@@ -1,4 +1,7 @@
 import { sb, sbOk, getCurrentCompanyId } from "./shared.js";
+import { translate, getCurrentLang } from "./i18n/translations.js";
+
+const tr = (key, params) => translate(getCurrentLang(), key, params);
 
 /**
  * پیکربندی سامانه — سراسری (نه به‌ازای شرکت)، چون Super Admin «مالک کل
@@ -22,7 +25,7 @@ export async function saveModuleConfig(list, updatedBy) {
     sort_order: idx + 1, updated_at: new Date().toISOString(), updated_by: updatedBy || "",
   }));
   const rows = await sb("system_module_config?on_conflict=module_key", { method: "POST", body: JSON.stringify(payload), prefer: "resolution=merge-duplicates,return=representation" }, "super_admin");
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ذخیره‌ی تنظیمات ماژول‌ها" };
+  if (!sbOk(rows)) return { __error: true, message: tr("scErrSaveModules") };
   return { ok: true };
 }
 
@@ -39,7 +42,7 @@ export async function saveDashboardConfig(list, updatedBy) {
     updated_at: new Date().toISOString(), updated_by: updatedBy || "",
   }));
   const rows = await sb("system_dashboard_config?on_conflict=kpi_key", { method: "POST", body: JSON.stringify(payload), prefer: "resolution=merge-duplicates,return=representation" }, "super_admin");
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ذخیره‌ی تنظیمات داشبورد" };
+  if (!sbOk(rows)) return { __error: true, message: tr("scErrSaveDashboard") };
   return { ok: true };
 }
 
@@ -71,7 +74,7 @@ export async function saveDashboardWidgetsBulk(list, updatedBy) {
     { method: "POST", body: JSON.stringify(payload), prefer: "resolution=merge-duplicates,return=representation" },
     "super_admin",
   );
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ذخیره‌ی تنظیمات پنل‌های داشبورد" };
+  if (!sbOk(rows)) return { __error: true, message: tr("scErrSaveDashboardWidgets") };
   return { ok: true };
 }
 
@@ -96,7 +99,7 @@ export async function saveNotificationType(typeKey, patch, updatedBy) {
   if ("priority" in patch) payload.priority = patch.priority;
   if ("warningDays" in patch) payload.warning_days = patch.warningDays;
   const rows = await sb(`system_notification_types?type_key=eq.${typeKey}`, { method: "PATCH", body: JSON.stringify(payload) }, "super_admin");
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ذخیره‌ی تنظیمات اعلان" };
+  if (!sbOk(rows)) return { __error: true, message: tr("scErrSaveNotification") };
   return { ok: true };
 }
 
@@ -173,7 +176,7 @@ export async function saveAppearanceConfig(config, updatedBy) {
     updated_at: new Date().toISOString(), updated_by: updatedBy || "",
   }));
   const rows = await sb("system_settings?on_conflict=key", { method: "POST", body: JSON.stringify(payload), prefer: "resolution=merge-duplicates,return=representation" }, "super_admin");
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ذخیره‌ی تنظیمات ظاهری" };
+  if (!sbOk(rows)) return { __error: true, message: tr("scErrSaveAppearance") };
   return { ok: true };
 }
 
@@ -293,7 +296,7 @@ export async function createAnnouncement(rec, createdBy) {
     display_location: rec.displayLocation || "both", is_active: rec.isActive !== false, updated_by: createdBy || "",
   };
   const rows = await sb("system_announcements", { method: "POST", body: JSON.stringify([payload]) }, "super_admin");
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ثبت اطلاعیه" };
+  if (!sbOk(rows)) return { __error: true, message: tr("scErrCreateAnnouncement") };
   return { ok: true };
 }
 
@@ -306,18 +309,18 @@ export async function updateAnnouncement(id, rec, updatedBy) {
     display_location: rec.displayLocation || "both", is_active: rec.isActive !== false, updated_at: new Date().toISOString(), updated_by: updatedBy || "",
   };
   const rows = await sb(`system_announcements?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(payload) }, "super_admin");
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ذخیره‌ی اطلاعیه" };
+  if (!sbOk(rows)) return { __error: true, message: tr("scErrSaveAnnouncement") };
   return { ok: true };
 }
 
 export async function setAnnouncementActive(id, isActive, updatedBy) {
   const rows = await sb(`system_announcements?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ is_active: isActive, updated_at: new Date().toISOString(), updated_by: updatedBy || "" }) }, "super_admin");
-  if (!sbOk(rows)) return { __error: true, message: "خطا در تغییر وضعیت" };
+  if (!sbOk(rows)) return { __error: true, message: tr("scErrChangeStatus") };
   return { ok: true };
 }
 
 export async function deleteAnnouncement(id) {
   const rows = await sb(`system_announcements?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" }, "super_admin");
-  if (!sbOk(rows)) return { __error: true, message: "خطا در حذف اطلاعیه" };
+  if (!sbOk(rows)) return { __error: true, message: tr("scErrDeleteAnnouncement") };
   return { ok: true };
 }

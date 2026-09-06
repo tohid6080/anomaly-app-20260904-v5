@@ -7746,7 +7746,37 @@ export const translations = {
   "pfChatAccessManagement": { "fa": "مدیریت دسترسی چت", "en": "Chat Access Management" },
   "pfHcmsMatrixManagement": { "fa": "مدیریت ماتریس HCMS", "en": "HCMS Matrix Management" },
   "pfEffectivenessThresholds": { "fa": "Threshold اثربخشی Barrier", "en": "Barrier Effectiveness Threshold" },
-  "pfAnomalyCategoryManagement": { "fa": "مدیریت دسته‌بندی آنومالی", "en": "Anomaly Category Management" }
+  "pfAnomalyCategoryManagement": { "fa": "مدیریت دسته‌بندی آنومالی", "en": "Anomaly Category Management" },
+
+  // --- dashboardWidgets.js: management-dashboard panel registry (batch 14) ---
+  "dwGroupKpi": { "fa": "شاخص‌های کلیدی (نوار بالا)", "en": "Key Indicators (top strip)" },
+  "dwGroupComparison": { "fa": "مقایسه و رتبه‌بندی پیمانکاران", "en": "Contractor Comparison & Ranking" },
+  "dwGroupAlerts": { "fa": "هشدارها و تحلیل", "en": "Alerts & Analysis" },
+  "dwGroupTrends": { "fa": "روندها و توزیع‌ها", "en": "Trends & Distributions" },
+  "dwKpiStrip": { "fa": "نوار شاخص‌های کلیدی", "en": "Key Indicators Strip" },
+  "dwContractorHse": { "fa": "جدول امتیاز HSE پیمانکاران", "en": "Contractor HSE Scorecard" },
+  "dwContractorPerformance": { "fa": "نمودار امتیاز عملکرد پیمانکاران", "en": "Contractor Performance Score Chart" },
+  "dwCorrectiveActionPerf": { "fa": "عملکرد اقدامات اصلاحی به تفکیک پیمانکار", "en": "Corrective Action Performance by Contractor" },
+  "dwUrgentAlerts": { "fa": "هشدارهای فوری", "en": "Urgent Alerts" },
+  "dwSmartInsights": { "fa": "تحلیل هوشمند", "en": "Smart Insights" },
+  "dwIncidentSafety": { "fa": "آمار ایمنی حوادث (هرم و روند)", "en": "Incident Safety Stats (pyramid & trend)" },
+  "dwRcaStatus": { "fa": "وضعیت تحلیل ریشه‌ای Tripod Beta", "en": "Tripod Beta Root-Cause Analysis Status" },
+  "dwProactiveScores": { "fa": "شاخص‌های پراکتیو (استعداد حادثه‌پذیری / HSE Climate)", "en": "Proactive Indicators (accident proneness / HSE Climate)" },
+  "dwAnomalyTrend": { "fa": "روند آنومالی (۶ ماه اخیر)", "en": "Anomaly Trend (last 6 months)" },
+  "dwHealthStatus": { "fa": "وضعیت طب کار", "en": "Occupational Health Status" },
+  "dwMachineryStatus": { "fa": "وضعیت ماشین‌آلات", "en": "Machinery Status" },
+  "dwAnomalyByRisk": { "fa": "آنومالی بر اساس ریسک", "en": "Anomalies by Risk" },
+
+  // --- systemConfigApi.js error messages (batch 14) ---
+  "scErrSaveModules": { "fa": "خطا در ذخیره‌ی تنظیمات ماژول‌ها", "en": "Error saving module settings" },
+  "scErrSaveDashboard": { "fa": "خطا در ذخیره‌ی تنظیمات داشبورد", "en": "Error saving dashboard settings" },
+  "scErrSaveDashboardWidgets": { "fa": "خطا در ذخیره‌ی تنظیمات پنل‌های داشبورد", "en": "Error saving dashboard panel settings" },
+  "scErrSaveNotification": { "fa": "خطا در ذخیره‌ی تنظیمات اعلان", "en": "Error saving notification settings" },
+  "scErrSaveAppearance": { "fa": "خطا در ذخیره‌ی تنظیمات ظاهری", "en": "Error saving appearance settings" },
+  "scErrCreateAnnouncement": { "fa": "خطا در ثبت اطلاعیه", "en": "Error creating the announcement" },
+  "scErrSaveAnnouncement": { "fa": "خطا در ذخیره‌ی اطلاعیه", "en": "Error saving the announcement" },
+  "scErrChangeStatus": { "fa": "خطا در تغییر وضعیت", "en": "Error changing status" },
+  "scErrDeleteAnnouncement": { "fa": "خطا در حذف اطلاعیه", "en": "Error deleting the announcement" }
 };
 
 // برای فایل‌های غیر React (لایه‌ی داده / api.js) که به Hook دسترسی ندارند اما
