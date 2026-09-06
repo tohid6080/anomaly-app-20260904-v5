@@ -132,7 +132,7 @@ export function AboutIhmsModal({ onClose, latestRelease, online }) {
       onClick={onClose}
       style={{ position: "fixed", inset: 0, zIndex: 4000, background: "rgba(6,17,26,0.55)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "40px 16px", overflowY: "auto", direction: dir }}
     >
-      <div onClick={(e) => e.stopPropagation()} style={{ ...styles.card, width: "100%", maxWidth: 440, margin: 0, textAlign: "center", position: "relative" }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ ...styles.card, width: "100%", maxWidth: 440, margin: 0, textAlign: "center", position: "relative", direction: dir }}>
         <button type="button" onClick={onClose} style={{ position: "absolute", top: 10, insetInlineEnd: 10, background: "none", border: "none", cursor: "pointer", color: THEME.text3 }}>
           <X size={18} />
         </button>
