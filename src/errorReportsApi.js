@@ -1,4 +1,7 @@
 import { sb, sbOk, getCurrentCompanyId } from "./shared.js";
+import { translate, getCurrentLang } from "./i18n/translations.js";
+
+const tr = (key, params) => translate(getCurrentLang(), key, params);
 
 /**
  * قابلیت عمومی «گزارش خطا» — هر کاربر (ادمین/کارفرما/سرپرست HSE/پیمانکار)
@@ -10,7 +13,7 @@ import { sb, sbOk, getCurrentCompanyId } from "./shared.js";
 
 export async function submitErrorReport({ currentUser, moduleKey, pageLabel, description, technicalMessage, technicalStack }) {
   const companyId = getCurrentCompanyId();
-  if (!companyId) return { __error: true, message: "شرکت جاری مشخص نیست — لطفاً دوباره وارد شوید." };
+  if (!companyId) return { __error: true, message: tr("erpErrCompanyUnknown") };
   const payload = {
     company_id: companyId,
     reported_by_username: currentUser?.username || "",
@@ -39,7 +42,7 @@ export async function submitErrorReport({ currentUser, moduleKey, pageLabel, des
     // یک پیام عمومی ثابت بود و جزئیات واقعی خطا (که خودِ دیباگ همین
     // قابلیت بهش نیاز داشت) گم می‌شد.
     console.error("ثبت گزارش خطا ناموفق بود", rows);
-    return { __error: true, message: `خطا در ارسال گزارش خطا: ${rows?.message || "نامشخص"}` };
+    return { __error: true, message: tr("erpErrSubmit", { detail: rows?.message || tr("erpUnknown") }) };
   }
   return { ok: true };
 }
@@ -81,6 +84,6 @@ export async function updateErrorReportStatus(id, status, adminNote, resolvedBy)
     patch.resolved_by = resolvedBy || "";
   }
   const rows = await sb(`error_reports?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch) }, "super_admin");
-  if (!sbOk(rows)) return { __error: true, message: "خطا در به‌روزرسانی وضعیت گزارش" };
+  if (!sbOk(rows)) return { __error: true, message: tr("erpErrUpdateStatus") };
   return { ok: true };
 }

@@ -25,6 +25,7 @@ import { computeSubscriptionAccess, loadOnlinePaymentsForCompany, loadCardTransf
 import { loadErrorReports, updateErrorReportStatus } from "../errorReportsApi.js";
 import DocumentViewerModal from "../personnel/DocumentViewerModal.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { trialModuleLabel } from "../trialRequestApi.js";
 import { translate, getCurrentLang } from "../i18n/translations.js";
 
 const inputStyle = { width: "100%", padding: "8px 10px", borderRadius: 8, border: `1.5px solid ${THEME.border}`, fontSize: 12.5, fontFamily: THEME.font, boxSizing: "border-box" };
@@ -1950,7 +1951,7 @@ function TrialRequestsPage({ currentAdmin }) {
                             <p style={{ margin: 0 }}>{t("saTrIndustry")}<b>{r.industry || "—"}</b></p>
                             <p style={{ margin: 0 }}>{t("saTrEmailLabel")}<b style={{ direction: "ltr", display: "inline-block" }}>{r.email || "—"}</b></p>
                             <p style={{ margin: 0, gridColumn: "1 / -1" }}>
-                              {t("saTrDesiredModules")}<b>{r.desiredModules.length > 0 ? r.desiredModules.join("، ") : "—"}</b>
+                              {t("saTrDesiredModules")}<b>{r.desiredModules.length > 0 ? r.desiredModules.map(trialModuleLabel).join("، ") : "—"}</b>
                             </p>
                           </div>
                           {r.description && <p style={{ fontSize: 12, color: THEME.text2, lineHeight: 1.8, margin: "0 0 10px", whiteSpace: "pre-wrap" }}>{t("saTrDescriptionLabel", { desc: r.description })}</p>}

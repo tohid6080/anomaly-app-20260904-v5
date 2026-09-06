@@ -1,4 +1,7 @@
 import { sb, sbOk, getCurrentCompanyId } from "../shared.js";
+import { translate, getCurrentLang } from "../i18n/translations.js";
+
+const tr = (key, params) => translate(getCurrentLang(), key, params);
 
 /**
  * موتور دانش ارزیابی ریسک — قانون‌محور (Rule-Based)، بدون هیچ سرویس هوش
@@ -156,7 +159,7 @@ export async function createKnowledgeRecord(rec, createdBy) {
   const payload = { ...kbToDb(rec), created_by: createdBy || "", company_id: getCurrentCompanyId() };
   const rows = await sb("risk_knowledge_base", { method: "POST", body: JSON.stringify([payload]) });
   invalidateKnowledgeCache();
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ثبت: " + (rows?.message || "نامشخص") };
+  if (!sbOk(rows)) return { __error: true, message: tr("rkErrCreateDetail", { detail: rows?.message || tr("rkUnknown") }) };
   return kbFromRow(rows[0]);
 }
 
@@ -165,14 +168,14 @@ export async function updateKnowledgeRecord(id, rec) {
   payload.updated_at = new Date().toISOString();
   const rows = await sb(`risk_knowledge_base?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(payload) });
   invalidateKnowledgeCache();
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ذخیره‌سازی: " + (rows?.message || "نامشخص") };
+  if (!sbOk(rows)) return { __error: true, message: tr("rkErrSaveDetail", { detail: rows?.message || tr("rkUnknown") }) };
   return kbFromRow(rows[0]);
 }
 
 export async function setKnowledgeRecordActive(id, approved) {
   const rows = await sb(`risk_knowledge_base?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ approved }) });
   invalidateKnowledgeCache();
-  if (!sbOk(rows)) return { __error: true, message: "خطا در تغییر وضعیت" };
+  if (!sbOk(rows)) return { __error: true, message: tr("rkErrToggleStatus") };
   return kbFromRow(rows[0]);
 }
 
@@ -180,7 +183,7 @@ export async function setKnowledgeRecordActive(id, approved) {
 export async function deleteKnowledgeRecord(id) {
   const result = await sb(`risk_knowledge_base?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" });
   invalidateKnowledgeCache();
-  if (!sbOk(result)) return { __error: true, message: "خطا در حذف رکورد" };
+  if (!sbOk(result)) return { __error: true, message: tr("rkErrDeleteRecord") };
   return { ok: true };
 }
 
@@ -190,7 +193,7 @@ export async function bulkDeleteKnowledgeRecords(ids) {
   const idList = ids.map((id) => `"${id}"`).join(",");
   const result = await sb(`risk_knowledge_base?id=in.(${idList})`, { method: "DELETE", prefer: "return=minimal" });
   invalidateKnowledgeCache();
-  if (!sbOk(result)) return { __error: true, message: "خطا در حذف گروهی" };
+  if (!sbOk(result)) return { __error: true, message: tr("rkErrBulkDelete") };
   return { ok: true, count: ids.length };
 }
 
@@ -203,7 +206,7 @@ export async function mergeKnowledgeRecords(keepId, mergeId) {
     sb(`risk_knowledge_base?id=eq.${mergeId}&select=*`),
   ]);
   if (!sbOk(keepRows) || !sbOk(mergeRows) || keepRows.length === 0 || mergeRows.length === 0) {
-    return { __error: true, message: "رکورد یافت نشد" };
+    return { __error: true, message: tr("rkRecordNotFound") };
   }
   const keep = kbFromRow(keepRows[0]);
   const merge = kbFromRow(mergeRows[0]);
@@ -307,7 +310,7 @@ export function parseKnowledgeBaseSheet(rows) {
   const header = rows[0];
   const colIdx = {};
   Object.entries(COLUMN_ALIASES).forEach(([key, aliases]) => { colIdx[key] = findColumnKey(header, aliases); });
-  if (colIdx.hazard === -1) return { records: [], error: "ستون «خطر» در فایل پیدا نشد" };
+  if (colIdx.hazard === -1) return { records: [], error: tr("rkHazardColumnMissing") };
 
   const records = [];
   const seenHazards = new Set();
@@ -342,7 +345,7 @@ export async function bulkImportKnowledgeRecords(records, createdBy) {
   const payload = records.map((r) => ({ ...kbToDb(r), created_by: createdBy || "", company_id: companyId }));
   const rows = await sb("risk_knowledge_base", { method: "POST", body: JSON.stringify(payload) });
   invalidateKnowledgeCache();
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ورود گروهی: " + (rows?.message || "نامشخص") };
+  if (!sbOk(rows)) return { __error: true, message: tr("rkErrBulkImportDetail", { detail: rows?.message || tr("rkUnknown") }) };
   return { ok: true, count: rows.length };
 }
 

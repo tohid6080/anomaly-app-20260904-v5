@@ -8327,7 +8327,62 @@ export const translations = {
   "gateMineIntro": { "fa": "مواردی که سرپرست/مدیر HSE برای بررسی به شما واگذار کرده است.", "en": "Items the HSE supervisor/manager has assigned to you for review." },
   "gateMineNone": { "fa": "در حال حاضر هیچ کاری به شما واگذار نشده است.", "en": "No work is currently assigned to you." },
   "gateMineAssignedBy": { "fa": "واگذارشده توسط {by} — {date}", "en": "Assigned by {by} — {date}" },
-  "gateHseSupervisorFallback": { "fa": "سرپرست/مدیر HSE", "en": "the HSE supervisor/manager" }
+  "gateHseSupervisorFallback": { "fa": "سرپرست/مدیر HSE", "en": "the HSE supervisor/manager" },
+
+  // --- Trial request (public lead form) module (batch 20) ---
+  "trmModAnomaly": { "fa": "مدیریت عدم انطباق‌ها (آنومالی)", "en": "Non-Conformance Management (Anomaly)" },
+  "trmModRisk": { "fa": "مدیریت ارزیابی ریسک (BowTie / HCMS)", "en": "Risk Assessment Management (BowTie / HCMS)" },
+  "trmModPersonnel": { "fa": "مدیریت ورود و تردد پرسنل", "en": "Personnel Access & Attendance Management" },
+  "trmModProactive": { "fa": "شاخص‌های Proactive HSE", "en": "Proactive HSE Indicators" },
+  "trmModIncident": { "fa": "مدیریت حوادث", "en": "Incident Management" },
+  "trmModMachinery": { "fa": "مدیریت ماشین‌آلات", "en": "Machinery Management" },
+  "trmModScaffold": { "fa": "مدیریت داربست", "en": "Scaffold Management" },
+  "trmModDashboard": { "fa": "داشبورد مدیریتی و گزارش‌های تحلیلی", "en": "Management Dashboard & Analytical Reports" },
+  "trmModChatArchive": { "fa": "چت و آرشیو فایل‌ها", "en": "Chat & File Archive" },
+  "trmErrSubmit": { "fa": "خطا در ثبت درخواست", "en": "Error submitting the request" },
+  "trmErrRequiredFields": { "fa": "نام و نام خانوادگی، موبایل و شرکت/سازمان الزامی است", "en": "Full name, mobile number and company/organization are required" },
+  "trmDoneTitle": { "fa": "درخواست شما ثبت شد", "en": "Your request has been submitted" },
+  "trmDoneBody": { "fa": "کارشناسان ما درخواست شما را بررسی می‌کنند و برای فعال‌سازی پلن آزمایشی، از طریق همان شماره موبایل با شما تماس می‌گیرند.", "en": "Our specialists will review your request and contact you on that same mobile number to activate the trial plan." },
+  "trmTitle": { "fa": "درخواست ارزیابی و پلن آزمایشی", "en": "Assessment & Trial Plan Request" },
+  "trmIntro": { "fa": "مشخصات زیر را تکمیل کنید تا برای ارزیابی رایگان و دریافت پلن آزمایشی سامانه با شما تماس بگیریم.", "en": "Fill in the details below and we'll contact you for a free assessment and a trial plan of the system." },
+  "trmFullNameReq": { "fa": "نام و نام خانوادگی *", "en": "Full name *" },
+  "trmPhoneReq": { "fa": "شماره موبایل *", "en": "Mobile number *" },
+  "trmCompanyReq": { "fa": "شرکت / سازمان *", "en": "Company / Organization *" },
+  "trmPosition": { "fa": "سمت", "en": "Position" },
+  "trmIndustry": { "fa": "حوزه فعالیت", "en": "Industry" },
+  "trmIndustryPlaceholder": { "fa": "مثلاً پیمانکاری، نفت و گاز، ساختمانی", "en": "e.g. contracting, oil & gas, construction" },
+  "trmPersonnelCount": { "fa": "تعداد پرسنل", "en": "Personnel count" },
+  "trmProjectName": { "fa": "نام پروژه", "en": "Project name" },
+  "trmProjectCity": { "fa": "شهر / محل پروژه", "en": "Project city / location" },
+  "trmEmailOptional": { "fa": "ایمیل (اختیاری)", "en": "Email (optional)" },
+  "trmDesiredModules": { "fa": "ماژول‌های موردنظر", "en": "Desired modules" },
+  "trmNotes": { "fa": "توضیحات", "en": "Notes" },
+  "trmSubmit": { "fa": "ارسال درخواست", "en": "Submit request" },
+
+  // --- Error report modal + API (batch 20) ---
+  "erpErrCompanyUnknown": { "fa": "شرکت جاری مشخص نیست — لطفاً دوباره وارد شوید.", "en": "The current company is unknown — please sign in again." },
+  "erpErrSubmit": { "fa": "خطا در ارسال گزارش خطا: {detail}", "en": "Error submitting the error report: {detail}" },
+  "erpErrUpdateStatus": { "fa": "خطا در به‌روزرسانی وضعیت گزارش", "en": "Error updating the report status" },
+  "erpUnknown": { "fa": "نامشخص", "en": "unknown" },
+  "erpDescRequired": { "fa": "شرح خطا الزامی است", "en": "The error description is required" },
+  "erpDoneTitle": { "fa": "گزارش شما ثبت شد", "en": "Your report has been submitted" },
+  "erpDoneBody": { "fa": "این مورد برای بررسی به مدیر سامانه (SuperAdmin) ارسال شد.", "en": "This item has been sent to the system administrator (SuperAdmin) for review." },
+  "erpTitle": { "fa": "گزارش خطا به مدیر سامانه", "en": "Report an Error to the System Administrator" },
+  "erpIntro": { "fa": "لطفاً توضیح دهید چه اتفاقی افتاد. کاربر، زمان و صفحه‌ای که در آن بودید خودکار همراه گزارش ارسال می‌شود.", "en": "Please describe what happened. The user, time and page you were on are sent automatically with the report." },
+  "erpDescLabel": { "fa": "شرح خطا", "en": "Error description" },
+  "erpDescPlaceholder": { "fa": "مثلاً: هنگام ثبت آنومالی جدید، صفحه خطا داد و ذخیره نشد", "en": "e.g. When logging a new anomaly, the page errored and it didn't save" },
+  "erpSubmit": { "fa": "ارسال گزارش", "en": "Submit report" },
+
+  // --- riskKnowledgeApi.js user-facing messages (batch 20) ---
+  "rkErrCreateDetail": { "fa": "خطا در ثبت: {detail}", "en": "Error creating: {detail}" },
+  "rkErrSaveDetail": { "fa": "خطا در ذخیره‌سازی: {detail}", "en": "Error saving: {detail}" },
+  "rkErrToggleStatus": { "fa": "خطا در تغییر وضعیت", "en": "Error changing the status" },
+  "rkErrDeleteRecord": { "fa": "خطا در حذف رکورد", "en": "Error deleting the record" },
+  "rkErrBulkDelete": { "fa": "خطا در حذف گروهی", "en": "Error deleting in bulk" },
+  "rkRecordNotFound": { "fa": "رکورد یافت نشد", "en": "Record not found" },
+  "rkHazardColumnMissing": { "fa": "ستون «خطر» در فایل پیدا نشد", "en": "The \"Hazard\" column was not found in the file" },
+  "rkErrBulkImportDetail": { "fa": "خطا در ورود گروهی: {detail}", "en": "Error importing in bulk: {detail}" },
+  "rkUnknown": { "fa": "نامشخص", "en": "unknown" }
 };
 
 // برای فایل‌های غیر React (لایه‌ی داده / api.js) که به Hook دسترسی ندارند اما
