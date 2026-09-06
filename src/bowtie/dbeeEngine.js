@@ -4,6 +4,7 @@ import { loadMappingsForBarrier } from "./dbeeMappingApi.js";
 import { loadWeights } from "./dbeeWeightsApi.js";
 import { EFFECTIVENESS_STATUS } from "./bowtieApi.js";
 import { createAutoCorrectiveActionForBarrier } from "../correctiveActions/correctiveActionsApi.js";
+import { translate, getCurrentLang } from "../i18n/translations.js";
 
 /**
  * DBEE — Dynamic Barrier Effectiveness Engine (موتور هوشمند اثربخشی
@@ -310,7 +311,7 @@ export async function recalculateBarrierDbee(barrier, sharedWeights, sharedThres
 
 export async function recalculateAllBarriersDbee(bowtieId) {
   const rows = await sb(`bowtie_barriers?bowtie_id=eq.${bowtieId}&select=id,label,bowtie_id,criticality,status`);
-  if (!sbOk(rows)) return { __error: true, message: "خطا در بارگذاری بریرها" };
+  if (!sbOk(rows)) return { __error: true, message: translate(getCurrentLang(), "dbeeErrLoadBarriers") };
   // weights و thresholds برای کل شرکت یکسان‌اند — قبلاً به‌ازای هر بریر
   // جدا بارگذاری می‌شدند؛ الان فقط یک‌بار و بین همه‌ی بریرهای این BowTie
   // به اشتراک گذاشته می‌شوند.

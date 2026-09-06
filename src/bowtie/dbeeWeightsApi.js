@@ -1,4 +1,7 @@
 import { sb, sbOk, getCurrentCompanyId } from "../shared.js";
+import { translate, getCurrentLang } from "../i18n/translations.js";
+
+const tr = (key, params) => translate(getCurrentLang(), key, params);
 
 /**
  * DBEE — Weight های قابل‌تنظیم. مقیاس هر وزن ۰ تا ۲ (۱=خنثی). این
@@ -8,13 +11,14 @@ import { sb, sbOk, getCurrentCompanyId } from "../shared.js";
  * تنظیم سراسری سوپرادمین) — طبق خواسته‌ی صریح.
  */
 
-export const FACTOR_LABELS = {
-  frequency: "فراوانی (Frequency)", severity: "شدت (Severity)", recurrence: "تکرار (Recurrence)",
-  criticality: "بحرانی‌بودن (Criticality)", recency: "تازگی (Recency)",
-  source_anomaly: "منبع: Anomaly", source_capa: "منبع: CAPA", source_incident: "منبع: Incident",
-  source_tripod: "منبع: Tripod Beta / RCA", source_sbs: "منبع: SBS",
-  source_hse_climate: "منبع: HSE Climate", source_accident_proneness: "منبع: استعداد حادثه‌پذیری",
+export const FACTOR_LABEL_KEYS = {
+  frequency: "dbeeFactorFrequency", severity: "dbeeFactorSeverity", recurrence: "dbeeFactorRecurrence",
+  criticality: "dbeeFactorCriticality", recency: "dbeeFactorRecency",
+  source_anomaly: "dbeeFactorSrcAnomaly", source_capa: "dbeeFactorSrcCapa", source_incident: "dbeeFactorSrcIncident",
+  source_tripod: "dbeeFactorSrcTripod", source_sbs: "dbeeFactorSrcSbs",
+  source_hse_climate: "dbeeFactorSrcHseClimate", source_accident_proneness: "dbeeFactorSrcAccidentProneness",
 };
+export const factorLabel = (key) => tr(FACTOR_LABEL_KEYS[key] || key);
 
 // خروجی: { factor_key: weight } — فقط برای شرکت جاری. اگر هنوز seed
 // نشده باشد (حالت نظری، چون Trigger/seed اولیه این را پوشش می‌دهد)،
@@ -44,9 +48,9 @@ export async function loadCompanyWeights() {
 // ردیف واقعاً تغییر کرد)، این را صریحاً به‌عنوان خطا تشخیص می‌دهیم —
 // نه یک «موفقیت» ساختگی که فقط باعث می‌شود کاربر فکر کند ذخیره شد.
 export async function saveCompanyWeight(id, weight, updatedBy) {
-  if (weight < 0 || weight > 2) return { __error: true, message: "وزن باید بین ۰ تا ۲ باشد" };
+  if (weight < 0 || weight > 2) return { __error: true, message: tr("dbeeWeightRange") };
   const rows = await sb(`dbee_weights?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ weight, updated_by: updatedBy || "", updated_at: new Date().toISOString() }) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ذخیره‌ی وزن — فقط ادمین همین شرکت مجاز است" };
-  if (rows.length === 0) return { __error: true, message: "ذخیره انجام نشد: دسترسی شما برای تغییر وزن‌دهی این شرکت تأیید نشد. لطفاً مطمئن شوید با نقش کارفرما یا ادمین شرکت وارد شده‌اید." };
+  if (!sbOk(rows)) return { __error: true, message: tr("dbeeErrSaveWeightAdminOnly") };
+  if (rows.length === 0) return { __error: true, message: tr("dbeeErrSaveWeightNoAccess") };
   return { ok: true };
 }

@@ -7,12 +7,14 @@ import { loadDashboardData, loadBarrierHistory, loadBarrierEvidence, recalculate
 import { createCorrectiveAction } from "../correctiveActions/correctiveActionsApi.js";
 import DbeeWeightsManager from "./DbeeWeightsManager.jsx";
 import DbeeTypeMappingManager from "./DbeeTypeMappingManager.jsx";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 /**
  * DBEE — Barrier Effectiveness Dashboard (زیرماژول مستقیم BowTie، طبق
  * محل قرارگیری تأییدشده: مدیریت ارزیابی ریسک → BowTie → این صفحه).
  */
 export default function BarrierEffectivenessDashboard({ currentUser, role, onBack }) {
+  const { t } = useLanguage();
   const [data, setData] = useState(null);
   const [filterBowtieId, setFilterBowtieId] = useState("all");
   const [filterSite, setFilterSite] = useState("all");
@@ -39,7 +41,7 @@ export default function BarrierEffectivenessDashboard({ currentUser, role, onBac
     );
   }
 
-  if (!data) return <p style={{ color: THEME.text3, textAlign: "center", padding: 40 }}>در حال بارگذاری...</p>;
+  if (!data) return <p style={{ color: THEME.text3, textAlign: "center", padding: 40 }}>{t("dbeeDashLoading")}</p>;
 
   const sites = [...new Set(data.bowties.map((b) => b.site).filter(Boolean))];
   const bowtiesInSite = filterSite === "all" ? data.bowties : data.bowties.filter((b) => b.site === filterSite);
@@ -60,24 +62,24 @@ export default function BarrierEffectivenessDashboard({ currentUser, role, onBac
 
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>بازگشت</div>}
+      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackPlain")}</div>}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10, marginBottom: 4 }}>
         <div>
           <h2 style={{ fontSize: 18, color: THEME.navy, fontWeight: 800, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
-            <ShieldCheck size={20} color={THEME.teal} /> موتور هوشمند اثربخشی Barrierها (DBEE)
+            <ShieldCheck size={20} color={THEME.teal} /> {t("dbeeDashTitle")}
           </h2>
-          <p style={{ color: THEME.text3, fontSize: 12, marginTop: 4 }}>محاسبه‌ی زنده از Anomaly، CAPA، Incident، Tripod Beta، SBS، HSE Climate، استعداد حادثه‌پذیری و خودِ BowTie</p>
+          <p style={{ color: THEME.text3, fontSize: 12, marginTop: 4 }}>{t("dbeeDashSubtitle")}</p>
         </div>
         {isEmployerSide && (
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 5, background: THEME.navyMid }} onClick={() => setSubView("mapping")}>
-              <Link2 size={13} /> مدیریت Mapping
+              <Link2 size={13} /> {t("dbeeDashManageMapping")}
             </button>
             <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 5, background: THEME.navyMid }} onClick={() => setSubView("weights")}>
-              <Sliders size={13} /> وزن‌دهی
+              <Sliders size={13} /> {t("dbeeDashWeighting")}
             </button>
             <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 5 }} onClick={handleRecalculateAll} disabled={recalculating}>
-              <RefreshCw size={13} /> {recalculating ? "در حال محاسبه..." : "بازمحاسبه‌ی همه"}
+              <RefreshCw size={13} /> {recalculating ? t("dbeeDashRecalculating") : t("dbeeDashRecalcAll")}
             </button>
           </div>
         )}
@@ -85,11 +87,11 @@ export default function BarrierEffectivenessDashboard({ currentUser, role, onBac
 
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", margin: "18px 0" }}>
         <select style={{ ...styles.input, marginTop: 0, width: 200 }} value={filterSite} onChange={(e) => { setFilterSite(e.target.value); setFilterBowtieId("all"); }} dir="rtl">
-          <option value="all">همه‌ی سایت‌ها/پروژه‌ها</option>
+          <option value="all">{t("dbeeDashAllSites")}</option>
           {sites.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
         <select style={{ ...styles.input, marginTop: 0, width: 240 }} value={filterBowtieId} onChange={(e) => setFilterBowtieId(e.target.value)} dir="rtl">
-          <option value="all">همه‌ی BowTie ها</option>
+          <option value="all">{t("dbeeDashAllBowties")}</option>
           {bowtiesInSite.map((b) => <option key={b.id} value={b.id}>{b.title}</option>)}
         </select>
       </div>
@@ -101,8 +103,8 @@ export default function BarrierEffectivenessDashboard({ currentUser, role, onBac
       <CriticalBarriersBySite barriers={visibleBarriers} bowties={data.bowties} />
 
       <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18, marginTop: 16 }}>
-        <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 12px" }}>همه‌ی Barrierها</h3>
-        {visibleBarriers.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>هیچ Barrier ای در این فیلتر یافت نشد.</p>}
+        <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 12px" }}>{t("dbeeAllBarriers")}</h3>
+        {visibleBarriers.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("dbeeNoBarriersInFilter")}</p>}
         {visibleBarriers.map((b) => (
           <BarrierRow key={b.id} barrier={b} bowtieTitle={data.bowties.find((bt) => bt.id === b.bowtieId)?.title} onClick={() => setSelectedBarrier(b)} />
         ))}
@@ -121,12 +123,13 @@ function computeKpis(barriers, bowties) {
 }
 
 function KpiGrid({ kpi }) {
+  const { t } = useLanguage();
   const cards = [
-    { label: "کل Barrierها", value: kpi.total, color: THEME.navy, bg: THEME.bg },
-    { label: "مؤثر", value: kpi.effective, color: "#166534", bg: "#dcfce7" },
-    { label: "ضعیف", value: kpi.weak, color: "#b45309", bg: "#fef3c7" },
-    { label: "بحرانی", value: kpi.critical, color: "#b91c1c", bg: "#fee2e2" },
-    { label: "بدون داده کافی", value: kpi.notAssessed, color: THEME.text3, bg: THEME.bg },
+    { label: t("dbeeKpiTotal"), value: kpi.total, color: THEME.navy, bg: THEME.bg },
+    { label: t("dbeeKpiEffective"), value: kpi.effective, color: "#166534", bg: "#dcfce7" },
+    { label: t("dbeeKpiWeak"), value: kpi.weak, color: "#b45309", bg: "#fef3c7" },
+    { label: t("dbeeKpiCritical"), value: kpi.critical, color: "#b91c1c", bg: "#fee2e2" },
+    { label: t("dbeeKpiNotAssessed"), value: kpi.notAssessed, color: THEME.text3, bg: THEME.bg },
   ];
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
@@ -141,13 +144,14 @@ function KpiGrid({ kpi }) {
 }
 
 function TopFailuresSection({ barriers, bowties }) {
+  const { t } = useLanguage();
   const withHistory = barriers.filter((b) => b.score != null);
   const worst = [...withHistory].sort((a, b) => a.score - b.score).slice(0, 5);
   if (worst.length === 0) return null;
   return (
     <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18, marginTop: 16 }}>
       <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
-        <TrendingDown size={15} color={THEME.danger} /> بیشترین ضعف اثربخشی
+        <TrendingDown size={15} color={THEME.danger} /> {t("dbeeTopFailures")}
       </h3>
       {worst.map((b) => {
         const meta = effectivenessMeta(b.status);
@@ -157,7 +161,7 @@ function TopFailuresSection({ barriers, bowties }) {
               <span style={{ fontSize: 12.5, fontWeight: 700, color: THEME.navy }}>{b.label}</span>
               <span style={{ fontSize: 11, color: THEME.text3, marginRight: 8 }}>({bowties.find((bt) => bt.id === b.bowtieId)?.title})</span>
             </div>
-            <span style={{ fontSize: 12, fontWeight: 700, color: meta.color }}>{meta.emoji} {b.score}٪</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: meta.color }}>{meta.emoji} {t("dbeePct", { n: b.score })}</span>
           </div>
         );
       })}
@@ -166,18 +170,19 @@ function TopFailuresSection({ barriers, bowties }) {
 }
 
 function CriticalBarriersBySite({ barriers, bowties }) {
+  const { t } = useLanguage();
   const critical = barriers.filter((b) => b.status === "failed" || (b.status === "weak" && b.criticality === "high"));
   if (critical.length === 0) return null;
   const bySite = {};
   critical.forEach((b) => {
-    const site = bowties.find((bt) => bt.id === b.bowtieId)?.site || "نامشخص";
+    const site = bowties.find((bt) => bt.id === b.bowtieId)?.site || t("dbeeUnknown");
     bySite[site] = (bySite[site] || 0) + 1;
   });
   const sorted = Object.entries(bySite).sort((a, b) => b[1] - a[1]);
   return (
     <div style={{ background: "#fee2e2", border: "1px solid #fca5a5", borderRadius: 12, padding: 18, marginTop: 16 }}>
       <h3 style={{ fontSize: 14, color: "#b91c1c", fontWeight: 700, margin: "0 0 10px", display: "flex", alignItems: "center", gap: 6 }}>
-        <AlertTriangle size={15} /> پروژه‌ها/واحدهای دارای بیشترین Barrier بحرانی
+        <AlertTriangle size={15} /> {t("dbeeCriticalBySite")}
       </h3>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
         {sorted.map(([site, count]) => (
@@ -191,6 +196,7 @@ function CriticalBarriersBySite({ barriers, bowties }) {
 }
 
 function BarrierRow({ barrier, bowtieTitle, onClick }) {
+  const { t } = useLanguage();
   const meta = effectivenessMeta(barrier.status);
   const isCriticalFlag = barrier.status === "failed" || (barrier.status === "weak" && barrier.criticality === "high");
   return (
@@ -201,14 +207,14 @@ function BarrierRow({ barrier, bowtieTitle, onClick }) {
       onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-        {isCriticalFlag && <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#b91c1c", color: "#fff", fontWeight: 700, flexShrink: 0 }}>بحرانی</span>}
+        {isCriticalFlag && <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#b91c1c", color: "#fff", fontWeight: 700, flexShrink: 0 }}>{t("dbeeCriticalFlag")}</span>}
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: THEME.navy, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{barrier.label}</div>
           <div style={{ fontSize: 11, color: THEME.text3 }}>{bowtieTitle}</div>
         </div>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-        <span style={{ fontSize: 12.5, fontWeight: 700, color: meta.color }}>{meta.emoji} {barrier.score != null ? `${barrier.score}٪` : "بدون داده کافی"}</span>
+        <span style={{ fontSize: 12.5, fontWeight: 700, color: meta.color }}>{meta.emoji} {barrier.score != null ? t("dbeePct", { n: barrier.score }) : t("dbeeNotEnoughData")}</span>
         <ChevronLeft size={14} color={THEME.text3} />
       </div>
     </div>
@@ -217,12 +223,13 @@ function BarrierRow({ barrier, bowtieTitle, onClick }) {
 
 // ---------- جزئیات یک Barrier ----------
 
-const SOURCE_LABELS = {
-  source_anomaly: "Anomaly", source_capa: "CAPA", source_incident: "Incident", source_tripod: "Tripod Beta / RCA",
-  source_sbs: "SBS", source_hse_climate: "HSE Climate", source_accident_proneness: "استعداد حادثه‌پذیری", bowtie_own: "خودِ BowTie",
+const SOURCE_LABEL_KEYS = {
+  source_anomaly: "dbeeSrcAnomaly", source_capa: "dbeeSrcCapa", source_incident: "dbeeSrcIncident", source_tripod: "dbeeSrcTripod",
+  source_sbs: "dbeeSrcSbs", source_hse_climate: "dbeeSrcHseClimate", source_accident_proneness: "dbeeSrcAccidentProneness", bowtie_own: "dbeeSrcBowtieOwn",
 };
 
 function BarrierDetailView({ barrier, bowtieTitle, currentUser, isEmployerSide, onBack, onRecalculated }) {
+  const { t } = useLanguage();
   const [history, setHistory] = useState(null);
   const [evidence, setEvidence] = useState(null);
   const [recalculating, setRecalculating] = useState(false);
@@ -256,10 +263,10 @@ function BarrierDetailView({ barrier, bowtieTitle, currentUser, isEmployerSide, 
 
   const openCaForm = () => setCaForm({ description: "", responsible: "", dueDate: "" });
   const handleSaveCa = async () => {
-    if (!caForm.description.trim() || !caForm.responsible.trim()) { setCaMessage("شرح و مسئول اقدام الزامی است"); return; }
+    if (!caForm.description.trim() || !caForm.responsible.trim()) { setCaMessage(t("dbeeCaErrRequired")); return; }
     setCaSaving(true);
     const result = await createCorrectiveAction({
-      source: "bowtie", nonconformanceDescription: `Barrier ضعیف/بحرانی: «${barrier.label}» (${bowtieTitle}) — امتیاز اثربخشی: ${barrier.score}٪`,
+      source: "bowtie", nonconformanceDescription: t("dbeeCaNonconformanceDesc", { label: barrier.label, bowtie: bowtieTitle, score: barrier.score }),
       actionDescription: caForm.description.trim(), responsibleContractorName: caForm.responsible.trim(),
       dueDate: caForm.dueDate || "", status: "open", linkedBarrierId: barrier.id,
     }, currentUser?.name);
@@ -270,64 +277,64 @@ function BarrierDetailView({ barrier, bowtieTitle, currentUser, isEmployerSide, 
 
   return (
     <div style={{ maxWidth: 800, margin: "0 auto", padding: 24 }}>
-      <div style={styles.backLink} onClick={onBack}>بازگشت</div>
+      <div style={styles.backLink} onClick={onBack}>{t("commonBackPlain")}</div>
       <h2 style={{ fontSize: 18, color: THEME.navy, fontWeight: 800, margin: "0 0 4px" }}>{barrier.label}</h2>
-      <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 18 }}>{bowtieTitle} — {barrier.side === "preventive" ? "پیشگیرانه" : "بازیابی"}</p>
+      <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 18 }}>{bowtieTitle} — {barrier.side === "preventive" ? t("dbeeSidePreventive") : t("dbeeSideRecovery")}</p>
 
       <div style={{ background: `${meta.color}14`, border: `1px solid ${meta.color}`, borderRadius: 12, padding: 18, marginBottom: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
           <div>
-            <div style={{ fontSize: 32, fontWeight: 800, color: meta.color }}>{barrier.score != null ? `${barrier.score}٪` : "—"}</div>
-            <div style={{ fontSize: 12.5, color: meta.color, fontWeight: 700 }}>{meta.emoji} {meta.label}</div>
+            <div style={{ fontSize: 32, fontWeight: 800, color: meta.color }}>{barrier.score != null ? t("dbeePct", { n: barrier.score }) : "—"}</div>
+            <div style={{ fontSize: 12.5, color: meta.color, fontWeight: 700 }}>{meta.emoji} {t(meta.labelKey)}</div>
           </div>
           {trend && (
             <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: THEME.text2 }}>
-              <span>{previous.score}٪</span>
+              <span>{t("dbeePct", { n: previous.score })}</span>
               {trend === "up" && <TrendingUp size={16} color="#166534" />}
               {trend === "down" && <TrendingDown size={16} color="#b91c1c" />}
               {trend === "flat" && <Minus size={16} color={THEME.text3} />}
-              <span style={{ fontWeight: 700 }}>{current.score}٪</span>
+              <span style={{ fontWeight: 700 }}>{t("dbeePct", { n: current.score })}</span>
             </div>
           )}
           {isEmployerSide && (
             <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 5 }} onClick={handleRecalculate} disabled={recalculating}>
-              <RefreshCw size={13} /> {recalculating ? "در حال محاسبه..." : "بازمحاسبه"}
+              <RefreshCw size={13} /> {recalculating ? t("dbeeDashRecalculating") : t("dbeeDetailRecalculate")}
             </button>
           )}
         </div>
-        {barrier.score == null && <p style={{ fontSize: 12, color: THEME.text3, marginTop: 10 }}>هیچ شاهدی از هیچ منبعی برای این Barrier ثبت نشده — امتیاز محاسبه نمی‌شود تا داده‌ی کافی وجود داشته باشد.</p>}
+        {barrier.score == null && <p style={{ fontSize: 12, color: THEME.text3, marginTop: 10 }}>{t("dbeeNoEvidenceNote")}</p>}
       </div>
 
       {current?.breakdown && (
         <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18, marginBottom: 16 }}>
-          <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>علت وضعیت فعلی — سهم هر منبع</h4>
+          <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>{t("dbeeReasonForStatus")}</h4>
           {Object.entries(current.breakdown).filter(([, v]) => v.evidenceCount > 0).map(([key, v]) => (
             <div key={key} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "5px 0", borderBottom: `1px solid ${THEME.border}` }}>
-              <span style={{ color: THEME.text2 }}>{SOURCE_LABELS[key] || key} ({v.evidenceCount} شاهد)</span>
+              <span style={{ color: THEME.text2 }}>{t("dbeeEvidenceCount", { name: SOURCE_LABEL_KEYS[key] ? t(SOURCE_LABEL_KEYS[key]) : key, count: v.evidenceCount })}</span>
               <span style={{ fontWeight: 700, color: v.weightedPenalty > 15 ? THEME.danger : THEME.text2 }}>−{v.weightedPenalty.toFixed(1)}</span>
             </div>
           ))}
-          {Object.values(current.breakdown).every((v) => v.evidenceCount === 0) && <p style={{ fontSize: 12, color: THEME.text3 }}>هیچ شاهدی ثبت نشده.</p>}
+          {Object.values(current.breakdown).every((v) => v.evidenceCount === 0) && <p style={{ fontSize: 12, color: THEME.text3 }}>{t("dbeeNoEvidenceRecorded")}</p>}
         </div>
       )}
 
       {evidence && (
         <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18, marginBottom: 16 }}>
-          <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>شواهد مرتبط</h4>
-          <EvidenceGroup title="Anomaly های مرتبط" items={evidence.anomalies.map((a) => `${a.id} — ${toJalaliSafe(a.createdAt)}`)} />
-          <EvidenceGroup title="اقدامات اصلاحی (CAPA)" items={evidence.capa.map((c) => `${c.actionNumber || c.id} — ${c.status}`)} />
-          <EvidenceGroup title="حوادث مرتبط" items={evidence.incidents.map((i) => `${i.incidentNo} — ${toJalaliSafe(i.occurredAt)}${i.isDisabling ? " (ناتوان‌کننده)" : ""}`)} />
-          <EvidenceGroup title="تحلیل‌های Tripod Beta مرتبط" items={evidence.tripod.map((t) => `${t.id} — وضعیت: ${t.status}`)} last />
+          <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>{t("dbeeRelatedEvidence")}</h4>
+          <EvidenceGroup title={t("dbeeEvRelatedAnomalies")} items={evidence.anomalies.map((a) => `${a.id} — ${toJalaliSafe(a.createdAt)}`)} />
+          <EvidenceGroup title={t("dbeeEvCapa")} items={evidence.capa.map((c) => `${c.actionNumber || c.id} — ${c.status}`)} />
+          <EvidenceGroup title={t("dbeeEvRelatedIncidents")} items={evidence.incidents.map((i) => `${i.incidentNo} — ${toJalaliSafe(i.occurredAt)}${i.isDisabling ? t("dbeeIncDisablingSuffix") : ""}`)} />
+          <EvidenceGroup title={t("dbeeEvRelatedTripod")} items={evidence.tripod.map((tp) => `${tp.id}${t("dbeeTripodStatusPrefix")}${tp.status}`)} last />
         </div>
       )}
 
       {history && history.length > 0 && (
         <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18, marginBottom: 16 }}>
-          <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>روند اثربخشی</h4>
+          <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>{t("dbeeEffectivenessTrend")}</h4>
           {history.map((h) => (
             <div key={h.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "5px 0", borderBottom: `1px solid ${THEME.border}` }}>
               <span style={{ color: THEME.text3 }}>{toJalaliSafe(h.calculatedAt)}</span>
-              <span style={{ fontWeight: 700, color: THEME.navy }}>{h.score != null ? `${h.score}٪` : "بدون داده کافی"}</span>
+              <span style={{ fontWeight: 700, color: THEME.navy }}>{h.score != null ? t("dbeePct", { n: h.score }) : t("dbeeNotEnoughData")}</span>
             </div>
           ))}
         </div>
@@ -335,24 +342,24 @@ function BarrierDetailView({ barrier, bowtieTitle, currentUser, isEmployerSide, 
 
       {isEmployerSide && isWeakOrCritical && (
         <div style={{ background: THEME.dangerBg, border: `1px solid ${THEME.danger}`, borderRadius: 12, padding: 18 }}>
-          <h4 style={{ fontSize: 13, color: THEME.danger, fontWeight: 700, margin: "0 0 10px" }}>پیشنهاد اقدام اصلاحی</h4>
+          <h4 style={{ fontSize: 13, color: THEME.danger, fontWeight: 700, margin: "0 0 10px" }}>{t("dbeeCaSuggestion")}</h4>
           {!caForm && (
             <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6, background: THEME.danger }} onClick={openCaForm}>
-              <Send size={13} /> صدور اقدام اصلاحی برای این Barrier
+              <Send size={13} /> {t("dbeeCaIssueForBarrier")}
             </button>
           )}
           {caForm && (
             <div>
-              <label style={styles.label}>شرح اقدام اصلاحی</label>
+              <label style={styles.label}>{t("dbeeCaDescLabel")}</label>
               <textarea style={{ ...styles.input, minHeight: 60 }} value={caForm.description} onChange={(e) => setCaForm({ ...caForm, description: e.target.value })} dir="rtl" />
-              <label style={styles.label}>مسئول اقدام</label>
+              <label style={styles.label}>{t("dbeeCaResponsibleLabel")}</label>
               <input style={styles.input} value={caForm.responsible} onChange={(e) => setCaForm({ ...caForm, responsible: e.target.value })} dir="rtl" />
-              <label style={styles.label}>مهلت انجام</label>
+              <label style={styles.label}>{t("dbeeCaDueLabel")}</label>
               <JalaliDateInput value={caForm.dueDate} onChange={(v) => setCaForm({ ...caForm, dueDate: v })} allowEmpty />
               {caMessage && <p style={styles.error}>{caMessage}</p>}
               <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-                <button type="button" style={styles.smallButton} onClick={handleSaveCa} disabled={caSaving}>{caSaving ? "در حال ثبت..." : "ثبت و اتصال به CAPA"}</button>
-                <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setCaForm(null)}>انصراف</button>
+                <button type="button" style={styles.smallButton} onClick={handleSaveCa} disabled={caSaving}>{caSaving ? t("dbeeSubmittingEllipsis") : t("dbeeCaSubmitLinkCapa")}</button>
+                <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setCaForm(null)}>{t("commonCancel")}</button>
               </div>
             </div>
           )}

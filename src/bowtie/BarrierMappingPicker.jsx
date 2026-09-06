@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { GitBranch, Plus, Trash2 } from "lucide-react";
 import { styles, THEME } from "../shared.js";
-import { loadAllBowtiesWithBarriers, loadMappingsForSource, createMapping, deleteMapping, RELEVANCE_LEVELS } from "./dbeeMappingApi.js";
+import { loadAllBowtiesWithBarriers, loadMappingsForSource, createMapping, deleteMapping, RELEVANCE_LEVELS, relevanceLabel } from "./dbeeMappingApi.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 /**
  * انتخاب صریح Barrier(های) مرتبط با یک منبع مشخص (Incident یا Tripod RCA)
@@ -12,6 +13,7 @@ import { loadAllBowtiesWithBarriers, loadMappingsForSource, createMapping, delet
  * یک ردیف در dbee_source_barrier_map ثبت می‌شود.
  */
 export default function BarrierMappingPicker({ sourceType, sourceId, currentUser, readOnly }) {
+  const { t } = useLanguage();
   const [bowties, setBowties] = useState([]);
   const [mappings, setMappings] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -33,7 +35,7 @@ export default function BarrierMappingPicker({ sourceType, sourceId, currentUser
 
   const handleAdd = async () => {
     setError("");
-    if (!selectedBowtieId || !selectedBarrierId) { setError("انتخاب BowTie و Barrier الزامی است"); return; }
+    if (!selectedBowtieId || !selectedBarrierId) { setError(t("dbeeBmpErrRequired")); return; }
     setSaving(true);
     const result = await createMapping({ sourceType, sourceId, bowtieId: selectedBowtieId, barrierId: selectedBarrierId, relevance, note }, currentUser?.name);
     setSaving(false);
@@ -43,7 +45,7 @@ export default function BarrierMappingPicker({ sourceType, sourceId, currentUser
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("این ارتباط با Barrier حذف شود؟")) return;
+    if (!confirm(t("dbeeBmpDeleteConfirm"))) return;
     const result = await deleteMapping(id);
     if (result?.__error) { alert(result.message); return; }
     await load();
@@ -54,18 +56,18 @@ export default function BarrierMappingPicker({ sourceType, sourceId, currentUser
   return (
     <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18, marginTop: 16 }}>
       <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 6 }}>
-        <GitBranch size={15} /> Barrierهای مرتبط (برای موتور اثربخشی DBEE)
+        <GitBranch size={15} /> {t("dbeeBmpTitle")}
       </h3>
       <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 12, lineHeight: 1.8 }}>
-        اگر این رویداد نشان‌دهنده‌ی ضعف یکی از Barrierهای BowTie است، آن را اینجا مشخص کنید — این ارتباط مستقیماً در محاسبه‌ی اثربخشی همان Barrier لحاظ می‌شود.
+        {t("dbeeBmpIntro")}
       </p>
 
-      {mappings.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, marginBottom: 10 }}>هنوز هیچ Barrier ای به این رویداد مرتبط نشده است.</p>}
+      {mappings.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, marginBottom: 10 }}>{t("dbeeBmpNoneYet")}</p>}
       {mappings.map((m) => (
         <div key={m.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: `1px solid ${THEME.border}` }}>
           <div>
             <span style={{ fontSize: 12.5, fontWeight: 700, color: THEME.navy }}>{m.barrierLabel || m.barrierId}</span>
-            <span style={{ fontSize: 11, color: THEME.text3, marginRight: 8 }}>({m.bowtieTitle || "BowTie"} — ارتباط: {RELEVANCE_LEVELS.find((r) => r.value === m.relevance)?.label})</span>
+            <span style={{ fontSize: 11, color: THEME.text3, marginRight: 8 }}>{t("dbeeTmRelevanceSuffix", { bowtie: m.bowtieTitle || "BowTie", relevance: relevanceLabel(m.relevance) })}</span>
           </div>
           {!readOnly && (
             <button type="button" onClick={() => handleDelete(m.id)} style={{ background: "none", border: "none", cursor: "pointer" }}>
@@ -77,7 +79,7 @@ export default function BarrierMappingPicker({ sourceType, sourceId, currentUser
 
       {!readOnly && !showForm && (
         <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6, marginTop: 12 }} onClick={() => setShowForm(true)}>
-          <Plus size={13} /> افزودن Barrier مرتبط
+          <Plus size={13} /> {t("dbeeBmpAddRelated")}
         </button>
       )}
 
@@ -87,32 +89,32 @@ export default function BarrierMappingPicker({ sourceType, sourceId, currentUser
             <div>
               <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>BowTie</label>
               <select style={styles.input} value={selectedBowtieId} onChange={(e) => { setSelectedBowtieId(e.target.value); setSelectedBarrierId(""); }} dir="rtl">
-                <option value="">انتخاب کنید</option>
+                <option value="">{t("dbeeSelect")}</option>
                 {bowties.map((b) => <option key={b.id} value={b.id}>{b.title}</option>)}
               </select>
             </div>
             <div>
               <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>Barrier</label>
               <select style={styles.input} value={selectedBarrierId} onChange={(e) => setSelectedBarrierId(e.target.value)} dir="rtl" disabled={!selectedBowtie}>
-                <option value="">{selectedBowtie ? "انتخاب کنید" : "ابتدا BowTie را انتخاب کنید"}</option>
-                {(selectedBowtie?.barriers || []).map((b) => <option key={b.id} value={b.id}>{b.label} ({b.side === "preventive" ? "پیشگیرانه" : "بازیابی"})</option>)}
+                <option value="">{selectedBowtie ? t("dbeeSelect") : t("dbeeSelectBowtieFirst")}</option>
+                {(selectedBowtie?.barriers || []).map((b) => <option key={b.id} value={b.id}>{b.label} ({b.side === "preventive" ? t("dbeeSidePreventive") : t("dbeeSideRecovery")})</option>)}
               </select>
             </div>
             <div>
-              <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>میزان ارتباط</label>
+              <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("dbeeRelevanceLabel")}</label>
               <select style={styles.input} value={relevance} onChange={(e) => setRelevance(e.target.value)} dir="rtl">
-                {RELEVANCE_LEVELS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+                {RELEVANCE_LEVELS.map((r) => <option key={r.value} value={r.value}>{t(r.labelKey)}</option>)}
               </select>
             </div>
             <div style={{ gridColumn: "1 / -1" }}>
-              <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>یادداشت (اختیاری)</label>
-              <input style={styles.input} value={note} onChange={(e) => setNote(e.target.value)} dir="rtl" placeholder="مثلاً: این Barrier در لحظه‌ی وقوع فعال نبود" />
+              <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("dbeeNoteOptional")}</label>
+              <input style={styles.input} value={note} onChange={(e) => setNote(e.target.value)} dir="rtl" placeholder={t("dbeeBmpNotePlaceholder")} />
             </div>
           </div>
           {error && <p style={styles.error}>{error}</p>}
           <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-            <button type="button" style={styles.smallButton} onClick={handleAdd} disabled={saving}>{saving ? "در حال ثبت..." : "ثبت ارتباط"}</button>
-            <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => { setShowForm(false); setError(""); }}>انصراف</button>
+            <button type="button" style={styles.smallButton} onClick={handleAdd} disabled={saving}>{saving ? t("dbeeSubmittingEllipsis") : t("dbeeSubmitMapping")}</button>
+            <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => { setShowForm(false); setError(""); }}>{t("commonCancel")}</button>
           </div>
         </div>
       )}

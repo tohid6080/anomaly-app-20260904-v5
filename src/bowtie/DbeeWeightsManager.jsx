@@ -1,28 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { Sliders, HelpCircle } from "lucide-react";
 import { styles, THEME } from "../shared.js";
-import { loadCompanyWeights, saveCompanyWeight, FACTOR_LABELS } from "./dbeeWeightsApi.js";
+import { loadCompanyWeights, saveCompanyWeight, factorLabel } from "./dbeeWeightsApi.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
-// راهنمای هر عامل — مثال‌ها دقیقاً بر اساس منطق واقعی موتور محاسبه
-// (dbeeEngine.js) نوشته شده‌اند، نه توضیح کلی و غیردقیق.
-const FACTOR_GUIDES = {
-  frequency: "تعداد دفعات تکرار یک شاهد ضعف (مثلاً چند بار این Barrier در آنومالی‌های اخیر ذکر شده). مثال: اگر یک Barrier در ۵ آنومالی جدا دیده شود، وزن بیشتر یعنی این تکرار جریمه‌ی سنگین‌تری ایجاد کند.",
-  severity: "شدت خودِ رویدادی که ضعف Barrier را نشان داده (مثلاً سطح ریسک آنومالی: بالا/متوسط/پایین، یا ناتوان‌کننده‌بودن حادثه). وزن بیشتر یعنی رویدادهای شدید، تأثیر بیشتری روی افت امتیاز بگذارند.",
-  recurrence: "تکرارشدنِ مشابه در بازه‌ی کوتاه (مثلاً ۳ آنومالی مرتبط در ۹۰ روز اخیر). این جدا از «فراوانی کلی» است — تمرکزش روی الگوی اخیر و پشت‌سرهم است، نه کل تاریخچه.",
-  criticality: "ضریبی که بر اساس سطح بحرانی‌بودن خودِ Barrier (پایین/متوسط/بالا، همان فیلدی که در خودِ BowTie تعیین می‌شود) کل جریمه‌ی نهایی را تشدید یا تخفیف می‌دهد. مثال: یک Barrier با بحرانی‌بودن «بالا»، با وزن بیشتر، حتی با شواهد کم هم امتیازش سریع‌تر افت می‌کند.",
-  recency: "وزن شواهد جدید در برابر شواهد قدیمی. طبق طراحی موتور، شواهد ثبت‌شده در ۹۰ روز اخیر همیشه اثر بیشتری از شواهد قدیمی‌تر دارند؛ این عامل شدت آن تفاوت را تنظیم می‌کند.",
-  source_anomaly: "سهم داده‌ی «مدیریت عدم انطباق‌ها (Anomaly)» در محاسبه — آنومالی‌هایی که مستقیماً به این Barrier متصل شده‌اند.",
-  source_capa: "سهم داده‌ی «اقدامات اصلاحی (CAPA)» — اقدام‌های باز یا منقضی‌شده‌ی متصل به این Barrier؛ اقدام منقضی‌شده همیشه جریمه‌ی بیشتری دارد.",
-  source_incident: "سهم داده‌ی «حوادث» — فقط حوادثی که کاربر HSE صراحتاً به این Barrier مرتبط کرده است (نه هر حادثه‌ای).",
-  source_tripod: "سهم داده‌ی «تحلیل ریشه‌ای Tripod Beta» — فقط تحلیل‌هایی که صراحتاً به این Barrier مرتبط شده‌اند؛ نتیجه‌ی «رد شده» توسط کارفرما سیگنال قوی‌تری است.",
-  source_sbs: "سهم داده‌ی «نمونه‌برداری رفتار ایمنی (SBS)» — مشاهدات رفتار ناایمن در دسته‌هایی که به این Barrier نگاشت شده‌اند.",
-  source_hse_climate: "سهم داده‌ی «جو ایمنی سازمانی (HSE Climate)» — میانگین پایین ابعادی از پرسشنامه که به این Barrier نگاشت شده‌اند.",
-  source_accident_proneness: "سهم داده‌ی «استعداد حادثه‌پذیری» — فقط ارزیابی‌های سطح «بالا»/«بسیار بالا» برای مشاغلی که به این Barrier نگاشت شده‌اند.",
+// راهنمای هر عامل — متنِ توضیحات در translations.js با کلیدهای
+// dbeeGuide* نگهداری می‌شود؛ اینجا فقط نگاشت factorKey → کلیدِ ترجمه.
+const FACTOR_GUIDE_KEYS = {
+  frequency: "dbeeGuideFrequency", severity: "dbeeGuideSeverity", recurrence: "dbeeGuideRecurrence", criticality: "dbeeGuideCriticality", recency: "dbeeGuideRecency",
+  source_anomaly: "dbeeGuideSrcAnomaly", source_capa: "dbeeGuideSrcCapa", source_incident: "dbeeGuideSrcIncident", source_tripod: "dbeeGuideSrcTripod", source_sbs: "dbeeGuideSrcSbs", source_hse_climate: "dbeeGuideSrcHseClimate", source_accident_proneness: "dbeeGuideSrcAccidentProneness",
 };
 
 const FACTOR_GROUPS = [
-  { title: "عوامل اصلی محاسبه", keys: ["frequency", "severity", "recurrence", "criticality", "recency"] },
-  { title: "وزن هر منبع داده", keys: ["source_anomaly", "source_capa", "source_incident", "source_tripod", "source_sbs", "source_hse_climate", "source_accident_proneness"] },
+  { titleKey: "dbeeWmGroupMain", keys: ["frequency", "severity", "recurrence", "criticality", "recency"] },
+  { titleKey: "dbeeWmGroupSources", keys: ["source_anomaly", "source_capa", "source_incident", "source_tripod", "source_sbs", "source_hse_climate", "source_accident_proneness"] },
 ];
 
 /**
@@ -33,6 +24,7 @@ const FACTOR_GROUPS = [
  * عامل تنظیم می‌شود (۰ تا ۲)، هرگز عدد نهایی هیچ Barrier ای.
  */
 export default function DbeeWeightsManager({ currentUser, onBack }) {
+  const { t } = useLanguage();
   const [weights, setWeights] = useState(null);
   const [saving, setSaving] = useState(null); // id در حال ذخیره
   const [message, setMessage] = useState("");
@@ -52,24 +44,23 @@ export default function DbeeWeightsManager({ currentUser, onBack }) {
     if (result?.__error) { setMessage(result.message); await load(); }
   };
 
-  if (!weights) return <p style={{ color: THEME.text3, textAlign: "center", padding: 40 }}>در حال بارگذاری...</p>;
+  if (!weights) return <p style={{ color: THEME.text3, textAlign: "center", padding: 40 }}>{t("dbeeWmLoading")}</p>;
 
   return (
     <div style={{ maxWidth: 640, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>بازگشت</div>}
+      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackPlain")}</div>}
       <h2 style={{ fontSize: 18, color: THEME.navy, fontWeight: 800, margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}>
-        <Sliders size={20} color={THEME.teal} /> وزن‌دهی موتور اثربخشی Barrier (DBEE)
+        <Sliders size={20} color={THEME.teal} /> {t("dbeeWmTitle")}
       </h2>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 18, lineHeight: 1.9 }}>
-        این وزن‌ها مخصوص شرکت شماست و روی محاسبه‌ی امتیاز اثربخشی همه‌ی Barrierهای BowTie اثر می‌گذارد.
-        عدد ۱ یعنی خنثی؛ بیشتر از ۱ یعنی همان عامل جریمه‌ی بیشتری ایجاد کند، کمتر از ۱ یعنی جریمه‌اش تخفیف بخورد.
-        برای توضیح هر عامل، روی آیکون <HelpCircle size={12} style={{ display: "inline", verticalAlign: "middle" }} /> کنارش بزنید.
+        {t("dbeeWmIntro")}
+        {" "}{t("dbeeWmGuideHint")} <HelpCircle size={12} style={{ display: "inline", verticalAlign: "middle" }} /> {t("dbeeWmGuideHint2")}
       </p>
       {message && <p style={styles.error}>{message}</p>}
 
       {FACTOR_GROUPS.map((group) => (
         <div key={group.title} style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18, marginBottom: 16 }}>
-          <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 12px" }}>{group.title}</h4>
+          <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 12px" }}>{t(group.titleKey)}</h4>
           {group.keys.map((key) => {
             const w = weights.find((x) => x.factorKey === key);
             if (!w) return null;
@@ -77,11 +68,11 @@ export default function DbeeWeightsManager({ currentUser, onBack }) {
               <div key={key} style={{ marginBottom: 14 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
                   <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                    <label style={{ fontSize: 12.5, color: THEME.text2, fontWeight: 600 }}>{FACTOR_LABELS[key] || key}</label>
+                    <label style={{ fontSize: 12.5, color: THEME.text2, fontWeight: 600 }}>{factorLabel(key)}</label>
                     <button
                       type="button" onClick={() => setOpenGuide(openGuide === key ? null : key)}
                       style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center" }}
-                      title="توضیح این عامل"
+                      title={t("dbeeWmFactorGuideTitle")}
                     >
                       <HelpCircle size={13} color={openGuide === key ? THEME.teal : THEME.text3} />
                     </button>
@@ -90,7 +81,7 @@ export default function DbeeWeightsManager({ currentUser, onBack }) {
                 </div>
                 {openGuide === key && (
                   <p style={{ fontSize: 11.5, color: THEME.text2, background: THEME.bg, borderRadius: 8, padding: "8px 10px", margin: "0 0 8px", lineHeight: 1.9 }}>
-                    {FACTOR_GUIDES[key]}
+                    {t(FACTOR_GUIDE_KEYS[key])}
                   </p>
                 )}
                 <input

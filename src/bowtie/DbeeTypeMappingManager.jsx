@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link2, Plus, Trash2 } from "lucide-react";
 import { styles, THEME } from "../shared.js";
-import { loadAllBowtiesWithBarriers, loadTypeMappings, createMapping, deleteMapping, RELEVANCE_LEVELS } from "./dbeeMappingApi.js";
+import { loadAllBowtiesWithBarriers, loadTypeMappings, createMapping, deleteMapping, RELEVANCE_LEVELS, relevanceLabel } from "./dbeeMappingApi.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { loadSbsCategories } from "../proactiveIndicators/sbsApi.js";
 import { HSE_CLIMATE_DIMENSIONS } from "../proactiveIndicators/hseClimateData.js";
 import { ACCIDENT_PRONENESS_CRITICAL_JOBS } from "../proactiveIndicators/proactiveIndicatorsApi.js";
@@ -13,12 +14,13 @@ import { ACCIDENT_PRONENESS_CRITICAL_JOBS } from "../proactiveIndicators/proacti
  * را حدس نمی‌زند — همیشه محصول انتخاب صریح یک کاربر مجاز است.
  */
 const SOURCE_TABS = [
-  { key: "sbs_category", label: "دسته‌های SBS" },
-  { key: "hse_climate_dimension", label: "ابعاد HSE Climate" },
-  { key: "accident_proneness_job", label: "مشاغل بحرانی (استعداد حادثه‌پذیری)" },
+  { key: "sbs_category", labelKey: "dbeeTmTabSbs" },
+  { key: "hse_climate_dimension", labelKey: "dbeeTmTabClimate" },
+  { key: "accident_proneness_job", labelKey: "dbeeTmTabJobs" },
 ];
 
 export default function DbeeTypeMappingManager({ currentUser, onBack }) {
+  const { t } = useLanguage();
   const [sourceType, setSourceType] = useState("sbs_category");
   const [bowties, setBowties] = useState([]);
   const [mappings, setMappings] = useState(null);
@@ -58,7 +60,7 @@ export default function DbeeTypeMappingManager({ currentUser, onBack }) {
   const handleAdd = async () => {
     setError("");
     if (!selectedOptionId || !selectedBowtieId || !selectedBarrierId) {
-      setError("انتخاب هر سه‌ی منبع، BowTie و Barrier الزامی است");
+      setError(t("dbeeTmErrAllRequired"));
       return;
     }
     setSaving(true);
@@ -70,7 +72,7 @@ export default function DbeeTypeMappingManager({ currentUser, onBack }) {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("این ارتباط حذف شود؟")) return;
+    if (!confirm(t("dbeeTmDeleteConfirm"))) return;
     const result = await deleteMapping(id);
     if (result?.__error) { alert(result.message); return; }
     await load();
@@ -78,41 +80,41 @@ export default function DbeeTypeMappingManager({ currentUser, onBack }) {
 
   return (
     <div style={{ maxWidth: 800, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>بازگشت</div>}
+      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackPlain")}</div>}
       <h2 style={{ fontSize: 18, color: THEME.navy, fontWeight: 800, margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}>
-        <Link2 size={20} color={THEME.teal} /> Mapping منابع غیرمستقیم به Barrier
+        <Link2 size={20} color={THEME.teal} /> {t("dbeeTmTitle")}
       </h2>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 18, lineHeight: 1.9 }}>
-        برای منابعی که رابطه‌ی مستقیمی به Barrier ندارند (SBS، HSE Climate، استعداد حادثه‌پذیری)، اینجا مشخص می‌کنید کدام دسته/بُعد/شغل به کدام Barrier مرتبط است. این ارتباط هیچ‌وقت خودکار ایجاد نمی‌شود.
+        {t("dbeeTmIntro")}
       </p>
 
       <div style={{ display: "flex", gap: 4, borderBottom: `1.5px solid ${THEME.border}`, marginBottom: 16, flexWrap: "wrap" }}>
-        {SOURCE_TABS.map((t) => (
+        {SOURCE_TABS.map((tb) => (
           <button
-            key={t.key} type="button" onClick={() => setSourceType(t.key)}
+            key={tb.key} type="button" onClick={() => setSourceType(tb.key)}
             style={{
               padding: "9px 16px", border: "none", background: "none", cursor: "pointer", fontFamily: THEME.font, fontSize: 12.5,
-              color: sourceType === t.key ? THEME.teal : THEME.text3, fontWeight: sourceType === t.key ? 700 : 500,
-              borderBottom: sourceType === t.key ? `2.5px solid ${THEME.teal}` : "2.5px solid transparent",
+              color: sourceType === tb.key ? THEME.teal : THEME.text3, fontWeight: sourceType === tb.key ? 700 : 500,
+              borderBottom: sourceType === tb.key ? `2.5px solid ${THEME.teal}` : "2.5px solid transparent",
             }}
           >
-            {t.label}
+            {t(tb.labelKey)}
           </button>
         ))}
       </div>
 
-      {mappings === null && <p style={{ color: THEME.text3, textAlign: "center", padding: 20 }}>در حال بارگذاری...</p>}
+      {mappings === null && <p style={{ color: THEME.text3, textAlign: "center", padding: 20 }}>{t("dbeeTmLoading")}</p>}
 
       {mappings !== null && (
         <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18 }}>
-          {mappings.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, marginBottom: 10 }}>هنوز هیچ ارتباطی ثبت نشده است.</p>}
+          {mappings.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, marginBottom: 10 }}>{t("dbeeTmNoMappingsYet")}</p>}
           {mappings.map((m) => (
             <div key={m.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: `1px solid ${THEME.border}` }}>
               <div>
                 <span style={{ fontSize: 12.5, fontWeight: 700, color: THEME.navy }}>{optionLabel(m.sourceId)}</span>
                 <span style={{ fontSize: 11, color: THEME.text3 }}> ← </span>
                 <span style={{ fontSize: 12.5, color: THEME.text }}>{m.barrierLabel || m.barrierId}</span>
-                <span style={{ fontSize: 11, color: THEME.text3, marginRight: 8 }}>({m.bowtieTitle || "BowTie"} — ارتباط: {RELEVANCE_LEVELS.find((r) => r.value === m.relevance)?.label})</span>
+                <span style={{ fontSize: 11, color: THEME.text3, marginRight: 8 }}>{t("dbeeTmRelevanceSuffix", { bowtie: m.bowtieTitle || "BowTie", relevance: relevanceLabel(m.relevance) })}</span>
               </div>
               <button type="button" onClick={() => handleDelete(m.id)} style={{ background: "none", border: "none", cursor: "pointer" }}>
                 <Trash2 size={13} color={THEME.danger} />
@@ -122,7 +124,7 @@ export default function DbeeTypeMappingManager({ currentUser, onBack }) {
 
           {!showForm && (
             <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6, marginTop: 14 }} onClick={() => setShowForm(true)}>
-              <Plus size={13} /> افزودن ارتباط جدید
+              <Plus size={13} /> {t("dbeeTmAddNew")}
             </button>
           )}
 
@@ -130,41 +132,41 @@ export default function DbeeTypeMappingManager({ currentUser, onBack }) {
             <div style={{ background: THEME.bg, borderRadius: 9, padding: 12, marginTop: 14 }}>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10 }}>
                 <div>
-                  <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{SOURCE_TABS.find((t) => t.key === sourceType)?.label}</label>
+                  <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t(SOURCE_TABS.find((tb) => tb.key === sourceType)?.labelKey || "")}</label>
                   <select style={styles.input} value={selectedOptionId} onChange={(e) => setSelectedOptionId(e.target.value)} dir="rtl">
-                    <option value="">انتخاب کنید</option>
+                    <option value="">{t("dbeeSelect")}</option>
                     {options.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
                   </select>
                 </div>
                 <div>
                   <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>BowTie</label>
                   <select style={styles.input} value={selectedBowtieId} onChange={(e) => { setSelectedBowtieId(e.target.value); setSelectedBarrierId(""); }} dir="rtl">
-                    <option value="">انتخاب کنید</option>
+                    <option value="">{t("dbeeSelect")}</option>
                     {bowties.map((b) => <option key={b.id} value={b.id}>{b.title}</option>)}
                   </select>
                 </div>
                 <div>
                   <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>Barrier</label>
                   <select style={styles.input} value={selectedBarrierId} onChange={(e) => setSelectedBarrierId(e.target.value)} dir="rtl" disabled={!selectedBowtie}>
-                    <option value="">{selectedBowtie ? "انتخاب کنید" : "ابتدا BowTie را انتخاب کنید"}</option>
+                    <option value="">{selectedBowtie ? t("dbeeSelect") : t("dbeeSelectBowtieFirst")}</option>
                     {(selectedBowtie?.barriers || []).map((b) => <option key={b.id} value={b.id}>{b.label}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>میزان ارتباط</label>
+                  <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("dbeeRelevanceLabel")}</label>
                   <select style={styles.input} value={relevance} onChange={(e) => setRelevance(e.target.value)} dir="rtl">
-                    {RELEVANCE_LEVELS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+                    {RELEVANCE_LEVELS.map((r) => <option key={r.value} value={r.value}>{t(r.labelKey)}</option>)}
                   </select>
                 </div>
                 <div style={{ gridColumn: "1 / -1" }}>
-                  <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>یادداشت / شواهد (اختیاری)</label>
-                  <input style={styles.input} value={note} onChange={(e) => setNote(e.target.value)} dir="rtl" placeholder="مثلاً: بر اساس بررسی کارشناس HSE" />
+                  <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("dbeeTmNoteEvidenceOptional")}</label>
+                  <input style={styles.input} value={note} onChange={(e) => setNote(e.target.value)} dir="rtl" placeholder={t("dbeeTmNotePlaceholder")} />
                 </div>
               </div>
               {error && <p style={styles.error}>{error}</p>}
               <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-                <button type="button" style={styles.smallButton} onClick={handleAdd} disabled={saving}>{saving ? "در حال ثبت..." : "ثبت ارتباط"}</button>
-                <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => { setShowForm(false); setError(""); }}>انصراف</button>
+                <button type="button" style={styles.smallButton} onClick={handleAdd} disabled={saving}>{saving ? t("dbeeSubmittingEllipsis") : t("dbeeSubmitMapping")}</button>
+                <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => { setShowForm(false); setError(""); }}>{t("commonCancel")}</button>
               </div>
             </div>
           )}
