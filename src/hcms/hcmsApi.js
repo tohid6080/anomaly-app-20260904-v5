@@ -290,7 +290,7 @@ export async function createSuggestedHcmsFromAnomaly(anomaly, hazardText, create
     activity: anomaly.category || "",
     hazard: isEnvironment ? "" : hazardText,
     environmentalAspect: isEnvironment ? hazardText : "",
-    consequence: `پیشنهاد سیستم بر اساس دسته‌بندی «${anomaly.category || "—"}» و سطح ریسک «${anomaly.riskLevel || "—"}» ثبت‌شده در آنومالی — پیش از تأیید نهایی بررسی و در صورت نیاز اصلاح شود.`,
+    consequence: translate(getCurrentLang(), "hcmsAutoConsequenceSuggestion", { category: anomaly.category || "—", risk: anomaly.riskLevel || "—" }),
     cause: anomaly.description || "",
     linkedAnomalyId: anomaly.id,
     createdBy: createdBy || "",

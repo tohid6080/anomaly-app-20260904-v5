@@ -416,7 +416,7 @@ export async function movePlan(plans, planId, direction) {
 export async function deletePlan(id) {
   const usedBy = await sb(`companies?plan_id=eq.${id}&select=id,name&limit=5`, {}, "super_admin");
   if (sbOk(usedBy) && usedBy.length > 0) {
-    const names = usedBy.map((c) => c.name).join("، ");
+    const names = usedBy.map((c) => c.name).join(getCurrentLang() === "en" ? ", " : "، ");
     return { __error: true, message: tr("saPlanInUseByCompanies", { names }) };
   }
   const result = await sb(`plans?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" }, "super_admin");

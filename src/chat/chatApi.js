@@ -390,7 +390,7 @@ export async function leaveConversation(conversationId, me) {
     sender_username: me.username || "",
     sender_name: me.name || "",
     sender_role: me.role || "",
-    body: `${me.name || me.username} گفتگو را ترک کرد`,
+    body: tr("chatLeftConversation", { name: me.name || me.username }),
     is_system: true,
   };
   await sb("chat_messages", { method: "POST", body: JSON.stringify([sysPayload]), prefer: "return=minimal" });

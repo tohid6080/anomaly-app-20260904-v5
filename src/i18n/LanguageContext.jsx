@@ -44,6 +44,6 @@ export function LanguageProvider({ children }) {
 
 export function useLanguage() {
   const ctx = useContext(LanguageContext);
-  if (!ctx) throw new Error("useLanguage باید داخل LanguageProvider استفاده شود");
+  if (!ctx) throw new Error("useLanguage must be used within a LanguageProvider");
   return ctx;
 }

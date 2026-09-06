@@ -57,7 +57,7 @@ async function fetchServerUpdatedAt(table, idField, id) {
 
 async function applyQueueItem(item) {
   const mapping = MODULE_TABLE_MAP[item.module];
-  if (!mapping) return { ok: false, permanent: true, error: `ماژول «${item.module}» برای همگام‌سازی ثبت نشده است` };
+  if (!mapping) return { ok: false, permanent: true, error: tr("errSyncModuleNotRegistered", { module: item.module }) };
   const { table, idField } = mapping;
 
   // اگر این آیتم یک فایل base64 معلق دارد (موقع آفلاین‌بودن ذخیره شده)،
@@ -67,7 +67,7 @@ async function applyQueueItem(item) {
       const url = await uploadBase64ToStorage(item.fileUpload.bucket, item.fileUpload.path, item.fileUpload.base64Data, item.fileUpload.contentType);
       item = { ...item, payload: { ...item.payload, [item.fileUpload.fieldName]: url } };
     } catch (e) {
-      return { ok: false, error: `خطا در آپلود فایل: ${String(e?.message || e)}` };
+      return { ok: false, error: tr("errFileUploadReason", { detail: String(e?.message || e) }) };
     }
   }
 

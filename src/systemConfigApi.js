@@ -140,7 +140,7 @@ export async function loadAppearanceConfig() {
   if (sbOk(rows)) rows.forEach((r) => { map[r.key] = r.value_numeric != null ? r.value_numeric : r.value_text; });
   return {
     systemName: map.appearance_system_name || "IHMS",
-    systemTitle: map.appearance_system_title || "سامانه مدیریت HSE",
+    systemTitle: map.appearance_system_title || tr("defaultSystemTitle"),
     logoUrl: map.appearance_logo_url || "",
     faviconUrl: map.appearance_favicon_url || "",
     apkIconUrl: map.appearance_apk_icon_url || "",

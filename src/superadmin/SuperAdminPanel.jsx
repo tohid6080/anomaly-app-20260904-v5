@@ -1951,7 +1951,7 @@ function TrialRequestsPage({ currentAdmin }) {
                             <p style={{ margin: 0 }}>{t("saTrIndustry")}<b>{r.industry || "—"}</b></p>
                             <p style={{ margin: 0 }}>{t("saTrEmailLabel")}<b style={{ direction: "ltr", display: "inline-block" }}>{r.email || "—"}</b></p>
                             <p style={{ margin: 0, gridColumn: "1 / -1" }}>
-                              {t("saTrDesiredModules")}<b>{r.desiredModules.length > 0 ? r.desiredModules.map(trialModuleLabel).join("، ") : "—"}</b>
+                              {t("saTrDesiredModules")}<b>{r.desiredModules.length > 0 ? r.desiredModules.map(trialModuleLabel).join(getCurrentLang() === "en" ? ", " : "، ") : "—"}</b>
                             </p>
                           </div>
                           {r.description && <p style={{ fontSize: 12, color: THEME.text2, lineHeight: 1.8, margin: "0 0 10px", whiteSpace: "pre-wrap" }}>{t("saTrDescriptionLabel", { desc: r.description })}</p>}

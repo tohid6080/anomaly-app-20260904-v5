@@ -1,4 +1,7 @@
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../shared.js";
+import { translate, getCurrentLang } from "../i18n/translations.js";
+
+const tr = (key, params) => translate(getCurrentLang(), key, params);
 
 /**
  * Uploads base64 image/document data to a Supabase Storage bucket instead
@@ -38,7 +41,7 @@ export async function uploadBase64ToStorage(bucket, path, base64Data, contentTyp
     // status ثبت می‌شود تا فراخوان بتواند «سرور واقعاً رد کرد» (مثلاً باکت
     // وجود ندارد یا policy اجازه نمی‌دهد) را از «قطعی واقعی شبکه» تشخیص
     // بدهد — این دو باید رفتار کاملاً متفاوتی داشته باشند.
-    const err = new Error(`خطا در آپلود فایل: ${text || res.status}`);
+    const err = new Error(tr("errFileUploadReason", { detail: text || res.status }));
     err.status = res.status;
     throw err;
   }
@@ -65,6 +68,6 @@ export async function deleteFromStorage(bucket, path) {
   });
   if (!res.ok && res.status !== 404) {
     const text = await res.text().catch(() => "");
-    throw new Error(`خطا در حذف فایل از Storage: ${text || res.status}`);
+    throw new Error(tr("errStorageDeleteReason", { detail: text || res.status }));
   }
 }

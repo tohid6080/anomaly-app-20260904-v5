@@ -106,7 +106,7 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
   const handleSubmitForReview = async () => {
     if (!validateBasics()) return;
     if (missingRequired.length > 0) {
-      setError(t("errUploadRequiredBefore", { list: missingRequired.map((d) => t(d.labelKey)).join("، ") }));
+      setError(t("errUploadRequiredBefore", { list: missingRequired.map((d) => t(d.labelKey)).join(dir === "rtl" ? "، " : ", ") }));
       return;
     }
     setSubmitting(true);
@@ -321,7 +321,7 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
 
           {missingRequired.length > 0 && (
             <p style={{ fontSize: 11.5, color: THEME.danger, marginBottom: 10 }}>
-              {t("mfRemainingRequiredDocs", { list: missingRequired.map((d) => t(d.labelKey)).join("، ") })}
+              {t("mfRemainingRequiredDocs", { list: missingRequired.map((d) => t(d.labelKey)).join(dir === "rtl" ? "، " : ", ") })}
             </p>
           )}
 

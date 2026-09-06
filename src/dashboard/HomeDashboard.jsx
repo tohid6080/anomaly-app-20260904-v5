@@ -182,10 +182,10 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
     const list = [];
     const worstAnomaly = [...contractorRows].sort((a, b) => b.openAnomalies - a.openAnomalies)[0];
     if (worstAnomaly && worstAnomaly.openAnomalies > 0) {
-      list.push({ type: "warn", text: `شرکت ${worstAnomaly.name} با ${worstAnomaly.openAnomalies} مورد، بیشترین تعداد آنومالی باز را دارد.` });
+      list.push({ type: "warn", text: t("hdInsightWorstAnomalyCompany", { name: worstAnomaly.name, count: worstAnomaly.openAnomalies }) });
     }
     contractorRows.filter((c) => c.needsHealth > 0).slice(0, 2).forEach((c) => {
-      list.push({ type: "warn", text: `شرکت ${c.name} دارای ${c.needsHealth} نفر نیازمند پیگیری طب کار است.` });
+      list.push({ type: "warn", text: t("hdInsightNeedsHealthFollowup", { name: c.name, count: c.needsHealth }) });
     });
     const overdueTotal = scopedCorrectiveActions.filter(caIsOverdue).length;
     if (overdueTotal > 0) {
@@ -193,8 +193,8 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
       list.push({
         type: overdueTotal >= 5 ? "danger" : "warn",
         text: worstCA && worstCA.overdueCA > 0
-          ? `${overdueTotal} اقدام اصلاحی از مهلت گذشته‌اند؛ بیشترین (${worstCA.overdueCA} مورد) مربوط به ${worstCA.name} است.`
-          : `${overdueTotal} اقدام اصلاحی از مهلت خود گذشته‌اند.`,
+          ? t("hdInsightOverdueCAWorst", { total: overdueTotal, worst: worstCA.overdueCA, name: worstCA.name })
+          : t("hdInsightOverdueCATotal", { total: overdueTotal }),
       });
     }
     const expiredMachines = machinery.filter((m) => {
@@ -202,15 +202,15 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
       return (d1 !== null && d1 <= 0) || (d2 !== null && d2 <= 0);
     });
     if (expiredMachines.length > 0) {
-      list.push({ type: "danger", text: `بیمه‌نامه یا سرتیفیکیت ${expiredMachines.length} دستگاه ماشین‌آلات منقضی شده است.` });
+      list.push({ type: "danger", text: t("hdInsightExpiredMachineryDocs", { count: expiredMachines.length }) });
     }
     const seriousIncidents = scopedIncidents.filter((i) => i.is_disabling || i.incident_type === "fatality" || i.incident_type === "disabling").length;
     if (seriousIncidents > 0) {
-      list.push({ type: "danger", text: `${seriousIncidents} حادثه‌ی ناتوان‌کننده/فوتی ثبت شده است — نیازمند تحلیل ریشه‌ای.` });
+      list.push({ type: "danger", text: t("hdInsightSeriousIncidents", { count: seriousIncidents }) });
     }
     const best = [...contractorRows].filter((c) => c.score > 0).sort((a, b) => b.score - a.score)[0];
     if (best && best.score >= 80) {
-      list.push({ type: "good", text: `عملکرد شرکت ${best.name} در رعایت الزامات HSE بسیار مناسب بوده است (امتیاز ${best.score}).` });
+      list.push({ type: "good", text: t("hdInsightBestPerformance", { name: best.name, score: best.score }) });
     }
     return list.slice(0, 6);
   }, [contractorRows, machinery, scopedCorrectiveActions, scopedIncidents]);
@@ -219,19 +219,19 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
   const urgentAlerts = useMemo(() => {
     const list = [];
     scopedAnomalies.filter((a) => a.status !== "Closed" && a.riskLevel === "High").forEach((a) => {
-      list.push({ severity: 3, text: `آنومالی بحرانی باز: ${a.trackingNumber || a.area} (${a.contractor})`, onClick: () => onNavigate({ module: "anomaly", riskFilter: "High" }) });
+      list.push({ severity: 3, text: t("hdAlertCriticalOpenAnomaly", { tracking: a.trackingNumber || a.area, contractor: a.contractor }), onClick: () => onNavigate({ module: "anomaly", riskFilter: "High" }) });
     });
     scopedCorrectiveActions.filter((r) => caIsOverdue(r) && (r.priority === "critical" || r.priority === "high")).forEach((r) => {
-      list.push({ severity: 2, text: `اقدام اصلاحی معوق (${r.priority === "critical" ? "بحرانی" : "بالا"})${r.responsible_contractor_name ? ` — ${r.responsible_contractor_name}` : ""}`, onClick: () => onNavigate({ module: "anomaly" }) });
+      list.push({ severity: 2, text: t("hdAlertOverdueCA", { priority: r.priority === "critical" ? t("caPriorityCritical") : t("caPriorityHigh") }) + (r.responsible_contractor_name ? ` — ${r.responsible_contractor_name}` : ""), onClick: () => onNavigate({ module: "anomaly" }) });
     });
     scopedPersonnel.filter((p) => p.status === "health_expired").forEach((p) => {
-      list.push({ severity: 2, text: `طب کار منقضی: ${p.fullName} (${p.contractorName})`, onClick: () => onNavigate({ module: "personnel", statusFilter: "health_expired" }) });
+      list.push({ severity: 2, text: t("hdAlertHealthExpired", { name: p.fullName, contractor: p.contractorName }), onClick: () => onNavigate({ module: "personnel", statusFilter: "health_expired" }) });
     });
     scopedMachinery.filter((m) => {
       const d1 = daysUntil(m.insurance_expiry), d2 = daysUntil(m.inspection_expiry);
       return (d1 !== null && d1 <= 0) || (d2 !== null && d2 <= 0);
     }).forEach((m) => {
-      list.push({ severity: 2, text: `مدارک منقضی‌شده: ${m.machine_name} (${m.contractor_name})`, onClick: () => onNavigate({ module: "machinery" }) });
+      list.push({ severity: 2, text: t("hdAlertMachineryDocsExpired", { name: m.machine_name, contractor: m.contractor_name }), onClick: () => onNavigate({ module: "machinery" }) });
     });
     return list.sort((a, b) => b.severity - a.severity).slice(0, 6);
   }, [scopedAnomalies, scopedPersonnel, scopedMachinery, scopedCorrectiveActions, onNavigate]);
@@ -333,7 +333,7 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
     const rows = contractorRows.map((c) => ({
       [t("colContractor")]: c.name,
       [t("colScore")]: c.score,
-      [t("colStatus")]: c.level === "green" ? "خوب" : c.level === "yellow" ? "متوسط" : "ضعیف",
+      [t("colStatus")]: c.level === "green" ? t("hdLevelGood") : c.level === "yellow" ? t("hdLevelMedium") : t("hdLevelWeak"),
       [t("colOpenAnomalies")]: c.openAnomalies,
       [t("colNeedsHealthVisit")]: c.needsHealth,
       [t("colFaultyMachinery")]: c.machineryFaulty,
@@ -409,8 +409,8 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
                 <span style={{ color: THEME.text2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 120 }}>{r.name}</span>
                 <span style={{ display: "flex", gap: 8, flexShrink: 0 }}>
                   <span style={{ fontWeight: 700 }}>{r.closeRate}%</span>
-                  <span style={{ color: THEME.text3 }}>باز {r.open}</span>
-                  <span style={{ color: r.overdue > 0 ? "#c92a2a" : THEME.text3, fontWeight: r.overdue > 0 ? 700 : 400 }}>معوق {r.overdue}</span>
+                  <span style={{ color: THEME.text3 }}>{t("hdOpenCount", { count: r.open })}</span>
+                  <span style={{ color: r.overdue > 0 ? "#c92a2a" : THEME.text3, fontWeight: r.overdue > 0 ? 700 : 400 }}>{t("hdOverdueCount", { count: r.overdue })}</span>
                 </span>
               </div>
             ))}

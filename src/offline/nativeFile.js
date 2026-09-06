@@ -76,7 +76,7 @@ export async function exportHtmlReportNativeAware(html, fileName) {
  */
 export async function downloadUrlNativeAware(url, fileName) {
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`دانلود فایل ناموفق بود (${res.status})`);
+  if (!res.ok) throw new Error(tr("errDownloadFailed", { status: res.status }));
   const blob = await res.blob();
 
   if (isNativeApp()) {
