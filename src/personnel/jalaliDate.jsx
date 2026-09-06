@@ -68,7 +68,7 @@ export function isoToJalali(iso) {
 }
 export function isoToJalaliDisplay(iso) {
   if (!iso) return "";
-  if (getCurrentLang() === "en") {
+  if (getCurrentLang() !== "fa") {
     const [gy, gm, gd] = String(iso).split("-").map(Number);
     if (!gy || !gm || !gd) return "";
     return `${gd} ${EN_MONTHS[gm - 1]} ${gy}`;
@@ -109,7 +109,7 @@ export function jalaliFileTimestamp() {
   const now = new Date();
   const hh = String(now.getHours()).padStart(2, "0");
   const mm = String(now.getMinutes()).padStart(2, "0");
-  if (getCurrentLang() === "en") {
+  if (getCurrentLang() !== "fa") {
     const iso = now.toISOString().slice(0, 10);
     return `${iso}_${hh}-${mm}`;
   }
@@ -149,7 +149,7 @@ export function JalaliDateInput({ value, onChange, allowEmpty, disabled, style }
 
   // نسخه‌ی انگلیسی: یک date input استاندارد میلادی (قرارداد مقدار همان
   // "YYYY-MM-DD" باقی می‌ماند — فقط UI انتخاب تاریخ عوض می‌شود).
-  if (lang === "en") {
+  if (lang !== "fa") {
     return (
       <input
         type="date"

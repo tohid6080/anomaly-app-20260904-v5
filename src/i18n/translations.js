@@ -1,7 +1,12 @@
-// دیکشنری مرکزی ترجمه — ساختار: { key: { fa, en } }.
+// دیکشنری مرکزی ترجمه — ساختار: { key: { fa, en, de } }.
 // این فایل حاصلِ ادغامِ دیکشنریِ کاملِ پروژهٔ مرجع (پایه) با کلیدهای همین
 // پروژه (روی هم‌نام‌ها برنده) است؛ تابعِ translate از نسخهٔ پارامترپذیرِ
 // پروژهٔ مرجع گرفته شده. جزئیات: پلنِ i18n merge.
+// ترجمهٔ آلمانی (Deutsch) در یک فایلِ جدا (translations.de.js) نگه‌داری
+// می‌شود و پایینِ همین فایل، کلید به کلید، به همین دیکشنری تزریق می‌شود —
+// تا فایلِ اصلی شلوغ نشود و افزودن/بازبینیِ آلمانی مستقل بماند.
+import { de as _deTranslations } from "./translations.de.js";
+
 export const translations = {
   "language": {
     "fa": "زبان",
@@ -8768,8 +8773,47 @@ export const translations = {
   "amRxIncCost": { "fa": "هزینه مالی (ریال)", "en": "Financial cost (Rial)" },
   "amRxIncEmployer": { "fa": "کارفرما", "en": "Employer" },
   "amRxIncContractor": { "fa": "پیمانکار", "en": "Contractor" },
-  "amRxIncDescription": { "fa": "شرح حادثه", "en": "Description" }
+  "amRxIncDescription": { "fa": "شرح حادثه", "en": "Description" },
+
+  // --- منوی «بیشتر» در هدر ---
+  "headerMoreMenu": { "fa": "بیشتر", "en": "More", "de": "Mehr" }
 };
+
+// ---------- تزریقِ ترجمهٔ آلمانی ----------
+// برای هر کلیدی که در translations.de.js مقدار دارد، شاخهٔ de را به همان
+// entry اضافه می‌کنیم. کلیدهایی که آلمانی ندارند، در translate() به انگلیسی
+// (و سپس فارسی) برمی‌گردند — پس چیزی نمی‌شکند.
+for (const _k in _deTranslations) {
+  if (translations[_k]) translations[_k].de = _deTranslations[_k];
+}
+
+// ---------- زبان‌های پشتیبانی‌شده ----------
+// یک منبعِ واحد برای منوی انتخاب زبان (Login / Header / Super Admin).
+export const SUPPORTED_LANGS = ["fa", "en", "de"];
+export const LANGUAGES = [
+  { code: "fa", label: "فارسی", flag: "🇮🇷", dir: "rtl" },
+  { code: "en", label: "English", flag: "🇬🇧", dir: "ltr" },
+  { code: "de", label: "Deutsch", flag: "🇩🇪", dir: "ltr" },
+];
+export function normalizeLang(v) {
+  return SUPPORTED_LANGS.includes(v) ? v : "fa";
+}
+// جهتِ نوشتار: فقط فارسی RTL است، انگلیسی و آلمانی LTR.
+export function dirOf(lang) {
+  return lang === "fa" ? "rtl" : "ltr";
+}
+// محلِ قالب‌بندیِ عدد: فارسی ارقام فارسی، آلمانی de-DE، بقیه en-US.
+export function numLocale(lang) {
+  return lang === "fa" ? "fa-IR" : lang === "de" ? "de-DE" : "en-US";
+}
+// نشانهٔ درصد: فقط فارسی «٪»، بقیه «%».
+export function pctSign(lang) {
+  return lang === "fa" ? "٪" : "%";
+}
+// جداکنندهٔ فهرست‌های درون‌متنی: فارسی «، »، بقیه «, ».
+export function listSep(lang) {
+  return lang === "fa" ? "، " : ", ";
+}
 
 // برای فایل‌های غیر React (لایه‌ی داده / api.js) که به Hook دسترسی ندارند اما
 // باید پیام خطای نمایشی را متناسب با زبان فعلی کاربر برگردانند. همان کلید
@@ -8790,7 +8834,7 @@ export function setActiveLangStorageKey(key) {
 export function getCurrentLang() {
   try {
     const v = localStorage.getItem(activeLangStorageKey);
-    return v === "en" ? "en" : "fa";
+    return SUPPORTED_LANGS.includes(v) ? v : "fa";
   } catch {
     return "fa";
   }
@@ -8798,7 +8842,9 @@ export function getCurrentLang() {
 
 export function translate(lang, key, params) {
   const entry = translations[key];
-  let str = entry ? (entry[lang] || entry.fa || key) : key;
+  // ترتیب برگشت: زبانِ خواسته‌شده → انگلیسی → فارسی → خودِ کلید.
+  // برای آلمانی، نبودِ ترجمه به انگلیسی برمی‌گردد (نه فارسی).
+  let str = entry ? (entry[lang] || entry.en || entry.fa || key) : key;
   if (params && typeof str === "string") {
     Object.keys(params).forEach((p) => {
       str = str.replace(new RegExp(`\\{${p}\\}`, "g"), params[p]);

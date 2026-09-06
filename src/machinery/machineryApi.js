@@ -5,7 +5,7 @@ import { getRecordsByModule, putRecord } from "../offline/offlineDb.js";
 import { checkUploadAllowed } from "../offline/dbSizeMonitor.js";
 import { parseStorageUrl, deleteFromStorage } from "../offline/storageUpload.js";
 import { deleteGateItemsForRecord } from "../hseGateApi.js";
-import { translate, getCurrentLang } from "../i18n/translations.js";
+import { translate, getCurrentLang, listSep } from "../i18n/translations.js";
 
 export const MACHINE_TYPES = [
   { value: "heavy", labelKey: "machineTypeHeavy" },
@@ -194,7 +194,7 @@ export async function updateMachineryInfo(id, rec) {
 export async function submitMachineryForReview(id, rec, uploadedDocTypes) {
   const missing = getMissingRequiredDocs(uploadedDocTypes || []);
   if (missing.length > 0) {
-    return { __error: true, message: translate(getCurrentLang(), "errMissingRequiredDocs", { list: missing.map((d) => translate(getCurrentLang(), d.labelKey)).join(getCurrentLang() === "en" ? ", " : "، ") }) };
+    return { __error: true, message: translate(getCurrentLang(), "errMissingRequiredDocs", { list: missing.map((d) => translate(getCurrentLang(), d.labelKey)).join(listSep(getCurrentLang())) }) };
   }
   const payload = { ...machineryToDb(rec), approval_status: "pending", review_note: "", updated_at: new Date().toISOString() };
   const result = await offlineWrite({ module: "machinery", table: "machinery", action: "update", id, payload });

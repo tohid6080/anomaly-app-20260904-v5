@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { AlertTriangle, Plus, X, ChevronRight, ChevronLeft, ChevronDown, ChevronsRight, ChevronsLeft, LogOut, CheckCircle2, Clock, Camera, ImagePlus, Trash2, FileSpreadsheet, FileText, User, Users, ShieldCheck, LayoutGrid, BarChart3, Briefcase, Settings, Archive, Truck, Tag, MessageCircle, GraduationCap, ShieldOff, ShieldAlert, Database, Fingerprint, Info, Sliders, TrendingUp, Search, Home, Megaphone, Sparkles, Gift, Bell, ArrowUpRight, ClipboardList } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { AlertTriangle, Plus, X, ChevronRight, ChevronLeft, ChevronDown, ChevronsRight, ChevronsLeft, LogOut, CheckCircle2, Clock, Camera, ImagePlus, Trash2, FileSpreadsheet, FileText, User, Users, ShieldCheck, LayoutGrid, BarChart3, Briefcase, Settings, Archive, Truck, Tag, MessageCircle, GraduationCap, ShieldOff, ShieldAlert, Database, Fingerprint, Info, Sliders, TrendingUp, Search, Home, Megaphone, Sparkles, Gift, Bell, ArrowUpRight, ClipboardList, MoreVertical } from "lucide-react";
 import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
 import BowTieDashboard from "./bowtie/BowTieDashboard.jsx";
@@ -39,7 +39,8 @@ import ArchiveManager from "./offline/ArchiveManager.jsx";
 import CorrectiveActionsDashboard from "./correctiveActions/CorrectiveActionsDashboard.jsx";
 import EffectivenessThresholdsManager from "./bowtie/EffectivenessThresholdsManager.jsx";
 import { LanguageProvider, useLanguage } from "./i18n/LanguageContext.jsx";
-import { translate, getCurrentLang } from "./i18n/translations.js";
+import { translate, getCurrentLang, numLocale, listSep } from "./i18n/translations.js";
+import LanguageSelect from "./i18n/LanguageSelect.jsx";
 
 // برای کدِ سطحِ ماژول (خارج از کامپوننت) که به Hook دسترسی ندارد
 const tr = (key, params) => translate(getCurrentLang(), key, params);
@@ -808,7 +809,7 @@ function JalaliDateInput({ value, onChange }) {
   // نسخه‌ی انگلیسی: یک date input استاندارد میلادی (قرارداد مقدار همان
   // "YYYY-MM-DD" باقی می‌ماند — فقط UI انتخاب تاریخ عوض می‌شود). دقیقاً
   // همان رفتار نسخه‌ی جداگانه‌ی JalaliDateInput در personnel/jalaliDate.jsx.
-  if (lang === "en") {
+  if (lang !== "fa") {
     return (
       <input
         type="date"
@@ -960,7 +961,7 @@ async function exportAnomaliesPdf(list, title) {
   const bodyRows = anomalyExportRows(list)
     .map((r) => `<tr>${Object.values(r).map((v) => `<td>${escapeHtml(v)}</td>`).join("")}</tr>`)
     .join("");
-  const html = `<!doctype html><html lang="${getCurrentLang()}" dir="${getCurrentLang() === "en" ? "ltr" : "rtl"}"><head><meta charset="utf-8"><title>${escapeHtml(title)}</title>
+  const html = `<!doctype html><html lang="${getCurrentLang()}" dir="${getCurrentLang() === "fa" ? "rtl" : "ltr"}"><head><meta charset="utf-8"><title>${escapeHtml(title)}</title>
   <style>
     body { font-family: Tahoma, Arial, sans-serif; direction: rtl; padding: 20px; color: #111; }
     h2 { text-align: center; margin-bottom: 4px; }
@@ -1036,7 +1037,7 @@ async function attemptCredentialLogin(username, password) {
 }
 
 function LoginScreen({ onLogin }) {
-  const { lang, setLang, t, dir } = useLanguage();
+  const { t, dir } = useLanguage();
   const appearance = useAppearance();
   // زبانی که هنگام زدن دکمه‌ی ورود روی صفحه‌ی ورود فعال است، همان زبانی است
   // که بعد از ورود هم می‌ماند — هیچ ترجیحِ ذخیره‌شده‌ای آن را بازنویسی نمی‌کند
@@ -1170,7 +1171,7 @@ function LoginScreen({ onLogin }) {
         <div style={{ flex: "1 1 380px", minWidth: 320, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 24px", background: THEME.surface }}>
           <div style={{ width: 340, maxWidth: "100%", direction: dir }}>
             <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
-              <LanguageToggle lang={lang} setLang={setLang} />
+              <LanguageSelect align="end" />
             </div>
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
               <IhmsLogo size={200} src={appearance?.logoUrl} />
@@ -1410,30 +1411,6 @@ function AccountDeactivatedScreen({ onExit }) {
   );
 }
 
-// تعویض فارسی/English — روی صفحه‌ی ورود و توی تنظیمات پروفایل استفاده می‌شود
-function LanguageToggle({ lang, setLang, compact }) {
-  const btn = (value, label) => (
-    <button
-      type="button"
-      onClick={() => setLang(value)}
-      style={{
-        padding: compact ? "6px 12px" : "5px 11px", borderRadius: 7, fontSize: compact ? 12.5 : 11.5, fontWeight: 600, cursor: "pointer",
-        border: `1.5px solid ${lang === value ? THEME.teal : THEME.border}`,
-        background: lang === value ? THEME.teal : "#fff", color: lang === value ? "#fff" : THEME.text2,
-        fontFamily: THEME.font,
-      }}
-    >
-      {label}
-    </button>
-  );
-  return (
-    <div style={{ display: "flex", gap: 6 }}>
-      {btn("fa", "فارسی")}
-      {btn("en", "English")}
-    </div>
-  );
-}
-
 // ---------- پروفایل کاربر ----------
 // ---------- آواتار (حروف اول نام) ----------
 function getInitials(name) {
@@ -1509,7 +1486,7 @@ function ChangePasswordSection() {
 }
 
 function ProfileView({ onBack, currentUser, roleLabel }) {
-  const { lang, setLang, t, dir } = useLanguage();
+  const { t, dir } = useLanguage();
   const [companyName, setCompanyName] = useState("");
   const [lastLogin, setLastLogin] = useState(null);
   const [phone, setPhone] = useState(currentUser?.phone || "");
@@ -1546,11 +1523,6 @@ function ProfileView({ onBack, currentUser, roleLabel }) {
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };
-
-  // انتخاب زبان بلافاصله اعمال و در localStorage همین دستگاه ذخیره می‌شود
-  // (از طریق setLang). عمداً در دیتابیسِ حساب ذخیره نمی‌شود: ترجیحِ ذخیره‌شده‌ی
-  // حساب قبلاً باعث می‌شد هنگام ورود، انتخابِ زبانِ صفحه‌ی ورود بازنویسی شود.
-  const handleLanguageChange = (value) => setLang(value);
 
   const handleToggleBiometric = async () => {
     setBioError("");
@@ -1621,11 +1593,6 @@ function ProfileView({ onBack, currentUser, roleLabel }) {
             <Field label={t("joinDate")} value={isoToJalaliDisplay(currentUser?.createdAt)} />
             <Field label={t("lastLogin")} value={lastLogin ? isoToJalaliDisplay(lastLogin) : t("firstLogin")} />
           </div>
-        </div>
-
-        <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 14, marginTop: 8 }}>
-          <p style={{ fontSize: 11, color: THEME.text3, fontWeight: 700, marginBottom: 10 }}>{t("systemLanguage")}</p>
-          <LanguageToggle lang={lang} setLang={handleLanguageChange} compact />
         </div>
 
         <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 14, marginTop: 14 }}>
@@ -3340,6 +3307,60 @@ const headerIconBtnStyle = {
   background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.22)", borderRadius: 9, cursor: "pointer",
 };
 
+// منوی «بیشتر» در هدرِ اصلی سامانه — تنظیمات / گزارش خطای سامانه / خروج را
+// جمع می‌کند تا هدر خلوت‌تر شود (به‌جای سه دکمه‌ی جدا). ساختار بازشونده مثل
+// LanguageSelect: بستن با کلیک بیرون یا Escape.
+function HeaderMoreMenu({ onSettings, onReportError, onLogout }) {
+  const { t, dir } = useLanguage();
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!open) return undefined;
+    const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("mousedown", onDoc); document.removeEventListener("keydown", onKey); };
+  }, [open]);
+  const items = [
+    { icon: Settings, label: t("settingsTooltip"), onClick: onSettings },
+    { icon: AlertTriangle, label: t("erpTitle"), onClick: onReportError },
+    { icon: LogOut, label: t("logout"), onClick: onLogout, danger: true },
+  ];
+  return (
+    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
+      <button type="button" onClick={() => setOpen((v) => !v)} style={headerIconBtnStyle}
+        title={t("headerMoreMenu")} aria-haspopup="menu" aria-expanded={open}>
+        <MoreVertical size={16} color="#fff" />
+      </button>
+      {open && (
+        <div role="menu" style={{
+          position: "absolute", top: "calc(100% + 6px)", ...(dir === "rtl" ? { left: 0 } : { right: 0 }),
+          zIndex: 60, minWidth: 208, background: "#fff", borderRadius: 10, border: `1px solid ${THEME.border}`,
+          boxShadow: "0 6px 24px -6px rgba(15,42,63,0.22), 0 2px 6px rgba(15,42,63,0.08)", padding: 5, direction: dir,
+        }}>
+          {items.map((it, i) => (
+            <button key={i} type="button" role="menuitem"
+              onClick={() => { setOpen(false); it.onClick && it.onClick(); }}
+              style={{
+                display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 11px",
+                borderRadius: 7, border: "none", cursor: "pointer", background: "transparent",
+                color: it.danger ? THEME.danger : THEME.text2, fontSize: 13, fontWeight: 600,
+                fontFamily: THEME.font, textAlign: dir === "rtl" ? "right" : "left",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = it.danger ? "#fdecec" : "#f4f6f9")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+            >
+              <it.icon size={15} style={{ flexShrink: 0 }} />
+              <span style={{ flex: 1 }}>{it.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DashboardHeader({ panelLabelKey, currentUser, onLogout, onOpenSettings, smartItems, onNavigate, currentModuleKey }) {
   const { t, dir } = useLanguage();
   const appearance = useAppearance();
@@ -3403,12 +3424,15 @@ function DashboardHeader({ panelLabelKey, currentUser, onLogout, onOpenSettings,
           )}
         </div>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0, flexWrap: "nowrap", justifyContent: "flex-end" }}>
         <HeaderAboutButton />
         {smartItems && <NotificationPanel smartItems={smartItems} onNavigate={onNavigate} />}
-        <button type="button" onClick={() => setShowReportError(true)} style={headerIconBtnStyle} title={t("erpTitle")}>
-          <AlertTriangle size={16} color="#fff" />
-        </button>
+        <LanguageSelect variant="dark" compact />
+        <HeaderMoreMenu
+          onSettings={onOpenSettings}
+          onReportError={() => setShowReportError(true)}
+          onLogout={() => { if (window.confirm(t("saLogoutConfirm"))) onLogout(); }}
+        />
         {showReportError && (
           <ReportErrorModal
             currentUser={currentUser}
@@ -3417,15 +3441,6 @@ function DashboardHeader({ panelLabelKey, currentUser, onLogout, onOpenSettings,
             onClose={() => setShowReportError(false)}
           />
         )}
-        <button type="button" onClick={onOpenSettings} style={headerIconBtnStyle} title={t("settingsTooltip")}>
-          <Settings size={16} color="#fff" />
-        </button>
-        <button
-          style={{ ...styles.logoutButton, padding: "8px clamp(10px, 3vw, 16px)" }}
-          onClick={() => { if (window.confirm(t("saLogoutConfirm"))) onLogout(); }}
-        >
-          <LogOut size={14} style={{ marginLeft: 6 }} />{t("logout")}
-        </button>
       </div>
     </div>
   );
@@ -3795,7 +3810,7 @@ function TasksCard({ tasks, onTaskClick }) {
           <ClipboardList size={15} color={THEME.teal} /> {t("tasksCardTitle")}
         </h3>
         {tasks && tasks.length > 0 && (
-          <span style={{ fontSize: 11, color: THEME.text3, fontWeight: 600 }}>{tasks.length.toLocaleString(getCurrentLang() === "en" ? "en-US" : "fa-IR")}</span>
+          <span style={{ fontSize: 11, color: THEME.text3, fontWeight: 600 }}>{tasks.length.toLocaleString(numLocale(getCurrentLang()))}</span>
         )}
       </div>
       {tasks === null && <p style={{ fontSize: 12, color: THEME.text3, margin: 0 }}>{t("commonLoading")}</p>}
@@ -4006,7 +4021,7 @@ function MobileAnnouncementBanner({ setView }) {
         </span>
         {visible.length > 1 && (
           <span style={{ fontSize: 10, fontWeight: 700, color: "#fff", background: THEME.teal, borderRadius: 999, minWidth: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px", flexShrink: 0 }}>
-            {visible.length.toLocaleString(getCurrentLang() === "en" ? "en-US" : "fa-IR")}
+            {visible.length.toLocaleString(numLocale(getCurrentLang()))}
           </span>
         )}
         <ChevronDown size={15} color={THEME.text3} style={{ flexShrink: 0 }} />
@@ -4076,7 +4091,7 @@ function AdminDashboard({ onLogout, currentUser }) {
     // display_label_en و در حالت فارسی display_label. هرکدام که خالی باشد،
     // به ترجمه‌ی i18n برمی‌گردد. در وب و موبایل یکسان است.
     if (cfg) {
-      const custom = lang === "en" ? cfg.displayLabelEn : cfg.displayLabel;
+      const custom = lang === "en" ? cfg.displayLabelEn : (lang === "fa" ? cfg.displayLabel : "");
       if (typeof custom === "string" && custom.trim()) return custom.trim();
     }
     return m?.labelKey ? t(m.labelKey) : m?.label;
@@ -4327,7 +4342,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
     // display_label_en و در حالت فارسی display_label. هرکدام که خالی باشد،
     // به ترجمه‌ی i18n برمی‌گردد. در وب و موبایل یکسان است.
     if (cfg) {
-      const custom = lang === "en" ? cfg.displayLabelEn : cfg.displayLabel;
+      const custom = lang === "en" ? cfg.displayLabelEn : (lang === "fa" ? cfg.displayLabel : "");
       if (typeof custom === "string" && custom.trim()) return custom.trim();
     }
     return m?.labelKey ? t(m.labelKey) : m?.label;
@@ -4587,7 +4602,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
     // display_label_en و در حالت فارسی display_label. هرکدام که خالی باشد،
     // به ترجمه‌ی i18n برمی‌گردد. در وب و موبایل یکسان است.
     if (cfg) {
-      const custom = lang === "en" ? cfg.displayLabelEn : cfg.displayLabel;
+      const custom = lang === "en" ? cfg.displayLabelEn : (lang === "fa" ? cfg.displayLabel : "");
       if (typeof custom === "string" && custom.trim()) return custom.trim();
     }
     return m?.labelKey ? t(m.labelKey) : m?.label;
@@ -4853,7 +4868,7 @@ class ErrorBoundary extends React.Component {
     if (this.state.error) {
       const currentUser = this.getCurrentUserForReport();
       return (
-        <div style={{ padding: 24, fontFamily: "Tahoma, Arial, sans-serif", direction: getCurrentLang() === "en" ? "ltr" : "rtl", maxWidth: 560, margin: "40px auto" }}>
+        <div style={{ padding: 24, fontFamily: "Tahoma, Arial, sans-serif", direction: getCurrentLang() === "fa" ? "rtl" : "ltr", maxWidth: 560, margin: "40px auto" }}>
           <h3 style={{ color: "#c92a2a" }}>{tr("errBoundaryTitle")}</h3>
           <p style={{ fontSize: 13, color: "#555" }}>{tr("errBoundaryDesc")}</p>
           <pre style={{ whiteSpace: "pre-wrap", fontSize: 12, color: "#991b1b", background: "#fee2e2", padding: 12, borderRadius: 8 }}>

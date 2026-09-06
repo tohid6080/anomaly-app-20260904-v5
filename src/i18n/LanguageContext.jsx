@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
-import { translate, setActiveLangStorageKey } from "./translations.js";
+import { translate, setActiveLangStorageKey, normalizeLang, dirOf } from "./translations.js";
 
 const LanguageContext = createContext(null);
 
@@ -7,8 +7,7 @@ const DEFAULT_STORAGE_KEY = "ihms_lang";
 
 function readStoredLang(storageKey) {
   try {
-    const v = localStorage.getItem(storageKey || DEFAULT_STORAGE_KEY);
-    return v === "en" ? "en" : "fa";
+    return normalizeLang(localStorage.getItem(storageKey || DEFAULT_STORAGE_KEY));
   } catch {
     return "fa";
   }
@@ -30,7 +29,7 @@ export function LanguageProvider({ children, storageKey = DEFAULT_STORAGE_KEY })
   const [lang, setLangState] = useState(() => readStoredLang(storageKey));
 
   const setLang = useCallback((next) => {
-    const value = next === "en" ? "en" : "fa";
+    const value = normalizeLang(next);
     setLangState(value);
     try { localStorage.setItem(storageKey, value); } catch { /* بی‌اهمیت */ }
   }, [storageKey]);
@@ -38,7 +37,7 @@ export function LanguageProvider({ children, storageKey = DEFAULT_STORAGE_KEY })
   // پارامترِ اختیاریِ params برای درون‌ریزیِ جای‌نگه‌دارهای {name} در متنِ
   // ترجمه — سازگار با فراخوانی‌های بدونِ پارامترِ موجود.
   const t = useCallback((key, params) => translate(lang, key, params), [lang]);
-  const dir = lang === "en" ? "ltr" : "rtl";
+  const dir = dirOf(lang);
 
   // جهت و زبانِ ریشه‌ی صفحه (<html>) را با زبان فعال هم‌گام می‌کنیم تا کلِ
   // درخت — کارت‌ها، جدول‌ها، فرم‌ها، دکمه‌ها — در حالت انگلیسی به‌صورت LTR

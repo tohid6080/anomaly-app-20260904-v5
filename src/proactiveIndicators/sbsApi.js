@@ -9,7 +9,7 @@ export const seasonLabel = (season) => tr(SEASON_KEY[season] || season);
 // متنِ جداول مرجع SBS دوزبانه است (title_fa/title_en, text_fa/text_en). در
 // حالت انگلیسی متنِ انگلیسی و در غیر این صورت فارسی برگردانده می‌شود؛ اگر
 // ترجمه‌ی انگلیسی خالی باشد به فارسی برمی‌گردد.
-const pickLang = (fa, en) => (getCurrentLang() === "en" && en ? en : (fa || ""));
+const pickLang = (fa, en) => (getCurrentLang() !== "fa" && en ? en : (fa || ""));
 
 /**
  * زیرماژول SBS (نمونه‌برداری از رفتارهای ایمنی) — پورت وفادار از

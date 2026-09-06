@@ -1,6 +1,6 @@
 import { sb, sbOk, SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "../shared.js";
 import { issueSessionToken, getSessionToken } from "../sessionToken.js";
-import { translate, getCurrentLang } from "../i18n/translations.js";
+import { translate, getCurrentLang, listSep, numLocale } from "../i18n/translations.js";
 
 // پیام‌های نمایشی این لایه‌ی داده باید با زبان فعلی کاربر هماهنگ باشند —
 // همان الگوی مستندشده در translations.js برای فایل‌های غیر React.
@@ -188,7 +188,7 @@ export function computeMonthlyPaymentAlarm(company, payments) {
     return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
   });
   if (paidThisMonth) return { overdue: false, labelKey: "monthlyAlarmPaid", color: "#166534", bg: "#dcfce7" };
-  return { overdue: true, label: tr("monthlyAlarmOverdue", { amount: monthlyAmount.toLocaleString(getCurrentLang() === "en" ? "en-US" : "fa-IR") }), color: "#b91c1c", bg: "#fee2e2" };
+  return { overdue: true, label: tr("monthlyAlarmOverdue", { amount: monthlyAmount.toLocaleString(numLocale(getCurrentLang())) }), color: "#b91c1c", bg: "#fee2e2" };
 }
 
 // معوق: هنوز بدهی باقی مانده و دوره‌ی اشتراک هم به پایان رسیده
@@ -416,7 +416,7 @@ export async function movePlan(plans, planId, direction) {
 export async function deletePlan(id) {
   const usedBy = await sb(`companies?plan_id=eq.${id}&select=id,name&limit=5`, {}, "super_admin");
   if (sbOk(usedBy) && usedBy.length > 0) {
-    const names = usedBy.map((c) => c.name).join(getCurrentLang() === "en" ? ", " : "، ");
+    const names = usedBy.map((c) => c.name).join(listSep(getCurrentLang()));
     return { __error: true, message: tr("saPlanInUseByCompanies", { names }) };
   }
   const result = await sb(`plans?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" }, "super_admin");

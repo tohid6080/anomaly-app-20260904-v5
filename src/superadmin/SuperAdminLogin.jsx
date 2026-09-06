@@ -3,9 +3,10 @@ import { Lock, ShieldAlert } from "lucide-react";
 import { THEME } from "../shared.js";
 import { superAdminLogin } from "./superAdminApi.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import LanguageSelect from "../i18n/LanguageSelect.jsx";
 
 export default function SuperAdminLogin({ onLogin }) {
-  const { t, dir, lang, setLang } = useLanguage();
+  const { t, dir } = useLanguage();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -21,26 +22,11 @@ export default function SuperAdminLogin({ onLogin }) {
     onLogin(result);
   };
 
-  const langBtn = (value, label) => (
-    <button
-      type="button" onClick={() => setLang(value)}
-      style={{
-        padding: "5px 12px", borderRadius: 7, fontSize: 11.5, fontWeight: 600, cursor: "pointer",
-        border: `1.5px solid ${lang === value ? THEME.teal : THEME.border}`,
-        background: lang === value ? THEME.teal : "#fff", color: lang === value ? "#fff" : THEME.text2,
-        fontFamily: THEME.font,
-      }}
-    >
-      {label}
-    </button>
-  );
-
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: THEME.navyDeep, fontFamily: THEME.font, padding: 20, direction: dir }}>
       <div style={{ background: THEME.surface, borderRadius: 16, padding: 32, width: "100%", maxWidth: 380, textAlign: "center" }}>
-        <div style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 18 }}>
-          {langBtn("fa", "فارسی")}
-          {langBtn("en", "English")}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 18 }}>
+          <LanguageSelect align="start" />
         </div>
         <div style={{ width: 56, height: 56, borderRadius: "50%", background: THEME.navyDeep, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
           <ShieldAlert size={26} color="#fff" />

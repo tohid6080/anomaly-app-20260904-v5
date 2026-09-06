@@ -4,6 +4,7 @@ import { styles, THEME } from "../shared.js";
 import { loadContractorOptions } from "../personnel/personnelApi.js";
 import { createSbsAssignment } from "./sbsApi.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { numLocale, pctSign } from "../i18n/translations.js";
 
 /**
  * ماشین‌حساب تعیین حجم نمونه SBS — پورت دقیق فرمول فایل راهنمای HSE
@@ -116,10 +117,10 @@ export default function SbsSampleSizeCalculator({ currentUser, onClose, onSent }
       {result && (
         <div style={{ background: THEME.bg, borderRadius: 9, padding: 14, marginTop: 14 }}>
           <p style={{ fontSize: 12.5, color: THEME.text2, margin: "0 0 4px" }}>
-            {t("sbsPilotUnsafeRatio")}<b style={{ color: THEME.navy }}>{(result.p * 100).toFixed(1)}{lang === "en" ? "%" : "٪"}</b>
+            {t("sbsPilotUnsafeRatio")}<b style={{ color: THEME.navy }}>{(result.p * 100).toFixed(1)}{pctSign(lang)}</b>
           </p>
           <p style={{ fontSize: 16, fontWeight: 800, color: THEME.teal, margin: "6px 0" }}>
-            {t("sbsTotalSampleNeeded", { n: result.n.toLocaleString(lang === "en" ? "en-US" : "fa-IR") })}
+            {t("sbsTotalSampleNeeded", { n: result.n.toLocaleString(numLocale(lang)) })}
           </p>
         </div>
       )}
@@ -131,7 +132,7 @@ export default function SbsSampleSizeCalculator({ currentUser, onClose, onSent }
           {perPerson != null && (
             <div style={{ background: "#eaf0fa", borderRadius: 9, padding: 12, marginTop: 10 }}>
               <p style={{ fontSize: 12.5, color: "#2c4a6b", margin: 0, lineHeight: 1.9 }}>
-                {t("sbsPerPersonNote", { n: result.n.toLocaleString(lang === "en" ? "en-US" : "fa-IR"), pop: pop.toLocaleString(lang === "en" ? "en-US" : "fa-IR"), per: perPerson, total: finalTotalIndividual.toLocaleString(lang === "en" ? "en-US" : "fa-IR") })}
+                {t("sbsPerPersonNote", { n: result.n.toLocaleString(numLocale(lang)), pop: pop.toLocaleString(numLocale(lang)), per: perPerson, total: finalTotalIndividual.toLocaleString(numLocale(lang)) })}
               </p>
             </div>
           )}
@@ -171,10 +172,10 @@ export default function SbsSampleSizeCalculator({ currentUser, onClose, onSent }
                   {workshopBreakdown.map((w) => (
                     <tr key={w.name} style={{ borderBottom: `1px solid ${THEME.border}` }}>
                       <td style={{ padding: "6px 8px" }}>{w.name}</td>
-                      <td style={{ padding: "6px 8px", textAlign: "center" }}>{w.workers.toLocaleString(lang === "en" ? "en-US" : "fa-IR")}</td>
-                      <td style={{ padding: "6px 8px", textAlign: "center" }}>{w.share.toLocaleString(lang === "en" ? "en-US" : "fa-IR")}</td>
+                      <td style={{ padding: "6px 8px", textAlign: "center" }}>{w.workers.toLocaleString(numLocale(lang))}</td>
+                      <td style={{ padding: "6px 8px", textAlign: "center" }}>{w.share.toLocaleString(numLocale(lang))}</td>
                       <td style={{ padding: "6px 8px", textAlign: "center", fontWeight: 700, color: THEME.navy }}>
-                        {w.finalTotal.toLocaleString(lang === "en" ? "en-US" : "fa-IR")} <span style={{ color: THEME.text3, fontWeight: 400 }}>{t("sbsPerPersonSuffix", { per: w.perPerson })}</span>
+                        {w.finalTotal.toLocaleString(numLocale(lang))} <span style={{ color: THEME.text3, fontWeight: 400 }}>{t("sbsPerPersonSuffix", { per: w.perPerson })}</span>
                       </td>
                     </tr>
                   ))}

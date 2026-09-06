@@ -17,6 +17,7 @@ import { mergeWidgetConfig, defaultWidgetConfig } from "./dashboardWidgets.js";
 import { INCIDENT_TYPES } from "../incidents/incidentsApi.js";
 import { TRIPOD_STATUS_LABELS } from "../tripodBeta/tripodAnalysesApi.js";
 import { accidentPronenessLevel } from "../proactiveIndicators/proactiveIndicatorsApi.js";
+import { numLocale } from "../i18n/translations.js";
 
 /**
  * Executive / management dashboard — a dense, single-screen overview for a
@@ -450,7 +451,7 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
                 <MiniBarChart data={incidentPyramid} />
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10.5, color: THEME.text2, margin: "8px 0 4px" }}>
                   <span>{t("dashLostDays")}</span>
-                  <span style={{ fontWeight: 700 }}>{totalLostDays.toLocaleString(lang === "en" ? "en-US" : "fa-IR")}</span>
+                  <span style={{ fontWeight: 700 }}>{totalLostDays.toLocaleString(numLocale(lang))}</span>
                 </div>
                 <MiniBarChart data={incidentTrend.map(([m, c]) => ({ label: m.slice(5), value: c, color: "#c92a2a" }))} />
               </>
@@ -466,7 +467,7 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
               rcaRows.map((r) => (
                 <div key={r.label} style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: THEME.text2, padding: "4px 0", borderBottom: `1px solid ${THEME.border}` }}>
                   <span>{r.label}</span>
-                  <span style={{ fontWeight: 700 }}>{r.value.toLocaleString(lang === "en" ? "en-US" : "fa-IR")}</span>
+                  <span style={{ fontWeight: 700 }}>{r.value.toLocaleString(numLocale(lang))}</span>
                 </div>
               ))
             )}
@@ -483,17 +484,17 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
                   <span>{t("dashAvgProneness")}</span>
                   {proactiveSummary.apAvg != null ? (
                     <span style={{ fontWeight: 700, padding: "1px 8px", borderRadius: 999, background: proactiveSummary.apLevel.bg, color: proactiveSummary.apLevel.color }}>
-                      {proactiveSummary.apAvg.toLocaleString(lang === "en" ? "en-US" : "fa-IR")} · {proactiveSummary.apLevel.level}
+                      {proactiveSummary.apAvg.toLocaleString(numLocale(lang))} · {proactiveSummary.apLevel.level}
                     </span>
                   ) : <span style={{ color: THEME.text3 }}>—</span>}
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: THEME.text2, padding: "4px 0" }}>
                   <span>{t("dashLatestClimate")}</span>
-                  <span style={{ fontWeight: 700 }}>{proactiveSummary.latestClimate != null ? proactiveSummary.latestClimate.toLocaleString(lang === "en" ? "en-US" : "fa-IR") : "—"}</span>
+                  <span style={{ fontWeight: 700 }}>{proactiveSummary.latestClimate != null ? proactiveSummary.latestClimate.toLocaleString(numLocale(lang)) : "—"}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: THEME.text2, padding: "4px 0" }}>
                   <span>{t("dashAssessmentCount")}</span>
-                  <span style={{ fontWeight: 700 }}>{proactiveSummary.count.toLocaleString(lang === "en" ? "en-US" : "fa-IR")}</span>
+                  <span style={{ fontWeight: 700 }}>{proactiveSummary.count.toLocaleString(numLocale(lang))}</span>
                 </div>
                 {proactiveSummary.climateTrend.length > 1 && (
                   <MiniBarChart data={proactiveSummary.climateTrend.map(([m, v]) => ({ label: m.slice(5), value: v, color: THEME.teal }))} />

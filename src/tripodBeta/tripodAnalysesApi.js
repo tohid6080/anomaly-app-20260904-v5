@@ -165,7 +165,7 @@ export async function updateAnalysisFields(analysisId, fields) {
 // ---------- اهداف (Targets) ----------
 
 // متنِ دوزبانه: در حالت انگلیسی en و در حالت فارسی fa (با fallback به fa).
-const refLang = (fa, en) => (getCurrentLang() === "en" && en ? en : (fa || ""));
+const refLang = (fa, en) => (getCurrentLang() !== "fa" && en ? en : (fa || ""));
 
 export async function loadTargets(analysisId) {
   const rows = await sb(`tripod_targets?analysis_id=eq.${analysisId}&select=*,tripod_ref_target_category(title_fa,title_en)`);

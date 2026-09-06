@@ -76,7 +76,7 @@ export async function exportCanvasPdf(svgEl, title) {
   const svgString = new XMLSerializer().serializeToString(clone);
 
   const lang = getCurrentLang();
-  const rtlDir = lang === "en" ? "ltr" : "rtl";
+  const rtlDir = lang === "fa" ? "rtl" : "ltr";
   const html = `<!doctype html><html lang="${lang}" dir="${rtlDir}"><head><meta charset="utf-8"><title>${escapeHtml(title)}</title>
   <style>
     body { font-family: Tahoma, Arial, sans-serif; direction: ${rtlDir}; padding: 16px; }

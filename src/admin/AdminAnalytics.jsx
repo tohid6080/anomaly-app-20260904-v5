@@ -4,7 +4,7 @@ import { THEME, styles } from "../shared.js";
 import { JalaliDateInput, toJalaliSafe } from "../personnel/jalaliDate.jsx";
 import { loadActivitySummary } from "./activityApi.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
-import { translate, getCurrentLang } from "../i18n/translations.js";
+import { translate, getCurrentLang, numLocale } from "../i18n/translations.js";
 
 const ROLE_LABEL_KEY = { ADMIN: "roleLabelAdmin", EMPLOYER: "roleLabelEmployer", CONTRACTOR: "roleLabelContractor" };
 
@@ -12,7 +12,7 @@ function formatTime(iso) {
   if (!iso) return "—";
   const d = new Date(iso);
   const lang = getCurrentLang();
-  return d.toLocaleTimeString(lang === "en" ? "en-US" : "fa-IR", { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleTimeString(numLocale(lang), { hour: "2-digit", minute: "2-digit" });
 }
 function formatDuration(ms) {
   if (ms === null || ms === undefined) return "—";

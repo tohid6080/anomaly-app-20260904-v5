@@ -8,6 +8,7 @@ import { computeTripodCandidateFlag } from "../tripodBeta/incidentSource.js";
 import TripodAnalysisWorkspace from "../tripodBeta/TripodAnalysisWorkspace.jsx";
 import BarrierMappingPicker from "../bowtie/BarrierMappingPicker.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { numLocale } from "../i18n/translations.js";
 
 /**
  * صفحه‌ی جزئیات حادثه — شامل دکمه‌ی «درخواست تحلیل Tripod Beta» طبق بخش ۳
@@ -80,7 +81,7 @@ export default function IncidentDetailPage({ incidentId, currentUser, role, read
           <Field label={t("incColDisabling")} value={incident.isDisabling ? t("commonYes") : t("commonNo")} />
           <Field label={t("incLostDays")} value={incident.lostDays} />
           <Field label={t("incInjuredNameShort")} value={incident.injuredPersonName} />
-          <Field label={t("incFinancialCostShort")} value={incident.financialCost != null ? incident.financialCost.toLocaleString(lang === "en" ? "en-US" : "fa-IR") : ""} />
+          <Field label={t("incFinancialCostShort")} value={incident.financialCost != null ? incident.financialCost.toLocaleString(numLocale(lang)) : ""} />
           <Field label={t("incEmployerOrg")} value={incident.employerOrg} />
           <Field label={t("incContractorOrg")} value={incident.contractorOrg} />
         </div>

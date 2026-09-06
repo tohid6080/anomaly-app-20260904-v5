@@ -267,7 +267,7 @@ async function buildAnomalyArchive(setProgress, performedBy, currentUser) {
   // جهت راست‌به‌چپ واقعی شیت) از ExcelJS استفاده می‌شود — فقط همین‌جا،
   // بقیه‌ی ماژول‌های آرشیو دست‌نخورده با همان xlsx قبلی کار می‌کنند.
   const lang = getCurrentLang();
-  const isEn = lang === "en";
+  const isEn = lang !== "fa";
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet(translate(lang, "expXlsSheetName"), { views: [{ rightToLeft: !isEn, state: "frozen", xSplit: 3, ySplit: 2 }] });
 
@@ -659,7 +659,7 @@ async function buildScaffoldArchive(setProgress, performedBy, currentUser) {
   }
 
   const lang = getCurrentLang();
-  const isEn = lang === "en";
+  const isEn = lang !== "fa";
   // ستون‌ها دقیقاً مطابق فایل نمونه‌ی پیوستی — همان ترتیب قبلی، بدون تغییر محتوایی
   const headers = [
     translate(lang, "exportColRow"), translate(lang, "amSColTagNumber"), translate(lang, "amSColLocation"), translate(lang, "amSColCompanyName"), translate(lang, "amSColErectionDate"), translate(lang, "amSColOkNotOk"), translate(lang, "amSColRemovalDate"), translate(lang, "amSColDescription"),

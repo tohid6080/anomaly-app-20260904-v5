@@ -34,7 +34,7 @@ function HseGuideOverlay({ onClose }) {
         </button>
       </div>
       <iframe
-        src={`${import.meta.env.BASE_URL}${lang === "en" ? "hse_guide_en.html" : "hse_guide.html"}`}
+        src={`${import.meta.env.BASE_URL}${lang === "fa" ? "hse_guide.html" : "hse_guide_en.html"}`}
         title={t("pidGuideIframeTitle")}
         style={{ flex: 1, width: "100%", border: "none" }}
       />
@@ -69,7 +69,7 @@ export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role
     loadActiveIndicators().then((rows) => { setIndicators(rows); setLoading(false); });
     loadModuleConfig().then((cfg) => {
       const row = cfg?.find((c) => c.moduleKey === "proactiveIndicators");
-      const custom = row ? (lang === "en" ? row.displayLabelEn : row.displayLabel) : "";
+      const custom = row ? (lang === "en" ? row.displayLabelEn : (lang === "fa" ? row.displayLabel : "")) : "";
       if (custom && custom.trim()) setModuleTitle(custom.trim());
       else setModuleTitle("");
     }).catch(() => {});

@@ -6,7 +6,7 @@ import { getCurrentLang } from "../i18n/translations.js";
 // متنِ هر ردیف دوزبانه است (text_fa / text_en, title_fa / title_en). در
 // حالت انگلیسی متنِ انگلیسی و در حالت فارسی متنِ فارسی نمایش داده می‌شود؛
 // اگر ترجمه‌ی انگلیسی خالی باشد، به فارسی برمی‌گردد.
-const pickLang = (fa, en) => (getCurrentLang() === "en" && en ? en : (fa || ""));
+const pickLang = (fa, en) => (getCurrentLang() !== "fa" && en ? en : (fa || ""));
 
 export async function loadReferenceGroups() {
   const [groupsRes, precondsRes, hiddensRes] = await Promise.all([

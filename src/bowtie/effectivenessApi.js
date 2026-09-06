@@ -1,5 +1,5 @@
 import { sb, sbOk, getCurrentCompanyId } from "../shared.js";
-import { translate, getCurrentLang } from "../i18n/translations.js";
+import { translate, getCurrentLang, pctSign } from "../i18n/translations.js";
 import { loadAnomalyLinksForBarrier } from "./anomalyBarrierLinksApi.js";
 import { EFFECTIVENESS_STATUS } from "./bowtieApi.js";
 import { createAutoCorrectiveActionForBarrier } from "../correctiveActions/correctiveActionsApi.js";
@@ -278,7 +278,7 @@ export async function loadDegradedBarrierAlerts(scopeContractorName) {
     if (!tmpl) continue;
     items.push({
       key: `barrier-eff-${b.id}`,
-      label: `${tmpl.emoji} ${tmpl.text(b.label)} (${titleMap[b.bowtie_id] || "BowTie"} — ${b.effectiveness_score}${getCurrentLang() === "en" ? "%" : "٪"})`,
+      label: `${tmpl.emoji} ${tmpl.text(b.label)} (${titleMap[b.bowtie_id] || "BowTie"} — ${b.effectiveness_score}${pctSign(getCurrentLang())})`,
       target: { module: "bowtie", bowtieId: b.bowtie_id },
     });
   }

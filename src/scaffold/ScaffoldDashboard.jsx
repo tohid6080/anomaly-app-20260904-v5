@@ -172,7 +172,7 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
 
   const handlePrintTag = async (t) => {
     const lang = getCurrentLang();
-    const isEn = lang === "en";
+    const isEn = lang !== "fa";
     const html = `<!doctype html><html lang="${lang}" dir="${isEn ? "ltr" : "rtl"}"><head><meta charset="utf-8"><title>${i18nTranslate(lang, "scaffTagPrintTitle", { num: t.tagNumber })}</title>
     <style>
       body { font-family: Tahoma, Arial, sans-serif; direction: ${isEn ? "ltr" : "rtl"}; padding: 30px; }

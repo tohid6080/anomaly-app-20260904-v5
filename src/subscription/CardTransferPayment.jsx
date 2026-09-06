@@ -3,6 +3,7 @@ import { CreditCard, Copy, Check, Clock, Globe, ImagePlus, X } from "lucide-reac
 import { styles, THEME, resizeImageFile } from "../shared.js";
 import { loadCardTransferSettings, submitCardTransferReceipt } from "../subscriptionApi.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { numLocale } from "../i18n/translations.js";
 
 /**
  * بخش «روش‌های پرداخت» — زیر خلاصه‌ی خرید در صفحه‌ی انتخاب پلن
@@ -141,7 +142,7 @@ export default function PaymentMethodsSection({ currentUser, selectedPlan, billi
               )}
               <div style={{ marginBottom: settings.description ? 10 : 0 }}>
                 <div style={{ fontSize: 11, color: THEME.text2, marginBottom: 2 }}>{t("ctpPayableAmount")}</div>
-                <div style={{ fontSize: 15, fontWeight: 800, color: THEME.teal }}>{t("saTomanAmount", { amount: (amount || 0).toLocaleString(lang === "en" ? "en-US" : "fa-IR") })}</div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: THEME.teal }}>{t("saTomanAmount", { amount: (amount || 0).toLocaleString(numLocale(lang)) })}</div>
               </div>
               {settings.description && (
                 <p style={{ fontSize: 11.5, color: THEME.text2, lineHeight: 1.9, margin: 0, whiteSpace: "pre-wrap" }}>{settings.description}</p>

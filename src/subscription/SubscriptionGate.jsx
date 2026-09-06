@@ -8,6 +8,7 @@ import {
 } from "../subscriptionApi.js";
 import PaymentMethodsSection from "./CardTransferPayment.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { numLocale } from "../i18n/translations.js";
 
 /**
  * گیت اشتراک — درست بعد از ورود موفق (و بیومتریک، اگر فعال باشد) و قبل
@@ -187,7 +188,7 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
                       }}
                     >
                       <span style={{ fontSize: 11.5, color: THEME.text2, fontWeight: 600 }}>{t("subTypeMonthly")}</span>
-                      <span style={{ fontSize: 14, fontWeight: 800, color: THEME.navy }}>{t("saTomanAmount", { amount: p.priceMonthly.toLocaleString(lang === "en" ? "en-US" : "fa-IR") })}</span>
+                      <span style={{ fontSize: 14, fontWeight: 800, color: THEME.navy }}>{t("saTomanAmount", { amount: p.priceMonthly.toLocaleString(numLocale(lang)) })}</span>
                     </button>
                   )}
                   {hasYearly && (
@@ -201,21 +202,21 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
                       }}
                     >
                       <span style={{ fontSize: 11.5, color: THEME.text2, fontWeight: 600 }}>{t("subTypeYearly")}</span>
-                      <span style={{ fontSize: 14, fontWeight: 800, color: THEME.navy }}>{t("saTomanAmount", { amount: p.priceYearly.toLocaleString(lang === "en" ? "en-US" : "fa-IR") })}</span>
+                      <span style={{ fontSize: 14, fontWeight: 800, color: THEME.navy }}>{t("saTomanAmount", { amount: p.priceYearly.toLocaleString(numLocale(lang)) })}</span>
                     </button>
                   )}
                   {p.priceTotal > 0 && (
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", padding: "8px 12px", borderRadius: 9, border: `1.5px dashed ${THEME.border}`, background: "transparent" }}>
                       <span style={{ fontSize: 11.5, color: THEME.text2, fontWeight: 600 }}>{t("sgTotalPriceOneOff")}</span>
-                      <span style={{ fontSize: 14, fontWeight: 800, color: THEME.navy }}>{t("saTomanAmount", { amount: p.priceTotal.toLocaleString(lang === "en" ? "en-US" : "fa-IR") })}</span>
+                      <span style={{ fontSize: 14, fontWeight: 800, color: THEME.navy }}>{t("saTomanAmount", { amount: p.priceTotal.toLocaleString(numLocale(lang)) })}</span>
                     </div>
                   )}
                   {!hasMonthly && !hasYearly && p.priceTotal <= 0 && <span style={{ fontSize: 12, color: THEME.text3 }}>{t("sgNoPriceDefined")}</span>}
                 </div>
 
-                {p.maxPersonnel && <p style={{ fontSize: 11.5, color: THEME.text2, margin: "0 0 4px" }}>{t("sgMaxPersonnelLine", { n: p.maxPersonnel.toLocaleString(lang === "en" ? "en-US" : "fa-IR") })}</p>}
-                {p.maxUsers && <p style={{ fontSize: 11.5, color: THEME.text2, margin: "0 0 4px" }}>{t("sgMaxUsersLine", { n: p.maxUsers.toLocaleString(lang === "en" ? "en-US" : "fa-IR") })}</p>}
-                <p style={{ fontSize: 11.5, color: THEME.text3, margin: 0 }}>{t("sgActiveModulesCount", { n: p.features.length.toLocaleString(lang === "en" ? "en-US" : "fa-IR") })}</p>
+                {p.maxPersonnel && <p style={{ fontSize: 11.5, color: THEME.text2, margin: "0 0 4px" }}>{t("sgMaxPersonnelLine", { n: p.maxPersonnel.toLocaleString(numLocale(lang)) })}</p>}
+                {p.maxUsers && <p style={{ fontSize: 11.5, color: THEME.text2, margin: "0 0 4px" }}>{t("sgMaxUsersLine", { n: p.maxUsers.toLocaleString(numLocale(lang)) })}</p>}
+                <p style={{ fontSize: 11.5, color: THEME.text3, margin: 0 }}>{t("sgActiveModulesCount", { n: p.features.length.toLocaleString(numLocale(lang)) })}</p>
               </div>
             );
           })}
@@ -226,7 +227,7 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
             <h4 style={{ fontSize: 13, fontWeight: 700, color: THEME.navy, margin: "0 0 10px" }}>{t("sgPurchaseSummary")}</h4>
             <p style={{ fontSize: 12.5, color: THEME.text2, margin: "0 0 4px" }}>{t("sgPlanLabel")}<b>{selectedPlan.name}</b></p>
             <p style={{ fontSize: 12.5, color: THEME.text2, margin: "0 0 4px" }}>{t("sgCycleLabel")}<b>{billingCycle === "monthly" ? t("subTypeMonthly") : t("subTypeYearly")}</b></p>
-            <p style={{ fontSize: 15, fontWeight: 800, color: THEME.teal, margin: "10px 0" }}>{t("sgFinalAmount", { amount: amount.toLocaleString(lang === "en" ? "en-US" : "fa-IR") })}</p>
+            <p style={{ fontSize: 15, fontWeight: 800, color: THEME.teal, margin: "10px 0" }}>{t("sgFinalAmount", { amount: amount.toLocaleString(numLocale(lang)) })}</p>
             <PaymentMethodsSection currentUser={currentUser} selectedPlan={selectedPlan} billingCycle={billingCycle} amount={amount} />
           </div>
         )}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Wifi, WifiOff, RefreshCw, Info, X, Download } from "lucide-react";
 import { THEME, styles, APP_NAME, APP_VERSION, APP_VERSION_CODE } from "./shared.js";
 import { useLanguage } from "./i18n/LanguageContext.jsx";
+import { numLocale } from "./i18n/translations.js";
 import { useAppearance } from "./shared/AppearanceContext.jsx";
 import { isoToJalaliDisplay } from "./personnel/jalaliDate.jsx";
 import { subscribeNetworkStatus, startNetworkMonitor } from "./offline/networkStatus.js";
@@ -116,13 +117,13 @@ export function AboutIhmsModal({ onClose, latestRelease, online }) {
 
   const updateAvailable = isNewerThanCurrent(release);
 
-  const todayDisplay = lang === "en"
-    ? new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
+  const todayDisplay = lang !== "fa"
+    ? new Date().toLocaleDateString(numLocale(lang), { year: "numeric", month: "long", day: "numeric" })
     : isoToJalaliDisplay(new Date().toISOString().slice(0, 10));
 
   const buildDisplay = typeof __BUILD_TIME__ !== "undefined"
-    ? (lang === "en"
-        ? new Date(__BUILD_TIME__).toLocaleString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
+    ? (lang !== "fa"
+        ? new Date(__BUILD_TIME__).toLocaleString(numLocale(lang), { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
         : `${isoToJalaliDisplay(__BUILD_TIME__.slice(0, 10))} - ${new Date(__BUILD_TIME__).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`)
     : "—";
 

@@ -27,19 +27,22 @@ import { computeSubscriptionAccess, loadOnlinePaymentsForCompany, loadCardTransf
 import { loadErrorReports, updateErrorReportStatus } from "../errorReportsApi.js";
 import DocumentViewerModal from "../personnel/DocumentViewerModal.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import LanguageSelect from "../i18n/LanguageSelect.jsx";
 import { trialModuleLabel } from "../trialRequestApi.js";
-import { translate, getCurrentLang } from "../i18n/translations.js";
+import { translate, getCurrentLang, listSep, pctSign as _pctSign, numLocale as _numLocale } from "../i18n/translations.js";
 
-// قالب‌بندی اعداد/تاریخ وابسته به زبان فعال: انگلیسی → ارقام لاتین، فارسی → ارقام فارسی.
-const numLocale = () => (getCurrentLang() === "en" ? "en-US" : "fa-IR");
-const pctSign = () => (getCurrentLang() === "en" ? "%" : "٪");
+// قالب‌بندی اعداد/تاریخ وابسته به زبان فعال: فارسی → ارقام فارسی، آلمانی →
+// de-DE، بقیه → en-US. (نگه‌داشتنِ همین دو helper بی‌آرگومان تا صدها محلِ
+// فراخوانیِ فعلی numLocale()/pctSign() دست‌نخورده بماند.)
+const numLocale = () => _numLocale(getCurrentLang());
+const pctSign = () => _pctSign(getCurrentLang());
 
 const inputStyle ={ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1.5px solid ${THEME.border}`, fontSize: 12.5, fontFamily: THEME.font, boxSizing: "border-box" };
 const btnStyle = (bg) => ({ padding: "7px 14px", borderRadius: 8, border: "none", background: bg || THEME.teal, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font });
 const smallLabelStyle = { display: "block", marginBottom: 4, fontSize: 11.5, fontWeight: 600, color: THEME.text2 };
 
 export default function SuperAdminPanel({ currentAdmin, onLogout }) {
-  const { t, dir, lang, setLang } = useLanguage();
+  const { t, dir } = useLanguage();
   const [page, setPage] = useState("overview");
   const [companies, setCompanies] = useState([]);
   const [plans, setPlans] = useState([]);
@@ -129,19 +132,6 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
     { key: "trialRequests", labelKey: "saNavTrialRequests", icon: ClipboardList },
   ];
 
-  const langBtn = (value, label) => (
-    <button
-      type="button" onClick={() => setLang(value)}
-      style={{
-        padding: "5px 11px", borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: THEME.font,
-        border: `1.5px solid ${lang === value ? "#fff" : "rgba(255,255,255,0.35)"}`,
-        background: lang === value ? "#fff" : "transparent", color: lang === value ? THEME.navyDeep : "#fff",
-      }}
-    >
-      {label}
-    </button>
-  );
-
   return (
     <div style={{ background: THEME.bg, minHeight: "100vh", fontFamily: THEME.font, direction: dir }}>
       <div style={{ background: THEME.navyDeep, color: "#fff", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
@@ -150,10 +140,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
           <h1 style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>{t("saHeaderTitle")}</h1>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", gap: 5 }}>
-            {langBtn("fa", "فارسی")}
-            {langBtn("en", "English")}
-          </div>
+          <LanguageSelect variant="dark" />
           <button type="button" onClick={() => setShowChangePassword((v) => !v)} style={{ ...btnStyle("rgba(255,255,255,0.15)"), display: "flex", alignItems: "center", gap: 6 }}>
             <KeyRound size={13} /> {t("saChangeMyPassword")}
           </button>
@@ -2218,7 +2205,7 @@ function TrialRequestsPage({ currentAdmin }) {
                             <p style={{ margin: 0 }}>{t("saTrIndustry")}<b>{r.industry || "—"}</b></p>
                             <p style={{ margin: 0 }}>{t("saTrEmailLabel")}<b style={{ direction: "ltr", display: "inline-block" }}>{r.email || "—"}</b></p>
                             <p style={{ margin: 0, gridColumn: "1 / -1" }}>
-                              {t("saTrDesiredModules")}<b>{r.desiredModules.length > 0 ? r.desiredModules.map(trialModuleLabel).join(getCurrentLang() === "en" ? ", " : "، ") : "—"}</b>
+                              {t("saTrDesiredModules")}<b>{r.desiredModules.length > 0 ? r.desiredModules.map(trialModuleLabel).join(listSep(getCurrentLang())) : "—"}</b>
                             </p>
                           </div>
                           {r.description && <p style={{ fontSize: 12, color: THEME.text2, lineHeight: 1.8, margin: "0 0 10px", whiteSpace: "pre-wrap" }}>{t("saTrDescriptionLabel", { desc: r.description })}</p>}

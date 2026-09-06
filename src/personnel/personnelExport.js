@@ -55,7 +55,7 @@ export async function exportPersonnelPdf(personnelList, title) {
   const documentsMap = await fetchAllDocuments(personnelList);
 
   const lang = getCurrentLang();
-  const isEn = lang === "en";
+  const isEn = lang !== "fa";
   const headers = [
     translate(lang, "exportColRow"), translate(lang, "peColFullName"), translate(lang, "peColNationalCode"), translate(lang, "peColContractor"),
     translate(lang, "peColJobTitle"), translate(lang, "peColContact"), translate(lang, "peColStartDate"), translate(lang, "commonStatus"),
