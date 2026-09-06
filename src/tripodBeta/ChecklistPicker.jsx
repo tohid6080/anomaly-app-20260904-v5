@@ -9,13 +9,16 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
  * دکمه‌ی toggle تا صفحه شلوغ نشود.
  */
 export default function TogglePicker({ label, items, onSelect, placeholder }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
   const filtered = useMemo(() => {
     const f = search.trim().toLowerCase();
-    return f ? items.filter((it) => it.code.toLowerCase().includes(f) || it.textFa.toLowerCase().includes(f) || (it.brfCode || "").toLowerCase().includes(f)) : items;
+    return f ? items.filter((it) => it.code.toLowerCase().includes(f)
+      || (it.textFa || "").toLowerCase().includes(f)
+      || (it.textEn || "").toLowerCase().includes(f)
+      || (it.brfCode || "").toLowerCase().includes(f)) : items;
   }, [items, search]);
 
   const byGroup = useMemo(() => {
@@ -38,7 +41,7 @@ export default function TogglePicker({ label, items, onSelect, placeholder }) {
         <Search size={13} color={THEME.text3} />
         <input
           autoFocus style={{ flex: 1, border: "none", background: "transparent", fontSize: 12.5, outline: "none", fontFamily: THEME.font }}
-          placeholder={placeholder || t("tcpSearchDefault")} value={search} onChange={(e) => setSearch(e.target.value)} dir="rtl"
+          placeholder={placeholder || t("tcpSearchDefault")} value={search} onChange={(e) => setSearch(e.target.value)} dir={dir}
         />
         <button type="button" onClick={() => { setOpen(false); setSearch(""); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 2 }}>
           <X size={14} color={THEME.text3} />
@@ -60,7 +63,7 @@ export default function TogglePicker({ label, items, onSelect, placeholder }) {
                 onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
               >
                 <span style={{ fontWeight: 700, color: THEME.teal, flexShrink: 0, minWidth: 62 }}>{it.code}{it.brfCode ? ` · ${it.brfCode}` : ""}</span>
-                <span style={{ color: THEME.text, lineHeight: 1.7, flex: 1 }}>{it.textFa}</span>
+                <span style={{ color: THEME.text, lineHeight: 1.7, flex: 1 }}>{it.text || it.textFa}</span>
               </div>
             ))}
           </div>

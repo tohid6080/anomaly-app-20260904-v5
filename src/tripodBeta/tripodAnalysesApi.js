@@ -164,9 +164,16 @@ export async function updateAnalysisFields(analysisId, fields) {
 
 // ---------- اهداف (Targets) ----------
 
+// متنِ دوزبانه: در حالت انگلیسی en و در حالت فارسی fa (با fallback به fa).
+const refLang = (fa, en) => (getCurrentLang() === "en" && en ? en : (fa || ""));
+
 export async function loadTargets(analysisId) {
-  const rows = await sb(`tripod_targets?analysis_id=eq.${analysisId}&select=*,tripod_ref_target_category(title_fa)`);
-  return sbOk(rows) ? rows.map((r) => ({ id: r.id, categoryCode: r.category_code, categoryTitle: r.tripod_ref_target_category?.title_fa || r.category_code, description: r.description || "" })) : [];
+  const rows = await sb(`tripod_targets?analysis_id=eq.${analysisId}&select=*,tripod_ref_target_category(title_fa,title_en)`);
+  return sbOk(rows) ? rows.map((r) => ({
+    id: r.id, categoryCode: r.category_code,
+    categoryTitle: refLang(r.tripod_ref_target_category?.title_fa, r.tripod_ref_target_category?.title_en) || r.category_code,
+    description: r.description || "",
+  })) : [];
 }
 export async function addTarget(analysisId, categoryCode, description) {
   const rows = await sb("tripod_targets", { method: "POST", body: JSON.stringify([{ id: uid("target"), analysis_id: analysisId, company_id: getCurrentCompanyId(), category_code: categoryCode, description: description || null }]) });
@@ -185,16 +192,20 @@ export async function loadBranchesWithDetails(analysisId) {
   if (!sbOk(branches)) return [];
   const result = [];
   for (const b of branches) {
-    const preconds = await sb(`tripod_branch_preconditions?branch_id=eq.${b.id}&select=*,tripod_ref_precondition(code,text_fa,group_no)`);
+    const preconds = await sb(`tripod_branch_preconditions?branch_id=eq.${b.id}&select=*,tripod_ref_precondition(code,text_fa,text_en,group_no)`);
     const preList = sbOk(preconds) ? preconds.map((p) => ({
       id: p.id, preconditionId: p.precondition_id, note: p.note || "",
-      code: p.tripod_ref_precondition?.code, text: p.tripod_ref_precondition?.text_fa, groupNo: p.tripod_ref_precondition?.group_no,
+      code: p.tripod_ref_precondition?.code,
+      text: refLang(p.tripod_ref_precondition?.text_fa, p.tripod_ref_precondition?.text_en),
+      groupNo: p.tripod_ref_precondition?.group_no,
     })) : [];
 
-    const hiddens = await sb(`tripod_branch_hidden_failures?branch_id=eq.${b.id}&select=*,tripod_ref_hidden_failure(code,text_fa,group_no,brf_code)`);
+    const hiddens = await sb(`tripod_branch_hidden_failures?branch_id=eq.${b.id}&select=*,tripod_ref_hidden_failure(code,text_fa,text_en,group_no,brf_code)`);
     const hidList = sbOk(hiddens) ? hiddens.map((h) => ({
       id: h.id, hiddenFailureId: h.hidden_failure_id, preconditionLinkId: h.precondition_link_id, note: h.note || "",
-      code: h.tripod_ref_hidden_failure?.code, text: h.tripod_ref_hidden_failure?.text_fa, groupNo: h.tripod_ref_hidden_failure?.group_no, brfCode: h.tripod_ref_hidden_failure?.brf_code,
+      code: h.tripod_ref_hidden_failure?.code,
+      text: refLang(h.tripod_ref_hidden_failure?.text_fa, h.tripod_ref_hidden_failure?.text_en),
+      groupNo: h.tripod_ref_hidden_failure?.group_no, brfCode: h.tripod_ref_hidden_failure?.brf_code,
     })) : [];
 
     for (const p of preList) p.hiddenFailures = hidList.filter((h) => h.preconditionLinkId === p.id);

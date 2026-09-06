@@ -198,7 +198,7 @@ function SummaryTab({ analysis, editable, targets, targetCats, onUpdateFields, o
           <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
             <select style={{ ...styles.input, marginTop: 0, flex: 1, minWidth: 140 }} value={newTargetCode} onChange={(e) => setNewTargetCode(e.target.value)} dir="rtl">
               <option value="">{t("twSelectTargetCategory")}</option>
-              {targetCats.map((c) => <option key={c.code} value={c.code}>{c.titleFa}</option>)}
+              {targetCats.map((c) => <option key={c.code} value={c.code}>{c.title || c.titleFa}</option>)}
             </select>
             <input style={{ ...styles.input, marginTop: 0, flex: 2, minWidth: 160 }} placeholder={t("twDescOptional")} value={newTargetDesc} onChange={(e) => setNewTargetDesc(e.target.value)} dir="rtl" />
             <button type="button" style={styles.smallButton} disabled={!newTargetCode} onClick={() => { onAddTarget(newTargetCode, newTargetDesc); setNewTargetCode(""); setNewTargetDesc(""); }}>{t("twAdd")}</button>
@@ -267,7 +267,7 @@ function PathCard({ path, refGroups, editable, onRefresh }) {
 function PreconditionItem({ pc, branchId, refGroups, editable, onRefresh }) {
   const { t } = useLanguage();
   const group = refGroups.find((g) => g.groupNo === pc.groupNo);
-  const scopedItems = group ? group.hiddenFailures.map((h) => ({ ...h, groupTitle: group.titleFa })) : [];
+  const scopedItems = group ? group.hiddenFailures.map((h) => ({ ...h, groupTitle: group.title || group.titleFa })) : [];
 
   return (
     <div style={{ background: THEME.bg, borderRadius: 10, padding: 12, marginBottom: 8 }}>
