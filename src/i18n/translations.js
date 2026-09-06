@@ -8652,7 +8652,23 @@ export const translations = {
   "pidIndHseClimateName": { "fa": "جو ایمنی، بهداشت و محیط زیست (HSE Climate)", "en": "HSE Climate" },
   "pidIndHseClimateDesc": { "fa": "سنجش نگرش و ادراک کارکنان نسبت به ایمنی، بهداشت و محیط زیست در سازمان.", "en": "Measures employees' attitudes and perceptions toward safety, health and environment in the organization." },
   "pidIndSbsName": { "fa": "نمونه‌برداری از رفتارهای ایمنی (SBS)", "en": "Safety Behavior Sampling (SBS)" },
-  "pidIndSbsDesc": { "fa": "ثبت میدانی رفتار ایمن/ناایمن کارکنان و تحلیل آنیِ نتایج.", "en": "Field logging of employees' safe/unsafe behavior with instant analysis of the results." }
+  "pidIndSbsDesc": { "fa": "ثبت میدانی رفتار ایمن/ناایمن کارکنان و تحلیل آنیِ نتایج.", "en": "Field logging of employees' safe/unsafe behavior with instant analysis of the results." },
+
+  // --- SuperAdmin notification-type registry (labels/descriptions loaded from DB, resolved by type_key) ---
+  "saNtAnomalyOpenLabel": { "fa": "آنومالی باز", "en": "Open anomalies" },
+  "saNtAnomalyOpenDesc": { "fa": "اعلان وجود آنومالی‌های باز یا بررسی‌نشده.", "en": "Alerts about open or unreviewed anomalies." },
+  "saNtHealthVisitLabel": { "fa": "مراجعه به طب کار", "en": "Occupational-health visit" },
+  "saNtHealthVisitDesc": { "fa": "یادآوری مهلت مراجعهٔ پرسنل به طب کار.", "en": "Reminds of the deadline for personnel to attend an occupational-health visit." },
+  "saNtHealthResultLabel": { "fa": "نتیجهٔ طب کار", "en": "Occupational-health result" },
+  "saNtHealthResultDesc": { "fa": "یادآوری بارگذاری نتیجهٔ طب کار پرسنل.", "en": "Reminds to upload personnel's occupational-health results." },
+  "saNtMachineryExpiringLabel": { "fa": "انقضای مدارک ماشین‌آلات", "en": "Machinery documents expiring" },
+  "saNtMachineryExpiringDesc": { "fa": "هشدار نزدیک‌شدن یا گذشتن تاریخ بیمه/معاینهٔ فنی ماشین‌آلات.", "en": "Warns when machinery insurance / technical inspection is near or past its expiry date." },
+  "saNtMachineryNeedsCorrectionLabel": { "fa": "ماشین‌آلات نیازمند اصلاح", "en": "Machinery needs correction" },
+  "saNtMachineryNeedsCorrectionDesc": { "fa": "اعلان ماشین‌آلاتی که رد شده یا نیازمند اصلاح‌اند.", "en": "Alerts about machinery that was rejected or needs correction." },
+  "saNtMachineryPendingReviewLabel": { "fa": "ماشین‌آلات در انتظار بررسی", "en": "Machinery pending review" },
+  "saNtMachineryPendingReviewDesc": { "fa": "اعلان درخواست‌های ثبت ماشین‌آلات که منتظر بررسی کارفرما هستند.", "en": "Alerts about machinery registration requests awaiting employer review." },
+  "saNtBarrierEffectivenessLabel": { "fa": "اثربخشی Barrier", "en": "Barrier effectiveness" },
+  "saNtBarrierEffectivenessDesc": { "fa": "هشدار کاهش اثربخشی Barrierهای BowTie.", "en": "Warns when the effectiveness of BowTie barriers drops." }
 };
 
 // برای فایل‌های غیر React (لایه‌ی داده / api.js) که به Hook دسترسی ندارند اما

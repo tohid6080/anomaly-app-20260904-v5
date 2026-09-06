@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ShieldAlert, Plus, LogOut, Send, CreditCard, AlertTriangle, UserPlus, KeyRound, Layers, Trash2, History, Activity, TrendingDown, Clock, LogIn, ShieldX, LayoutDashboard, Building2, Users, FileClock, ChevronLeft, HardDrive, RefreshCw, Settings2, Copy, GripVertical, ArrowUp, ArrowDown, RotateCcw, Eye, EyeOff, LayoutGrid, PanelsTopLeft, Bell, Palette, Megaphone, Sparkles, Gift, Info, ImagePlus, X, ClipboardList } from "lucide-react";
 import { THEME } from "../shared.js";
 import { changeMyPassword } from "../sessionToken.js";
-import { loadModuleConfig, saveModuleConfig, loadNotificationTypes, saveNotificationType, syncNotificationTypesWithPlans, loadAppearanceConfig, saveAppearanceConfig, loadAllAnnouncements, createAnnouncement, updateAnnouncement, setAnnouncementActive, deleteAnnouncement, loadDashboardWidgetConfig, saveDashboardWidgetsBulk } from "../systemConfigApi.js";
+import { loadModuleConfig, saveModuleConfig, loadNotificationTypes, saveNotificationType, syncNotificationTypesWithPlans, loadAppearanceConfig, saveAppearanceConfig, loadAllAnnouncements, createAnnouncement, updateAnnouncement, setAnnouncementActive, deleteAnnouncement, loadDashboardWidgetConfig, saveDashboardWidgetsBulk, notificationTypeLabel, notificationTypeDescription } from "../systemConfigApi.js";
 import { DASHBOARD_WIDGET_GROUPS, mergeWidgetConfig, defaultWidgetConfig } from "../dashboard/dashboardWidgets.js";
 import { uploadBase64ToStorage, deleteFromStorage, parseStorageUrl } from "../offline/storageUpload.js";
 import AccountManagement from "./AccountManagement.jsx";
@@ -743,7 +743,17 @@ function ModuleManagementTab({ currentAdmin }) {
   const [msgErr, setMsgErr] = useState(false);
   const [dragIndex, setDragIndex] = useState(null);
 
-  const load = () => loadModuleConfig().then((rows) => setList(rows.length > 0 ? rows : buildDefaultModuleConfig(t)));
+  // برچسب/توضیح نمایشی همیشه از i18n خوانده می‌شود (نه رشته‌ی تک‌زبانه‌ی
+  // display_label که در جدول system_module_config seed شده) — فقط ترتیب از
+  // دیتابیس می‌آید.
+  const load = () => loadModuleConfig().then((rows) => {
+    const defs = new Map(DEFAULT_MODULE_CONFIG.map((d) => [d.moduleKey, d]));
+    const base = rows.length > 0 ? rows : buildDefaultModuleConfig(t);
+    setList(base.map((m) => {
+      const d = defs.get(m.moduleKey);
+      return d ? { ...m, displayLabel: t(d.labelKey), description: t(d.descKey) } : m;
+    }));
+  });
   useEffect(() => { load(); }, []);
 
   if (!list) return <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 30 }}>{t("commonLoading")}</p>;
@@ -1008,7 +1018,7 @@ function NotificationManagementTab({ currentAdmin }) {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
             <div style={{ flex: 1, minWidth: 200 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: THEME.navy }}>{nt.label}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: THEME.navy }}>{notificationTypeLabel(nt)}</span>
                 <span style={{ fontSize: 10, padding: "2px 9px", borderRadius: 999, background: PRIORITY_META[nt.priority].bg, color: PRIORITY_META[nt.priority].color, fontWeight: 600 }}>
                   {t("saPriorityBadge", { label: t(PRIORITY_META[nt.priority].labelKey) })}
                 </span>
@@ -1016,7 +1026,7 @@ function NotificationManagementTab({ currentAdmin }) {
                   {nt.isEnabled ? t("commonActive") : t("commonInactive")}
                 </span>
               </div>
-              {nt.description && <p style={{ fontSize: 11, color: THEME.text3, margin: "4px 0 0" }}>{nt.description}</p>}
+              {notificationTypeDescription(nt) && <p style={{ fontSize: 11, color: THEME.text3, margin: "4px 0 0" }}>{notificationTypeDescription(nt)}</p>}
             </div>
             <button
               type="button" onClick={() => updateDraft(nt.typeKey, { isEnabled: !nt.isEnabled })}

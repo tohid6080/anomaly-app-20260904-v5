@@ -83,6 +83,29 @@ export async function saveDashboardWidgetsBulk(list, updatedBy) {
 // موازی) فیلتر می‌زند — نگاه کنید به classifyNotificationKey/
 // filterSmartItemsByConfig در App.jsx.
 
+// برچسب/توضیحِ نمایشیِ هر نوع اعلان از دیتابیس می‌آید (فارسی، seed‌شده). برای
+// دوزبانه‌شدن، نوع‌های شناخته‌شده از روی type_key به کلید ترجمه نگاشت می‌شوند؛
+// نوع‌های آینده که اینجا نیستند خودکار به همان مقدار دیتابیس برمی‌گردند.
+const NOTIFICATION_TYPE_LABEL_KEYS = {
+  anomaly_open: { label: "saNtAnomalyOpenLabel", desc: "saNtAnomalyOpenDesc" },
+  personnel_health_visit: { label: "saNtHealthVisitLabel", desc: "saNtHealthVisitDesc" },
+  personnel_health_result: { label: "saNtHealthResultLabel", desc: "saNtHealthResultDesc" },
+  machinery_expiring: { label: "saNtMachineryExpiringLabel", desc: "saNtMachineryExpiringDesc" },
+  machinery_needs_correction: { label: "saNtMachineryNeedsCorrectionLabel", desc: "saNtMachineryNeedsCorrectionDesc" },
+  machinery_pending_review: { label: "saNtMachineryPendingReviewLabel", desc: "saNtMachineryPendingReviewDesc" },
+  barrier_effectiveness: { label: "saNtBarrierEffectivenessLabel", desc: "saNtBarrierEffectivenessDesc" },
+};
+
+export function notificationTypeLabel(nt) {
+  const k = NOTIFICATION_TYPE_LABEL_KEYS[nt?.typeKey]?.label;
+  return k ? tr(k) : (nt?.label || nt?.typeKey || "");
+}
+
+export function notificationTypeDescription(nt) {
+  const k = NOTIFICATION_TYPE_LABEL_KEYS[nt?.typeKey]?.desc;
+  return k ? tr(k) : (nt?.description || "");
+}
+
 export async function loadNotificationTypes() {
   const rows = await sb("system_notification_types?select=*&order=type_key.asc");
   return sbOk(rows) ? rows.map((r) => ({
