@@ -207,7 +207,10 @@ function contractorFromRow(r) {
     companyId: r.company_id || "",
     phone: r.phone || "",
     email: r.email || "",
-    preferredLanguage: r.preferred_language || "fa",
+    // null یعنی «کاربر هیچ ترجیح زبانی ذخیره نکرده» — در این حالت انتخابِ
+    // زبان در صفحه‌ی ورود نباید بعد از ورود بازنویسی شود (نگاه کنید به
+    // finishLogin). فقط وقتی مقدار واقعی ذخیره شده باشد، هنگام ورود اعمال می‌شود.
+    preferredLanguage: r.preferred_language || null,
     createdAt: r.created_at || "",
   };
 }
@@ -287,7 +290,10 @@ function employerAccountFromRow(r) {
     companyId: r.company_id || "",
     phone: r.phone || "",
     email: r.email || "",
-    preferredLanguage: r.preferred_language || "fa",
+    // null یعنی «کاربر هیچ ترجیح زبانی ذخیره نکرده» — در این حالت انتخابِ
+    // زبان در صفحه‌ی ورود نباید بعد از ورود بازنویسی شود (نگاه کنید به
+    // finishLogin). فقط وقتی مقدار واقعی ذخیره شده باشد، هنگام ورود اعمال می‌شود.
+    preferredLanguage: r.preferred_language || null,
     createdAt: r.created_at || "",
   };
 }
