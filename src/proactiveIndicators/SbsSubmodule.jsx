@@ -14,7 +14,7 @@ import SbsAssignmentsList from "./SbsAssignmentsList.jsx";
  * آبشاری) کاملاً استفاده می‌شود.
  */
 export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
-  const { t, lang } = useLanguage();
+  const { t, lang, dir } = useLanguage();
   const isEmployerSide = role === "EMPLOYER" || role === "ADMIN";
   const [categories, setCategories] = useState([]);
   const [observations, setObservations] = useState(null);
@@ -123,15 +123,15 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
             <div>
               <label style={styles.label}>{t("sbsFieldProject")}</label>
-              <input style={styles.input} value={form.project} onChange={(e) => setForm({ ...form, project: e.target.value })} dir="rtl" placeholder={t("sbsFieldProjectPlaceholder")} />
+              <input style={styles.input} value={form.project} onChange={(e) => setForm({ ...form, project: e.target.value })} dir={dir} placeholder={t("sbsFieldProjectPlaceholder")} />
             </div>
             <div>
               <label style={styles.label}>{t("sbsFieldCompanyContractor")}</label>
-              <input style={styles.input} value={form.contractorOrg} onChange={(e) => setForm({ ...form, contractorOrg: e.target.value })} dir="rtl" />
+              <input style={styles.input} value={form.contractorOrg} onChange={(e) => setForm({ ...form, contractorOrg: e.target.value })} dir={dir} />
             </div>
             <div>
               <label style={styles.label}>{t("sbsFieldJobTitle")}</label>
-              <input style={styles.input} value={form.jobTitle} onChange={(e) => setForm({ ...form, jobTitle: e.target.value })} dir="rtl" placeholder={t("sbsFieldJobTitlePlaceholder")} />
+              <input style={styles.input} value={form.jobTitle} onChange={(e) => setForm({ ...form, jobTitle: e.target.value })} dir={dir} placeholder={t("sbsFieldJobTitlePlaceholder")} />
             </div>
             <div>
               <label style={styles.label}>{t("sbsFieldObservationDate")}</label>
@@ -171,14 +171,14 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, background: THEME.dangerBg, border: `1px dashed #d9a9a8`, borderRadius: 9, padding: 14, marginTop: 12 }}>
               <div>
                 <label style={styles.label}>{t("sbsUnsafeCode")}</label>
-                <select style={styles.input} value={form.categoryCode} onChange={(e) => setForm({ ...form, categoryCode: e.target.value, subitemId: "" })} dir="rtl">
+                <select style={styles.input} value={form.categoryCode} onChange={(e) => setForm({ ...form, categoryCode: e.target.value, subitemId: "" })} dir={dir}>
                   <option value="">{t("sbsSelectCategory")}</option>
                   {categories.map((c) => <option key={c.code} value={c.code}>{c.title}</option>)}
                 </select>
               </div>
               <div>
                 <label style={styles.label}>{t("sbsInstanceCode")}</label>
-                <select style={styles.input} value={form.subitemId} onChange={(e) => setForm({ ...form, subitemId: e.target.value })} dir="rtl" disabled={!selectedCategory}>
+                <select style={styles.input} value={form.subitemId} onChange={(e) => setForm({ ...form, subitemId: e.target.value })} dir={dir} disabled={!selectedCategory}>
                   <option value="">{selectedCategory ? t("sbsSelectPlaceholder") : t("sbsSelectCategoryFirst")}</option>
                   {(selectedCategory?.items || []).map((it) => <option key={it.id} value={it.id}>{it.text}</option>)}
                 </select>
@@ -186,7 +186,7 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
               {isOtherCategory && (
                 <div style={{ gridColumn: "1 / -1" }}>
                   <label style={styles.label}>{t("sbsOtherCategoryDescLabel")}</label>
-                  <textarea style={{ ...styles.input, minHeight: 60 }} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} dir="rtl" placeholder={t("sbsOtherCategoryDescPlaceholder")} />
+                  <textarea style={{ ...styles.input, minHeight: 60 }} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} dir={dir} placeholder={t("sbsOtherCategoryDescPlaceholder")} />
                 </div>
               )}
             </div>

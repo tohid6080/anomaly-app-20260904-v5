@@ -11,7 +11,7 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
  * گزارش به SuperAdmin ارسال می‌شود.
  */
 export default function ReportErrorModal({ currentUser, moduleKey, pageLabel, technicalMessage, technicalStack, onClose }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -35,7 +35,7 @@ export default function ReportErrorModal({ currentUser, moduleKey, pageLabel, te
       style={{ position: "fixed", inset: 0, background: "rgba(10,20,30,0.55)", zIndex: 3000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
       onClick={onClose}
     >
-      <div style={{ background: THEME.surface, borderRadius: 14, padding: 20, maxWidth: 440, width: "100%", direction: "rtl", maxHeight: "90vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
+      <div style={{ background: THEME.surface, borderRadius: 14, padding: 20, maxWidth: 440, width: "100%", direction: dir, maxHeight: "90vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
         {done ? (
           <div style={{ textAlign: "center", padding: "10px 0" }}>
             <CheckCircle2 size={40} color="#166534" style={{ marginBottom: 10 }} />
@@ -59,7 +59,7 @@ export default function ReportErrorModal({ currentUser, moduleKey, pageLabel, te
             <label style={{ ...styles.label, marginTop: 0 }}>{t("erpDescLabel")}</label>
             <textarea
               style={{ ...styles.input, minHeight: 90 }} value={description}
-              onChange={(e) => setDescription(e.target.value)} dir="rtl"
+              onChange={(e) => setDescription(e.target.value)} dir={dir}
               placeholder={t("erpDescPlaceholder")}
             />
             {technicalMessage && (

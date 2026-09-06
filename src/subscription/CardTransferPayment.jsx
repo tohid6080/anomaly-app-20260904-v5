@@ -14,7 +14,7 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
  *    بعداً با اتصال Zarinpal واقعی دوباره فعال شود.
  */
 export default function PaymentMethodsSection({ currentUser, selectedPlan, billingCycle, amount }) {
-  const { t, lang } = useLanguage();
+  const { t, lang, dir } = useLanguage();
   const [method, setMethod] = useState("card_transfer");
   const [settings, setSettings] = useState(undefined); // undefined = در حال بارگذاری
   const [copied, setCopied] = useState(false);
@@ -152,7 +152,7 @@ export default function PaymentMethodsSection({ currentUser, selectedPlan, billi
           <p style={{ fontSize: 12, fontWeight: 700, color: THEME.navy, margin: "0 0 10px" }}>{t("ctpEnterReceiptAfterTransfer")}</p>
 
           <label style={styles.label}>{t("ctpFullName")}</label>
-          <input style={styles.input} value={payerName} onChange={(e) => setPayerName(e.target.value)} dir="rtl" />
+          <input style={styles.input} value={payerName} onChange={(e) => setPayerName(e.target.value)} dir={dir} />
 
           <label style={styles.label}>{t("ctpMobileNumber")}</label>
           <input style={styles.input} value={payerPhone} onChange={(e) => setPayerPhone(e.target.value)} dir="ltr" placeholder="09xxxxxxxxx" />

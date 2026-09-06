@@ -13,7 +13,7 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
  * یک ردیف در dbee_source_barrier_map ثبت می‌شود.
  */
 export default function BarrierMappingPicker({ sourceType, sourceId, currentUser, readOnly }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [bowties, setBowties] = useState([]);
   const [mappings, setMappings] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -88,27 +88,27 @@ export default function BarrierMappingPicker({ sourceType, sourceId, currentUser
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10 }}>
             <div>
               <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>BowTie</label>
-              <select style={styles.input} value={selectedBowtieId} onChange={(e) => { setSelectedBowtieId(e.target.value); setSelectedBarrierId(""); }} dir="rtl">
+              <select style={styles.input} value={selectedBowtieId} onChange={(e) => { setSelectedBowtieId(e.target.value); setSelectedBarrierId(""); }} dir={dir}>
                 <option value="">{t("dbeeSelect")}</option>
                 {bowties.map((b) => <option key={b.id} value={b.id}>{b.title}</option>)}
               </select>
             </div>
             <div>
               <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>Barrier</label>
-              <select style={styles.input} value={selectedBarrierId} onChange={(e) => setSelectedBarrierId(e.target.value)} dir="rtl" disabled={!selectedBowtie}>
+              <select style={styles.input} value={selectedBarrierId} onChange={(e) => setSelectedBarrierId(e.target.value)} dir={dir} disabled={!selectedBowtie}>
                 <option value="">{selectedBowtie ? t("dbeeSelect") : t("dbeeSelectBowtieFirst")}</option>
                 {(selectedBowtie?.barriers || []).map((b) => <option key={b.id} value={b.id}>{b.label} ({b.side === "preventive" ? t("dbeeSidePreventive") : t("dbeeSideRecovery")})</option>)}
               </select>
             </div>
             <div>
               <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("dbeeRelevanceLabel")}</label>
-              <select style={styles.input} value={relevance} onChange={(e) => setRelevance(e.target.value)} dir="rtl">
+              <select style={styles.input} value={relevance} onChange={(e) => setRelevance(e.target.value)} dir={dir}>
                 {RELEVANCE_LEVELS.map((r) => <option key={r.value} value={r.value}>{t(r.labelKey)}</option>)}
               </select>
             </div>
             <div style={{ gridColumn: "1 / -1" }}>
               <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("dbeeNoteOptional")}</label>
-              <input style={styles.input} value={note} onChange={(e) => setNote(e.target.value)} dir="rtl" placeholder={t("dbeeBmpNotePlaceholder")} />
+              <input style={styles.input} value={note} onChange={(e) => setNote(e.target.value)} dir={dir} placeholder={t("dbeeBmpNotePlaceholder")} />
             </div>
           </div>
           {error && <p style={styles.error}>{error}</p>}

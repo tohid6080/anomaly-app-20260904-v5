@@ -75,9 +75,11 @@ export async function exportCanvasPdf(svgEl, title) {
   clone.setAttribute("viewBox", `0 0 ${Math.round(bbox.width)} ${Math.round(bbox.height)}`);
   const svgString = new XMLSerializer().serializeToString(clone);
 
-  const html = `<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>${escapeHtml(title)}</title>
+  const lang = getCurrentLang();
+  const rtlDir = lang === "en" ? "ltr" : "rtl";
+  const html = `<!doctype html><html lang="${lang}" dir="${rtlDir}"><head><meta charset="utf-8"><title>${escapeHtml(title)}</title>
   <style>
-    body { font-family: Tahoma, Arial, sans-serif; direction: rtl; padding: 16px; }
+    body { font-family: Tahoma, Arial, sans-serif; direction: ${rtlDir}; padding: 16px; }
     h2 { text-align: center; margin-bottom: 4px; }
     p.meta { text-align: center; color: #666; font-size: 12px; margin-top: 0; }
     svg { width: 100%; height: auto; border: 1px solid #ddd; border-radius: 8px; }

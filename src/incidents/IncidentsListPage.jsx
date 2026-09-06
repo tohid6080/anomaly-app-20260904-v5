@@ -16,7 +16,7 @@ function emptyForm() {
 }
 
 export default function IncidentsListPage({ currentUser, role, readOnly }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -76,7 +76,7 @@ export default function IncidentsListPage({ currentUser, role, readOnly }) {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
             <div>
               <label style={styles.label}>{t("incNo")}</label>
-              <input style={inputStyle} value={form.incidentNo} onChange={(e) => setForm({ ...form, incidentNo: e.target.value })} dir="rtl" />
+              <input style={inputStyle} value={form.incidentNo} onChange={(e) => setForm({ ...form, incidentNo: e.target.value })} dir={dir} />
             </div>
             <div>
               <label style={styles.label}>{t("incOccurredAt")}</label>
@@ -84,17 +84,17 @@ export default function IncidentsListPage({ currentUser, role, readOnly }) {
             </div>
             <div>
               <label style={styles.label}>{t("incLocation")}</label>
-              <input style={inputStyle} value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} dir="rtl" />
+              <input style={inputStyle} value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} dir={dir} />
             </div>
             <div>
               <label style={styles.label}>{t("incType")}</label>
-              <select style={inputStyle} value={form.incidentType} onChange={(e) => setForm({ ...form, incidentType: e.target.value })} dir="rtl">
+              <select style={inputStyle} value={form.incidentType} onChange={(e) => setForm({ ...form, incidentType: e.target.value })} dir={dir}>
                 {INCIDENT_TYPES.map((it) => <option key={it.value} value={it.value}>{t(it.labelKey)}</option>)}
               </select>
             </div>
             <div>
               <label style={styles.label}>{t("incInjuredName")}</label>
-              <input style={inputStyle} value={form.injuredPersonName} onChange={(e) => setForm({ ...form, injuredPersonName: e.target.value })} dir="rtl" />
+              <input style={inputStyle} value={form.injuredPersonName} onChange={(e) => setForm({ ...form, injuredPersonName: e.target.value })} dir={dir} />
             </div>
             <div>
               <label style={styles.label}>{t("incLostDays")}</label>
@@ -106,11 +106,11 @@ export default function IncidentsListPage({ currentUser, role, readOnly }) {
             </div>
             <div>
               <label style={styles.label}>{t("incEmployerOrg")}</label>
-              <input style={inputStyle} value={form.employerOrg} onChange={(e) => setForm({ ...form, employerOrg: e.target.value })} dir="rtl" />
+              <input style={inputStyle} value={form.employerOrg} onChange={(e) => setForm({ ...form, employerOrg: e.target.value })} dir={dir} />
             </div>
             <div>
               <label style={styles.label}>{t("incContractorOrg")}</label>
-              <input style={inputStyle} value={form.contractorOrg} onChange={(e) => setForm({ ...form, contractorOrg: e.target.value })} dir="rtl" />
+              <input style={inputStyle} value={form.contractorOrg} onChange={(e) => setForm({ ...form, contractorOrg: e.target.value })} dir={dir} />
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 22 }}>
               <input type="checkbox" id="isDisabling" checked={form.isDisabling} onChange={(e) => setForm({ ...form, isDisabling: e.target.checked })} />
@@ -119,7 +119,7 @@ export default function IncidentsListPage({ currentUser, role, readOnly }) {
           </div>
           <div style={{ marginTop: 12 }}>
             <label style={styles.label}>{t("incDescription")}</label>
-            <textarea style={{ ...inputStyle, minHeight: 70 }} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} dir="rtl" />
+            <textarea style={{ ...inputStyle, minHeight: 70 }} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} dir={dir} />
           </div>
           {error && <p style={styles.error}>{error}</p>}
           <button type="button" style={{ ...styles.smallButton, marginTop: 12 }} onClick={handleCreate} disabled={saving}>

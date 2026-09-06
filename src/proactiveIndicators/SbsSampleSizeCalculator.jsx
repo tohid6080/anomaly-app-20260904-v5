@@ -25,7 +25,7 @@ function computeSampleSize(pilotTotal, pilotUnsafe, precisionPct) {
 }
 
 export default function SbsSampleSizeCalculator({ currentUser, onClose, onSent }) {
-  const { t, lang } = useLanguage();
+  const { t, lang, dir } = useLanguage();
   const [mode, setMode] = useState("factory"); // factory | workshop
   const [pilotTotal, setPilotTotal] = useState("200");
   const [pilotUnsafe, setPilotUnsafe] = useState("");
@@ -143,7 +143,7 @@ export default function SbsSampleSizeCalculator({ currentUser, onClose, onSent }
           <p style={{ fontSize: 12, fontWeight: 700, color: THEME.navy, marginBottom: 8 }}>{t("sbsWorkshopDistribution")}</p>
           {workshops.map((w) => (
             <div key={w.id} style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "center" }}>
-              <input style={{ ...styles.input, marginTop: 0, flex: 2 }} value={w.name} onChange={(e) => updateWorkshop(w.id, "name", e.target.value)} dir="rtl" />
+              <input style={{ ...styles.input, marginTop: 0, flex: 2 }} value={w.name} onChange={(e) => updateWorkshop(w.id, "name", e.target.value)} dir={dir} />
               <input type="number" style={{ ...styles.input, marginTop: 0, flex: 1 }} value={w.workers} onChange={(e) => updateWorkshop(w.id, "workers", e.target.value)} dir="ltr" placeholder={t("sbsWorkerCount")} />
               {workshops.length > 1 && (
                 <button type="button" onClick={() => removeWorkshop(w.id)} style={{ background: "none", border: "none", cursor: "pointer" }}>
@@ -189,12 +189,12 @@ export default function SbsSampleSizeCalculator({ currentUser, onClose, onSent }
         <div style={{ background: THEME.dangerBg, border: `1px solid ${THEME.danger}`, borderRadius: 9, padding: 14, marginTop: 16 }}>
           <h4 style={{ fontSize: 12.5, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>{t("sbsSendTargetTitle")}</h4>
           <label style={styles.label}>{t("sbsTargetContractor")}</label>
-          <select style={styles.input} value={targetContractorId} onChange={(e) => setTargetContractorId(e.target.value)} dir="rtl">
+          <select style={styles.input} value={targetContractorId} onChange={(e) => setTargetContractorId(e.target.value)} dir={dir}>
             <option value="all">{t("sbsAllContractors")}</option>
             {contractors.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
           <label style={styles.label}>{t("sbsNoteForContractor")}</label>
-          <input style={styles.input} value={note} onChange={(e) => setNote(e.target.value)} dir="rtl" placeholder={t("sbsNoteForContractorPlaceholder")} />
+          <input style={styles.input} value={note} onChange={(e) => setNote(e.target.value)} dir={dir} placeholder={t("sbsNoteForContractorPlaceholder")} />
           {error && <p style={styles.error}>{error}</p>}
           {sentMessage && <p style={{ fontSize: 12.5, color: "#166534", marginTop: 10, fontWeight: 600 }}>{sentMessage}</p>}
           <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6, marginTop: 12 }} onClick={handleSend} disabled={sending}>

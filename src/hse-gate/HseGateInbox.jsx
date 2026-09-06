@@ -23,7 +23,7 @@ const MODULE_LABEL_KEYS = {
  *     HSE باید آن را به یک کارشناس مشخص کارفرما واگذار کند.
  */
 export default function HseGateInbox({ currentUser, onBack }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [items, setItems] = useState(null);
   const [staff, setStaff] = useState([]);
   const [tab, setTab] = useState("employer_to_contractor");
@@ -148,7 +148,7 @@ export default function HseGateInbox({ currentUser, onBack }) {
           {rejectingId === it.id && (
             <div style={{ background: THEME.dangerBg, borderRadius: 9, padding: 12, marginTop: 10 }}>
               <label style={{ fontSize: 11.5, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("gateInboxRejectReason")}</label>
-              <textarea style={{ ...styles.input, marginTop: 0, minHeight: 50 }} value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} dir="rtl" />
+              <textarea style={{ ...styles.input, marginTop: 0, minHeight: 50 }} value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} dir={dir} />
               <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                 <button type="button" style={styles.smallButton} onClick={confirmReject} disabled={busy === it.id}>{t("gateInboxSubmitReject")}</button>
                 <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setRejectingId(null)}>{t("commonCancel")}</button>
@@ -159,7 +159,7 @@ export default function HseGateInbox({ currentUser, onBack }) {
           {assigningId === it.id && (
             <div style={{ background: THEME.bg, borderRadius: 9, padding: 12, marginTop: 10 }}>
               <label style={{ fontSize: 11.5, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("gateInboxAssignTo")}</label>
-              <select style={{ ...styles.input, marginTop: 0 }} value={assignTo} onChange={(e) => setAssignTo(e.target.value)} dir="rtl">
+              <select style={{ ...styles.input, marginTop: 0 }} value={assignTo} onChange={(e) => setAssignTo(e.target.value)} dir={dir}>
                 <option value="">{t("gateInboxSelectSpecialist")}</option>
                 {staff.map((s) => <option key={s.username} value={s.username}>{s.name}</option>)}
               </select>

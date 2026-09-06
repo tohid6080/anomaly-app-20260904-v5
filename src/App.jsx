@@ -778,7 +778,7 @@ const JALALI_MONTHS = ["فروردین", "اردیبهشت", "خرداد", "تی
 
 // انتخاب‌گر تاریخ شمسی (سه select: سال/ماه/روز) — مقدار ورودی/خروجی ISO میلادی (yyyy-mm-dd) برای سازگاری با دیتابیس
 function JalaliDateInput({ value, onChange }) {
-  const { lang } = useLanguage();
+  const { lang, dir } = useLanguage();
   const todayParts = todayJalaliParts();
   const parsed = isoToJalali(value);
   const jy = parsed ? parsed[0] : todayParts[0];
@@ -821,7 +821,7 @@ function JalaliDateInput({ value, onChange }) {
   }
 
   return (
-    <div style={{ display: "flex", gap: 6 }} dir="rtl">
+    <div style={{ display: "flex", gap: 6 }} dir={dir}>
       <select style={{ ...styles.input, flex: 1.2 }} value={jy} onChange={(e) => emit(Number(e.target.value), jm, jd)}>
         {years.map((y) => <option key={y} value={y}>{y}</option>)}
       </select>
@@ -1391,9 +1391,9 @@ function BiometricGateScreen({ currentUser, onUnlocked, onFallbackToPassword }) 
 // راه خروج نمایش داده می‌شود. توکن نشست پیش از رندر این صفحه پاک می‌شود،
 // پس هیچ درخواست داده‌ای دیگری با اعتبار قبلی انجام نمی‌شود.
 function AccountDeactivatedScreen({ onExit }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   return (
-    <div style={{ ...styles.centerScreen, direction: "rtl" }}>
+    <div style={{ ...styles.centerScreen, direction: dir }}>
       <div style={{ ...styles.card, width: 360, textAlign: "center" }}>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
           <div style={{ width: 60, height: 60, borderRadius: "50%", background: THEME.dangerBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -1707,7 +1707,7 @@ function ProfileView({ onBack, currentUser, roleLabel }) {
 
 // ---------- مدیریت یکپارچه پیمانکاران (اطلاعات شرکت + حساب کاربری ورود) ----------
 function ContractorManager({ onBack }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [contractors, setContractors] = useState([]);
   const [jobPositions, setJobPositions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1785,22 +1785,22 @@ function ContractorManager({ onBack }) {
       {showForm && (
         <div style={styles.card}>
           <label style={styles.label}>{t("cmContractorName")}</label>
-          <input style={styles.input} value={name} onChange={(e) => setName(e.target.value)} dir="rtl" placeholder={t("cmContractorNamePlaceholder")} />
+          <input style={styles.input} value={name} onChange={(e) => setName(e.target.value)} dir={dir} placeholder={t("cmContractorNamePlaceholder")} />
           <label style={styles.label}>{t("cmContactPerson")}</label>
-          <input style={styles.input} value={contactPersonName} onChange={(e) => setContactPersonName(e.target.value)} dir="rtl" />
+          <input style={styles.input} value={contactPersonName} onChange={(e) => setContactPersonName(e.target.value)} dir={dir} />
           <label style={styles.label}>{t("cmJobTitle")}</label>
-          <select style={styles.input} value={jobPositionId} onChange={(e) => setJobPositionId(e.target.value)} dir="rtl">
+          <select style={styles.input} value={jobPositionId} onChange={(e) => setJobPositionId(e.target.value)} dir={dir}>
             <option value="">{t("cmSelectPlaceholder")}</option>
             {jobPositions.map((jp) => <option key={jp.id} value={jp.id}>{jp.title}</option>)}
           </select>
           <label style={styles.label}>{t("cmStartDate")}</label>
           <JalaliDateInput value={startDate} onChange={setStartDate} />
           <label style={styles.label}>{t("cmContractDetails")}</label>
-          <textarea style={{ ...styles.input, minHeight: 70, resize: "vertical", fontFamily: "inherit" }} value={contractDetails} onChange={(e) => setContractDetails(e.target.value)} dir="rtl" />
+          <textarea style={{ ...styles.input, minHeight: 70, resize: "vertical", fontFamily: "inherit" }} value={contractDetails} onChange={(e) => setContractDetails(e.target.value)} dir={dir} />
           <label style={styles.label}>{t("cmUsernameForLogin")}</label>
-          <input style={styles.input} value={username} onChange={(e) => setUsername(e.target.value)} dir="rtl" />
+          <input style={styles.input} value={username} onChange={(e) => setUsername(e.target.value)} dir={dir} />
           <label style={styles.label}>{t("cmPassword")}</label>
-          <input style={styles.input} value={password} onChange={(e) => setPassword(e.target.value)} dir="rtl" />
+          <input style={styles.input} value={password} onChange={(e) => setPassword(e.target.value)} dir={dir} />
           <p style={{ fontSize: 10.5, color: THEME.text3, margin: "-8px 0 8px" }}>{t("appMinCharsHint", { n: MIN_PASSWORD_LENGTH })}</p>
           {formError && <p style={styles.error}>{formError}</p>}
           <button type="button" style={styles.button} onClick={handleAdd}>{t("cmAddContractorBtn")}</button>
@@ -1814,22 +1814,22 @@ function ContractorManager({ onBack }) {
         editingId === c.id ? (
           <div key={c.id} style={styles.card}>
             <label style={styles.label}>{t("cmContractorName")}</label>
-            <input style={styles.input} value={editData.name} onChange={(e) => setEditData({ ...editData, name: e.target.value })} dir="rtl" />
+            <input style={styles.input} value={editData.name} onChange={(e) => setEditData({ ...editData, name: e.target.value })} dir={dir} />
             <label style={styles.label}>{t("cmContactPerson")}</label>
-            <input style={styles.input} value={editData.contactPersonName || ""} onChange={(e) => setEditData({ ...editData, contactPersonName: e.target.value })} dir="rtl" />
+            <input style={styles.input} value={editData.contactPersonName || ""} onChange={(e) => setEditData({ ...editData, contactPersonName: e.target.value })} dir={dir} />
             <label style={styles.label}>{t("cmJobTitle")}</label>
-            <select style={styles.input} value={editData.jobPositionId || ""} onChange={(e) => setEditData({ ...editData, jobPositionId: e.target.value })} dir="rtl">
+            <select style={styles.input} value={editData.jobPositionId || ""} onChange={(e) => setEditData({ ...editData, jobPositionId: e.target.value })} dir={dir}>
               <option value="">{t("cmSelectPlaceholder")}</option>
               {jobPositions.map((jp) => <option key={jp.id} value={jp.id}>{jp.title}</option>)}
             </select>
             <label style={styles.label}>{t("cmStartDate")}</label>
             <JalaliDateInput value={editData.startDate} onChange={(v) => setEditData({ ...editData, startDate: v })} />
             <label style={styles.label}>{t("cmContractDetails")}</label>
-            <textarea style={{ ...styles.input, minHeight: 70, fontFamily: "inherit" }} value={editData.contractDetails} onChange={(e) => setEditData({ ...editData, contractDetails: e.target.value })} dir="rtl" />
+            <textarea style={{ ...styles.input, minHeight: 70, fontFamily: "inherit" }} value={editData.contractDetails} onChange={(e) => setEditData({ ...editData, contractDetails: e.target.value })} dir={dir} />
             <label style={styles.label}>{t("cmUsername")}</label>
-            <input style={styles.input} value={editData.username} onChange={(e) => setEditData({ ...editData, username: e.target.value })} dir="rtl" />
+            <input style={styles.input} value={editData.username} onChange={(e) => setEditData({ ...editData, username: e.target.value })} dir={dir} />
             <label style={styles.label}>{t("cmPassword")}</label>
-            <input style={styles.input} value={editData.password} onChange={(e) => setEditData({ ...editData, password: e.target.value })} dir="rtl" />
+            <input style={styles.input} value={editData.password} onChange={(e) => setEditData({ ...editData, password: e.target.value })} dir={dir} />
             <p style={{ fontSize: 10.5, color: THEME.text3, margin: "-8px 0 8px" }}>{t("appMinCharsHint", { n: MIN_PASSWORD_LENGTH })}</p>
             <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
               <button type="button" style={styles.button} onClick={() => saveEdit(c.id)}>{t("commonSave")}</button>
@@ -1861,7 +1861,7 @@ function ContractorManager({ onBack }) {
 
 // ---------- مدیریت حساب‌های کارفرما/همکاران (فقط ادمین) ----------
 function EmployerAccountManager({ onBack }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [accounts, setAccounts] = useState([]);
   const [jobPositions, setJobPositions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1936,18 +1936,18 @@ function EmployerAccountManager({ onBack }) {
       {showForm && (
         <div style={styles.card}>
           <label style={styles.label}>{t("eamFullName")}</label>
-          <input style={styles.input} value={name} onChange={(e) => setName(e.target.value)} dir="rtl" />
+          <input style={styles.input} value={name} onChange={(e) => setName(e.target.value)} dir={dir} />
           <label style={styles.label}>{t("eamCompanyName")}</label>
-          <input style={styles.input} value={companyName} onChange={(e) => setCompanyName(e.target.value)} dir="rtl" />
+          <input style={styles.input} value={companyName} onChange={(e) => setCompanyName(e.target.value)} dir={dir} />
           <label style={styles.label}>{t("cmJobTitle")}</label>
-          <select style={styles.input} value={jobPositionId} onChange={(e) => setJobPositionId(e.target.value)} dir="rtl">
+          <select style={styles.input} value={jobPositionId} onChange={(e) => setJobPositionId(e.target.value)} dir={dir}>
             <option value="">{t("cmSelectPlaceholder")}</option>
             {jobPositions.map((jp) => <option key={jp.id} value={jp.id}>{jp.title}</option>)}
           </select>
           <label style={styles.label}>{t("cmUsername")}</label>
-          <input style={styles.input} value={username} onChange={(e) => setUsername(e.target.value)} dir="rtl" />
+          <input style={styles.input} value={username} onChange={(e) => setUsername(e.target.value)} dir={dir} />
           <label style={styles.label}>{t("cmPassword")}</label>
-          <input style={styles.input} value={password} onChange={(e) => setPassword(e.target.value)} dir="rtl" />
+          <input style={styles.input} value={password} onChange={(e) => setPassword(e.target.value)} dir={dir} />
           <p style={{ fontSize: 10.5, color: THEME.text3, margin: "-8px 0 8px" }}>{t("appMinCharsHint", { n: MIN_PASSWORD_LENGTH })}</p>
           <label style={styles.label}>{t("eamAccessLevel")}</label>
           <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
@@ -1966,18 +1966,18 @@ function EmployerAccountManager({ onBack }) {
         editingId === a.id ? (
           <div key={a.id} style={styles.card}>
             <label style={styles.label}>{t("eamFullName")}</label>
-            <input style={styles.input} value={editData.name} onChange={(e) => setEditData({ ...editData, name: e.target.value })} dir="rtl" />
+            <input style={styles.input} value={editData.name} onChange={(e) => setEditData({ ...editData, name: e.target.value })} dir={dir} />
             <label style={styles.label}>{t("eamCompanyName")}</label>
-            <input style={styles.input} value={editData.companyName || ""} onChange={(e) => setEditData({ ...editData, companyName: e.target.value })} dir="rtl" />
+            <input style={styles.input} value={editData.companyName || ""} onChange={(e) => setEditData({ ...editData, companyName: e.target.value })} dir={dir} />
             <label style={styles.label}>{t("cmJobTitle")}</label>
-            <select style={styles.input} value={editData.jobPositionId || ""} onChange={(e) => setEditData({ ...editData, jobPositionId: e.target.value })} dir="rtl">
+            <select style={styles.input} value={editData.jobPositionId || ""} onChange={(e) => setEditData({ ...editData, jobPositionId: e.target.value })} dir={dir}>
               <option value="">{t("cmSelectPlaceholder")}</option>
               {jobPositions.map((jp) => <option key={jp.id} value={jp.id}>{jp.title}</option>)}
             </select>
             <label style={styles.label}>{t("cmUsername")}</label>
-            <input style={styles.input} value={editData.username} onChange={(e) => setEditData({ ...editData, username: e.target.value })} dir="rtl" />
+            <input style={styles.input} value={editData.username} onChange={(e) => setEditData({ ...editData, username: e.target.value })} dir={dir} />
             <label style={styles.label}>{t("cmPassword")}</label>
-            <input style={styles.input} value={editData.password} onChange={(e) => setEditData({ ...editData, password: e.target.value })} dir="rtl" />
+            <input style={styles.input} value={editData.password} onChange={(e) => setEditData({ ...editData, password: e.target.value })} dir={dir} />
             <p style={{ fontSize: 10.5, color: THEME.text3, margin: "-8px 0 8px" }}>{t("appMinCharsHint", { n: MIN_PASSWORD_LENGTH })}</p>
             <label style={styles.label}>{t("eamAccessLevel")}</label>
             <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
@@ -2015,7 +2015,7 @@ function EmployerAccountManager({ onBack }) {
 
 // ---------- ثبت آنومالی جدید (بر اساس «فرم آنومالی») ----------
 function AnomalyForm({ onBack, currentUser, onSaved }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [contractorNames, setContractorNames] = useState([]);
   const [project, setProject] = useState("");
   const [contractor, setContractor] = useState("");
@@ -2212,32 +2212,32 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
         <div style={styles.formGrid}>
           <div>
             <label style={styles.label}>{t("afProject")}</label>
-            <input style={styles.input} value={project} onChange={(e) => setProject(e.target.value)} dir="rtl" />
+            <input style={styles.input} value={project} onChange={(e) => setProject(e.target.value)} dir={dir} />
           </div>
           <div>
             <label style={styles.label}>{t("afTrackingNumber")}</label>
-            <input style={styles.input} placeholder={t("afTrackingAuto")} value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} dir="rtl" />
+            <input style={styles.input} placeholder={t("afTrackingAuto")} value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} dir={dir} />
           </div>
         </div>
 
         <div style={styles.formGrid}>
           <div>
             <label style={styles.label}>{t("afContractor")}</label>
-            <select style={styles.input} value={contractor} onChange={(e) => setContractor(e.target.value)} dir="rtl">
+            <select style={styles.input} value={contractor} onChange={(e) => setContractor(e.target.value)} dir={dir}>
               <option value="">{t("cmSelectPlaceholder")}</option>
               {contractorNames.map((n) => <option key={n} value={n}>{n}</option>)}
             </select>
           </div>
           <div>
             <label style={styles.label}>{t("afSubContractor")}</label>
-            <input style={styles.input} value={subContractor} onChange={(e) => setSubContractor(e.target.value)} dir="rtl" />
+            <input style={styles.input} value={subContractor} onChange={(e) => setSubContractor(e.target.value)} dir={dir} />
           </div>
         </div>
 
         <div style={styles.formGrid}>
           <div>
             <label style={styles.label}>{t("afAreaLocation")}</label>
-            <input style={styles.input} value={area} onChange={(e) => setArea(e.target.value)} dir="rtl" placeholder={t("afAreaPlaceholder")} />
+            <input style={styles.input} value={area} onChange={(e) => setArea(e.target.value)} dir={dir} placeholder={t("afAreaPlaceholder")} />
           </div>
           <div>
             <label style={styles.label}>{t("afDate")}</label>
@@ -2273,23 +2273,23 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
         <div style={styles.formGrid}>
           <div>
             <label style={styles.label}>{t("afCategory")}</label>
-            <select style={styles.input} value={category} onChange={(e) => setCategory(e.target.value)} dir="rtl">
+            <select style={styles.input} value={category} onChange={(e) => setCategory(e.target.value)} dir={dir}>
               {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
           <div>
             <label style={styles.label}>{t("afFormat")}</label>
-            <select style={styles.input} value={format} onChange={(e) => setFormat(e.target.value)} dir="rtl">
+            <select style={styles.input} value={format} onChange={(e) => setFormat(e.target.value)} dir={dir}>
               {ANOMALY_FORMATS.map((f) => <option key={f.value} value={f.value}>{t(f.labelKey)}</option>)}
             </select>
           </div>
         </div>
 
         <label style={styles.label}>{t("afDescription")}</label>
-        <textarea style={{ ...styles.input, minHeight: 100, resize: "vertical", fontFamily: "inherit" }} value={description} onChange={(e) => setDescription(e.target.value)} dir="rtl" />
+        <textarea style={{ ...styles.input, minHeight: 100, resize: "vertical", fontFamily: "inherit" }} value={description} onChange={(e) => setDescription(e.target.value)} dir={dir} />
 
         <label style={styles.label}>{t("afFollower")}</label>
-        <input style={styles.input} value={follower} onChange={(e) => setFollower(e.target.value)} dir="rtl" />
+        <input style={styles.input} value={follower} onChange={(e) => setFollower(e.target.value)} dir={dir} />
 
         <label style={styles.label}>{t("afNeedsRiskAssessment")}</label>
         <div style={{ display: "flex", gap: 8, marginBottom: needsRiskAssessment ? 10 : 0 }}>
@@ -2299,7 +2299,7 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
         {needsRiskAssessment && (
           <>
             <label style={styles.label}>{t("afIdentifiedHazard")}</label>
-            <textarea style={{ ...styles.input, minHeight: 70, fontFamily: "inherit" }} value={identifiedHazard} onChange={(e) => setIdentifiedHazard(e.target.value)} dir="rtl" placeholder={t("afIdentifiedHazardPlaceholder")} />
+            <textarea style={{ ...styles.input, minHeight: 70, fontFamily: "inherit" }} value={identifiedHazard} onChange={(e) => setIdentifiedHazard(e.target.value)} dir={dir} placeholder={t("afIdentifiedHazardPlaceholder")} />
           </>
         )}
 
@@ -2314,7 +2314,7 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
               {t("afBarrierEvidenceNote")}
             </p>
             <label style={styles.label}>BowTie</label>
-            <select style={styles.input} value={selectedBowtieId} onChange={(e) => setSelectedBowtieId(e.target.value)} dir="rtl">
+            <select style={styles.input} value={selectedBowtieId} onChange={(e) => setSelectedBowtieId(e.target.value)} dir={dir}>
               <option value="">{t("cmSelectPlaceholder")}</option>
               {bowtieOptions.map((b) => <option key={b.id} value={b.id}>{b.title}</option>)}
             </select>
@@ -2404,7 +2404,7 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
 
 // ---------- لیست و پیگیری آنومالی‌ها ----------
 function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter, initialRiskFilter, initialContractorFilter, initialExpandedAnomalyId }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const isAdmin = role === "ADMIN";
   // طبق تصمیم تأییدشده: تأیید نهایی آنومالی (بستن بعد از اقدام اصلاحی
   // پیمانکار) فقط برای سرپرست/مدیر HSE و ادمین مجاز است، نه هر
@@ -2883,19 +2883,19 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
         onSortChange={setSort}
         filterSlot={
           <>
-            <select style={styles.filterSelect} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir="rtl">
+            <select style={styles.filterSelect} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir={dir}>
               <option value="all">{t("filterAllStatuses")}</option>
               <option value="not_closed">{t("filterNotClosed")}</option>
               <option value="open">{t("anomStatusOpen")}</option>
               <option value="pending_review">{t("anomStatusPendingReview")}</option>
               <option value="Closed">{t("anomStatusClosed")}</option>
             </select>
-            <select style={styles.filterSelect} value={riskFilter} onChange={(e) => setRiskFilter(e.target.value)} dir="rtl">
+            <select style={styles.filterSelect} value={riskFilter} onChange={(e) => setRiskFilter(e.target.value)} dir={dir}>
               <option value="all">{t("filterAllRiskLevels")}</option>
               {RISK_LEVELS.map((r) => <option key={r.value} value={r.value}>{r.value}</option>)}
             </select>
             {!isContractor && (
-              <select style={styles.filterSelect} value={contractorFilter} onChange={(e) => setContractorFilter(e.target.value)} dir="rtl">
+              <select style={styles.filterSelect} value={contractorFilter} onChange={(e) => setContractorFilter(e.target.value)} dir={dir}>
                 <option value="all">{t("filterAllContractors")}</option>
                 {contractorNamesInList.map((name) => <option key={name} value={name}>{name}</option>)}
               </select>
@@ -3066,7 +3066,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
             {canActAsContractor && a.status === "open" && (
               <div>
                 <label style={styles.label}>{t("correctiveActionDescLabel")}</label>
-                <textarea style={{ ...styles.input, minHeight: 70, fontFamily: "inherit" }} value={actionText} onChange={(e) => setActionText(e.target.value)} dir="rtl" placeholder={t("correctiveActionPlaceholder")} />
+                <textarea style={{ ...styles.input, minHeight: 70, fontFamily: "inherit" }} value={actionText} onChange={(e) => setActionText(e.target.value)} dir={dir} placeholder={t("correctiveActionPlaceholder")} />
 
                 <label style={styles.label}>{t("correctiveActionPhotoCount", { count: actionPhotos.length })}</label>
                 <div style={{ display: "flex", gap: 8 }}>
@@ -3133,7 +3133,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
                   ) : (
                     <>
                       <label style={styles.label}>{t("rejectReasonLabel")}</label>
-                      <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} dir="rtl" />
+                      <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} dir={dir} />
                       <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
                         <button type="button" style={{ ...styles.button, background: "#c92a2a" }} onClick={() => rejectAnomaly(a)} disabled={reviewSaving}>
                           {reviewSaving ? t("savingEllipsisShort") : t("confirmReturn")}
@@ -3187,7 +3187,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
                     </div>
                     {assigningGateId === a.id && (
                       <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                        <select style={{ ...styles.input, marginTop: 0, maxWidth: 220 }} value={assignGateTo} onChange={(e) => setAssignGateTo(e.target.value)} dir="rtl">
+                        <select style={{ ...styles.input, marginTop: 0, maxWidth: 220 }} value={assignGateTo} onChange={(e) => setAssignGateTo(e.target.value)} dir={dir}>
                           <option value="">{t("alSelectExpert")}</option>
                           {gateStaff.filter((s) => s.username !== currentUser?.username).map((s) => <option key={s.username} value={s.username}>{s.name}</option>)}
                         </select>
@@ -3208,7 +3208,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
                     ) : (
                       <div>
                         <label style={styles.label}>{t("alReviewCommentOptional")}</label>
-                        <textarea style={{ ...styles.input, minHeight: 50 }} value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} dir="rtl" />
+                        <textarea style={{ ...styles.input, minHeight: 50 }} value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} dir={dir} />
                         <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                           <button type="button" style={styles.smallButton} onClick={() => handleSubmitReview(a)} disabled={gateBusy === a.id}>{t("alSend")}</button>
                           <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setReviewingGateId(null)}>{t("commonCancel")}</button>
@@ -3221,7 +3221,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
                 {isReviewer && showRejectBox && (
                   <div style={{ marginTop: 8 }}>
                     <label style={styles.label}>{t("alRejectReasonOptional")}</label>
-                    <textarea style={{ ...styles.input, minHeight: 50 }} value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} dir="rtl" />
+                    <textarea style={{ ...styles.input, minHeight: 50 }} value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} dir={dir} />
                     <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                       <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => { handleRejectGate(a, rejectNote); setShowRejectBox(false); setRejectNote(""); }} disabled={gateBusy === a.id}>{t("alSubmitReject")}</button>
                       <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setShowRejectBox(false)}>{t("commonCancel")}</button>
@@ -3238,19 +3238,19 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
                 {showManualEdit && (
                   <>
                     <label style={styles.label}>{t("fieldCorrectiveAction")}</label>
-                    <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={draft.correctiveAction} onChange={(e) => setDraft({ ...draft, correctiveAction: e.target.value })} dir="rtl" />
+                    <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={draft.correctiveAction} onChange={(e) => setDraft({ ...draft, correctiveAction: e.target.value })} dir={dir} />
 
                     <label style={styles.label}>{t("fieldObstacles")}</label>
-                    <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={draft.obstacles} onChange={(e) => setDraft({ ...draft, obstacles: e.target.value })} dir="rtl" />
+                    <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={draft.obstacles} onChange={(e) => setDraft({ ...draft, obstacles: e.target.value })} dir={dir} />
 
                     <div style={styles.formGrid}>
                       <div>
                         <label style={styles.label}>{t("fieldFollowerPerson")}</label>
-                        <input style={styles.input} value={draft.follower} onChange={(e) => setDraft({ ...draft, follower: e.target.value })} dir="rtl" />
+                        <input style={styles.input} value={draft.follower} onChange={(e) => setDraft({ ...draft, follower: e.target.value })} dir={dir} />
                       </div>
                       <div>
                         <label style={styles.label}>{t("colStatus")}</label>
-                        <select style={styles.input} value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value })} dir="rtl">
+                        <select style={styles.input} value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value })} dir={dir}>
                           <option value="open">{t("anomStatusOpen")}</option>
                           <option value="pending_review">{t("anomStatusPendingReview")}</option>
                           <option value="Closed">{t("statusClosedParenthetical")}</option>
@@ -3266,7 +3266,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
                         </div>
                         <div>
                           <label style={styles.label}>{t("fieldEffectiveness")}</label>
-                          <input style={styles.input} value={draft.effectiveness} onChange={(e) => setDraft({ ...draft, effectiveness: e.target.value })} dir="rtl" />
+                          <input style={styles.input} value={draft.effectiveness} onChange={(e) => setDraft({ ...draft, effectiveness: e.target.value })} dir={dir} />
                         </div>
                       </div>
                     )}
@@ -3566,7 +3566,7 @@ function SidebarItem({ mod, view, setView, collapsed, openKey, setOpenKey }) {
 }
 
 function Sidebar({ modules, view, setView, collapsed, onToggleCollapse }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   // آکاردئون: اگر view فعلی زیرمجموعه‌ی یک ماژول است، همان ماژول را از
   // ابتدا باز نگه دار تا کاربر جهت‌یابی خودش را از دست ندهد.
   const [openKey, setOpenKey] = useState(() => {
@@ -3605,7 +3605,7 @@ function Sidebar({ modules, view, setView, collapsed, onToggleCollapse }) {
           <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.07)", borderRadius: 8, padding: "6px 10px", minWidth: 0 }}>
             <Search size={13} color="rgba(255,255,255,0.5)" style={{ flexShrink: 0 }} />
             <input
-              value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("sidebarSearchModules")} dir="rtl"
+              value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("sidebarSearchModules")} dir={dir}
               style={{ flex: 1, minWidth: 0, background: "transparent", border: "none", outline: "none", color: "#fff", fontSize: 12, fontFamily: THEME.font }}
             />
           </div>
@@ -4853,7 +4853,7 @@ class ErrorBoundary extends React.Component {
     if (this.state.error) {
       const currentUser = this.getCurrentUserForReport();
       return (
-        <div style={{ padding: 24, fontFamily: "Tahoma, Arial, sans-serif", direction: "rtl", maxWidth: 560, margin: "40px auto" }}>
+        <div style={{ padding: 24, fontFamily: "Tahoma, Arial, sans-serif", direction: getCurrentLang() === "en" ? "ltr" : "rtl", maxWidth: 560, margin: "40px auto" }}>
           <h3 style={{ color: "#c92a2a" }}>{tr("errBoundaryTitle")}</h3>
           <p style={{ fontSize: 13, color: "#555" }}>{tr("errBoundaryDesc")}</p>
           <pre style={{ whiteSpace: "pre-wrap", fontSize: 12, color: "#991b1b", background: "#fee2e2", padding: 12, borderRadius: 8 }}>

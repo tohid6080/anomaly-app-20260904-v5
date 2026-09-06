@@ -569,7 +569,7 @@ function CompaniesPage({
   setShowCreate, setNewName, setNewType, onCreate, onToggleExpand, onUpdate, onDelete, onSetActive,
   payments, onAddPayment, onPlanChanged,
 }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   return (
     <div>
       <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
@@ -583,11 +583,11 @@ function CompaniesPage({
         {showCreate && (
           <div style={{ marginBottom: 14, background: THEME.bg, padding: 12, borderRadius: 8 }}>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
-              <input style={{ ...inputStyle, flex: 1, minWidth: 160 }} placeholder={t("saCompanyNamePlaceholder")} value={newName} onChange={(e) => setNewName(e.target.value)} dir="rtl" />
-              <select style={inputStyle} value={newType} onChange={(e) => setNewType(e.target.value)} dir="rtl">
+              <input style={{ ...inputStyle, flex: 1, minWidth: 160 }} placeholder={t("saCompanyNamePlaceholder")} value={newName} onChange={(e) => setNewName(e.target.value)} dir={dir} />
+              <select style={inputStyle} value={newType} onChange={(e) => setNewType(e.target.value)} dir={dir}>
                 {SUBSCRIPTION_TYPES.map((o) => <option key={o.value} value={o.value}>{t(o.labelKey)}</option>)}
               </select>
-              <select style={inputStyle} value={newStatus} onChange={(e) => setNewStatus(e.target.value)} dir="rtl">
+              <select style={inputStyle} value={newStatus} onChange={(e) => setNewStatus(e.target.value)} dir={dir}>
                 {SUBSCRIPTION_STATUSES.map((s) => <option key={s.value} value={s.value}>{t(s.labelKey)}</option>)}
               </select>
             </div>
@@ -745,7 +745,7 @@ function SystemConfigPage({ currentAdmin, companies }) {
 // فقط با کلیک روی «ثبت و انتشار». دکمه‌های انتشار/لغو انتشار/حذف در تاریخچه
 // دستوراتِ اتمیک با confirm خودشان‌اند (نه ویرایشِ فیلد) پس فوری اجرا می‌شوند.
 function AppUpdateManagementTab({ currentAdmin }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [releases, setReleases] = useState(null);
   const [version, setVersion] = useState("");
   const [releaseNotes, setReleaseNotes] = useState("");
@@ -848,7 +848,7 @@ function AppUpdateManagementTab({ currentAdmin }) {
           </div>
         </div>
         <label style={{ ...smallLabelStyle, marginTop: 10 }}>{t("arReleaseNotesLabel")}</label>
-        <textarea style={{ ...inputStyle, minHeight: 70, fontFamily: THEME.font }} value={releaseNotes} onChange={(e) => setReleaseNotes(e.target.value)} dir="rtl" />
+        <textarea style={{ ...inputStyle, minHeight: 70, fontFamily: THEME.font }} value={releaseNotes} onChange={(e) => setReleaseNotes(e.target.value)} dir={dir} />
         <button type="button" style={{ ...btnStyle(THEME.tealDeep), marginTop: 12, display: "flex", alignItems: "center", gap: 6 }} onClick={handleAutoBuild} disabled={building}>
           <RefreshCw size={14} style={building ? { animation: "sa-spin 1s linear infinite" } : undefined} /> {building ? t("arAutoBuildBuilding") : t("arAutoBuildButton")}
         </button>
@@ -869,7 +869,7 @@ function AppUpdateManagementTab({ currentAdmin }) {
           </div>
         </div>
         <label style={{ ...smallLabelStyle, marginTop: 10 }}>{t("arReleaseNotesLabel")}</label>
-        <textarea style={{ ...inputStyle, minHeight: 90, fontFamily: THEME.font }} value={releaseNotes} onChange={(e) => setReleaseNotes(e.target.value)} dir="rtl" />
+        <textarea style={{ ...inputStyle, minHeight: 90, fontFamily: THEME.font }} value={releaseNotes} onChange={(e) => setReleaseNotes(e.target.value)} dir={dir} />
 
         <label style={{ ...smallLabelStyle, marginTop: 10 }}>{t("arApkFileLabel")}</label>
         <input type="file" accept=".apk,application/vnd.android.package-archive" onChange={(e) => setApkFile(e.target.files?.[0] || null)} style={{ fontSize: 12 }} />
@@ -973,7 +973,7 @@ const moduleDefaultNames = (moduleKey) => {
 };
 
 function ModuleManagementTab({ currentAdmin }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [list, setList] = useState(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -1063,9 +1063,9 @@ function ModuleManagementTab({ currentAdmin }) {
             <button type="button" onClick={() => move(idx, 1)} disabled={idx === list.length - 1} style={{ background: "none", border: "none", cursor: idx === list.length - 1 ? "default" : "pointer", opacity: idx === list.length - 1 ? 0.3 : 1, padding: 1 }}><ArrowDown size={13} color={THEME.text2} /></button>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1.4fr", gap: 8, flex: 1, minWidth: 0 }}>
-            <input style={inputStyle} placeholder={def.fa} value={m.displayLabel} onChange={(e) => updateField(idx, "displayLabel", e.target.value)} dir="rtl" />
+            <input style={inputStyle} placeholder={def.fa} value={m.displayLabel} onChange={(e) => updateField(idx, "displayLabel", e.target.value)} dir={dir} />
             <input style={{ ...inputStyle, direction: "ltr" }} placeholder={def.en} value={m.displayLabelEn} onChange={(e) => updateField(idx, "displayLabelEn", e.target.value)} dir="ltr" />
-            <input style={inputStyle} placeholder={t("saMmDescPlaceholder")} value={m.description} onChange={(e) => updateField(idx, "description", e.target.value)} dir="rtl" />
+            <input style={inputStyle} placeholder={t("saMmDescPlaceholder")} value={m.description} onChange={(e) => updateField(idx, "description", e.target.value)} dir={dir} />
           </div>
         </div>
         );
@@ -1217,7 +1217,7 @@ const PRIORITY_META = {
 };
 
 function NotificationManagementTab({ currentAdmin }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [list, setList] = useState(null);
   const [draftList, setDraftList] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -1291,13 +1291,13 @@ function NotificationManagementTab({ currentAdmin }) {
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
             <div>
               <label style={{ fontSize: 10.5, color: THEME.text3, display: "block", marginBottom: 3 }}>{t("saRecipient")}</label>
-              <select style={{ ...inputStyle, width: 140 }} value={nt.targetRole} onChange={(e) => updateDraft(nt.typeKey, { targetRole: e.target.value })} dir="rtl">
+              <select style={{ ...inputStyle, width: 140 }} value={nt.targetRole} onChange={(e) => updateDraft(nt.typeKey, { targetRole: e.target.value })} dir={dir}>
                 {Object.entries(ROLE_LABELS).map(([k, v]) => <option key={k} value={k}>{t(v)}</option>)}
               </select>
             </div>
             <div>
               <label style={{ fontSize: 10.5, color: THEME.text3, display: "block", marginBottom: 3 }}>{t("saPriority")}</label>
-              <select style={{ ...inputStyle, width: 110 }} value={nt.priority} onChange={(e) => updateDraft(nt.typeKey, { priority: e.target.value })} dir="rtl">
+              <select style={{ ...inputStyle, width: 110 }} value={nt.priority} onChange={(e) => updateDraft(nt.typeKey, { priority: e.target.value })} dir={dir}>
                 {Object.entries(PRIORITY_META).map(([k, v]) => <option key={k} value={k}>{t(v.labelKey)}</option>)}
               </select>
             </div>
@@ -1321,7 +1321,7 @@ function NotificationManagementTab({ currentAdmin }) {
 }
 
 function AppearanceManagementTab({ currentAdmin }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [config, setConfig] = useState(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -1357,7 +1357,7 @@ function AppearanceManagementTab({ currentAdmin }) {
         </div>
         <div>
           <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApSystemTitle")}</label>
-          <input style={inputStyle} value={config.systemTitle} onChange={(e) => update("systemTitle", e.target.value)} dir="rtl" />
+          <input style={inputStyle} value={config.systemTitle} onChange={(e) => update("systemTitle", e.target.value)} dir={dir} />
         </div>
         <div>
           <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApLogoUrl")}</label>
@@ -1385,7 +1385,7 @@ function AppearanceManagementTab({ currentAdmin }) {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginBottom: 18 }}>
         <div>
           <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApTheme")}</label>
-          <select style={inputStyle} value={config.themeMode} onChange={(e) => update("themeMode", e.target.value)} dir="rtl">
+          <select style={inputStyle} value={config.themeMode} onChange={(e) => update("themeMode", e.target.value)} dir={dir}>
             <option value="light">{t("saApThemeLight")}</option>
             <option value="dark">{t("saApThemeDark")}</option>
           </select>
@@ -1495,7 +1495,7 @@ function AnnouncementImageUploader({ value, aspectRatio, width, uploading, onUpl
 }
 
 function AnnouncementManagementTab({ currentAdmin, companies }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [list, setList] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -1612,11 +1612,11 @@ function AnnouncementManagementTab({ currentAdmin, companies }) {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10, marginBottom: 10 }}>
             <div>
               <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saAnTitle")}</label>
-              <input style={inputStyle} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} dir="rtl" />
+              <input style={inputStyle} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} dir={dir} />
             </div>
             <div>
               <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saAnIcon")}</label>
-              <select style={inputStyle} value={form.iconKey} onChange={(e) => setForm({ ...form, iconKey: e.target.value })} dir="rtl">
+              <select style={inputStyle} value={form.iconKey} onChange={(e) => setForm({ ...form, iconKey: e.target.value })} dir={dir}>
                 <option value="megaphone">{t("saAnIconMegaphone")}</option>
                 <option value="sparkles">{t("saAnIconSparkles")}</option>
                 <option value="gift">{t("saAnIconGift")}</option>
@@ -1626,7 +1626,7 @@ function AnnouncementManagementTab({ currentAdmin, companies }) {
             </div>
             <div>
               <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saAnTargetCompany")}</label>
-              <select style={inputStyle} value={form.companyId} onChange={(e) => setForm({ ...form, companyId: e.target.value })} dir="rtl">
+              <select style={inputStyle} value={form.companyId} onChange={(e) => setForm({ ...form, companyId: e.target.value })} dir={dir}>
                 <option value="">{t("saAllCompanies")}</option>
                 {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
@@ -1637,7 +1637,7 @@ function AnnouncementManagementTab({ currentAdmin, companies }) {
             </div>
             <div>
               <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saAnDisplayDuration")}</label>
-              <select style={inputStyle} value={form.displaySeconds} onChange={(e) => setForm({ ...form, displaySeconds: Number(e.target.value) })} dir="rtl">
+              <select style={inputStyle} value={form.displaySeconds} onChange={(e) => setForm({ ...form, displaySeconds: Number(e.target.value) })} dir={dir}>
                 <option value={5}>{t("saSecondsN", { n: 5 })}</option>
                 <option value={10}>{t("saSecondsN", { n: 10 })}</option>
                 <option value={15}>{t("saSecondsN", { n: 15 })}</option>
@@ -1654,7 +1654,7 @@ function AnnouncementManagementTab({ currentAdmin, companies }) {
             </div>
             <div>
               <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saAnButtonLabel")}</label>
-              <input style={inputStyle} placeholder={t("saAnButtonLabelPlaceholder")} value={form.buttonLabel} onChange={(e) => setForm({ ...form, buttonLabel: e.target.value })} dir="rtl" />
+              <input style={inputStyle} placeholder={t("saAnButtonLabelPlaceholder")} value={form.buttonLabel} onChange={(e) => setForm({ ...form, buttonLabel: e.target.value })} dir={dir} />
             </div>
             <div>
               <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saAnButtonUrl")}</label>
@@ -1662,7 +1662,7 @@ function AnnouncementManagementTab({ currentAdmin, companies }) {
             </div>
           </div>
           <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saAnMessage")}</label>
-          <textarea style={{ ...inputStyle, minHeight: 60 }} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} dir="rtl" />
+          <textarea style={{ ...inputStyle, minHeight: 60 }} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} dir={dir} />
 
           <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4, marginTop: 10 }}>{t("saAnHomeImage")}</label>
           <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 8px", lineHeight: 1.7 }}>
@@ -1683,7 +1683,7 @@ function AnnouncementManagementTab({ currentAdmin, companies }) {
           />
 
           <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4, marginTop: 14 }}>{t("saAnDisplayLocation")}</label>
-          <select style={inputStyle} value={form.displayLocation} onChange={(e) => setForm({ ...form, displayLocation: e.target.value })} dir="rtl">
+          <select style={inputStyle} value={form.displayLocation} onChange={(e) => setForm({ ...form, displayLocation: e.target.value })} dir={dir}>
             <option value="both">{t("saAnLocBoth")}</option>
             <option value="login">{t("saAnLocLogin")}</option>
             <option value="home">{t("saAnLocHome")}</option>
@@ -1807,7 +1807,7 @@ const ERROR_REPORT_STATUS_META = {
 const ERROR_REPORT_ROLE_LABELS = { ADMIN: "saRoleAdmin", EMPLOYER: "saRoleEmployer", HSE_SUPERVISOR: "saRoleHseSupervisor", CONTRACTOR: "saRoleContractor" };
 
 function ErrorReportsPage({ currentAdmin }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [statusFilter, setStatusFilter] = useState("all");
   const [rows, setRows] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
@@ -1845,7 +1845,7 @@ function ErrorReportsPage({ currentAdmin }) {
             </span>
           )}
         </h3>
-        <select style={{ ...inputStyle, width: "auto" }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir="rtl">
+        <select style={{ ...inputStyle, width: "auto" }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir={dir}>
           <option value="all">{t("saAllStatuses")}</option>
           <option value="open">{t("saErStatusOpen")}</option>
           <option value="reviewed">{t("saErStatusReviewed")}</option>
@@ -1898,7 +1898,7 @@ function ErrorReportsPage({ currentAdmin }) {
                           )}
                           {r.userAgent && <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 8px" }}>{t("saErUserAgent", { ua: r.userAgent })}</p>}
                           <label style={smallLabelStyle}>{t("saErInternalNote")}</label>
-                          <textarea style={{ ...inputStyle, minHeight: 60 }} value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} dir="rtl" />
+                          <textarea style={{ ...inputStyle, minHeight: 60 }} value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} dir={dir} />
                           {r.resolvedAt && (
                             <p style={{ fontSize: 10.5, color: THEME.text3, margin: "6px 0" }}>{t("saErResolvedBy", { by: r.resolvedBy || "—", at: toJalaliDateTime(r.resolvedAt) })}</p>
                           )}
@@ -1932,7 +1932,7 @@ const CARD_PAYMENT_STATUS_META = {
 };
 
 function CardTransferSettingsForm({ currentAdmin }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [settings, setSettings] = useState(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -1961,11 +1961,11 @@ function CardTransferSettingsForm({ currentAdmin }) {
         </div>
         <div>
           <label style={smallLabelStyle}>{t("saCtHolderName")}</label>
-          <input style={inputStyle} value={settings.holderName} onChange={(e) => setSettings({ ...settings, holderName: e.target.value })} dir="rtl" />
+          <input style={inputStyle} value={settings.holderName} onChange={(e) => setSettings({ ...settings, holderName: e.target.value })} dir={dir} />
         </div>
       </div>
       <label style={smallLabelStyle}>{t("saCtDescription")}</label>
-      <textarea style={{ ...inputStyle, minHeight: 60 }} value={settings.description} onChange={(e) => setSettings({ ...settings, description: e.target.value })} dir="rtl" />
+      <textarea style={{ ...inputStyle, minHeight: 60 }} value={settings.description} onChange={(e) => setSettings({ ...settings, description: e.target.value })} dir={dir} />
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
         <button type="button" style={btnStyle()} onClick={handleSave} disabled={saving}>{saving ? t("saSavingEllipsis") : t("saCtSaveSettings")}</button>
         {message && <span style={{ fontSize: 11.5, color: THEME.text3 }}>{message}</span>}
@@ -1975,7 +1975,7 @@ function CardTransferSettingsForm({ currentAdmin }) {
 }
 
 function CardTransferPaymentsPage({ currentAdmin }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [statusFilter, setStatusFilter] = useState("awaiting_review");
   const [rows, setRows] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
@@ -2021,7 +2021,7 @@ function CardTransferPaymentsPage({ currentAdmin }) {
               </span>
             )}
           </h3>
-          <select style={{ ...inputStyle, width: "auto" }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir="rtl">
+          <select style={{ ...inputStyle, width: "auto" }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir={dir}>
             <option value="all">{t("saAllStatuses")}</option>
             <option value="awaiting_review">{t("saCtStatusAwaiting")}</option>
             <option value="paid">{t("saCtStatusPaid")}</option>
@@ -2080,7 +2080,7 @@ function CardTransferPaymentsPage({ currentAdmin }) {
                                 </div>
                                 {showRejectFor === r.id && (
                                   <div style={{ marginTop: 8 }}>
-                                    <textarea style={{ ...inputStyle, minHeight: 50 }} placeholder={t("saCtRejectReasonPlaceholder")} value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} dir="rtl" />
+                                    <textarea style={{ ...inputStyle, minHeight: 50 }} placeholder={t("saCtRejectReasonPlaceholder")} value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} dir={dir} />
                                     <button type="button" style={{ ...btnStyle(THEME.danger), marginTop: 6 }} disabled={saving || !rejectNote.trim()} onClick={() => handleReject(r)}>{t("saCtSubmitReject")}</button>
                                   </div>
                                 )}
@@ -2115,7 +2115,7 @@ const TRIAL_REQUEST_STATUS_META = {
 };
 
 function TrialRequestsPage({ currentAdmin }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [statusFilter, setStatusFilter] = useState("pending");
   const [rows, setRows] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
@@ -2166,7 +2166,7 @@ function TrialRequestsPage({ currentAdmin }) {
             </span>
           )}
         </h3>
-        <select style={{ ...inputStyle, width: "auto" }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir="rtl">
+        <select style={{ ...inputStyle, width: "auto" }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir={dir}>
           <option value="all">{t("saAllStatuses")}</option>
           <option value="pending">{t("saTrStatusPending")}</option>
           <option value="approved">{t("saTrStatusApproved")}</option>
@@ -2232,7 +2232,7 @@ function TrialRequestsPage({ currentAdmin }) {
                                 <label style={{ fontSize: 11.5, color: THEME.text2 }}>{t("saTrTrialDays")}</label>
                                 <input type="number" min="1" style={{ ...inputStyle, width: 80 }} value={trialDaysDraft} onChange={(e) => setTrialDaysDraft(e.target.value)} />
                               </div>
-                              <textarea style={{ ...inputStyle, minHeight: 45, marginBottom: 8 }} placeholder={t("saTrNotePlaceholder")} value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} dir="rtl" />
+                              <textarea style={{ ...inputStyle, minHeight: 45, marginBottom: 8 }} placeholder={t("saTrNotePlaceholder")} value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} dir={dir} />
                               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                                 <button type="button" style={btnStyle("#166534")} disabled={saving || !trialDaysDraft} onClick={() => handleApprove(r)}>{t("saTrApprove")}</button>
                                 <button type="button" style={btnStyle(THEME.danger)} disabled={saving || !noteDraft.trim()} onClick={() => handleReject(r)}>{t("saTrReject")}</button>
@@ -2507,13 +2507,13 @@ function PlanCompanyUsage({ plan, companies }) {
 }
 
 function PlanForm({ form, setForm, toggleModule, toggleSub, onSave, saving, saveLabel }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   return (
     <div style={{ background: THEME.bg, padding: 14, borderRadius: 8, marginBottom: 14 }}>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8, marginBottom: 10 }}>
         <div>
           <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saPlanName")}</label>
-          <input style={inputStyle} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} dir="rtl" />
+          <input style={inputStyle} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} dir={dir} />
         </div>
         <div>
           <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saMonthlyPriceToman")}</label>
@@ -2549,7 +2549,7 @@ function PlanForm({ form, setForm, toggleModule, toggleSub, onSave, saving, save
         style={{ ...inputStyle, minHeight: 60, resize: "vertical", marginBottom: 12 }}
         value={form.description}
         onChange={(e) => setForm({ ...form, description: e.target.value })}
-        dir="rtl"
+        dir={dir}
         placeholder={t("saPfDescPlaceholder")}
       />
       <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 6 }}>{t("saActiveModulesLabel")}</label>
@@ -2744,7 +2744,7 @@ function StatBox({ label, value, color }) {
 
 
 function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStats, onUpdate, onDelete, onSetActive, paymentsPromise, onAddPayment, onPlanChanged }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [status, setStatus] = useState(company.subscriptionStatus);
   const [quotaInput, setQuotaInput] = useState(company.storageQuotaMb);
   const [paymentsList, setPaymentsList] = useState([]);
@@ -2865,7 +2865,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
             {t("saTypeToConfirm")} <b>{company.name}</b>
           </p>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <input style={{ ...inputStyle, width: 220 }} value={deleteConfirmInput} onChange={(e) => setDeleteConfirmInput(e.target.value)} dir="rtl" />
+            <input style={{ ...inputStyle, width: 220 }} value={deleteConfirmInput} onChange={(e) => setDeleteConfirmInput(e.target.value)} dir={dir} />
             <button
               type="button" style={{ ...btnStyle(THEME.danger), opacity: deleteConfirmInput === company.name ? 1 : 0.5 }}
               disabled={deleteConfirmInput !== company.name || deleting}
@@ -2900,11 +2900,11 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
           </p>
         )}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8, marginBottom: 8 }}>
-          <select style={inputStyle} value={selectedPlanId} onChange={(e) => setSelectedPlanId(e.target.value)} dir="rtl">
+          <select style={inputStyle} value={selectedPlanId} onChange={(e) => setSelectedPlanId(e.target.value)} dir={dir}>
             <option value="">{t("saSelectPlanPlaceholder")}</option>
             {plans.filter((p) => p.isActive).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
-          <select style={inputStyle} value={assignType} onChange={(e) => setAssignType(e.target.value)} dir="rtl">
+          <select style={inputStyle} value={assignType} onChange={(e) => setAssignType(e.target.value)} dir={dir}>
             {SUBSCRIPTION_TYPES.filter((st) => {
               if (!selectedPlanForAssign) return true; // پلنی هنوز انتخاب نشده — همه‌ی گزینه‌ها را نشان بده
               if (st.value === "monthly") return selectedPlanForAssign.priceMonthly > 0;
@@ -2917,7 +2917,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
             <input type="number" style={inputStyle} placeholder={t("saDayCountPlaceholder")} value={assignDays} onChange={(e) => setAssignDays(e.target.value)} dir="ltr" />
           )}
           <input type="number" style={inputStyle} placeholder={t("saDiscountTomanOptional")} value={discountInput} onChange={(e) => setDiscountInput(e.target.value)} dir="ltr" />
-          <input style={inputStyle} placeholder={t("saNoteOptional")} value={planNote} onChange={(e) => setPlanNote(e.target.value)} dir="rtl" />
+          <input style={inputStyle} placeholder={t("saNoteOptional")} value={planNote} onChange={(e) => setPlanNote(e.target.value)} dir={dir} />
         </div>
 
         {selectedPlanForAssign && (
@@ -2997,7 +2997,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
           {t("saCopyContentNote", { name: company.name })}
         </p>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-          <select style={{ ...inputStyle, minWidth: 180 }} value={copySourceId} onChange={(e) => setCopySourceId(e.target.value)} dir="rtl">
+          <select style={{ ...inputStyle, minWidth: 180 }} value={copySourceId} onChange={(e) => setCopySourceId(e.target.value)} dir={dir}>
             <option value="">{t("saSelectSourceCompany")}</option>
             {companies.filter((c) => c.id !== company.id).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
@@ -3070,11 +3070,11 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
         )}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 8, marginTop: 10 }}>
           <input type="number" style={inputStyle} placeholder={t("saAmountToman")} value={payAmount} onChange={(e) => setPayAmount(e.target.value)} dir="ltr" />
-          <select style={inputStyle} value={payType} onChange={(e) => setPayType(e.target.value)} dir="rtl">
+          <select style={inputStyle} value={payType} onChange={(e) => setPayType(e.target.value)} dir={dir}>
             {PAYMENT_TYPES.map((pt) => <option key={pt.value} value={pt.value}>{t(pt.labelKey)}</option>)}
           </select>
           <input style={inputStyle} placeholder={t("saTrackingNumberOptional")} value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} dir="ltr" />
-          <input style={inputStyle} placeholder={t("saDescOptional")} value={payNote} onChange={(e) => setPayNote(e.target.value)} dir="rtl" />
+          <input style={inputStyle} placeholder={t("saDescOptional")} value={payNote} onChange={(e) => setPayNote(e.target.value)} dir={dir} />
         </div>
         <button
           type="button" style={{ ...btnStyle(), marginTop: 8 }}

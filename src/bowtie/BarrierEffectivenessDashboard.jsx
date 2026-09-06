@@ -14,7 +14,7 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
  * محل قرارگیری تأییدشده: مدیریت ارزیابی ریسک → BowTie → این صفحه).
  */
 export default function BarrierEffectivenessDashboard({ currentUser, role, onBack }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [data, setData] = useState(null);
   const [filterBowtieId, setFilterBowtieId] = useState("all");
   const [filterSite, setFilterSite] = useState("all");
@@ -86,11 +86,11 @@ export default function BarrierEffectivenessDashboard({ currentUser, role, onBac
       </div>
 
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", margin: "18px 0" }}>
-        <select style={{ ...styles.input, marginTop: 0, width: 200 }} value={filterSite} onChange={(e) => { setFilterSite(e.target.value); setFilterBowtieId("all"); }} dir="rtl">
+        <select style={{ ...styles.input, marginTop: 0, width: 200 }} value={filterSite} onChange={(e) => { setFilterSite(e.target.value); setFilterBowtieId("all"); }} dir={dir}>
           <option value="all">{t("dbeeDashAllSites")}</option>
           {sites.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
-        <select style={{ ...styles.input, marginTop: 0, width: 240 }} value={filterBowtieId} onChange={(e) => setFilterBowtieId(e.target.value)} dir="rtl">
+        <select style={{ ...styles.input, marginTop: 0, width: 240 }} value={filterBowtieId} onChange={(e) => setFilterBowtieId(e.target.value)} dir={dir}>
           <option value="all">{t("dbeeDashAllBowties")}</option>
           {bowtiesInSite.map((b) => <option key={b.id} value={b.id}>{b.title}</option>)}
         </select>
@@ -229,7 +229,7 @@ const SOURCE_LABEL_KEYS = {
 };
 
 function BarrierDetailView({ barrier, bowtieTitle, currentUser, isEmployerSide, onBack, onRecalculated }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [history, setHistory] = useState(null);
   const [evidence, setEvidence] = useState(null);
   const [recalculating, setRecalculating] = useState(false);
@@ -351,9 +351,9 @@ function BarrierDetailView({ barrier, bowtieTitle, currentUser, isEmployerSide, 
           {caForm && (
             <div>
               <label style={styles.label}>{t("dbeeCaDescLabel")}</label>
-              <textarea style={{ ...styles.input, minHeight: 60 }} value={caForm.description} onChange={(e) => setCaForm({ ...caForm, description: e.target.value })} dir="rtl" />
+              <textarea style={{ ...styles.input, minHeight: 60 }} value={caForm.description} onChange={(e) => setCaForm({ ...caForm, description: e.target.value })} dir={dir} />
               <label style={styles.label}>{t("dbeeCaResponsibleLabel")}</label>
-              <input style={styles.input} value={caForm.responsible} onChange={(e) => setCaForm({ ...caForm, responsible: e.target.value })} dir="rtl" />
+              <input style={styles.input} value={caForm.responsible} onChange={(e) => setCaForm({ ...caForm, responsible: e.target.value })} dir={dir} />
               <label style={styles.label}>{t("dbeeCaDueLabel")}</label>
               <JalaliDateInput value={caForm.dueDate} onChange={(v) => setCaForm({ ...caForm, dueDate: v })} allowEmpty />
               {caMessage && <p style={styles.error}>{caMessage}</p>}

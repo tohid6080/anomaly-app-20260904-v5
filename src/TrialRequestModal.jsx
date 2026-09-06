@@ -16,7 +16,7 @@ const MODULE_OPTIONS = ["anomaly", "risk", "personnel", "proactive", "incident",
  * «درخواست‌های ارزیابی و پلن آزمایشی») قابل‌مشاهده است.
  */
 export default function TrialRequestModal({ onClose }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [companyName, setCompanyName] = useState("");
@@ -61,7 +61,7 @@ export default function TrialRequestModal({ onClose }) {
       onClick={onClose}
     >
       <div
-        style={{ background: THEME.surface, borderRadius: 16, padding: 22, maxWidth: 520, width: "100%", direction: "rtl", maxHeight: "92vh", overflowY: "auto", fontFamily: THEME.font }}
+        style={{ background: THEME.surface, borderRadius: 16, padding: 22, maxWidth: 520, width: "100%", direction: dir, maxHeight: "92vh", overflowY: "auto", fontFamily: THEME.font }}
         onClick={(e) => e.stopPropagation()}
       >
         {done ? (
@@ -90,7 +90,7 @@ export default function TrialRequestModal({ onClose }) {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 0 }}>
               <div>
                 <label style={styles.label}>{t("trmFullNameReq")}</label>
-                <input style={styles.input} value={fullName} onChange={(e) => setFullName(e.target.value)} dir="rtl" />
+                <input style={styles.input} value={fullName} onChange={(e) => setFullName(e.target.value)} dir={dir} />
               </div>
               <div>
                 <label style={styles.label}>{t("trmPhoneReq")}</label>
@@ -98,15 +98,15 @@ export default function TrialRequestModal({ onClose }) {
               </div>
               <div>
                 <label style={styles.label}>{t("trmCompanyReq")}</label>
-                <input style={styles.input} value={companyName} onChange={(e) => setCompanyName(e.target.value)} dir="rtl" />
+                <input style={styles.input} value={companyName} onChange={(e) => setCompanyName(e.target.value)} dir={dir} />
               </div>
               <div>
                 <label style={styles.label}>{t("trmPosition")}</label>
-                <input style={styles.input} value={position} onChange={(e) => setPosition(e.target.value)} dir="rtl" />
+                <input style={styles.input} value={position} onChange={(e) => setPosition(e.target.value)} dir={dir} />
               </div>
               <div>
                 <label style={styles.label}>{t("trmIndustry")}</label>
-                <input style={styles.input} value={industry} onChange={(e) => setIndustry(e.target.value)} dir="rtl" placeholder={t("trmIndustryPlaceholder")} />
+                <input style={styles.input} value={industry} onChange={(e) => setIndustry(e.target.value)} dir={dir} placeholder={t("trmIndustryPlaceholder")} />
               </div>
               <div>
                 <label style={styles.label}>{t("trmPersonnelCount")}</label>
@@ -114,11 +114,11 @@ export default function TrialRequestModal({ onClose }) {
               </div>
               <div>
                 <label style={styles.label}>{t("trmProjectName")}</label>
-                <input style={styles.input} value={projectName} onChange={(e) => setProjectName(e.target.value)} dir="rtl" />
+                <input style={styles.input} value={projectName} onChange={(e) => setProjectName(e.target.value)} dir={dir} />
               </div>
               <div>
                 <label style={styles.label}>{t("trmProjectCity")}</label>
-                <input style={styles.input} value={projectCity} onChange={(e) => setProjectCity(e.target.value)} dir="rtl" />
+                <input style={styles.input} value={projectCity} onChange={(e) => setProjectCity(e.target.value)} dir={dir} />
               </div>
               <div>
                 <label style={styles.label}>{t("trmEmailOptional")}</label>
@@ -145,7 +145,7 @@ export default function TrialRequestModal({ onClose }) {
             </div>
 
             <label style={styles.label}>{t("trmNotes")}</label>
-            <textarea style={{ ...styles.input, minHeight: 70 }} value={description} onChange={(e) => setDescription(e.target.value)} dir="rtl" />
+            <textarea style={{ ...styles.input, minHeight: 70 }} value={description} onChange={(e) => setDescription(e.target.value)} dir={dir} />
 
             {error && <p style={styles.error}>{error}</p>}
 

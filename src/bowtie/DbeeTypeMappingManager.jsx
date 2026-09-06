@@ -20,7 +20,7 @@ const SOURCE_TABS = [
 ];
 
 export default function DbeeTypeMappingManager({ currentUser, onBack }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [sourceType, setSourceType] = useState("sbs_category");
   const [bowties, setBowties] = useState([]);
   const [mappings, setMappings] = useState(null);
@@ -133,34 +133,34 @@ export default function DbeeTypeMappingManager({ currentUser, onBack }) {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10 }}>
                 <div>
                   <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t(SOURCE_TABS.find((tb) => tb.key === sourceType)?.labelKey || "")}</label>
-                  <select style={styles.input} value={selectedOptionId} onChange={(e) => setSelectedOptionId(e.target.value)} dir="rtl">
+                  <select style={styles.input} value={selectedOptionId} onChange={(e) => setSelectedOptionId(e.target.value)} dir={dir}>
                     <option value="">{t("dbeeSelect")}</option>
                     {options.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
                   </select>
                 </div>
                 <div>
                   <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>BowTie</label>
-                  <select style={styles.input} value={selectedBowtieId} onChange={(e) => { setSelectedBowtieId(e.target.value); setSelectedBarrierId(""); }} dir="rtl">
+                  <select style={styles.input} value={selectedBowtieId} onChange={(e) => { setSelectedBowtieId(e.target.value); setSelectedBarrierId(""); }} dir={dir}>
                     <option value="">{t("dbeeSelect")}</option>
                     {bowties.map((b) => <option key={b.id} value={b.id}>{b.title}</option>)}
                   </select>
                 </div>
                 <div>
                   <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>Barrier</label>
-                  <select style={styles.input} value={selectedBarrierId} onChange={(e) => setSelectedBarrierId(e.target.value)} dir="rtl" disabled={!selectedBowtie}>
+                  <select style={styles.input} value={selectedBarrierId} onChange={(e) => setSelectedBarrierId(e.target.value)} dir={dir} disabled={!selectedBowtie}>
                     <option value="">{selectedBowtie ? t("dbeeSelect") : t("dbeeSelectBowtieFirst")}</option>
                     {(selectedBowtie?.barriers || []).map((b) => <option key={b.id} value={b.id}>{b.label}</option>)}
                   </select>
                 </div>
                 <div>
                   <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("dbeeRelevanceLabel")}</label>
-                  <select style={styles.input} value={relevance} onChange={(e) => setRelevance(e.target.value)} dir="rtl">
+                  <select style={styles.input} value={relevance} onChange={(e) => setRelevance(e.target.value)} dir={dir}>
                     {RELEVANCE_LEVELS.map((r) => <option key={r.value} value={r.value}>{t(r.labelKey)}</option>)}
                   </select>
                 </div>
                 <div style={{ gridColumn: "1 / -1" }}>
                   <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("dbeeTmNoteEvidenceOptional")}</label>
-                  <input style={styles.input} value={note} onChange={(e) => setNote(e.target.value)} dir="rtl" placeholder={t("dbeeTmNotePlaceholder")} />
+                  <input style={styles.input} value={note} onChange={(e) => setNote(e.target.value)} dir={dir} placeholder={t("dbeeTmNotePlaceholder")} />
                 </div>
               </div>
               {error && <p style={styles.error}>{error}</p>}

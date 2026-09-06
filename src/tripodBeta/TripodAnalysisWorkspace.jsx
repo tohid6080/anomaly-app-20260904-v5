@@ -127,7 +127,7 @@ export default function TripodAnalysisWorkspace({ analysisId, incident, currentU
 // ---------- اکشن‌های گردش‌کار ----------
 
 function WorkflowActions({ analysis, role, busy, onAction }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [showReject, setShowReject] = useState(false);
   const [reason, setReason] = useState("");
   const s = analysis.status;
@@ -155,7 +155,7 @@ function WorkflowActions({ analysis, role, busy, onAction }) {
       )}
       {showReject && (
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          <input style={{ ...styles.input, width: 200, marginTop: 0 }} placeholder={t("twRejectReasonPlaceholder")} value={reason} onChange={(e) => setReason(e.target.value)} dir="rtl" />
+          <input style={{ ...styles.input, width: 200, marginTop: 0 }} placeholder={t("twRejectReasonPlaceholder")} value={reason} onChange={(e) => setReason(e.target.value)} dir={dir} />
           <button type="button" disabled={busy || !reason.trim()} onClick={async () => { await onAction("reject", reason); setShowReject(false); setReason(""); }} style={{ ...styles.smallButton, background: THEME.danger }}>{t("twSubmitReject")}</button>
           <button type="button" onClick={() => setShowReject(false)} style={{ ...styles.smallButton, background: THEME.text3 }}>{t("commonCancel")}</button>
         </div>
@@ -167,7 +167,7 @@ function WorkflowActions({ analysis, role, busy, onAction }) {
 // ---------- تب خلاصه ----------
 
 function SummaryTab({ analysis, editable, targets, targetCats, onUpdateFields, onAddTarget, onDeleteTarget }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [eventDesc, setEventDesc] = useState(analysis.eventDescription);
   const [hazardDesc, setHazardDesc] = useState(analysis.hazardDescription);
   const [newTargetCode, setNewTargetCode] = useState("");
@@ -179,9 +179,9 @@ function SummaryTab({ analysis, editable, targets, targetCats, onUpdateFields, o
     <div>
       <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18, marginBottom: 16 }}>
         <label style={styles.label}>{t("twEventDescLabel")}</label>
-        <textarea style={{ ...styles.input, minHeight: 60 }} value={eventDesc} onChange={(e) => setEventDesc(e.target.value)} onBlur={() => editable && onUpdateFields({ event_description: eventDesc })} disabled={!editable} dir="rtl" />
+        <textarea style={{ ...styles.input, minHeight: 60 }} value={eventDesc} onChange={(e) => setEventDesc(e.target.value)} onBlur={() => editable && onUpdateFields({ event_description: eventDesc })} disabled={!editable} dir={dir} />
         <label style={styles.label}>{t("twHazardDescLabel")}</label>
-        <textarea style={{ ...styles.input, minHeight: 60 }} value={hazardDesc} onChange={(e) => setHazardDesc(e.target.value)} onBlur={() => editable && onUpdateFields({ hazard_description: hazardDesc })} disabled={!editable} dir="rtl" />
+        <textarea style={{ ...styles.input, minHeight: 60 }} value={hazardDesc} onChange={(e) => setHazardDesc(e.target.value)} onBlur={() => editable && onUpdateFields({ hazard_description: hazardDesc })} disabled={!editable} dir={dir} />
       </div>
 
       <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18 }}>
@@ -196,11 +196,11 @@ function SummaryTab({ analysis, editable, targets, targetCats, onUpdateFields, o
         ))}
         {editable && (
           <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
-            <select style={{ ...styles.input, marginTop: 0, flex: 1, minWidth: 140 }} value={newTargetCode} onChange={(e) => setNewTargetCode(e.target.value)} dir="rtl">
+            <select style={{ ...styles.input, marginTop: 0, flex: 1, minWidth: 140 }} value={newTargetCode} onChange={(e) => setNewTargetCode(e.target.value)} dir={dir}>
               <option value="">{t("twSelectTargetCategory")}</option>
               {targetCats.map((c) => <option key={c.code} value={c.code}>{c.title || c.titleFa}</option>)}
             </select>
-            <input style={{ ...styles.input, marginTop: 0, flex: 2, minWidth: 160 }} placeholder={t("twDescOptional")} value={newTargetDesc} onChange={(e) => setNewTargetDesc(e.target.value)} dir="rtl" />
+            <input style={{ ...styles.input, marginTop: 0, flex: 2, minWidth: 160 }} placeholder={t("twDescOptional")} value={newTargetDesc} onChange={(e) => setNewTargetDesc(e.target.value)} dir={dir} />
             <button type="button" style={styles.smallButton} disabled={!newTargetCode} onClick={() => { onAddTarget(newTargetCode, newTargetDesc); setNewTargetCode(""); setNewTargetDesc(""); }}>{t("twAdd")}</button>
           </div>
         )}
@@ -220,7 +220,7 @@ function BuildTab({ branches, refGroups, editable, onRefresh }) {
 }
 
 function PathCard({ path, refGroups, editable, onRefresh }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [type, setType] = useState(path.surfaceFailureType || "unsafe_condition");
   const [text, setText] = useState(path.surfaceFailureText);
   const filled = !!path.surfaceFailureText;
@@ -239,11 +239,11 @@ function PathCard({ path, refGroups, editable, onRefresh }) {
         <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: filled ? "#dcfce7" : "#eef1f5", color: filled ? "#166534" : THEME.text3, fontWeight: 600 }}>{filled ? t("twPathFilled") : t("twPathEmpty")}</span>
       </div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <select style={{ ...styles.input, marginTop: 0, width: 140 }} value={type} onChange={(e) => setType(e.target.value)} disabled={!editable} dir="rtl">
+        <select style={{ ...styles.input, marginTop: 0, width: 140 }} value={type} onChange={(e) => setType(e.target.value)} disabled={!editable} dir={dir}>
           <option value="unsafe_condition">{t("twUnsafeCondition")}</option>
           <option value="unsafe_act">{t("twUnsafeAct")}</option>
         </select>
-        <input style={{ ...styles.input, marginTop: 0, flex: 1, minWidth: 200 }} placeholder={t("twSurfaceFailurePlaceholder")} value={text} onChange={(e) => setText(e.target.value)} disabled={!editable} dir="rtl" />
+        <input style={{ ...styles.input, marginTop: 0, flex: 1, minWidth: 200 }} placeholder={t("twSurfaceFailurePlaceholder")} value={text} onChange={(e) => setText(e.target.value)} disabled={!editable} dir={dir} />
         {editable && <button type="button" style={{ ...styles.smallButton, marginTop: 0 }} onClick={handleSave}>{t("commonSave")}</button>}
       </div>
 
@@ -310,7 +310,7 @@ function PreconditionItem({ pc, branchId, refGroups, editable, onRefresh }) {
 // ---------- تب علل ریشه‌ای ----------
 
 function RootCauseTab({ analysisId, incident, rootCause, correctiveActions, currentUser, onRefresh }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [modalSrc, setModalSrc] = useState(null);
   // پیش‌نویس محلی وضعیت هر اقدام اصلاحی — تا کلیک روی «ثبت» هیچ Writeای
   // به دیتابیس نمی‌رود (استاندارد سراسری: تغییر کاربر فقط Local می‌ماند)
@@ -392,7 +392,7 @@ function RootCauseTab({ analysisId, incident, rootCause, correctiveActions, curr
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <select
-                style={{ ...styles.input, marginTop: 0, width: 130 }} value={statusDraft[ca.id] ?? ca.status} dir="rtl"
+                style={{ ...styles.input, marginTop: 0, width: 130 }} value={statusDraft[ca.id] ?? ca.status} dir={dir}
                 onChange={(e) => setStatusDraft((prev) => ({ ...prev, [ca.id]: e.target.value }))}
               >
                 {Object.entries(CA_STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{t(v)}</option>)}
@@ -452,7 +452,7 @@ function SimpleTable({ headers, rows, emptyText }) {
 }
 
 function CorrectiveActionModal({ src, incident, analysisId, currentUser, onClose, onSaved }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [description, setDescription] = useState("");
   const [responsible, setResponsible] = useState("");
   const [dueDate, setDueDate] = useState("");
@@ -484,9 +484,9 @@ function CorrectiveActionModal({ src, incident, analysisId, currentUser, onClose
           <div><b>{t("twCaRepeatCountLabel")}</b> {src.repeatCount}{classLabel ? ` — ${classLabel}` : ""}</div>
         </div>
         <label style={styles.label}>{t("twCaDescLabel")}</label>
-        <textarea style={{ ...styles.input, minHeight: 60 }} value={description} onChange={(e) => setDescription(e.target.value)} dir="rtl" />
+        <textarea style={{ ...styles.input, minHeight: 60 }} value={description} onChange={(e) => setDescription(e.target.value)} dir={dir} />
         <label style={styles.label}>{t("twCaResponsibleLabel")}</label>
-        <input style={styles.input} value={responsible} onChange={(e) => setResponsible(e.target.value)} dir="rtl" />
+        <input style={styles.input} value={responsible} onChange={(e) => setResponsible(e.target.value)} dir={dir} />
         <label style={styles.label}>{t("twCaDueLabel")}</label>
         <JalaliDateInput value={dueDate} onChange={setDueDate} allowEmpty />
         {error && <p style={styles.error}>{error}</p>}
