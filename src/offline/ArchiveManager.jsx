@@ -875,8 +875,8 @@ async function exportSbsExcel() {
   const catByCode = {};
   const subById = {};
   cats.forEach((c) => {
-    catByCode[c.code] = c.titleFa;
-    c.items.forEach((it) => { subById[it.id] = it.textFa; });
+    catByCode[c.code] = c.title;
+    c.items.forEach((it) => { subById[it.id] = it.text; });
   });
   const headers = [
     translate(lang, "exportColRow"),

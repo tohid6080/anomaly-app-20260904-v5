@@ -37,7 +37,7 @@ export default function DbeeTypeMappingManager({ currentUser, onBack }) {
   const loadSourceOptions = async () => {
     if (sourceType === "sbs_category") {
       const cats = await loadSbsCategories();
-      setOptions(cats.map((c) => ({ id: c.code, label: c.titleFa })));
+      setOptions(cats.map((c) => ({ id: c.code, label: c.title })));
     } else if (sourceType === "hse_climate_dimension") {
       // d.title اکنون شیء { fa, en } است (دوزبانه‌سازیِ داده‌ی HSE Climate)
       setOptions(HSE_CLIMATE_DIMENSIONS.map((d) => ({ id: d.id, label: (typeof d.title === "object" && d.title !== null ? d.title.fa : d.title) })));

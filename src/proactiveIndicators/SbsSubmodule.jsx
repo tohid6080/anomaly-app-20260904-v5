@@ -84,7 +84,7 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
   };
 
   const analysis = computeSbsAnalysis(observations, seasonFilter);
-  const catTitleByCode = Object.fromEntries(categories.map((c) => [c.code, c.titleFa]));
+  const catTitleByCode = Object.fromEntries(categories.map((c) => [c.code, c.title]));
   const maxBar = Math.max(1, ...analysis.categoryBars.map(([, n]) => n));
 
   return (
@@ -173,14 +173,14 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
                 <label style={styles.label}>{t("sbsUnsafeCode")}</label>
                 <select style={styles.input} value={form.categoryCode} onChange={(e) => setForm({ ...form, categoryCode: e.target.value, subitemId: "" })} dir="rtl">
                   <option value="">{t("sbsSelectCategory")}</option>
-                  {categories.map((c) => <option key={c.code} value={c.code}>{c.titleFa}</option>)}
+                  {categories.map((c) => <option key={c.code} value={c.code}>{c.title}</option>)}
                 </select>
               </div>
               <div>
                 <label style={styles.label}>{t("sbsInstanceCode")}</label>
                 <select style={styles.input} value={form.subitemId} onChange={(e) => setForm({ ...form, subitemId: e.target.value })} dir="rtl" disabled={!selectedCategory}>
                   <option value="">{selectedCategory ? t("sbsSelectPlaceholder") : t("sbsSelectCategoryFirst")}</option>
-                  {(selectedCategory?.items || []).map((it) => <option key={it.id} value={it.id}>{it.textFa}</option>)}
+                  {(selectedCategory?.items || []).map((it) => <option key={it.id} value={it.id}>{it.text}</option>)}
                 </select>
               </div>
               {isOtherCategory && (

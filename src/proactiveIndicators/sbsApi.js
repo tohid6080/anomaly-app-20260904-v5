@@ -6,6 +6,11 @@ const tr = (key, params) => translate(getCurrentLang(), key, params);
 const SEASON_KEY = { "بهار": "sbsSeasonSpring", "تابستان": "sbsSeasonSummer", "پاییز": "sbsSeasonAutumn", "زمستان": "sbsSeasonWinter" };
 export const seasonLabel = (season) => tr(SEASON_KEY[season] || season);
 
+// متنِ جداول مرجع SBS دوزبانه است (title_fa/title_en, text_fa/text_en). در
+// حالت انگلیسی متنِ انگلیسی و در غیر این صورت فارسی برگردانده می‌شود؛ اگر
+// ترجمه‌ی انگلیسی خالی باشد به فارسی برمی‌گردد.
+const pickLang = (fa, en) => (getCurrentLang() === "en" && en ? en : (fa || ""));
+
 /**
  * زیرماژول SBS (نمونه‌برداری از رفتارهای ایمنی) — پورت وفادار از
  * sbs-submodule.html: همان ۱۲ دسته/۳۲ کد مصداق (اکنون در دیتابیس،
@@ -40,8 +45,10 @@ export async function loadSbsCategories() {
   const cats = sbOk(catsRes) ? catsRes : [];
   const subs = sbOk(subsRes) ? subsRes : [];
   return cats.map((c) => ({
-    code: c.code, titleFa: c.title_fa,
-    items: subs.filter((s) => s.category_code === c.code).map((s) => ({ id: s.id, textFa: s.text_fa })),
+    code: c.code, titleFa: c.title_fa, titleEn: c.title_en || "", title: pickLang(c.title_fa, c.title_en),
+    items: subs.filter((s) => s.category_code === c.code).map((s) => ({
+      id: s.id, textFa: s.text_fa, textEn: s.text_en || "", text: pickLang(s.text_fa, s.text_en),
+    })),
   }));
 }
 
