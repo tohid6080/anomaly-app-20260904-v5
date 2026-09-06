@@ -1316,8 +1316,8 @@ export const translations = {
     "en": "Change Log"
   },
   "saHeaderTitle": {
-    "fa": "Super Admin — مالک سامانه",
-    "en": "Super Admin — System Owner"
+    "fa": "Super Admin",
+    "en": "Super Admin"
   },
   "saChangeMyPassword": {
     "fa": "تغییر رمز من",
