@@ -28,7 +28,11 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { trialModuleLabel } from "../trialRequestApi.js";
 import { translate, getCurrentLang } from "../i18n/translations.js";
 
-const inputStyle = { width: "100%", padding: "8px 10px", borderRadius: 8, border: `1.5px solid ${THEME.border}`, fontSize: 12.5, fontFamily: THEME.font, boxSizing: "border-box" };
+// قالب‌بندی اعداد/تاریخ وابسته به زبان فعال: انگلیسی → ارقام لاتین، فارسی → ارقام فارسی.
+const numLocale = () => (getCurrentLang() === "en" ? "en-US" : "fa-IR");
+const pctSign = () => (getCurrentLang() === "en" ? "%" : "٪");
+
+const inputStyle ={ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1.5px solid ${THEME.border}`, fontSize: 12.5, fontFamily: THEME.font, boxSizing: "border-box" };
 const btnStyle = (bg) => ({ padding: "7px 14px", borderRadius: 8, border: "none", background: bg || THEME.teal, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font });
 const smallLabelStyle = { display: "block", marginBottom: 4, fontSize: 11.5, fontWeight: 600, color: THEME.text2 };
 
@@ -274,8 +278,8 @@ function formatBytes(bytes) {
   if (bytes == null) return "—";
   if (bytes === 0) return translate(getCurrentLang(), "saBytesZero");
   const mb = bytes / (1024 * 1024);
-  if (mb < 1024) return `${mb.toLocaleString("fa-IR", { maximumFractionDigits: 1 })} MB`;
-  return `${(mb / 1024).toLocaleString("fa-IR", { maximumFractionDigits: 2 })} GB`;
+  if (mb < 1024) return `${mb.toLocaleString(numLocale(), { maximumFractionDigits: 1 })} MB`;
+  return `${(mb / 1024).toLocaleString(numLocale(), { maximumFractionDigits: 2 })} GB`;
 }
 
 // هوک ساده‌ی داخلی — بارگذاری اولیه + رفرش دستی + رفرش خودکار حداکثر هر ۶۰ ثانیه
@@ -336,7 +340,7 @@ function StorageOverviewCard({ onNavigate }) {
             <MiniStat label={t("saCapacityTotal")} value={capacityBytes ? formatBytes(capacityBytes) : t("saCapacityNotSet")} />
             <MiniStat label={t("saCapacityUsed")} value={formatBytes(usedBytes)} />
             <MiniStat label={t("saCapacityRemaining")} value={capacityBytes ? formatBytes(Math.max(0, capacityBytes - usedBytes)) : "—"} />
-            <MiniStat label={t("saCapacityPercent")} value={percent != null ? `${percent.toLocaleString("fa-IR", { maximumFractionDigits: 1 })}٪` : "—"} color={status?.color} />
+            <MiniStat label={t("saCapacityPercent")} value={percent != null ? `${percent.toLocaleString(numLocale(), { maximumFractionDigits: 1 })}${pctSign()}` : "—"} color={status?.color} />
           </div>
           {percent != null && (
             <div style={{ height: 8, background: "#eef1f5", borderRadius: 4, overflow: "hidden", marginBottom: 8 }}>
@@ -349,7 +353,7 @@ function StorageOverviewCard({ onNavigate }) {
             </span>
           )}
           <p style={{ fontSize: 10.5, color: THEME.text3, marginTop: 10, marginBottom: 0 }}>
-            {t("saLastUpdated", { time: new Date(data.generatedAt).toLocaleTimeString("fa-IR") })}
+            {t("saLastUpdated", { time: new Date(data.generatedAt).toLocaleTimeString(numLocale()) })}
           </p>
         </>
       )}
@@ -426,8 +430,8 @@ function StorageUsagePage() {
               <MiniStat label={t("saCapacityTotal")} value={capacityBytes ? formatBytes(capacityBytes) : t("saCapacityNotSet")} />
               <MiniStat label={t("saCapacityUsed")} value={formatBytes(usedBytes)} />
               <MiniStat label={t("saCapacityRemaining")} value={capacityBytes ? formatBytes(Math.max(0, capacityBytes - usedBytes)) : "—"} />
-              <MiniStat label={t("saCapacityPercent")} value={percent != null ? `${percent.toLocaleString("fa-IR", { maximumFractionDigits: 1 })}٪` : "—"} color={status?.color} />
-              <MiniStat label={t("saTotalObjectCount")} value={data.totalObjects?.toLocaleString("fa-IR") ?? "—"} />
+              <MiniStat label={t("saCapacityPercent")} value={percent != null ? `${percent.toLocaleString(numLocale(), { maximumFractionDigits: 1 })}${pctSign()}` : "—"} color={status?.color} />
+              <MiniStat label={t("saTotalObjectCount")} value={data.totalObjects?.toLocaleString(numLocale()) ?? "—"} />
             </div>
             {percent != null && (
               <div style={{ height: 10, background: "#eef1f5", borderRadius: 5, overflow: "hidden", marginBottom: 8 }}>
@@ -435,7 +439,7 @@ function StorageUsagePage() {
               </div>
             )}
             <p style={{ fontSize: 10.5, color: THEME.text3, margin: 0 }}>
-              {t("saLastUpdated", { time: new Date(data.generatedAt).toLocaleString("fa-IR") })}
+              {t("saLastUpdated", { time: new Date(data.generatedAt).toLocaleString(numLocale()) })}
             </p>
           </div>
 
@@ -464,7 +468,7 @@ function StorageUsagePage() {
                         <td style={{ padding: "8px", textAlign: "center" }}>{formatBytes(allocBytes)}</td>
                         <td style={{ padding: "8px", textAlign: "center" }}>{formatBytes(c.usedBytes)}</td>
                         <td style={{ padding: "8px", textAlign: "center" }}>{formatBytes(Math.max(0, allocBytes - c.usedBytes))}</td>
-                        <td style={{ padding: "8px", textAlign: "center" }}>{pct.toLocaleString("fa-IR", { maximumFractionDigits: 1 })}٪</td>
+                        <td style={{ padding: "8px", textAlign: "center" }}>{pct.toLocaleString(numLocale(), { maximumFractionDigits: 1 })}{pctSign()}</td>
                         <td style={{ padding: "8px", textAlign: "center" }}>
                           <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: st.bg, color: st.color, fontWeight: 600 }}>{st.label}</span>
                         </td>
@@ -495,7 +499,7 @@ function StorageUsagePage() {
                     <tr key={b.bucket} style={{ borderBottom: `1px solid ${THEME.border}` }}>
                       <td style={{ padding: "8px", fontWeight: 600, direction: "ltr", textAlign: "right" }}>{b.bucket}</td>
                       <td style={{ padding: "8px", textAlign: "center" }}>{formatBytes(b.bytesUsed)}</td>
-                      <td style={{ padding: "8px", textAlign: "center" }}>{b.objectCount.toLocaleString("fa-IR")}</td>
+                      <td style={{ padding: "8px", textAlign: "center" }}>{b.objectCount.toLocaleString(numLocale())}</td>
                     </tr>
                   ))}
                   {data.byBucket.length === 0 && (
@@ -520,7 +524,7 @@ function AttentionCard({ icon: Icon, color, bg, label, value, onClick }) {
     >
       <Icon size={18} color={color} style={{ flexShrink: 0 }} />
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 20, fontWeight: 800, color }}>{value === null ? "…" : value.toLocaleString("fa-IR")}</div>
+        <div style={{ fontSize: 20, fontWeight: 800, color }}>{value === null ? "…" : value.toLocaleString(numLocale())}</div>
         <div style={{ fontSize: 11, color, opacity: 0.85 }}>{label}</div>
       </div>
     </button>
@@ -1786,7 +1790,7 @@ function CardTransferPaymentsPage({ currentAdmin }) {
                       <tr style={{ borderBottom: `1px solid ${THEME.border}`, cursor: "pointer" }} onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}>
                         <td style={{ padding: "8px", fontWeight: 600 }}>{r.companyName || "—"}</td>
                         <td style={{ padding: "8px" }}>{r.planName || "—"} — {r.billingCycle === "monthly" ? t("saBillingMonthly") : t("saBillingYearly")}</td>
-                        <td style={{ padding: "8px", textAlign: "center", fontWeight: 700, color: THEME.navy }}>{r.amount.toLocaleString("fa-IR")}</td>
+                        <td style={{ padding: "8px", textAlign: "center", fontWeight: 700, color: THEME.navy }}>{r.amount.toLocaleString(numLocale())}</td>
                         <td style={{ padding: "8px" }}>{r.payerName} <span style={{ color: THEME.text3, fontSize: 10.5, direction: "ltr", display: "inline-block" }}>({r.payerPhone})</span></td>
                         <td style={{ padding: "8px", textAlign: "center", color: THEME.text3, whiteSpace: "nowrap" }}>{toJalaliDateTime(r.createdAt)}</td>
                         <td style={{ padding: "8px", textAlign: "center" }}>
@@ -1937,7 +1941,7 @@ function TrialRequestsPage({ currentAdmin }) {
                         {r.fullName}{r.position && <span style={{ color: THEME.text3, fontSize: 10.5 }}> — {r.position}</span>}
                         <div style={{ fontSize: 10.5, color: THEME.text3, direction: "ltr", textAlign: "right" }}>{r.phone}</div>
                       </td>
-                      <td style={{ padding: "8px", textAlign: "center" }}>{r.personnelCount != null ? r.personnelCount.toLocaleString("fa-IR") : "—"}</td>
+                      <td style={{ padding: "8px", textAlign: "center" }}>{r.personnelCount != null ? r.personnelCount.toLocaleString(numLocale()) : "—"}</td>
                       <td style={{ padding: "8px", color: THEME.text3 }}>{r.projectName || "—"}{r.projectCity && ` — ${r.projectCity}`}</td>
                       <td style={{ padding: "8px", textAlign: "center", color: THEME.text3, whiteSpace: "nowrap" }}>{toJalaliDateTime(r.createdAt)}</td>
                       <td style={{ padding: "8px", textAlign: "center" }}>
@@ -2136,9 +2140,9 @@ function PlansManager({ plans, companies, currentAdmin, onChanged }) {
                     <button type="button" onClick={() => movePlan(plans, p.id, "down").then(onChanged)} disabled={idx === plans.length - 1} style={{ ...btnStyle(THEME.navyMid), fontSize: 10, padding: "3px 7px", opacity: idx === plans.length - 1 ? 0.3 : 1 }} title={t("saMoveDown")}>▼</button>
                   </td>
                   <td style={{ padding: "8px", fontWeight: 600 }}>{p.name}</td>
-                  <td style={{ padding: "8px", textAlign: "center" }}>{p.priceMonthly.toLocaleString("fa-IR")}</td>
-                  <td style={{ padding: "8px", textAlign: "center" }}>{p.priceYearly.toLocaleString("fa-IR")}</td>
-                  <td style={{ padding: "8px", textAlign: "center" }}>{p.priceTotal ? p.priceTotal.toLocaleString("fa-IR") : "—"}</td>
+                  <td style={{ padding: "8px", textAlign: "center" }}>{p.priceMonthly.toLocaleString(numLocale())}</td>
+                  <td style={{ padding: "8px", textAlign: "center" }}>{p.priceYearly.toLocaleString(numLocale())}</td>
+                  <td style={{ padding: "8px", textAlign: "center" }}>{p.priceTotal ? p.priceTotal.toLocaleString(numLocale()) : "—"}</td>
                   <td style={{ padding: "8px", textAlign: "center" }}>{p.maxUsers ?? t("saUnlimited")}</td>
                   <td style={{ padding: "8px", textAlign: "center" }}>{p.maxPersonnel ?? t("saUnlimited")}</td>
                   <td style={{ padding: "8px", textAlign: "center" }}>{p.maxStorageMb ?? t("saUnlimited")}</td>
@@ -2207,7 +2211,7 @@ function PlanCompanyUsage({ plan, companies }) {
   return (
     <div style={{ background: THEME.bg, borderRadius: 8, padding: "8px 10px" }}>
       <p style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, margin: "0 0 6px" }}>
-        {t("saPcuHeader", { count: usingCompanies.length.toLocaleString("fa-IR") })}
+        {t("saPcuHeader", { count: usingCompanies.length.toLocaleString(numLocale()) })}
       </p>
       {usingCompanies.map((c) => {
         const isTrial = c.subscriptionType === "trial";
@@ -2315,7 +2319,7 @@ function UsageChip({ label, value }) {
   return (
     <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 8, padding: "6px 12px", fontSize: 12 }}>
       <span style={{ color: THEME.text3 }}>{label}: </span>
-      <b style={{ color: THEME.navy }}>{value.toLocaleString("fa-IR")}</b>
+      <b style={{ color: THEME.navy }}>{value.toLocaleString(numLocale())}</b>
     </div>
   );
 }
@@ -2405,7 +2409,7 @@ function SystemInsights({ companies }) {
         {!paymentsLoading && paymentAlerts.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saNoOutstandingCompanies")}</p>}
         {!paymentsLoading && paymentAlerts.map(({ company: c, status, overdue }) => (
           <div key={c.id} style={{ fontSize: 12, padding: "6px 0", borderBottom: `1px solid ${THEME.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span>{c.name}{t("saRemainingLabelToman", { amount: status.remaining.toLocaleString("fa-IR") })}</span>
+            <span>{c.name}{t("saRemainingLabelToman", { amount: status.remaining.toLocaleString(numLocale()) })}</span>
             <span style={{ display: "flex", gap: 6 }}>
               <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: status.bg, color: status.color, fontWeight: 600 }}>{status.labelKey ? t(status.labelKey) : status.label}</span>
               {overdue && <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#fee2e2", color: "#b91c1c", fontWeight: 600 }}>{t("saOverdue")}</span>}
@@ -2655,13 +2659,13 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
 
         {selectedPlanForAssign && (
           <div style={{ background: THEME.bg, borderRadius: 8, padding: "8px 12px", marginBottom: 8, fontSize: 11.5, color: THEME.text2, lineHeight: 1.9 }}>
-            <div>{t("saPlanMonthlyYearlyPrice", { monthly: (selectedPlanForAssign.priceMonthly || 0).toLocaleString("fa-IR"), yearly: (selectedPlanForAssign.priceYearly || 0).toLocaleString("fa-IR") })}</div>
+            <div>{t("saPlanMonthlyYearlyPrice", { monthly: (selectedPlanForAssign.priceMonthly || 0).toLocaleString(numLocale()), yearly: (selectedPlanForAssign.priceYearly || 0).toLocaleString(numLocale()) })}</div>
             {(assignType === "monthly" || assignType === "yearly" || assignType === "daily" || assignType === "monthly_and_yearly") && (
               <div>
                 {t("saPreviewBasedOnSelection")}
-                {previewContractAmount > 0 && t("saOneTimeContractAmount", { amount: previewContractAmount.toLocaleString("fa-IR") })}
-                {previewContractAmount > 0 && Number(discountInput) > 0 && t("saWithDiscount", { amount: previewFinalAmount.toLocaleString("fa-IR") })}
-                {previewMonthlyRecurring > 0 && <><br />{t("saMonthlyRecurringAmount", { amount: previewMonthlyRecurring.toLocaleString("fa-IR") })}</>}
+                {previewContractAmount > 0 && t("saOneTimeContractAmount", { amount: previewContractAmount.toLocaleString(numLocale()) })}
+                {previewContractAmount > 0 && Number(discountInput) > 0 && t("saWithDiscount", { amount: previewFinalAmount.toLocaleString(numLocale()) })}
+                {previewMonthlyRecurring > 0 && <><br />{t("saMonthlyRecurringAmount", { amount: previewMonthlyRecurring.toLocaleString(numLocale()) })}</>}
               </div>
             )}
           </div>
@@ -2686,12 +2690,12 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
 
         {/* وضعیت مالی فعلی — ذخیره‌شده در دیتابیس، نه فقط پیش‌نمایش لحظه‌ای */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, marginTop: 12, background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 8, padding: 12 }}>
-          <MiniStat label={t("saOneTimeContract")} value={t("saTShort", { amount: company.contractAmount.toLocaleString("fa-IR") })} />
-          <MiniStat label={t("saDiscount")} value={t("saTShort", { amount: company.discountAmount.toLocaleString("fa-IR") })} />
-          <MiniStat label={t("saFinalOneTimeAmount")} value={t("saTShort", { amount: company.finalAmount.toLocaleString("fa-IR") })} />
-          {company.monthlyRecurringAmount > 0 && <MiniStat label={t("saMonthlyRecurring")} value={t("saTShort", { amount: company.monthlyRecurringAmount.toLocaleString("fa-IR") })} color="#1d4ed8" />}
-          <MiniStat label={t("saTotalPaid")} value={t("saTShort", { amount: paymentStatus.totalPaid.toLocaleString("fa-IR") })} color="#166534" />
-          <MiniStat label={t("saRemainingBalance")} value={t("saTShort", { amount: paymentStatus.remaining.toLocaleString("fa-IR") })} color={paymentStatus.remaining > 0 ? "#b91c1c" : "#166534"} />
+          <MiniStat label={t("saOneTimeContract")} value={t("saTShort", { amount: company.contractAmount.toLocaleString(numLocale()) })} />
+          <MiniStat label={t("saDiscount")} value={t("saTShort", { amount: company.discountAmount.toLocaleString(numLocale()) })} />
+          <MiniStat label={t("saFinalOneTimeAmount")} value={t("saTShort", { amount: company.finalAmount.toLocaleString(numLocale()) })} />
+          {company.monthlyRecurringAmount > 0 && <MiniStat label={t("saMonthlyRecurring")} value={t("saTShort", { amount: company.monthlyRecurringAmount.toLocaleString(numLocale()) })} color="#1d4ed8" />}
+          <MiniStat label={t("saTotalPaid")} value={t("saTShort", { amount: paymentStatus.totalPaid.toLocaleString(numLocale()) })} color="#166534" />
+          <MiniStat label={t("saRemainingBalance")} value={t("saTShort", { amount: paymentStatus.remaining.toLocaleString(numLocale()) })} color={paymentStatus.remaining > 0 ? "#b91c1c" : "#166534"} />
         </div>
         <div style={{ display: "flex", gap: 8, marginTop: 8, alignItems: "center", flexWrap: "wrap" }}>
           <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 999, background: paymentStatus.bg, color: paymentStatus.color, fontWeight: 600 }}>
@@ -2715,7 +2719,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
             {history.map((h) => (
               <div key={h.id} style={{ fontSize: 11, color: THEME.text2, padding: "5px 0", borderBottom: `1px solid ${THEME.border}` }}>
                 {toJalaliSafe(h.changed_at)} — <b>{h.action}</b> {h.note && `— ${h.note}`} {h.changed_by && <span style={{ color: THEME.text3 }}>{t("saByUser", { name: h.changed_by })}</span>}
-                {h.final_amount != null && <span style={{ color: THEME.text3 }}>{t("saFinalAmountLabel", { amount: Number(h.final_amount).toLocaleString("fa-IR") })}</span>}
+                {h.final_amount != null && <span style={{ color: THEME.text3 }}>{t("saFinalAmountLabel", { amount: Number(h.final_amount).toLocaleString(numLocale()) })}</span>}
               </div>
             ))}
           </div>
@@ -2774,7 +2778,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
         {paymentsList.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saNoPaymentsYet")}</p>}
         {paymentsList.map((p) => (
           <div key={p.id} style={{ fontSize: 11.5, color: THEME.text2, padding: "5px 0", borderBottom: `1px solid ${THEME.border}` }}>
-            {toJalaliSafe(p.payment_date)} — <b>{p.amount?.toLocaleString("fa-IR")}</b> {t("saTomanUnit")}
+            {toJalaliSafe(p.payment_date)} — <b>{p.amount?.toLocaleString(numLocale())}</b> {t("saTomanUnit")}
             {" "}({(() => { const pt = PAYMENT_TYPES.find((x) => x.value === p.payment_type); return pt ? t(pt.labelKey) : p.payment_type; })()})
             {p.tracking_number && <span style={{ color: THEME.text3 }}>{t("saTracking", { num: p.tracking_number })}</span>}
             {p.note && <span style={{ color: THEME.text3 }}> — {p.note}</span>}
@@ -2792,7 +2796,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
               return (
                 <div key={p.id} style={{ fontSize: 11.5, color: THEME.text2, padding: "5px 0", borderBottom: `1px solid ${THEME.border}`, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                   <span>{toJalaliSafe(p.createdAt)}</span>
-                  <b>{t("saTomanAmount", { amount: p.amount.toLocaleString("fa-IR") })}</b>
+                  <b>{t("saTomanAmount", { amount: p.amount.toLocaleString(numLocale()) })}</b>
                   <span>({p.billingCycle === "monthly" ? t("saBillingMonthly") : t("saBillingYearly")})</span>
                   <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: st.bg, color: st.color, fontWeight: 600 }}>{t(st.labelKey)}</span>
                   {p.refId && <span style={{ color: THEME.text3 }}>{t("saTrackingCode", { ref: p.refId })}</span>}

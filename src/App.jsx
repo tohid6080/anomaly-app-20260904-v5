@@ -16,7 +16,7 @@ import PersonnelDashboard from "./personnel/PersonnelDashboard.jsx";
 import ProactiveIndicatorsDashboard from "./proactiveIndicators/ProactiveIndicatorsDashboard.jsx";
 import IncidentsListPage from "./incidents/IncidentsListPage.jsx";
 import { loadHomeKpiSummary } from "./dashboard/homeKpiApi.js";
-import { loadModuleConfig, loadDashboardConfig, loadNotificationTypes, loadAppearanceConfig, applyAppearanceToDom, loadActiveAnnouncements, isSeededModuleLabel } from "./systemConfigApi.js";
+import { loadModuleConfig, loadDashboardConfig, loadNotificationTypes, loadAppearanceConfig, applyAppearanceToDom, loadActiveAnnouncements } from "./systemConfigApi.js";
 import { submitToGate, loadPendingGateItems, loadAssignedGateItems, loadAssignedReviewItemsForModule, deleteGateItemsForRecord, loadCompanyStaffOptions, assignForReview, submitReview, approveGateItem, rejectGateItem, GATE_STATUS_LABELS, gateStatusLabel } from "./hseGateApi.js";
 import SubscriptionGate from "./subscription/SubscriptionGate.jsx";
 import { checkMyAccountActive } from "./subscriptionApi.js";
@@ -3359,20 +3359,14 @@ const MODULE_ICON = { profile: User, chat: MessageCircle, anomalyReport: AlertTr
 function applyModuleConfig(modules, config) {
   if (!config || config.length === 0) return modules;
   const orderMap = new Map(config.map((c, idx) => [c.moduleKey, idx]));
-  const labelMap = new Map(config.map((c) => [c.moduleKey, c.displayLabel]));
-  return [...modules]
-    .sort((a, b) => {
-      const ao = orderMap.has(a.key) ? orderMap.get(a.key) : 999;
-      const bo = orderMap.has(b.key) ? orderMap.get(b.key) : 999;
-      return ao - bo;
-    })
-    .map((m) => {
-      const dl = labelMap.get(m.key);
-      // فقط وقتی برچسب سفارشیِ ادمین را اعمال کن که واقعاً سفارشی باشد — نه
-      // برچسب پیش‌فرضِ seed‌شده که در آن صورت باید ترجمه‌ی i18n (که caller قبلاً
-      // در m.label گذاشته) حفظ شود.
-      return dl && !isSeededModuleLabel(m.key, dl) ? { ...m, label: dl } : m;
-    });
+  // فقط ترتیب (sort_order) از «پیکربندی سامانه» اعمال می‌شود؛ برچسب نمایشی
+  // قبلاً توسط caller از طریق mt() (ترجمه‌ی i18n) در m.label قرار گرفته و نباید
+  // با رشته‌ی تک‌زبانه‌ی display_label بازنویسی شود.
+  return [...modules].sort((a, b) => {
+    const ao = orderMap.has(a.key) ? orderMap.get(a.key) : 999;
+    const bo = orderMap.has(b.key) ? orderMap.get(b.key) : 999;
+    return ao - bo;
+  });
 }
 
 // ---------- ردیف منوی استاندارد (آیکون + عنوان + شورون) ----------
@@ -3835,7 +3829,7 @@ function TasksCard({ tasks, onTaskClick }) {
           <ClipboardList size={15} color={THEME.teal} /> {t("tasksCardTitle")}
         </h3>
         {tasks && tasks.length > 0 && (
-          <span style={{ fontSize: 11, color: THEME.text3, fontWeight: 600 }}>{tasks.length.toLocaleString("fa-IR")}</span>
+          <span style={{ fontSize: 11, color: THEME.text3, fontWeight: 600 }}>{tasks.length.toLocaleString(getCurrentLang() === "en" ? "en-US" : "fa-IR")}</span>
         )}
       </div>
       {tasks === null && <p style={{ fontSize: 12, color: THEME.text3, margin: 0 }}>{t("commonLoading")}</p>}
@@ -4046,7 +4040,7 @@ function MobileAnnouncementBanner({ setView }) {
         </span>
         {visible.length > 1 && (
           <span style={{ fontSize: 10, fontWeight: 700, color: "#fff", background: THEME.teal, borderRadius: 999, minWidth: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px", flexShrink: 0 }}>
-            {visible.length.toLocaleString("fa-IR")}
+            {visible.length.toLocaleString(getCurrentLang() === "en" ? "en-US" : "fa-IR")}
           </span>
         )}
         <ChevronDown size={15} color={THEME.text3} style={{ flexShrink: 0 }} />
@@ -4112,8 +4106,11 @@ function AdminDashboard({ onLogout, currentUser }) {
   // خودکار به رفتار قبلی برمی‌گردند.
   const mt = (m) => {
     const cfg = Array.isArray(moduleConfig) ? moduleConfig.find((c) => c.moduleKey === m?.key) : null;
-    if (cfg?.displayLabel && !isSeededModuleLabel(m?.key, cfg.displayLabel)) return cfg.displayLabel;
-    return m?.labelKey ? t(m.labelKey) : m?.label;
+    // ترجمه‌ی i18n همیشه اولویت دارد؛ display_labelِ جدول system_module_config
+    // یک رشته‌ی تک‌زبانه (فارسی) است و در حالت دوزبانه نمی‌تواند مبنا باشد — فقط
+    // وقتی استفاده می‌شود که هیچ کلید ترجمه‌ای برای این ماژول وجود نداشته باشد.
+    if (m?.labelKey) return t(m.labelKey);
+    return cfg?.displayLabel || m?.label;
   };
   const [view, setView] = usePersistedState("ihms_view_admin", "menu");
   useEffect(() => { trackPageView(currentUser, view); }, [view]);
@@ -4347,8 +4344,11 @@ function EmployerDashboard({ onLogout, currentUser }) {
   // خودکار به رفتار قبلی برمی‌گردند.
   const mt = (m) => {
     const cfg = Array.isArray(moduleConfig) ? moduleConfig.find((c) => c.moduleKey === m?.key) : null;
-    if (cfg?.displayLabel && !isSeededModuleLabel(m?.key, cfg.displayLabel)) return cfg.displayLabel;
-    return m?.labelKey ? t(m.labelKey) : m?.label;
+    // ترجمه‌ی i18n همیشه اولویت دارد؛ display_labelِ جدول system_module_config
+    // یک رشته‌ی تک‌زبانه (فارسی) است و در حالت دوزبانه نمی‌تواند مبنا باشد — فقط
+    // وقتی استفاده می‌شود که هیچ کلید ترجمه‌ای برای این ماژول وجود نداشته باشد.
+    if (m?.labelKey) return t(m.labelKey);
+    return cfg?.displayLabel || m?.label;
   };
   const [view, setView] = usePersistedState("ihms_view_employer", "menu");
   useEffect(() => { trackPageView(currentUser, view); }, [view]);
@@ -4584,8 +4584,11 @@ function ContractorDashboard({ onLogout, currentUser }) {
   // خودکار به رفتار قبلی برمی‌گردند.
   const mt = (m) => {
     const cfg = Array.isArray(moduleConfig) ? moduleConfig.find((c) => c.moduleKey === m?.key) : null;
-    if (cfg?.displayLabel && !isSeededModuleLabel(m?.key, cfg.displayLabel)) return cfg.displayLabel;
-    return m?.labelKey ? t(m.labelKey) : m?.label;
+    // ترجمه‌ی i18n همیشه اولویت دارد؛ display_labelِ جدول system_module_config
+    // یک رشته‌ی تک‌زبانه (فارسی) است و در حالت دوزبانه نمی‌تواند مبنا باشد — فقط
+    // وقتی استفاده می‌شود که هیچ کلید ترجمه‌ای برای این ماژول وجود نداشته باشد.
+    if (m?.labelKey) return t(m.labelKey);
+    return cfg?.displayLabel || m?.label;
   };
   const [view, setView] = usePersistedState("ihms_view_contractor", "menu");
   useEffect(() => { trackPageView(currentUser, view); }, [view]);

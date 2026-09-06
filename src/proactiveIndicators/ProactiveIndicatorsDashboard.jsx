@@ -3,7 +3,6 @@ import { ChevronRight, TrendingUp, ClipboardList, BookOpen, X } from "lucide-rea
 import { styles, THEME } from "../shared.js";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
 import { loadActiveIndicators, loadAllAssessments, accidentPronenessLevel, indicatorLabel, indicatorDescriptionLabel } from "./proactiveIndicatorsApi.js";
-import { loadModuleConfig, isSeededModuleLabel } from "../systemConfigApi.js";
 import { loadCorrectiveActionsForAssessments, STATUS_META } from "../correctiveActions/correctiveActionsApi.js";
 import AccidentPronenessAssessmentForm from "./AccidentPronenessAssessmentForm.jsx";
 import HseClimateCampaignManager from "./HseClimateCampaignManager.jsx";
@@ -57,10 +56,6 @@ export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState(focusPersonnelId ? "form" : "list"); // list | results | form
   const [activeIndicatorKey, setActiveIndicatorKey] = useState(focusPersonnelId ? "accident_proneness" : null);
-  // عنوان ماژول از همان منبع مشترکِ «پیکربندی سامانه» خوانده می‌شود تا
-  // اگر SuperAdmin نام ماژول را عوض کند، این صفحه هم (در موبایل و دسکتاپ)
-  // همان نام را نشان بدهد — نه یک رشته‌ی هاردکدشده.
-  const [moduleTitle, setModuleTitle] = useState("");
   // راهنمای اجرایی به‌صورت یک لایه‌ی تمام‌صفحه‌ی داخل خودِ اپ باز می‌شود
   // (نه tab جدید با target=_blank) تا در موبایل هم همیشه یک راه خروج/بستن
   // با دکمه‌ی × داشته باشد.
@@ -68,10 +63,6 @@ export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role
 
   useEffect(() => {
     loadActiveIndicators().then((rows) => { setIndicators(rows); setLoading(false); });
-    loadModuleConfig().then((cfg) => {
-      const label = cfg?.find((c) => c.moduleKey === "proactiveIndicators")?.displayLabel;
-      if (label && !isSeededModuleLabel("proactiveIndicators", label)) setModuleTitle(label);
-    }).catch(() => {});
   }, []);
 
   if (view === "form" && activeIndicatorKey === "accident_proneness") {
@@ -118,7 +109,7 @@ export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role
         </button>
       </div>
       {showGuide && <HseGuideOverlay onClose={() => setShowGuide(false)} />}
-      <h3 style={{ marginBottom: 4, color: THEME.navy }}>{moduleTitle || t("pidModuleTitle")}</h3>
+      <h3 style={{ marginBottom: 4, color: THEME.navy }}>{t("pidModuleTitle")}</h3>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 0, marginBottom: 16 }}>
         {t("pidModuleDesc")}
       </p>

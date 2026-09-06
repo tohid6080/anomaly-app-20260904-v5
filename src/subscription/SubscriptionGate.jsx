@@ -20,7 +20,7 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
  * است» همان Query String صفحه (?orderId=...&Authority=...) است.
  */
 export default function SubscriptionGate({ currentUser, onLogout, children }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [info, setInfo] = useState(undefined); // undefined = در حال بارگذاری
   const [params] = useState(() => new URLSearchParams(window.location.search));
   const [verifying, setVerifying] = useState(() => !!new URLSearchParams(window.location.search).get("orderId"));
@@ -80,7 +80,7 @@ export default function SubscriptionGate({ currentUser, onLogout, children }) {
 }
 
 function TrialWarningBanner({ access }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   return (
     <div style={{ background: "#fef3c7", borderBottom: "1px solid #f59e0b", padding: "8px 20px", textAlign: "center", fontSize: 12.5, color: "#92400e", fontWeight: 600 }}>
       <Clock size={13} style={{ display: "inline", verticalAlign: "middle", marginInlineEnd: 5 }} />
@@ -91,7 +91,7 @@ function TrialWarningBanner({ access }) {
 }
 
 function PaymentResultScreen({ result, onContinue, onLogout }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const success = result?.activated;
   return (
     <div style={styles.centerScreen}>
@@ -117,7 +117,7 @@ function PaymentResultScreen({ result, onContinue, onLogout }) {
 }
 
 function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [plans, setPlans] = useState(null);
   const [selectedPlanId, setSelectedPlanId] = useState("");
   const [billingCycle, setBillingCycle] = useState("yearly");
@@ -187,7 +187,7 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
                       }}
                     >
                       <span style={{ fontSize: 11.5, color: THEME.text2, fontWeight: 600 }}>{t("subTypeMonthly")}</span>
-                      <span style={{ fontSize: 14, fontWeight: 800, color: THEME.navy }}>{t("saTomanAmount", { amount: p.priceMonthly.toLocaleString("fa-IR") })}</span>
+                      <span style={{ fontSize: 14, fontWeight: 800, color: THEME.navy }}>{t("saTomanAmount", { amount: p.priceMonthly.toLocaleString(lang === "en" ? "en-US" : "fa-IR") })}</span>
                     </button>
                   )}
                   {hasYearly && (
@@ -201,21 +201,21 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
                       }}
                     >
                       <span style={{ fontSize: 11.5, color: THEME.text2, fontWeight: 600 }}>{t("subTypeYearly")}</span>
-                      <span style={{ fontSize: 14, fontWeight: 800, color: THEME.navy }}>{t("saTomanAmount", { amount: p.priceYearly.toLocaleString("fa-IR") })}</span>
+                      <span style={{ fontSize: 14, fontWeight: 800, color: THEME.navy }}>{t("saTomanAmount", { amount: p.priceYearly.toLocaleString(lang === "en" ? "en-US" : "fa-IR") })}</span>
                     </button>
                   )}
                   {p.priceTotal > 0 && (
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", padding: "8px 12px", borderRadius: 9, border: `1.5px dashed ${THEME.border}`, background: "transparent" }}>
                       <span style={{ fontSize: 11.5, color: THEME.text2, fontWeight: 600 }}>{t("sgTotalPriceOneOff")}</span>
-                      <span style={{ fontSize: 14, fontWeight: 800, color: THEME.navy }}>{t("saTomanAmount", { amount: p.priceTotal.toLocaleString("fa-IR") })}</span>
+                      <span style={{ fontSize: 14, fontWeight: 800, color: THEME.navy }}>{t("saTomanAmount", { amount: p.priceTotal.toLocaleString(lang === "en" ? "en-US" : "fa-IR") })}</span>
                     </div>
                   )}
                   {!hasMonthly && !hasYearly && p.priceTotal <= 0 && <span style={{ fontSize: 12, color: THEME.text3 }}>{t("sgNoPriceDefined")}</span>}
                 </div>
 
-                {p.maxPersonnel && <p style={{ fontSize: 11.5, color: THEME.text2, margin: "0 0 4px" }}>{t("sgMaxPersonnelLine", { n: p.maxPersonnel.toLocaleString("fa-IR") })}</p>}
-                {p.maxUsers && <p style={{ fontSize: 11.5, color: THEME.text2, margin: "0 0 4px" }}>{t("sgMaxUsersLine", { n: p.maxUsers.toLocaleString("fa-IR") })}</p>}
-                <p style={{ fontSize: 11.5, color: THEME.text3, margin: 0 }}>{t("sgActiveModulesCount", { n: p.features.length.toLocaleString("fa-IR") })}</p>
+                {p.maxPersonnel && <p style={{ fontSize: 11.5, color: THEME.text2, margin: "0 0 4px" }}>{t("sgMaxPersonnelLine", { n: p.maxPersonnel.toLocaleString(lang === "en" ? "en-US" : "fa-IR") })}</p>}
+                {p.maxUsers && <p style={{ fontSize: 11.5, color: THEME.text2, margin: "0 0 4px" }}>{t("sgMaxUsersLine", { n: p.maxUsers.toLocaleString(lang === "en" ? "en-US" : "fa-IR") })}</p>}
+                <p style={{ fontSize: 11.5, color: THEME.text3, margin: 0 }}>{t("sgActiveModulesCount", { n: p.features.length.toLocaleString(lang === "en" ? "en-US" : "fa-IR") })}</p>
               </div>
             );
           })}
@@ -226,7 +226,7 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
             <h4 style={{ fontSize: 13, fontWeight: 700, color: THEME.navy, margin: "0 0 10px" }}>{t("sgPurchaseSummary")}</h4>
             <p style={{ fontSize: 12.5, color: THEME.text2, margin: "0 0 4px" }}>{t("sgPlanLabel")}<b>{selectedPlan.name}</b></p>
             <p style={{ fontSize: 12.5, color: THEME.text2, margin: "0 0 4px" }}>{t("sgCycleLabel")}<b>{billingCycle === "monthly" ? t("subTypeMonthly") : t("subTypeYearly")}</b></p>
-            <p style={{ fontSize: 15, fontWeight: 800, color: THEME.teal, margin: "10px 0" }}>{t("sgFinalAmount", { amount: amount.toLocaleString("fa-IR") })}</p>
+            <p style={{ fontSize: 15, fontWeight: 800, color: THEME.teal, margin: "10px 0" }}>{t("sgFinalAmount", { amount: amount.toLocaleString(lang === "en" ? "en-US" : "fa-IR") })}</p>
             <PaymentMethodsSection currentUser={currentUser} selectedPlan={selectedPlan} billingCycle={billingCycle} amount={amount} />
           </div>
         )}

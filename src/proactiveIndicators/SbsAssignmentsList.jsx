@@ -19,7 +19,7 @@ const STATUS_META = {
  * دستکاری‌پذیر نیست.
  */
 export default function SbsAssignmentsList({ role, currentUser, observations }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [assignments, setAssignments] = useState(null);
   const isContractor = role === "CONTRACTOR";
 
@@ -61,7 +61,7 @@ export default function SbsAssignmentsList({ role, currentUser, observations }) 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
               <div>
                 <span style={{ fontSize: 13, fontWeight: 700, color: THEME.navy }}>
-                  {a.mode === "factory" ? t("sbsAsgFactory") : t("sbsAsgWorkshop")} — {t("sbsAsgObsCount", { n: a.totalSampleSize.toLocaleString("fa-IR") })}
+                  {a.mode === "factory" ? t("sbsAsgFactory") : t("sbsAsgWorkshop")} — {t("sbsAsgObsCount", { n: a.totalSampleSize.toLocaleString(lang === "en" ? "en-US" : "fa-IR") })}
                 </span>
                 <span style={{ fontSize: 10.5, padding: "2px 9px", borderRadius: 999, background: meta.bg, color: meta.color, fontWeight: 600, marginRight: 8 }}>{t(meta.labelKey)}</span>
                 <p style={{ fontSize: 11.5, color: THEME.text3, margin: "4px 0 0" }}>
@@ -77,8 +77,8 @@ export default function SbsAssignmentsList({ role, currentUser, observations }) 
 
             <div style={{ marginTop: 10 }}>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11.5, color: THEME.text2, marginBottom: 4 }}>
-                <span>{t("sbsAsgActualProgress", { done: progress.done.toLocaleString("fa-IR"), target: progress.target.toLocaleString("fa-IR") })}</span>
-                <span style={{ fontWeight: 700, color: THEME.navy }}>{progress.pct}٪</span>
+                <span>{t("sbsAsgActualProgress", { done: progress.done.toLocaleString(lang === "en" ? "en-US" : "fa-IR"), target: progress.target.toLocaleString(lang === "en" ? "en-US" : "fa-IR") })}</span>
+                <span style={{ fontWeight: 700, color: THEME.navy }}>{progress.pct}{lang === "en" ? "%" : "٪"}</span>
               </div>
               <div style={{ height: 8, background: THEME.bg, borderRadius: 999, overflow: "hidden" }}>
                 <div style={{ width: `${progress.pct}%`, height: "100%", background: progress.pct >= 100 ? "#16a34a" : THEME.teal, borderRadius: 999 }} />

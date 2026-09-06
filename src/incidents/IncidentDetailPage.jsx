@@ -15,7 +15,7 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
  * وارد فضای کار کامل تحلیل (مسیرها، درخت، علل ریشه‌ای) می‌شود.
  */
 export default function IncidentDetailPage({ incidentId, currentUser, role, readOnly, onBack }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [incident, setIncident] = useState(undefined);
   const [analysis, setAnalysis] = useState(undefined);
   const [requesting, setRequesting] = useState(false);
@@ -80,7 +80,7 @@ export default function IncidentDetailPage({ incidentId, currentUser, role, read
           <Field label={t("incColDisabling")} value={incident.isDisabling ? t("commonYes") : t("commonNo")} />
           <Field label={t("incLostDays")} value={incident.lostDays} />
           <Field label={t("incInjuredNameShort")} value={incident.injuredPersonName} />
-          <Field label={t("incFinancialCostShort")} value={incident.financialCost != null ? incident.financialCost.toLocaleString("fa-IR") : ""} />
+          <Field label={t("incFinancialCostShort")} value={incident.financialCost != null ? incident.financialCost.toLocaleString(lang === "en" ? "en-US" : "fa-IR") : ""} />
           <Field label={t("incEmployerOrg")} value={incident.employerOrg} />
           <Field label={t("incContractorOrg")} value={incident.contractorOrg} />
         </div>

@@ -32,8 +32,8 @@ export function computeSubscriptionAccess(company) {
     const daysLeft = Math.floor(msLeft / (24 * 3600 * 1000));
     const hoursLeft = Math.floor(msLeft / (3600 * 1000));
     const base = { status: "trial_active", isLocked: false, trialStart: company.trialStart, trialEnd: company.trialEnd };
-    if (daysLeft >= 1) return { ...base, daysLeft, label: tr("subAccTrialDaysLeft", { days: daysLeft.toLocaleString("fa-IR") }) };
-    return { ...base, hoursLeft, label: tr("subAccTrialHoursLeft", { hours: hoursLeft.toLocaleString("fa-IR") }) };
+    if (daysLeft >= 1) return { ...base, daysLeft, label: tr("subAccTrialDaysLeft", { days: daysLeft.toLocaleString(getCurrentLang() === "en" ? "en-US" : "fa-IR") }) };
+    return { ...base, hoursLeft, label: tr("subAccTrialHoursLeft", { hours: hoursLeft.toLocaleString(getCurrentLang() === "en" ? "en-US" : "fa-IR") }) };
   }
 
   if (company.subscriptionType === "permanent") {
@@ -45,7 +45,7 @@ export function computeSubscriptionAccess(company) {
   const msLeft = end.getTime() - now.getTime();
   if (msLeft <= 0) return { status: "expired", isLocked: true, label: tr("subAccExpired"), subscriptionStartDate: company.subscriptionStartDate, subscriptionEndDate: company.subscriptionEndDate };
   const daysLeft = Math.floor(msLeft / (24 * 3600 * 1000));
-  return { status: "active", isLocked: false, daysLeft, subscriptionStartDate: company.subscriptionStartDate, subscriptionEndDate: company.subscriptionEndDate, label: daysLeft <= 7 ? tr("subAccDaysToEnd", { days: daysLeft.toLocaleString("fa-IR") }) : tr("subAccActive") };
+  return { status: "active", isLocked: false, daysLeft, subscriptionStartDate: company.subscriptionStartDate, subscriptionEndDate: company.subscriptionEndDate, label: daysLeft <= 7 ? tr("subAccDaysToEnd", { days: daysLeft.toLocaleString(getCurrentLang() === "en" ? "en-US" : "fa-IR") }) : tr("subAccActive") };
 }
 
 // ---------- بررسی فعال‌بودن حساب کاربرِ واردشده (Forced Logout) ----------

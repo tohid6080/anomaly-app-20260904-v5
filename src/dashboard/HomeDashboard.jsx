@@ -50,7 +50,7 @@ function caIsOverdue(r) {
 const caIsOpen = (r) => r.status !== "closed" && r.status !== "expired";
 
 export default function HomeDashboard({ role, currentUser, onNavigate, onBack }) {
-  const { t, dir } = useLanguage();
+  const { t, dir, lang } = useLanguage();
   const [personnel, setPersonnel] = useState([]);
   const [anomalies, setAnomalies] = useState([]);
   const [contractors, setContractors] = useState([]);
@@ -450,7 +450,7 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
                 <MiniBarChart data={incidentPyramid} />
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10.5, color: THEME.text2, margin: "8px 0 4px" }}>
                   <span>{t("dashLostDays")}</span>
-                  <span style={{ fontWeight: 700 }}>{totalLostDays.toLocaleString("fa-IR")}</span>
+                  <span style={{ fontWeight: 700 }}>{totalLostDays.toLocaleString(lang === "en" ? "en-US" : "fa-IR")}</span>
                 </div>
                 <MiniBarChart data={incidentTrend.map(([m, c]) => ({ label: m.slice(5), value: c, color: "#c92a2a" }))} />
               </>
@@ -466,7 +466,7 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
               rcaRows.map((r) => (
                 <div key={r.label} style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: THEME.text2, padding: "4px 0", borderBottom: `1px solid ${THEME.border}` }}>
                   <span>{r.label}</span>
-                  <span style={{ fontWeight: 700 }}>{r.value.toLocaleString("fa-IR")}</span>
+                  <span style={{ fontWeight: 700 }}>{r.value.toLocaleString(lang === "en" ? "en-US" : "fa-IR")}</span>
                 </div>
               ))
             )}
@@ -483,17 +483,17 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
                   <span>{t("dashAvgProneness")}</span>
                   {proactiveSummary.apAvg != null ? (
                     <span style={{ fontWeight: 700, padding: "1px 8px", borderRadius: 999, background: proactiveSummary.apLevel.bg, color: proactiveSummary.apLevel.color }}>
-                      {proactiveSummary.apAvg.toLocaleString("fa-IR")} · {proactiveSummary.apLevel.level}
+                      {proactiveSummary.apAvg.toLocaleString(lang === "en" ? "en-US" : "fa-IR")} · {proactiveSummary.apLevel.level}
                     </span>
                   ) : <span style={{ color: THEME.text3 }}>—</span>}
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: THEME.text2, padding: "4px 0" }}>
                   <span>{t("dashLatestClimate")}</span>
-                  <span style={{ fontWeight: 700 }}>{proactiveSummary.latestClimate != null ? proactiveSummary.latestClimate.toLocaleString("fa-IR") : "—"}</span>
+                  <span style={{ fontWeight: 700 }}>{proactiveSummary.latestClimate != null ? proactiveSummary.latestClimate.toLocaleString(lang === "en" ? "en-US" : "fa-IR") : "—"}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: THEME.text2, padding: "4px 0" }}>
                   <span>{t("dashAssessmentCount")}</span>
-                  <span style={{ fontWeight: 700 }}>{proactiveSummary.count.toLocaleString("fa-IR")}</span>
+                  <span style={{ fontWeight: 700 }}>{proactiveSummary.count.toLocaleString(lang === "en" ? "en-US" : "fa-IR")}</span>
                 </div>
                 {proactiveSummary.climateTrend.length > 1 && (
                   <MiniBarChart data={proactiveSummary.climateTrend.map(([m, v]) => ({ label: m.slice(5), value: v, color: THEME.teal }))} />
@@ -642,7 +642,7 @@ function Dot({ level }) {
 }
 
 function MiniBarChart({ data, suffix = "" }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const max = Math.max(1, ...data.map((d) => d.value));
   if (data.length === 0) return <p style={emptyTextStyle}>{t("commonNoData")}</p>;
   return (
@@ -664,7 +664,7 @@ function MiniBarChart({ data, suffix = "" }) {
 
 // دونات ساده با SVG خام (بدون کتابخانه‌ی نمودار، برای سبک نگه‌داشتن باندل)
 function MiniDonut({ data }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const total = data.reduce((s, d) => s + d.value, 0);
   if (total === 0) return <p style={emptyTextStyle}>{t("commonNoData")}</p>;
   const r = 34, cx = 40, cy = 40, circumference = 2 * Math.PI * r;

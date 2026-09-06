@@ -12,35 +12,6 @@ const tr = (key, params) => translate(getCurrentLang(), key, params);
 
 // ---------- مدیریت ماژول‌ها ----------
 
-// نگاشت کلید ماژول → کلیدهای ترجمه‌ی برچسب پیش‌فرضش (هم خانواده‌ی «module*» که
-// در منو/ساید‌بار استفاده می‌شود، هم خانواده‌ی «saDmcLabel*» که در جدول
-// system_module_config سیستم seed شده است، و در صورت وجود عنوان اختصاصی صفحه).
-// از این نگاشت برای تشخیص «آیا display_labelِ ذخیره‌شده یک اسم واقعاً سفارشی است
-// یا فقط همان برچسب پیش‌فرض» استفاده می‌شود — تا برچسب پیش‌فرضِ seed‌شده ترجمه‌ی
-// دوزبانه‌ی i18n را بازنویسی نکند.
-const MODULE_DEFAULT_LABEL_KEYS = {
-  chat: ["moduleChat", "saDmcLabelChat"],
-  archiveManagement: ["moduleArchive", "saDmcLabelArchive"],
-  anomalyReport: ["moduleAnomalyReport", "saDmcLabelAnomaly"],
-  riskAssessment: ["moduleRiskAssessment", "saDmcLabelRisk"],
-  personnelAccess: ["modulePersonnelAccess", "saDmcLabelPersonnel"],
-  proactiveIndicators: ["moduleProactiveIndicators", "saDmcLabelProactive", "pidModuleTitle"],
-  incidentManagement: ["moduleIncidentManagement", "saDmcLabelIncident"],
-  machineryManagement: ["moduleMachinery", "saDmcLabelMachinery"],
-  scaffoldManagement: ["moduleScaffold", "saDmcLabelScaffold"],
-  managementDashboard: ["moduleManagementDashboard", "saDmcLabelMgmtDash"],
-};
-
-// آیا این display_labelِ ذخیره‌شده صرفاً همان برچسب پیش‌فرض seed‌شده است (در هر
-// یک از دو زبان) و نه اسمی که ادمین عمداً تغییر داده؟ اگر بله، مصرف‌کننده باید
-// به‌جای آن ترجمه‌ی i18n را نشان دهد.
-export function isSeededModuleLabel(moduleKey, displayLabel) {
-  if (!displayLabel) return false;
-  return (MODULE_DEFAULT_LABEL_KEYS[moduleKey] || []).some(
-    (k) => displayLabel === translate("fa", k) || displayLabel === translate("en", k)
-  );
-}
-
 export async function loadModuleConfig() {
   const rows = await sb("system_module_config?select=*&order=sort_order.asc");
   return sbOk(rows) ? rows.map((r) => ({

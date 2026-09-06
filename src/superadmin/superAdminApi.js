@@ -188,7 +188,7 @@ export function computeMonthlyPaymentAlarm(company, payments) {
     return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
   });
   if (paidThisMonth) return { overdue: false, labelKey: "monthlyAlarmPaid", color: "#166534", bg: "#dcfce7" };
-  return { overdue: true, label: tr("monthlyAlarmOverdue", { amount: monthlyAmount.toLocaleString("fa-IR") }), color: "#b91c1c", bg: "#fee2e2" };
+  return { overdue: true, label: tr("monthlyAlarmOverdue", { amount: monthlyAmount.toLocaleString(getCurrentLang() === "en" ? "en-US" : "fa-IR") }), color: "#b91c1c", bg: "#fee2e2" };
 }
 
 // معوق: هنوز بدهی باقی مانده و دوره‌ی اشتراک هم به پایان رسیده

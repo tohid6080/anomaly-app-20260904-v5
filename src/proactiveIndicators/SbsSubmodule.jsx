@@ -14,7 +14,7 @@ import SbsAssignmentsList from "./SbsAssignmentsList.jsx";
  * آبشاری) کاملاً استفاده می‌شود.
  */
 export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const isEmployerSide = role === "EMPLOYER" || role === "ADMIN";
   const [categories, setCategories] = useState([]);
   const [observations, setObservations] = useState(null);
@@ -220,7 +220,7 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
           <StatCard label={t("sbsStatTotal")} value={analysis.total} />
           <StatCard label={t("sbsStatSafe")} value={analysis.safe} color="#166534" bg="#dcfce7" />
           <StatCard label={t("sbsStatUnsafe")} value={analysis.unsafe} color={THEME.danger} bg={THEME.dangerBg} />
-          <StatCard label={t("sbsStatUnsafePct")} value={`${analysis.unsafePct.toFixed(1)}٪`} color="#b45309" bg="#fef3c7" />
+          <StatCard label={t("sbsStatUnsafePct")} value={`${analysis.unsafePct.toFixed(1)}${lang === "en" ? "%" : "٪"}`} color="#b45309" bg="#fef3c7" />
         </div>
 
         <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>{t("sbsUnsafeByCategory")}</h4>
@@ -242,7 +242,7 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
               <div style={{ fontSize: 12.5, fontWeight: 700, color: THEME.navy, marginBottom: 6 }}>{seasonLabel(s.season)}</div>
               <Row label={t("sbsStatTotal")} value={s.total} />
               <Row label={t("sbsRowUnsafe")} value={s.unsafe} />
-              <Row label={t("sbsRowUnsafePct")} value={s.total ? `${s.unsafePct.toFixed(1)}٪` : "—"} />
+              <Row label={t("sbsRowUnsafePct")} value={s.total ? `${s.unsafePct.toFixed(1)}${lang === "en" ? "%" : "٪"}` : "—"} />
             </div>
           ))}
         </div>
