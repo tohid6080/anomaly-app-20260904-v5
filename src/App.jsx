@@ -29,7 +29,8 @@ import JobPositionManager from "./jobpositions/JobPositionManager.jsx";
 import { loadActiveJobPositions, loadJobPositionTitle } from "./jobpositions/jobPositionsApi.js";
 import NotificationPanel from "./personnel/NotificationPanel.jsx";
 import { loadNotifications, loadPersonnelList, checkAndUpdateDeadlines, markNotificationRead } from "./personnel/personnelApi.js";
-import OnlineIndicator from "./offline/OnlineIndicator.jsx";
+import { HeaderAboutButton } from "./AboutIhmsPanel.jsx";
+import UpdateAvailableBanner from "./UpdateAvailableBanner.jsx";
 import { isOnline, subscribeNetworkStatus } from "./offline/networkStatus.js";
 import { offlineWrite, offlineWriteFile } from "./offline/offlineWrite.js";
 import DbSizeWarningBanner from "./offline/DbSizeWarningBanner.jsx";
@@ -1706,54 +1707,10 @@ function ProfileView({ onBack, currentUser, roleLabel }) {
 }
 
 // ---------- درباره‌ی IHMS ----------
-function AboutIhms({ onBack }) {
-  const { t, dir, lang } = useLanguage();
-  const appearance = useAppearance();
-
-  const todayDisplay = lang === "en"
-    ? new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
-    : isoToJalaliDisplay(new Date().toISOString().slice(0, 10));
-
-  const buildDisplay = typeof __BUILD_TIME__ !== "undefined"
-    ? (lang === "en"
-        ? new Date(__BUILD_TIME__).toLocaleString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
-        : `${isoToJalaliDisplay(__BUILD_TIME__.slice(0, 10))} - ${new Date(__BUILD_TIME__).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`)
-    : "—";
-
-  const Row = ({ label, value, ltr }) => (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: `1px solid ${THEME.border}`, gap: 12 }}>
-      <span style={{ fontSize: 12, color: THEME.text3, fontWeight: 600, flexShrink: 0 }}>{label}</span>
-      <span style={{ fontSize: 13, color: THEME.text, fontWeight: 600, direction: ltr ? "ltr" : dir, textAlign: dir === "rtl" ? "left" : "right" }}>{value}</span>
-    </div>
-  );
-
-  return (
-    <div style={{ maxWidth: 440, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("backToMenu")}</div>}
-      <div style={{ ...styles.card, width: "auto", textAlign: "center" }}>
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
-          <IhmsLogo size={88} src={appearance?.logoUrl} />
-        </div>
-        <h2 style={{ margin: 0, fontSize: 20, direction: "ltr", color: THEME.navy, fontWeight: 700, letterSpacing: "-0.01em" }}>{appearance?.systemName || APP_NAME}</h2>
-        <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 22, fontWeight: 500 }}>{t("aboutFullTitleValue")}</p>
-
-        <div style={{ textAlign: dir === "rtl" ? "right" : "left" }}>
-          <Row label={t("aboutVersion")} value="v1.0.0" ltr />
-          <Row label={t("aboutLastUpdate")} value={todayDisplay} />
-          <Row label={t("aboutBuild")} value={buildDisplay} />
-          <Row label={t("aboutDeveloper")} value="Tohid Mirasadi" ltr />
-          <Row
-            label={t("aboutStatus")}
-            value={<span style={{ background: "#dcfce7", color: "#166534", padding: "3px 10px", borderRadius: 999, fontSize: 11.5 }}>{t("aboutStatusValue")}</span>}
-          />
-          <Row label={t("aboutLanguageLabel")} value={t("aboutLanguageValue")} />
-        </div>
-
-        <p style={{ textAlign: "center", color: "#aaa", fontSize: 11, marginTop: 20 }}>{t("aboutCopyright")}</p>
-      </div>
-    </div>
-  );
-}
+// «درباره IHMS» از منوی «مدیریت سیستم» خارج شد و به یک پنلِ قابل‌دسترس از
+// هدرِ همه‌ی داشبوردها منتقل شد — نگاه کنید به src/AboutIhmsPanel.jsx
+// (HeaderAboutButton + AboutIhmsModal). آن پنل علاوه بر مشخصات نرم‌افزار،
+// نسخه‌ی نصب‌شده و آخرین نسخه‌ی منتشرشده (جدول app_releases) را نشان می‌دهد.
 
 // ---------- مدیریت یکپارچه پیمانکاران (اطلاعات شرکت + حساب کاربری ورود) ----------
 function ContractorManager({ onBack }) {
@@ -3454,7 +3411,7 @@ function DashboardHeader({ panelLabelKey, currentUser, onLogout, onOpenSettings,
         </div>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
-        <OnlineIndicator />
+        <HeaderAboutButton />
         {smartItems && <NotificationPanel smartItems={smartItems} onNavigate={onNavigate} />}
         <button type="button" onClick={() => setShowReportError(true)} style={headerIconBtnStyle} title={t("erpTitle")}>
           <AlertTriangle size={16} color="#fff" />
@@ -3710,6 +3667,7 @@ function ResponsiveDashboardShell({ panelLabelKey, currentUser, onLogout, onOpen
     return (
       <div style={{ ...styles.dashboardWrapper, direction: dir }}>
         <DashboardHeader panelLabelKey={panelLabelKey} currentUser={currentUser} onLogout={onLogout} onOpenSettings={onOpenSettings} smartItems={smartItems} onNavigate={onNavigate} currentModuleKey={view} />
+        <UpdateAvailableBanner />
         {children}
       </div>
     );
@@ -3723,6 +3681,7 @@ function ResponsiveDashboardShell({ panelLabelKey, currentUser, onLogout, onOpen
   return (
     <div style={{ direction: dir, fontFamily: THEME.font, minHeight: "100vh", background: THEME.bg, display: "flex", flexDirection: "column" }}>
       <DashboardHeader panelLabelKey={panelLabelKey} currentUser={currentUser} onLogout={onLogout} onOpenSettings={onOpenSettings} smartItems={smartItems} onNavigate={onNavigate} currentModuleKey={view} />
+      <UpdateAvailableBanner />
       <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
         <Sidebar modules={sidebarModules} view={view} setView={setView} collapsed={collapsed} onToggleCollapse={() => setCollapsed((v) => !v)} />
         <main style={{ flex: 1, minWidth: 0, overflowY: "auto", padding: "28px clamp(20px, 3vw, 40px)" }}>
@@ -4190,7 +4149,6 @@ function AdminDashboard({ onLogout, currentUser }) {
         isModuleInPlan(planFeatures, "effectivenessThresholds") && { key: "effectivenessThresholds", label: t("subEffectivenessThresholds") },
         isModuleInPlan(planFeatures, "riskKnowledgeManagement") && { key: "riskKnowledgeManagement", label: t("subRiskKnowledge") },
         isModuleInPlan(planFeatures, "anomalyCategoryManagement") && { key: "anomalyCategoryManagement", label: t("subAnomalyCategories") },
-        { key: "aboutIhms", label: t("aboutMenuLabel") },
       ].filter(Boolean),
     },
   ].filter(Boolean), moduleConfig);
@@ -4240,7 +4198,6 @@ function AdminDashboard({ onLogout, currentUser }) {
             {isModuleInPlan(planFeatures, "effectivenessThresholds") && <MenuRow icon={Sliders} label={t("subEffectivenessThresholds")} onClick={() => setView("effectivenessThresholds")} />}
             {isModuleInPlan(planFeatures, "riskKnowledgeManagement") && <MenuRow icon={Database} label={t("subRiskKnowledge")} onClick={() => setView("riskKnowledgeManagement")} />}
             {isModuleInPlan(planFeatures, "anomalyCategoryManagement") && <MenuRow icon={Tag} label={t("subAnomalyCategories")} onClick={() => setView("anomalyCategoryManagement")} />}
-            <MenuRow icon={Info} label={t("aboutMenuLabel")} onClick={() => setView("aboutIhms")} />
           </div>
         </div>
       )}
@@ -4251,7 +4208,6 @@ function AdminDashboard({ onLogout, currentUser }) {
       {view === "effectivenessThresholds" && <EffectivenessThresholdsManager onBack={() => setView("systemManagement")} currentUser={currentUser} />}
       {view === "riskKnowledgeManagement" && <RiskKnowledgeManager onBack={() => setView("systemManagement")} currentUser={currentUser} />}
       {view === "anomalyCategoryManagement" && <AnomalyCategoryManager onBack={() => setView("systemManagement")} />}
-      {view === "aboutIhms" && <AboutIhms onBack={() => setView("systemManagement")} />}
 
       {view === "anomalyReport" && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
