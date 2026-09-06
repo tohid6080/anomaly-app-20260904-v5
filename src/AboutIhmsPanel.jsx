@@ -8,6 +8,7 @@ import { subscribeNetworkStatus, startNetworkMonitor } from "./offline/networkSt
 import { startAutoSync, subscribeSyncStatus } from "./offline/syncEngine.js";
 import { getQueue } from "./offline/offlineDb.js";
 import { loadLatestPublishedRelease, isNewerThanCurrent } from "./superadmin/appReleaseApi.js";
+import { resolveLatestApkUrl, openApkDownload } from "./appDownload.js";
 
 // وضعیت آنلاین/آفلاین + شمارنده‌ی عملیات معلق + بوت‌استرپِ حلقه‌ی
 // همگام‌سازی — دقیقاً همان کاری که OnlineIndicator می‌کرد. حالا داخلِ
@@ -97,14 +98,19 @@ export function AboutIhmsModal({ onClose, latestRelease, online }) {
   const appearance = useAppearance();
   const [release, setRelease] = useState(latestRelease || null);
   const [checking, setChecking] = useState(latestRelease === undefined || latestRelease === null);
+  // لینکِ دانلودِ مستقیمِ APK — از Assetِ Releaseِ GitHub گرفته می‌شود.
+  const [apkUrl, setApkUrl] = useState("");
 
   useEffect(() => {
-    if (latestRelease) { setRelease(latestRelease); setChecking(false); return; }
     let alive = true;
+    const use = (r) => {
+      if (!alive) return;
+      setRelease(r); setChecking(false);
+      resolveLatestApkUrl(r?.effectiveDownloadUrl || "").then((u) => { if (alive) setApkUrl(u); });
+    };
+    if (latestRelease) { use(latestRelease); return () => { alive = false; }; }
     setChecking(true);
-    loadLatestPublishedRelease()
-      .then((r) => { if (alive) { setRelease(r); setChecking(false); } })
-      .catch(() => { if (alive) setChecking(false); });
+    loadLatestPublishedRelease().then(use).catch(() => { if (alive) setChecking(false); });
     return () => { alive = false; };
   }, [latestRelease]);
 
@@ -176,13 +182,14 @@ export function AboutIhmsModal({ onClose, latestRelease, online }) {
           </div>
         )}
 
-        {updateAvailable && release?.effectiveDownloadUrl && (
-          <a
-            href={release.effectiveDownloadUrl} target="_blank" rel="noopener noreferrer"
-            style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 16, background: THEME.teal, color: "#fff", borderRadius: 9, padding: "9px 18px", fontSize: 12.5, fontWeight: 700, textDecoration: "none" }}
+        {updateAvailable && (apkUrl || release?.effectiveDownloadUrl) && (
+          <button
+            type="button"
+            onClick={() => openApkDownload(apkUrl || release.effectiveDownloadUrl)}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 16, background: THEME.teal, color: "#fff", border: "none", borderRadius: 9, padding: "9px 18px", fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: THEME.font }}
           >
             <Download size={14} /> {t("aboutDownloadUpdate")}
-          </a>
+          </button>
         )}
 
         <p style={{ textAlign: "center", color: "#aaa", fontSize: 11, marginTop: 18 }}>{t("aboutCopyright")}</p>
