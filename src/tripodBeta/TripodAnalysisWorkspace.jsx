@@ -13,16 +13,18 @@ import {
 import TogglePicker from "./ChecklistPicker.jsx";
 import TripodTree from "./TripodTree.jsx";
 import BarrierMappingPicker from "../bowtie/BarrierMappingPicker.jsx";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 const TABS = [
-  { key: "summary", label: "خلاصه" },
-  { key: "build", label: "مسیرها و اشکالات پنهان" },
-  { key: "tree", label: "درخت" },
-  { key: "rootcause", label: "علل ریشه‌ای و اقدام اصلاحی" },
-  { key: "history", label: "تاریخچه" },
+  { key: "summary", labelKey: "twTabSummary" },
+  { key: "build", labelKey: "twTabBuild" },
+  { key: "tree", labelKey: "twTabTree" },
+  { key: "rootcause", labelKey: "twTabRootCause" },
+  { key: "history", labelKey: "twTabHistory" },
 ];
 
 export default function TripodAnalysisWorkspace({ analysisId, incident, currentUser, role, onBack }) {
+  const { t } = useLanguage();
   const [analysis, setAnalysis] = useState(undefined);
   const [refGroups, setRefGroups] = useState([]);
   const [targetCats, setTargetCats] = useState([]);
@@ -36,11 +38,11 @@ export default function TripodAnalysisWorkspace({ analysisId, incident, currentU
   const [busy, setBusy] = useState(false);
 
   const refresh = async () => {
-    const [a, t, br, rc, ca, hist] = await Promise.all([
+    const [a, tg, br, rc, ca, hist] = await Promise.all([
       loadAnalysisById(analysisId), loadTargets(analysisId), loadBranchesWithDetails(analysisId),
       loadRootCauseSummary(analysisId), loadTripodCorrectiveActions(analysisId), loadHistory(analysisId),
     ]);
-    setAnalysis(a); setTargets(t); setBranches(br); setRootCause(rc); setCorrectiveActions(ca); setHistory(hist);
+    setAnalysis(a); setTargets(tg); setBranches(br); setRootCause(rc); setCorrectiveActions(ca); setHistory(hist);
   };
 
   useEffect(() => {
@@ -50,8 +52,8 @@ export default function TripodAnalysisWorkspace({ analysisId, incident, currentU
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [analysisId]);
 
-  if (analysis === undefined) return <p style={{ color: THEME.text3, textAlign: "center", padding: 40 }}>در حال بارگذاری...</p>;
-  if (!analysis) return <p style={{ color: THEME.danger, textAlign: "center", padding: 40 }}>تحلیل یافت نشد.</p>;
+  if (analysis === undefined) return <p style={{ color: THEME.text3, textAlign: "center", padding: 40 }}>{t("commonLoading")}</p>;
+  if (!analysis) return <p style={{ color: THEME.danger, textAlign: "center", padding: 40 }}>{t("twNotFound")}</p>;
 
   const editable = EDITABLE_STATUSES.has(analysis.status);
 
@@ -65,15 +67,15 @@ export default function TripodAnalysisWorkspace({ analysisId, incident, currentU
 
   return (
     <div>
-      <div style={styles.backLink} onClick={onBack}>بازگشت</div>
+      <div style={styles.backLink} onClick={onBack}>{t("commonBackPlain")}</div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
         <div>
           <h2 style={{ fontSize: 17, color: THEME.navy, fontWeight: 800, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
-            <GitBranch size={19} color={THEME.teal} /> تحلیل Tripod Beta — حادثه {incident?.incidentNo}
+            <GitBranch size={19} color={THEME.teal} /> {t("twHeading", { no: incident?.incidentNo })}
           </h2>
           <p style={{ color: THEME.text3, fontSize: 12, margin: "4px 0 0" }}>
-            وضعیت فعلی: <b style={{ color: THEME.navy }}>{TRIPOD_STATUS_LABELS[analysis.status] || analysis.status}</b>
-            {analysis.isLocked && " — قفل‌شده"}
+            {t("twCurrentStatusLabel")}<b style={{ color: THEME.navy }}>{t(TRIPOD_STATUS_LABELS[analysis.status] || analysis.status)}</b>
+            {analysis.isLocked && t("twLocked")}
           </p>
         </div>
         <WorkflowActions analysis={analysis} role={role} busy={busy} onAction={doAction} />
@@ -82,7 +84,7 @@ export default function TripodAnalysisWorkspace({ analysisId, incident, currentU
       {error && <p style={styles.error}>{error}</p>}
       {analysis.rejectionReason && (
         <div style={{ background: "#fee2e2", border: "1px solid #fca5a5", borderRadius: 8, padding: 12, marginBottom: 14 }}>
-          <p style={{ fontSize: 12.5, color: "#991b1b", margin: 0 }}>علت رد آخرین بازبینی: {analysis.rejectionReason}</p>
+          <p style={{ fontSize: 12.5, color: "#991b1b", margin: 0 }}>{t("twLastRejectionReason", { reason: analysis.rejectionReason })}</p>
         </div>
       )}
 
@@ -96,7 +98,7 @@ export default function TripodAnalysisWorkspace({ analysisId, incident, currentU
               borderBottom: tab === tb.key ? `2.5px solid ${THEME.teal}` : "2.5px solid transparent",
             }}
           >
-            {tb.label}
+            {t(tb.labelKey)}
           </button>
         ))}
       </div>
@@ -125,18 +127,19 @@ export default function TripodAnalysisWorkspace({ analysisId, incident, currentU
 // ---------- اکشن‌های گردش‌کار ----------
 
 function WorkflowActions({ analysis, role, busy, onAction }) {
+  const { t } = useLanguage();
   const [showReject, setShowReject] = useState(false);
   const [reason, setReason] = useState("");
   const s = analysis.status;
   const buttons = [];
 
-  if ((s === "NOT_REQUIRED" || s === "CANDIDATE") && (role === "EMPLOYER" || role === "ADMIN")) buttons.push({ label: "درخواست تحلیل", icon: Send, action: "request" });
-  if (s === "REQUESTED" && role === "CONTRACTOR") buttons.push({ label: "شروع تحلیل", icon: Play, action: "start" });
-  if (s === "IN_PROGRESS" && role === "CONTRACTOR") buttons.push({ label: "ارسال به کارفرما", icon: Send, action: "submit" });
+  if ((s === "NOT_REQUIRED" || s === "CANDIDATE") && (role === "EMPLOYER" || role === "ADMIN")) buttons.push({ label: t("twActionRequest"), icon: Send, action: "request" });
+  if (s === "REQUESTED" && role === "CONTRACTOR") buttons.push({ label: t("twActionStart"), icon: Play, action: "start" });
+  if (s === "IN_PROGRESS" && role === "CONTRACTOR") buttons.push({ label: t("twActionSubmit"), icon: Send, action: "submit" });
   if (s === "EMPLOYER_REVIEW" && (role === "EMPLOYER" || role === "ADMIN")) {
-    buttons.push({ label: "تأیید نهایی", icon: CheckCircle2, action: "approve" });
+    buttons.push({ label: t("twActionApprove"), icon: CheckCircle2, action: "approve" });
   }
-  if (s === "REJECTED" && role === "CONTRACTOR") buttons.push({ label: "شروع بازبینی مجدد", icon: RotateCcw, action: "revise" });
+  if (s === "REJECTED" && role === "CONTRACTOR") buttons.push({ label: t("twActionRevise"), icon: RotateCcw, action: "revise" });
 
   return (
     <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
@@ -147,14 +150,14 @@ function WorkflowActions({ analysis, role, busy, onAction }) {
       ))}
       {s === "EMPLOYER_REVIEW" && (role === "EMPLOYER" || role === "ADMIN") && !showReject && (
         <button type="button" disabled={busy} onClick={() => setShowReject(true)} style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 5, background: THEME.danger }}>
-          <XCircle size={13} /> رد تحلیل
+          <XCircle size={13} /> {t("twActionReject")}
         </button>
       )}
       {showReject && (
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          <input style={{ ...styles.input, width: 200, marginTop: 0 }} placeholder="علت رد..." value={reason} onChange={(e) => setReason(e.target.value)} dir="rtl" />
-          <button type="button" disabled={busy || !reason.trim()} onClick={async () => { await onAction("reject", reason); setShowReject(false); setReason(""); }} style={{ ...styles.smallButton, background: THEME.danger }}>ثبت رد</button>
-          <button type="button" onClick={() => setShowReject(false)} style={{ ...styles.smallButton, background: THEME.text3 }}>انصراف</button>
+          <input style={{ ...styles.input, width: 200, marginTop: 0 }} placeholder={t("twRejectReasonPlaceholder")} value={reason} onChange={(e) => setReason(e.target.value)} dir="rtl" />
+          <button type="button" disabled={busy || !reason.trim()} onClick={async () => { await onAction("reject", reason); setShowReject(false); setReason(""); }} style={{ ...styles.smallButton, background: THEME.danger }}>{t("twSubmitReject")}</button>
+          <button type="button" onClick={() => setShowReject(false)} style={{ ...styles.smallButton, background: THEME.text3 }}>{t("commonCancel")}</button>
         </div>
       )}
     </div>
@@ -164,6 +167,7 @@ function WorkflowActions({ analysis, role, busy, onAction }) {
 // ---------- تب خلاصه ----------
 
 function SummaryTab({ analysis, editable, targets, targetCats, onUpdateFields, onAddTarget, onDeleteTarget }) {
+  const { t } = useLanguage();
   const [eventDesc, setEventDesc] = useState(analysis.eventDescription);
   const [hazardDesc, setHazardDesc] = useState(analysis.hazardDescription);
   const [newTargetCode, setNewTargetCode] = useState("");
@@ -174,30 +178,30 @@ function SummaryTab({ analysis, editable, targets, targetCats, onUpdateFields, o
   return (
     <div>
       <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18, marginBottom: 16 }}>
-        <label style={styles.label}>شرح رویداد (Event)</label>
+        <label style={styles.label}>{t("twEventDescLabel")}</label>
         <textarea style={{ ...styles.input, minHeight: 60 }} value={eventDesc} onChange={(e) => setEventDesc(e.target.value)} onBlur={() => editable && onUpdateFields({ event_description: eventDesc })} disabled={!editable} dir="rtl" />
-        <label style={styles.label}>شرح خطر (Hazard)</label>
+        <label style={styles.label}>{t("twHazardDescLabel")}</label>
         <textarea style={{ ...styles.input, minHeight: 60 }} value={hazardDesc} onChange={(e) => setHazardDesc(e.target.value)} onBlur={() => editable && onUpdateFields({ hazard_description: hazardDesc })} disabled={!editable} dir="rtl" />
       </div>
 
       <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18 }}>
         <h4 style={{ fontSize: 13.5, color: THEME.navy, fontWeight: 700, margin: "0 0 10px", display: "flex", alignItems: "center", gap: 6 }}>
-          <TargetIcon size={15} /> اهداف متأثر (Target)
+          <TargetIcon size={15} /> {t("twAffectedTargets")}
         </h4>
-        {targets.map((t) => (
-          <div key={t.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: `1px solid ${THEME.border}` }}>
-            <span style={{ fontSize: 12.5 }}><b>{t.categoryTitle}</b>{t.description && ` — ${t.description}`}</span>
-            {editable && <button type="button" onClick={() => onDeleteTarget(t.id)} style={{ background: "none", border: "none", cursor: "pointer" }}><Trash2 size={13} color={THEME.danger} /></button>}
+        {targets.map((tg) => (
+          <div key={tg.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: `1px solid ${THEME.border}` }}>
+            <span style={{ fontSize: 12.5 }}><b>{tg.categoryTitle}</b>{tg.description && ` — ${tg.description}`}</span>
+            {editable && <button type="button" onClick={() => onDeleteTarget(tg.id)} style={{ background: "none", border: "none", cursor: "pointer" }}><Trash2 size={13} color={THEME.danger} /></button>}
           </div>
         ))}
         {editable && (
           <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
             <select style={{ ...styles.input, marginTop: 0, flex: 1, minWidth: 140 }} value={newTargetCode} onChange={(e) => setNewTargetCode(e.target.value)} dir="rtl">
-              <option value="">— انتخاب دسته هدف —</option>
+              <option value="">{t("twSelectTargetCategory")}</option>
               {targetCats.map((c) => <option key={c.code} value={c.code}>{c.titleFa}</option>)}
             </select>
-            <input style={{ ...styles.input, marginTop: 0, flex: 2, minWidth: 160 }} placeholder="توضیح (اختیاری)" value={newTargetDesc} onChange={(e) => setNewTargetDesc(e.target.value)} dir="rtl" />
-            <button type="button" style={styles.smallButton} disabled={!newTargetCode} onClick={() => { onAddTarget(newTargetCode, newTargetDesc); setNewTargetCode(""); setNewTargetDesc(""); }}>افزودن</button>
+            <input style={{ ...styles.input, marginTop: 0, flex: 2, minWidth: 160 }} placeholder={t("twDescOptional")} value={newTargetDesc} onChange={(e) => setNewTargetDesc(e.target.value)} dir="rtl" />
+            <button type="button" style={styles.smallButton} disabled={!newTargetCode} onClick={() => { onAddTarget(newTargetCode, newTargetDesc); setNewTargetCode(""); setNewTargetDesc(""); }}>{t("twAdd")}</button>
           </div>
         )}
       </div>
@@ -216,6 +220,7 @@ function BuildTab({ branches, refGroups, editable, onRefresh }) {
 }
 
 function PathCard({ path, refGroups, editable, onRefresh }) {
+  const { t } = useLanguage();
   const [type, setType] = useState(path.surfaceFailureType || "unsafe_condition");
   const [text, setText] = useState(path.surfaceFailureText);
   const filled = !!path.surfaceFailureText;
@@ -230,27 +235,27 @@ function PathCard({ path, refGroups, editable, onRefresh }) {
   return (
     <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 16, marginBottom: 14 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-        <span style={{ fontSize: 13.5, fontWeight: 700, color: THEME.navy }}>مسیر تحلیل {path.pathNo}</span>
-        <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: filled ? "#dcfce7" : "#eef1f5", color: filled ? "#166534" : THEME.text3, fontWeight: 600 }}>{filled ? "تکمیل‌شده" : "خالی"}</span>
+        <span style={{ fontSize: 13.5, fontWeight: 700, color: THEME.navy }}>{t("twPathN", { n: path.pathNo })}</span>
+        <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: filled ? "#dcfce7" : "#eef1f5", color: filled ? "#166534" : THEME.text3, fontWeight: 600 }}>{filled ? t("twPathFilled") : t("twPathEmpty")}</span>
       </div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <select style={{ ...styles.input, marginTop: 0, width: 140 }} value={type} onChange={(e) => setType(e.target.value)} disabled={!editable} dir="rtl">
-          <option value="unsafe_condition">شرایط ناایمن</option>
-          <option value="unsafe_act">اعمال ناایمن</option>
+          <option value="unsafe_condition">{t("twUnsafeCondition")}</option>
+          <option value="unsafe_act">{t("twUnsafeAct")}</option>
         </select>
-        <input style={{ ...styles.input, marginTop: 0, flex: 1, minWidth: 200 }} placeholder="شرح اشکال سطحی این مسیر..." value={text} onChange={(e) => setText(e.target.value)} disabled={!editable} dir="rtl" />
-        {editable && <button type="button" style={{ ...styles.smallButton, marginTop: 0 }} onClick={handleSave}>ذخیره</button>}
+        <input style={{ ...styles.input, marginTop: 0, flex: 1, minWidth: 200 }} placeholder={t("twSurfaceFailurePlaceholder")} value={text} onChange={(e) => setText(e.target.value)} disabled={!editable} dir="rtl" />
+        {editable && <button type="button" style={{ ...styles.smallButton, marginTop: 0 }} onClick={handleSave}>{t("commonSave")}</button>}
       </div>
 
       <div style={{ marginTop: 14 }}>
-        <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 6 }}>پیش‌شرط‌ها و اشکالات پنهان این مسیر:</p>
-        {(path.preconditions || []).length === 0 && <p style={{ fontSize: 12, color: THEME.text3, padding: "10px 0" }}>هنوز پیش‌شرطی برای این مسیر ثبت نشده.</p>}
+        <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 6 }}>{t("twPrecondsAndHidden")}</p>
+        {(path.preconditions || []).length === 0 && <p style={{ fontSize: 12, color: THEME.text3, padding: "10px 0" }}>{t("twNoPrecondYet")}</p>}
         {path.preconditions.map((pc) => (
           <PreconditionItem key={pc.id} pc={pc} branchId={path.id} refGroups={refGroups} editable={editable} onRefresh={onRefresh} />
         ))}
         {editable && (
           <TogglePicker
-            label="افزودن پیش‌شرط از چک‌لیست" items={precondItems} placeholder="جستجو در ۵۵ پیش‌شرط..."
+            label={t("twAddPrecondFromChecklist")} items={precondItems} placeholder={t("twSearchIn55Preconds")}
             onSelect={async (item) => { await addBranchPrecondition(path.id, item.id); await onRefresh(); }}
           />
         )}
@@ -260,22 +265,23 @@ function PathCard({ path, refGroups, editable, onRefresh }) {
 }
 
 function PreconditionItem({ pc, branchId, refGroups, editable, onRefresh }) {
+  const { t } = useLanguage();
   const group = refGroups.find((g) => g.groupNo === pc.groupNo);
   const scopedItems = group ? group.hiddenFailures.map((h) => ({ ...h, groupTitle: group.titleFa })) : [];
 
   return (
     <div style={{ background: THEME.bg, borderRadius: 10, padding: 12, marginBottom: 8 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <span style={{ fontSize: 12 }}><b style={{ color: THEME.teal }}>{pc.code}</b> <span style={{ color: THEME.text3, fontSize: 10.5 }}>(گروه {pc.groupNo})</span></span>
+        <span style={{ fontSize: 12 }}><b style={{ color: THEME.teal }}>{pc.code}</b> <span style={{ color: THEME.text3, fontSize: 10.5 }}>{t("twGroupN", { n: pc.groupNo })}</span></span>
         {editable && (
-          <button type="button" onClick={async () => { if (!confirm("حذف این پیش‌شرط و همه‌ی اشکالات پنهان زیر آن؟")) return; await deleteBranchPrecondition(pc.id); await onRefresh(); }} style={{ background: "none", border: "none", cursor: "pointer" }}>
+          <button type="button" onClick={async () => { if (!confirm(t("twDeletePrecondConfirm"))) return; await deleteBranchPrecondition(pc.id); await onRefresh(); }} style={{ background: "none", border: "none", cursor: "pointer" }}>
             <Trash2 size={13} color={THEME.danger} />
           </button>
         )}
       </div>
       <p style={{ fontSize: 12.5, color: THEME.text, lineHeight: 1.8, margin: "4px 0 8px" }}>{pc.text}</p>
 
-      {(pc.hiddenFailures || []).length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3, margin: "4px 0" }}>هنوز اشکال پنهانی برای این پیش‌شرط ثبت نشده.</p>}
+      {(pc.hiddenFailures || []).length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3, margin: "4px 0" }}>{t("twNoHiddenYet")}</p>}
       {pc.hiddenFailures.map((h) => (
         <div key={h.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "5px 0", borderTop: `1px solid ${THEME.border}` }}>
           <span style={{ fontSize: 11.5 }}><b style={{ color: "#b3261e" }}>{h.code} · {h.brfCode || "-"}</b> {h.text}</span>
@@ -289,7 +295,7 @@ function PreconditionItem({ pc, branchId, refGroups, editable, onRefresh }) {
 
       {editable && (
         <TogglePicker
-          label={`افزودن اشکال پنهان (فقط گروه ${pc.groupNo})`} items={scopedItems} placeholder={`جستجو در اشکالات پنهان گروه ${pc.groupNo}...`}
+          label={t("twAddHiddenGroupOnly", { n: pc.groupNo })} items={scopedItems} placeholder={t("twSearchHiddenGroup", { n: pc.groupNo })}
           onSelect={async (item) => {
             const result = await addBranchHiddenFailure(branchId, pc.id, item.id, pc.groupNo, item.groupNo);
             if (result?.__error) { alert(result.message); return; }
@@ -304,6 +310,7 @@ function PreconditionItem({ pc, branchId, refGroups, editable, onRefresh }) {
 // ---------- تب علل ریشه‌ای ----------
 
 function RootCauseTab({ analysisId, incident, rootCause, correctiveActions, currentUser, onRefresh }) {
+  const { t } = useLanguage();
   const [modalSrc, setModalSrc] = useState(null);
   // پیش‌نویس محلی وضعیت هر اقدام اصلاحی — تا کلیک روی «ثبت» هیچ Writeای
   // به دیتابیس نمی‌رود (استاندارد سراسری: تغییر کاربر فقط Local می‌ماند)
@@ -320,67 +327,67 @@ function RootCauseTab({ analysisId, incident, rootCause, correctiveActions, curr
     await onRefresh();
   };
   const tiers = [
-    { key: "root_cause", label: "علل ریشه‌ای (۴ بار یا بیشتر تکرار)" },
-    { key: "major_issue", label: "اشکالات مهم (۳ بار تکرار)" },
-    { key: "hidden_issue", label: "اشکالات پنهان (۲ بار تکرار)" },
+    { key: "root_cause", label: t("twTierRootCause") },
+    { key: "major_issue", label: t("twTierMajorIssue") },
+    { key: "hidden_issue", label: t("twTierHiddenIssue") },
   ];
 
   return (
     <div>
       <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 16, marginBottom: 16 }}>
-        <h4 style={{ fontSize: 13.5, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>خروجی ۱ — مجموع تکرار هر دسته اصلی (BRF)</h4>
+        <h4 style={{ fontSize: 13.5, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>{t("twOutput1Title")}</h4>
         <SimpleTable
-          headers={["کد", "نام دسته", "تعداد تکرار", ""]}
+          headers={[t("twColCode"), t("twColCategoryName"), t("twColOccurrences"), ""]}
           rows={rootCause.byBrfCategory.map((item) => {
             const issued = correctiveActions.some((ca) => ca.sourceType === "brf_category" && ca.brfCode === item.brfCode);
             return [
               item.brfCode || "-", item.brfNameFa || item.brfNameEn || "-", item.occurrences,
               issued
                 ? <IssuedBadge key="issued" />
-                : <button key="btn" type="button" style={{ ...styles.smallButton, fontSize: 11 }} onClick={() => setModalSrc({ sourceType: "brf_category", brfCode: item.brfCode, titleFa: item.brfNameFa || item.brfNameEn, repeatCount: item.occurrences })}>صدور اقدام اصلاحی</button>,
+                : <button key="btn" type="button" style={{ ...styles.smallButton, fontSize: 11 }} onClick={() => setModalSrc({ sourceType: "brf_category", brfCode: item.brfCode, titleFa: item.brfNameFa || item.brfNameEn, repeatCount: item.occurrences })}>{t("twIssueCorrectiveAction")}</button>,
             ];
           })}
-          emptyText="هنوز اشکال پنهانی ثبت نشده."
+          emptyText={t("twNoHiddenLogged")}
         />
       </div>
 
       <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 16, marginBottom: 16 }}>
-        <h4 style={{ fontSize: 13.5, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>خروجی ۲ — کدهای تکرارشده اشکال پنهان</h4>
+        <h4 style={{ fontSize: 13.5, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>{t("twOutput2Title")}</h4>
         {tiers.map((tier) => {
           const items = rootCause.byHiddenFailureCode.filter((it) => it.classification === tier.key);
           if (items.length === 0) return null;
           return (
             <div key={tier.key} style={{ marginBottom: 14 }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: THEME.navy, marginBottom: 6 }}>{items.length} مورد — {tier.label}</p>
+              <p style={{ fontSize: 12, fontWeight: 700, color: THEME.navy, marginBottom: 6 }}>{t("twTierCountLine", { count: items.length, label: tier.label })}</p>
               <SimpleTable
-                headers={["کد", "شرح", "تعداد", ""]}
+                headers={[t("twColCode"), t("twColDesc"), t("twColCount"), ""]}
                 rows={items.map((it) => {
                   const issued = correctiveActions.some((ca) => ca.sourceType === "hidden_failure_code" && ca.hiddenFailureCode === it.code);
                   return [
                     it.code, it.textFa, it.branchCount,
                     issued
                       ? <IssuedBadge key="issued" />
-                      : <button key="btn" type="button" style={{ ...styles.smallButton, fontSize: 11 }} onClick={() => setModalSrc({ sourceType: "hidden_failure_code", hiddenFailureCode: it.code, titleFa: it.textFa, repeatCount: it.branchCount, classification: it.classification })}>صدور اقدام اصلاحی</button>,
+                      : <button key="btn" type="button" style={{ ...styles.smallButton, fontSize: 11 }} onClick={() => setModalSrc({ sourceType: "hidden_failure_code", hiddenFailureCode: it.code, titleFa: it.textFa, repeatCount: it.branchCount, classification: it.classification })}>{t("twIssueCorrectiveAction")}</button>,
                   ];
                 })}
               />
             </div>
           );
         })}
-        {rootCause.byHiddenFailureCode.length === 0 && <p style={{ fontSize: 12, color: THEME.text3 }}>هنوز هیچ کدی در ۲ یا چند مسیر مستقل تکرار نشده است.</p>}
+        {rootCause.byHiddenFailureCode.length === 0 && <p style={{ fontSize: 12, color: THEME.text3 }}>{t("twNoRepeatedCode")}</p>}
       </div>
 
       <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 16 }}>
-        <h4 style={{ fontSize: 13.5, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>اقدامات اصلاحی ثبت‌شده</h4>
-        {correctiveActions.length === 0 && <p style={{ fontSize: 12, color: THEME.text3 }}>هنوز اقدام اصلاحی ثبت نشده.</p>}
+        <h4 style={{ fontSize: 13.5, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>{t("twRegisteredCorrectiveActions")}</h4>
+        {correctiveActions.length === 0 && <p style={{ fontSize: 12, color: THEME.text3 }}>{t("twNoCorrectiveActionYet")}</p>}
         {correctiveActions.map((ca) => (
           <div key={ca.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "10px 0", borderBottom: `1px solid ${THEME.border}`, gap: 10, flexWrap: "wrap" }}>
             <div style={{ flex: 1, minWidth: 200 }}>
-              <p style={{ fontSize: 12.5, margin: 0 }}><b>{ca.titleFa}</b> <span style={{ color: THEME.text3, fontSize: 11 }}>({ca.sourceType === "brf_category" ? `دسته BRF: ${ca.brfCode}` : `کد: ${ca.hiddenFailureCode}`}, تکرار: {ca.repeatCount})</span></p>
+              <p style={{ fontSize: 12.5, margin: 0 }}><b>{ca.titleFa}</b> <span style={{ color: THEME.text3, fontSize: 11 }}>({ca.sourceType === "brf_category" ? t("twBrfCategoryLabel", { code: ca.brfCode }) : t("twCodeLabel", { code: ca.hiddenFailureCode })}, {t("twRepeatLabel", { count: ca.repeatCount })})</span></p>
               <p style={{ fontSize: 11.5, color: THEME.text2, margin: "4px 0" }}>{ca.description}</p>
               <p style={{ fontSize: 11, color: THEME.text3, margin: 0 }}>
-                مسئول: {ca.responsiblePerson}{ca.dueDate && ` · مهلت: ${toJalaliSafe(ca.dueDate)}`}
-                {ca.responsibleContractorName && ` · ارجاع‌شده به: ${ca.responsibleContractorName}`}
+                {t("twResponsibleLabel", { name: ca.responsiblePerson })}{ca.dueDate && t("twDueSuffix", { date: toJalaliSafe(ca.dueDate) })}
+                {ca.responsibleContractorName && t("twAssignedToSuffix", { name: ca.responsibleContractorName })}
               </p>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -388,11 +395,11 @@ function RootCauseTab({ analysisId, incident, rootCause, correctiveActions, curr
                 style={{ ...styles.input, marginTop: 0, width: 130 }} value={statusDraft[ca.id] ?? ca.status} dir="rtl"
                 onChange={(e) => setStatusDraft((prev) => ({ ...prev, [ca.id]: e.target.value }))}
               >
-                {Object.entries(CA_STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                {Object.entries(CA_STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{t(v)}</option>)}
               </select>
               {statusDraft[ca.id] !== undefined && statusDraft[ca.id] !== ca.status && (
                 <button type="button" style={{ ...styles.smallButton, fontSize: 11, padding: "6px 10px" }} onClick={() => commitStatus(ca.id)} disabled={statusSaving === ca.id}>
-                  {statusSaving === ca.id ? "..." : "ثبت"}
+                  {statusSaving === ca.id ? "..." : t("twSubmitShort")}
                 </button>
               )}
             </div>
@@ -414,9 +421,10 @@ function RootCauseTab({ analysisId, incident, rootCause, correctiveActions, curr
 // جای دکمه‌ی «صدور اقدام اصلاحی» وقتی از قبل برای همین علت/کد صادر شده —
 // از تکرار/دوباره‌کاری صدور اقدام اصلاحی برای یک مورد جلوگیری می‌کند
 function IssuedBadge() {
+  const { t } = useLanguage();
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10.5, fontWeight: 700, color: "#166534", background: "#dcfce7", padding: "4px 9px", borderRadius: 999 }}>
-      <CheckCircle2 size={12} /> اقدام اصلاحی صادر شد
+      <CheckCircle2 size={12} /> {t("twCorrectiveActionIssued")}
     </span>
   );
 }
@@ -444,15 +452,16 @@ function SimpleTable({ headers, rows, emptyText }) {
 }
 
 function CorrectiveActionModal({ src, incident, analysisId, currentUser, onClose, onSaved }) {
+  const { t } = useLanguage();
   const [description, setDescription] = useState("");
   const [responsible, setResponsible] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
-  const classLabel = { root_cause: "علت ریشه‌ای", major_issue: "اشکال مهم", hidden_issue: "اشکال پنهان" }[src.classification];
+  const classLabel = { root_cause: t("tpClassRootCause"), major_issue: t("tpClassMajorIssue"), hidden_issue: t("tpClassHiddenIssue") }[src.classification];
 
   const handleSave = async () => {
-    if (!description.trim() || !responsible.trim()) { setError("شرح و مسئول اقدام الزامی است"); return; }
+    if (!description.trim() || !responsible.trim()) { setError(t("twCaErrRequired")); return; }
     setSaving(true);
     const result = await createTripodCorrectiveAction(analysisId, {
       sourceType: src.sourceType, brfCode: src.brfCode, hiddenFailureCode: src.hiddenFailureCode,
@@ -467,23 +476,23 @@ function CorrectiveActionModal({ src, incident, analysisId, currentUser, onClose
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(15,42,63,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16 }} onClick={onClose}>
       <div style={{ background: THEME.surface, borderRadius: 14, padding: 22, maxWidth: 440, width: "100%", maxHeight: "85vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
-        <h3 style={{ fontSize: 15, color: THEME.navy, fontWeight: 800, margin: "0 0 12px" }}>صدور اقدام اصلاحی</h3>
+        <h3 style={{ fontSize: 15, color: THEME.navy, fontWeight: 800, margin: "0 0 12px" }}>{t("twCaModalTitle")}</h3>
         <div style={{ background: THEME.bg, borderRadius: 8, padding: 10, marginBottom: 12, fontSize: 11.5, color: THEME.text2, lineHeight: 1.9 }}>
-          <div><b>حادثه:</b> {incident?.incidentNo}</div>
-          <div><b>منبع:</b> {src.sourceType === "brf_category" ? "دسته اصلی (BRF)" : "کد اشکال پنهان"}</div>
-          <div><b>عنوان/تعریف:</b> {src.titleFa}</div>
-          <div><b>تعداد تکرار:</b> {src.repeatCount}{classLabel ? ` — ${classLabel}` : ""}</div>
+          <div><b>{t("twCaIncidentLabel")}</b> {incident?.incidentNo}</div>
+          <div><b>{t("twCaSourceLabel")}</b> {src.sourceType === "brf_category" ? t("twCaSourceBrf") : t("twCaSourceHidden")}</div>
+          <div><b>{t("twCaTitleLabel")}</b> {src.titleFa}</div>
+          <div><b>{t("twCaRepeatCountLabel")}</b> {src.repeatCount}{classLabel ? ` — ${classLabel}` : ""}</div>
         </div>
-        <label style={styles.label}>شرح اقدام اصلاحی</label>
+        <label style={styles.label}>{t("twCaDescLabel")}</label>
         <textarea style={{ ...styles.input, minHeight: 60 }} value={description} onChange={(e) => setDescription(e.target.value)} dir="rtl" />
-        <label style={styles.label}>مسئول اقدام</label>
+        <label style={styles.label}>{t("twCaResponsibleLabel")}</label>
         <input style={styles.input} value={responsible} onChange={(e) => setResponsible(e.target.value)} dir="rtl" />
-        <label style={styles.label}>مهلت انجام</label>
+        <label style={styles.label}>{t("twCaDueLabel")}</label>
         <JalaliDateInput value={dueDate} onChange={setDueDate} allowEmpty />
         {error && <p style={styles.error}>{error}</p>}
         <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-          <button type="button" style={styles.smallButton} onClick={handleSave} disabled={saving}>{saving ? "در حال ثبت..." : "ثبت اقدام اصلاحی"}</button>
-          <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={onClose}>انصراف</button>
+          <button type="button" style={styles.smallButton} onClick={handleSave} disabled={saving}>{saving ? t("saSubmittingEllipsis") : t("twCaSubmit")}</button>
+          <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={onClose}>{t("commonCancel")}</button>
         </div>
       </div>
     </div>
@@ -493,7 +502,8 @@ function CorrectiveActionModal({ src, incident, analysisId, currentUser, onClose
 // ---------- تب تاریخچه ----------
 
 function HistoryTab({ history }) {
-  if (history.length === 0) return <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 30 }}>هنوز رخدادی ثبت نشده.</p>;
+  const { t } = useLanguage();
+  if (history.length === 0) return <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 30 }}>{t("twNoHistoryYet")}</p>;
   return (
     <div>
       {history.map((h) => (
@@ -501,9 +511,9 @@ function HistoryTab({ history }) {
           <HistoryIcon size={14} color={THEME.text3} style={{ marginTop: 2, flexShrink: 0 }} />
           <div>
             <p style={{ fontSize: 12.5, margin: 0 }}>
-              {h.fromStatus ? `${TRIPOD_STATUS_LABELS[h.fromStatus] || h.fromStatus} ← ` : ""}
-              <b style={{ color: THEME.navy }}>{TRIPOD_STATUS_LABELS[h.toStatus] || h.toStatus}</b>
-              {h.changedBy && <span style={{ color: THEME.text3 }}> — توسط {h.changedBy}</span>}
+              {h.fromStatus ? `${t(TRIPOD_STATUS_LABELS[h.fromStatus] || h.fromStatus)} ← ` : ""}
+              <b style={{ color: THEME.navy }}>{t(TRIPOD_STATUS_LABELS[h.toStatus] || h.toStatus)}</b>
+              {h.changedBy && <span style={{ color: THEME.text3 }}>{t("twHistBySuffix", { name: h.changedBy })}</span>}
             </p>
             <p style={{ fontSize: 11, color: THEME.text3, margin: "2px 0 0" }}>{toJalaliSafe(h.changedAt)}{h.note && ` — ${h.note}`}</p>
           </div>

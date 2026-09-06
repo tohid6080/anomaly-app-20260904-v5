@@ -7,6 +7,7 @@ import { createOrGetAnalysis, loadAnalysisForIncident, requestTripodAnalysis, TR
 import { computeTripodCandidateFlag } from "../tripodBeta/incidentSource.js";
 import TripodAnalysisWorkspace from "../tripodBeta/TripodAnalysisWorkspace.jsx";
 import BarrierMappingPicker from "../bowtie/BarrierMappingPicker.jsx";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 /**
  * صفحه‌ی جزئیات حادثه — شامل دکمه‌ی «درخواست تحلیل Tripod Beta» طبق بخش ۳
@@ -14,6 +15,7 @@ import BarrierMappingPicker from "../bowtie/BarrierMappingPicker.jsx";
  * وارد فضای کار کامل تحلیل (مسیرها، درخت، علل ریشه‌ای) می‌شود.
  */
 export default function IncidentDetailPage({ incidentId, currentUser, role, readOnly, onBack }) {
+  const { t } = useLanguage();
   const [incident, setIncident] = useState(undefined);
   const [analysis, setAnalysis] = useState(undefined);
   const [requesting, setRequesting] = useState(false);
@@ -29,15 +31,16 @@ export default function IncidentDetailPage({ incidentId, currentUser, role, read
   };
   useEffect(() => { load(); }, [incidentId]);
 
-  if (incident === undefined || analysis === undefined) return <p style={{ color: THEME.text3, textAlign: "center", padding: 40 }}>در حال بارگذاری...</p>;
-  if (!incident) return <p style={{ color: THEME.danger, textAlign: "center", padding: 40 }}>حادثه یافت نشد.</p>;
+  if (incident === undefined || analysis === undefined) return <p style={{ color: THEME.text3, textAlign: "center", padding: 40 }}>{t("commonLoading")}</p>;
+  if (!incident) return <p style={{ color: THEME.danger, textAlign: "center", padding: 40 }}>{t("incNotFound")}</p>;
 
   if (openWorkspace && analysis) {
     return <TripodAnalysisWorkspace analysisId={analysis.id} incident={incident} currentUser={currentUser} role={role} onBack={() => { setOpenWorkspace(false); load(); }} />;
   }
 
   const isCandidate = computeTripodCandidateFlag(incident);
-  const typeLabel = INCIDENT_TYPES.find((t) => t.value === incident.incidentType)?.label || incident.incidentType;
+  const _it = INCIDENT_TYPES.find((x) => x.value === incident.incidentType);
+  const typeLabel = _it ? t(_it.labelKey) : incident.incidentType;
 
   const handleRequestAnalysis = async () => {
     setError("");
@@ -65,25 +68,25 @@ export default function IncidentDetailPage({ incidentId, currentUser, role, read
 
   return (
     <div>
-      <div style={styles.backLink} onClick={onBack}>بازگشت</div>
+      <div style={styles.backLink} onClick={onBack}>{t("commonBackPlain")}</div>
       <h2 style={{ fontSize: 18, color: THEME.navy, fontWeight: 800, margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}>
-        <AlertTriangle size={20} color={THEME.teal} /> حادثه‌ی {incident.incidentNo}
+        <AlertTriangle size={20} color={THEME.teal} /> {t("incDetailHeading", { no: incident.incidentNo })}
       </h2>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 18 }}>{toJalaliSafe(incident.occurredAt)} — {typeLabel}</p>
 
       <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18, marginBottom: 16 }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 14, fontSize: 13 }}>
-          <Field label="محل وقوع" value={incident.location} />
-          <Field label="ناتوان‌کننده" value={incident.isDisabling ? "بله" : "خیر"} />
-          <Field label="روزهای از‌کارافتادگی" value={incident.lostDays} />
-          <Field label="نام مصدوم" value={incident.injuredPersonName} />
-          <Field label="هزینه مالی" value={incident.financialCost != null ? incident.financialCost.toLocaleString("fa-IR") : ""} />
-          <Field label="شرکت کارفرما" value={incident.employerOrg} />
-          <Field label="شرکت پیمانکار" value={incident.contractorOrg} />
+          <Field label={t("incLocation")} value={incident.location} />
+          <Field label={t("incColDisabling")} value={incident.isDisabling ? t("commonYes") : t("commonNo")} />
+          <Field label={t("incLostDays")} value={incident.lostDays} />
+          <Field label={t("incInjuredNameShort")} value={incident.injuredPersonName} />
+          <Field label={t("incFinancialCostShort")} value={incident.financialCost != null ? incident.financialCost.toLocaleString("fa-IR") : ""} />
+          <Field label={t("incEmployerOrg")} value={incident.employerOrg} />
+          <Field label={t("incContractorOrg")} value={incident.contractorOrg} />
         </div>
         {incident.description && (
           <div style={{ marginTop: 14 }}>
-            <div style={{ fontSize: 11, color: THEME.text3, marginBottom: 4 }}>شرح حادثه</div>
+            <div style={{ fontSize: 11, color: THEME.text3, marginBottom: 4 }}>{t("incDescription")}</div>
             <p style={{ fontSize: 13, color: THEME.text, lineHeight: 1.9, margin: 0 }}>{incident.description}</p>
           </div>
         )}
@@ -91,33 +94,33 @@ export default function IncidentDetailPage({ incidentId, currentUser, role, read
 
       <div style={{ background: isCandidate ? "#fff7ed" : THEME.surface, border: `1px solid ${isCandidate ? "#fdba74" : THEME.border}`, borderRadius: 12, padding: 18 }}>
         <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 6 }}>
-          <GitBranch size={15} /> تحلیل حادثه Tripod Beta
+          <GitBranch size={15} /> {t("incTripodAnalysisTitle")}
         </h3>
         {isCandidate && !analysis && (
           <p style={{ fontSize: 12, color: "#7c2d12", marginBottom: 10, lineHeight: 1.8 }}>
-            این حادثه ناتوان‌کننده با بیش از ۳ روز از‌کارافتادگی است — طبق روش تریپاد بتا، کاندید تحلیل ریشه‌ای است.
+            {t("incTripodCandidateNote")}
           </p>
         )}
         {analysis && (
           <p style={{ fontSize: 13, color: THEME.text2, marginBottom: 10 }}>
-            وضعیت فعلی: <b style={{ color: THEME.navy }}>{TRIPOD_STATUS_LABELS[analysis.status] || analysis.status}</b>
+            {t("incCurrentStatusLabel")}<b style={{ color: THEME.navy }}>{t(TRIPOD_STATUS_LABELS[analysis.status] || analysis.status)}</b>
           </p>
         )}
         {error && <p style={styles.error}>{error}</p>}
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {showRequestButton && (
             <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6, background: THEME.teal }} onClick={handleRequestAnalysis} disabled={requesting}>
-              <Send size={13} /> {requesting ? "در حال ثبت..." : "درخواست تحلیل Tripod Beta"}
+              <Send size={13} /> {requesting ? t("saSubmittingEllipsis") : t("incRequestTripod")}
             </button>
           )}
           {showOpenButton && (
             <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6 }} onClick={() => setOpenWorkspace(true)}>
-              <GitBranch size={13} /> ورود به فضای کار تحلیل
+              <GitBranch size={13} /> {t("incEnterWorkspace")}
             </button>
           )}
         </div>
         {!showRequestButton && !analysis && !isEmployerSide && (
-          <p style={{ fontSize: 12, color: THEME.text3 }}>درخواست تحلیل فقط توسط کارفرما/ادمین انجام می‌شود.</p>
+          <p style={{ fontSize: 12, color: THEME.text3 }}>{t("incRequestOnlyEmployer")}</p>
         )}
       </div>
 

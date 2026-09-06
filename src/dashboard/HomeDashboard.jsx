@@ -266,7 +266,7 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
 
   // --- آمار ایمنی حوادث ---
   const incidentPyramid = INCIDENT_TYPES.map((it) => ({
-    label: it.label,
+    label: t(it.labelKey),
     value: scopedIncidents.filter((i) => i.incident_type === it.value).length,
     color: THEME.navy,
   }));
@@ -287,9 +287,9 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
     tripod.forEach((a) => { map[a.status] = (map[a.status] || 0) + 1; });
     return Object.entries(map)
       .filter(([k]) => k !== "NOT_REQUIRED")
-      .map(([k, v]) => ({ label: TRIPOD_STATUS_LABELS[k] || k, value: v }))
+      .map(([k, v]) => ({ label: t(TRIPOD_STATUS_LABELS[k] || k), value: v }))
       .sort((a, b) => b.value - a.value);
-  }, [tripod]);
+  }, [tripod, t]);
 
   // --- شاخص‌های پراکتیو ---
   const proactiveSummary = useMemo(() => {

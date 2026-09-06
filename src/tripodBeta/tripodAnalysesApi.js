@@ -1,5 +1,8 @@
 import { sb, sbOk, uid, getCurrentCompanyId } from "../shared.js";
 import { getIncidentForTripod, computeTripodCandidateFlag } from "./incidentSource.js";
+import { translate, getCurrentLang } from "../i18n/translations.js";
+
+const tr = (key, params) => translate(getCurrentLang(), key, params);
 
 /**
  * پورت وفادار از routes/analyses.py + services/workflow.py + services/tree.py.
@@ -24,11 +27,14 @@ export const TRANSITIONS = {
 };
 export const ACTION_REQUIRED_ROLE = { request: "EMPLOYER", start: "CONTRACTOR", submit: "CONTRACTOR", approve: "EMPLOYER", reject: "EMPLOYER", revise: "CONTRACTOR" };
 export const EDITABLE_STATUSES = new Set(["NOT_REQUIRED", "CANDIDATE", "REQUESTED", "IN_PROGRESS"]);
+// نگاشتِ وضعیت → کلیدِ ترجمه (منبع واحد: translations.js). مصرف‌کننده‌ها
+// با t()/tr() مقدار نهایی را می‌گیرند تا با زبان فعلی کاربر هماهنگ باشد.
 export const TRIPOD_STATUS_LABELS = {
-  NOT_REQUIRED: "نیازی نیست", CANDIDATE: "کاندید تحلیل", REQUESTED: "درخواست‌شده",
-  IN_PROGRESS: "در حال تحلیل", SUBMITTED: "ارسال‌شده", EMPLOYER_REVIEW: "در حال بازبینی کارفرما",
-  APPROVED: "تأییدشده", REJECTED: "ردشده", FINAL: "نهایی",
+  NOT_REQUIRED: "tpStatusNotRequired", CANDIDATE: "tpStatusCandidate", REQUESTED: "tpStatusRequested",
+  IN_PROGRESS: "tpStatusInProgress", SUBMITTED: "tpStatusSubmitted", EMPLOYER_REVIEW: "tpStatusEmployerReview",
+  APPROVED: "tpStatusApproved", REJECTED: "tpStatusRejected", FINAL: "tpStatusFinal",
 };
+export const tripodStatusLabel = (status) => tr(TRIPOD_STATUS_LABELS[status] || status);
 
 function analysisFromRow(r) {
   return {
@@ -68,7 +74,7 @@ export async function createOrGetAnalysis(incidentId) {
   if (existing) return existing;
 
   const incident = await getIncidentForTripod(incidentId);
-  if (!incident) return { __error: true, message: "حادثه یافت نشد" };
+  if (!incident) return { __error: true, message: tr("tpErrIncidentNotFound") };
 
   const companyId = getCurrentCompanyId();
   const status = computeTripodCandidateFlag(incident) ? "CANDIDATE" : "NOT_REQUIRED";
@@ -79,14 +85,14 @@ export async function createOrGetAnalysis(incidentId) {
     event_description: incident.description || null, contractor_org: incident.contractorOrg || null,
   };
   const rows = await sb("tripod_analyses", { method: "POST", body: JSON.stringify([payload]) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ایجاد تحلیل" };
+  if (!sbOk(rows)) return { __error: true, message: tr("tpErrCreateAnalysis") };
 
   const branchPayload = Array.from({ length: PATH_COUNT }, (_, i) => ({
     id: uid("branch"), analysis_id: analysisId, company_id: companyId, path_no: i + 1,
   }));
   await sb("tripod_branches", { method: "POST", body: JSON.stringify(branchPayload), prefer: "return=minimal" });
 
-  await logHistory(analysisId, null, status, null, "ایجاد خودکار تحلیل بر اساس گزارش حادثه");
+  await logHistory(analysisId, null, status, null, tr("tpHistAutoCreate"));
   return analysisFromRow(rows[0]);
 }
 
@@ -102,18 +108,18 @@ async function logHistory(analysisId, fromStatus, toStatus, changedBy, note) {
 
 export async function transitionAnalysis(analysisId, action, role, actorName, reason) {
   const current = await loadAnalysisById(analysisId);
-  if (!current) return { __error: true, message: "تحلیل یافت نشد" };
+  if (!current) return { __error: true, message: tr("tpErrAnalysisNotFound") };
 
   const requiredRole = ACTION_REQUIRED_ROLE[action];
   if (requiredRole && role !== requiredRole && role !== "ADMIN") {
-    return { __error: true, message: `این عملیات فقط توسط نقش «${requiredRole === "EMPLOYER" ? "کارفرما" : "پیمانکار"}» قابل انجام است.` };
+    return { __error: true, message: tr("tpErrActionRoleOnly", { role: requiredRole === "EMPLOYER" ? tr("tpRoleEmployer") : tr("tpRoleContractor") }) };
   }
   const toStatus = TRANSITIONS[`${current.status}|${action}`];
   if (!toStatus) {
-    return { __error: true, message: `انتقال نامعتبر: نمی‌توان از وضعیت «${TRIPOD_STATUS_LABELS[current.status]}» با این عملیات حرکت کرد.` };
+    return { __error: true, message: tr("tpErrInvalidTransition", { status: tr(TRIPOD_STATUS_LABELS[current.status] || current.status) }) };
   }
   if (action === "reject" && !reason) {
-    return { __error: true, message: "ثبت علت رد الزامی است." };
+    return { __error: true, message: tr("tpErrRejectReasonRequired") };
   }
 
   const nowIso = new Date().toISOString();
@@ -124,20 +130,20 @@ export async function transitionAnalysis(analysisId, action, role, actorName, re
   else if (action === "reject") { updates.employer_reviewed_by = actorName; updates.employer_reviewed_at = nowIso; updates.rejection_reason = reason; }
 
   const rows = await sb(`tripod_analyses?id=eq.${analysisId}`, { method: "PATCH", body: JSON.stringify(updates) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در انجام عملیات" };
+  if (!sbOk(rows)) return { __error: true, message: tr("tpErrGenericOp") };
   await logHistory(analysisId, current.status, toStatus, actorName);
 
   // پرش‌های خودکار — دقیقاً مثل نسخه‌ی اصلی
   if (toStatus === "SUBMITTED") {
     const auto = TRANSITIONS["SUBMITTED|_auto_forward"];
     await sb(`tripod_analyses?id=eq.${analysisId}`, { method: "PATCH", body: JSON.stringify({ status: auto, updated_at: new Date().toISOString() }) });
-    await logHistory(analysisId, "SUBMITTED", auto, null, "ارجاع خودکار جهت بازبینی کارفرما");
+    await logHistory(analysisId, "SUBMITTED", auto, null, tr("tpHistAutoForward"));
     return loadAnalysisById(analysisId);
   }
   if (toStatus === "APPROVED") {
     const auto = TRANSITIONS["APPROVED|_auto_finalize"];
     await sb(`tripod_analyses?id=eq.${analysisId}`, { method: "PATCH", body: JSON.stringify({ status: auto, is_locked: true, updated_at: new Date().toISOString() }) });
-    await logHistory(analysisId, "APPROVED", auto, actorName, "نهایی‌سازی و قفل شدن تحلیل");
+    await logHistory(analysisId, "APPROVED", auto, actorName, tr("tpHistAutoFinalize"));
     return loadAnalysisById(analysisId);
   }
   return loadAnalysisById(analysisId);
@@ -152,7 +158,7 @@ export async function loadHistory(analysisId) {
 
 export async function updateAnalysisFields(analysisId, fields) {
   const rows = await sb(`tripod_analyses?id=eq.${analysisId}`, { method: "PATCH", body: JSON.stringify({ ...fields, updated_at: new Date().toISOString() }) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ذخیره‌سازی" };
+  if (!sbOk(rows)) return { __error: true, message: tr("tpErrSave") };
   return analysisFromRow(rows[0]);
 }
 
@@ -164,7 +170,7 @@ export async function loadTargets(analysisId) {
 }
 export async function addTarget(analysisId, categoryCode, description) {
   const rows = await sb("tripod_targets", { method: "POST", body: JSON.stringify([{ id: uid("target"), analysis_id: analysisId, company_id: getCurrentCompanyId(), category_code: categoryCode, description: description || null }]) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در افزودن هدف" };
+  if (!sbOk(rows)) return { __error: true, message: tr("tpErrAddTarget") };
   return { ok: true };
 }
 export async function deleteTarget(targetId) {
@@ -206,13 +212,13 @@ export async function updateBranch(branchId, fields) {
   if ("surfaceFailureType" in fields) payload.surface_failure_type = fields.surfaceFailureType || null;
   if ("surfaceFailureText" in fields) payload.surface_failure_text = fields.surfaceFailureText || null;
   const rows = await sb(`tripod_branches?id=eq.${branchId}`, { method: "PATCH", body: JSON.stringify(payload) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ذخیره‌سازی مسیر" };
+  if (!sbOk(rows)) return { __error: true, message: tr("tpErrSaveBranch") };
   return { ok: true };
 }
 
 export async function addBranchPrecondition(branchId, preconditionId, note) {
   const rows = await sb("tripod_branch_preconditions", { method: "POST", body: JSON.stringify([{ id: uid("bp"), branch_id: branchId, company_id: getCurrentCompanyId(), precondition_id: preconditionId, note: note || null }]) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در افزودن پیش‌شرط" };
+  if (!sbOk(rows)) return { __error: true, message: tr("tpErrAddPrecondition") };
   return { ok: true };
 }
 export async function deleteBranchPrecondition(bpId) {
@@ -225,13 +231,13 @@ export async function deleteBranchPrecondition(bpId) {
 // ولی همین‌جا هم دوباره صریح چک می‌شود تا از هر مسیر ارسال داده‌ی نامعتبر جلوگیری شود.
 export async function addBranchHiddenFailure(branchId, preconditionLinkId, hiddenFailureId, preconditionGroupNo, hiddenFailureGroupNo, note) {
   if (preconditionGroupNo !== hiddenFailureGroupNo) {
-    return { __error: true, message: "اشکال پنهان انتخابی باید از همان دسته (گروه) پیش‌شرط باشد." };
+    return { __error: true, message: tr("tpErrHiddenFailureSameGroup") };
   }
   const rows = await sb("tripod_branch_hidden_failures", {
     method: "POST",
     body: JSON.stringify([{ id: uid("bhf"), branch_id: branchId, company_id: getCurrentCompanyId(), hidden_failure_id: hiddenFailureId, precondition_link_id: preconditionLinkId, note: note || null }]),
   });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در افزودن اشکال پنهان" };
+  if (!sbOk(rows)) return { __error: true, message: tr("tpErrAddHiddenFailure") };
   return { ok: true };
 }
 export async function deleteBranchHiddenFailure(bhfId) {
@@ -266,7 +272,7 @@ export async function loadRootCauseSummary(analysisId) {
     const branchCount = info.branchIds.size;
     if (branchCount < 2) continue;
     const classification = branchCount >= 4 ? "root_cause" : branchCount === 3 ? "major_issue" : "hidden_issue";
-    const classificationFa = { root_cause: "علت ریشه‌ای", major_issue: "اشکال مهم", hidden_issue: "اشکال پنهان" }[classification];
+    const classificationFa = tr({ root_cause: "tpClassRootCause", major_issue: "tpClassMajorIssue", hidden_issue: "tpClassHiddenIssue" }[classification]);
     byHiddenFailureCode.push({ code, textFa: info.text, brfCode: info.brfCode, groupNo: info.groupNo, branchCount, classification, classificationFa });
   }
   byHiddenFailureCode.sort((a, b) => b.branchCount - a.branchCount || a.code.localeCompare(b.code));
@@ -295,7 +301,7 @@ export async function loadTripodCorrectiveActions(analysisId) {
 
 export async function createTripodCorrectiveAction(analysisId, rec, createdBy) {
   if (!rec.description?.trim() || !rec.responsiblePerson?.trim()) {
-    return { __error: true, message: "شرح اقدام و مسئول اقدام الزامی است" };
+    return { __error: true, message: tr("tpErrActionAndOwnerRequired") };
   }
   const payload = {
     id: uid("tca"), analysis_id: analysisId, company_id: getCurrentCompanyId(),
@@ -305,13 +311,13 @@ export async function createTripodCorrectiveAction(analysisId, rec, createdBy) {
     due_date: rec.dueDate || null, status: "OPEN", created_by: createdBy || "",
   };
   const rows = await sb("tripod_corrective_actions", { method: "POST", body: JSON.stringify([payload]) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ثبت اقدام اصلاحی" };
+  if (!sbOk(rows)) return { __error: true, message: tr("tpErrCreateCorrectiveAction") };
   return { ok: true };
 }
 
 export async function updateTripodCorrectiveActionStatus(caId, status) {
   const rows = await sb(`tripod_corrective_actions?id=eq.${caId}`, { method: "PATCH", body: JSON.stringify({ status, updated_at: new Date().toISOString() }) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در بروزرسانی وضعیت" };
+  if (!sbOk(rows)) return { __error: true, message: tr("tpErrUpdateStatus") };
   return { ok: true };
 }
 
@@ -324,11 +330,12 @@ export async function assignTripodCorrectiveActionContractor(caId, contractorId,
     updated_at: new Date().toISOString(),
   };
   const rows = await sb(`tripod_corrective_actions?id=eq.${caId}`, { method: "PATCH", body: JSON.stringify(payload) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ارجاع به پیمانکار" };
+  if (!sbOk(rows)) return { __error: true, message: tr("tpErrAssignContractor") };
   return { ok: true };
 }
 
-export const CA_STATUS_LABELS = { OPEN: "باز", IN_PROGRESS: "در حال انجام", DONE: "انجام‌شده", CANCELLED: "لغوشده" };
+export const CA_STATUS_LABELS = { OPEN: "tpCaStatusOpen", IN_PROGRESS: "tpCaStatusInProgress", DONE: "tpCaStatusDone", CANCELLED: "tpCaStatusCancelled" };
+export const caStatusLabel = (status) => tr(CA_STATUS_LABELS[status] || status);
 
 // ---------- خلاصه‌ی سراسریِ اقدامات اصلاحیِ Tripod Beta برای کل شرکت ----------
 // برخلاف loadTripodCorrectiveActions (مخصوص یک تحلیل)، این تابع همه‌ی

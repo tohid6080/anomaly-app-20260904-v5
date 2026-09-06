@@ -1,5 +1,6 @@
 import React from "react";
 import { THEME } from "../shared.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 /**
  * پورت React از tree-render.js اصلی — همان هندسه، همان رنگ‌ها، همان
@@ -10,6 +11,7 @@ const COLS = { hidden: 0, precond: 1, surface: 2, event: 3 };
 const colX = (name) => 60 + COLS[name] * (NODE_W + COL_GAP);
 
 export default function TripodTree({ eventDescription, branches }) {
+  const { t } = useLanguage();
   const paths = (branches || []).filter((b) => b.surfaceFailureText);
 
   const laneRows = paths.map((p) => {
@@ -25,16 +27,16 @@ export default function TripodTree({ eventDescription, branches }) {
   const boxes = [];
   const lines = [];
 
-  boxes.push({ x: colX("event"), y: eventY, fill: "#f8d7d5", stroke: "#b3261e", text: "رویداد: " + (eventDescription || "(ثبت نشده)"), small: false, key: "event" });
+  boxes.push({ x: colX("event"), y: eventY, fill: "#f8d7d5", stroke: "#b3261e", text: t("ttrEventPrefix") + (eventDescription || t("ttrNotRecorded")), small: false, key: "event" });
 
   let cursorY = 30;
   paths.forEach((p, idx) => {
     const rows = laneRows[idx];
     const laneH = rows * (NODE_H + GAP_Y);
     const surfaceY = cursorY + laneH / 2 - NODE_H / 2;
-    const typeLabel = p.surfaceFailureType === "unsafe_condition" ? "شرایط ناایمن" : "اعمال ناایمن";
+    const typeLabel = p.surfaceFailureType === "unsafe_condition" ? t("twUnsafeCondition") : t("twUnsafeAct");
 
-    boxes.push({ x: colX("surface"), y: surfaceY, fill: "#fdf1de", stroke: "#c07a12", text: `مسیر ${p.pathNo} (${typeLabel}): ${p.surfaceFailureText}`, small: true, key: `surf-${p.id}` });
+    boxes.push({ x: colX("surface"), y: surfaceY, fill: "#fdf1de", stroke: "#c07a12", text: t("ttrPathLabel", { n: p.pathNo, type: typeLabel, text: p.surfaceFailureText }), small: true, key: `surf-${p.id}` });
     lines.push({ x1: colX("surface") + NODE_W, y1: surfaceY + NODE_H / 2, x2: colX("event"), y2: eventY + NODE_H / 2, color: "#c07a12", key: `line-surf-${p.id}` });
 
     let rowCursor = cursorY;
@@ -59,15 +61,15 @@ export default function TripodTree({ eventDescription, branches }) {
     cursorY += laneH;
   });
 
-  const headers = [["hidden", "اشکال پنهان"], ["precond", "پیش‌شرط"], ["surface", "اشکال سطحی (مسیر)"], ["event", "رویداد"]];
+  const headers = [["hidden", t("ttrColHidden")], ["precond", t("ttrColPrecond")], ["surface", t("ttrColSurface")], ["event", t("ttrColEvent")]];
 
   return (
     <div>
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap", fontSize: 11, color: THEME.text2, marginBottom: 10 }}>
-        <LegendDot color="#1f3864" label="رویداد" />
-        <LegendDot color="#c07a12" label="اشکال سطحی (مسیر)" />
-        <LegendDot color="#5b7fbd" label="پیش‌شرط" />
-        <LegendDot color="#d98c86" label="اشکال پنهان" />
+        <LegendDot color="#1f3864" label={t("ttrLegendEvent")} />
+        <LegendDot color="#c07a12" label={t("ttrLegendSurface")} />
+        <LegendDot color="#5b7fbd" label={t("ttrLegendPrecond")} />
+        <LegendDot color="#d98c86" label={t("ttrLegendHidden")} />
       </div>
       <div style={{ overflowX: "auto", direction: "ltr", border: `1px solid ${THEME.border}`, borderRadius: 10, background: THEME.surface }}>
         <svg viewBox={`0 0 ${width} ${totalHeight}`} width={Math.max(width, 900)} height={totalHeight}>
@@ -89,7 +91,7 @@ export default function TripodTree({ eventDescription, branches }) {
             </g>
           ))}
           {paths.length === 0 && (
-            <text x={width / 2} y={totalHeight / 2} textAnchor="middle" fill="#64748b" fontFamily="Vazirmatn, Tahoma, sans-serif">هنوز هیچ مسیر تحلیلی تکمیل نشده است.</text>
+            <text x={width / 2} y={totalHeight / 2} textAnchor="middle" fill="#64748b" fontFamily="Vazirmatn, Tahoma, sans-serif">{t("ttrEmpty")}</text>
           )}
         </svg>
       </div>

@@ -465,7 +465,7 @@ function TripodActionAssignModal({ action, contractors, onClose, onSaved }) {
 
         <label style={styles.label}>{t("cadTripodFollowUpStatus")}</label>
         <select style={styles.input} value={status} onChange={(e) => setStatus(e.target.value)} dir={dir}>
-          {Object.entries(CA_STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          {Object.entries(CA_STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{t(v)}</option>)}
         </select>
 
         <p style={{ fontSize: 10.5, color: THEME.text3, marginTop: 10 }}>

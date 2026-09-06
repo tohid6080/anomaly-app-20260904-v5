@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { Plus, Search, X } from "lucide-react";
 import { THEME } from "../shared.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 /**
  * پورت React از checklist-picker.js اصلی — جعبه‌ی جست‌وجوپذیر با متن
@@ -8,6 +9,7 @@ import { THEME } from "../shared.js";
  * دکمه‌ی toggle تا صفحه شلوغ نشود.
  */
 export default function TogglePicker({ label, items, onSelect, placeholder }) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -36,14 +38,14 @@ export default function TogglePicker({ label, items, onSelect, placeholder }) {
         <Search size={13} color={THEME.text3} />
         <input
           autoFocus style={{ flex: 1, border: "none", background: "transparent", fontSize: 12.5, outline: "none", fontFamily: THEME.font }}
-          placeholder={placeholder || "جستجو در کد یا شرح..."} value={search} onChange={(e) => setSearch(e.target.value)} dir="rtl"
+          placeholder={placeholder || t("tcpSearchDefault")} value={search} onChange={(e) => setSearch(e.target.value)} dir="rtl"
         />
         <button type="button" onClick={() => { setOpen(false); setSearch(""); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 2 }}>
           <X size={14} color={THEME.text3} />
         </button>
       </div>
       <div style={{ maxHeight: 260, overflowY: "auto" }}>
-        {filtered.length === 0 && <div style={{ padding: 14, fontSize: 12, color: THEME.text3, textAlign: "center" }}>موردی یافت نشد.</div>}
+        {filtered.length === 0 && <div style={{ padding: 14, fontSize: 12, color: THEME.text3, textAlign: "center" }}>{t("tcpNoneFound")}</div>}
         {byGroup.map(([gno, groupItems]) => (
           <div key={gno}>
             <div style={{ padding: "5px 10px", background: THEME.bg, fontSize: 10.5, color: THEME.text3, fontWeight: 700 }}>

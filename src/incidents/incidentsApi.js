@@ -1,4 +1,7 @@
 import { sb, sbOk, uid, getCurrentCompanyId } from "../shared.js";
+import { translate, getCurrentLang } from "../i18n/translations.js";
+
+const tr = (key, params) => translate(getCurrentLang(), key, params);
 
 /**
  * ماژول مدیریت حوادث — لایه‌ی داده‌ی واقعی (نه جدول استاب زیرماژول).
@@ -8,13 +11,17 @@ import { sb, sbOk, uid, getCurrentCompanyId } from "../shared.js";
  */
 
 export const INCIDENT_TYPES = [
-  { value: "fatality", label: "فوتی" },
-  { value: "disabling", label: "ناتوان‌کننده" },
-  { value: "medical_treatment", label: "درمان پزشکی" },
-  { value: "first_aid", label: "کمک‌های اولیه" },
-  { value: "near_miss", label: "شبه‌حادثه" },
-  { value: "property_damage", label: "خسارت مالی/تجهیزات" },
+  { value: "fatality", labelKey: "incTypeFatality" },
+  { value: "disabling", labelKey: "incTypeDisabling" },
+  { value: "medical_treatment", labelKey: "incTypeMedicalTreatment" },
+  { value: "first_aid", labelKey: "incTypeFirstAid" },
+  { value: "near_miss", labelKey: "incTypeNearMiss" },
+  { value: "property_damage", labelKey: "incTypePropertyDamage" },
 ];
+export const incidentTypeLabel = (value) => {
+  const it = INCIDENT_TYPES.find((x) => x.value === value);
+  return it ? tr(it.labelKey) : value;
+};
 
 function incidentFromRow(r) {
   return {
@@ -65,23 +72,23 @@ export async function loadIncidentById(id) {
 
 export async function createIncident(rec, createdBy) {
   if (!rec.incidentNo?.trim() || !rec.occurredAt) {
-    return { __error: true, message: "شماره حادثه و تاریخ وقوع الزامی است" };
+    return { __error: true, message: tr("incErrNoAndDateRequired") };
   }
   const payload = { ...incidentToDb(rec), id: uid("inc"), company_id: getCurrentCompanyId(), created_by: createdBy || "" };
   const rows = await sb("incidents", { method: "POST", body: JSON.stringify([payload]) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ثبت حادثه — شاید این شماره‌ی حادثه قبلاً استفاده شده باشد" };
+  if (!sbOk(rows)) return { __error: true, message: tr("incErrCreate") };
   return incidentFromRow(rows[0]);
 }
 
 export async function updateIncident(id, rec) {
   const payload = { ...incidentToDb(rec), updated_at: new Date().toISOString() };
   const rows = await sb(`incidents?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(payload) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ذخیره‌سازی" };
+  if (!sbOk(rows)) return { __error: true, message: tr("saErrSave") };
   return incidentFromRow(rows[0]);
 }
 
 export async function deleteIncident(id) {
   const rows = await sb(`incidents?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در حذف حادثه" };
+  if (!sbOk(rows)) return { __error: true, message: tr("incErrDelete") };
   return { ok: true };
 }
