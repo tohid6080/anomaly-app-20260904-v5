@@ -1,5 +1,10 @@
 import { sb, sbOk, uid, getCurrentCompanyId } from "../shared.js";
 import { isoToJalali, JALALI_MONTHS } from "../personnel/jalaliDate.jsx";
+import { translate, getCurrentLang } from "../i18n/translations.js";
+
+const tr = (key, params) => translate(getCurrentLang(), key, params);
+const SEASON_KEY = { "بهار": "sbsSeasonSpring", "تابستان": "sbsSeasonSummer", "پاییز": "sbsSeasonAutumn", "زمستان": "sbsSeasonWinter" };
+export const seasonLabel = (season) => tr(SEASON_KEY[season] || season);
 
 /**
  * زیرماژول SBS (نمونه‌برداری از رفتارهای ایمنی) — پورت وفادار از
@@ -60,10 +65,10 @@ export async function loadSbsObservations() {
 }
 
 export async function createSbsObservation(rec, observedBy) {
-  if (!rec.observationDate) return { __error: true, message: "تاریخ مشاهده الزامی است" };
-  if (!rec.status) return { __error: true, message: "وضعیت مشاهده (ایمن/ناایمن) الزامی است" };
+  if (!rec.observationDate) return { __error: true, message: tr("sbsErrDateRequired") };
+  if (!rec.status) return { __error: true, message: tr("sbsErrStatusRequired") };
   if (rec.status === "unsafe" && (!rec.categoryCode || !rec.subitemId)) {
-    return { __error: true, message: "برای رفتار ناایمن، انتخاب دسته و کد مصداق الزامی است" };
+    return { __error: true, message: tr("sbsErrCategoryRequired") };
   }
   const payload = {
     id: uid("sbs"), company_id: getCurrentCompanyId(),
@@ -75,13 +80,13 @@ export async function createSbsObservation(rec, observedBy) {
     note: rec.note || null, observed_by: observedBy || "",
   };
   const rows = await sb("sbs_observations", { method: "POST", body: JSON.stringify([payload]) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ثبت مشاهده" };
+  if (!sbOk(rows)) return { __error: true, message: tr("sbsErrCreateObs") };
   return observationFromRow(rows[0]);
 }
 
 export async function deleteSbsObservation(id) {
   const rows = await sb(`sbs_observations?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در حذف مشاهده" };
+  if (!sbOk(rows)) return { __error: true, message: tr("sbsErrDeleteObs") };
   return { ok: true };
 }
 
@@ -147,7 +152,7 @@ export async function loadSbsAssignmentsForContractor(contractorId) {
 }
 
 export async function createSbsAssignment(rec, createdBy) {
-  if (!rec.totalSampleSize || rec.totalSampleSize <= 0) return { __error: true, message: "حجم نمونه‌ی محاسبه‌شده نامعتبر است" };
+  if (!rec.totalSampleSize || rec.totalSampleSize <= 0) return { __error: true, message: tr("sbsErrInvalidSampleSize") };
   const payload = {
     id: uid("sbsassign"), company_id: getCurrentCompanyId(), contractor_id: rec.contractorId || null,
     mode: rec.mode, pilot_total: rec.pilotTotal || null, pilot_unsafe: rec.pilotUnsafe || null,
@@ -156,19 +161,19 @@ export async function createSbsAssignment(rec, createdBy) {
     workshop_breakdown: rec.workshopBreakdown || null, note: rec.note || null, status: "sent", created_by: createdBy || "",
   };
   const rows = await sb("sbs_sample_size_assignments", { method: "POST", body: JSON.stringify([payload]) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ارسال هدف نمونه‌برداری" };
+  if (!sbOk(rows)) return { __error: true, message: tr("sbsErrSendAssignment") };
   return assignmentFromRow(rows[0]);
 }
 
 export async function updateSbsAssignmentStatus(id, status) {
   const rows = await sb(`sbs_sample_size_assignments?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ status }) });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در به‌روزرسانی وضعیت" };
+  if (!sbOk(rows)) return { __error: true, message: tr("sbsErrUpdateStatus") };
   return { ok: true };
 }
 
 export async function deleteSbsAssignment(id) {
   const rows = await sb(`sbs_sample_size_assignments?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" });
-  if (!sbOk(rows)) return { __error: true, message: "خطا در حذف" };
+  if (!sbOk(rows)) return { __error: true, message: tr("sbsErrDelete") };
   return { ok: true };
 }
 

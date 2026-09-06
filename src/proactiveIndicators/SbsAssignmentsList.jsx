@@ -3,11 +3,12 @@ import { Target, Trash2, CheckCircle2 } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
 import { loadSbsAssignments, loadSbsAssignmentsForContractor, updateSbsAssignmentStatus, deleteSbsAssignment, computeAssignmentProgress } from "./sbsApi.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 const STATUS_META = {
-  sent: { label: "ارسال‌شده", color: "#1d4ed8", bg: "#dbeafe" },
-  in_progress: { label: "در حال انجام", color: "#b45309", bg: "#fef3c7" },
-  completed: { label: "تکمیل‌شده", color: "#166534", bg: "#dcfce7" },
+  sent: { labelKey: "sbsAsgStatusSent", color: "#1d4ed8", bg: "#dbeafe" },
+  in_progress: { labelKey: "sbsAsgStatusInProgress", color: "#b45309", bg: "#fef3c7" },
+  completed: { labelKey: "sbsAsgStatusCompleted", color: "#166534", bg: "#dcfce7" },
 };
 
 /**
@@ -18,6 +19,7 @@ const STATUS_META = {
  * دستکاری‌پذیر نیست.
  */
 export default function SbsAssignmentsList({ role, currentUser, observations }) {
+  const { t } = useLanguage();
   const [assignments, setAssignments] = useState(null);
   const isContractor = role === "CONTRACTOR";
 
@@ -37,7 +39,7 @@ export default function SbsAssignmentsList({ role, currentUser, observations }) 
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("این هدف نمونه‌برداری حذف شود؟")) return;
+    if (!confirm(t("sbsAsgDeleteConfirm"))) return;
     const result = await deleteSbsAssignment(id);
     if (result?.__error) { alert(result.message); return; }
     await load();
@@ -49,7 +51,7 @@ export default function SbsAssignmentsList({ role, currentUser, observations }) 
   return (
     <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18, marginBottom: 20 }}>
       <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
-        <Target size={15} /> {isContractor ? "هدف‌های نمونه‌برداری واگذارشده به شما" : "هدف‌های نمونه‌برداری ارسال‌شده"}
+        <Target size={15} /> {isContractor ? t("sbsAsgTitleContractor") : t("sbsAsgTitleEmployer")}
       </h3>
       {assignments.map((a) => {
         const progress = computeAssignmentProgress(a, observations, currentUser?.name);
@@ -59,11 +61,11 @@ export default function SbsAssignmentsList({ role, currentUser, observations }) 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
               <div>
                 <span style={{ fontSize: 13, fontWeight: 700, color: THEME.navy }}>
-                  {a.mode === "factory" ? "نمونه‌برداری کارخانه" : "نمونه‌برداری کارگاهی"} — {a.totalSampleSize.toLocaleString("fa-IR")} مشاهده
+                  {a.mode === "factory" ? t("sbsAsgFactory") : t("sbsAsgWorkshop")} — {t("sbsAsgObsCount", { n: a.totalSampleSize.toLocaleString("fa-IR") })}
                 </span>
-                <span style={{ fontSize: 10.5, padding: "2px 9px", borderRadius: 999, background: meta.bg, color: meta.color, fontWeight: 600, marginRight: 8 }}>{meta.label}</span>
+                <span style={{ fontSize: 10.5, padding: "2px 9px", borderRadius: 999, background: meta.bg, color: meta.color, fontWeight: 600, marginRight: 8 }}>{t(meta.labelKey)}</span>
                 <p style={{ fontSize: 11.5, color: THEME.text3, margin: "4px 0 0" }}>
-                  {toJalaliSafe(a.createdAt)} — توسط {a.createdBy}{a.note && ` — ${a.note}`}
+                  {t("sbsAsgBySuffix", { date: toJalaliSafe(a.createdAt), by: a.createdBy })}{a.note && ` — ${a.note}`}
                 </p>
               </div>
               {!isContractor && (
@@ -75,7 +77,7 @@ export default function SbsAssignmentsList({ role, currentUser, observations }) 
 
             <div style={{ marginTop: 10 }}>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11.5, color: THEME.text2, marginBottom: 4 }}>
-                <span>پیشرفت واقعی: {progress.done.toLocaleString("fa-IR")} از {progress.target.toLocaleString("fa-IR")} مشاهده</span>
+                <span>{t("sbsAsgActualProgress", { done: progress.done.toLocaleString("fa-IR"), target: progress.target.toLocaleString("fa-IR") })}</span>
                 <span style={{ fontWeight: 700, color: THEME.navy }}>{progress.pct}٪</span>
               </div>
               <div style={{ height: 8, background: THEME.bg, borderRadius: 999, overflow: "hidden" }}>
@@ -86,10 +88,10 @@ export default function SbsAssignmentsList({ role, currentUser, observations }) 
             {isContractor && a.status !== "completed" && (
               <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
                 {a.status === "sent" && (
-                  <button type="button" style={{ ...styles.smallButton, fontSize: 11 }} onClick={() => handleStatusChange(a.id, "in_progress")}>شروع نمونه‌برداری</button>
+                  <button type="button" style={{ ...styles.smallButton, fontSize: 11 }} onClick={() => handleStatusChange(a.id, "in_progress")}>{t("sbsAsgStartSampling")}</button>
                 )}
                 <button type="button" style={{ ...styles.smallButton, fontSize: 11, display: "flex", alignItems: "center", gap: 4, background: "#166534" }} onClick={() => handleStatusChange(a.id, "completed")}>
-                  <CheckCircle2 size={12} /> اعلام تکمیل
+                  <CheckCircle2 size={12} /> {t("sbsAsgMarkComplete")}
                 </button>
               </div>
             )}

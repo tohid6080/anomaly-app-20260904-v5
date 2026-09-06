@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { ClipboardCheck, Trash2, Printer, Calculator } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { JalaliDateInput, toJalaliSafe } from "../personnel/jalaliDate.jsx";
-import { loadSbsCategories, loadSbsObservations, createSbsObservation, deleteSbsObservation, computeSbsAnalysis, SEASONS } from "./sbsApi.js";
+import { loadSbsCategories, loadSbsObservations, createSbsObservation, deleteSbsObservation, computeSbsAnalysis, SEASONS, seasonLabel } from "./sbsApi.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 import SbsSampleSizeCalculator from "./SbsSampleSizeCalculator.jsx";
 import SbsAssignmentsList from "./SbsAssignmentsList.jsx";
 
@@ -13,6 +14,7 @@ import SbsAssignmentsList from "./SbsAssignmentsList.jsx";
  * آبشاری) کاملاً استفاده می‌شود.
  */
 export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
+  const { t } = useLanguage();
   const isEmployerSide = role === "EMPLOYER" || role === "ADMIN";
   const [categories, setCategories] = useState([]);
   const [observations, setObservations] = useState(null);
@@ -40,20 +42,20 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
   }, []);
 
   if (loading) {
-    return <p style={{ color: THEME.text3, textAlign: "center", padding: 40 }}>در حال بارگذاری...</p>;
+    return <p style={{ color: THEME.text3, textAlign: "center", padding: 40 }}>{t("sbsLoading")}</p>;
   }
   if (categories.length === 0) {
     return (
       <div style={{ maxWidth: 500, margin: "60px auto", textAlign: "center", padding: 20 }}>
         <p style={{ color: THEME.danger, fontSize: 13, lineHeight: 1.9 }}>
-          دسته‌بندی‌های SBS هنوز در دیتابیس ثبت نشده‌اند. لطفاً از مدیر سامانه بخواهید فایل SQL مرجع این زیرماژول را اجرا کند.
+          {t("sbsCategoriesMissing")}
         </p>
-        <div style={{ ...styles.backLink, marginTop: 12, justifyContent: "center" }} onClick={onBack}>بازگشت</div>
+        <div style={{ ...styles.backLink, marginTop: 12, justifyContent: "center" }} onClick={onBack}>{t("commonBackPlain")}</div>
       </div>
     );
   }
   if (observations === null) {
-    return <p style={{ color: THEME.text3, textAlign: "center", padding: 40 }}>در حال بارگذاری...</p>;
+    return <p style={{ color: THEME.text3, textAlign: "center", padding: 40 }}>{t("sbsLoading")}</p>;
   }
 
   const selectedCategory = categories.find((c) => c.code === form.categoryCode);
@@ -62,7 +64,7 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
   const handleSubmit = async () => {
     setError("");
     if (form.status === "unsafe" && isOtherCategory && !form.note.trim()) {
-      setError("برای دسته‌ی «سایر»، شرح رفتار مشاهده‌شده الزامی است");
+      setError(t("sbsOtherCategoryDescRequired"));
       return;
     }
     setSaving(true);
@@ -75,7 +77,7 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("این مشاهده حذف شود؟")) return;
+    if (!confirm(t("sbsDeleteObsConfirm"))) return;
     const result = await deleteSbsObservation(id);
     if (result?.__error) { alert(result.message); return; }
     await load();
@@ -87,25 +89,25 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
 
   return (
     <div>
-      <div style={styles.backLink} onClick={onBack}>بازگشت</div>
+      <div style={styles.backLink} onClick={onBack}>{t("commonBackPlain")}</div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4, flexWrap: "wrap", gap: 10 }}>
         <h2 style={{ fontSize: 18, color: THEME.navy, fontWeight: 800, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
-          <ClipboardCheck size={20} color={THEME.teal} /> نمونه‌برداری از رفتارهای ایمنی (SBS)
+          <ClipboardCheck size={20} color={THEME.teal} /> {t("sbsTitle")}
         </h2>
       </div>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 18, lineHeight: 1.9 }}>
-        ثبت میدانی رفتار ایمن/ناایمن کارکنان توسط پیمانکار، و مشاهده‌ی آنی تحلیل نتایج برای ارائه به کارفرما. دوره‌ی ثبت برای پیمانکار: فصلی — هر ۳ ماه یک‌بار.
+        {t("sbsIntro")}
       </p>
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
         {!readOnly && (
           <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6 }} onClick={() => { setShowForm((v) => !v); setError(""); }}>
-            <ClipboardCheck size={14} /> ثبت مشاهده‌ی جدید
+            <ClipboardCheck size={14} /> {t("sbsNewObservation")}
           </button>
         )}
         {isEmployerSide && (
           <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6, background: THEME.navyMid }} onClick={() => setShowCalculator((v) => !v)}>
-            <Calculator size={14} /> {showCalculator ? "بستن ماشین‌حساب" : "محاسبه و واگذاری حجم نمونه"}
+            <Calculator size={14} /> {showCalculator ? t("sbsCloseCalculator") : t("sbsCalcAndAssign")}
           </button>
         )}
       </div>
@@ -120,28 +122,28 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
         <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18, marginBottom: 20 }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
             <div>
-              <label style={styles.label}>پروژه</label>
-              <input style={styles.input} value={form.project} onChange={(e) => setForm({ ...form, project: e.target.value })} dir="rtl" placeholder="مثلاً واحد نمک‌زدایی" />
+              <label style={styles.label}>{t("sbsFieldProject")}</label>
+              <input style={styles.input} value={form.project} onChange={(e) => setForm({ ...form, project: e.target.value })} dir="rtl" placeholder={t("sbsFieldProjectPlaceholder")} />
             </div>
             <div>
-              <label style={styles.label}>شرکت / پیمانکار</label>
+              <label style={styles.label}>{t("sbsFieldCompanyContractor")}</label>
               <input style={styles.input} value={form.contractorOrg} onChange={(e) => setForm({ ...form, contractorOrg: e.target.value })} dir="rtl" />
             </div>
             <div>
-              <label style={styles.label}>شغل / پست</label>
-              <input style={styles.input} value={form.jobTitle} onChange={(e) => setForm({ ...form, jobTitle: e.target.value })} dir="rtl" placeholder="مثلاً جوشکار، ریگر..." />
+              <label style={styles.label}>{t("sbsFieldJobTitle")}</label>
+              <input style={styles.input} value={form.jobTitle} onChange={(e) => setForm({ ...form, jobTitle: e.target.value })} dir="rtl" placeholder={t("sbsFieldJobTitlePlaceholder")} />
             </div>
             <div>
-              <label style={styles.label}>تاریخ مشاهده</label>
+              <label style={styles.label}>{t("sbsFieldObservationDate")}</label>
               <JalaliDateInput value={form.observationDate} onChange={(v) => setForm({ ...form, observationDate: v })} />
             </div>
             <div>
-              <label style={styles.label}>ساعت</label>
+              <label style={styles.label}>{t("sbsFieldTime")}</label>
               <input type="time" style={styles.input} value={form.observationTime} onChange={(e) => setForm({ ...form, observationTime: e.target.value })} />
             </div>
           </div>
 
-          <label style={styles.label}>وضعیت مشاهده</label>
+          <label style={styles.label}>{t("sbsFieldObservationStatus")}</label>
           <div style={{ display: "flex", gap: 10 }}>
             <button
               type="button" onClick={() => setForm({ ...form, status: "safe", categoryCode: "", subitemId: "", note: "" })}
@@ -151,7 +153,7 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
                 fontWeight: 700, fontSize: 13.5, cursor: "pointer", fontFamily: THEME.font,
               }}
             >
-              ✅ رفتار ایمن
+              {t("sbsSafeBehavior")}
             </button>
             <button
               type="button" onClick={() => setForm({ ...form, status: "unsafe" })}
@@ -161,30 +163,30 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
                 fontWeight: 700, fontSize: 13.5, cursor: "pointer", fontFamily: THEME.font,
               }}
             >
-              ⚠️ رفتار ناایمن
+              {t("sbsUnsafeBehavior")}
             </button>
           </div>
 
           {form.status === "unsafe" && (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, background: THEME.dangerBg, border: `1px dashed #d9a9a8`, borderRadius: 9, padding: 14, marginTop: 12 }}>
               <div>
-                <label style={styles.label}>کد رفتار ناایمن</label>
+                <label style={styles.label}>{t("sbsUnsafeCode")}</label>
                 <select style={styles.input} value={form.categoryCode} onChange={(e) => setForm({ ...form, categoryCode: e.target.value, subitemId: "" })} dir="rtl">
-                  <option value="">انتخاب دسته</option>
+                  <option value="">{t("sbsSelectCategory")}</option>
                   {categories.map((c) => <option key={c.code} value={c.code}>{c.titleFa}</option>)}
                 </select>
               </div>
               <div>
-                <label style={styles.label}>کد مصداق</label>
+                <label style={styles.label}>{t("sbsInstanceCode")}</label>
                 <select style={styles.input} value={form.subitemId} onChange={(e) => setForm({ ...form, subitemId: e.target.value })} dir="rtl" disabled={!selectedCategory}>
-                  <option value="">{selectedCategory ? "انتخاب کنید" : "ابتدا دسته را انتخاب کنید"}</option>
+                  <option value="">{selectedCategory ? t("sbsSelectPlaceholder") : t("sbsSelectCategoryFirst")}</option>
                   {(selectedCategory?.items || []).map((it) => <option key={it.id} value={it.id}>{it.textFa}</option>)}
                 </select>
               </div>
               {isOtherCategory && (
                 <div style={{ gridColumn: "1 / -1" }}>
-                  <label style={styles.label}>شرح رفتار مشاهده‌شده (برای کد ۱۲)</label>
-                  <textarea style={{ ...styles.input, minHeight: 60 }} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} dir="rtl" placeholder="نوع رفتار ناایمن مشاهده‌شده را بنویسید..." />
+                  <label style={styles.label}>{t("sbsOtherCategoryDescLabel")}</label>
+                  <textarea style={{ ...styles.input, minHeight: 60 }} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} dir="rtl" placeholder={t("sbsOtherCategoryDescPlaceholder")} />
                 </div>
               )}
             </div>
@@ -192,14 +194,14 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
 
           {error && <p style={styles.error}>{error}</p>}
           <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-            <button type="button" style={styles.smallButton} onClick={handleSubmit} disabled={saving || !form.status}>{saving ? "در حال ثبت..." : "ثبت مشاهده"}</button>
-            <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => { setShowForm(false); setForm(emptyForm()); setError(""); }}>انصراف</button>
+            <button type="button" style={styles.smallButton} onClick={handleSubmit} disabled={saving || !form.status}>{saving ? t("saSubmittingEllipsis") : t("sbsSubmitObservation")}</button>
+            <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => { setShowForm(false); setForm(emptyForm()); setError(""); }}>{t("commonCancel")}</button>
           </div>
         </div>
       )}
 
       <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18, marginBottom: 20 }}>
-        <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>فیلتر فصلی</h3>
+        <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>{t("sbsSeasonFilter")}</h3>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
           {["all", ...SEASONS].map((s) => (
             <button
@@ -209,20 +211,20 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
                 background: seasonFilter === s ? THEME.navy : "#fbfcfd", color: seasonFilter === s ? "#fff" : THEME.text2, borderColor: seasonFilter === s ? THEME.navy : THEME.border,
               }}
             >
-              {s === "all" ? "همه‌ی فصول" : s}
+              {s === "all" ? t("sbsAllSeasons") : seasonLabel(s)}
             </button>
           ))}
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, marginBottom: 20 }}>
-          <StatCard label="کل مشاهدات" value={analysis.total} />
-          <StatCard label="رفتار ایمن" value={analysis.safe} color="#166534" bg="#dcfce7" />
-          <StatCard label="رفتار ناایمن" value={analysis.unsafe} color={THEME.danger} bg={THEME.dangerBg} />
-          <StatCard label="درصد رفتار ناایمن" value={`${analysis.unsafePct.toFixed(1)}٪`} color="#b45309" bg="#fef3c7" />
+          <StatCard label={t("sbsStatTotal")} value={analysis.total} />
+          <StatCard label={t("sbsStatSafe")} value={analysis.safe} color="#166534" bg="#dcfce7" />
+          <StatCard label={t("sbsStatUnsafe")} value={analysis.unsafe} color={THEME.danger} bg={THEME.dangerBg} />
+          <StatCard label={t("sbsStatUnsafePct")} value={`${analysis.unsafePct.toFixed(1)}٪`} color="#b45309" bg="#fef3c7" />
         </div>
 
-        <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>تفکیک رفتار ناایمن بر اساس دسته</h4>
-        {analysis.categoryBars.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, marginBottom: 18 }}>رفتار ناایمنی در این فصل ثبت نشده است.</p>}
+        <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>{t("sbsUnsafeByCategory")}</h4>
+        {analysis.categoryBars.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, marginBottom: 18 }}>{t("sbsNoUnsafeThisSeason")}</p>}
         {analysis.categoryBars.map(([code, count]) => (
           <div key={code} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
             <span style={{ fontSize: 11.5, color: THEME.text2, width: 200, flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={catTitleByCode[code]}>{catTitleByCode[code] || code}</span>
@@ -233,38 +235,38 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
           </div>
         ))}
 
-        <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "22px 0 10px" }}>وضعیت به تفکیک فصل</h4>
+        <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "22px 0 10px" }}>{t("sbsStatusBySeason")}</h4>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10 }}>
           {analysis.seasonSummary.map((s) => (
             <div key={s.season} style={{ background: THEME.bg, borderRadius: 9, padding: 12 }}>
-              <div style={{ fontSize: 12.5, fontWeight: 700, color: THEME.navy, marginBottom: 6 }}>{s.season}</div>
-              <Row label="کل مشاهدات" value={s.total} />
-              <Row label="ناایمن" value={s.unsafe} />
-              <Row label="درصد ناایمن" value={s.total ? `${s.unsafePct.toFixed(1)}٪` : "—"} />
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: THEME.navy, marginBottom: 6 }}>{seasonLabel(s.season)}</div>
+              <Row label={t("sbsStatTotal")} value={s.total} />
+              <Row label={t("sbsRowUnsafe")} value={s.unsafe} />
+              <Row label={t("sbsRowUnsafePct")} value={s.total ? `${s.unsafePct.toFixed(1)}٪` : "—"} />
             </div>
           ))}
         </div>
 
         <div style={{ display: "flex", gap: 8, alignItems: "flex-start", background: "#eaf0fa", border: "1px solid #aec3d4", borderRadius: 9, padding: 12, marginTop: 18 }}>
-          <span style={{ fontSize: 12, color: "#2c4a6b", lineHeight: 1.9 }}>📌 این گزارش برای ارائه به کارفرما آماده است — از دکمه‌ی «چاپ گزارش» پایین صفحه استفاده کنید.</span>
+          <span style={{ fontSize: 12, color: "#2c4a6b", lineHeight: 1.9 }}>{t("sbsPrintHint")}</span>
         </div>
       </div>
 
       <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18 }}>
-        <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 12px" }}>جدول مشاهدات ثبت‌شده</h3>
-        {analysis.filtered.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>مشاهده‌ای برای این فصل ثبت نشده است.</p>}
+        <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 12px" }}>{t("sbsObservationsTable")}</h3>
+        {analysis.filtered.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("sbsNoObsThisSeason")}</p>}
         {analysis.filtered.length > 0 && (
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
               <thead>
                 <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
-                  <th style={{ textAlign: "right", padding: "6px 8px" }}>پروژه</th>
-                  <th style={{ textAlign: "center", padding: "6px 8px" }}>پیمانکار</th>
-                  <th style={{ textAlign: "center", padding: "6px 8px" }}>تاریخ</th>
-                  <th style={{ textAlign: "center", padding: "6px 8px" }}>فصل</th>
-                  <th style={{ textAlign: "center", padding: "6px 8px" }}>شغل</th>
-                  <th style={{ textAlign: "center", padding: "6px 8px" }}>وضعیت</th>
-                  <th style={{ textAlign: "right", padding: "6px 8px" }}>دسته / کد مصداق</th>
+                  <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("sbsColProject")}</th>
+                  <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("sbsColContractor")}</th>
+                  <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("sbsColDate")}</th>
+                  <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("sbsColSeason")}</th>
+                  <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("sbsColJob")}</th>
+                  <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("sbsColStatus")}</th>
+                  <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("sbsColCategoryCode")}</th>
                   {!readOnly && <th />}
                 </tr>
               </thead>
@@ -274,11 +276,11 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
                     <td style={{ padding: "6px 8px" }}>{o.project || "—"}</td>
                     <td style={{ padding: "6px 8px", textAlign: "center" }}>{o.contractorOrg || "—"}</td>
                     <td style={{ padding: "6px 8px", textAlign: "center" }}>{toJalaliSafe(o.observationDate)}</td>
-                    <td style={{ padding: "6px 8px", textAlign: "center" }}>{o.season}</td>
+                    <td style={{ padding: "6px 8px", textAlign: "center" }}>{seasonLabel(o.season)}</td>
                     <td style={{ padding: "6px 8px", textAlign: "center" }}>{o.jobTitle || "—"}</td>
                     <td style={{ padding: "6px 8px", textAlign: "center" }}>
                       <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: o.status === "safe" ? "#dcfce7" : THEME.dangerBg, color: o.status === "safe" ? "#166534" : THEME.danger, fontWeight: 600 }}>
-                        {o.status === "safe" ? "ایمن" : "ناایمن"}
+                        {o.status === "safe" ? t("sbsStatusSafe") : t("sbsStatusUnsafe")}
                       </span>
                     </td>
                     <td style={{ padding: "6px 8px" }}>
@@ -301,7 +303,7 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
 
       <div style={{ marginTop: 16 }}>
         <button type="button" onClick={() => window.print()} style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6, background: THEME.navy }}>
-          <Printer size={14} /> چاپ گزارش برای کارفرما
+          <Printer size={14} /> {t("sbsPrintReport")}
         </button>
       </div>
     </div>

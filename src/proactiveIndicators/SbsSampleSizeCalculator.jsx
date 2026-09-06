@@ -3,6 +3,7 @@ import { Calculator, Plus, Trash2, Send } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { loadContractorOptions } from "../personnel/personnelApi.js";
 import { createSbsAssignment } from "./sbsApi.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 /**
  * ماشین‌حساب تعیین حجم نمونه SBS — پورت دقیق فرمول فایل راهنمای HSE
@@ -24,12 +25,13 @@ function computeSampleSize(pilotTotal, pilotUnsafe, precisionPct) {
 }
 
 export default function SbsSampleSizeCalculator({ currentUser, onClose, onSent }) {
+  const { t } = useLanguage();
   const [mode, setMode] = useState("factory"); // factory | workshop
   const [pilotTotal, setPilotTotal] = useState("200");
   const [pilotUnsafe, setPilotUnsafe] = useState("");
   const [precisionPct, setPrecisionPct] = useState("5");
   const [population, setPopulation] = useState("");
-  const [workshops, setWorkshops] = useState([{ id: 1, name: "کارگاه شماره ۱", workers: "" }]);
+  const [workshops, setWorkshops] = useState([{ id: 1, name: t("sbsWorkshopNameN", { n: 1 }), workers: "" }]);
   const [contractors, setContractors] = useState([]);
   const [targetContractorId, setTargetContractorId] = useState("all");
   const [note, setNote] = useState("");
@@ -50,7 +52,7 @@ export default function SbsSampleSizeCalculator({ currentUser, onClose, onSent }
 
   const totalWorkers = workshops.reduce((sum, w) => sum + (Number(w.workers) || 0), 0);
 
-  const addWorkshop = () => setWorkshops([...workshops, { id: Date.now(), name: `کارگاه شماره ${workshops.length + 1}`, workers: "" }]);
+  const addWorkshop = () => setWorkshops([...workshops, { id: Date.now(), name: t("sbsWorkshopNameN", { n: workshops.length + 1 }), workers: "" }]);
   const removeWorkshop = (id) => setWorkshops(workshops.filter((w) => w.id !== id));
   const updateWorkshop = (id, field, value) => setWorkshops(workshops.map((w) => (w.id === id ? { ...w, [field]: value } : w)));
 
@@ -65,7 +67,7 @@ export default function SbsSampleSizeCalculator({ currentUser, onClose, onSent }
 
   const handleSend = async () => {
     setError(""); setSentMessage("");
-    if (!result) { setError("ابتدا حجم نمونه را محاسبه کنید"); return; }
+    if (!result) { setError(t("sbsCalcFirst")); return; }
     setSending(true);
     const result_ = await createSbsAssignment({
       contractorId: targetContractorId === "all" ? null : targetContractorId,
@@ -75,7 +77,7 @@ export default function SbsSampleSizeCalculator({ currentUser, onClose, onSent }
     }, currentUser?.name);
     setSending(false);
     if (result_?.__error) { setError(result_.message); return; }
-    setSentMessage("هدف نمونه‌برداری برای پیمانکار ارسال شد.");
+    setSentMessage(t("sbsTargetSent"));
     if (onSent) onSent();
   };
 
@@ -83,54 +85,53 @@ export default function SbsSampleSizeCalculator({ currentUser, onClose, onSent }
     <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18, marginBottom: 20 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
         <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
-          <Calculator size={16} /> محاسبه و واگذاری حجم نمونه
+          <Calculator size={16} /> {t("sbsCalcTitle")}
         </h3>
-        {onClose && <button type="button" onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: THEME.text3 }}>بستن</button>}
+        {onClose && <button type="button" onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: THEME.text3 }}>{t("sbsCalcClose")}</button>}
       </div>
       <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 14, lineHeight: 1.9 }}>
-        فرمول تعیین حجم نمونه (حد اطمینان ۹۵٪): N = K² × (۱−P) / (S² × P) — طبق راهنمای HSE. بعد از محاسبه، هدف نهایی را برای پیمانکار ارسال می‌کنید تا نمونه‌برداری واقعی را انجام دهد.
+        {t("sbsCalcFormulaNote")}
       </p>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        <button type="button" onClick={() => setMode("factory")} style={{ ...styles.smallButton, background: mode === "factory" ? THEME.teal : THEME.text3, flex: 1 }}>کارخانه</button>
-        <button type="button" onClick={() => setMode("workshop")} style={{ ...styles.smallButton, background: mode === "workshop" ? THEME.teal : THEME.text3, flex: 1 }}>کارگاه</button>
+        <button type="button" onClick={() => setMode("factory")} style={{ ...styles.smallButton, background: mode === "factory" ? THEME.teal : THEME.text3, flex: 1 }}>{t("sbsModeFactory")}</button>
+        <button type="button" onClick={() => setMode("workshop")} style={{ ...styles.smallButton, background: mode === "workshop" ? THEME.teal : THEME.text3, flex: 1 }}>{t("sbsModeWorkshop")}</button>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
         <div>
-          <label style={styles.label}>تعداد کل مشاهدات پایلوت</label>
-          <input type="number" style={styles.input} value={pilotTotal} onChange={(e) => setPilotTotal(e.target.value)} dir="ltr" placeholder="پیش‌فرض راهنما: ۲۰۰" />
+          <label style={styles.label}>{t("sbsPilotTotal")}</label>
+          <input type="number" style={styles.input} value={pilotTotal} onChange={(e) => setPilotTotal(e.target.value)} dir="ltr" placeholder={t("sbsGuideDefault200")} />
         </div>
         <div>
-          <label style={styles.label}>تعداد رفتار ناایمن در پایلوت</label>
+          <label style={styles.label}>{t("sbsPilotUnsafe")}</label>
           <input type="number" style={styles.input} value={pilotUnsafe} onChange={(e) => setPilotUnsafe(e.target.value)} dir="ltr" />
         </div>
         <div>
-          <label style={styles.label}>دقت مدنظر S (٪)</label>
-          <input type="number" style={styles.input} value={precisionPct} onChange={(e) => setPrecisionPct(e.target.value)} dir="ltr" placeholder="پیش‌فرض راهنما: ۵" />
+          <label style={styles.label}>{t("sbsPrecisionS")}</label>
+          <input type="number" style={styles.input} value={precisionPct} onChange={(e) => setPrecisionPct(e.target.value)} dir="ltr" placeholder={t("sbsGuideDefault5")} />
         </div>
       </div>
 
       {result && (
         <div style={{ background: THEME.bg, borderRadius: 9, padding: 14, marginTop: 14 }}>
           <p style={{ fontSize: 12.5, color: THEME.text2, margin: "0 0 4px" }}>
-            نسبت رفتار ناایمن در پایلوت (P): <b style={{ color: THEME.navy }}>{(result.p * 100).toFixed(1)}٪</b>
+            {t("sbsPilotUnsafeRatio")}<b style={{ color: THEME.navy }}>{(result.p * 100).toFixed(1)}٪</b>
           </p>
           <p style={{ fontSize: 16, fontWeight: 800, color: THEME.teal, margin: "6px 0" }}>
-            حجم نمونه‌ی کل لازم: {result.n.toLocaleString("fa-IR")} مشاهده
+            {t("sbsTotalSampleNeeded", { n: result.n.toLocaleString("fa-IR") })}
           </p>
         </div>
       )}
 
       {result && mode === "factory" && (
         <div style={{ marginTop: 14 }}>
-          <label style={styles.label}>جمعیت آماری (تعداد کارکنان کارخانه)</label>
+          <label style={styles.label}>{t("sbsPopulationLabel")}</label>
           <input type="number" style={styles.input} value={population} onChange={(e) => setPopulation(e.target.value)} dir="ltr" />
           {perPerson != null && (
             <div style={{ background: "#eaf0fa", borderRadius: 9, padding: 12, marginTop: 10 }}>
               <p style={{ fontSize: 12.5, color: "#2c4a6b", margin: 0, lineHeight: 1.9 }}>
-                {result.n.toLocaleString("fa-IR")} ÷ {pop.toLocaleString("fa-IR")} ≈ به‌ازای هر نفر <b>{perPerson}</b> مشاهده لازم است
-                (جمعاً <b>{finalTotalIndividual.toLocaleString("fa-IR")}</b> مشاهده در طول سال).
+                {t("sbsPerPersonNote", { n: result.n.toLocaleString("fa-IR"), pop: pop.toLocaleString("fa-IR"), per: perPerson, total: finalTotalIndividual.toLocaleString("fa-IR") })}
               </p>
             </div>
           )}
@@ -139,11 +140,11 @@ export default function SbsSampleSizeCalculator({ currentUser, onClose, onSent }
 
       {result && mode === "workshop" && (
         <div style={{ marginTop: 14 }}>
-          <p style={{ fontSize: 12, fontWeight: 700, color: THEME.navy, marginBottom: 8 }}>توزیع نمونه بین کارگاه‌ها (متناسب با تعداد کارگران هر کارگاه)</p>
+          <p style={{ fontSize: 12, fontWeight: 700, color: THEME.navy, marginBottom: 8 }}>{t("sbsWorkshopDistribution")}</p>
           {workshops.map((w) => (
             <div key={w.id} style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "center" }}>
               <input style={{ ...styles.input, marginTop: 0, flex: 2 }} value={w.name} onChange={(e) => updateWorkshop(w.id, "name", e.target.value)} dir="rtl" />
-              <input type="number" style={{ ...styles.input, marginTop: 0, flex: 1 }} value={w.workers} onChange={(e) => updateWorkshop(w.id, "workers", e.target.value)} dir="ltr" placeholder="تعداد کارگر" />
+              <input type="number" style={{ ...styles.input, marginTop: 0, flex: 1 }} value={w.workers} onChange={(e) => updateWorkshop(w.id, "workers", e.target.value)} dir="ltr" placeholder={t("sbsWorkerCount")} />
               {workshops.length > 1 && (
                 <button type="button" onClick={() => removeWorkshop(w.id)} style={{ background: "none", border: "none", cursor: "pointer" }}>
                   <Trash2 size={14} color={THEME.danger} />
@@ -152,7 +153,7 @@ export default function SbsSampleSizeCalculator({ currentUser, onClose, onSent }
             </div>
           ))}
           <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 5, marginBottom: 12 }} onClick={addWorkshop}>
-            <Plus size={12} /> افزودن کارگاه
+            <Plus size={12} /> {t("sbsAddWorkshop")}
           </button>
 
           {workshopBreakdown && (
@@ -160,10 +161,10 @@ export default function SbsSampleSizeCalculator({ currentUser, onClose, onSent }
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                 <thead>
                   <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
-                    <th style={{ textAlign: "right", padding: "6px 8px" }}>کارگاه</th>
-                    <th style={{ textAlign: "center", padding: "6px 8px" }}>تعداد کارگران</th>
-                    <th style={{ textAlign: "center", padding: "6px 8px" }}>سهم از نمونه‌ی کل</th>
-                    <th style={{ textAlign: "center", padding: "6px 8px" }}>مشاهدات نهایی</th>
+                    <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("sbsColWorkshop")}</th>
+                    <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("sbsColWorkerCount")}</th>
+                    <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("sbsColShareOfTotal")}</th>
+                    <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("sbsColFinalObs")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -173,7 +174,7 @@ export default function SbsSampleSizeCalculator({ currentUser, onClose, onSent }
                       <td style={{ padding: "6px 8px", textAlign: "center" }}>{w.workers.toLocaleString("fa-IR")}</td>
                       <td style={{ padding: "6px 8px", textAlign: "center" }}>{w.share.toLocaleString("fa-IR")}</td>
                       <td style={{ padding: "6px 8px", textAlign: "center", fontWeight: 700, color: THEME.navy }}>
-                        {w.finalTotal.toLocaleString("fa-IR")} <span style={{ color: THEME.text3, fontWeight: 400 }}>({w.perPerson} به‌ازای هر نفر)</span>
+                        {w.finalTotal.toLocaleString("fa-IR")} <span style={{ color: THEME.text3, fontWeight: 400 }}>{t("sbsPerPersonSuffix", { per: w.perPerson })}</span>
                       </td>
                     </tr>
                   ))}
@@ -186,18 +187,18 @@ export default function SbsSampleSizeCalculator({ currentUser, onClose, onSent }
 
       {result && (
         <div style={{ background: THEME.dangerBg, border: `1px solid ${THEME.danger}`, borderRadius: 9, padding: 14, marginTop: 16 }}>
-          <h4 style={{ fontSize: 12.5, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>ارسال هدف نمونه‌برداری برای پیمانکار</h4>
-          <label style={styles.label}>پیمانکار مقصد</label>
+          <h4 style={{ fontSize: 12.5, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>{t("sbsSendTargetTitle")}</h4>
+          <label style={styles.label}>{t("sbsTargetContractor")}</label>
           <select style={styles.input} value={targetContractorId} onChange={(e) => setTargetContractorId(e.target.value)} dir="rtl">
-            <option value="all">همه‌ی پیمانکاران این شرکت</option>
+            <option value="all">{t("sbsAllContractors")}</option>
             {contractors.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
-          <label style={styles.label}>یادداشت برای پیمانکار (اختیاری)</label>
-          <input style={styles.input} value={note} onChange={(e) => setNote(e.target.value)} dir="rtl" placeholder="مثلاً: نمونه‌برداری فصل بهار" />
+          <label style={styles.label}>{t("sbsNoteForContractor")}</label>
+          <input style={styles.input} value={note} onChange={(e) => setNote(e.target.value)} dir="rtl" placeholder={t("sbsNoteForContractorPlaceholder")} />
           {error && <p style={styles.error}>{error}</p>}
           {sentMessage && <p style={{ fontSize: 12.5, color: "#166534", marginTop: 10, fontWeight: 600 }}>{sentMessage}</p>}
           <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6, marginTop: 12 }} onClick={handleSend} disabled={sending}>
-            <Send size={13} /> {sending ? "در حال ارسال..." : "ارسال به پیمانکار"}
+            <Send size={13} /> {sending ? t("sbsSending") : t("sbsSendToContractor")}
           </button>
         </div>
       )}
