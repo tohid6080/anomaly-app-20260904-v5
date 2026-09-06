@@ -2035,6 +2035,7 @@ function EmployerAccountManager({ onBack }) {
 
 // ---------- ثبت آنومالی جدید (بر اساس «فرم آنومالی») ----------
 function AnomalyForm({ onBack, currentUser, onSaved }) {
+  const { t } = useLanguage();
   const [contractorNames, setContractorNames] = useState([]);
   const [project, setProject] = useState("");
   const [contractor, setContractor] = useState("");
@@ -2070,7 +2071,7 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
       const results = await Promise.all(files.map((f) => resizeImageFile(f)));
       setPhotos((prev) => [...prev, ...results]);
     } catch {
-      setError("خطا در بارگذاری یکی از عکس‌ها");
+      setError(t("afErrPhotoLoad"));
     }
     setPhotoBusy(false);
   };
@@ -2109,17 +2110,17 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
 
   const handleSubmit = async () => {
     if (!area.trim() || !description.trim()) {
-      setError("موقعیت/ناحیه و شرح آنومالی الزامی است");
+      setError(t("afErrAreaDescRequired"));
       return;
     }
     if (needsRiskAssessment && !identifiedHazard.trim()) {
-      setError("چون «نیاز به ارزیابی ریسک دارد» را انتخاب کردید، وارد کردن «خطر شناسایی‌شده» الزامی است");
+      setError(t("afErrHazardRequired"));
       return;
     }
     if (photos.length > 0 && isOnline()) {
       const { allowed, storageMb } = await checkUploadAllowed();
       if (!allowed) {
-        setError(`فضای ذخیره‌سازی پر شده است (${storageMb} مگابایت). لطفاً ابتدا از بخش «آرشیو فایل‌ها» عکس‌های قدیمی را دانلود و حذف کنید، یا آنومالی را بدون عکس ثبت کنید.`);
+        setError(t("afErrStorageFull", { mb: storageMb }));
         return;
       }
     }
@@ -2154,7 +2155,7 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
       id: record.id, payload: anomalyRecordToDb(record),
     });
     if (!result.ok) {
-      setError(`خطا در ذخیره‌سازی: ${result?.message || "نامشخص"}`);
+      setError(t("afErrSaveDetail", { detail: result?.message || t("afUnknown") }));
       return;
     }
     if (affectsBarrier && selectedBarrierIds.length > 0) {
@@ -2167,7 +2168,7 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
       if (linkResult?.__error) {
         // آنومالی با موفقیت ثبت شده؛ فقط ثبت ارتباط با Barrier ناموفق بوده —
         // نباید کل ثبت آنومالی را از دید کاربر ناموفق نشان بدهد
-        alert(`آنومالی ثبت شد، اما ثبت ارتباط با Barrier با خطا مواجه شد: ${linkResult.message}`);
+        alert(t("afBarrierLinkFailed", { message: linkResult.message }));
       } else {
         // اثربخشی همان بریرهایی که همین الان بهشان شاهد جدید اضافه شد، فوراً
         // بازمحاسبه می‌شود — منتظر نمی‌مانیم چون این عملیات نباید ثبت آنومالی
@@ -2190,7 +2191,7 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
       if (hcmsResult?.__error) {
         // آنومالی با موفقیت ثبت شده؛ فقط ارزیابی ریسک پیشنهادی ساخته نشد — این
         // نباید کل ثبت آنومالی را از دید کاربر ناموفق نشان بدهد، ولی باید مطلع شود
-        alert(`آنومالی ثبت شد، اما ساخت خودکار ارزیابی ریسک HCMS با خطا مواجه شد: ${hcmsResult.message}\nمی‌توانید بعداً از داخل «مدیریت ریسک → HCMS» آن را دستی بسازید.`);
+        alert(t("afHcmsCreateFailed", { message: hcmsResult.message }));
       }
     }
     // ورود به گیت تأیید سرپرست/مدیر HSE — طبق طرح تأییدشده، فقط وقتی
@@ -2211,7 +2212,7 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
       // پیامی — چون setSaving(false) هیچ‌وقت اجرا نمی‌شد. الان حداقل پیام
       // واقعی خطا نشون داده می‌شه تا اگه دوباره رخ بده، دقیق مشخص بشه چرا.
       console.error("خطای غیرمنتظره در ثبت آنومالی:", e);
-      setError(`خطای غیرمنتظره: ${e?.message || "نامشخص"} — لطفاً دوباره تلاش کنید یا این پیام را به پشتیبانی گزارش دهید.`);
+      setError(t("afErrUnexpected", { detail: e?.message || t("afUnknown") }));
     } finally {
       setSaving(false);
     }
@@ -2219,58 +2220,58 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
 
   return (
     <div style={{ maxWidth: 620, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>← بازگشت به منو</div>}
+      {onBack && <div style={styles.backLink} onClick={onBack}>{t("cmBackToMenu")}</div>}
 
       <div style={{ ...styles.card, width: "auto" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
           <AlertTriangle size={20} color="#c92a2a" />
-          <h3 style={{ margin: 0 }}>گزارش شرایط ناایمن / اعمال ناایمن (آنومالی)</h3>
+          <h3 style={{ margin: 0 }}>{t("afFormTitle")}</h3>
         </div>
-        <p style={{ color: "#93a1b0", fontSize: 13, marginTop: 4 }}>این قسمت توسط کارفرما تکمیل می‌شود</p>
+        <p style={{ color: "#93a1b0", fontSize: 13, marginTop: 4 }}>{t("afFilledByEmployer")}</p>
 
         <div style={styles.formGrid}>
           <div>
-            <label style={styles.label}>پروژه</label>
+            <label style={styles.label}>{t("afProject")}</label>
             <input style={styles.input} value={project} onChange={(e) => setProject(e.target.value)} dir="rtl" />
           </div>
           <div>
-            <label style={styles.label}>شماره پیگیری</label>
-            <input style={styles.input} placeholder="خودکار در صورت خالی بودن" value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} dir="rtl" />
+            <label style={styles.label}>{t("afTrackingNumber")}</label>
+            <input style={styles.input} placeholder={t("afTrackingAuto")} value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} dir="rtl" />
           </div>
         </div>
 
         <div style={styles.formGrid}>
           <div>
-            <label style={styles.label}>پیمانکار</label>
+            <label style={styles.label}>{t("afContractor")}</label>
             <select style={styles.input} value={contractor} onChange={(e) => setContractor(e.target.value)} dir="rtl">
               <option value="">{t("cmSelectPlaceholder")}</option>
               {contractorNames.map((n) => <option key={n} value={n}>{n}</option>)}
             </select>
           </div>
           <div>
-            <label style={styles.label}>پیمانکار فرعی</label>
+            <label style={styles.label}>{t("afSubContractor")}</label>
             <input style={styles.input} value={subContractor} onChange={(e) => setSubContractor(e.target.value)} dir="rtl" />
           </div>
         </div>
 
         <div style={styles.formGrid}>
           <div>
-            <label style={styles.label}>موقعیت / ناحیه</label>
-            <input style={styles.input} value={area} onChange={(e) => setArea(e.target.value)} dir="rtl" placeholder="مثال: UNIT 74 (RHU)" />
+            <label style={styles.label}>{t("afAreaLocation")}</label>
+            <input style={styles.input} value={area} onChange={(e) => setArea(e.target.value)} dir="rtl" placeholder={t("afAreaPlaceholder")} />
           </div>
           <div>
-            <label style={styles.label}>تاریخ</label>
+            <label style={styles.label}>{t("afDate")}</label>
             <JalaliDateInput value={date} onChange={setDate} />
           </div>
         </div>
 
         <div style={styles.formGrid}>
           <div>
-            <label style={styles.label}>ساعت</label>
+            <label style={styles.label}>{t("afTime")}</label>
             <input style={styles.input} type="time" value={time} onChange={(e) => setTime(e.target.value)} />
           </div>
           <div>
-            <label style={styles.label}>سطح ریسک</label>
+            <label style={styles.label}>{t("afRiskLevel")}</label>
             <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
               {RISK_LEVELS.map((r) => (
                 <button
@@ -2282,7 +2283,7 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
                     background: riskLevel === r.value ? r.bg : "#fff", color: r.color, fontSize: 13, cursor: "pointer", fontWeight: riskLevel === r.value ? "bold" : "normal",
                   }}
                 >
-                  {r.value}
+                  {t(r.labelKey)}
                 </button>
               ))}
             </div>
@@ -2291,46 +2292,46 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
 
         <div style={styles.formGrid}>
           <div>
-            <label style={styles.label}>دسته‌بندی</label>
+            <label style={styles.label}>{t("afCategory")}</label>
             <select style={styles.input} value={category} onChange={(e) => setCategory(e.target.value)} dir="rtl">
               {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
           <div>
-            <label style={styles.label}>فرمت</label>
+            <label style={styles.label}>{t("afFormat")}</label>
             <select style={styles.input} value={format} onChange={(e) => setFormat(e.target.value)} dir="rtl">
-              {ANOMALY_FORMATS.map((f) => <option key={f.value} value={f.value}>{f.value}</option>)}
+              {ANOMALY_FORMATS.map((f) => <option key={f.value} value={f.value}>{t(f.labelKey)}</option>)}
             </select>
           </div>
         </div>
 
-        <label style={styles.label}>شرح آنومالی</label>
+        <label style={styles.label}>{t("afDescription")}</label>
         <textarea style={{ ...styles.input, minHeight: 100, resize: "vertical", fontFamily: "inherit" }} value={description} onChange={(e) => setDescription(e.target.value)} dir="rtl" />
 
-        <label style={styles.label}>شخص پیگیری‌کننده (اختیاری)</label>
+        <label style={styles.label}>{t("afFollower")}</label>
         <input style={styles.input} value={follower} onChange={(e) => setFollower(e.target.value)} dir="rtl" />
 
-        <label style={styles.label}>نیاز به ارزیابی ریسک دارد؟</label>
+        <label style={styles.label}>{t("afNeedsRiskAssessment")}</label>
         <div style={{ display: "flex", gap: 8, marginBottom: needsRiskAssessment ? 10 : 0 }}>
-          <button type="button" onClick={() => setNeedsRiskAssessment(true)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: needsRiskAssessment ? "2px solid #0d8f8a" : "1px solid #e3e8ee", background: needsRiskAssessment ? "#e3f5f4" : "#fff", color: "#0d8f8a", fontSize: 13, cursor: "pointer" }}>بله</button>
-          <button type="button" onClick={() => setNeedsRiskAssessment(false)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: !needsRiskAssessment ? "2px solid #123a54" : "1px solid #e3e8ee", background: !needsRiskAssessment ? "#f1f5f9" : "#fff", color: "#334155", fontSize: 13, cursor: "pointer" }}>خیر</button>
+          <button type="button" onClick={() => setNeedsRiskAssessment(true)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: needsRiskAssessment ? "2px solid #0d8f8a" : "1px solid #e3e8ee", background: needsRiskAssessment ? "#e3f5f4" : "#fff", color: "#0d8f8a", fontSize: 13, cursor: "pointer" }}>{t("commonYes")}</button>
+          <button type="button" onClick={() => setNeedsRiskAssessment(false)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: !needsRiskAssessment ? "2px solid #123a54" : "1px solid #e3e8ee", background: !needsRiskAssessment ? "#f1f5f9" : "#fff", color: "#334155", fontSize: 13, cursor: "pointer" }}>{t("commonNo")}</button>
         </div>
         {needsRiskAssessment && (
           <>
-            <label style={styles.label}>خطر شناسایی‌شده</label>
-            <textarea style={{ ...styles.input, minHeight: 70, fontFamily: "inherit" }} value={identifiedHazard} onChange={(e) => setIdentifiedHazard(e.target.value)} dir="rtl" placeholder="خطری که مشاهده کردید را شرح دهید — بعد از ثبت آنومالی، یک ارزیابی ریسک HCMS پیشنهادی خودکار ساخته می‌شود که کارفرما باید آن را بررسی و تأیید کند." />
+            <label style={styles.label}>{t("afIdentifiedHazard")}</label>
+            <textarea style={{ ...styles.input, minHeight: 70, fontFamily: "inherit" }} value={identifiedHazard} onChange={(e) => setIdentifiedHazard(e.target.value)} dir="rtl" placeholder={t("afIdentifiedHazardPlaceholder")} />
           </>
         )}
 
-        <label style={styles.label}>آیا این عدم انطباق بر یک Barrier تأثیر دارد؟</label>
+        <label style={styles.label}>{t("afAffectsBarrier")}</label>
         <div style={{ display: "flex", gap: 8, marginBottom: affectsBarrier ? 10 : 0 }}>
-          <button type="button" onClick={() => setAffectsBarrier(true)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: affectsBarrier ? "2px solid #0d8f8a" : "1px solid #e3e8ee", background: affectsBarrier ? "#e3f5f4" : "#fff", color: "#0d8f8a", fontSize: 13, cursor: "pointer" }}>بله</button>
-          <button type="button" onClick={() => { setAffectsBarrier(false); setSelectedBowtieId(""); setSelectedBarrierIds([]); }} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: !affectsBarrier ? "2px solid #123a54" : "1px solid #e3e8ee", background: !affectsBarrier ? "#f1f5f9" : "#fff", color: "#334155", fontSize: 13, cursor: "pointer" }}>خیر</button>
+          <button type="button" onClick={() => setAffectsBarrier(true)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: affectsBarrier ? "2px solid #0d8f8a" : "1px solid #e3e8ee", background: affectsBarrier ? "#e3f5f4" : "#fff", color: "#0d8f8a", fontSize: 13, cursor: "pointer" }}>{t("commonYes")}</button>
+          <button type="button" onClick={() => { setAffectsBarrier(false); setSelectedBowtieId(""); setSelectedBarrierIds([]); }} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: !affectsBarrier ? "2px solid #123a54" : "1px solid #e3e8ee", background: !affectsBarrier ? "#f1f5f9" : "#fff", color: "#334155", fontSize: 13, cursor: "pointer" }}>{t("commonNo")}</button>
         </div>
         {affectsBarrier && (
           <div style={{ background: "#f7f9fa", border: "1px solid #e3e8ee", borderRadius: 8, padding: 12, marginBottom: 10 }}>
             <p style={{ fontSize: 11, color: "#93a1b0", margin: "0 0 10px", lineHeight: 1.8 }}>
-              این آنومالی به‌عنوان شاهد (Evidence) برای ارزیابی اثربخشی Barrier ثبت می‌شود — وضعیت خودِ Barrier مستقیماً تغییر نمی‌کند و همچنان نیازمند بررسی HSE است.
+              {t("afBarrierEvidenceNote")}
             </p>
             <label style={styles.label}>BowTie</label>
             <select style={styles.input} value={selectedBowtieId} onChange={(e) => setSelectedBowtieId(e.target.value)} dir="rtl">
@@ -2340,9 +2341,9 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
 
             {selectedBowtieId && (
               <>
-                <label style={styles.label}>Barrier (می‌توانید چند مورد انتخاب کنید)</label>
-                {loadingBarriers && <p style={{ fontSize: 11.5, color: "#93a1b0" }}>در حال بارگذاری...</p>}
-                {!loadingBarriers && barrierOptions.length === 0 && <p style={{ fontSize: 11.5, color: "#93a1b0" }}>این BowTie هنوز هیچ Barrier ای ندارد</p>}
+                <label style={styles.label}>{t("afBarrierMultiSelect")}</label>
+                {loadingBarriers && <p style={{ fontSize: 11.5, color: "#93a1b0" }}>{t("commonLoading")}</p>}
+                {!loadingBarriers && barrierOptions.length === 0 && <p style={{ fontSize: 11.5, color: "#93a1b0" }}>{t("afBowtieNoBarriers")}</p>}
                 {!loadingBarriers && barrierOptions.map((b) => {
                   const checked = selectedBarrierIds.includes(b.id);
                   return (
@@ -2353,7 +2354,7 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
                         onChange={() => setSelectedBarrierIds((prev) => checked ? prev.filter((id) => id !== b.id) : [...prev, b.id])}
                       />
                       {b.label}
-                      <span style={{ fontSize: 9.5, color: "#93a1b0", marginInlineStart: "auto" }}>{b.side === "preventive" ? "پیشگیرانه" : "بازیابی"}</span>
+                      <span style={{ fontSize: 9.5, color: "#93a1b0", marginInlineStart: "auto" }}>{b.side === "preventive" ? t("afSidePreventive") : t("afSideRecovery")}</span>
                     </label>
                   );
                 })}
@@ -2362,7 +2363,7 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
           </div>
         )}
 
-        <label style={styles.label}>عکس‌های پیوست ({photos.length}/2)</label>
+        <label style={styles.label}>{t("afAttachedPhotos", { count: photos.length })}</label>
         <div style={{ display: "flex", gap: 8 }}>
           <label
             style={{
@@ -2370,7 +2371,7 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
               opacity: photoBusy || photos.length >= 2 ? 0.5 : 1, pointerEvents: photoBusy || photos.length >= 2 ? "none" : "auto",
             }}
           >
-            <Camera size={16} /> گرفتن عکس
+            <Camera size={16} /> {t("afTakePhoto")}
             <input
               type="file"
               accept="image/*"
@@ -2385,7 +2386,7 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
               opacity: photoBusy || photos.length >= 2 ? 0.5 : 1, pointerEvents: photoBusy || photos.length >= 2 ? "none" : "auto",
             }}
           >
-            <ImagePlus size={16} /> افزودن از گالری
+            <ImagePlus size={16} /> {t("afAddFromGallery")}
             <input
               type="file"
               accept="image/*"
@@ -2395,14 +2396,14 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
             />
           </label>
         </div>
-        {photoBusy && <p style={{ fontSize: 12, color: "#93a1b0", marginTop: 8 }}>در حال پردازش عکس...</p>}
+        {photoBusy && <p style={{ fontSize: 12, color: "#93a1b0", marginTop: 8 }}>{t("afProcessingPhoto")}</p>}
 
 
         {photos.length > 0 && (
           <div style={styles.photoGrid}>
             {photos.map((src, idx) => (
               <div key={idx} style={styles.photoThumbWrap}>
-                <img src={src} alt={`پیوست ${idx + 1}`} style={styles.photoThumb} />
+                <img src={src} alt={t("afAttachmentAlt", { n: idx + 1 })} style={styles.photoThumb} />
                 <button type="button" style={styles.photoRemoveBtn} onClick={() => removePhoto(idx)}>
                   <X size={12} color="#fff" />
                 </button>
@@ -2414,7 +2415,7 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
         {error && <p style={styles.error}>{error}</p>}
 
         <button type="button" style={styles.button} onClick={handleSubmit} disabled={saving}>
-          {saving ? "در حال ثبت..." : "ثبت آنومالی"}
+          {saving ? t("afSubmitting") : t("afSubmit")}
         </button>
       </div>
     </div>
@@ -2423,6 +2424,7 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
 
 // ---------- لیست و پیگیری آنومالی‌ها ----------
 function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter, initialRiskFilter, initialContractorFilter, initialExpandedAnomalyId }) {
+  const { t } = useLanguage();
   const isAdmin = role === "ADMIN";
   // طبق تصمیم تأییدشده: تأیید نهایی آنومالی (بستن بعد از اقدام اصلاحی
   // پیمانکار) فقط برای سرپرست/مدیر HSE و ادمین مجاز است، نه هر
@@ -3089,11 +3091,11 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
                 <label style={styles.label}>عکس اقدام اصلاحی ({actionPhotos.length}/2)</label>
                 <div style={{ display: "flex", gap: 8 }}>
                   <label style={{ ...styles.smallButton, flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", position: "relative", overflow: "hidden", opacity: actionPhotoBusy || actionPhotos.length >= 2 ? 0.5 : 1, pointerEvents: actionPhotoBusy || actionPhotos.length >= 2 ? "none" : "auto" }}>
-                    <Camera size={16} /> گرفتن عکس
+                    <Camera size={16} /> {t("afTakePhoto")}
                     <input type="file" accept="image/*" capture="environment" style={{ position: "absolute", width: 1, height: 1, opacity: 0, overflow: "hidden", pointerEvents: "none" }} onChange={(e) => { handleActionPickFiles(e.target.files); e.target.value = ""; }} />
                   </label>
                   <label style={{ ...styles.smallButton, flex: 1, background: "#334155", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", position: "relative", overflow: "hidden", opacity: actionPhotoBusy || actionPhotos.length >= 2 ? 0.5 : 1, pointerEvents: actionPhotoBusy || actionPhotos.length >= 2 ? "none" : "auto" }}>
-                    <ImagePlus size={16} /> افزودن از گالری
+                    <ImagePlus size={16} /> {t("afAddFromGallery")}
                     <input type="file" accept="image/*" multiple style={{ position: "absolute", width: 1, height: 1, opacity: 0, overflow: "hidden", pointerEvents: "none" }} onChange={(e) => { handleActionPickFiles(e.target.files); e.target.value = ""; }} />
                   </label>
                 </div>
