@@ -54,6 +54,25 @@ export async function isAccidentPronenessEnabledForCompany() {
 // که برای شرکت تخصیص داده شده انجام می‌شود (نگاه کنید به PLAN_FEATURES در
 // superAdminApi.js: کلید accidentProneness و hseClimate زیر proactiveIndicators).
 
+// نام/توضیحِ نمایشیِ هر شاخص از دیتابیس می‌آید (فارسی). برای دوزبانه‌شدن،
+// شاخص‌های شناخته‌شده از روی key به کلید ترجمه نگاشت می‌شوند؛ شاخص‌های آینده که
+// اینجا نیستند خودکار به همان مقدار دیتابیس برمی‌گردند (fail-safe).
+const INDICATOR_LABEL_KEYS = {
+  accident_proneness: { name: "pidIndAccidentProneName", desc: "pidIndAccidentProneDesc" },
+  hse_climate: { name: "pidIndHseClimateName", desc: "pidIndHseClimateDesc" },
+  sbs: { name: "pidIndSbsName", desc: "pidIndSbsDesc" },
+};
+
+export function indicatorLabel(ind) {
+  const k = INDICATOR_LABEL_KEYS[ind?.key]?.name;
+  return k ? translate(getCurrentLang(), k) : (ind?.name || "");
+}
+
+export function indicatorDescriptionLabel(ind) {
+  const k = INDICATOR_LABEL_KEYS[ind?.key]?.desc;
+  return k ? translate(getCurrentLang(), k) : (ind?.description || "");
+}
+
 export async function loadActiveIndicators() {
   const [rows, planFeatures] = await Promise.all([
     sb("proactive_indicator_definitions?is_active=eq.true&select=*&order=name.asc"),

@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Executive Guide — Leading & Intermediate HSE Indicators</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EAECEC;
+    --paper:#FFFFFF;
+    --ink:#201F1D;
+    --ink-soft:#5B5851;
+    --ink-faint:#8B8880;
+    --rule:#DAD7CD;
+    --rule-soft:#EAE8E1;
+
+    --red:#AE2A2E;
+    --red-deep:#7E1E22;
+    --red-soft:#F4DEDD;
+    --red-line:#D9A9A8;
+
+    --blue:#2C4A6B;
+    --blue-soft:#DCE6EE;
+    --blue-line:#AEC3D4;
+
+    --teal:#2F6E5D;
+    --teal-soft:#DCEAE4;
+    --teal-line:#A9CBBE;
+
+    --amber:#9C6B22;
+    --amber-soft:#F1E4CC;
+    --amber-line:#D9BD86;
+
+    --radius:10px;
+    --shadow: 0 1px 2px rgba(32,31,29,.06), 0 8px 24px -12px rgba(32,31,29,.18);
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    font-family:'Vazirmatn', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    line-height:1.8;
+    font-feature-settings:"tnum" 1, "ss01" 1;
+  }
+  h1,h2,h3,h4{font-family:inherit; margin:0; font-weight:900;}
+  p{margin:0 0 14px;}
+  a{color:inherit;}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    background:
+      radial-gradient(1100px 420px at 15% -10%, rgba(174,42,46,.14), transparent 60%),
+      linear-gradient(180deg, #FBFAF8 0%, var(--bg) 100%);
+    border-bottom:1px solid var(--rule);
+    padding:56px 24px 34px;
+  }
+  .hero-inner{max-width:1180px; margin:0 auto;}
+
+  .hero h1{
+    font-size:clamp(28px, 4vw, 44px);
+    line-height:1.3;
+    margin-bottom:14px;
+  }
+  .hero .lede{
+    font-size:16.5px; color:var(--ink-soft); margin-bottom:0;
+  }
+
+  /* ---------- LAYOUT ---------- */
+  .layout{
+    max-width:1180px; margin:0 auto; padding:40px 24px 80px;
+    display:grid; grid-template-columns:210px 1fr; gap:36px;
+    align-items:start;
+  }
+  @media (max-width: 880px){ .layout{grid-template-columns:1fr;} .toc{position:static; order:-1;} }
+
+  .toc{
+    position:sticky; top:20px;
+    background:var(--paper); border:1px solid var(--rule); border-radius:var(--radius);
+    padding:16px 12px; box-shadow:var(--shadow);
+  }
+  .toc h4{font-size:11.5px; color:var(--ink-faint); font-weight:700; margin-bottom:10px;}
+  .toc ol{list-style:none; margin:0; padding:0; counter-reset:toc;}
+  .toc li{counter-increment:toc; margin-bottom:2px;}
+  .toc a{
+    display:flex; gap:6px; align-items:baseline;
+    font-size:12px; line-height:1.6; padding:6px 5px; border-radius:6px; text-decoration:none; color:var(--ink-soft);
+  }
+  .toc a::before{
+    content: counter(toc, decimal) ".";
+    font-size:11px; color:var(--ink-faint); flex:none;
+  }
+  .toc a:hover, .toc a.active{background:var(--rule-soft); color:var(--ink); font-weight:700;}
+
+  /* ---------- MAIN CONTENT ---------- */
+  main{min-width:0;}
+  section{margin-bottom:56px; scroll-margin-top:20px;}
+
+  .sec-head{display:flex; align-items:flex-start; gap:14px; margin-bottom:6px;}
+  .sec-num{
+    font-size:13px; font-weight:800; color:var(--paper);
+    background:var(--ink); width:34px; height:34px; border-radius:8px;
+    display:flex; align-items:center; justify-content:center; flex:none;
+  }
+  section h2{font-size:24px;}
+  .sec-sub{color:var(--ink-faint); font-size:13.5px; margin:6px 0 22px 48px;}
+
+  h3.h{font-size:16px; margin:26px 0 10px; padding-left:12px; border-left:3px solid var(--red);}
+  h4.h{font-size:14px; margin:20px 0 8px; color:var(--ink-soft); font-weight:700;}
+
+  .card{
+    background:var(--paper); border:1px solid var(--rule); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:26px 26px 22px; margin-bottom:20px;
+  }
+
+  .meta-row{
+    display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; margin-bottom:22px;
+  }
+  @media (max-width:700px){.meta-row{grid-template-columns:1fr;}}
+  .meta{
+    background:var(--rule-soft); border:1px solid var(--rule); border-radius:8px; padding:12px 14px;
+  }
+  .meta .k{font-size:11px; color:var(--ink-faint); font-weight:700; margin-bottom:4px;}
+  .meta .v{font-size:13.5px; font-weight:600;}
+
+  table{width:100%; border-collapse:collapse; font-size:13.5px; margin:12px 0 22px;}
+  caption{text-align:left; font-size:12px; color:var(--ink-faint); margin-bottom:6px; caption-side:top;}
+  th,td{border:1px solid var(--rule); padding:9px 12px; text-align:left; vertical-align:top;}
+  th{background:var(--rule-soft); font-weight:700; font-size:12.5px; color:var(--ink-soft);}
+  tr:nth-child(even) td{background:#FCFCFB;}
+  td.num, th.num{text-align:center;}
+
+  .badge{display:inline-block; padding:2px 9px; border-radius:999px; font-size:11.5px; font-weight:700;}
+  .b-low{background:var(--red-soft); color:var(--red-deep); border:1px solid var(--red-line);}
+  .b-mid{background:var(--amber-soft); color:var(--amber); border:1px solid var(--amber-line);}
+  .b-high{background:var(--teal-soft); color:var(--teal); border:1px solid var(--teal-line);}
+  .b-vhigh{background:var(--blue-soft); color:var(--blue); border:1px solid var(--blue-line);}
+
+  ol.steps{margin:0 0 8px; padding-left:0; list-style:none; counter-reset:step;}
+  ol.steps > li{
+    counter-increment:step;
+    position:relative;
+    padding:2px 0 18px 46px;
+    border-left:2px solid var(--rule);
+    margin-left:16px;
+  }
+  ol.steps > li:last-child{border-color:transparent; padding-bottom:2px;}
+  ol.steps > li::before{
+    content: counter(step);
+    position:absolute; left:-16px; top:0;
+    width:32px; height:32px; border-radius:50%;
+    background:var(--paper); border:2px solid var(--ink); color:var(--ink);
+    font-weight:800; font-size:13px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  ol.steps > li b{display:block; font-size:14.5px; margin-bottom:4px;}
+  ol.steps > li p{margin:0; color:var(--ink-soft); font-size:13.5px;}
+
+  .callout{
+    display:flex; gap:12px; align-items:flex-start;
+    background:var(--red-soft); border:1px solid var(--red-line); border-radius:8px;
+    padding:14px 16px; margin:16px 0; font-size:13.5px;
+  }
+  .callout .ico{font-size:16px; flex:none;}
+  .callout b{color:var(--red-deep);}
+
+  .callout.note{background:var(--rule-soft); border-color:var(--rule);}
+  .callout.note b{color:var(--ink);}
+
+  .formula{
+    background:#22221F; color:#F1EFE8; border-radius:8px; padding:16px 18px;
+    font-size:13px; line-height:2; direction:ltr; text-align:left;
+    overflow-x:auto; margin:12px 0 18px;
+  }
+  .formula .label{display:block; text-align:left; color:#B7B4A9; font-size:11.5px; margin-bottom:8px;}
+
+  .example{
+    border:1px dashed var(--rule); border-radius:8px; padding:14px 16px; font-size:13.5px;
+    background:#FCFCFB; margin:12px 0 18px;
+  }
+  .example b{color:var(--ink);}
+
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  @media (max-width:700px){.grid2{grid-template-columns:1fr;}}
+
+  .taglist{display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 4px;}
+  .tag{font-size:12px; background:var(--rule-soft); border:1px solid var(--rule); border-radius:999px; padding:4px 11px; color:var(--ink-soft);}
+
+  @media print{
+    .toc, .hero{display:none;}
+    .layout{grid-template-columns:1fr; padding:0;}
+    .card{box-shadow:none; break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <h1>Executive Guide — Leading &amp; Intermediate HSE Indicators</h1>
+    <p class="lede">
+      This page explains how the <b>HSE Climate</b> and <b>Accident Proneness</b> questionnaires, as well as
+      the Safety Behavior Sampling (<b>SBS</b>) plan, are completed and scored — by whom, and on what schedule.
+    </p>
+  </div>
+</header>
+
+<div class="layout">
+
+  <nav class="toc">
+    <h4>Guide contents</h4>
+    <ol>
+      <li><a href="#intro">Overview &amp; definitions</a></li>
+      <li><a href="#climate">HSE Climate questionnaire</a></li>
+      <li><a href="#accident">Accident Proneness</a></li>
+      <li><a href="#sbs">SBS sampling</a></li>
+      <li><a href="#sbs-factory">&nbsp;&nbsp;— Factories</a></li>
+      <li><a href="#sbs-workshop">&nbsp;&nbsp;— Work sites</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section id="intro">
+      <div class="sec-head"><div class="sec-num">1</div><h2>Overview &amp; definitions</h2></div>
+      <p class="sec-sub">Read these few points before completing any questionnaire or running a sampling exercise.</p>
+      <div class="card">
+        <p>
+          Unlike lagging indicators such as the incident rate, <b>leading (proactive)</b> and
+          <b>intermediate</b> HSE indicators measure the state of safety, health and environment
+          <em>before</em> an incident occurs. Three standard tools are used for this:
+        </p>
+        <div class="taglist">
+          <span class="tag">HSE Climate — employees' understanding and perception of the HSE climate</span>
+          <span class="tag">Accident Proneness — a personality trait of people in critical roles</span>
+          <span class="tag">SBS — direct observation of safe and unsafe behavior at the workplace</span>
+        </div>
+        <div class="callout note">
+          <span class="ico">ℹ️</span>
+          <div><b>One important note:</b> HSE climate is not the same as HSE culture. Climate is a
+          psychological, changeable phenomenon that reflects employees' perception at a given point in time;
+          HSE culture is more stable and relates to the organization's shared values.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ HSE CLIMATE ============ -->
+    <section id="climate">
+      <div class="sec-head"><div class="sec-num">2</div><h2>HSE Climate questionnaire</h2></div>
+      <p class="sec-sub">Measuring employees' perception of safety, health and environment at the workplace</p>
+
+      <div class="card">
+        <div class="meta-row">
+          <div class="meta"><div class="k">Target group</div><div class="v">All personnel and manpower-supply contractors</div></div>
+          <div class="meta"><div class="k">Completion method</div><div class="v">Self-administered, semi-supervised — 43 questions, 5-point scale</div></div>
+          <div class="meta"><div class="k">Cycle</div><div class="v">Annual, in two 6-month rounds (50% of people per round)</div></div>
+        </div>
+
+        <h3 class="h">Step 1 — Determine how many questionnaires to distribute</h3>
+        <p>The number of questionnaires to print and distribute depends on the company's total headcount, and
+        must be distributed so that every job level (technician, foreman, supervisor, etc.) is represented in
+        the same proportion.</p>
+        <table>
+          <caption>Table 1 — HSE Climate questionnaire distribution rate by headcount</caption>
+          <thead><tr><th>Total headcount</th><th class="num">Distribution rate</th></tr></thead>
+          <tbody>
+            <tr><td>Up to 100 people</td><td class="num">80%</td></tr>
+            <tr><td>100 to 200 people</td><td class="num">70%</td></tr>
+            <tr><td>200 to 400 people</td><td class="num">60%</td></tr>
+            <tr><td>400 to 800 people</td><td class="num">50%</td></tr>
+            <tr><td>800 people and above</td><td class="num">40%</td></tr>
+          </tbody>
+        </table>
+        <div class="example">Example: if a company has 1,000 employees, 400 questionnaires must be printed and distributed, such that roughly 40% of the people in each job level complete the questionnaire.</div>
+
+        <h3 class="h">Step 2 — Know the questionnaire structure (9 domains, 43 questions)</h3>
+        <table>
+          <caption>Table 2 — Domains assessed and number of questions per domain</caption>
+          <thead><tr><th class="num">No.</th><th>Domain assessed</th><th class="num">Questions</th></tr></thead>
+          <tbody>
+            <tr><td class="num">1</td><td>Management commitment</td><td class="num">7</td></tr>
+            <tr><td class="num">2</td><td>Communication</td><td class="num">5</td></tr>
+            <tr><td class="num">3</td><td>HSE priority</td><td class="num">4</td></tr>
+            <tr><td class="num">4</td><td>HSE rules and procedures</td><td class="num">3</td></tr>
+            <tr><td class="num">5</td><td>Supportive environment</td><td class="num">6</td></tr>
+            <tr><td class="num">6</td><td>Involvement in HSE</td><td class="num">3</td></tr>
+            <tr><td class="num">7</td><td>Personnel priorities and need for HSE</td><td class="num">5</td></tr>
+            <tr><td class="num">8</td><td>Personnel risk perception</td><td class="num">4</td></tr>
+            <tr><td class="num">9</td><td>Work environment</td><td class="num">6</td></tr>
+            <tr style="font-weight:700;"><td class="num">—</td><td>Total</td><td class="num">43</td></tr>
+          </tbody>
+        </table>
+
+        <h3 class="h">Step 3 — Score the answers</h3>
+        <p>After the questionnaires are collected, each answer is scored per the table below:</p>
+        <table>
+          <caption>Table 3 — Answer scores</caption>
+          <thead><tr><th>Answer</th><th class="num">Score</th></tr></thead>
+          <tbody>
+            <tr><td>Strongly disagree</td><td class="num">1</td></tr>
+            <tr><td>Disagree</td><td class="num">2</td></tr>
+            <tr><td>No opinion</td><td class="num">3</td></tr>
+            <tr><td>Agree</td><td class="num">4</td></tr>
+            <tr><td>Strongly agree</td><td class="num">5</td></tr>
+          </tbody>
+        </table>
+
+        <h3 class="h">Step 4 — Calculate each domain score</h3>
+        <p>
+          The raw score of each domain is the sum of its questions (some questions are reverse-scored and are
+          shown as <span style="direction:ltr; display:inline-block;">(6 − Item)</span>), then divided by a
+          fixed number and multiplied by 10 so that each domain score falls in the range
+          <b>0 to 10</b>. The sum of the 9 domain scores gives the total climate score (maximum 90).
+        </p>
+        <table>
+          <caption>Table 4 — Domain-score formula (divide by, then multiply by 10)</caption>
+          <thead><tr><th>Domain</th><th>Contributing items (sum formula)</th><th class="num">Divide by</th></tr></thead>
+          <tbody>
+            <tr><td>Management commitment</td><td style="direction:ltr; text-align:left;">Item9+(6−Item16)+(6−Item19)+Item26+Item33+Item38+Item42</td><td class="num">35</td></tr>
+            <tr><td>Communication</td><td style="direction:ltr; text-align:left;">Item1+Item10+(6−Item25)+(6−Item28)+Item31</td><td class="num">25</td></tr>
+            <tr><td>HSE priority</td><td style="direction:ltr; text-align:left;">Item4+Item5+(6−Item20)+Item40</td><td class="num">20</td></tr>
+            <tr><td>HSE rules and procedures</td><td style="direction:ltr; text-align:left;">(6−Item17)+(6−Item21)+(6−Item35)</td><td class="num">15</td></tr>
+            <tr><td>Supportive environment</td><td style="direction:ltr; text-align:left;">Item3+Item15+(6−Item22)+Item29+(6−Item32)+Item41</td><td class="num">30</td></tr>
+            <tr><td>Involvement in HSE</td><td style="direction:ltr; text-align:left;">Item8+Item13+(6−Item39)</td><td class="num">15</td></tr>
+            <tr><td>Personnel priorities and need for HSE</td><td style="direction:ltr; text-align:left;">Item2+Item11+Item12+(6−Item23)+Item36</td><td class="num">25</td></tr>
+            <tr><td>Personnel risk perception</td><td style="direction:ltr; text-align:left;">(6−Item6)+(6−Item18)+Item24+Item34</td><td class="num">20</td></tr>
+            <tr><td>Work environment</td><td style="direction:ltr; text-align:left;">(6−Item7)+Item14+(6−Item27)+(6−Item30)+Item37+(6−Item43)</td><td class="num">30</td></tr>
+          </tbody>
+        </table>
+        <div class="callout note"><span class="ico">🧮</span><div>
+          Domain score = (sum of the relevant items ÷ the "divide by" number) × 10. For example, "HSE priority"
+          means the sum of its four questions divided by 20 and multiplied by 10.
+        </div></div>
+
+        <h3 class="h">Step 5 — Classify the result</h3>
+        <table>
+          <caption>Table 5 — Quantifying and classifying the results</caption>
+          <thead><tr><th>Level</th><th class="num">Per domain (out of 10)</th><th class="num">Total climate score (out of 90)</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge b-low">Low climate</span></td><td class="num">2 to below 4</td><td class="num">18 to below 36</td></tr>
+            <tr><td><span class="badge b-mid">Medium climate</span></td><td class="num">4 to below 8</td><td class="num">36 to below 72</td></tr>
+            <tr><td><span class="badge b-high">High climate</span></td><td class="num">8 to 10</td><td class="num">72 to 90</td></tr>
+          </tbody>
+        </table>
+
+        <h3 class="h">Step 6 — Scheduling and submitting results</h3>
+        <ol class="steps">
+          <li><b>Annual distribution in two rounds</b><p>The target group is split in two; every 6 months the questionnaire is handed to 50% of the people.</p></li>
+          <li><b>Data entry</b><p>Immediately after each round of questionnaires is received, the data is recorded and entered into the relevant file.</p></li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============ ACCIDENT PRONENESS ============ -->
+    <section id="accident">
+      <div class="sec-head"><div class="sec-num">3</div><h2>Accident Proneness questionnaire</h2></div>
+      <p class="sec-sub">Assessing the personality trait related to risk-taking — for people in critical roles</p>
+
+      <div class="card">
+        <div class="meta-row">
+          <div class="meta"><div class="k">Target group</div><div class="v">People in "critical roles"</div></div>
+          <div class="meta"><div class="k">Completion method</div><div class="v">Self-administered, semi-supervised — 39 questions, 5-point scale</div></div>
+          <div class="meta"><div class="k">Cycle</div><div class="v">Before hiring / starting work, and once a year for permanently critical roles</div></div>
+        </div>
+
+        <h3 class="h">Step 1 — Prepare the list of critical roles</h3>
+        <p>
+          Before distributing the questionnaire, a list of "critical roles" must be prepared — meaning roles
+          rated high-risk in the assessments that have been carried out.
+        </p>
+
+        <h3 class="h">Step 2 — Score the answers</h3>
+        <table>
+          <caption>Table 6 — Answer scores in the Accident Proneness questionnaire</caption>
+          <thead><tr><th>Answer</th><th class="num">Score</th></tr></thead>
+          <tbody>
+            <tr><td>Strongly agree</td><td class="num">5</td></tr>
+            <tr><td>Agree</td><td class="num">4</td></tr>
+            <tr><td>No opinion</td><td class="num">3</td></tr>
+            <tr><td>Disagree</td><td class="num">2</td></tr>
+            <tr><td>Completely disagree</td><td class="num">1</td></tr>
+          </tbody>
+        </table>
+
+        <h3 class="h">Step 3 — Calculate the total score</h3>
+        <p>The total score is the algebraic sum of the 39 questions (with some items reversed) per the standard formula below:</p>
+        <div class="formula">
+          <span class="label">Table 7 — Formula for the total Accident Proneness score</span>
+          Σ(Item1–3) + (6−Item4) + Σ(Item5–13) + (24−Σ(Item14–17)) + Σ(Item18–22)<br>
+          + (24−Σ(Item23–26)) + Item27 + (6−Item28) + Item29 + (6−Item30)<br>
+          + Σ(Item31–35) + (12−Σ(Item36–37)) + Σ(Item38–39)
+        </div>
+        <h3 class="h">Step 4 — Classify the result</h3>
+        <table>
+          <thead><tr><th>Accident Proneness level</th><th class="num">Score range (39 to 195)</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge b-low">Low</span></td><td class="num">39 to 78</td></tr>
+            <tr><td><span class="badge b-mid">Medium</span></td><td class="num">78 to 117</td></tr>
+            <tr><td><span class="badge b-high">High</span></td><td class="num">117 to 156</td></tr>
+            <tr><td><span class="badge b-vhigh">Very high</span></td><td class="num">156 to 195</td></tr>
+          </tbody>
+        </table>
+
+        <h3 class="h">Step 5 — Scheduling and submitting results</h3>
+        <ol class="steps">
+          <li><b>Before starting work</b><p>Where possible before hiring, otherwise before starting work in the critical role, the questionnaire must be completed.</p></li>
+          <li><b>Annual repeat for permanent roles</b><p>For roles that are permanently considered critical, the questionnaire must be completed at least once a year.</p></li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============ SBS ============ -->
+    <section id="sbs">
+      <div class="sec-head"><div class="sec-num">4</div><h2>Safety Behavior Sampling (SBS)</h2></div>
+      <p class="sec-sub">Field observation and logging of employees' safe/unsafe behavior — the method differs between factories and work sites</p>
+
+      <div id="sbs-factory">
+        <h3 class="h" style="font-size:18px;">4.1 — Sampling in factories</h3>
+        <div class="card">
+          <ol class="steps">
+            <li><b>Define the work station</b><p>A work station is one of the company areas where an activity takes place; the factory grounds are divided up on this basis.</p></li>
+            <li><b>Prepare the list of unsafe acts</b><p>Prepared from prior studies and incident reports (disabling injuries, recordable incidents, first-aid cases) and reputable references.</p></li>
+            <li><b>Pilot study</b><p>A pilot study of 200 observations is run to determine the unsafe-behavior ratio (P). Factories that sampled in previous years may use the previous years' unsafe-behavior percentage instead of a pilot.</p></li>
+            <li><b>Calculate the required sample size</b><p>The sample size is calculated with the formula below for a 95% confidence level (K≈1.64); observations are then divided equally among the employees.</p></li>
+            <li><b>Train the observer and run the sampling</b><p>The observer is trained to classify each person's behavior quickly and correctly as "safe" or "unsafe"; sampling is then carried out throughout the year, sensibly distributed across working hours, weekdays and shifts.</p></li>
+          </ol>
+
+          <div class="formula">
+            <span class="label">Sample-size formula (95% confidence level)</span>
+            N = K² × (1−P) / (S² × P) &nbsp;→&nbsp; for 95%: N = 1075 × [(1−P) / P]
+          </div>
+          <div class="example">
+            <b>Example:</b> if the pilot study found 62 unsafe acts out of 200 observations (P = 31%) and the
+            required precision is S = 5%:<br>
+            N = (1.64)² × (1−0.31) / (0.05² × 0.31) ≈ <b>2,392 observations</b><br>
+            If the population is 243 people, 2,392 ÷ 243 ≈ 9.8; so 10 observations are made per person
+            (2,430 observations in total). The main study is completed with the remaining (total sample − pilot sample) observations.
+          </div>
+        </div>
+      </div>
+
+      <div id="sbs-workshop">
+        <h3 class="h" style="font-size:18px;">4.2 — Sampling at work sites</h3>
+        <div class="card">
+          <ol class="steps">
+            <li><b>Prepare the list of unsafe acts</b><p>As with factories, prepared from prior studies and incident reports.</p></li>
+            <li><b>Select eligible work sites</b><p>The selected site must be 20% to 90% complete and must have no fewer than 70 workers.</p></li>
+            <li><b>Pilot study</b><p>Results from previous years' studies may be used instead of a new pilot.</p></li>
+            <li><b>Calculate and allocate the sample size across sites</b><p>The company's total sample size is calculated with the same formula, then divided among the sites in proportion to each site's worker count.</p></li>
+            <li><b>Train the observer and run quarterly</b><p>Sampling is carried out throughout the year at suitable intervals — usually once per quarter, over two to three days.</p></li>
+          </ol>
+
+          <div class="example">
+            <b>Example of allocating the sample across sites:</b> for a total of 2,392 observations at a company with three sites (200, 150 and 400 workers):
+          </div>
+          <table>
+            <caption>Table 8 — Sample allocation of observations across sites (numeric example)</caption>
+            <thead><tr><th>Site</th><th class="num">Workers</th><th class="num">Share of total sample</th><th class="num">Final observations (rounded per person)</th></tr></thead>
+            <tbody>
+              <tr><td>Site no. 1</td><td class="num">200</td><td class="num">637</td><td class="num">800 <span style="color:var(--ink-faint);">(4 per person)</span></td></tr>
+              <tr><td>Site no. 2</td><td class="num">150</td><td class="num">479</td><td class="num">600</td></tr>
+              <tr><td>Site no. 3</td><td class="num">400</td><td class="num">1,276</td><td class="num">1,600</td></tr>
+              <tr style="font-weight:700;"><td>Total</td><td class="num">750</td><td class="num">2,392</td><td class="num">3,000</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  // Scroll-spy for TOC
+  const links = document.querySelectorAll('.toc a');
+  const sections = Array.from(links).map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      const id = '#' + entry.target.id;
+      const link = document.querySelector('.toc a[href="'+id+'"]');
+      if(!link) return;
+      if(entry.isIntersecting){
+        links.forEach(l=>l.classList.remove('active'));
+        link.classList.add('active');
+      }
+    });
+  }, {rootMargin:'-20% 0px -70% 0px'});
+  sections.forEach(s=>io.observe(s));
+</script>
+
+</body>
+</html>

@@ -8644,7 +8644,15 @@ export const translations = {
   "errFileUploadReason": { "fa": "خطا در آپلود فایل: {detail}", "en": "File upload error: {detail}" },
   "errStorageDeleteReason": { "fa": "خطا در حذف فایل از Storage: {detail}", "en": "Error deleting file from Storage: {detail}" },
   "errDownloadFailed": { "fa": "دانلود فایل ناموفق بود ({status})", "en": "File download failed ({status})" },
-  "errSyncModuleNotRegistered": { "fa": "ماژول «{module}» برای همگام‌سازی ثبت نشده است", "en": "Module \"{module}\" is not registered for sync" }
+  "errSyncModuleNotRegistered": { "fa": "ماژول «{module}» برای همگام‌سازی ثبت نشده است", "en": "Module \"{module}\" is not registered for sync" },
+
+  // --- Proactive-indicator names/descriptions (loaded from DB, resolved by key) ---
+  "pidIndAccidentProneName": { "fa": "استعداد حادثه‌پذیری (Accident Proneness)", "en": "Accident Proneness" },
+  "pidIndAccidentProneDesc": { "fa": "سنجش استعداد فردی برای درگیر شدن در حوادث، پیش از شروع به کار در مشاغل بحرانی.", "en": "Measures an individual's predisposition to be involved in incidents, before they start work in a critical role." },
+  "pidIndHseClimateName": { "fa": "جو ایمنی، بهداشت و محیط زیست (HSE Climate)", "en": "HSE Climate" },
+  "pidIndHseClimateDesc": { "fa": "سنجش نگرش و ادراک کارکنان نسبت به ایمنی، بهداشت و محیط زیست در سازمان.", "en": "Measures employees' attitudes and perceptions toward safety, health and environment in the organization." },
+  "pidIndSbsName": { "fa": "نمونه‌برداری از رفتارهای ایمنی (SBS)", "en": "Safety Behavior Sampling (SBS)" },
+  "pidIndSbsDesc": { "fa": "ثبت میدانی رفتار ایمن/ناایمن کارکنان و تحلیل آنیِ نتایج.", "en": "Field logging of employees' safe/unsafe behavior with instant analysis of the results." }
 };
 
 // برای فایل‌های غیر React (لایه‌ی داده / api.js) که به Hook دسترسی ندارند اما

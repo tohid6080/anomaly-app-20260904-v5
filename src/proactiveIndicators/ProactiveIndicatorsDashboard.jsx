@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ChevronRight, TrendingUp, ClipboardList, BookOpen, X } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
-import { loadActiveIndicators, loadAllAssessments, accidentPronenessLevel } from "./proactiveIndicatorsApi.js";
+import { loadActiveIndicators, loadAllAssessments, accidentPronenessLevel, indicatorLabel, indicatorDescriptionLabel } from "./proactiveIndicatorsApi.js";
 import { loadModuleConfig, isSeededModuleLabel } from "../systemConfigApi.js";
 import { loadCorrectiveActionsForAssessments, STATUS_META } from "../correctiveActions/correctiveActionsApi.js";
 import AccidentPronenessAssessmentForm from "./AccidentPronenessAssessmentForm.jsx";
@@ -14,7 +14,7 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
 // را داخل یک iframe نشان می‌دهد و همیشه یک دکمه‌ی × برای بستن دارد
 // (روی موبایل، بازکردن با target=_blank راه خروج نداشت).
 function HseGuideOverlay({ onClose }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   useEffect(() => {
     const onKey = (e) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
@@ -34,7 +34,7 @@ function HseGuideOverlay({ onClose }) {
         </button>
       </div>
       <iframe
-        src={`${import.meta.env.BASE_URL}hse_guide.html`}
+        src={`${import.meta.env.BASE_URL}${lang === "en" ? "hse_guide_en.html" : "hse_guide.html"}`}
         title={t("pidGuideIframeTitle")}
         style={{ flex: 1, width: "100%", border: "none" }}
       />
@@ -99,7 +99,7 @@ export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role
     return (
       <ResultsList
         indicatorKey={activeIndicatorKey}
-        indicatorName={indicators.find((i) => i.key === activeIndicatorKey)?.name || ""}
+        indicatorName={indicatorLabel(indicators.find((i) => i.key === activeIndicatorKey))}
         currentUser={currentUser}
         onBack={() => setView("list")}
       />
@@ -139,8 +139,8 @@ export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <TrendingUp size={20} color={THEME.teal} />
             <div>
-              <div style={{ fontWeight: 700, color: THEME.navy, fontSize: 14 }}>{ind.name}</div>
-              {ind.description && <div style={{ fontSize: 11.5, color: THEME.text3, marginTop: 3 }}>{ind.description}</div>}
+              <div style={{ fontWeight: 700, color: THEME.navy, fontSize: 14 }}>{indicatorLabel(ind)}</div>
+              {indicatorDescriptionLabel(ind) && <div style={{ fontSize: 11.5, color: THEME.text3, marginTop: 3 }}>{indicatorDescriptionLabel(ind)}</div>}
             </div>
           </div>
           <ChevronRight size={18} color={THEME.text3} style={{ transform: "rotate(180deg)" }} />
