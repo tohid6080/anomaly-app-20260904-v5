@@ -4266,6 +4266,18 @@ function AdminDashboard({ onLogout, currentUser }) {
         </div>
       )}
 
+      {view === "incidentManagement" && incidentMod && (
+        <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
+          <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
+          <h3 style={{ marginBottom: 12, color: THEME.navy }}>{mt(incidentMod)}</h3>
+          <div style={styles.menuList2}>
+            {incidentMod.sub.map((s) => (
+              <MenuRow key={s.key} icon={ShieldAlert} label={mt(s)} onClick={() => setView(s.key)} accent />
+            ))}
+          </div>
+        </div>
+      )}
+
       {view === "profile" && <ProfileView onBack={() => setView("menu")} currentUser={currentUser} roleLabel={t("roleLabelAdmin")} />}
       {view === "chat" && <ChatDashboard onBack={() => setView("menu")} currentUser={currentUser} />}
       {/* مدیریت حساب کارفرما/پیمانکار: عمداً دیگر اینجا رندر نمی‌شود — به پنل Super Admin منتقل شد */}
@@ -4413,6 +4425,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
   const personnelMod = HSE_MODULES.find((m) => m.key === "personnelAccess");
   const machineryMod = HSE_MODULES.find((m) => m.key === "machineryManagement");
   const scaffoldMod = HSE_MODULES.find((m) => m.key === "scaffoldManagement");
+  const incidentMod = HSE_MODULES.find((m) => m.key === "incidentManagement");
 
   // دقیقاً همان فیلتر مجوز+پلن که منوی موبایل استفاده می‌کند — فقط این‌بار
   // به‌شکل داده برای Sidebar، بدون تکرار منطق فیلترکردن.
@@ -4512,6 +4525,18 @@ function EmployerDashboard({ onLogout, currentUser }) {
           <div style={styles.menuList2}>
             {scaffoldMod.sub.map((s) => (
               <MenuRow key={s.key} icon={Tag} label={mt(s)} onClick={() => setView(s.key)} accent />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {view === "incidentManagement" && incidentMod && (
+        <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
+          <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
+          <h3 style={{ marginBottom: 12, color: THEME.navy }}>{mt(incidentMod)}</h3>
+          <div style={styles.menuList2}>
+            {incidentMod.sub.map((s) => (
+              <MenuRow key={s.key} icon={ShieldAlert} label={mt(s)} onClick={() => setView(s.key)} accent />
             ))}
           </div>
         </div>
@@ -4658,6 +4683,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
   const personnelMod = HSE_MODULES.find((m) => m.key === "personnelAccess");
   const machineryMod = HSE_MODULES.find((m) => m.key === "machineryManagement");
   const scaffoldMod = HSE_MODULES.find((m) => m.key === "scaffoldManagement");
+  const incidentMod = HSE_MODULES.find((m) => m.key === "incidentManagement");
 
   const sidebarModules = applyModuleConfig(HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key)).map((mod) => ({
     key: mod.key,
@@ -4742,6 +4768,18 @@ function ContractorDashboard({ onLogout, currentUser }) {
           <div style={styles.menuList2}>
             {scaffoldMod.sub.map((s) => (
               <MenuRow key={s.key} icon={Tag} label={mt(s)} onClick={() => setView(s.key)} accent />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {view === "incidentManagement" && incidentMod && (
+        <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
+          <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
+          <h3 style={{ marginBottom: 12, color: THEME.navy }}>{mt(incidentMod)}</h3>
+          <div style={styles.menuList2}>
+            {incidentMod.sub.map((s) => (
+              <MenuRow key={s.key} icon={ShieldAlert} label={mt(s)} onClick={() => setView(s.key)} accent />
             ))}
           </div>
         </div>

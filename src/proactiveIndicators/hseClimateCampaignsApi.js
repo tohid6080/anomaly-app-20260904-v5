@@ -1,4 +1,4 @@
-import { sb, sbOk, getCurrentCompanyId, SUPABASE_URL, SUPABASE_ANON_KEY } from "../shared.js";
+import { sb, sbOk, getCurrentCompanyId, SUPABASE_URL, SUPABASE_ANON_KEY, PUBLIC_APP_URL } from "../shared.js";
 import { translate, getCurrentLang } from "../i18n/translations.js";
 
 /**
@@ -50,9 +50,13 @@ function campaignFromRow(r) {
   };
 }
 
-// لینک عمومی قابل‌اشتراک — صفحه‌ی مستقل و بدون نیاز به ورود
+// لینک عمومی قابل‌اشتراک — صفحه‌ی مستقل و بدون نیاز به ورود.
+// همیشه به آدرسِ عمومیِ سامانه (PUBLIC_APP_URL) اشاره می‌کند، نه
+// window.location: در اپ اندروید (Capacitor) مقدارِ window.location.origin
+// برابر http://localhost است و لینکِ ساخته‌شده از بیرون باز نمی‌شود. با این
+// روش، لینکِ ساخته‌شده در اپ موبایل و در نسخه‌ی وب دقیقاً یکی است.
 export function buildHseClimateSurveyLink(publicToken) {
-  const base = typeof window !== "undefined" ? window.location.origin + window.location.pathname : "";
+  const base = PUBLIC_APP_URL.endsWith("/") ? PUBLIC_APP_URL : `${PUBLIC_APP_URL}/`;
   return `${base}#hse-climate-survey/${publicToken}`;
 }
 
