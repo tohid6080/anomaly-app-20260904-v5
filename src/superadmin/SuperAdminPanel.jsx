@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { ShieldAlert, Plus, LogOut, Send, CreditCard, AlertTriangle, UserPlus, KeyRound, Layers, Trash2, History, Activity, TrendingDown, Clock, LogIn, ShieldX, LayoutDashboard, Building2, Users, FileClock, ChevronLeft, HardDrive, RefreshCw, Settings2, Copy, GripVertical, ArrowUp, ArrowDown, RotateCcw, Eye, EyeOff, LayoutGrid, PanelsTopLeft, Bell, Palette, Megaphone, Sparkles, Gift, Info, ImagePlus, X, ClipboardList } from "lucide-react";
+import { ShieldAlert, Plus, LogOut, Send, CreditCard, AlertTriangle, UserPlus, KeyRound, Layers, Trash2, History, Activity, TrendingDown, Clock, LogIn, ShieldX, LayoutDashboard, Building2, Users, FileClock, ChevronLeft, HardDrive, RefreshCw, Settings2, Copy, GripVertical, ArrowUp, ArrowDown, RotateCcw, Eye, EyeOff, LayoutGrid, PanelsTopLeft, Bell, Palette, Megaphone, Sparkles, Gift, Info, ImagePlus, X, ClipboardList, Smartphone, UploadCloud, CheckCircle2, Download } from "lucide-react";
+import { loadAppReleases, createAppRelease, setReleasePublished, deleteAppRelease, loadLatestPublishedRelease, nextPatchVersion } from "./appReleaseApi.js";
+import { APP_VERSION, APP_VERSION_CODE } from "../shared.js";
 import { THEME } from "../shared.js";
 import { changeMyPassword } from "../sessionToken.js";
 import { loadModuleConfig, saveModuleConfig, loadNotificationTypes, saveNotificationType, syncNotificationTypesWithPlans, loadAppearanceConfig, saveAppearanceConfig, loadAllAnnouncements, createAnnouncement, updateAnnouncement, setAnnouncementActive, deleteAnnouncement, loadDashboardWidgetConfig, saveDashboardWidgetsBulk, notificationTypeLabel, notificationTypeDescription } from "../systemConfigApi.js";
@@ -704,6 +706,7 @@ const SYSTEM_CONFIG_TABS = [
   { key: "notifications", labelKey: "saScTabNotifications", icon: Bell },
   { key: "appearance", labelKey: "saScTabAppearance", icon: Palette },
   { key: "announcements", labelKey: "saScTabAnnouncements", icon: Megaphone },
+  { key: "appUpdate", labelKey: "saScTabAppUpdate", icon: Smartphone },
 ];
 
 function SystemConfigPage({ currentAdmin, companies }) {
@@ -730,6 +733,181 @@ function SystemConfigPage({ currentAdmin, companies }) {
       {tab === "notifications" && <NotificationManagementTab currentAdmin={currentAdmin} />}
       {tab === "appearance" && <AppearanceManagementTab currentAdmin={currentAdmin} />}
       {tab === "announcements" && <AnnouncementManagementTab currentAdmin={currentAdmin} companies={companies} />}
+      {tab === "appUpdate" && <AppUpdateManagementTab currentAdmin={currentAdmin} />}
+    </div>
+  );
+}
+
+// ---------- مدیریت آپدیت نرم‌افزار و موبایل ----------
+// جدول app_releases + باکت Storage به‌نام app-releases. version_code یک عددِ
+// صعودی است که اپ موبایل برای تشخیص «نسخه‌ی جدید» با APP_VERSION_CODE مقایسه
+// می‌کند. طبق استاندارد پروژه: فرمِ ثبت فقط local state است و Write واقعی
+// فقط با کلیک روی «ثبت و انتشار». دکمه‌های انتشار/لغو انتشار/حذف در تاریخچه
+// دستوراتِ اتمیک با confirm خودشان‌اند (نه ویرایشِ فیلد) پس فوری اجرا می‌شوند.
+function AppUpdateManagementTab({ currentAdmin }) {
+  const { t } = useLanguage();
+  const [releases, setReleases] = useState(null);
+  const [version, setVersion] = useState("");
+  const [releaseNotes, setReleaseNotes] = useState("");
+  const [downloadUrl, setDownloadUrl] = useState("");
+  const [apkFile, setApkFile] = useState(null);
+  const [publishNow, setPublishNow] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [busyId, setBusyId] = useState(null);
+  const [message, setMessage] = useState("");
+  const [msgErr, setMsgErr] = useState(false);
+
+  const load = async () => {
+    const rows = await loadAppReleases();
+    setReleases(rows);
+    // پیش‌پرکردنِ شماره‌ی نسخه با patchِ بعدیِ جدیدترین نسخه (یا خودِ بیلد فعلی).
+    const base = rows[0]?.version || APP_VERSION;
+    setVersion((prev) => prev || nextPatchVersion(base));
+  };
+  useEffect(() => { load(); }, []);
+
+  const latestPublished = releases?.find((r) => r.isPublished) || null;
+
+  const resetForm = () => { setVersion(""); setReleaseNotes(""); setDownloadUrl(""); setApkFile(null); setPublishNow(true); };
+
+  const handleSubmit = async () => {
+    setMessage(""); setSaving(true);
+    const result = await createAppRelease({
+      version, releaseNotes, downloadUrl, apkFile,
+      publish: publishNow, createdBy: currentAdmin?.fullName,
+    });
+    setSaving(false);
+    if (result?.__error) { setMsgErr(true); setMessage(result.message); return; }
+    setMsgErr(false); setMessage(t("arSavedMessage"));
+    resetForm();
+    await load();
+  };
+
+  const handleTogglePublish = async (r) => {
+    setBusyId(r.id); setMessage("");
+    const result = await setReleasePublished(r.id, !r.isPublished, currentAdmin?.fullName);
+    setBusyId(null);
+    if (result?.__error) { setMsgErr(true); setMessage(result.message); return; }
+    await load();
+  };
+
+  const handleDelete = async (r) => {
+    if (!window.confirm(t("arDeleteConfirm", { version: r.version }))) return;
+    setBusyId(r.id); setMessage("");
+    const result = await deleteAppRelease(r.id);
+    setBusyId(null);
+    if (result?.__error) { setMsgErr(true); setMessage(result.message); return; }
+    await load();
+  };
+
+  if (!releases) return <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 30 }}>{t("commonLoading")}</p>;
+
+  const th = { textAlign: "center", padding: "8px", fontSize: 11, color: THEME.text3, fontWeight: 700 };
+  const td = { textAlign: "center", padding: "8px", fontSize: 12 };
+
+  return (
+    <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
+      <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 14, lineHeight: 1.8 }}>{t("arNote")}</p>
+
+      {/* نسخه فعلی و آخرین نسخه */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10, marginBottom: 18 }}>
+        <div style={{ background: THEME.bg, border: `1px solid ${THEME.border}`, borderRadius: 8, padding: "12px 14px" }}>
+          <div style={{ fontSize: 11, color: THEME.text3, fontWeight: 700, marginBottom: 4 }}>{t("arCurrentBuildVersion")}</div>
+          <div style={{ fontSize: 15, fontWeight: 800, color: THEME.navy, direction: "ltr" }}>{APP_VERSION} <span style={{ fontSize: 11, color: THEME.text3 }}>(build {APP_VERSION_CODE})</span></div>
+        </div>
+        <div style={{ background: THEME.bg, border: `1px solid ${THEME.border}`, borderRadius: 8, padding: "12px 14px" }}>
+          <div style={{ fontSize: 11, color: THEME.text3, fontWeight: 700, marginBottom: 4 }}>{t("arLatestPublishedVersion")}</div>
+          <div style={{ fontSize: 15, fontWeight: 800, color: latestPublished ? THEME.teal : THEME.text3, direction: "ltr" }}>
+            {latestPublished ? `${latestPublished.version} (build ${latestPublished.versionCode})` : "—"}
+          </div>
+        </div>
+      </div>
+
+      {/* فرم ثبت نسخه‌ی جدید */}
+      <div style={{ border: `1px solid ${THEME.border}`, borderRadius: 8, padding: 14, marginBottom: 18 }}>
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: THEME.navy, marginBottom: 10 }}>{t("arNewReleaseTitle")}</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
+          <div>
+            <label style={smallLabelStyle}>{t("arVersionLabel")}</label>
+            <input style={{ ...inputStyle, direction: "ltr" }} value={version} onChange={(e) => setVersion(e.target.value)} placeholder="1.2.0" />
+          </div>
+          <div>
+            <label style={smallLabelStyle}>{t("arExternalDownloadUrl")}</label>
+            <input style={{ ...inputStyle, direction: "ltr" }} value={downloadUrl} onChange={(e) => setDownloadUrl(e.target.value)} placeholder="https://…/app.apk" />
+          </div>
+        </div>
+        <label style={{ ...smallLabelStyle, marginTop: 10 }}>{t("arReleaseNotesLabel")}</label>
+        <textarea style={{ ...inputStyle, minHeight: 90, fontFamily: THEME.font }} value={releaseNotes} onChange={(e) => setReleaseNotes(e.target.value)} dir="rtl" />
+
+        <label style={{ ...smallLabelStyle, marginTop: 10 }}>{t("arApkFileLabel")}</label>
+        <input type="file" accept=".apk,application/vnd.android.package-archive" onChange={(e) => setApkFile(e.target.files?.[0] || null)} style={{ fontSize: 12 }} />
+        {apkFile && <div style={{ fontSize: 11, color: THEME.text3, marginTop: 4 }}>{apkFile.name} — {(apkFile.size / (1024 * 1024)).toFixed(1)} MB</div>}
+        <p style={{ fontSize: 10.5, color: THEME.text3, margin: "6px 0 0", lineHeight: 1.7 }}>{t("arApkOrLinkHint")}</p>
+
+        <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: THEME.text2, marginTop: 12, cursor: "pointer" }}>
+          <input type="checkbox" checked={publishNow} onChange={(e) => setPublishNow(e.target.checked)} />
+          {t("arPublishImmediately")}
+        </label>
+
+        {message && <p style={{ fontSize: 11.5, color: msgErr ? THEME.danger : "#166534", margin: "10px 0 0" }}>{message}</p>}
+
+        <button type="button" style={{ ...btnStyle(), marginTop: 12, display: "flex", alignItems: "center", gap: 6 }} onClick={handleSubmit} disabled={saving}>
+          <UploadCloud size={14} /> {saving ? t("arSavingEllipsis") : t("arSubmitRelease")}
+        </button>
+      </div>
+
+      {/* تاریخچه‌ی نسخه‌ها */}
+      <div style={{ fontSize: 12.5, fontWeight: 700, color: THEME.navy, marginBottom: 8 }}>{t("arHistoryTitle")}</div>
+      {releases.length === 0 ? (
+        <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 16 }}>{t("arNoReleasesYet")}</p>
+      ) : (
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead><tr style={{ borderBottom: `1.5px solid ${THEME.border}` }}>
+              <th style={th}>{t("arColVersion")}</th>
+              <th style={th}>build</th>
+              <th style={th}>{t("arColStatus")}</th>
+              <th style={th}>{t("arColPublishedAt")}</th>
+              <th style={th}>{t("arColDownload")}</th>
+              <th style={th}></th>
+            </tr></thead>
+            <tbody>
+              {releases.map((r) => (
+                <tr key={r.id} style={{ borderBottom: `1px solid ${THEME.border}` }}>
+                  <td style={{ ...td, fontWeight: 700, color: THEME.navy, direction: "ltr" }}>
+                    {r.version}
+                    {r.releaseNotes && <div style={{ fontSize: 10, color: THEME.text3, fontWeight: 400, direction: "rtl", maxWidth: 260, margin: "3px auto 0", whiteSpace: "pre-wrap" }}>{r.releaseNotes}</div>}
+                  </td>
+                  <td style={td}>{r.versionCode}</td>
+                  <td style={td}>
+                    <span style={{ fontSize: 10.5, padding: "2px 9px", borderRadius: 999, fontWeight: 700, background: r.isPublished ? "#dcfce7" : "#eef1f5", color: r.isPublished ? "#166534" : THEME.text3 }}>
+                      {r.isPublished ? t("arStatusPublished") : t("arStatusUnpublished")}
+                    </span>
+                  </td>
+                  <td style={{ ...td, fontSize: 11, color: THEME.text3 }}>{r.publishedAt ? toJalaliSafe(r.publishedAt) : "—"}</td>
+                  <td style={td}>
+                    {r.effectiveDownloadUrl
+                      ? <a href={r.effectiveDownloadUrl} target="_blank" rel="noopener noreferrer" style={{ color: THEME.teal, display: "inline-flex", alignItems: "center", gap: 3, fontSize: 11 }}><Download size={12} /> APK</a>
+                      : <span style={{ fontSize: 11, color: THEME.text3 }}>—</span>}
+                  </td>
+                  <td style={td}>
+                    <div style={{ display: "flex", gap: 5, justifyContent: "center", flexWrap: "wrap" }}>
+                      <button type="button" onClick={() => handleTogglePublish(r)} disabled={busyId === r.id}
+                        style={{ ...btnStyle(r.isPublished ? THEME.text3 : "#166534"), fontSize: 10.5, padding: "5px 10px" }}>
+                        {r.isPublished ? t("arUnpublishAction") : t("arPublishAction")}
+                      </button>
+                      <button type="button" onClick={() => handleDelete(r)} disabled={busyId === r.id}
+                        style={{ ...btnStyle(THEME.danger), fontSize: 10.5, padding: "5px 10px", display: "flex", alignItems: "center", gap: 4 }}>
+                        <Trash2 size={11} /> {t("commonDelete")}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

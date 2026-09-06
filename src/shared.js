@@ -12,6 +12,14 @@ const tr = (key, params) => translate(getCurrentLang(), key, params);
 
 export const APP_NAME = "Integrated HSE Management System";
 
+// نسخه‌ی همین بیلد از اپ. APP_VERSION رشته‌ی نمایشی است و APP_VERSION_CODE
+// یک عدد صعودی که اپ موبایل برای تشخیص «نسخه‌ی جدید موجود است» با
+// version_code آخرین انتشارِ ثبت‌شده در جدول app_releases مقایسه می‌کند.
+// هنگام انتشار یک نسخه‌ی جدید، این دو مقدار باید هم‌زمان با ساخت APK
+// جدید به‌روزرسانی شوند.
+export const APP_VERSION = "1.0.0";
+export const APP_VERSION_CODE = 1;
+
 // نکته امنیتی: فقط از کلید publishable/anon استفاده می‌شود، هرگز کلید secret را
 // داخل کد سمت مرورگر قرار ندهید چون هرکسی که اپ را باز کند می‌تواند آن را ببیند.
 export const SUPABASE_URL = "https://zmmxiyqlwkqjzghbcydi.supabase.co";

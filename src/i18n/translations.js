@@ -8668,7 +8668,51 @@ export const translations = {
   "saNtMachineryPendingReviewLabel": { "fa": "ماشین‌آلات در انتظار بررسی", "en": "Machinery pending review" },
   "saNtMachineryPendingReviewDesc": { "fa": "اعلان درخواست‌های ثبت ماشین‌آلات که منتظر بررسی کارفرما هستند.", "en": "Alerts about machinery registration requests awaiting employer review." },
   "saNtBarrierEffectivenessLabel": { "fa": "اثربخشی Barrier", "en": "Barrier effectiveness" },
-  "saNtBarrierEffectivenessDesc": { "fa": "هشدار کاهش اثربخشی Barrierهای BowTie.", "en": "Warns when the effectiveness of BowTie barriers drops." }
+  "saNtBarrierEffectivenessDesc": { "fa": "هشدار کاهش اثربخشی Barrierهای BowTie.", "en": "Warns when the effectiveness of BowTie barriers drops." },
+
+  // --- SuperAdmin: مدیریت آپدیت نرم‌افزار و موبایل (app_releases) ---
+  "saScTabAppUpdate": { "fa": "مدیریت آپدیت نرم‌افزار و موبایل", "en": "Software & Mobile Update Management" },
+  "arNote": { "fa": "از این بخش نسخه‌های جدید اپ موبایل (APK) را ثبت و منتشر کنید. اپ موبایل کاربران، آخرین نسخه‌ی «منتشرشده» را با نسخه‌ی نصب‌شده مقایسه می‌کند و در صورت جدیدتر بودن، پیام «نسخه جدید موجود است» را نشان می‌دهد.", "en": "Register and publish new mobile app releases (APK) here. Each user's mobile app compares the latest published release with the installed one and shows a \"new version available\" message when it is newer." },
+  "arCurrentBuildVersion": { "fa": "نسخه‌ی این بیلد", "en": "This build's version" },
+  "arLatestPublishedVersion": { "fa": "آخرین نسخه‌ی منتشرشده", "en": "Latest published version" },
+  "arNewReleaseTitle": { "fa": "ثبت نسخه‌ی جدید", "en": "Register a new release" },
+  "arVersionLabel": { "fa": "شماره نسخه (مثل 1.2.0)", "en": "Version number (e.g. 1.2.0)" },
+  "arExternalDownloadUrl": { "fa": "لینک دانلود بیرونی (اختیاری)", "en": "External download link (optional)" },
+  "arReleaseNotesLabel": { "fa": "Release Notes — تغییرات این نسخه", "en": "Release notes — what changed in this version" },
+  "arApkFileLabel": { "fa": "فایل APK (اختیاری)", "en": "APK file (optional)" },
+  "arApkOrLinkHint": { "fa": "یا فایل APK را آپلود کنید، یا لینک دانلود بیرونی را وارد کنید — حداقل یکی لازم است. version_code به‌صورت خودکار و صعودی برای هر انتشار تعیین می‌شود.", "en": "Either upload an APK file or enter an external download link — at least one is required. The version_code is assigned automatically and increments with every release." },
+  "arPublishImmediately": { "fa": "همین حالا منتشر شود", "en": "Publish immediately" },
+  "arSubmitRelease": { "fa": "ثبت و انتشار", "en": "Register & publish" },
+  "arSavingEllipsis": { "fa": "در حال ثبت...", "en": "Saving..." },
+  "arSavedMessage": { "fa": "نسخه‌ی جدید ثبت شد.", "en": "The new release has been registered." },
+  "arHistoryTitle": { "fa": "تاریخچه‌ی نسخه‌ها", "en": "Version history" },
+  "arNoReleasesYet": { "fa": "هنوز نسخه‌ای ثبت نشده است.", "en": "No releases registered yet." },
+  "arColVersion": { "fa": "نسخه", "en": "Version" },
+  "arColStatus": { "fa": "وضعیت", "en": "Status" },
+  "arColPublishedAt": { "fa": "تاریخ انتشار", "en": "Published on" },
+  "arColDownload": { "fa": "دانلود", "en": "Download" },
+  "arStatusPublished": { "fa": "منتشرشده", "en": "Published" },
+  "arStatusUnpublished": { "fa": "منتشرنشده", "en": "Unpublished" },
+  "arPublishAction": { "fa": "انتشار", "en": "Publish" },
+  "arUnpublishAction": { "fa": "لغو انتشار", "en": "Unpublish" },
+  "arDeleteConfirm": { "fa": "نسخه‌ی «{version}» حذف شود؟ (فایل APK آن هم پاک می‌شود)", "en": "Delete version \"{version}\"? (its APK file will be removed too)" },
+  "arErrVersionRequired": { "fa": "شماره نسخه الزامی است", "en": "Version number is required" },
+  "arErrNeedApkOrLink": { "fa": "یا فایل APK را آپلود کنید یا لینک دانلود بیرونی را وارد کنید", "en": "Upload an APK file or enter an external download link" },
+  "arErrApkUpload": { "fa": "خطا در آپلود APK: {detail}", "en": "APK upload error: {detail}" },
+  "arErrCreate": { "fa": "خطا در ثبت نسخه: {detail}", "en": "Error registering the release: {detail}" },
+  "arErrPublishToggle": { "fa": "خطا در تغییر وضعیت انتشار", "en": "Error changing the publish state" },
+  "arErrDelete": { "fa": "خطا در حذف نسخه", "en": "Error deleting the release" },
+
+  // --- درباره IHMS + بنر نسخه‌ی جدید در موبایل ---
+  "aboutCurrentVersion": { "fa": "نسخه‌ی نصب‌شده", "en": "Installed version" },
+  "aboutLatestVersion": { "fa": "آخرین نسخه‌ی موجود", "en": "Latest available version" },
+  "aboutNewVersionAvailable": { "fa": "نسخه‌ی جدید موجود است", "en": "A new version is available" },
+  "aboutUpToDate": { "fa": "شما از آخرین نسخه استفاده می‌کنید", "en": "You are on the latest version" },
+  "aboutReleaseNotesLabel": { "fa": "تغییرات این نسخه", "en": "What's new in this version" },
+  "aboutDownloadUpdate": { "fa": "دانلود به‌روزرسانی", "en": "Download update" },
+  "updateBannerNewVersion": { "fa": "نسخه جدید موجود است ({version})", "en": "A new version is available ({version})" },
+  "updateBannerDownload": { "fa": "دانلود", "en": "Download" },
+  "updateBannerDismiss": { "fa": "بستن", "en": "Dismiss" }
 };
 
 // برای فایل‌های غیر React (لایه‌ی داده / api.js) که به Hook دسترسی ندارند اما
