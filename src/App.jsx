@@ -1038,11 +1038,9 @@ async function attemptCredentialLogin(username, password) {
 function LoginScreen({ onLogin }) {
   const { lang, setLang, t, dir } = useLanguage();
   const appearance = useAppearance();
-  // اگر کاربر در همین صفحه‌ی ورود زبان را دستی انتخاب کند، آن انتخاب باید
-  // بعد از ورود هم بماند و با preferred_language ذخیره‌شده‌ی حساب بازنویسی
-  // نشود (نگاه کنید به finishLogin).
-  const [langPickedHere, setLangPickedHere] = useState(false);
-  const pickLang = (value) => { setLangPickedHere(true); setLang(value); };
+  // زبانی که هنگام زدن دکمه‌ی ورود روی صفحه‌ی ورود فعال است، همان زبانی است
+  // که بعد از ورود هم می‌ماند — هیچ ترجیحِ ذخیره‌شده‌ای آن را بازنویسی نمی‌کند
+  // (نگاه کنید به finishLogin). این تنها منبعِ حقیقتِ زبان است.
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -1084,10 +1082,10 @@ function LoginScreen({ onLogin }) {
       setCurrentCompanyId(user.companyId);
       await syncOfflineCacheCompanyScope(user.companyId);
       trackLogin(user);
-      // ترجیح زبانِ ذخیره‌شده‌ی حساب فقط وقتی اعمال می‌شود که کاربر همین‌جا
-      // در صفحه‌ی ورود زبان را دستی عوض نکرده باشد؛ انتخابِ صریحِ لحظه‌ی ورود
-      // اولویت دارد.
-      if (!langPickedHere && user.preferredLanguage) setLang(user.preferredLanguage);
+      // زبان به‌عمد اینجا تغییر داده نمی‌شود: هرچه روی صفحه‌ی ورود انتخاب/فعال
+      // بوده همان می‌ماند. (قبلاً user.preferredLanguage اینجا اعمال می‌شد و
+      // انتخابِ قابل‌مشاهده‌ی صفحه‌ی ورود را بازنویسی می‌کرد — باعث می‌شد گاهی
+      // با انتخابِ «فارسی»، کاربر انگلیسی وارد شود.)
       // توکن نشست از قبل، داخل خودِ attemptCredentialLogin (از طریق
       // issueSessionToken) گرفته و ذخیره شده — اینجا دیگر نیازی به تکرارش نیست.
       onLogin(user);
@@ -1172,7 +1170,7 @@ function LoginScreen({ onLogin }) {
         <div style={{ flex: "1 1 380px", minWidth: 320, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 24px", background: THEME.surface }}>
           <div style={{ width: 340, maxWidth: "100%", direction: dir }}>
             <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
-              <LanguageToggle lang={lang} setLang={pickLang} />
+              <LanguageToggle lang={lang} setLang={setLang} />
             </div>
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
               <IhmsLogo size={200} src={appearance?.logoUrl} />
@@ -1549,15 +1547,10 @@ function ProfileView({ onBack, currentUser, roleLabel }) {
     setTimeout(() => setSaved(false), 2500);
   };
 
-  // انتخاب زبان بلافاصله روی هدر/این صفحه اعمال می‌شود (setLang)، و همزمان
-  // به‌عنوان ترجیح دائمی همین کاربر در دیتابیس ذخیره می‌شود — دفعه‌ی بعد که
-  // از هر دستگاهی وارد شود، همین زبان روی هدرش اعمال خواهد شد.
-  const handleLanguageChange = async (value) => {
-    setLang(value);
-    if (currentUser?.role && currentUser?.id) {
-      await updateMyProfile(currentUser.role, currentUser.id, { preferredLanguage: value });
-    }
-  };
+  // انتخاب زبان بلافاصله اعمال و در localStorage همین دستگاه ذخیره می‌شود
+  // (از طریق setLang). عمداً در دیتابیسِ حساب ذخیره نمی‌شود: ترجیحِ ذخیره‌شده‌ی
+  // حساب قبلاً باعث می‌شد هنگام ورود، انتخابِ زبانِ صفحه‌ی ورود بازنویسی شود.
+  const handleLanguageChange = (value) => setLang(value);
 
   const handleToggleBiometric = async () => {
     setBioError("");
