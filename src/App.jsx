@@ -4158,19 +4158,18 @@ function AdminDashboard({ onLogout, currentUser }) {
           <MobileAnnouncementBanner setView={setView} />
           <DbSizeWarningBanner />
           {isModuleInPlan(planFeatures, "chat") && <MenuRow icon={MessageCircle} label={t("moduleChat")} onClick={() => setView("chat")} badge={chatUnread} />}
-          {isModuleInPlan(planFeatures, "anomalyReport") && <MenuRow icon={AlertTriangle} label={mt(anomalyMod)} onClick={() => setView("anomalyReport")} accent sub />}
-          {isModuleInPlan(planFeatures, "riskAssessment") && <MenuRow icon={ShieldCheck} label={mt(riskMod)} onClick={() => setView("riskAssessment")} accent sub />}
-          {isModuleInPlan(planFeatures, "personnelAccess") && <MenuRow icon={Users} label={mt(personnelMod)} onClick={() => setView("personnelAccess")} accent sub />}
-          {isModuleInPlan(planFeatures, "machineryManagement") && <MenuRow icon={Truck} label={mt(machineryMod)} onClick={() => setView("machineryManagement")} accent sub />}
-          {isModuleInPlan(planFeatures, "scaffoldManagement") && <MenuRow icon={Tag} label={mt(scaffoldMod)} onClick={() => setView("scaffoldManagement")} accent sub />}
-          {isModuleInPlan(planFeatures, "managementDashboard") && <MenuRow icon={BarChart3} label={mt(managementMod)} onClick={() => setView("managementDashboard")} accent />}
-          {isModuleInPlan(planFeatures, "proactiveIndicators") && <MenuRow icon={TrendingUp} label={mt(proactiveMod)} onClick={() => setView("proactiveIndicators")} accent />}
-          {isModuleInPlan(planFeatures, "adminAnalytics") && <MenuRow icon={BarChart3} label={t("moduleAdminAnalytics")} onClick={() => setView("adminAnalytics")} />}
-          {/* مدیریت سیستم: طبق خواسته‌ی صریح، «اگه تو پلن‌ها فعال شد فقط
-              برای ادمین شرکت‌ها فعال میشه» — نقش Admin از قبل تضمین‌شده
-              (این منو فقط داخل AdminDashboard رندر می‌شود)، پس اینجا فقط
-              کافی است فعال‌بودنش در پلن را هم چک کنیم. */}
-          {isModuleInPlan(planFeatures, "systemManagement") && <MenuRow icon={Settings} label={t("moduleSystemManagement")} onClick={() => setView("systemManagement")} accent sub />}
+          {/* دقیقاً همان لیست و ترتیبِ Sidebarِ دسکتاپ (sidebarModules ساخته‌شده
+              با applyModuleConfig) — تا ترتیبِ «مدیریت ماژول‌ها» در وب و موبایل یکی باشد. */}
+          {sidebarModules.map((m) => (
+            <MenuRow
+              key={m.key}
+              icon={m.icon}
+              label={m.label}
+              onClick={() => setView(m.key)}
+              accent={m.key !== "adminAnalytics"}
+              sub={!!(m.sub && m.sub.length)}
+            />
+          ))}
         </div>
       )}
 
@@ -4441,7 +4440,9 @@ function EmployerDashboard({ onLogout, currentUser }) {
       {view === "menu" && (
         <div style={styles.menuList}>
           <MobileAnnouncementBanner setView={setView} />
-          {HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key)).map((mod) => (
+          {/* همان ترتیبی که «پیکربندی سامانه → مدیریت ماژول‌ها» تعیین می‌کند —
+              دقیقاً مثل Sidebarِ دسکتاپ (applyModuleConfig)، تا وب و موبایل یکی باشند. */}
+          {applyModuleConfig(HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key)), moduleConfig).map((mod) => (
             <MenuRow
               key={mod.key}
               icon={MODULE_ICON[mod.key] || LayoutGrid}
@@ -4682,7 +4683,8 @@ function ContractorDashboard({ onLogout, currentUser }) {
       {view === "menu" && (
         <div style={styles.menuList}>
           <MobileAnnouncementBanner setView={setView} />
-          {HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key)).map((mod) => (
+          {/* همان ترتیبِ «مدیریت ماژول‌ها» — یکسان با Sidebarِ دسکتاپ (وب/موبایل یکی). */}
+          {applyModuleConfig(HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key)), moduleConfig).map((mod) => (
             <MenuRow
               key={mod.key}
               icon={MODULE_ICON[mod.key] || LayoutGrid}

@@ -61,6 +61,17 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
+      # کلیدِ امضای debug ثابت (کامیت‌شده در ریپو، رمز استاندارد "android").
+      # بدون این، هر اجرای CI یک debug.keystore تصادفی می‌سازد → امضای APKها
+      # با هم فرق می‌کند → اندروید اجازه‌ی «به‌روزرسانی روی نصبِ قبلی» را
+      # نمی‌دهد و کاربر مجبور است هر بار حذف/نصب کند. با کلیدِ ثابت، همه‌ی
+      # بیلدها یک امضا دارند و آپدیت روی نسخه‌ی قبلی نصب می‌شود.
+      - name: Use stable debug signing key
+        run: |
+          mkdir -p ~/.android
+          cp android-signing/debug.keystore ~/.android/debug.keystore
+          echo "Stable debug keystore in place."
+
       - name: Set app version in Gradle
         run: |
           GRADLE=android/app/build.gradle
