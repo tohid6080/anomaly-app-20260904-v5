@@ -3,6 +3,7 @@ import { ChevronRight, TrendingUp, ClipboardList, BookOpen, X } from "lucide-rea
 import { styles, THEME } from "../shared.js";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
 import { loadActiveIndicators, loadAllAssessments, accidentPronenessLevel, indicatorLabel, indicatorDescriptionLabel } from "./proactiveIndicatorsApi.js";
+import { loadModuleConfig } from "../systemConfigApi.js";
 import { loadCorrectiveActionsForAssessments, STATUS_META } from "../correctiveActions/correctiveActionsApi.js";
 import AccidentPronenessAssessmentForm from "./AccidentPronenessAssessmentForm.jsx";
 import HseClimateCampaignManager from "./HseClimateCampaignManager.jsx";
@@ -60,9 +61,16 @@ export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role
   // (نه tab جدید با target=_blank) تا در موبایل هم همیشه یک راه خروج/بستن
   // با دکمه‌ی × داشته باشد.
   const [showGuide, setShowGuide] = useState(false);
+  // نامِ سفارشیِ ماژول از «پیکربندی سامانه → مدیریت ماژول‌ها» (اگر ادمین
+  // display_label تنظیم کرده باشد). خالی = ترجمه‌ی i18n استفاده می‌شود.
+  const [moduleTitle, setModuleTitle] = useState("");
 
   useEffect(() => {
     loadActiveIndicators().then((rows) => { setIndicators(rows); setLoading(false); });
+    loadModuleConfig().then((cfg) => {
+      const custom = cfg?.find((c) => c.moduleKey === "proactiveIndicators")?.displayLabel;
+      if (custom && custom.trim()) setModuleTitle(custom.trim());
+    }).catch(() => {});
   }, []);
 
   if (view === "form" && activeIndicatorKey === "accident_proneness") {
@@ -109,7 +117,7 @@ export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role
         </button>
       </div>
       {showGuide && <HseGuideOverlay onClose={() => setShowGuide(false)} />}
-      <h3 style={{ marginBottom: 4, color: THEME.navy }}>{t("pidModuleTitle")}</h3>
+      <h3 style={{ marginBottom: 4, color: THEME.navy }}>{moduleTitle || t("pidModuleTitle")}</h3>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 0, marginBottom: 16 }}>
         {t("pidModuleDesc")}
       </p>

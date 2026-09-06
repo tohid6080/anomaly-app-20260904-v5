@@ -959,7 +959,14 @@ const DEFAULT_MODULE_CONFIG = [
   { moduleKey: "managementDashboard", labelKey: "saDmcLabelMgmtDash", descKey: "saDmcDescMgmtDash" },
 ];
 
-const buildDefaultModuleConfig = (t) => DEFAULT_MODULE_CONFIG.map((m) => ({ moduleKey: m.moduleKey, displayLabel: t(m.labelKey), description: t(m.descKey) }));
+// برچسب/توضیحِ پیش‌فرضِ ترجمه‌شده‌ی هر ماژول — برای placeholderِ فیلدها و
+// «بازگردانی پیش‌فرض». هنگام ساختِ اولیه‌ی ردیف‌ها displayLabel خالی گذاشته
+// می‌شود تا اگر ادمین چیزی تایپ نکند، همان ترجمه‌ی دوزبانه‌ی i18n استفاده شود.
+const buildDefaultModuleConfig = (t) => DEFAULT_MODULE_CONFIG.map((m) => ({ moduleKey: m.moduleKey, displayLabel: "", description: "" }));
+const moduleDefaultLabel = (t, moduleKey) => {
+  const d = DEFAULT_MODULE_CONFIG.find((x) => x.moduleKey === moduleKey);
+  return d ? t(d.labelKey) : moduleKey;
+};
 
 function ModuleManagementTab({ currentAdmin }) {
   const { t } = useLanguage();
@@ -969,16 +976,14 @@ function ModuleManagementTab({ currentAdmin }) {
   const [msgErr, setMsgErr] = useState(false);
   const [dragIndex, setDragIndex] = useState(null);
 
-  // برچسب/توضیح نمایشی همیشه از i18n خوانده می‌شود (نه رشته‌ی تک‌زبانه‌ی
-  // display_label که در جدول system_module_config seed شده) — فقط ترتیب از
-  // دیتابیس می‌آید.
+  // نامِ سفارشیِ ادمین (display_label) هرجا که خالی نباشد، مبناست و در وب و
+  // موبایل نمایش داده می‌شود؛ اگر خالی بماند، ترجمه‌ی i18n استفاده می‌شود.
+  // پس اینجا مقدارِ واقعیِ دیتابیس نمایش داده می‌شود (نه ترجمه) و فیلدِ خالی
+  // با placeholderِ نامِ پیش‌فرض همراه است.
   const load = () => loadModuleConfig().then((rows) => {
-    const defs = new Map(DEFAULT_MODULE_CONFIG.map((d) => [d.moduleKey, d]));
-    const base = rows.length > 0 ? rows : buildDefaultModuleConfig(t);
-    setList(base.map((m) => {
-      const d = defs.get(m.moduleKey);
-      return d ? { ...m, displayLabel: t(d.labelKey), description: t(d.descKey) } : m;
-    }));
+    setList(rows.length > 0
+      ? rows.map((r) => ({ moduleKey: r.moduleKey, displayLabel: r.displayLabel || "", description: r.description || "" }))
+      : buildDefaultModuleConfig(t));
   });
   useEffect(() => { load(); }, []);
 
@@ -1038,7 +1043,7 @@ function ModuleManagementTab({ currentAdmin }) {
             <button type="button" onClick={() => move(idx, 1)} disabled={idx === list.length - 1} style={{ background: "none", border: "none", cursor: idx === list.length - 1 ? "default" : "pointer", opacity: idx === list.length - 1 ? 0.3 : 1, padding: 1 }}><ArrowDown size={13} color={THEME.text2} /></button>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 8, flex: 1, minWidth: 0 }}>
-            <input style={inputStyle} value={m.displayLabel} onChange={(e) => updateField(idx, "displayLabel", e.target.value)} dir="rtl" />
+            <input style={inputStyle} placeholder={moduleDefaultLabel(t, m.moduleKey)} value={m.displayLabel} onChange={(e) => updateField(idx, "displayLabel", e.target.value)} dir="rtl" />
             <input style={inputStyle} placeholder={t("saMmDescPlaceholder")} value={m.description} onChange={(e) => updateField(idx, "description", e.target.value)} dir="rtl" />
           </div>
         </div>

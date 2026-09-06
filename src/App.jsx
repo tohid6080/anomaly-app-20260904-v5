@@ -3330,9 +3330,9 @@ const MODULE_ICON = { profile: User, chat: MessageCircle, anomalyReport: AlertTr
 function applyModuleConfig(modules, config) {
   if (!config || config.length === 0) return modules;
   const orderMap = new Map(config.map((c, idx) => [c.moduleKey, idx]));
-  // فقط ترتیب (sort_order) از «پیکربندی سامانه» اعمال می‌شود؛ برچسب نمایشی
-  // قبلاً توسط caller از طریق mt() (ترجمه‌ی i18n) در m.label قرار گرفته و نباید
-  // با رشته‌ی تک‌زبانه‌ی display_label بازنویسی شود.
+  // فقط ترتیب (sort_order) اینجا اعمال می‌شود؛ برچسبِ نمایشی قبلاً توسط
+  // caller از طریق mt() تعیین شده (نامِ سفارشیِ ادمین اگر باشد، وگرنه ترجمه‌ی
+  // i18n) — پس اینجا دوباره override نمی‌شود.
   return [...modules].sort((a, b) => {
     const ao = orderMap.has(a.key) ? orderMap.get(a.key) : 999;
     const bo = orderMap.has(b.key) ? orderMap.get(b.key) : 999;
@@ -4079,11 +4079,11 @@ function AdminDashboard({ onLogout, currentUser }) {
   // خودکار به رفتار قبلی برمی‌گردند.
   const mt = (m) => {
     const cfg = Array.isArray(moduleConfig) ? moduleConfig.find((c) => c.moduleKey === m?.key) : null;
-    // ترجمه‌ی i18n همیشه اولویت دارد؛ display_labelِ جدول system_module_config
-    // یک رشته‌ی تک‌زبانه (فارسی) است و در حالت دوزبانه نمی‌تواند مبنا باشد — فقط
-    // وقتی استفاده می‌شود که هیچ کلید ترجمه‌ای برای این ماژول وجود نداشته باشد.
-    if (m?.labelKey) return t(m.labelKey);
-    return cfg?.displayLabel || m?.label;
+    // نامِ سفارشیِ ادمین از «پیکربندی سامانه → مدیریت ماژول‌ها» (display_label)
+    // هرجا که خالی نباشد، اولویت دارد و در وب و موبایل یکسان نمایش داده می‌شود.
+    // اگر تنظیم نشده باشد، ترجمه‌ی دوزبانه‌ی i18n استفاده می‌شود.
+    if (cfg && typeof cfg.displayLabel === "string" && cfg.displayLabel.trim()) return cfg.displayLabel.trim();
+    return m?.labelKey ? t(m.labelKey) : m?.label;
   };
   const [view, setView] = usePersistedState("ihms_view_admin", "menu");
   useEffect(() => { trackPageView(currentUser, view); }, [view]);
@@ -4096,7 +4096,9 @@ function AdminDashboard({ onLogout, currentUser }) {
   const [planFeatures, setPlanFeatures] = useState(null);
   useEffect(() => { loadCurrentCompanyPlanFeatures().then(setPlanFeatures); }, []);
   const [moduleConfig, setModuleConfig] = useState(null);
-  useEffect(() => { loadModuleConfig().then(setModuleConfig); }, []);
+  // با هر جابه‌جایی در داشبورد دوباره خوانده می‌شود تا تغییرِ نامِ ماژول‌ها در
+  // «پیکربندی سامانه» بلافاصله (بدون نیاز به reload یا نصب مجدد اپ) اعمال شود.
+  useEffect(() => { loadModuleConfig().then(setModuleConfig); }, [view]);
   const [chatUnread, setChatUnread] = useState(0);
   useEffect(() => {
     const load = () => loadUnreadTotal(currentUser?.username).then(setChatUnread);
@@ -4314,11 +4316,11 @@ function EmployerDashboard({ onLogout, currentUser }) {
   // خودکار به رفتار قبلی برمی‌گردند.
   const mt = (m) => {
     const cfg = Array.isArray(moduleConfig) ? moduleConfig.find((c) => c.moduleKey === m?.key) : null;
-    // ترجمه‌ی i18n همیشه اولویت دارد؛ display_labelِ جدول system_module_config
-    // یک رشته‌ی تک‌زبانه (فارسی) است و در حالت دوزبانه نمی‌تواند مبنا باشد — فقط
-    // وقتی استفاده می‌شود که هیچ کلید ترجمه‌ای برای این ماژول وجود نداشته باشد.
-    if (m?.labelKey) return t(m.labelKey);
-    return cfg?.displayLabel || m?.label;
+    // نامِ سفارشیِ ادمین از «پیکربندی سامانه → مدیریت ماژول‌ها» (display_label)
+    // هرجا که خالی نباشد، اولویت دارد و در وب و موبایل یکسان نمایش داده می‌شود.
+    // اگر تنظیم نشده باشد، ترجمه‌ی دوزبانه‌ی i18n استفاده می‌شود.
+    if (cfg && typeof cfg.displayLabel === "string" && cfg.displayLabel.trim()) return cfg.displayLabel.trim();
+    return m?.labelKey ? t(m.labelKey) : m?.label;
   };
   const [view, setView] = usePersistedState("ihms_view_employer", "menu");
   useEffect(() => { trackPageView(currentUser, view); }, [view]);
@@ -4329,7 +4331,9 @@ function EmployerDashboard({ onLogout, currentUser }) {
   const [planFeatures, setPlanFeatures] = useState(null);
   useEffect(() => { loadCurrentCompanyPlanFeatures().then(setPlanFeatures); }, []);
   const [moduleConfig, setModuleConfig] = useState(null);
-  useEffect(() => { loadModuleConfig().then(setModuleConfig); }, []);
+  // با هر جابه‌جایی در داشبورد دوباره خوانده می‌شود تا تغییرِ نامِ ماژول‌ها در
+  // «پیکربندی سامانه» بلافاصله (بدون نیاز به reload یا نصب مجدد اپ) اعمال شود.
+  useEffect(() => { loadModuleConfig().then(setModuleConfig); }, [view]);
   const [permMap, setPermMap] = useState({});
   const [smartItems, setSmartItems] = useState([]);
   const [chatUnread, setChatUnread] = useState(0);
@@ -4554,11 +4558,11 @@ function ContractorDashboard({ onLogout, currentUser }) {
   // خودکار به رفتار قبلی برمی‌گردند.
   const mt = (m) => {
     const cfg = Array.isArray(moduleConfig) ? moduleConfig.find((c) => c.moduleKey === m?.key) : null;
-    // ترجمه‌ی i18n همیشه اولویت دارد؛ display_labelِ جدول system_module_config
-    // یک رشته‌ی تک‌زبانه (فارسی) است و در حالت دوزبانه نمی‌تواند مبنا باشد — فقط
-    // وقتی استفاده می‌شود که هیچ کلید ترجمه‌ای برای این ماژول وجود نداشته باشد.
-    if (m?.labelKey) return t(m.labelKey);
-    return cfg?.displayLabel || m?.label;
+    // نامِ سفارشیِ ادمین از «پیکربندی سامانه → مدیریت ماژول‌ها» (display_label)
+    // هرجا که خالی نباشد، اولویت دارد و در وب و موبایل یکسان نمایش داده می‌شود.
+    // اگر تنظیم نشده باشد، ترجمه‌ی دوزبانه‌ی i18n استفاده می‌شود.
+    if (cfg && typeof cfg.displayLabel === "string" && cfg.displayLabel.trim()) return cfg.displayLabel.trim();
+    return m?.labelKey ? t(m.labelKey) : m?.label;
   };
   const [view, setView] = usePersistedState("ihms_view_contractor", "menu");
   useEffect(() => { trackPageView(currentUser, view); }, [view]);
@@ -4569,7 +4573,9 @@ function ContractorDashboard({ onLogout, currentUser }) {
   const [planFeatures, setPlanFeatures] = useState(null);
   useEffect(() => { loadCurrentCompanyPlanFeatures().then(setPlanFeatures); }, []);
   const [moduleConfig, setModuleConfig] = useState(null);
-  useEffect(() => { loadModuleConfig().then(setModuleConfig); }, []);
+  // با هر جابه‌جایی در داشبورد دوباره خوانده می‌شود تا تغییرِ نامِ ماژول‌ها در
+  // «پیکربندی سامانه» بلافاصله (بدون نیاز به reload یا نصب مجدد اپ) اعمال شود.
+  useEffect(() => { loadModuleConfig().then(setModuleConfig); }, [view]);
   const [permMap, setPermMap] = useState({});
   const [smartItems, setSmartItems] = useState([]);
   const riskMod = HSE_MODULES.find((m) => m.key === "riskAssessment");
