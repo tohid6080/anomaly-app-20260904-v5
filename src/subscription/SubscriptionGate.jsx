@@ -7,6 +7,7 @@ import {
   verifyPayment,
 } from "../subscriptionApi.js";
 import PaymentMethodsSection from "./CardTransferPayment.jsx";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 /**
  * گیت اشتراک — درست بعد از ورود موفق (و بیومتریک، اگر فعال باشد) و قبل
@@ -19,6 +20,7 @@ import PaymentMethodsSection from "./CardTransferPayment.jsx";
  * است» همان Query String صفحه (?orderId=...&Authority=...) است.
  */
 export default function SubscriptionGate({ currentUser, onLogout, children }) {
+  const { t } = useLanguage();
   const [info, setInfo] = useState(undefined); // undefined = در حال بارگذاری
   const [params] = useState(() => new URLSearchParams(window.location.search));
   const [verifying, setVerifying] = useState(() => !!new URLSearchParams(window.location.search).get("orderId"));
@@ -49,7 +51,7 @@ export default function SubscriptionGate({ currentUser, onLogout, children }) {
       <div style={styles.centerScreen}>
         <div style={{ textAlign: "center" }}>
           <Loader2 size={32} color={THEME.teal} />
-          <p style={{ marginTop: 16, color: THEME.text2, fontSize: 13.5 }}>در حال بررسی نتیجه‌ی پرداخت...</p>
+          <p style={{ marginTop: 16, color: THEME.text2, fontSize: 13.5 }}>{t("sgVerifyingPayment")}</p>
         </div>
       </div>
     );
@@ -60,7 +62,7 @@ export default function SubscriptionGate({ currentUser, onLogout, children }) {
   }
 
   if (info === undefined) {
-    return <div style={styles.centerScreen}><p style={{ color: THEME.text3 }}>در حال بارگذاری...</p></div>;
+    return <div style={styles.centerScreen}><p style={{ color: THEME.text3 }}>{t("commonLoading")}</p></div>;
   }
 
   const access = computeSubscriptionAccess(info);
@@ -78,16 +80,18 @@ export default function SubscriptionGate({ currentUser, onLogout, children }) {
 }
 
 function TrialWarningBanner({ access }) {
+  const { t } = useLanguage();
   return (
     <div style={{ background: "#fef3c7", borderBottom: "1px solid #f59e0b", padding: "8px 20px", textAlign: "center", fontSize: 12.5, color: "#92400e", fontWeight: 600 }}>
       <Clock size={13} style={{ display: "inline", verticalAlign: "middle", marginInlineEnd: 5 }} />
       {access.label}
-      {access.trialEnd && <span style={{ fontWeight: 500 }}> — پایان دوره‌ی آزمایشی: {toJalaliDateTime(access.trialEnd)}</span>}
+      {access.trialEnd && <span style={{ fontWeight: 500 }}>{t("sgTrialEndSuffix", { date: toJalaliDateTime(access.trialEnd) })}</span>}
     </div>
   );
 }
 
 function PaymentResultScreen({ result, onContinue, onLogout }) {
+  const { t } = useLanguage();
   const success = result?.activated;
   return (
     <div style={styles.centerScreen}>
@@ -95,24 +99,25 @@ function PaymentResultScreen({ result, onContinue, onLogout }) {
         {success ? (
           <>
             <CheckCircle2 size={48} color="#166534" style={{ margin: "0 auto 14px" }} />
-            <h2 style={{ fontSize: 17, color: THEME.navy, fontWeight: 800, margin: "0 0 8px" }}>پرداخت با موفقیت انجام شد</h2>
-            <p style={{ fontSize: 12.5, color: THEME.text2, lineHeight: 1.9, marginBottom: 6 }}>پلن شما فعال شد و اکنون می‌توانید از امکانات سامانه استفاده کنید.</p>
-            {result.refId && <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 18 }}>کد رهگیری: {result.refId}</p>}
+            <h2 style={{ fontSize: 17, color: THEME.navy, fontWeight: 800, margin: "0 0 8px" }}>{t("sgPaymentSuccess")}</h2>
+            <p style={{ fontSize: 12.5, color: THEME.text2, lineHeight: 1.9, marginBottom: 6 }}>{t("sgPaymentSuccessBody")}</p>
+            {result.refId && <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 18 }}>{t("sgRefCode", { ref: result.refId })}</p>}
           </>
         ) : (
           <>
             <XCircle size={48} color={THEME.danger} style={{ margin: "0 auto 14px" }} />
-            <h2 style={{ fontSize: 17, color: THEME.navy, fontWeight: 800, margin: "0 0 8px" }}>پرداخت ناموفق بود</h2>
-            <p style={{ fontSize: 12.5, color: THEME.text2, lineHeight: 1.9, marginBottom: 18 }}>{result.error || "تراکنش تکمیل نشد یا توسط شما لغو شد. می‌توانید دوباره تلاش کنید."}</p>
+            <h2 style={{ fontSize: 17, color: THEME.navy, fontWeight: 800, margin: "0 0 8px" }}>{t("sgPaymentFailed")}</h2>
+            <p style={{ fontSize: 12.5, color: THEME.text2, lineHeight: 1.9, marginBottom: 18 }}>{result.error || t("sgPaymentFailedBody")}</p>
           </>
         )}
-        <button type="button" style={styles.button} onClick={onContinue}>{success ? "ادامه" : "بازگشت به انتخاب پلن"}</button>
+        <button type="button" style={styles.button} onClick={onContinue}>{success ? t("sgContinue") : t("sgBackToPlans")}</button>
       </div>
     </div>
   );
 }
 
 function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
+  const { t } = useLanguage();
   const [plans, setPlans] = useState(null);
   const [selectedPlanId, setSelectedPlanId] = useState("");
   const [billingCycle, setBillingCycle] = useState("yearly");
@@ -135,20 +140,20 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
             <h1 style={{ fontSize: 20, fontWeight: 800, color: THEME.navy, margin: "0 0 6px" }}>{access.label}</h1>
             {access.trialStart && access.trialEnd && (
               <p style={{ fontSize: 12, color: THEME.text3, margin: "0 0 6px" }}>
-                از {toJalaliDateTime(access.trialStart)} تا {toJalaliDateTime(access.trialEnd)}
+                {t("saFromTo", { start: toJalaliDateTime(access.trialStart), end: toJalaliDateTime(access.trialEnd) })}
               </p>
             )}
             {access.subscriptionEndDate && (
-              <p style={{ fontSize: 12, color: THEME.text3, margin: "0 0 6px" }}>پایان اشتراک: {toJalaliDateTime(access.subscriptionEndDate)}</p>
+              <p style={{ fontSize: 12, color: THEME.text3, margin: "0 0 6px" }}>{t("sgSubEnd", { date: toJalaliDateTime(access.subscriptionEndDate) })}</p>
             )}
-            <p style={{ fontSize: 13, color: THEME.text2, margin: 0 }}>برای ادامه‌ی استفاده از سامانه، یکی از پلن‌های زیر را انتخاب کنید.</p>
+            <p style={{ fontSize: 13, color: THEME.text2, margin: 0 }}>{t("sgChoosePlanPrompt")}</p>
           </div>
           <button type="button" onClick={onLogout} style={{ ...styles.smallButton, background: THEME.text3, display: "flex", alignItems: "center", gap: 6 }}>
-            <LogOut size={13} /> خروج
+            <LogOut size={13} /> {t("saLogout")}
           </button>
         </div>
 
-        {plans === null && <p style={{ textAlign: "center", color: THEME.text3 }}>در حال بارگذاری پلن‌ها...</p>}
+        {plans === null && <p style={{ textAlign: "center", color: THEME.text3 }}>{t("sgLoadingPlans")}</p>}
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14, marginBottom: 24 }}>
           {plans?.map((p) => {
@@ -181,8 +186,8 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
                         background: isThisPlanSelected && billingCycle === "monthly" ? THEME.tealSoft : "transparent",
                       }}
                     >
-                      <span style={{ fontSize: 11.5, color: THEME.text2, fontWeight: 600 }}>ماهانه</span>
-                      <span style={{ fontSize: 14, fontWeight: 800, color: THEME.navy }}>{p.priceMonthly.toLocaleString("fa-IR")} تومان</span>
+                      <span style={{ fontSize: 11.5, color: THEME.text2, fontWeight: 600 }}>{t("subTypeMonthly")}</span>
+                      <span style={{ fontSize: 14, fontWeight: 800, color: THEME.navy }}>{t("saTomanAmount", { amount: p.priceMonthly.toLocaleString("fa-IR") })}</span>
                     </button>
                   )}
                   {hasYearly && (
@@ -195,22 +200,22 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
                         background: isThisPlanSelected && billingCycle === "yearly" ? THEME.tealSoft : "transparent",
                       }}
                     >
-                      <span style={{ fontSize: 11.5, color: THEME.text2, fontWeight: 600 }}>سالانه</span>
-                      <span style={{ fontSize: 14, fontWeight: 800, color: THEME.navy }}>{p.priceYearly.toLocaleString("fa-IR")} تومان</span>
+                      <span style={{ fontSize: 11.5, color: THEME.text2, fontWeight: 600 }}>{t("subTypeYearly")}</span>
+                      <span style={{ fontSize: 14, fontWeight: 800, color: THEME.navy }}>{t("saTomanAmount", { amount: p.priceYearly.toLocaleString("fa-IR") })}</span>
                     </button>
                   )}
                   {p.priceTotal > 0 && (
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", padding: "8px 12px", borderRadius: 9, border: `1.5px dashed ${THEME.border}`, background: "transparent" }}>
-                      <span style={{ fontSize: 11.5, color: THEME.text2, fontWeight: 600 }}>قیمت کلی (یک‌جا)</span>
-                      <span style={{ fontSize: 14, fontWeight: 800, color: THEME.navy }}>{p.priceTotal.toLocaleString("fa-IR")} تومان</span>
+                      <span style={{ fontSize: 11.5, color: THEME.text2, fontWeight: 600 }}>{t("sgTotalPriceOneOff")}</span>
+                      <span style={{ fontSize: 14, fontWeight: 800, color: THEME.navy }}>{t("saTomanAmount", { amount: p.priceTotal.toLocaleString("fa-IR") })}</span>
                     </div>
                   )}
-                  {!hasMonthly && !hasYearly && p.priceTotal <= 0 && <span style={{ fontSize: 12, color: THEME.text3 }}>قیمتی تعریف نشده</span>}
+                  {!hasMonthly && !hasYearly && p.priceTotal <= 0 && <span style={{ fontSize: 12, color: THEME.text3 }}>{t("sgNoPriceDefined")}</span>}
                 </div>
 
-                {p.maxPersonnel && <p style={{ fontSize: 11.5, color: THEME.text2, margin: "0 0 4px" }}>سقف پرسنل: {p.maxPersonnel.toLocaleString("fa-IR")} نفر</p>}
-                {p.maxUsers && <p style={{ fontSize: 11.5, color: THEME.text2, margin: "0 0 4px" }}>سقف کاربر: {p.maxUsers.toLocaleString("fa-IR")}</p>}
-                <p style={{ fontSize: 11.5, color: THEME.text3, margin: 0 }}>{p.features.length.toLocaleString("fa-IR")} ماژول فعال</p>
+                {p.maxPersonnel && <p style={{ fontSize: 11.5, color: THEME.text2, margin: "0 0 4px" }}>{t("sgMaxPersonnelLine", { n: p.maxPersonnel.toLocaleString("fa-IR") })}</p>}
+                {p.maxUsers && <p style={{ fontSize: 11.5, color: THEME.text2, margin: "0 0 4px" }}>{t("sgMaxUsersLine", { n: p.maxUsers.toLocaleString("fa-IR") })}</p>}
+                <p style={{ fontSize: 11.5, color: THEME.text3, margin: 0 }}>{t("sgActiveModulesCount", { n: p.features.length.toLocaleString("fa-IR") })}</p>
               </div>
             );
           })}
@@ -218,10 +223,10 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
 
         {selectedPlan && (
           <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 14, padding: 20, maxWidth: 460, margin: "0 auto" }}>
-            <h4 style={{ fontSize: 13, fontWeight: 700, color: THEME.navy, margin: "0 0 10px" }}>خلاصه‌ی خرید</h4>
-            <p style={{ fontSize: 12.5, color: THEME.text2, margin: "0 0 4px" }}>پلن: <b>{selectedPlan.name}</b></p>
-            <p style={{ fontSize: 12.5, color: THEME.text2, margin: "0 0 4px" }}>دوره: <b>{billingCycle === "monthly" ? "ماهانه" : "سالانه"}</b></p>
-            <p style={{ fontSize: 15, fontWeight: 800, color: THEME.teal, margin: "10px 0" }}>مبلغ نهایی: {amount.toLocaleString("fa-IR")} تومان</p>
+            <h4 style={{ fontSize: 13, fontWeight: 700, color: THEME.navy, margin: "0 0 10px" }}>{t("sgPurchaseSummary")}</h4>
+            <p style={{ fontSize: 12.5, color: THEME.text2, margin: "0 0 4px" }}>{t("sgPlanLabel")}<b>{selectedPlan.name}</b></p>
+            <p style={{ fontSize: 12.5, color: THEME.text2, margin: "0 0 4px" }}>{t("sgCycleLabel")}<b>{billingCycle === "monthly" ? t("subTypeMonthly") : t("subTypeYearly")}</b></p>
+            <p style={{ fontSize: 15, fontWeight: 800, color: THEME.teal, margin: "10px 0" }}>{t("sgFinalAmount", { amount: amount.toLocaleString("fa-IR") })}</p>
             <PaymentMethodsSection currentUser={currentUser} selectedPlan={selectedPlan} billingCycle={billingCycle} amount={amount} />
           </div>
         )}

@@ -1,5 +1,8 @@
 import { sb, sbOk, uid, SUPABASE_URL, SUPABASE_ANON_KEY, getCurrentCompanyId } from "./shared.js";
 import { getSessionToken } from "./sessionToken.js";
+import { translate, getCurrentLang } from "./i18n/translations.js";
+
+const tr = (key, params) => translate(getCurrentLang(), key, params);
 
 /**
  * محاسبه‌ی وضعیت واقعی دسترسی شرکت — طبق اصل صریح «Frontend فقط
@@ -10,39 +13,39 @@ import { getSessionToken } from "./sessionToken.js";
  * تصمیم‌گیرنده‌ی نهایی است — این فقط برای UI سریع است.
  */
 export function computeSubscriptionAccess(company) {
-  if (!company) return { status: "unknown", isLocked: true, label: "نامشخص" };
+  if (!company) return { status: "unknown", isLocked: true, label: tr("subAccUnknown") };
 
   if (company.subscriptionStatus === "disabled") {
-    return { status: "disabled", isLocked: true, label: "حساب شرکت غیرفعال شده است" };
+    return { status: "disabled", isLocked: true, label: tr("subAccDisabled") };
   }
   if (company.subscriptionStatus === "pending_payment") {
-    return { status: "pending_payment", isLocked: true, label: "در انتظار تکمیل پرداخت" };
+    return { status: "pending_payment", isLocked: true, label: tr("subAccPendingPayment") };
   }
 
   const now = new Date();
 
   if (company.subscriptionType === "trial") {
-    if (!company.trialEnd) return { status: "trial_expired", isLocked: true, label: "دوره‌ی آزمایشی تنظیم نشده است" };
+    if (!company.trialEnd) return { status: "trial_expired", isLocked: true, label: tr("subAccTrialNotSet") };
     const end = new Date(company.trialEnd);
     const msLeft = end.getTime() - now.getTime();
-    if (msLeft <= 0) return { status: "trial_expired", isLocked: true, label: "دوره‌ی آزمایشی شما به پایان رسیده است", trialStart: company.trialStart, trialEnd: company.trialEnd };
+    if (msLeft <= 0) return { status: "trial_expired", isLocked: true, label: tr("subAccTrialEnded"), trialStart: company.trialStart, trialEnd: company.trialEnd };
     const daysLeft = Math.floor(msLeft / (24 * 3600 * 1000));
     const hoursLeft = Math.floor(msLeft / (3600 * 1000));
     const base = { status: "trial_active", isLocked: false, trialStart: company.trialStart, trialEnd: company.trialEnd };
-    if (daysLeft >= 1) return { ...base, daysLeft, label: `${daysLeft.toLocaleString("fa-IR")} روز از دوره‌ی آزمایشی شما باقی مانده است` };
-    return { ...base, hoursLeft, label: `${hoursLeft.toLocaleString("fa-IR")} ساعت از دوره‌ی آزمایشی شما باقی مانده است` };
+    if (daysLeft >= 1) return { ...base, daysLeft, label: tr("subAccTrialDaysLeft", { days: daysLeft.toLocaleString("fa-IR") }) };
+    return { ...base, hoursLeft, label: tr("subAccTrialHoursLeft", { hours: hoursLeft.toLocaleString("fa-IR") }) };
   }
 
   if (company.subscriptionType === "permanent") {
-    return { status: "active", isLocked: false, label: "اشتراک دائمی" };
+    return { status: "active", isLocked: false, label: tr("subAccPermanent") };
   }
 
-  if (!company.subscriptionEndDate) return { status: "expired", isLocked: true, label: "اشتراک شما به پایان رسیده است" };
+  if (!company.subscriptionEndDate) return { status: "expired", isLocked: true, label: tr("subAccExpired") };
   const end = new Date(company.subscriptionEndDate);
   const msLeft = end.getTime() - now.getTime();
-  if (msLeft <= 0) return { status: "expired", isLocked: true, label: "اشتراک شما به پایان رسیده است", subscriptionStartDate: company.subscriptionStartDate, subscriptionEndDate: company.subscriptionEndDate };
+  if (msLeft <= 0) return { status: "expired", isLocked: true, label: tr("subAccExpired"), subscriptionStartDate: company.subscriptionStartDate, subscriptionEndDate: company.subscriptionEndDate };
   const daysLeft = Math.floor(msLeft / (24 * 3600 * 1000));
-  return { status: "active", isLocked: false, daysLeft, subscriptionStartDate: company.subscriptionStartDate, subscriptionEndDate: company.subscriptionEndDate, label: daysLeft <= 7 ? `${daysLeft.toLocaleString("fa-IR")} روز تا پایان اشتراک شما باقی مانده است` : "اشتراک فعال" };
+  return { status: "active", isLocked: false, daysLeft, subscriptionStartDate: company.subscriptionStartDate, subscriptionEndDate: company.subscriptionEndDate, label: daysLeft <= 7 ? tr("subAccDaysToEnd", { days: daysLeft.toLocaleString("fa-IR") }) : tr("subAccActive") };
 }
 
 // ---------- بررسی فعال‌بودن حساب کاربرِ واردشده (Forced Logout) ----------
@@ -132,7 +135,7 @@ function paymentFromRow(r) {
 
 async function callPaymentFunction(body) {
   const token = getSessionToken("customer");
-  if (!token) return { __error: true, message: "نشست شما نامعتبر است — لطفاً دوباره وارد شوید." };
+  if (!token) return { __error: true, message: tr("subErrInvalidSessionCustomer") };
   try {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/zarinpal-payment`, {
       method: "POST",
@@ -140,10 +143,10 @@ async function callPaymentFunction(body) {
       body: JSON.stringify(body),
     });
     const data = await res.json();
-    if (!res.ok) return { __error: true, message: data?.error || "خطا در ارتباط با درگاه پرداخت" };
+    if (!res.ok) return { __error: true, message: data?.error || tr("subErrGatewayConn") };
     return data;
   } catch {
-    return { __error: true, message: "خطا در برقراری ارتباط با سرور" };
+    return { __error: true, message: tr("saErrServerConn") };
   }
 }
 
@@ -170,7 +173,7 @@ export async function verifyPayment(authority, orderId) {
 export async function activateTrialForCompany(companyId, planId, changedBy, startDateIso) {
   const planRows = await sb(`plans?id=eq.${planId}&select=trial_days`, {}, "super_admin");
   const trialDays = sbOk(planRows) && planRows.length > 0 ? Number(planRows[0].trial_days) || 0 : 0;
-  if (trialDays <= 0) return { __error: true, message: "این پلن مدت Trial تعریف‌شده‌ای ندارد" };
+  if (trialDays <= 0) return { __error: true, message: tr("subErrPlanNoTrial") };
 
   const start = startDateIso ? new Date(startDateIso) : new Date();
   const end = new Date(start.getTime() + trialDays * 24 * 3600 * 1000);
@@ -179,11 +182,11 @@ export async function activateTrialForCompany(companyId, planId, changedBy, star
     trial_start: start.toISOString(), trial_end: end.toISOString(),
   };
   const rows = await sb(`companies?id=eq.${companyId}`, { method: "PATCH", body: JSON.stringify(payload) }, "super_admin");
-  if (!sbOk(rows)) return { __error: true, message: "خطا در فعال‌سازی دوره‌ی آزمایشی" };
+  if (!sbOk(rows)) return { __error: true, message: tr("subErrActivateTrial") };
 
   await sb("company_subscription_history", {
     method: "POST", prefer: "return=minimal",
-    body: JSON.stringify([{ company_id: companyId, plan_id: planId, action: "trial_activated", changed_by: changedBy || "", note: `Trial ${trialDays} روزه فعال شد` }]),
+    body: JSON.stringify([{ company_id: companyId, plan_id: planId, action: "trial_activated", changed_by: changedBy || "", note: tr("subTrialHistoryNote", { days: trialDays }) }]),
   }, "super_admin");
 
   return { ok: true, trialEnd: end.toISOString() };
@@ -216,10 +219,10 @@ export async function loadCardTransferSettings() {
 // سمت کلاینت است، نه مرز امنیتی واقعی).
 export async function submitCardTransferReceipt({ planId, billingCycle, amount, payerName, payerPhone, trackingNumber, receiptImage }, requestedBy) {
   const companyId = getCurrentCompanyId();
-  if (!companyId) return { __error: true, message: "شرکت جاری مشخص نیست — لطفاً دوباره وارد شوید." };
-  if (!planId || !billingCycle) return { __error: true, message: "پلن یا دوره‌ی پرداخت نامعتبر است" };
+  if (!companyId) return { __error: true, message: tr("subErrCompanyUnknown") };
+  if (!planId || !billingCycle) return { __error: true, message: tr("subErrPlanCycleInvalid") };
   if (!payerName?.trim() || !payerPhone?.trim() || !trackingNumber?.trim()) {
-    return { __error: true, message: "نام، شماره موبایل و شماره پیگیری الزامی است" };
+    return { __error: true, message: tr("subErrReceiptFieldsRequired") };
   }
   const id = uid("card");
   const payload = {
@@ -231,7 +234,7 @@ export async function submitCardTransferReceipt({ planId, billingCycle, amount, 
     requested_by: requestedBy || "",
   };
   const rows = await sb("payments", { method: "POST", body: JSON.stringify([payload]) });
-  if (!sbOk(rows)) return { __error: true, message: `خطا در ثبت رسید: ${rows?.message || "نامشخص"}` };
+  if (!sbOk(rows)) return { __error: true, message: tr("subErrSubmitReceipt", { detail: rows?.message || tr("subUnknownShort") }) };
   return { ok: true };
 }
 
