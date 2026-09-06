@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
           jobPositionTitle: employer.job_position_title || "", companyName: employer.company_name || "",
           role: appRole === "admin" ? "ADMIN" : appRole === "hse_supervisor" ? "HSE_SUPERVISOR" : "EMPLOYER", companyId: employer.company_id || "",
           phone: employer.phone || "", email: employer.email || "",
-          preferredLanguage: employer.preferred_language || "fa", createdAt: employer.created_at || "",
+          preferredLanguage: employer.preferred_language || null, createdAt: employer.created_at || "",
         },
       });
     }
@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
           jobPositionTitle: contractor.job_position_title || "", companyName: contractor.company_name || "",
           role: "CONTRACTOR", companyId: contractor.company_id || "",
           phone: contractor.phone || "", email: contractor.email || "",
-          preferredLanguage: contractor.preferred_language || "fa", createdAt: contractor.created_at || "",
+          preferredLanguage: contractor.preferred_language || null, createdAt: contractor.created_at || "",
         },
       });
     }
