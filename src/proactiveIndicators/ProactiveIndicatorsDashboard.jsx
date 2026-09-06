@@ -3,7 +3,7 @@ import { ChevronRight, TrendingUp, ClipboardList, BookOpen, X } from "lucide-rea
 import { styles, THEME } from "../shared.js";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
 import { loadActiveIndicators, loadAllAssessments, accidentPronenessLevel } from "./proactiveIndicatorsApi.js";
-import { loadModuleConfig } from "../systemConfigApi.js";
+import { loadModuleConfig, isSeededModuleLabel } from "../systemConfigApi.js";
 import { loadCorrectiveActionsForAssessments, STATUS_META } from "../correctiveActions/correctiveActionsApi.js";
 import AccidentPronenessAssessmentForm from "./AccidentPronenessAssessmentForm.jsx";
 import HseClimateCampaignManager from "./HseClimateCampaignManager.jsx";
@@ -70,7 +70,7 @@ export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role
     loadActiveIndicators().then((rows) => { setIndicators(rows); setLoading(false); });
     loadModuleConfig().then((cfg) => {
       const label = cfg?.find((c) => c.moduleKey === "proactiveIndicators")?.displayLabel;
-      if (label) setModuleTitle(label);
+      if (label && !isSeededModuleLabel("proactiveIndicators", label)) setModuleTitle(label);
     }).catch(() => {});
   }, []);
 

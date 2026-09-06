@@ -16,7 +16,7 @@ import PersonnelDashboard from "./personnel/PersonnelDashboard.jsx";
 import ProactiveIndicatorsDashboard from "./proactiveIndicators/ProactiveIndicatorsDashboard.jsx";
 import IncidentsListPage from "./incidents/IncidentsListPage.jsx";
 import { loadHomeKpiSummary } from "./dashboard/homeKpiApi.js";
-import { loadModuleConfig, loadDashboardConfig, loadNotificationTypes, loadAppearanceConfig, applyAppearanceToDom, loadActiveAnnouncements } from "./systemConfigApi.js";
+import { loadModuleConfig, loadDashboardConfig, loadNotificationTypes, loadAppearanceConfig, applyAppearanceToDom, loadActiveAnnouncements, isSeededModuleLabel } from "./systemConfigApi.js";
 import { submitToGate, loadPendingGateItems, loadAssignedGateItems, loadAssignedReviewItemsForModule, deleteGateItemsForRecord, loadCompanyStaffOptions, assignForReview, submitReview, approveGateItem, rejectGateItem, GATE_STATUS_LABELS, gateStatusLabel } from "./hseGateApi.js";
 import SubscriptionGate from "./subscription/SubscriptionGate.jsx";
 import { checkMyAccountActive } from "./subscriptionApi.js";
@@ -3366,7 +3366,13 @@ function applyModuleConfig(modules, config) {
       const bo = orderMap.has(b.key) ? orderMap.get(b.key) : 999;
       return ao - bo;
     })
-    .map((m) => (labelMap.has(m.key) && labelMap.get(m.key) ? { ...m, label: labelMap.get(m.key) } : m));
+    .map((m) => {
+      const dl = labelMap.get(m.key);
+      // فقط وقتی برچسب سفارشیِ ادمین را اعمال کن که واقعاً سفارشی باشد — نه
+      // برچسب پیش‌فرضِ seed‌شده که در آن صورت باید ترجمه‌ی i18n (که caller قبلاً
+      // در m.label گذاشته) حفظ شود.
+      return dl && !isSeededModuleLabel(m.key, dl) ? { ...m, label: dl } : m;
+    });
 }
 
 // ---------- ردیف منوی استاندارد (آیکون + عنوان + شورون) ----------
@@ -4106,7 +4112,7 @@ function AdminDashboard({ onLogout, currentUser }) {
   // خودکار به رفتار قبلی برمی‌گردند.
   const mt = (m) => {
     const cfg = Array.isArray(moduleConfig) ? moduleConfig.find((c) => c.moduleKey === m?.key) : null;
-    if (cfg?.displayLabel) return cfg.displayLabel;
+    if (cfg?.displayLabel && !isSeededModuleLabel(m?.key, cfg.displayLabel)) return cfg.displayLabel;
     return m?.labelKey ? t(m.labelKey) : m?.label;
   };
   const [view, setView] = usePersistedState("ihms_view_admin", "menu");
@@ -4341,7 +4347,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
   // خودکار به رفتار قبلی برمی‌گردند.
   const mt = (m) => {
     const cfg = Array.isArray(moduleConfig) ? moduleConfig.find((c) => c.moduleKey === m?.key) : null;
-    if (cfg?.displayLabel) return cfg.displayLabel;
+    if (cfg?.displayLabel && !isSeededModuleLabel(m?.key, cfg.displayLabel)) return cfg.displayLabel;
     return m?.labelKey ? t(m.labelKey) : m?.label;
   };
   const [view, setView] = usePersistedState("ihms_view_employer", "menu");
@@ -4578,7 +4584,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
   // خودکار به رفتار قبلی برمی‌گردند.
   const mt = (m) => {
     const cfg = Array.isArray(moduleConfig) ? moduleConfig.find((c) => c.moduleKey === m?.key) : null;
-    if (cfg?.displayLabel) return cfg.displayLabel;
+    if (cfg?.displayLabel && !isSeededModuleLabel(m?.key, cfg.displayLabel)) return cfg.displayLabel;
     return m?.labelKey ? t(m.labelKey) : m?.label;
   };
   const [view, setView] = usePersistedState("ihms_view_contractor", "menu");
