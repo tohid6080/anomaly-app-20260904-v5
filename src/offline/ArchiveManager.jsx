@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Archive, FileSpreadsheet, Trash2, Users, AlertTriangle, GitBranch, History, Truck, Tag, ShieldAlert } from "lucide-react";
+import { Archive, FileSpreadsheet, Trash2, Users, AlertTriangle, GitBranch, History, Truck, Tag, ShieldAlert, Activity, ClipboardList, TrendingUp } from "lucide-react";
 import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
 import { sb, sbOk, styles, THEME, getCurrentCompanyId } from "../shared.js";
+import { exportWorkbookNativeAware } from "./nativeFile.js";
+import { loadHseClimateHistory, loadAllAssessments, accidentPronenessLevel } from "../proactiveIndicators/proactiveIndicatorsApi.js";
+import { loadSbsObservations, loadSbsCategories, seasonLabel } from "../proactiveIndicators/sbsApi.js";
+import { loadIncidents, incidentTypeLabel } from "../incidents/incidentsApi.js";
 import { uploadBase64ToStorage, deleteFromStorage, parseStorageUrl } from "./storageUpload.js";
 import { fetchStorageSizeMB } from "./dbSizeMonitor.js";
 import { DOC_TYPES } from "../personnel/personnelApi.js";
@@ -828,6 +832,153 @@ async function deleteHcmsArchive(archived, setProgress) {
   }
 }
 
+// ================= خروجی اکسل گزارش‌ها (جو ایمنی / SBS / استعداد حادثه‌پذیری / فهرست حوادث) =================
+// این‌ها فقط یک فایل اکسل تولید و دانلود می‌کنند — نه آرشیو، نه حذف، نه ZIP،
+// نه ثبت در archive_log. سربرگ‌ها و برچسب‌ها با زبان فعال سامانه
+// (getCurrentLang) نوشته می‌شوند، دقیقاً مثل بقیه‌ی خروجی‌های دوزبانه.
+
+const HSE_CLIMATE_LEVEL_KEYS = { "پایین": "hseLevelLow", "متوسط": "hseLevelMedium", "بالا": "hseLevelHigh" };
+
+function buildReportWorkbook(headers, rows, sheetName, colWidth = 18) {
+  const aoa = [headers, ...rows];
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws["!cols"] = headers.map(() => ({ wch: colWidth }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  return wb;
+}
+
+async function exportHseClimateExcel() {
+  const lang = getCurrentLang();
+  const records = await loadHseClimateHistory();
+  const headers = [
+    translate(lang, "exportColRow"),
+    translate(lang, "amRxHseDate"),
+    translate(lang, "amRxHseAssessor"),
+    translate(lang, "amRxHseTotalScore"),
+    translate(lang, "amRxHseLevel"),
+  ];
+  const rows = records.map((r, idx) => [
+    idx + 1,
+    toJalaliSafe(r.assessmentDate) || "—",
+    r.assessorName || "—",
+    r.totalScore != null ? r.totalScore : "—",
+    HSE_CLIMATE_LEVEL_KEYS[r.totalLevel] ? translate(lang, HSE_CLIMATE_LEVEL_KEYS[r.totalLevel]) : (r.totalLevel || "—"),
+  ]);
+  const wb = buildReportWorkbook(headers, rows, translate(lang, "amRxSheetHseClimate"));
+  await exportWorkbookNativeAware(XLSX, wb, `HSE_Climate_${jalaliFileTimestamp()}.xlsx`);
+}
+
+async function exportSbsExcel() {
+  const lang = getCurrentLang();
+  const [obs, cats] = await Promise.all([loadSbsObservations(), loadSbsCategories()]);
+  const catByCode = {};
+  const subById = {};
+  cats.forEach((c) => {
+    catByCode[c.code] = c.titleFa;
+    c.items.forEach((it) => { subById[it.id] = it.textFa; });
+  });
+  const headers = [
+    translate(lang, "exportColRow"),
+    translate(lang, "amRxSbsProject"),
+    translate(lang, "amRxSbsContractor"),
+    translate(lang, "amRxSbsJobTitle"),
+    translate(lang, "amRxSbsDate"),
+    translate(lang, "amRxSbsTime"),
+    translate(lang, "amRxSbsSeason"),
+    translate(lang, "amRxSbsStatus"),
+    translate(lang, "amRxSbsCategory"),
+    translate(lang, "amRxSbsSubitem"),
+    translate(lang, "amRxSbsNote"),
+    translate(lang, "amRxSbsObserver"),
+  ];
+  const rows = obs.map((o, idx) => [
+    idx + 1,
+    o.project || "—",
+    o.contractorOrg || "—",
+    o.jobTitle || "—",
+    toJalaliSafe(o.observationDate) || "—",
+    o.observationTime || "—",
+    o.season ? seasonLabel(o.season) : "—",
+    translate(lang, o.status === "safe" ? "sbsStatusSafe" : "sbsStatusUnsafe"),
+    o.status === "unsafe" ? (catByCode[o.categoryCode] || "—") : "—",
+    o.status === "unsafe" ? (subById[o.subitemId] || "—") : "—",
+    o.note || "—",
+    o.observedBy || "—",
+  ]);
+  const wb = buildReportWorkbook(headers, rows, translate(lang, "amRxSheetSbs"));
+  await exportWorkbookNativeAware(XLSX, wb, `SBS_${jalaliFileTimestamp()}.xlsx`);
+}
+
+async function exportAccidentPronenessExcel() {
+  const lang = getCurrentLang();
+  const records = await loadAllAssessments("accident_proneness");
+  const headers = [
+    translate(lang, "exportColRow"),
+    translate(lang, "amRxApPersonnel"),
+    translate(lang, "amRxApJobTitle"),
+    translate(lang, "amRxApDate"),
+    translate(lang, "amRxApAssessor"),
+    translate(lang, "amRxApScore"),
+    translate(lang, "amRxApLevel"),
+  ];
+  const rows = records.map((r, idx) => [
+    idx + 1,
+    r.personnelName || "—",
+    r.jobTitle || "—",
+    toJalaliSafe(r.assessmentDate) || "—",
+    r.assessorName || "—",
+    r.finalScore != null ? r.finalScore : "—",
+    r.finalScore != null ? accidentPronenessLevel(r.finalScore).level : "—",
+  ]);
+  const wb = buildReportWorkbook(headers, rows, translate(lang, "amRxSheetAccidentProneness"));
+  await exportWorkbookNativeAware(XLSX, wb, `Accident_Proneness_${jalaliFileTimestamp()}.xlsx`);
+}
+
+async function exportIncidentsExcel() {
+  const lang = getCurrentLang();
+  const records = await loadIncidents();
+  const yes = translate(lang, "commonYes");
+  const no = translate(lang, "commonNo");
+  const headers = [
+    translate(lang, "exportColRow"),
+    translate(lang, "amRxIncNo"),
+    translate(lang, "amRxIncDate"),
+    translate(lang, "amRxIncLocation"),
+    translate(lang, "amRxIncType"),
+    translate(lang, "amRxIncDisabling"),
+    translate(lang, "amRxIncInjured"),
+    translate(lang, "amRxIncLostDays"),
+    translate(lang, "amRxIncCost"),
+    translate(lang, "amRxIncEmployer"),
+    translate(lang, "amRxIncContractor"),
+    translate(lang, "amRxIncDescription"),
+  ];
+  const rows = records.map((r, idx) => [
+    idx + 1,
+    r.incidentNo || "—",
+    toJalaliSafe(r.occurredAt) || "—",
+    r.location || "—",
+    r.incidentType ? incidentTypeLabel(r.incidentType) : "—",
+    r.isDisabling ? yes : no,
+    r.injuredPersonName || "—",
+    r.lostDays || 0,
+    r.financialCost != null ? r.financialCost : "—",
+    r.employerOrg || "—",
+    r.contractorOrg || "—",
+    r.description || "—",
+  ]);
+  const wb = buildReportWorkbook(headers, rows, translate(lang, "amRxSheetIncidents"));
+  await exportWorkbookNativeAware(XLSX, wb, `Incidents_${jalaliFileTimestamp()}.xlsx`);
+}
+
+const REPORT_EXPORTS = [
+  { key: "hseClimate", labelKey: "amRxBtnHseClimate", icon: Activity, run: exportHseClimateExcel },
+  { key: "sbs", labelKey: "amRxBtnSbs", icon: ClipboardList, run: exportSbsExcel },
+  { key: "accidentProneness", labelKey: "amRxBtnAccidentProneness", icon: TrendingUp, run: exportAccidentPronenessExcel },
+  { key: "incidents", labelKey: "amRxBtnIncidents", icon: AlertTriangle, run: exportIncidentsExcel },
+];
+
 // ================= UI =================
 
 const TABS = [
@@ -857,6 +1008,7 @@ export default function ArchiveManager({ onBack, currentUser }) {
   const [exported, setExported] = useState(null);
   const [diagramUrls, setDiagramUrls] = useState({});
   const [lastLogs, setLastLogs] = useState([]);
+  const [reportBusy, setReportBusy] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -929,6 +1081,16 @@ export default function ArchiveManager({ onBack, currentUser }) {
     setProcessing(false);
     setProgressText("");
     await load();
+  };
+
+  const runReportExport = async (rx) => {
+    setReportBusy(rx.key);
+    try {
+      await rx.run();
+    } catch (e) {
+      alert(translate(getCurrentLang(), "amRxExportFailed", { reason: e?.message || translate(getCurrentLang(), "commonErrorUnknown") }));
+    }
+    setReportBusy(null);
   };
 
   if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</div>;
@@ -1034,6 +1196,33 @@ export default function ArchiveManager({ onBack, currentUser }) {
           {t("amNoApprovedRecords")}
         </p>
       )}
+
+      <div style={{ ...styles.card, width: "auto", marginTop: 18 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+          <FileSpreadsheet size={16} color={THEME.teal} />
+          <h3 style={{ margin: 0, fontSize: 15, color: THEME.navy, fontWeight: 700 }}>{t("amReportExportsTitle")}</h3>
+        </div>
+        <p style={{ color: THEME.text3, fontSize: 12, marginTop: 4, marginBottom: 12, lineHeight: 1.9 }}>
+          {t("amReportExportsDesc")}
+        </p>
+        <div style={{ display: "grid", gap: 8 }}>
+          {REPORT_EXPORTS.map((rx) => (
+            <button
+              key={rx.key}
+              type="button"
+              onClick={() => runReportExport(rx)}
+              disabled={!!reportBusy}
+              style={{
+                ...styles.button, background: "#fff", color: THEME.text2,
+                border: `1.5px solid ${THEME.border}`, display: "flex", alignItems: "center",
+                justifyContent: "center", gap: 8, opacity: reportBusy && reportBusy !== rx.key ? 0.55 : 1,
+              }}
+            >
+              <rx.icon size={15} /> {reportBusy === rx.key ? t("amRxExporting") : t(rx.labelKey)}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
