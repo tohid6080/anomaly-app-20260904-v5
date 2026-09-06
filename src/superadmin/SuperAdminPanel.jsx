@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ShieldAlert, Plus, LogOut, Send, CreditCard, AlertTriangle, UserPlus, KeyRound, Layers, Trash2, History, Activity, TrendingDown, Clock, LogIn, ShieldX, LayoutDashboard, Building2, Users, FileClock, ChevronLeft, HardDrive, RefreshCw, Settings2, Copy, GripVertical, ArrowUp, ArrowDown, RotateCcw, Eye, EyeOff, LayoutGrid, PanelsTopLeft, Bell, Palette, Megaphone, Sparkles, Gift, Info, ImagePlus, X, ClipboardList, Smartphone, UploadCloud, CheckCircle2, Download } from "lucide-react";
-import { loadAppReleases, createAppRelease, setReleasePublished, deleteAppRelease, loadLatestPublishedRelease, nextPatchVersion } from "./appReleaseApi.js";
+import { loadAppReleases, createAppRelease, setReleasePublished, deleteAppRelease, loadLatestPublishedRelease, nextPatchVersion, triggerMobileBuild } from "./appReleaseApi.js";
 import { APP_VERSION, APP_VERSION_CODE } from "../shared.js";
 import { THEME } from "../shared.js";
 import { changeMyPassword } from "../sessionToken.js";
@@ -783,6 +783,18 @@ function AppUpdateManagementTab({ currentAdmin }) {
     await load();
   };
 
+  const [building, setBuilding] = useState(false);
+  const handleAutoBuild = async () => {
+    if (!window.confirm(t("arAutoBuildConfirm"))) return;
+    setMessage(""); setBuilding(true);
+    const result = await triggerMobileBuild({ version, releaseNotes });
+    setBuilding(false);
+    if (result?.__error) { setMsgErr(true); setMessage(result.message); return; }
+    setMsgErr(false); setMessage(result.message || t("arAutoBuildStarted"));
+    resetForm();
+    await load();
+  };
+
   const handleTogglePublish = async (r) => {
     setBusyId(r.id); setMessage("");
     const result = await setReleasePublished(r.id, !r.isPublished, currentAdmin?.fullName);
@@ -823,7 +835,27 @@ function AppUpdateManagementTab({ currentAdmin }) {
         </div>
       </div>
 
-      {/* فرم ثبت نسخه‌ی جدید */}
+      {/* بیلد و انتشار خودکار (بدون رفتن به GitHub) */}
+      <div style={{ border: `1.5px solid ${THEME.teal}`, background: THEME.tealSoft, borderRadius: 8, padding: 14, marginBottom: 14 }}>
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: THEME.tealDeep, marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
+          <Smartphone size={14} /> {t("arAutoBuildTitle")}
+        </div>
+        <p style={{ fontSize: 11, color: THEME.text2, margin: "0 0 10px", lineHeight: 1.8 }}>{t("arAutoBuildHint")}</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
+          <div>
+            <label style={smallLabelStyle}>{t("arVersionLabel")}</label>
+            <input style={{ ...inputStyle, direction: "ltr" }} value={version} onChange={(e) => setVersion(e.target.value)} placeholder="1.2.0" />
+          </div>
+        </div>
+        <label style={{ ...smallLabelStyle, marginTop: 10 }}>{t("arReleaseNotesLabel")}</label>
+        <textarea style={{ ...inputStyle, minHeight: 70, fontFamily: THEME.font }} value={releaseNotes} onChange={(e) => setReleaseNotes(e.target.value)} dir="rtl" />
+        <button type="button" style={{ ...btnStyle(THEME.tealDeep), marginTop: 12, display: "flex", alignItems: "center", gap: 6 }} onClick={handleAutoBuild} disabled={building}>
+          <RefreshCw size={14} style={building ? { animation: "sa-spin 1s linear infinite" } : undefined} /> {building ? t("arAutoBuildBuilding") : t("arAutoBuildButton")}
+        </button>
+        <style>{`@keyframes sa-spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}`}</style>
+      </div>
+
+      {/* فرم ثبت نسخه‌ی جدید — آپلود دستی APK یا لینک بیرونی */}
       <div style={{ border: `1px solid ${THEME.border}`, borderRadius: 8, padding: 14, marginBottom: 18 }}>
         <div style={{ fontSize: 12.5, fontWeight: 700, color: THEME.navy, marginBottom: 10 }}>{t("arNewReleaseTitle")}</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>

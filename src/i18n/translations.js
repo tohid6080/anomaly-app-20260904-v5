@@ -8702,6 +8702,13 @@ export const translations = {
   "arErrCreate": { "fa": "خطا در ثبت نسخه: {detail}", "en": "Error registering the release: {detail}" },
   "arErrPublishToggle": { "fa": "خطا در تغییر وضعیت انتشار", "en": "Error changing the publish state" },
   "arErrDelete": { "fa": "خطا در حذف نسخه", "en": "Error deleting the release" },
+  "arErrTriggerBuild": { "fa": "خطا در شروع بیلد موبایل", "en": "Error starting the mobile build" },
+  "arAutoBuildTitle": { "fa": "بیلد و انتشار خودکار موبایل (بدون GitHub)", "en": "Automatic mobile build & publish (no GitHub)" },
+  "arAutoBuildHint": { "fa": "با این دکمه، ساخت APK نسخه‌ی جدید مستقیماً از همین‌جا شروع می‌شود؛ چند دقیقه بعد نسخه به‌صورت خودکار در لیست پایین و روی گوشی کاربران منتشر می‌شود. نیازی به رفتن به GitHub و آپلود دستی فایل نیست. (فایل APK یا لینک لازم نیست.)", "en": "This button starts building the new APK right here; a few minutes later the release is published automatically in the list below and on users' phones. No need to go to GitHub or upload a file manually. (No APK file or link needed.)" },
+  "arAutoBuildButton": { "fa": "بیلد و انتشار نسخه‌ی جدید موبایل", "en": "Build & publish new mobile version" },
+  "arAutoBuildBuilding": { "fa": "در حال شروع بیلد...", "en": "Starting the build..." },
+  "arAutoBuildConfirm": { "fa": "ساخت APK نسخه‌ی جدید همین حالا شروع شود؟", "en": "Start building the new APK now?" },
+  "arAutoBuildStarted": { "fa": "بیلد شروع شد — چند دقیقه بعد نسخه به‌صورت خودکار منتشر می‌شود.", "en": "The build has started — the release will be published automatically in a few minutes." },
 
   // --- درباره IHMS + بنر نسخه‌ی جدید در موبایل ---
   "aboutCurrentVersion": { "fa": "نسخه‌ی نصب‌شده", "en": "Installed version" },

@@ -101,3 +101,29 @@ jobs:
             --notes "$NOTES"
           echo "APK download URL:"
           echo "https://github.com/${{ github.repository }}/releases/download/$TAG/ihms-${{ github.event.inputs.version }}.apk"
+
+      # ردیفِ app_releases که Edge Function «trigger-mobile-build» با
+      # is_published=false درج کرده بود را حالا که APK واقعاً ساخته و
+      # Release عمومی شد، به «منتشرشده» تبدیل می‌کند — تا گوشی‌های کاربران
+      # نوار «نسخه جدید موجود است» را ببینند. اگر ساخت از این مسیر شروع
+      # نشده باشد (اجرای دستی)، ردیفی برای آپدیت نیست و این مرحله بی‌اثر است.
+      - name: Mark release published in Supabase
+        if: ${{ github.event.inputs.publish_release == 'true' }}
+        env:
+          SUPABASE_URL: https://zmmxiyqlwkqjzghbcydi.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "SUPABASE_SERVICE_ROLE_KEY secret not set — skipping auto-publish. Publish this version manually in the SuperAdmin panel."
+            exit 0
+          fi
+          APK_URL="https://github.com/${{ github.repository }}/releases/download/v${{ github.event.inputs.version }}/ihms-${{ github.event.inputs.version }}.apk"
+          NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          curl -sS -X PATCH \
+            "$SUPABASE_URL/rest/v1/app_releases?version_code=eq.${{ github.event.inputs.version_code }}" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            -d "{\"is_published\":true,\"apk_url\":\"$APK_URL\",\"download_url\":\"$APK_URL\",\"published_at\":\"$NOW\"}"
+          echo "Supabase app_releases row for version_code ${{ github.event.inputs.version_code }} marked published."

@@ -144,6 +144,27 @@ export async function setReleasePublished(id, isPublished, by) {
   return { ok: true };
 }
 
+// «دکمه‌ی آپدیت موبایل» — بدون رفتن به GitHub، ساخت APK را از طریق Edge
+// Function شروع می‌کند. Edge Function خودش version_code بعدی را می‌زند، یک
+// ردیف «در حال ساخت» درج می‌کند و ورک‌فلوی GitHub را دیسپچ می‌کند؛ وقتی
+// ساخت تمام شد، همان ردیف خودکار «منتشرشده» می‌شود.
+export async function triggerMobileBuild({ version, releaseNotes } = {}) {
+  const token = getSessionToken("super_admin");
+  if (!token) return { __error: true, message: tr("saErrInvalidSession") };
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/trigger-mobile-build`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, apikey: SUPABASE_ANON_KEY },
+      body: JSON.stringify({ version: version || "", releaseNotes: releaseNotes || "" }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) return { __error: true, message: data?.error || tr("arErrTriggerBuild") };
+    return data;
+  } catch {
+    return { __error: true, message: tr("saErrServerConn") };
+  }
+}
+
 // حذف یک نسخه (به‌همراه APKاش در Storage).
 export async function deleteAppRelease(id) {
   const row = await sb(`app_releases?id=eq.${id}&select=apk_path`, {}, "super_admin");
