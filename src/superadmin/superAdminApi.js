@@ -1,5 +1,10 @@
 import { sb, sbOk, SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "../shared.js";
 import { issueSessionToken, getSessionToken } from "../sessionToken.js";
+import { translate, getCurrentLang } from "../i18n/translations.js";
+
+// پیام‌های نمایشی این لایه‌ی داده باید با زبان فعلی کاربر هماهنگ باشند —
+// همان الگوی مستندشده در translations.js برای فایل‌های غیر React.
+const tr = (key, params) => translate(getCurrentLang(), key, params);
 
 /**
  * Fully separate from the regular auth flow (SEED_USERS / employer_accounts
@@ -21,17 +26,17 @@ export async function superAdminLogin(username, password) {
 }
 
 export const SUBSCRIPTION_TYPES = [
-  { value: "trial", label: "آزمایشی" },
-  { value: "daily", label: "روزانه" },
-  { value: "monthly", label: "ماهانه" },
-  { value: "yearly", label: "سالانه" },
-  { value: "monthly_and_yearly", label: "هر دو (ماهانه و سالانه)" },
-  { value: "permanent", label: "دائمی" },
+  { value: "trial", labelKey: "subTypeTrial" },
+  { value: "daily", labelKey: "subTypeDaily" },
+  { value: "monthly", labelKey: "subTypeMonthly" },
+  { value: "yearly", labelKey: "subTypeYearly" },
+  { value: "monthly_and_yearly", labelKey: "subTypeBoth" },
+  { value: "permanent", labelKey: "subTypePermanent" },
 ];
 export const SUBSCRIPTION_STATUSES = [
-  { value: "active", label: "فعال", color: "#166534", bg: "#dcfce7" },
-  { value: "expired", label: "منقضی", color: "#c92a2a", bg: "#fdecec" },
-  { value: "disabled", label: "غیرفعال", color: "#5b6b7d", bg: "#eef1f5" },
+  { value: "active", labelKey: "commonActive", color: "#166534", bg: "#dcfce7" },
+  { value: "expired", labelKey: "subStatusExpired", color: "#c92a2a", bg: "#fdecec" },
+  { value: "disabled", labelKey: "commonInactive", color: "#5b6b7d", bg: "#eef1f5" },
 ];
 export function subscriptionStatusMeta(v) {
   return SUBSCRIPTION_STATUSES.find((s) => s.value === v) || SUBSCRIPTION_STATUSES[0];
@@ -73,7 +78,7 @@ export async function createCompany(rec) {
     storage_quota_mb: rec.storageQuotaMb || 500,
   };
   const rows = await sb("companies", { method: "POST", body: JSON.stringify([payload]) }, "super_admin");
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ثبت شرکت" };
+  if (!sbOk(rows)) return { __error: true, message: tr("saErrCreateCompany") };
   return companyFromRow(rows[0]);
 }
 
@@ -85,7 +90,7 @@ export async function updateCompany(id, patch) {
   if ("storageQuotaMb" in patch) dbPatch.storage_quota_mb = patch.storageQuotaMb;
   if ("notes" in patch) dbPatch.notes = patch.notes;
   const rows = await sb(`companies?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(dbPatch) }, "super_admin");
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ذخیره‌سازی" };
+  if (!sbOk(rows)) return { __error: true, message: tr("saErrSave") };
 
   // طبق خواسته‌ی صریح: هم غیرفعال‌سازی/انقضا هم فعال‌سازی مجدد شرکت، همه‌ی
   // کاربرانش (کارفرما+پیمانکار) را در همان جهت هماهنگ می‌کند.
@@ -107,7 +112,7 @@ export async function updateCompany(id, patch) {
 // محافظ صریح در برابر حذف تصادفی.
 export async function deleteCompanySecure(companyId, confirmName) {
   const token = getSessionToken("super_admin");
-  if (!token) return { __error: true, message: "نشست نامعتبر است — لطفاً دوباره وارد شوید." };
+  if (!token) return { __error: true, message: tr("saErrInvalidSession") };
   try {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/delete-company`, {
       method: "POST",
@@ -115,10 +120,10 @@ export async function deleteCompanySecure(companyId, confirmName) {
       body: JSON.stringify({ companyId, confirmName }),
     });
     const data = await res.json();
-    if (!res.ok) return { __error: true, message: data?.error || "خطا در حذف شرکت", detail: data?.detail || "" };
+    if (!res.ok) return { __error: true, message: data?.error || tr("saErrDeleteCompany"), detail: data?.detail || "" };
     return { ok: true, deletedCounts: data.deletedCounts };
   } catch {
-    return { __error: true, message: "خطا در برقراری ارتباط با سرور" };
+    return { __error: true, message: tr("saErrServerConn") };
   }
 }
 
@@ -127,7 +132,7 @@ export async function deleteCompanySecure(companyId, confirmName) {
 // برخلاف حذف، کاملاً برگشت‌پذیر است و هیچ داده‌ای پاک نمی‌شود.
 export async function setCompanyActive(companyId, active) {
   const rows = await sb(`companies?id=eq.${companyId}`, { method: "PATCH", body: JSON.stringify({ subscription_status: active ? "active" : "disabled" }) }, "super_admin");
-  if (!sbOk(rows)) return { __error: true, message: "خطا در تغییر وضعیت شرکت" };
+  if (!sbOk(rows)) return { __error: true, message: tr("saErrChangeCompanyStatus") };
   // طبق خواسته‌ی صریح: is_active حساب‌های کاربری عمداً دست‌نخورده می‌ماند —
   // کاربر باید بتواند حتی وقتی شرکتش غیرفعال شده لاگین کند و پیام واضح
   // «حساب شرکت غیرفعال شده است» را همراه با صفحه‌ی انتخاب پلن ببیند
@@ -137,8 +142,8 @@ export async function setCompanyActive(companyId, active) {
 }
 
 export const PAYMENT_TYPES = [
-  { value: "monthly", label: "ماهانه" },
-  { value: "yearly", label: "سالانه" },
+  { value: "monthly", labelKey: "subTypeMonthly" },
+  { value: "yearly", labelKey: "subTypeYearly" },
 ];
 
 export async function loadCompanyPayments(companyId) {
@@ -165,9 +170,9 @@ export function computePaymentStatus(finalAmount, payments) {
   const yearlyPayments = payments.filter((p) => p.payment_type === "yearly");
   const totalPaid = yearlyPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
   const remaining = Math.max(0, (Number(finalAmount) || 0) - totalPaid);
-  if (totalPaid === 0) return { status: "unpaid", label: "پرداخت نشده", color: "#5b6b7d", bg: "#eef1f5", remaining, totalPaid };
-  if (remaining <= 0) return { status: "settled", label: "تسویه کامل", color: "#166534", bg: "#dcfce7", remaining: 0, totalPaid };
-  return { status: "partial", label: "در حال تسویه", color: "#92400e", bg: "#fef3c7", remaining, totalPaid };
+  if (totalPaid === 0) return { status: "unpaid", labelKey: "payStatusUnpaid", color: "#5b6b7d", bg: "#eef1f5", remaining, totalPaid };
+  if (remaining <= 0) return { status: "settled", labelKey: "payStatusSettled", color: "#166534", bg: "#dcfce7", remaining: 0, totalPaid };
+  return { status: "partial", labelKey: "payStatusPartial", color: "#92400e", bg: "#fef3c7", remaining, totalPaid };
 }
 
 // وضعیت مبلغ مستمر ماهانه — طبق خواسته‌ی صریح: چون این مبلغ باید هرماه
@@ -182,8 +187,8 @@ export function computeMonthlyPaymentAlarm(company, payments) {
     const d = new Date(p.payment_date);
     return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
   });
-  if (paidThisMonth) return { overdue: false, label: "پرداخت ماهانه این ماه ثبت شده", color: "#166534", bg: "#dcfce7" };
-  return { overdue: true, label: `مبلغ مستمر ماهانه (${monthlyAmount.toLocaleString("fa-IR")} تومان) هنوز برای این ماه پرداخت نشده`, color: "#b91c1c", bg: "#fee2e2" };
+  if (paidThisMonth) return { overdue: false, labelKey: "monthlyAlarmPaid", color: "#166534", bg: "#dcfce7" };
+  return { overdue: true, label: tr("monthlyAlarmOverdue", { amount: monthlyAmount.toLocaleString("fa-IR") }), color: "#b91c1c", bg: "#fee2e2" };
 }
 
 // معوق: هنوز بدهی باقی مانده و دوره‌ی اشتراک هم به پایان رسیده
@@ -199,12 +204,13 @@ export function computeSubscriptionAlertTier(endDate) {
   const now = new Date(); now.setHours(0, 0, 0, 0);
   const end = new Date(endDate); end.setHours(0, 0, 0, 0);
   const daysLeft = Math.round((end - now) / (1000 * 60 * 60 * 24));
-  if (daysLeft < 0) return { tier: "expired", label: "منقضی شده", daysLeft, color: "#b91c1c", bg: "#fee2e2" };
-  if (daysLeft === 0) return { tier: "today", label: "امروز پایان می‌یابد", daysLeft, color: "#b91c1c", bg: "#fee2e2" };
-  if (daysLeft <= 3) return { tier: "3days", label: `${daysLeft} روز مانده`, daysLeft, color: "#b91c1c", bg: "#fee2e2" };
-  if (daysLeft <= 7) return { tier: "7days", label: `${daysLeft} روز مانده`, daysLeft, color: "#92400e", bg: "#fef3c7" };
-  if (daysLeft <= 15) return { tier: "15days", label: `${daysLeft} روز مانده`, daysLeft, color: "#92400e", bg: "#fef3c7" };
-  if (daysLeft <= 30) return { tier: "30days", label: `${daysLeft} روز مانده`, daysLeft, color: "#92400e", bg: "#fef3c7" };
+  const daysLeftLabel = tr("subTierDaysLeft", { days: daysLeft });
+  if (daysLeft < 0) return { tier: "expired", label: tr("subTierExpired"), daysLeft, color: "#b91c1c", bg: "#fee2e2" };
+  if (daysLeft === 0) return { tier: "today", label: tr("subTierToday"), daysLeft, color: "#b91c1c", bg: "#fee2e2" };
+  if (daysLeft <= 3) return { tier: "3days", label: daysLeftLabel, daysLeft, color: "#b91c1c", bg: "#fee2e2" };
+  if (daysLeft <= 7) return { tier: "7days", label: daysLeftLabel, daysLeft, color: "#92400e", bg: "#fef3c7" };
+  if (daysLeft <= 15) return { tier: "15days", label: daysLeftLabel, daysLeft, color: "#92400e", bg: "#fef3c7" };
+  if (daysLeft <= 30) return { tier: "30days", label: daysLeftLabel, daysLeft, color: "#92400e", bg: "#fef3c7" };
   return null;
 }
 
@@ -221,7 +227,7 @@ export async function createCompanyUserAccount(companyId, { name, username, pass
   const clean = username.trim();
   const existing = await sb(`employer_accounts?username=eq.${encodeURIComponent(clean)}&select=id`, {}, "super_admin");
   if (sbOk(existing) && existing.length > 0) {
-    return { __error: true, message: "این نام کاربری قبلاً استفاده شده است" };
+    return { __error: true, message: tr("saErrUsernameTaken") };
   }
   const validRoles = ["admin", "employer", "hse_supervisor"];
   const payload = {
@@ -229,7 +235,7 @@ export async function createCompanyUserAccount(companyId, { name, username, pass
     role: validRoles.includes(role) ? role : "employer", company_id: companyId,
   };
   const rows = await sb("employer_accounts", { method: "POST", body: JSON.stringify([payload]) }, "super_admin");
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ثبت حساب" };
+  if (!sbOk(rows)) return { __error: true, message: tr("saErrCreateAccount") };
   return rows[0];
 }
 
@@ -268,75 +274,75 @@ function planFromRow(r) {
 // درخت واقعی ماژول/زیرماژول اپ — دقیقاً منطبق با HSE_MODULES در App.jsx،
 // تا انتخاب فیچر هر پلن با ساختار واقعی منوها همخوانی داشته باشد.
 export const PLAN_FEATURES = [
-  { key: "chat", label: "چت" },
+  { key: "chat", labelKey: "pfChat" },
   {
-    key: "archiveManagement", label: "آرشیو فایل‌ها",
+    key: "archiveManagement", labelKey: "pfArchiveManagement",
     sub: [
-      { key: "archivePersonnel", label: "آرشیو پرسنل" },
-      { key: "archiveAnomaly", label: "آرشیو آنومالی" },
-      { key: "archiveMachinery", label: "آرشیو ماشین‌آلات" },
-      { key: "archiveScaffold", label: "آرشیو داربست" },
+      { key: "archivePersonnel", labelKey: "pfArchivePersonnel" },
+      { key: "archiveAnomaly", labelKey: "pfArchiveAnomaly" },
+      { key: "archiveMachinery", labelKey: "pfArchiveMachinery" },
+      { key: "archiveScaffold", labelKey: "pfArchiveScaffold" },
     ],
   },
   {
-    key: "anomalyReport", label: "مدیریت عدم انطباق‌ها",
+    key: "anomalyReport", labelKey: "pfAnomalyReport",
     sub: [
-      { key: "anomalyForm", label: "ثبت آنومالی" },
-      { key: "anomalyList", label: "لیست آنومالی‌ها" },
-      { key: "correctiveActionsList", label: "لیست اقدامات اصلاحی" },
+      { key: "anomalyForm", labelKey: "pfAnomalyForm" },
+      { key: "anomalyList", labelKey: "pfAnomalyList" },
+      { key: "correctiveActionsList", labelKey: "pfCorrectiveActionsList" },
     ],
   },
   {
-    key: "riskAssessment", label: "مدیریت ارزیابی ریسک",
+    key: "riskAssessment", labelKey: "pfRiskAssessment",
     sub: [
-      { key: "bowtieDashboard", label: "BowTie Risk Analysis" },
-      { key: "hcmsDashboard", label: "HCMS - مدیریت و کنترل خطرات" },
-      { key: "riskKnowledgeManagement", label: "بانک اطلاعاتی ارزیابی ریسک" },
+      { key: "bowtieDashboard", labelKey: "pfBowtieDashboard" },
+      { key: "hcmsDashboard", labelKey: "pfHcmsDashboard" },
+      { key: "riskKnowledgeManagement", labelKey: "pfRiskKnowledgeManagement" },
     ],
   },
   {
-    key: "personnelAccess", label: "مدیریت ورود و تردد پرسنل",
+    key: "personnelAccess", labelKey: "pfPersonnelAccess",
     sub: [
-      { key: "personnelDashboard", label: "لیست پرسنل" },
-      { key: "personnelForm", label: "ثبت پرسنل جدید" },
+      { key: "personnelDashboard", labelKey: "pfPersonnelDashboard" },
+      { key: "personnelForm", labelKey: "pfPersonnelForm" },
     ],
   },
   {
-    key: "proactiveIndicators", label: "اندازه‌گیری شاخص‌های Proactive HSE",
+    key: "proactiveIndicators", labelKey: "pfProactiveIndicators",
     sub: [
-      { key: "accidentProneness", label: "استعداد حادثه‌پذیری (Accident Proneness)" },
-      { key: "hseClimate", label: "HSE Climate" },
-      { key: "sbs", label: "نمونه‌برداری از رفتارهای ایمنی (SBS)" },
+      { key: "accidentProneness", labelKey: "pfAccidentProneness" },
+      { key: "hseClimate", labelKey: "pfHseClimate" },
+      { key: "sbs", labelKey: "pfSbs" },
     ],
   },
   {
-    key: "incidentManagement", label: "مدیریت حوادث",
+    key: "incidentManagement", labelKey: "pfIncidentManagement",
     sub: [
-      { key: "incidentsList", label: "فهرست حوادث" },
-      { key: "tripodBetaAnalysis", label: "تحلیل حادثه Tripod Beta" },
+      { key: "incidentsList", labelKey: "pfIncidentsList" },
+      { key: "tripodBetaAnalysis", labelKey: "pfTripodBetaAnalysis" },
     ],
   },
   {
-    key: "machineryManagement", label: "مدیریت ماشین‌آلات",
-    sub: [{ key: "machineryDashboard", label: "لیست ماشین‌آلات" }],
+    key: "machineryManagement", labelKey: "pfMachineryManagement",
+    sub: [{ key: "machineryDashboard", labelKey: "pfMachineryDashboard" }],
   },
   {
-    key: "scaffoldManagement", label: "مدیریت داربست",
-    sub: [{ key: "scaffoldDashboard", label: "لیست تگ داربست" }],
+    key: "scaffoldManagement", labelKey: "pfScaffoldManagement",
+    sub: [{ key: "scaffoldDashboard", labelKey: "pfScaffoldDashboard" }],
   },
-  { key: "managementDashboard", label: "داشبورد مدیریتی و گزارش‌های تحلیلی" },
-  { key: "adminAnalytics", label: "داشبورد فعالیت کاربران" },
+  { key: "managementDashboard", labelKey: "pfManagementDashboard" },
+  { key: "adminAnalytics", labelKey: "pfAdminAnalytics" },
   {
-    key: "systemManagement", label: "مدیریت سیستم",
+    key: "systemManagement", labelKey: "pfSystemManagement",
     sub: [
-      { key: "permissionManagement", label: "مدیریت دسترسی‌ها" },
-      { key: "jobPositionManagement", label: "مدیریت عناوین شغلی" },
-      { key: "scaffoldCodeManagement", label: "مدیریت کدهای داربست" },
-      { key: "trainingManagement", label: "مدیریت آموزش" },
-      { key: "chatAccessManagement", label: "مدیریت دسترسی چت" },
-      { key: "hcmsMatrixManagement", label: "مدیریت ماتریس HCMS" },
-      { key: "effectivenessThresholds", label: "Threshold اثربخشی Barrier" },
-      { key: "anomalyCategoryManagement", label: "مدیریت دسته‌بندی آنومالی" },
+      { key: "permissionManagement", labelKey: "pfPermissionManagement" },
+      { key: "jobPositionManagement", labelKey: "pfJobPositionManagement" },
+      { key: "scaffoldCodeManagement", labelKey: "pfScaffoldCodeManagement" },
+      { key: "trainingManagement", labelKey: "pfTrainingManagement" },
+      { key: "chatAccessManagement", labelKey: "pfChatAccessManagement" },
+      { key: "hcmsMatrixManagement", labelKey: "pfHcmsMatrixManagement" },
+      { key: "effectivenessThresholds", labelKey: "pfEffectivenessThresholds" },
+      { key: "anomalyCategoryManagement", labelKey: "pfAnomalyCategoryManagement" },
     ],
   },
 ];
@@ -358,7 +364,7 @@ export async function createPlan(rec) {
     features: rec.features || [], is_active: true, sort_order: nextOrder,
   };
   const rows = await sb("plans", { method: "POST", body: JSON.stringify([payload]) }, "super_admin");
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ثبت پلن" };
+  if (!sbOk(rows)) return { __error: true, message: tr("saErrCreatePlan") };
   return planFromRow(rows[0]);
 }
 
@@ -376,7 +382,7 @@ export async function updatePlan(id, patch) {
   if ("features" in patch) dbPatch.features = patch.features;
   if ("isActive" in patch) dbPatch.is_active = patch.isActive;
   const rows = await sb(`plans?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(dbPatch) }, "super_admin");
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ذخیره‌سازی پلن" };
+  if (!sbOk(rows)) return { __error: true, message: tr("saErrSavePlan") };
   return planFromRow(rows[0]);
 }
 
@@ -411,10 +417,10 @@ export async function deletePlan(id) {
   const usedBy = await sb(`companies?plan_id=eq.${id}&select=id,name&limit=5`, {}, "super_admin");
   if (sbOk(usedBy) && usedBy.length > 0) {
     const names = usedBy.map((c) => c.name).join("، ");
-    return { __error: true, message: `این پلن هنوز برای این شرکت‌ها فعال است: ${names} — اول پلن آن‌ها را عوض کنید یا این پلن را فقط غیرفعال کنید.` };
+    return { __error: true, message: tr("saPlanInUseByCompanies", { names }) };
   }
   const result = await sb(`plans?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" }, "super_admin");
-  if (!sbOk(result)) return { __error: true, message: "خطا در حذف پلن" };
+  if (!sbOk(result)) return { __error: true, message: tr("saErrDeletePlan") };
   return { ok: true };
 }
 
@@ -485,7 +491,7 @@ export async function assignPlanToCompany(companyId, planId, action, changedBy, 
   if (endDate) updatePayload.subscription_end_date = endDate;
 
   const updateResult = await sb(`companies?id=eq.${companyId}`, { method: "PATCH", body: JSON.stringify(updatePayload) }, "super_admin");
-  if (!sbOk(updateResult)) return { __error: true, message: "خطا در تغییر پلن شرکت" };
+  if (!sbOk(updateResult)) return { __error: true, message: tr("saErrChangeCompanyPlan") };
 
   const historyPayload = {
     company_id: companyId, plan_id: planId, previous_plan_id: previousPlanId,
@@ -535,8 +541,8 @@ export async function approveCardTransferPayment(paymentId, reviewedBy) {
     method: "PATCH",
     body: JSON.stringify({ status: "paid", reviewed_by: reviewedBy || "", reviewed_at: new Date().toISOString() }),
   }, "super_admin");
-  if (!sbOk(rows)) return { __error: true, message: "خطا در تأیید پرداخت" };
-  if (rows.length === 0) return { __error: true, message: "این رسید قبلاً تأیید/رد شده یا پیدا نشد" };
+  if (!sbOk(rows)) return { __error: true, message: tr("saErrApprovePayment") };
+  if (rows.length === 0) return { __error: true, message: tr("saReceiptAlreadyReviewed") };
   const payment = rows[0];
 
   const endDate = computeSubscriptionEndDate(payment.billing_cycle);
@@ -556,7 +562,7 @@ export async function approveCardTransferPayment(paymentId, reviewedBy) {
     body: JSON.stringify([{
       company_id: payment.company_id, plan_id: payment.plan_id, previous_plan_id: previousPlanId,
       action: "auto_activated_card_transfer",
-      note: `تأیید رسید کارت‌به‌کارت — دوره‌ی ${payment.billing_cycle === "monthly" ? "ماهانه" : "سالانه"} — پیگیری: ${payment.tracking_number || "—"}`,
+      note: tr("saCardTransferHistoryNote", { cycle: payment.billing_cycle === "monthly" ? tr("subTypeMonthly") : tr("subTypeYearly"), tracking: payment.tracking_number || "—" }),
       changed_by: reviewedBy || "",
     }]),
   }, "super_admin");
@@ -565,13 +571,13 @@ export async function approveCardTransferPayment(paymentId, reviewedBy) {
 }
 
 export async function rejectCardTransferPayment(paymentId, reviewedBy, note) {
-  if (!note || !note.trim()) return { __error: true, message: "برای رد یک رسید، ذکر دلیل الزامی است" };
+  if (!note || !note.trim()) return { __error: true, message: tr("saRejectReasonRequired") };
   const rows = await sb(`payments?id=eq.${paymentId}&status=eq.awaiting_review`, {
     method: "PATCH",
     body: JSON.stringify({ status: "rejected", admin_note: note.trim(), reviewed_by: reviewedBy || "", reviewed_at: new Date().toISOString() }),
   }, "super_admin");
-  if (!sbOk(rows)) return { __error: true, message: "خطا در رد پرداخت" };
-  if (rows.length === 0) return { __error: true, message: "این رسید قبلاً تأیید/رد شده یا پیدا نشد" };
+  if (!sbOk(rows)) return { __error: true, message: tr("saErrRejectPayment") };
+  if (rows.length === 0) return { __error: true, message: tr("saReceiptAlreadyReviewed") };
   return { ok: true };
 }
 
@@ -586,7 +592,7 @@ export async function saveCardTransferSettings({ cardNumber, holderName, descrip
   ];
   const payload = entries.map(([key, value]) => ({ key, value_text: value, updated_at: new Date().toISOString(), updated_by: updatedBy || "" }));
   const rows = await sb("system_settings?on_conflict=key", { method: "POST", body: JSON.stringify(payload), prefer: "resolution=merge-duplicates,return=representation" }, "super_admin");
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ذخیره‌ی تنظیمات پرداخت" };
+  if (!sbOk(rows)) return { __error: true, message: tr("saErrSavePaymentSettings") };
   return { ok: true };
 }
 
@@ -622,7 +628,7 @@ export async function loadTrialRequests(statusFilter) {
 
 export async function approveTrialRequest(id, approvedTrialDays, reviewedBy, note) {
   const days = Number(approvedTrialDays);
-  if (!days || days <= 0) return { __error: true, message: "مدت پلن آزمایشی نامعتبر است" };
+  if (!days || days <= 0) return { __error: true, message: tr("saInvalidTrialDuration") };
   const rows = await sb(`trial_requests?id=eq.${id}&status=eq.pending`, {
     method: "PATCH",
     body: JSON.stringify({
@@ -630,19 +636,19 @@ export async function approveTrialRequest(id, approvedTrialDays, reviewedBy, not
       reviewed_by: reviewedBy || "", reviewed_at: new Date().toISOString(),
     }),
   }, "super_admin");
-  if (!sbOk(rows)) return { __error: true, message: "خطا در تأیید درخواست" };
-  if (rows.length === 0) return { __error: true, message: "این درخواست قبلاً تأیید/رد شده یا پیدا نشد" };
+  if (!sbOk(rows)) return { __error: true, message: tr("saErrApproveRequest") };
+  if (rows.length === 0) return { __error: true, message: tr("saRequestAlreadyReviewed") };
   return { ok: true };
 }
 
 export async function rejectTrialRequest(id, reviewedBy, note) {
-  if (!note || !note.trim()) return { __error: true, message: "برای رد یک درخواست، ذکر دلیل الزامی است" };
+  if (!note || !note.trim()) return { __error: true, message: tr("saTrialRejectReasonRequired") };
   const rows = await sb(`trial_requests?id=eq.${id}&status=eq.pending`, {
     method: "PATCH",
     body: JSON.stringify({ status: "rejected", admin_note: note.trim(), reviewed_by: reviewedBy || "", reviewed_at: new Date().toISOString() }),
   }, "super_admin");
-  if (!sbOk(rows)) return { __error: true, message: "خطا در رد درخواست" };
-  if (rows.length === 0) return { __error: true, message: "این درخواست قبلاً تأیید/رد شده یا پیدا نشد" };
+  if (!sbOk(rows)) return { __error: true, message: tr("saErrRejectRequest") };
+  if (rows.length === 0) return { __error: true, message: tr("saRequestAlreadyReviewed") };
   return { ok: true };
 }
 
@@ -663,7 +669,7 @@ export async function loadJobPositionsForCompany(companyId) {
 
 async function callManageAccount(payload) {
   const token = getSessionToken("super_admin");
-  if (!token) return { __error: true, message: "نشست نامعتبر است — لطفاً دوباره وارد شوید." };
+  if (!token) return { __error: true, message: tr("saErrInvalidSession") };
   try {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/manage-account`, {
       method: "POST",
@@ -671,10 +677,10 @@ async function callManageAccount(payload) {
       body: JSON.stringify(payload),
     });
     const data = await res.json();
-    if (!res.ok) return { __error: true, message: data?.error || "خطا در انجام عملیات" };
+    if (!res.ok) return { __error: true, message: data?.error || tr("saErrGenericOp") };
     return data;
   } catch {
-    return { __error: true, message: "خطا در برقراری ارتباط با سرور" };
+    return { __error: true, message: tr("saErrServerConn") };
   }
 }
 
@@ -800,7 +806,7 @@ export async function computeInactiveCompanies(companies, sinceDays = 30) {
 
 async function callStorageUsage(payload) {
   const token = getSessionToken("super_admin");
-  if (!token) return { __error: true, message: "نشست نامعتبر است — لطفاً دوباره وارد شوید." };
+  if (!token) return { __error: true, message: tr("saErrInvalidSession") };
   try {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/storage-usage`, {
       method: "POST",
@@ -808,10 +814,10 @@ async function callStorageUsage(payload) {
       body: JSON.stringify(payload),
     });
     const data = await res.json();
-    if (!res.ok) return { __error: true, message: data?.error || "خطا در دریافت اطلاعات Storage" };
+    if (!res.ok) return { __error: true, message: data?.error || tr("saErrStorageInfo") };
     return data;
   } catch {
-    return { __error: true, message: "خطا در برقراری ارتباط با سرور" };
+    return { __error: true, message: tr("saErrServerConn") };
   }
 }
 
@@ -825,9 +831,9 @@ export async function setStorageCapacity(capacityMb) {
 
 // وضعیت رنگی مصرف — دقیقاً همان سه آستانه‌ی درخواست‌شده
 export function storageUsageStatus(percent) {
-  if (percent >= 90) return { label: "بحرانی", color: "#b91c1c", bg: "#fee2e2" };
-  if (percent >= 80) return { label: "هشدار", color: "#92400e", bg: "#fef3c7" };
-  return { label: "عادی", color: "#166534", bg: "#dcfce7" };
+  if (percent >= 90) return { label: tr("storageStatusCritical"), color: "#b91c1c", bg: "#fee2e2" };
+  if (percent >= 80) return { label: tr("storageStatusWarning"), color: "#92400e", bg: "#fef3c7" };
+  return { label: tr("storageStatusNormal"), color: "#166534", bg: "#dcfce7" };
 }
 
 // ---------- کپی محتوای آماده بین شرکت‌ها — فقط Super Admin ----------
@@ -838,7 +844,7 @@ export function storageUsageStatus(percent) {
 
 export async function copyRiskKnowledgeToCompany(sourceCompanyId, targetCompanyId) {
   const rows = await sb(`risk_knowledge_base?company_id=eq.${sourceCompanyId}&select=*`, {}, "super_admin");
-  if (!sbOk(rows)) return { __error: true, message: "خطا در خواندن بانک دانش ریسک مبدأ" };
+  if (!sbOk(rows)) return { __error: true, message: tr("saErrReadSourceKnowledge") };
   if (rows.length === 0) return { ok: true, count: 0 };
 
   // نکته‌ی مهم: برخلاف جدول‌های BowTie (که id متنی و ساخت‌شده در برنامه
@@ -851,13 +857,13 @@ export async function copyRiskKnowledgeToCompany(sourceCompanyId, targetCompanyI
     return { ...rest, company_id: targetCompanyId };
   });
   const inserted = await sb("risk_knowledge_base", { method: "POST", body: JSON.stringify(payload) }, "super_admin");
-  if (!sbOk(inserted)) return { __error: true, message: "خطا در نوشتن نسخه‌ی جدید" };
+  if (!sbOk(inserted)) return { __error: true, message: tr("saErrWriteNewCopy") };
   return { ok: true, count: inserted.length };
 }
 
 export async function copyBowtiesToCompany(sourceCompanyId, targetCompanyId) {
   const bowties = await sb(`bowties?company_id=eq.${sourceCompanyId}&select=*`, {}, "super_admin");
-  if (!sbOk(bowties)) return { __error: true, message: "خطا در خواندن مدل‌های BowTie مبدأ" };
+  if (!sbOk(bowties)) return { __error: true, message: tr("saErrReadSourceBowties") };
   if (bowties.length === 0) return { ok: true, count: 0 };
 
   let copiedCount = 0;
@@ -971,6 +977,6 @@ export async function setCompanyProactiveSettings(companyId, patch, updatedBy) {
   const rows = sbOk(existing) && existing.length > 0
     ? await sb(`company_proactive_settings?company_id=eq.${companyId}`, { method: "PATCH", body: JSON.stringify(payload) }, "super_admin")
     : await sb("company_proactive_settings", { method: "POST", body: JSON.stringify([payload]) }, "super_admin");
-  if (!sbOk(rows)) return { __error: true, message: "خطا در ذخیره‌ی تنظیمات" };
+  if (!sbOk(rows)) return { __error: true, message: tr("saErrSaveSettings") };
   return { ok: true };
 }

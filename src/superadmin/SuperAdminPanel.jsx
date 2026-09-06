@@ -24,12 +24,15 @@ import {
 import { computeSubscriptionAccess, loadOnlinePaymentsForCompany, loadCardTransferSettings } from "../subscriptionApi.js";
 import { loadErrorReports, updateErrorReportStatus } from "../errorReportsApi.js";
 import DocumentViewerModal from "../personnel/DocumentViewerModal.jsx";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { translate, getCurrentLang } from "../i18n/translations.js";
 
 const inputStyle = { width: "100%", padding: "8px 10px", borderRadius: 8, border: `1.5px solid ${THEME.border}`, fontSize: 12.5, fontFamily: THEME.font, boxSizing: "border-box" };
 const btnStyle = (bg) => ({ padding: "7px 14px", borderRadius: 8, border: "none", background: bg || THEME.teal, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font });
 const smallLabelStyle = { display: "block", marginBottom: 4, fontSize: 11.5, fontWeight: 600, color: THEME.text2 };
 
 export default function SuperAdminPanel({ currentAdmin, onLogout }) {
+  const { t } = useLanguage();
   const [page, setPage] = useState("overview");
   const [companies, setCompanies] = useState([]);
   const [plans, setPlans] = useState([]);
@@ -74,7 +77,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
 
   const handleDelete = async (id, confirmName) => {
     const result = await deleteCompanySecure(id, confirmName);
-    if (result?.__error) { alert(result.message + (result.detail ? `\n\nجزئیات فنی:\n${result.detail}` : "")); return; }
+    if (result?.__error) { alert(result.message + (result.detail ? t("saTechDetailsSuffix", { detail: result.detail }) : "")); return; }
     await load();
   };
 
@@ -103,20 +106,20 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
     disabled: companies.filter((c) => c.subscriptionStatus === "disabled").length,
   };
 
-  if (loading) return <div style={{ padding: 40, textAlign: "center", color: THEME.text3 }}>در حال بارگذاری...</div>;
+  if (loading) return <div style={{ padding: 40, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</div>;
 
   const NAV_ITEMS = [
-    { key: "overview", label: "نمای کلی", icon: LayoutDashboard },
-    { key: "companies", label: "شرکت‌ها", icon: Building2 },
-    { key: "accounts", label: "حساب‌ها", icon: Users },
-    { key: "plans", label: "پلن‌ها", icon: Layers },
-    { key: "storage", label: "Storage & Usage", icon: HardDrive },
-    { key: "monitoring", label: "مانیتورینگ و تحلیل", icon: Activity },
-    { key: "systemConfig", label: "پیکربندی سامانه", icon: Settings2 },
-    { key: "auditLog", label: "گزارش تغییرات", icon: FileClock },
-    { key: "errorReports", label: "گزارش‌های خطا", icon: AlertTriangle },
-    { key: "cardTransferPayments", label: "رسیدهای پرداخت", icon: CreditCard },
-    { key: "trialRequests", label: "درخواست پلن آزمایشی", icon: ClipboardList },
+    { key: "overview", labelKey: "saNavOverview", icon: LayoutDashboard },
+    { key: "companies", labelKey: "saNavCompanies", icon: Building2 },
+    { key: "accounts", labelKey: "saNavAccounts", icon: Users },
+    { key: "plans", labelKey: "saNavPlans", icon: Layers },
+    { key: "storage", labelKey: "saStorageUsageTitle", icon: HardDrive },
+    { key: "monitoring", labelKey: "saNavMonitoring", icon: Activity },
+    { key: "systemConfig", labelKey: "saNavSystemConfig", icon: Settings2 },
+    { key: "auditLog", labelKey: "saNavAuditLog", icon: FileClock },
+    { key: "errorReports", labelKey: "saNavErrorReports", icon: AlertTriangle },
+    { key: "cardTransferPayments", labelKey: "saNavCardPayments", icon: CreditCard },
+    { key: "trialRequests", labelKey: "saNavTrialRequests", icon: ClipboardList },
   ];
 
   return (
@@ -124,15 +127,15 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
       <div style={{ background: THEME.navyDeep, color: "#fff", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <ShieldAlert size={18} />
-          <h1 style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>Super Admin — مالک سامانه</h1>
+          <h1 style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>{t("saHeaderTitle")}</h1>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <span style={{ fontSize: 12, opacity: 0.8 }}>{currentAdmin?.fullName}</span>
           <button type="button" onClick={() => setShowChangePassword((v) => !v)} style={{ ...btnStyle("rgba(255,255,255,0.15)"), display: "flex", alignItems: "center", gap: 6 }}>
-            <KeyRound size={13} /> تغییر رمز من
+            <KeyRound size={13} /> {t("saChangeMyPassword")}
           </button>
-          <button type="button" onClick={() => { if (window.confirm("آیا مطمئن هستید که می‌خواهید از سامانه خارج شوید؟")) onLogout(); }} style={{ ...btnStyle("rgba(255,255,255,0.15)"), display: "flex", alignItems: "center", gap: 6 }}>
-            <LogOut size={13} /> خروج
+          <button type="button" onClick={() => { if (window.confirm(t("saLogoutConfirm"))) onLogout(); }} style={{ ...btnStyle("rgba(255,255,255,0.15)"), display: "flex", alignItems: "center", gap: 6 }}>
+            <LogOut size={13} /> {t("saLogout")}
           </button>
         </div>
       </div>
@@ -154,7 +157,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
                   fontSize: 12.5, fontWeight: active ? 700 : 500, fontFamily: THEME.font,
                 }}
               >
-                <Icon size={14} /> {item.label}
+                <Icon size={14} /> {t(item.labelKey)}
               </button>
             );
           })}
@@ -195,6 +198,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
 }
 
 function DashboardOverview({ companies, summary, usageStats, onNavigate }) {
+  const { t } = useLanguage();
   const [failedLoginCount, setFailedLoginCount] = useState(null);
   const [inactiveCount, setInactiveCount] = useState(null);
   const [paymentAlertCount, setPaymentAlertCount] = useState(null);
@@ -218,48 +222,48 @@ function DashboardOverview({ companies, summary, usageStats, onNavigate }) {
 
   return (
     <div>
-      <h2 style={{ fontSize: 16, color: THEME.navy, fontWeight: 700, margin: "0 0 14px" }}>نمای کلی</h2>
+      <h2 style={{ fontSize: 16, color: THEME.navy, fontWeight: 700, margin: "0 0 14px" }}>{t("saOverviewTitle")}</h2>
 
       <StorageOverviewCard onNavigate={onNavigate} />
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 1, background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, overflow: "hidden", marginBottom: 16 }}>
-        <StatBox label="کل شرکت‌ها" value={summary.total} />
-        <StatBox label="اشتراک فعال" value={summary.active} color="#166534" />
-        <StatBox label="منقضی" value={summary.expired} color="#c92a2a" />
-        <StatBox label="غیرفعال" value={summary.disabled} color="#5b6b7d" />
-        <StatBox label="کل پرسنل ثبت‌شده" value={totalPersonnel} />
-        <StatBox label="کل آنومالی ثبت‌شده" value={totalAnomalies} />
+        <StatBox label={t("saStatTotalCompanies")} value={summary.total} />
+        <StatBox label={t("saStatActiveSub")} value={summary.active} color="#166534" />
+        <StatBox label={t("saStatExpired")} value={summary.expired} color="#c92a2a" />
+        <StatBox label={t("saStatDisabled")} value={summary.disabled} color="#5b6b7d" />
+        <StatBox label={t("saStatTotalPersonnel")} value={totalPersonnel} />
+        <StatBox label={t("saStatTotalAnomalies")} value={totalAnomalies} />
       </div>
 
-      <h3 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>نیازمند توجه</h3>
+      <h3 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>{t("saNeedsAttention")}</h3>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, marginBottom: 16 }}>
         <AttentionCard
           icon={AlertTriangle} color="#92400e" bg="#fef3c7"
-          label="هشدار پایان اشتراک (تا ۳۰ روز)" value={subscriptionAlertCount}
+          label={t("saSubAlertLabel")} value={subscriptionAlertCount}
           onClick={() => onNavigate("monitoring")}
         />
         <AttentionCard
           icon={CreditCard} color="#b91c1c" bg="#fee2e2"
-          label="شرکت‌های دارای مانده‌حساب" value={paymentAlertCount}
+          label={t("saPaymentAlertLabel")} value={paymentAlertCount}
           onClick={() => onNavigate("monitoring")}
         />
         <AttentionCard
           icon={TrendingDown} color="#b91c1c" bg="#fee2e2"
-          label="شرکت‌های کم‌فعالیت (۳۰ روز)" value={inactiveCount}
+          label={t("saInactiveLabel")} value={inactiveCount}
           onClick={() => onNavigate("monitoring")}
         />
         <AttentionCard
           icon={ShieldX} color="#b91c1c" bg="#fee2e2"
-          label="تلاش ناموفق ورود (۲۴ ساعت اخیر)" value={failedLoginCount}
+          label={t("saFailedLoginLabel")} value={failedLoginCount}
           onClick={() => onNavigate("monitoring")}
         />
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10 }}>
-        <QuickLinkCard icon={Building2} label="مدیریت شرکت‌ها" onClick={() => onNavigate("companies")} />
-        <QuickLinkCard icon={Users} label="مدیریت حساب‌ها" onClick={() => onNavigate("accounts")} />
-        <QuickLinkCard icon={Layers} label="مدیریت پلن‌ها" onClick={() => onNavigate("plans")} />
-        <QuickLinkCard icon={FileClock} label="گزارش تغییرات" onClick={() => onNavigate("auditLog")} />
+        <QuickLinkCard icon={Building2} label={t("saQuickCompanies")} onClick={() => onNavigate("companies")} />
+        <QuickLinkCard icon={Users} label={t("saQuickAccounts")} onClick={() => onNavigate("accounts")} />
+        <QuickLinkCard icon={Layers} label={t("saQuickPlans")} onClick={() => onNavigate("plans")} />
+        <QuickLinkCard icon={FileClock} label={t("saQuickAuditLog")} onClick={() => onNavigate("auditLog")} />
       </div>
     </div>
   );
@@ -267,7 +271,7 @@ function DashboardOverview({ companies, summary, usageStats, onNavigate }) {
 
 function formatBytes(bytes) {
   if (bytes == null) return "—";
-  if (bytes === 0) return "۰ MB";
+  if (bytes === 0) return translate(getCurrentLang(), "saBytesZero");
   const mb = bytes / (1024 * 1024);
   if (mb < 1024) return `${mb.toLocaleString("fa-IR", { maximumFractionDigits: 1 })} MB`;
   return `${(mb / 1024).toLocaleString("fa-IR", { maximumFractionDigits: 2 })} GB`;
@@ -299,6 +303,7 @@ function useStorageData() {
 }
 
 function StorageOverviewCard({ onNavigate }) {
+  const { t } = useLanguage();
   const { data, loading, error, refresh } = useStorageData();
 
   const capacityBytes = data?.capacityMb ? data.capacityMb * 1024 * 1024 : null;
@@ -314,10 +319,10 @@ function StorageOverviewCard({ onNavigate }) {
         </h3>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {onNavigate && (
-            <button type="button" onClick={() => onNavigate("storage")} style={{ ...btnStyle(THEME.navyMid), fontSize: 11 }}>جزئیات</button>
+            <button type="button" onClick={() => onNavigate("storage")} style={{ ...btnStyle(THEME.navyMid), fontSize: 11 }}>{t("saDetails")}</button>
           )}
           <button type="button" onClick={refresh} disabled={loading} style={{ ...btnStyle(THEME.navyMid), fontSize: 11, display: "flex", alignItems: "center", gap: 5 }}>
-            <RefreshCw size={11} /> {loading ? "..." : "رفرش"}
+            <RefreshCw size={11} /> {loading ? "..." : t("saRefresh")}
           </button>
         </div>
       </div>
@@ -327,10 +332,10 @@ function StorageOverviewCard({ onNavigate }) {
       {data && (
         <>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: 12 }}>
-            <MiniStat label="ظرفیت کل" value={capacityBytes ? formatBytes(capacityBytes) : "تنظیم‌نشده"} />
-            <MiniStat label="مصرف‌شده" value={formatBytes(usedBytes)} />
-            <MiniStat label="باقی‌مانده" value={capacityBytes ? formatBytes(Math.max(0, capacityBytes - usedBytes)) : "—"} />
-            <MiniStat label="درصد مصرف" value={percent != null ? `${percent.toLocaleString("fa-IR", { maximumFractionDigits: 1 })}٪` : "—"} color={status?.color} />
+            <MiniStat label={t("saCapacityTotal")} value={capacityBytes ? formatBytes(capacityBytes) : t("saCapacityNotSet")} />
+            <MiniStat label={t("saCapacityUsed")} value={formatBytes(usedBytes)} />
+            <MiniStat label={t("saCapacityRemaining")} value={capacityBytes ? formatBytes(Math.max(0, capacityBytes - usedBytes)) : "—"} />
+            <MiniStat label={t("saCapacityPercent")} value={percent != null ? `${percent.toLocaleString("fa-IR", { maximumFractionDigits: 1 })}٪` : "—"} color={status?.color} />
           </div>
           {percent != null && (
             <div style={{ height: 8, background: "#eef1f5", borderRadius: 4, overflow: "hidden", marginBottom: 8 }}>
@@ -339,15 +344,15 @@ function StorageOverviewCard({ onNavigate }) {
           )}
           {status && (
             <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: status.bg, color: status.color, fontWeight: 600 }}>
-              وضعیت: {status.label}
+              {t("saStatusLabel", { label: status.label })}
             </span>
           )}
           <p style={{ fontSize: 10.5, color: THEME.text3, marginTop: 10, marginBottom: 0 }}>
-            آخرین به‌روزرسانی: {new Date(data.generatedAt).toLocaleTimeString("fa-IR")}
+            {t("saLastUpdated", { time: new Date(data.generatedAt).toLocaleTimeString("fa-IR") })}
           </p>
         </>
       )}
-      {!data && loading && <p style={{ fontSize: 12, color: THEME.text3 }}>در حال بارگذاری...</p>}
+      {!data && loading && <p style={{ fontSize: 12, color: THEME.text3 }}>{t("commonLoading")}</p>}
     </div>
   );
 }
@@ -362,6 +367,7 @@ function MiniStat({ label, value, color }) {
 }
 
 function StorageUsagePage() {
+  const { t } = useLanguage();
   const { data, loading, error, refresh } = useStorageData();
   const [editingCapacity, setEditingCapacity] = useState(false);
   const [capacityInput, setCapacityInput] = useState("");
@@ -386,16 +392,14 @@ function StorageUsagePage() {
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-        <h2 style={{ fontSize: 16, color: THEME.navy, fontWeight: 700, margin: 0 }}>Storage & Usage</h2>
+        <h2 style={{ fontSize: 16, color: THEME.navy, fontWeight: 700, margin: 0 }}>{t("saStorageUsageTitle")}</h2>
         <button type="button" onClick={refresh} disabled={loading} style={{ ...btnStyle(THEME.navyMid), display: "flex", alignItems: "center", gap: 6 }}>
-          <RefreshCw size={13} /> {loading ? "در حال رفرش..." : "رفرش"}
+          <RefreshCw size={13} /> {loading ? t("saRefreshing") : t("saRefresh")}
         </button>
       </div>
 
       <p style={{ fontSize: 11, color: THEME.text3, marginBottom: 14, lineHeight: 1.8 }}>
-        عدد «ظرفیت کل» یک تنظیمات سیستمی است (مطابق پلن اشتراک واقعی Supabase شما) — چون خودِ Supabase این عدد را از طریق API عمومی نمی‌دهد.
-        بقیه‌ی اعداد (مصرف کل، مصرف هر شرکت، تفکیک هر Bucket) مستقیم و زنده از Storage واقعی خوانده می‌شوند.
-        این صفحه حداکثر هر ۶۰ ثانیه خودکار به‌روز می‌شود.
+        {t("saStorageNote")}
       </p>
 
       {error && <p style={{ color: THEME.danger, fontSize: 12, marginBottom: 10 }}>{error}</p>}
@@ -404,25 +408,25 @@ function StorageUsagePage() {
         <>
           <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16, marginBottom: 16 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <h3 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: 0 }}>خلاصه‌ی کلی</h3>
+              <h3 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: 0 }}>{t("saOverallSummary")}</h3>
               <button type="button" onClick={() => { setEditingCapacity((v) => !v); setCapacityInput(String(data.capacityMb || "")); }} style={{ ...btnStyle(THEME.navyMid), fontSize: 11, display: "flex", alignItems: "center", gap: 5 }}>
-                <Settings2 size={11} /> تنظیم ظرفیت کل
+                <Settings2 size={11} /> {t("saSetTotalCapacity")}
               </button>
             </div>
 
             {editingCapacity && (
               <div style={{ display: "flex", gap: 8, marginBottom: 14, background: THEME.bg, padding: 10, borderRadius: 8 }}>
-                <input type="number" style={{ ...inputStyle, width: 160 }} value={capacityInput} onChange={(e) => setCapacityInput(e.target.value)} placeholder="ظرفیت به مگابایت" dir="ltr" />
-                <button type="button" onClick={handleSaveCapacity} disabled={savingCapacity} style={btnStyle()}>{savingCapacity ? "..." : "ذخیره"}</button>
+                <input type="number" style={{ ...inputStyle, width: 160 }} value={capacityInput} onChange={(e) => setCapacityInput(e.target.value)} placeholder={t("saCapacityMbPlaceholder")} dir="ltr" />
+                <button type="button" onClick={handleSaveCapacity} disabled={savingCapacity} style={btnStyle()}>{savingCapacity ? "..." : t("commonSave")}</button>
               </div>
             )}
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 14, marginBottom: 12 }}>
-              <MiniStat label="ظرفیت کل" value={capacityBytes ? formatBytes(capacityBytes) : "تنظیم‌نشده"} />
-              <MiniStat label="مصرف‌شده" value={formatBytes(usedBytes)} />
-              <MiniStat label="باقی‌مانده" value={capacityBytes ? formatBytes(Math.max(0, capacityBytes - usedBytes)) : "—"} />
-              <MiniStat label="درصد مصرف" value={percent != null ? `${percent.toLocaleString("fa-IR", { maximumFractionDigits: 1 })}٪` : "—"} color={status?.color} />
-              <MiniStat label="تعداد کل فایل‌ها" value={data.totalObjects?.toLocaleString("fa-IR") ?? "—"} />
+              <MiniStat label={t("saCapacityTotal")} value={capacityBytes ? formatBytes(capacityBytes) : t("saCapacityNotSet")} />
+              <MiniStat label={t("saCapacityUsed")} value={formatBytes(usedBytes)} />
+              <MiniStat label={t("saCapacityRemaining")} value={capacityBytes ? formatBytes(Math.max(0, capacityBytes - usedBytes)) : "—"} />
+              <MiniStat label={t("saCapacityPercent")} value={percent != null ? `${percent.toLocaleString("fa-IR", { maximumFractionDigits: 1 })}٪` : "—"} color={status?.color} />
+              <MiniStat label={t("saTotalObjectCount")} value={data.totalObjects?.toLocaleString("fa-IR") ?? "—"} />
             </div>
             {percent != null && (
               <div style={{ height: 10, background: "#eef1f5", borderRadius: 5, overflow: "hidden", marginBottom: 8 }}>
@@ -430,22 +434,22 @@ function StorageUsagePage() {
               </div>
             )}
             <p style={{ fontSize: 10.5, color: THEME.text3, margin: 0 }}>
-              آخرین به‌روزرسانی: {new Date(data.generatedAt).toLocaleString("fa-IR")}
+              {t("saLastUpdated", { time: new Date(data.generatedAt).toLocaleString("fa-IR") })}
             </p>
           </div>
 
           <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16, marginBottom: 16 }}>
-            <h3 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 12px" }}>مصرف هر شرکت</h3>
+            <h3 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 12px" }}>{t("saUsagePerCompany")}</h3>
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                 <thead>
                   <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
-                    <th style={{ textAlign: "right", padding: "6px 8px" }}>شرکت</th>
-                    <th style={{ textAlign: "center", padding: "6px 8px" }}>فضای اختصاص‌یافته</th>
-                    <th style={{ textAlign: "center", padding: "6px 8px" }}>مصرف واقعی</th>
-                    <th style={{ textAlign: "center", padding: "6px 8px" }}>باقی‌مانده</th>
-                    <th style={{ textAlign: "center", padding: "6px 8px" }}>درصد مصرف</th>
-                    <th style={{ textAlign: "center", padding: "6px 8px" }}>وضعیت</th>
+                    <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("saColCompany")}</th>
+                    <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColAllocatedSpace")}</th>
+                    <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColActualUsage")}</th>
+                    <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saCapacityRemaining")}</th>
+                    <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saCapacityPercent")}</th>
+                    <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("commonStatus")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -467,7 +471,7 @@ function StorageUsagePage() {
                     );
                   })}
                   {data.byCompany.length === 0 && (
-                    <tr><td colSpan={6} style={{ padding: 20, textAlign: "center", color: THEME.text3 }}>هنوز هیچ فایلی به شرکتی نسبت داده نشده است</td></tr>
+                    <tr><td colSpan={6} style={{ padding: 20, textAlign: "center", color: THEME.text3 }}>{t("saNoFilesAssigned")}</td></tr>
                   )}
                 </tbody>
               </table>
@@ -475,14 +479,14 @@ function StorageUsagePage() {
           </div>
 
           <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
-            <h3 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 12px" }}>تفکیک بر اساس Bucket</h3>
+            <h3 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 12px" }}>{t("saBreakdownByBucket")}</h3>
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                 <thead>
                   <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
                     <th style={{ textAlign: "right", padding: "6px 8px" }}>Bucket</th>
-                    <th style={{ textAlign: "center", padding: "6px 8px" }}>حجم مصرفی</th>
-                    <th style={{ textAlign: "center", padding: "6px 8px" }}>تعداد فایل</th>
+                    <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColUsedVolume")}</th>
+                    <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColFileCount")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -494,7 +498,7 @@ function StorageUsagePage() {
                     </tr>
                   ))}
                   {data.byBucket.length === 0 && (
-                    <tr><td colSpan={3} style={{ padding: 20, textAlign: "center", color: THEME.text3 }}>هیچ Bucket ای یافت نشد</td></tr>
+                    <tr><td colSpan={3} style={{ padding: 20, textAlign: "center", color: THEME.text3 }}>{t("saNoBucketsFound")}</td></tr>
                   )}
                 </tbody>
               </table>
@@ -502,7 +506,7 @@ function StorageUsagePage() {
           </div>
         </>
       )}
-      {!data && loading && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 30 }}>در حال بارگذاری...</p>}
+      {!data && loading && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 30 }}>{t("commonLoading")}</p>}
     </div>
   );
 }
@@ -542,55 +546,58 @@ function CompaniesPage({
   setShowCreate, setNewName, setNewType, onCreate, onToggleExpand, onUpdate, onDelete, onSetActive,
   payments, onAddPayment, onPlanChanged,
 }) {
+  const { t } = useLanguage();
   return (
     <div>
       <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: 0 }}>شرکت‌های مشتری</h3>
+          <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: 0 }}>{t("saCustomerCompanies")}</h3>
           <button type="button" onClick={() => setShowCreate((v) => !v)} style={{ ...btnStyle(), display: "flex", alignItems: "center", gap: 6 }}>
-            <Plus size={13} /> شرکت جدید
+            <Plus size={13} /> {t("saNewCompany")}
           </button>
         </div>
 
         {showCreate && (
           <div style={{ marginBottom: 14, background: THEME.bg, padding: 12, borderRadius: 8 }}>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
-              <input style={{ ...inputStyle, flex: 1, minWidth: 160 }} placeholder="نام شرکت" value={newName} onChange={(e) => setNewName(e.target.value)} dir="rtl" />
+              <input style={{ ...inputStyle, flex: 1, minWidth: 160 }} placeholder={t("saCompanyNamePlaceholder")} value={newName} onChange={(e) => setNewName(e.target.value)} dir="rtl" />
               <select style={inputStyle} value={newType} onChange={(e) => setNewType(e.target.value)} dir="rtl">
-                {SUBSCRIPTION_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                {SUBSCRIPTION_TYPES.map((o) => <option key={o.value} value={o.value}>{t(o.labelKey)}</option>)}
               </select>
               <select style={inputStyle} value={newStatus} onChange={(e) => setNewStatus(e.target.value)} dir="rtl">
-                {SUBSCRIPTION_STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                {SUBSCRIPTION_STATUSES.map((s) => <option key={s.value} value={s.value}>{t(s.labelKey)}</option>)}
               </select>
             </div>
             <p style={{ fontSize: 11, color: THEME.text3, margin: "0 0 6px", fontWeight: 600 }}>
-              تاریخ و ساعت دقیق شروع و پایان دوره (به شمسی) — نه مدت‌زمان به روز یا ماه:
+              {t("saPeriodDateTimeNote")}
             </p>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8, alignItems: "flex-end" }}>
               <div>
-                <label style={{ fontSize: 10.5, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 3 }}>شروع — تاریخ</label>
+                <label style={{ fontSize: 10.5, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 3 }}>{t("saStartDate")}</label>
                 <JalaliDateInput value={newStartDate} onChange={setNewStartDate} />
               </div>
               <div>
-                <label style={{ fontSize: 10.5, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 3 }}>شروع — ساعت</label>
+                <label style={{ fontSize: 10.5, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 3 }}>{t("saStartTime")}</label>
                 <input type="time" style={inputStyle} value={newStartTime} onChange={(e) => setNewStartTime(e.target.value)} />
               </div>
               <div>
-                <label style={{ fontSize: 10.5, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 3 }}>پایان — تاریخ</label>
+                <label style={{ fontSize: 10.5, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 3 }}>{t("saEndDate")}</label>
                 <JalaliDateInput value={newEndDate} onChange={setNewEndDate} allowEmpty />
               </div>
               <div>
-                <label style={{ fontSize: 10.5, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 3 }}>پایان — ساعت</label>
+                <label style={{ fontSize: 10.5, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 3 }}>{t("saEndTime")}</label>
                 <input type="time" style={inputStyle} value={newEndTime} onChange={(e) => setNewEndTime(e.target.value)} />
               </div>
             </div>
             {newStartDate && newEndDate && (
               <p style={{ fontSize: 11.5, color: THEME.navy, fontWeight: 600, margin: "0 0 8px" }}>
-                از <b>{toJalaliDateTime(new Date(`${newStartDate}T${newStartTime || "00:00"}:00`).toISOString())}</b>
-                {" "}تا <b>{toJalaliDateTime(new Date(`${newEndDate}T${newEndTime || "00:00"}:00`).toISOString())}</b>
+                {t("saFromTo", {
+                  start: toJalaliDateTime(new Date(`${newStartDate}T${newStartTime || "00:00"}:00`).toISOString()),
+                  end: toJalaliDateTime(new Date(`${newEndDate}T${newEndTime || "00:00"}:00`).toISOString()),
+                })}
               </p>
             )}
-            <button type="button" onClick={onCreate} style={btnStyle()}>ثبت</button>
+            <button type="button" onClick={onCreate} style={btnStyle()}>{t("saSubmit")}</button>
           </div>
         )}
 
@@ -598,17 +605,17 @@ function CompaniesPage({
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead>
               <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
-                <th style={{ textAlign: "right", padding: "6px 8px" }}>نام شرکت</th>
-                <th style={{ textAlign: "center", padding: "6px 8px" }}>تاریخ ثبت‌نام</th>
-                <th style={{ textAlign: "center", padding: "6px 8px" }}>پلن و وضعیت اشتراک</th>
-                <th style={{ textAlign: "center", padding: "6px 8px" }}>آخرین ورود</th>
+                <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("saColCompanyName")}</th>
+                <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColRegisteredDate")}</th>
+                <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColPlanAndSubStatus")}</th>
+                <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColLastLogin")}</th>
                 <th style={{ padding: "6px 8px" }} />
               </tr>
             </thead>
             <tbody>
               {companies.map((c) => {
                 const access = computeSubscriptionAccess(c);
-                const planName = plans.find((p) => p.id === c.planId)?.name || "بدون پلن";
+                const planName = plans.find((p) => p.id === c.planId)?.name || t("saNoPlan");
                 return (
                   <React.Fragment key={c.id}>
                     <tr style={{ borderBottom: `1px solid ${THEME.border}` }}>
@@ -619,10 +626,10 @@ function CompaniesPage({
                           {planName} — {access.label}
                         </span>
                       </td>
-                      <td style={{ padding: "8px", textAlign: "center", color: THEME.text3 }}>{c.lastLoginAt ? toJalaliSafe(c.lastLoginAt) : "هنوز وارد نشده"}</td>
+                      <td style={{ padding: "8px", textAlign: "center", color: THEME.text3 }}>{c.lastLoginAt ? toJalaliSafe(c.lastLoginAt) : t("saNeverLoggedIn")}</td>
                       <td style={{ padding: "8px", textAlign: "left" }}>
                         <button type="button" onClick={() => onToggleExpand(c)} style={{ ...btnStyle(THEME.navyMid), fontSize: 11 }}>
-                          {expandedId === c.id ? "بستن" : "مدیریت"}
+                          {expandedId === c.id ? t("saClose") : t("saManage")}
                         </button>
                       </td>
                     </tr>
@@ -649,7 +656,7 @@ function CompaniesPage({
                 );
               })}
               {companies.length === 0 && (
-                <tr><td colSpan={5} style={{ padding: 20, textAlign: "center", color: THEME.text3 }}>هنوز شرکتی ثبت نشده است</td></tr>
+                <tr><td colSpan={5} style={{ padding: 20, textAlign: "center", color: THEME.text3 }}>{t("saNoCompaniesYet")}</td></tr>
               )}
             </tbody>
           </table>
@@ -671,28 +678,29 @@ function CompaniesPage({
 // کامل (چند اطلاعیه، اولویت، بازه‌ی زمانی، فعال/غیرفعال) ارتقا یافت —
 // روی همان جدول system_announcements موجود، بدون هیچ ساختار موازی.
 const SYSTEM_CONFIG_TABS = [
-  { key: "modules", label: "مدیریت ماژول‌ها", icon: LayoutGrid },
-  { key: "dashboard", label: "مدیریت داشبورد", icon: PanelsTopLeft },
-  { key: "notifications", label: "مدیریت اعلان‌ها", icon: Bell },
-  { key: "appearance", label: "تنظیمات ظاهری", icon: Palette },
-  { key: "announcements", label: "اطلاعیه‌های سامانه", icon: Megaphone },
+  { key: "modules", labelKey: "saScTabModules", icon: LayoutGrid },
+  { key: "dashboard", labelKey: "saScTabDashboard", icon: PanelsTopLeft },
+  { key: "notifications", labelKey: "saScTabNotifications", icon: Bell },
+  { key: "appearance", labelKey: "saScTabAppearance", icon: Palette },
+  { key: "announcements", labelKey: "saScTabAnnouncements", icon: Megaphone },
 ];
 
 function SystemConfigPage({ currentAdmin, companies }) {
+  const { t } = useLanguage();
   const [tab, setTab] = useState("modules");
   return (
     <div>
       <div style={{ display: "flex", gap: 4, borderBottom: `1.5px solid ${THEME.border}`, marginBottom: 16 }}>
-        {SYSTEM_CONFIG_TABS.map((t) => (
+        {SYSTEM_CONFIG_TABS.map((tb) => (
           <button
-            key={t.key} type="button" onClick={() => setTab(t.key)}
+            key={tb.key} type="button" onClick={() => setTab(tb.key)}
             style={{
               display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", border: "none", background: "none", cursor: "pointer", fontFamily: THEME.font, fontSize: 12.5,
-              color: tab === t.key ? THEME.teal : THEME.text3, fontWeight: tab === t.key ? 700 : 500,
-              borderBottom: tab === t.key ? `2.5px solid ${THEME.teal}` : "2.5px solid transparent",
+              color: tab === tb.key ? THEME.teal : THEME.text3, fontWeight: tab === tb.key ? 700 : 500,
+              borderBottom: tab === tb.key ? `2.5px solid ${THEME.teal}` : "2.5px solid transparent",
             }}
           >
-            <t.icon size={14} /> {t.label}
+            <tb.icon size={14} /> {t(tb.labelKey)}
           </button>
         ))}
       </div>
@@ -708,28 +716,32 @@ function SystemConfigPage({ currentAdmin, companies }) {
 // همان لیست/ترتیب/برچسب پیش‌فرضی که در SQL seed شده — برای «بازگردانی
 // ترتیب پیش‌فرض» بدون نیاز به رفت‌وبرگشت اضافه با دیتابیس.
 const DEFAULT_MODULE_CONFIG = [
-  { moduleKey: "chat", displayLabel: "چت", description: "ارتباط مستقیم بین کاربران سامانه" },
-  { moduleKey: "archiveManagement", displayLabel: "آرشیو فایل‌ها", description: "بایگانی و جست‌وجوی اسناد و مدارک ثبت‌شده" },
-  { moduleKey: "anomalyReport", displayLabel: "مدیریت عدم انطباق‌ها", description: "ثبت، پیگیری و اقدام اصلاحی موارد عدم انطباق HSE" },
-  { moduleKey: "riskAssessment", displayLabel: "مدیریت ارزیابی ریسک", description: "تحلیل BowTie، HCMS و بانک دانش ریسک" },
-  { moduleKey: "personnelAccess", displayLabel: "مدیریت ورود و تردد پرسنل", description: "ثبت و پیگیری وضعیت پرسنل و مدارک ایشان" },
-  { moduleKey: "proactiveIndicators", displayLabel: "شاخص‌های Proactive HSE", description: "اندازه‌گیری استعداد حادثه‌پذیری و جو ایمنی سازمان" },
-  { moduleKey: "incidentManagement", displayLabel: "مدیریت حوادث", description: "ثبت حوادث و تحلیل ریشه‌ای Tripod Beta" },
-  { moduleKey: "machineryManagement", displayLabel: "مدیریت ماشین‌آلات", description: "پیگیری وضعیت و مجوزهای ماشین‌آلات" },
-  { moduleKey: "scaffoldManagement", displayLabel: "مدیریت داربست", description: "صدور و پیگیری تگ‌های داربست" },
-  { moduleKey: "managementDashboard", displayLabel: "داشبورد مدیریتی", description: "گزارش‌های تحلیلی و شاخص‌های کلان HSE" },
+  { moduleKey: "chat", labelKey: "saDmcLabelChat", descKey: "saDmcDescChat" },
+  { moduleKey: "archiveManagement", labelKey: "saDmcLabelArchive", descKey: "saDmcDescArchive" },
+  { moduleKey: "anomalyReport", labelKey: "saDmcLabelAnomaly", descKey: "saDmcDescAnomaly" },
+  { moduleKey: "riskAssessment", labelKey: "saDmcLabelRisk", descKey: "saDmcDescRisk" },
+  { moduleKey: "personnelAccess", labelKey: "saDmcLabelPersonnel", descKey: "saDmcDescPersonnel" },
+  { moduleKey: "proactiveIndicators", labelKey: "saDmcLabelProactive", descKey: "saDmcDescProactive" },
+  { moduleKey: "incidentManagement", labelKey: "saDmcLabelIncident", descKey: "saDmcDescIncident" },
+  { moduleKey: "machineryManagement", labelKey: "saDmcLabelMachinery", descKey: "saDmcDescMachinery" },
+  { moduleKey: "scaffoldManagement", labelKey: "saDmcLabelScaffold", descKey: "saDmcDescScaffold" },
+  { moduleKey: "managementDashboard", labelKey: "saDmcLabelMgmtDash", descKey: "saDmcDescMgmtDash" },
 ];
 
+const buildDefaultModuleConfig = (t) => DEFAULT_MODULE_CONFIG.map((m) => ({ moduleKey: m.moduleKey, displayLabel: t(m.labelKey), description: t(m.descKey) }));
+
 function ModuleManagementTab({ currentAdmin }) {
+  const { t } = useLanguage();
   const [list, setList] = useState(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [msgErr, setMsgErr] = useState(false);
   const [dragIndex, setDragIndex] = useState(null);
 
-  const load = () => loadModuleConfig().then((rows) => setList(rows.length > 0 ? rows : DEFAULT_MODULE_CONFIG));
+  const load = () => loadModuleConfig().then((rows) => setList(rows.length > 0 ? rows : buildDefaultModuleConfig(t)));
   useEffect(() => { load(); }, []);
 
-  if (!list) return <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 30 }}>در حال بارگذاری...</p>;
+  if (!list) return <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 30 }}>{t("commonLoading")}</p>;
 
   const move = (idx, dir) => {
     const to = idx + dir;
@@ -758,17 +770,17 @@ function ModuleManagementTab({ currentAdmin }) {
     setSaving(true); setMessage("");
     const result = await saveModuleConfig(list, currentAdmin?.fullName);
     setSaving(false);
-    setMessage(result?.__error ? result.message : "تنظیمات ماژول‌ها ذخیره شد.");
+    setMsgErr(!!result?.__error);
+    setMessage(result?.__error ? result.message : t("saMmSaved"));
     if (!result?.__error) await load();
   };
 
-  const handleReset = () => setList(DEFAULT_MODULE_CONFIG.map((m) => ({ ...m })));
+  const handleReset = () => setList(buildDefaultModuleConfig(t));
 
   return (
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
       <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 14, lineHeight: 1.8 }}>
-        ترتیب، نام نمایشی و توضیح کوتاه هر ماژول اصلی — این تنظیمات مستقیم روی Sidebar همه‌ی کاربران سامانه اثر می‌گذارد.
-        آیکون و دسترسی هر ماژول از تنظیمات پلن/مجوز تغییر نمی‌کند.
+        {t("saMmNote")}
       </p>
       {list.map((m, idx) => (
         <div
@@ -786,15 +798,15 @@ function ModuleManagementTab({ currentAdmin }) {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 8, flex: 1, minWidth: 0 }}>
             <input style={inputStyle} value={m.displayLabel} onChange={(e) => updateField(idx, "displayLabel", e.target.value)} dir="rtl" />
-            <input style={inputStyle} placeholder="توضیح کوتاه (اختیاری)" value={m.description} onChange={(e) => updateField(idx, "description", e.target.value)} dir="rtl" />
+            <input style={inputStyle} placeholder={t("saMmDescPlaceholder")} value={m.description} onChange={(e) => updateField(idx, "description", e.target.value)} dir="rtl" />
           </div>
         </div>
       ))}
-      {message && <p style={{ fontSize: 11.5, color: message.includes("خطا") ? THEME.danger : "#166534", marginTop: 10 }}>{message}</p>}
+      {message && <p style={{ fontSize: 11.5, color: msgErr ? THEME.danger : "#166534", marginTop: 10 }}>{message}</p>}
       <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-        <button type="button" style={btnStyle()} onClick={handleSave} disabled={saving}>{saving ? "در حال ذخیره..." : "ذخیره تغییرات"}</button>
+        <button type="button" style={btnStyle()} onClick={handleSave} disabled={saving}>{saving ? t("saSavingEllipsis") : t("saSaveChangesPlain")}</button>
         <button type="button" style={{ ...btnStyle(THEME.text3), display: "flex", alignItems: "center", gap: 6 }} onClick={handleReset}>
-          <RotateCcw size={13} /> بازگردانی ترتیب پیش‌فرض
+          <RotateCcw size={13} /> {t("saRestoreDefaultOrder")}
         </button>
       </div>
     </div>
@@ -817,10 +829,12 @@ function DashboardManagementTab({ currentAdmin }) {
 const widgetSignature = (list) => list.map((w) => `${w.key}:${w.isVisible ? 1 : 0}`).join("|");
 
 function DashboardWidgetsSection({ currentAdmin }) {
+  const { t } = useLanguage();
   const [baseline, setBaseline] = useState(null);
   const [draft, setDraft] = useState(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [msgErr, setMsgErr] = useState(false);
 
   const load = () => loadDashboardWidgetConfig().then((rows) => {
     const merged = mergeWidgetConfig(rows);
@@ -829,7 +843,7 @@ function DashboardWidgetsSection({ currentAdmin }) {
   });
   useEffect(() => { load(); }, []);
 
-  if (!draft) return <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>در حال بارگذاری...</p>;
+  if (!draft) return <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("commonLoading")}</p>;
 
   // استاندارد سراسری ذخیره‌سازی: هر تغییر فقط در draft می‌رود؛ Write واقعی
   // فقط با «ذخیره تغییرات».
@@ -867,34 +881,34 @@ function DashboardWidgetsSection({ currentAdmin }) {
     const list = draft.map((w, idx) => ({ widgetKey: w.key, isVisible: w.isVisible, sortOrder: idx + 1 }));
     const result = await saveDashboardWidgetsBulk(list, currentAdmin?.fullName);
     setSaving(false);
-    setMessage(result?.__error ? result.message : "تنظیمات پنل‌های داشبورد ذخیره شد.");
+    setMsgErr(!!result?.__error);
+    setMessage(result?.__error ? result.message : t("saDwSaved"));
     if (!result?.__error) await load();
   };
 
   return (
     <div>
-      <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 6px" }}>مدیریت پنل‌های داشبورد مدیریتی</h4>
+      <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 6px" }}>{t("saDwTitle")}</h4>
       <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 10, lineHeight: 1.8 }}>
-        نمایش/پنهان و ترتیبِ هر پنل داخل ماژول «داشبورد مدیریتی» — روی همه‌ی کاربران (کارفرما/پیمانکار) اعمال می‌شود.
-        جابه‌جایی ترتیب فقط داخل هر بخش امکان‌پذیر است. پنل‌های «مقایسه و رتبه‌بندی پیمانکاران» هرگز برای نقش پیمانکار نمایش داده نمی‌شوند.
+        {t("saDwNote")}
       </p>
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-        <button type="button" style={{ ...btnStyle(THEME.navyMid), fontSize: 11 }} onClick={() => setAll(true)}>همه روشن</button>
-        <button type="button" style={{ ...btnStyle(THEME.text3), fontSize: 11 }} onClick={() => setAll(false)}>همه خاموش</button>
+        <button type="button" style={{ ...btnStyle(THEME.navyMid), fontSize: 11 }} onClick={() => setAll(true)}>{t("saAllOn")}</button>
+        <button type="button" style={{ ...btnStyle(THEME.text3), fontSize: 11 }} onClick={() => setAll(false)}>{t("saAllOff")}</button>
         <button type="button" style={{ ...btnStyle(THEME.text3), fontSize: 11, display: "flex", alignItems: "center", gap: 5 }} onClick={resetToDefault}>
-          <RotateCcw size={12} /> بازگردانی پیش‌فرض
+          <RotateCcw size={12} /> {t("saRestoreDefault")}
         </button>
       </div>
 
-      {message && <p style={{ fontSize: 11.5, color: message.includes("خطا") ? THEME.danger : "#166534", marginBottom: 10 }}>{message}</p>}
+      {message && <p style={{ fontSize: 11.5, color: msgErr ? THEME.danger : "#166534", marginBottom: 10 }}>{message}</p>}
 
       {DASHBOARD_WIDGET_GROUPS.map((group) => {
         const rows = draft.filter((w) => w.group === group.key);
         if (rows.length === 0) return null;
         return (
           <div key={group.key} style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: THEME.teal, margin: "0 0 4px" }}>{group.label}</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: THEME.teal, margin: "0 0 4px" }}>{group.labelKey ? t(group.labelKey) : group.label}</div>
             {rows.map((w, gi) => (
               <div key={w.key} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px", borderBottom: `1px solid ${THEME.border}` }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 2, flexShrink: 0 }}>
@@ -902,14 +916,14 @@ function DashboardWidgetsSection({ currentAdmin }) {
                   <button type="button" onClick={() => move(w.key, 1)} disabled={gi === rows.length - 1} style={{ background: "none", border: "none", cursor: gi === rows.length - 1 ? "default" : "pointer", opacity: gi === rows.length - 1 ? 0.3 : 1, padding: 1 }}><ArrowDown size={13} color={THEME.text2} /></button>
                 </div>
                 <span style={{ flex: 1, fontSize: 12.5, color: THEME.text, fontWeight: 600 }}>
-                  {w.label}
-                  {w.employerOnly && <span style={{ fontSize: 10, color: THEME.text3, fontWeight: 400 }}> — فقط کارفرما</span>}
+                  {w.labelKey ? t(w.labelKey) : w.label}
+                  {w.employerOnly && <span style={{ fontSize: 10, color: THEME.text3, fontWeight: 400 }}>{t("saEmployerOnlySuffix")}</span>}
                 </span>
                 <button
                   type="button" onClick={() => toggle(w.key)}
                   style={{ display: "flex", alignItems: "center", gap: 5, background: w.isVisible ? "#dcfce7" : "#eef1f5", color: w.isVisible ? "#166534" : THEME.text3, border: "none", borderRadius: 999, padding: "5px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font }}
                 >
-                  {w.isVisible ? <Eye size={13} /> : <EyeOff size={13} />} {w.isVisible ? "نمایش داده می‌شود" : "پنهان"}
+                  {w.isVisible ? <Eye size={13} /> : <EyeOff size={13} />} {w.isVisible ? t("saVisibleShown") : t("saHidden")}
                 </button>
               </div>
             ))}
@@ -919,107 +933,110 @@ function DashboardWidgetsSection({ currentAdmin }) {
 
       {isDirty && (
         <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-          <button type="button" style={btnStyle()} onClick={handleSave} disabled={saving}>{saving ? "در حال ذخیره..." : "ذخیره تغییرات"}</button>
-          <button type="button" style={{ ...btnStyle(THEME.text3) }} onClick={() => setDraft(baseline.map((w) => ({ ...w })))} disabled={saving}>انصراف</button>
+          <button type="button" style={btnStyle()} onClick={handleSave} disabled={saving}>{saving ? t("saSavingEllipsis") : t("saSaveChangesPlain")}</button>
+          <button type="button" style={{ ...btnStyle(THEME.text3) }} onClick={() => setDraft(baseline.map((w) => ({ ...w })))} disabled={saving}>{t("commonCancel")}</button>
         </div>
       )}
     </div>
   );
 }
 
-const ROLE_LABELS = { all: "همه", employer: "فقط کارفرما", contractor: "فقط پیمانکار" };
+const ROLE_LABELS = { all: "saRoleAll", employer: "saRoleEmployerOnly", contractor: "saRoleContractorOnly" };
 const PRIORITY_META = {
-  low: { label: "کم", color: "#5b6b7d", bg: "#eef1f5" },
-  medium: { label: "متوسط", color: "#92400e", bg: "#fef3c7" },
-  high: { label: "بالا", color: "#b91c1c", bg: "#fee2e2" },
+  low: { labelKey: "saPrioLow", color: "#5b6b7d", bg: "#eef1f5" },
+  medium: { labelKey: "saPrioMedium", color: "#92400e", bg: "#fef3c7" },
+  high: { labelKey: "saPrioHigh", color: "#b91c1c", bg: "#fee2e2" },
 };
 
 function NotificationManagementTab({ currentAdmin }) {
+  const { t } = useLanguage();
   const [list, setList] = useState(null);
   const [draftList, setDraftList] = useState(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [msgErr, setMsgErr] = useState(false);
 
   const load = () => loadNotificationTypes().then((rows) => { setList(rows); setDraftList(rows); });
   useEffect(() => { load(); }, []);
 
-  if (!draftList) return <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 30 }}>در حال بارگذاری...</p>;
+  if (!draftList) return <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 30 }}>{t("commonLoading")}</p>;
 
   // استاندارد سراسری ذخیره‌سازی: هر تغییر (فعال/غیرفعال، گیرنده، اولویت،
   // مهلت هشدار) فقط در این آرایه‌ی محلی می‌رود؛ Write واقعی فقط با کلیک
   // روی «ذخیره تغییرات» انجام می‌شود
   const updateDraft = (typeKey, patch) => {
     setMessage("");
-    setDraftList((prev) => prev.map((t) => (t.typeKey === typeKey ? { ...t, ...patch } : t)));
+    setDraftList((prev) => prev.map((nt) => (nt.typeKey === typeKey ? { ...nt, ...patch } : nt)));
   };
 
-  const isDirty = draftList.some((t, idx) => JSON.stringify(t) !== JSON.stringify(list[idx]));
+  const isDirty = draftList.some((nt, idx) => JSON.stringify(nt) !== JSON.stringify(list[idx]));
 
   const handleSave = async () => {
     setSaving(true); setMessage("");
     const writes = [];
-    draftList.forEach((t, idx) => {
+    draftList.forEach((nt, idx) => {
       const orig = list[idx];
-      if (!orig || orig.typeKey !== t.typeKey) return;
+      if (!orig || orig.typeKey !== nt.typeKey) return;
       const patch = {};
-      if (orig.isEnabled !== t.isEnabled) patch.isEnabled = t.isEnabled;
-      if (orig.targetRole !== t.targetRole) patch.targetRole = t.targetRole;
-      if (orig.priority !== t.priority) patch.priority = t.priority;
-      if (orig.warningDays !== t.warningDays) patch.warningDays = t.warningDays;
-      if (Object.keys(patch).length > 0) writes.push(saveNotificationType(t.typeKey, patch, currentAdmin?.fullName));
+      if (orig.isEnabled !== nt.isEnabled) patch.isEnabled = nt.isEnabled;
+      if (orig.targetRole !== nt.targetRole) patch.targetRole = nt.targetRole;
+      if (orig.priority !== nt.priority) patch.priority = nt.priority;
+      if (orig.warningDays !== nt.warningDays) patch.warningDays = nt.warningDays;
+      if (Object.keys(patch).length > 0) writes.push(saveNotificationType(nt.typeKey, patch, currentAdmin?.fullName));
     });
     const results = await Promise.all(writes);
     setSaving(false);
     const failed = results.find((r) => r?.__error);
-    setMessage(failed ? failed.message : "تنظیمات اعلان‌ها ذخیره شد.");
+    setMsgErr(!!failed);
+    setMessage(failed ? failed.message : t("saNmSaved"));
     if (!failed) await load();
   };
 
   return (
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
       <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 14, lineHeight: 1.8 }}>
-        این تنظیمات مستقیم روی زنگوله‌ی اعلان همه‌ی کاربران اثر می‌گذارد — هر نوع اعلان که اینجا غیرفعال شود، دیگر برای هیچ‌کس نمایش داده نمی‌شود.
+        {t("saNmNote")}
       </p>
-      {message && <p style={{ fontSize: 11.5, color: THEME.danger, marginBottom: 10 }}>{message}</p>}
-      {draftList.map((t) => (
-        <div key={t.typeKey} style={{ padding: "12px 8px", borderBottom: `1px solid ${THEME.border}` }}>
+      {message && <p style={{ fontSize: 11.5, color: msgErr ? THEME.danger : "#166534", marginBottom: 10 }}>{message}</p>}
+      {draftList.map((nt) => (
+        <div key={nt.typeKey} style={{ padding: "12px 8px", borderBottom: `1px solid ${THEME.border}` }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
             <div style={{ flex: 1, minWidth: 200 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: THEME.navy }}>{t.label}</span>
-                <span style={{ fontSize: 10, padding: "2px 9px", borderRadius: 999, background: PRIORITY_META[t.priority].bg, color: PRIORITY_META[t.priority].color, fontWeight: 600 }}>
-                  اولویت {PRIORITY_META[t.priority].label}
+                <span style={{ fontSize: 13, fontWeight: 700, color: THEME.navy }}>{nt.label}</span>
+                <span style={{ fontSize: 10, padding: "2px 9px", borderRadius: 999, background: PRIORITY_META[nt.priority].bg, color: PRIORITY_META[nt.priority].color, fontWeight: 600 }}>
+                  {t("saPriorityBadge", { label: t(PRIORITY_META[nt.priority].labelKey) })}
                 </span>
-                <span style={{ fontSize: 10, padding: "2px 9px", borderRadius: 999, background: t.isEnabled ? "#dcfce7" : "#eef1f5", color: t.isEnabled ? "#166534" : THEME.text3, fontWeight: 600 }}>
-                  {t.isEnabled ? "فعال" : "غیرفعال"}
+                <span style={{ fontSize: 10, padding: "2px 9px", borderRadius: 999, background: nt.isEnabled ? "#dcfce7" : "#eef1f5", color: nt.isEnabled ? "#166534" : THEME.text3, fontWeight: 600 }}>
+                  {nt.isEnabled ? t("commonActive") : t("commonInactive")}
                 </span>
               </div>
-              {t.description && <p style={{ fontSize: 11, color: THEME.text3, margin: "4px 0 0" }}>{t.description}</p>}
+              {nt.description && <p style={{ fontSize: 11, color: THEME.text3, margin: "4px 0 0" }}>{nt.description}</p>}
             </div>
             <button
-              type="button" onClick={() => updateDraft(t.typeKey, { isEnabled: !t.isEnabled })}
-              style={{ display: "flex", alignItems: "center", gap: 5, background: t.isEnabled ? "#fee2e2" : "#dcfce7", color: t.isEnabled ? "#b91c1c" : "#166534", border: "none", borderRadius: 999, padding: "6px 14px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font, flexShrink: 0 }}
+              type="button" onClick={() => updateDraft(nt.typeKey, { isEnabled: !nt.isEnabled })}
+              style={{ display: "flex", alignItems: "center", gap: 5, background: nt.isEnabled ? "#fee2e2" : "#dcfce7", color: nt.isEnabled ? "#b91c1c" : "#166534", border: "none", borderRadius: 999, padding: "6px 14px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font, flexShrink: 0 }}
             >
-              {t.isEnabled ? <EyeOff size={13} /> : <Eye size={13} />} {t.isEnabled ? "غیرفعال کن" : "فعال کن"}
+              {nt.isEnabled ? <EyeOff size={13} /> : <Eye size={13} />} {nt.isEnabled ? t("saDisableAction") : t("saEnableAction")}
             </button>
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
             <div>
-              <label style={{ fontSize: 10.5, color: THEME.text3, display: "block", marginBottom: 3 }}>گیرنده</label>
-              <select style={{ ...inputStyle, width: 140 }} value={t.targetRole} onChange={(e) => updateDraft(t.typeKey, { targetRole: e.target.value })} dir="rtl">
-                {Object.entries(ROLE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              <label style={{ fontSize: 10.5, color: THEME.text3, display: "block", marginBottom: 3 }}>{t("saRecipient")}</label>
+              <select style={{ ...inputStyle, width: 140 }} value={nt.targetRole} onChange={(e) => updateDraft(nt.typeKey, { targetRole: e.target.value })} dir="rtl">
+                {Object.entries(ROLE_LABELS).map(([k, v]) => <option key={k} value={k}>{t(v)}</option>)}
               </select>
             </div>
             <div>
-              <label style={{ fontSize: 10.5, color: THEME.text3, display: "block", marginBottom: 3 }}>اولویت</label>
-              <select style={{ ...inputStyle, width: 110 }} value={t.priority} onChange={(e) => updateDraft(t.typeKey, { priority: e.target.value })} dir="rtl">
-                {Object.entries(PRIORITY_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+              <label style={{ fontSize: 10.5, color: THEME.text3, display: "block", marginBottom: 3 }}>{t("saPriority")}</label>
+              <select style={{ ...inputStyle, width: 110 }} value={nt.priority} onChange={(e) => updateDraft(nt.typeKey, { priority: e.target.value })} dir="rtl">
+                {Object.entries(PRIORITY_META).map(([k, v]) => <option key={k} value={k}>{t(v.labelKey)}</option>)}
               </select>
             </div>
-            {t.warningDays != null && (
+            {nt.warningDays != null && (
               <div>
-                <label style={{ fontSize: 10.5, color: THEME.text3, display: "block", marginBottom: 3 }}>هشدار چند روز قبل از مهلت</label>
-                <input type="number" style={{ ...inputStyle, width: 100 }} value={t.warningDays} onChange={(e) => updateDraft(t.typeKey, { warningDays: Number(e.target.value) || 0 })} dir="ltr" />
+                <label style={{ fontSize: 10.5, color: THEME.text3, display: "block", marginBottom: 3 }}>{t("saWarnDaysBefore")}</label>
+                <input type="number" style={{ ...inputStyle, width: 100 }} value={nt.warningDays} onChange={(e) => updateDraft(nt.typeKey, { warningDays: Number(e.target.value) || 0 })} dir="ltr" />
               </div>
             )}
           </div>
@@ -1027,8 +1044,8 @@ function NotificationManagementTab({ currentAdmin }) {
       ))}
       {isDirty && (
         <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-          <button type="button" style={btnStyle()} onClick={handleSave} disabled={saving}>{saving ? "در حال ذخیره..." : "ذخیره تغییرات"}</button>
-          <button type="button" style={btnStyle(THEME.text3)} onClick={() => setDraftList(list)} disabled={saving}>انصراف</button>
+          <button type="button" style={btnStyle()} onClick={handleSave} disabled={saving}>{saving ? t("saSavingEllipsis") : t("saSaveChangesPlain")}</button>
+          <button type="button" style={btnStyle(THEME.text3)} onClick={() => setDraftList(list)} disabled={saving}>{t("commonCancel")}</button>
         </div>
       )}
     </div>
@@ -1036,14 +1053,16 @@ function NotificationManagementTab({ currentAdmin }) {
 }
 
 function AppearanceManagementTab({ currentAdmin }) {
+  const { t } = useLanguage();
   const [config, setConfig] = useState(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [msgErr, setMsgErr] = useState(false);
 
   const load = () => loadAppearanceConfig().then(setConfig);
   useEffect(() => { load(); }, []);
 
-  if (!config) return <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 30 }}>در حال بارگذاری...</p>;
+  if (!config) return <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 30 }}>{t("commonLoading")}</p>;
 
   const update = (field, value) => setConfig((prev) => ({ ...prev, [field]: value }));
 
@@ -1051,103 +1070,104 @@ function AppearanceManagementTab({ currentAdmin }) {
     setSaving(true); setMessage("");
     const result = await saveAppearanceConfig(config, currentAdmin?.fullName);
     setSaving(false);
-    setMessage(result?.__error ? result.message : "تنظیمات ظاهری ذخیره شد — برای دیدن اثر کامل روی همه‌ی صفحات، کاربران باید صفحه را رفرش کنند.");
+    setMsgErr(!!result?.__error);
+    setMessage(result?.__error ? result.message : t("saApSaved"));
     if (!result?.__error) await load();
   };
 
   return (
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
       <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 16, lineHeight: 1.8 }}>
-        این تنظیمات فقط روی اپلیکیشن اصلی مشتری (نه همین پنل Super Admin) اثر می‌گذارد و بعد از ذخیره، برای همه‌ی کاربران با رفرش صفحه اعمال می‌شود.
+        {t("saApNote")}
       </p>
 
-      <SectionLabel>هویت سامانه</SectionLabel>
+      <SectionLabel>{t("saApIdentity")}</SectionLabel>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginBottom: 18 }}>
         <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>نام سامانه</label>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApSystemName")}</label>
           <input style={inputStyle} value={config.systemName} onChange={(e) => update("systemName", e.target.value)} dir="ltr" />
         </div>
         <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>عنوان سامانه (زیرنویس صفحه‌ی ورود)</label>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApSystemTitle")}</label>
           <input style={inputStyle} value={config.systemTitle} onChange={(e) => update("systemTitle", e.target.value)} dir="rtl" />
         </div>
         <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>آدرس لوگو (URL)</label>
-          <input style={inputStyle} value={config.logoUrl} onChange={(e) => update("logoUrl", e.target.value)} dir="ltr" placeholder="خالی = لوگوی پیش‌فرض IHMS" />
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApLogoUrl")}</label>
+          <input style={inputStyle} value={config.logoUrl} onChange={(e) => update("logoUrl", e.target.value)} dir="ltr" placeholder={t("saApLogoUrlPlaceholder")} />
         </div>
         <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>آدرس Favicon (URL)</label>
-          <input style={inputStyle} value={config.faviconUrl} onChange={(e) => update("faviconUrl", e.target.value)} dir="ltr" placeholder="خالی = Favicon پیش‌فرض" />
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApFaviconUrl")}</label>
+          <input style={inputStyle} value={config.faviconUrl} onChange={(e) => update("faviconUrl", e.target.value)} dir="ltr" placeholder={t("saApFaviconPlaceholder")} />
         </div>
       </div>
       {config.logoUrl && (
         <div style={{ marginBottom: 18, display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 11, color: THEME.text3 }}>پیش‌نمایش لوگو:</span>
-          <img src={config.logoUrl} alt="پیش‌نمایش لوگو" style={{ width: 48, height: 48, objectFit: "contain", border: `1px solid ${THEME.border}`, borderRadius: 8, padding: 4 }} onError={(e) => { e.target.style.display = "none"; }} />
+          <span style={{ fontSize: 11, color: THEME.text3 }}>{t("saApLogoPreview")}</span>
+          <img src={config.logoUrl} alt={t("saApLogoPreviewAlt")} style={{ width: 48, height: 48, objectFit: "contain", border: `1px solid ${THEME.border}`, borderRadius: 8, padding: 4 }} onError={(e) => { e.target.style.display = "none"; }} />
         </div>
       )}
 
-      <SectionLabel>رنگ سازمانی</SectionLabel>
+      <SectionLabel>{t("saApBrandColor")}</SectionLabel>
       <div style={{ display: "flex", gap: 18, flexWrap: "wrap", marginBottom: 18 }}>
-        <ColorField label="رنگ اصلی (Navy)" value={config.colorPrimary} onChange={(v) => update("colorPrimary", v)} />
-        <ColorField label="رنگ ثانویه (Accent)" value={config.colorAccent} onChange={(v) => update("colorAccent", v)} />
+        <ColorField label={t("saApColorPrimary")} value={config.colorPrimary} onChange={(v) => update("colorPrimary", v)} />
+        <ColorField label={t("saApColorAccent")} value={config.colorAccent} onChange={(v) => update("colorAccent", v)} />
       </div>
 
-      <SectionLabel>تم و قلم</SectionLabel>
+      <SectionLabel>{t("saApThemeFont")}</SectionLabel>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginBottom: 18 }}>
         <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>تم</label>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApTheme")}</label>
           <select style={inputStyle} value={config.themeMode} onChange={(e) => update("themeMode", e.target.value)} dir="rtl">
-            <option value="light">روشن</option>
-            <option value="dark">تیره</option>
+            <option value="light">{t("saApThemeLight")}</option>
+            <option value="dark">{t("saApThemeDark")}</option>
           </select>
         </div>
         <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>خانواده‌ی فونت (CSS font-family)</label>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApFontFamily")}</label>
           <input style={inputStyle} value={config.fontFamily} onChange={(e) => update("fontFamily", e.target.value)} dir="ltr" />
         </div>
         <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>اندازه‌ی پایه‌ی قلم (px، خالی = پیش‌فرض مرورگر)</label>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApFontSizeBase")}</label>
           <input type="number" style={inputStyle} value={config.fontSizeBase ?? ""} onChange={(e) => update("fontSizeBase", e.target.value ? Number(e.target.value) : null)} dir="ltr" />
         </div>
       </div>
 
-      <SectionLabel>Header و Sidebar</SectionLabel>
+      <SectionLabel>{t("saApHeaderSidebar")}</SectionLabel>
       <div style={{ display: "flex", gap: 18, flexWrap: "wrap", marginBottom: 18 }}>
         <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: THEME.text2, cursor: "pointer" }}>
           <input type="checkbox" checked={config.headerShowCompanyName} onChange={(e) => update("headerShowCompanyName", e.target.checked)} />
-          نمایش نام شرکت در Header
+          {t("saApShowCompanyName")}
         </label>
         <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: THEME.text2, cursor: "pointer" }}>
           <input type="checkbox" checked={config.sidebarDefaultCollapsed} onChange={(e) => update("sidebarDefaultCollapsed", e.target.checked)} />
-          Sidebar به‌صورت پیش‌فرض جمع‌شده باشد (برای کاربرانی که هنوز انتخاب شخصی نکرده‌اند)
+          {t("saApSidebarCollapsed")}
         </label>
       </div>
 
-      <SectionLabel>مدیریت آیکون اپ موبایل / APK</SectionLabel>
+      <SectionLabel>{t("saApApkIcon")}</SectionLabel>
       <div style={{ background: "#fff7ed", border: "1px solid #fdba74", borderRadius: 10, padding: 14, marginBottom: 18 }}>
         <p style={{ fontSize: 11.5, color: "#7c2d12", margin: "0 0 10px", lineHeight: 1.9 }}>
-          چون ساخت APK از طریق GitHub Actions روی مخزن کد انجام می‌شود (نه این پنل)، آیکون اپ به‌صورت آنی از اینجا اعمال نمی‌شود. مسیر واقعی:
+          {t("saApApkNote")}
         </p>
         <ol style={{ fontSize: 11.5, color: "#7c2d12", margin: "0 0 10px", paddingInlineStart: 18, lineHeight: 2 }}>
-          <li>آدرس تصویر آیکون جدید (حداقل ۱۰۲۴×۱۰۲۴ پیکسل، پس‌زمینه‌ی یکدست) را در فیلد زیر وارد و ذخیره کنید.</li>
-          <li>همان فایل را دانلود کرده و در مخزن کد، به‌جای <code>resources/icon.png</code> جایگزین/commit کنید.</li>
-          <li>Workflow ساخت APK (<code>Build Android APK</code>) را از تب Actions در GitHub اجرا کنید — مرحله‌ی <code>Generate Splash Screen assets</code> در همان workflow، آیکون جدید را خودکار در همه‌ی چگالی‌های اندروید تولید می‌کند.</li>
+          <li>{t("saApApkStep1")}</li>
+          <li>{t("saApApkStep2a")}<code>resources/icon.png</code>{t("saApApkStep2b")}</li>
+          <li>{t("saApApkStep3a")}<code>Build Android APK</code>{t("saApApkStep3b")}<code>Generate Splash Screen assets</code>{t("saApApkStep3c")}</li>
         </ol>
         <div>
-          <label style={{ fontSize: 11, color: "#7c2d12", fontWeight: 600, display: "block", marginBottom: 4 }}>آدرس تصویر آیکون APK (URL)</label>
-          <input style={inputStyle} value={config.apkIconUrl} onChange={(e) => update("apkIconUrl", e.target.value)} dir="ltr" placeholder="https://... — فقط برای نگهداری آدرس، جهت دانلود و commit دستی" />
+          <label style={{ fontSize: 11, color: "#7c2d12", fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApApkIconUrl")}</label>
+          <input style={inputStyle} value={config.apkIconUrl} onChange={(e) => update("apkIconUrl", e.target.value)} dir="ltr" placeholder={t("saApApkIconUrlPlaceholder")} />
         </div>
         {config.apkIconUrl && (
           <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 11, color: "#7c2d12" }}>پیش‌نمایش:</span>
-            <img src={config.apkIconUrl} alt="پیش‌نمایش آیکون APK" style={{ width: 48, height: 48, objectFit: "contain", border: "1px solid #fdba74", borderRadius: 8, padding: 4, background: "#fff" }} onError={(e) => { e.target.style.display = "none"; }} />
+            <span style={{ fontSize: 11, color: "#7c2d12" }}>{t("saPreviewLabel")}</span>
+            <img src={config.apkIconUrl} alt={t("saApApkIconAlt")} style={{ width: 48, height: 48, objectFit: "contain", border: "1px solid #fdba74", borderRadius: 8, padding: 4, background: "#fff" }} onError={(e) => { e.target.style.display = "none"; }} />
           </div>
         )}
       </div>
 
-      {message && <p style={{ fontSize: 11.5, color: message.includes("خطا") ? THEME.danger : "#166534", marginBottom: 10, lineHeight: 1.8 }}>{message}</p>}
-      <button type="button" style={btnStyle()} onClick={handleSave} disabled={saving}>{saving ? "در حال ذخیره..." : "ذخیره‌ی تنظیمات ظاهری"}</button>
+      {message && <p style={{ fontSize: 11.5, color: msgErr ? THEME.danger : "#166534", marginBottom: 10, lineHeight: 1.8 }}>{message}</p>}
+      <button type="button" style={btnStyle()} onClick={handleSave} disabled={saving}>{saving ? t("saSavingEllipsis") : t("saApSaveBtn")}</button>
     </div>
   );
 }
@@ -1176,6 +1196,7 @@ const ANNOUNCEMENT_ICONS = {
 // نمونه‌ی جدا برای پس‌زمینه‌ی صفحه‌ی ورود (نسبت عمودی)، چون این دو زمینه
 // ابعاد بصری کاملاً متفاوتی دارند.
 function AnnouncementImageUploader({ value, aspectRatio, width, uploading, onUpload, onRemove }) {
+  const { t } = useLanguage();
   // مرورگر رویداد change ورودی فایل را وقتی «همان فایل قبلی» دوباره
   // انتخاب شود، شلیک نمی‌کند (چون از دید مرورگر مقدار تغییر نکرده) —
   // این دقیقاً همان علتی است که «جایگزین می‌کنم هیچ اتفاقی نمی‌افته» را
@@ -1185,27 +1206,28 @@ function AnnouncementImageUploader({ value, aspectRatio, width, uploading, onUpl
   return value ? (
     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
       <div style={{ width, aspectRatio, borderRadius: 8, overflow: "hidden", border: `1px solid ${THEME.border}`, flexShrink: 0, background: "#e9eef3" }}>
-        <img src={value} alt="پیش‌نمایش" style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
+        <img src={value} alt={t("saPreviewAlt")} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <label style={{ ...btnStyle(THEME.navyMid), display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer", width: "fit-content" }}>
-          <ImagePlus size={13} /> {uploading ? "در حال آپلود..." : "جایگزینی عکس"}
+          <ImagePlus size={13} /> {uploading ? t("saUploading") : t("saReplaceImage")}
           <input type="file" accept="image/*" onClick={clearBeforePick} onChange={onUpload} disabled={uploading} style={{ display: "none" }} />
         </label>
         <button type="button" onClick={onRemove} style={{ ...btnStyle(THEME.danger), display: "inline-flex", alignItems: "center", gap: 6, width: "fit-content" }}>
-          <X size={13} /> حذف عکس
+          <X size={13} /> {t("saRemoveImage")}
         </button>
       </div>
     </div>
   ) : (
     <label style={{ ...btnStyle(THEME.navyMid), display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer", width: "fit-content" }}>
-      <ImagePlus size={13} /> {uploading ? "در حال آپلود..." : "بارگذاری عکس"}
+      <ImagePlus size={13} /> {uploading ? t("saUploading") : t("saUploadImage")}
       <input type="file" accept="image/*" onClick={clearBeforePick} onChange={onUpload} disabled={uploading} style={{ display: "none" }} />
     </label>
   );
 }
 
 function AnnouncementManagementTab({ currentAdmin, companies }) {
+  const { t } = useLanguage();
   const [list, setList] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -1259,15 +1281,15 @@ function AnnouncementManagementTab({ currentAdmin, companies }) {
       setForm((prev) => ({ ...prev, [field]: url }));
     } catch (err) {
       const status = err?.status;
-      const rawText = (err?.message || "").replace(/^خطا در آپلود فایل:\s*/, "");
+      const rawText = (err?.message || "").replace(/^(خطا در آپلود فایل|File upload error):\s*/, "");
       if (status === 401 || status === 403) {
-        setMessage(`آپلود ناموفق بود (کد ${status}): دسترسی نوشتن به باکت «announcement-images» مجاز نیست. جزئیات سرور: ${rawText}`);
+        setMessage(t("saAnUploadErr403", { status, detail: rawText }));
       } else {
         // متن دقیق پاسخ سرور همیشه نشان داده می‌شود — چون پیام‌های حدسی
         // قبلی (فقط بر اساس status code) گمراه‌کننده بودند: حتی بعد از
         // ساخته‌شدن باکت، همان پیام تکراری برمی‌گشت، یعنی علت واقعی چیز
         // دیگری بود (نام دقیق باکت، یا محدودیت نوع/حجم فایل).
-        setMessage(`آپلود عکس ناموفق بود (کد ${status ?? "نامشخص"}): ${rawText || "خطای نامشخص"}`);
+        setMessage(t("saAnUploadErrGeneric", { status: status ?? t("saUnknownCode"), detail: rawText || t("saUnknownError") }));
       }
     }
     setUploadingImage(false);
@@ -1283,7 +1305,7 @@ function AnnouncementManagementTab({ currentAdmin, companies }) {
   };
 
   const handleSave = async () => {
-    if (!form.message.trim()) { setMessage("متن اطلاعیه الزامی است"); return; }
+    if (!form.message.trim()) { setMessage(t("saAnMsgRequired")); return; }
     setSaving(true); setMessage("");
     const payload = { ...form, startsAt: form.startsAt || null, endsAt: form.endsAt || null, priority: Number(form.priority) || 0 };
     const result = editingId ? await updateAnnouncement(editingId, payload, currentAdmin?.fullName) : await createAnnouncement(payload, currentAdmin?.fullName);
@@ -1300,7 +1322,7 @@ function AnnouncementManagementTab({ currentAdmin, companies }) {
   };
 
   const handleDelete = async (a) => {
-    if (!confirm(`اطلاعیه‌ی «${a.title || a.message.slice(0, 30)}» برای همیشه حذف شود؟`)) return;
+    if (!confirm(t("saAnDeleteConfirm", { title: a.title || a.message.slice(0, 30) }))) return;
     const result = await deleteAnnouncement(a.id);
     if (result?.__error) { alert(result.message); return; }
     await load();
@@ -1310,10 +1332,10 @@ function AnnouncementManagementTab({ currentAdmin, companies }) {
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
         <p style={{ fontSize: 11.5, color: THEME.text3, margin: 0, lineHeight: 1.8, maxWidth: 560 }}>
-          کارت اطلاعیه در کنار «خوش‌آمدید» صفحه‌ی اصلی مشتریان نمایش داده می‌شود. اگر چند اطلاعیه‌ی واجد شرایط هم‌زمان فعال باشند، بالاترین اولویت نمایش داده می‌شود.
+          {t("saAnNote")}
         </p>
         <button type="button" style={{ ...btnStyle(), display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }} onClick={openCreate}>
-          <Plus size={13} /> اطلاعیه‌ی جدید
+          <Plus size={13} /> {t("saAnNew")}
         </button>
       </div>
 
@@ -1321,97 +1343,97 @@ function AnnouncementManagementTab({ currentAdmin, companies }) {
         <div style={{ background: THEME.bg, borderRadius: 10, padding: 14, marginBottom: 16 }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10, marginBottom: 10 }}>
             <div>
-              <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>عنوان</label>
+              <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saAnTitle")}</label>
               <input style={inputStyle} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} dir="rtl" />
             </div>
             <div>
-              <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>آیکون</label>
+              <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saAnIcon")}</label>
               <select style={inputStyle} value={form.iconKey} onChange={(e) => setForm({ ...form, iconKey: e.target.value })} dir="rtl">
-                <option value="megaphone">📢 اطلاعیه</option>
-                <option value="sparkles">✨ ویژگی جدید</option>
-                <option value="gift">🎁 پیشنهاد/تبلیغ</option>
-                <option value="info">ℹ️ اطلاع‌رسانی</option>
-                <option value="bell">🔔 یادآوری</option>
+                <option value="megaphone">{t("saAnIconMegaphone")}</option>
+                <option value="sparkles">{t("saAnIconSparkles")}</option>
+                <option value="gift">{t("saAnIconGift")}</option>
+                <option value="info">{t("saAnIconInfo")}</option>
+                <option value="bell">{t("saAnIconBell")}</option>
               </select>
             </div>
             <div>
-              <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>شرکت هدف</label>
+              <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saAnTargetCompany")}</label>
               <select style={inputStyle} value={form.companyId} onChange={(e) => setForm({ ...form, companyId: e.target.value })} dir="rtl">
-                <option value="">همه‌ی شرکت‌ها</option>
+                <option value="">{t("saAllCompanies")}</option>
                 {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
             <div>
-              <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>اولویت (عدد بزرگ‌تر = مهم‌تر)</label>
+              <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saAnPriority")}</label>
               <input type="number" style={inputStyle} value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })} dir="ltr" />
             </div>
             <div>
-              <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>مدت‌زمان نمایش در اسلایدر</label>
+              <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saAnDisplayDuration")}</label>
               <select style={inputStyle} value={form.displaySeconds} onChange={(e) => setForm({ ...form, displaySeconds: Number(e.target.value) })} dir="rtl">
-                <option value={5}>۵ ثانیه</option>
-                <option value={10}>۱۰ ثانیه</option>
-                <option value={15}>۱۵ ثانیه</option>
-                <option value={30}>۳۰ ثانیه</option>
+                <option value={5}>{t("saSecondsN", { n: 5 })}</option>
+                <option value={10}>{t("saSecondsN", { n: 10 })}</option>
+                <option value={15}>{t("saSecondsN", { n: 15 })}</option>
+                <option value={30}>{t("saSecondsN", { n: 30 })}</option>
               </select>
             </div>
             <div>
-              <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>شروع نمایش (اختیاری)</label>
+              <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saAnStartsAt")}</label>
               <input type="datetime-local" style={inputStyle} value={form.startsAt} onChange={(e) => setForm({ ...form, startsAt: e.target.value })} />
             </div>
             <div>
-              <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>پایان نمایش (اختیاری)</label>
+              <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saAnEndsAt")}</label>
               <input type="datetime-local" style={inputStyle} value={form.endsAt} onChange={(e) => setForm({ ...form, endsAt: e.target.value })} />
             </div>
             <div>
-              <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>برچسب دکمه (اختیاری)</label>
-              <input style={inputStyle} placeholder="مثلاً مشاهده جزئیات" value={form.buttonLabel} onChange={(e) => setForm({ ...form, buttonLabel: e.target.value })} dir="rtl" />
+              <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saAnButtonLabel")}</label>
+              <input style={inputStyle} placeholder={t("saAnButtonLabelPlaceholder")} value={form.buttonLabel} onChange={(e) => setForm({ ...form, buttonLabel: e.target.value })} dir="rtl" />
             </div>
             <div>
-              <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>لینک/مقصد دکمه (اختیاری)</label>
-              <input style={inputStyle} placeholder="https:// یا نام یک ماژول داخلی" value={form.buttonUrl} onChange={(e) => setForm({ ...form, buttonUrl: e.target.value })} dir="ltr" />
+              <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saAnButtonUrl")}</label>
+              <input style={inputStyle} placeholder={t("saAnButtonUrlPlaceholder")} value={form.buttonUrl} onChange={(e) => setForm({ ...form, buttonUrl: e.target.value })} dir="ltr" />
             </div>
           </div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>متن اطلاعیه</label>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saAnMessage")}</label>
           <textarea style={{ ...inputStyle, minHeight: 60 }} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} dir="rtl" />
 
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4, marginTop: 10 }}>عکس کارت صفحه‌ی اصلی (اختیاری)</label>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4, marginTop: 10 }}>{t("saAnHomeImage")}</label>
           <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 8px", lineHeight: 1.7 }}>
-            قاب افقی و عریض (نسبت ۱۶:۹) — مثلاً ۸۰۰×۴۵۰ پیکسل. عکس کامل و بدون برش نمایش داده می‌شود.
+            {t("saAnHomeImageNote")}
           </p>
           <AnnouncementImageUploader
             value={form.imageUrl} aspectRatio="16/9" width={160} uploading={uploadingImage === "imageUrl"}
             onUpload={handleImageChange("imageUrl")} onRemove={handleRemoveImage("imageUrl")}
           />
 
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4, marginTop: 16 }}>عکس پس‌زمینه‌ی صفحه‌ی ورود (اختیاری)</label>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4, marginTop: 16 }}>{t("saAnLoginImage")}</label>
           <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 8px", lineHeight: 1.7 }}>
-            قاب عمودی و بلند (نسبت تقریبی ۳:۴ یا بلندتر) — مثلاً ۹۰۰×۱۲۰۰ پیکسل. این تصویر کاملاً جدا از عکس بالاست، چون قاب صفحه‌ی ورود عمودی است، نه افقی. اگر خالی بماند، از همان عکس کارت صفحه‌ی اصلی استفاده می‌شود.
+            {t("saAnLoginImageNote")}
           </p>
           <AnnouncementImageUploader
             value={form.loginImageUrl} aspectRatio="3/4" width={110} uploading={uploadingImage === "loginImageUrl"}
             onUpload={handleImageChange("loginImageUrl")} onRemove={handleRemoveImage("loginImageUrl")}
           />
 
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4, marginTop: 14 }}>محل نمایش</label>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4, marginTop: 14 }}>{t("saAnDisplayLocation")}</label>
           <select style={inputStyle} value={form.displayLocation} onChange={(e) => setForm({ ...form, displayLocation: e.target.value })} dir="rtl">
-            <option value="both">هر دو (صفحه‌ی ورود و صفحه‌ی اصلی)</option>
-            <option value="login">فقط صفحه‌ی ورود</option>
-            <option value="home">فقط صفحه‌ی اصلی پس از ورود</option>
+            <option value="both">{t("saAnLocBoth")}</option>
+            <option value="login">{t("saAnLocLogin")}</option>
+            <option value="home">{t("saAnLocHome")}</option>
           </select>
 
           <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: THEME.text2, marginTop: 10, cursor: "pointer" }}>
-            <input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} /> فعال
+            <input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} /> {t("commonActive")}
           </label>
           {message && <p style={{ fontSize: 11.5, color: THEME.danger, marginTop: 8 }}>{message}</p>}
           <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-            <button type="button" style={btnStyle()} onClick={handleSave} disabled={saving}>{saving ? "در حال ذخیره..." : "ذخیره"}</button>
-            <button type="button" style={{ ...btnStyle(THEME.text3) }} onClick={() => setShowForm(false)}>انصراف</button>
+            <button type="button" style={btnStyle()} onClick={handleSave} disabled={saving}>{saving ? t("saSavingEllipsis") : t("commonSave")}</button>
+            <button type="button" style={{ ...btnStyle(THEME.text3) }} onClick={() => setShowForm(false)}>{t("commonCancel")}</button>
           </div>
         </div>
       )}
 
-      {list === null && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>در حال بارگذاری...</p>}
-      {list !== null && list.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>هنوز اطلاعیه‌ای ثبت نشده است.</p>}
+      {list === null && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("commonLoading")}</p>}
+      {list !== null && list.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("saAnNoneYet")}</p>}
       {list && list.map((a) => {
         const Icon = ANNOUNCEMENT_ICONS[a.iconKey] || Megaphone;
         return (
@@ -1424,27 +1446,27 @@ function AnnouncementManagementTab({ currentAdmin, companies }) {
               )}
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: THEME.navy }}>{a.title || "(بدون عنوان)"}</span>
-                  <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: a.isActive ? "#dcfce7" : "#eef1f5", color: a.isActive ? "#166534" : THEME.text3, fontWeight: 600 }}>{a.isActive ? "فعال" : "غیرفعال"}</span>
-                  <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#eef1f5", color: THEME.text3, fontWeight: 600 }}>اولویت {a.priority}</span>
-                  <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#eef1f5", color: THEME.text3, fontWeight: 600 }}>{a.displaySeconds || 10} ثانیه</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: THEME.navy }}>{a.title || t("saAnNoTitle")}</span>
+                  <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: a.isActive ? "#dcfce7" : "#eef1f5", color: a.isActive ? "#166534" : THEME.text3, fontWeight: 600 }}>{a.isActive ? t("commonActive") : t("commonInactive")}</span>
+                  <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#eef1f5", color: THEME.text3, fontWeight: 600 }}>{t("saPriorityBadge", { label: a.priority })}</span>
+                  <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#eef1f5", color: THEME.text3, fontWeight: 600 }}>{t("saSecondsN", { n: a.displaySeconds || 10 })}</span>
                   <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#dbeafe", color: "#1d4ed8", fontWeight: 600 }}>
-                    {{ login: "فقط صفحه‌ی ورود", home: "فقط صفحه‌ی اصلی", both: "هر دو صفحه" }[a.displayLocation || "both"]}
+                    {{ login: t("saAnLocLoginShort"), home: t("saAnLocHomeShort"), both: t("saAnLocBothShort") }[a.displayLocation || "both"]}
                   </span>
-                  <span style={{ fontSize: 10, color: THEME.text3 }}>{a.companyId ? companies.find((c) => c.id === a.companyId)?.name || "شرکت خاص" : "همه‌ی شرکت‌ها"}</span>
+                  <span style={{ fontSize: 10, color: THEME.text3 }}>{a.companyId ? companies.find((c) => c.id === a.companyId)?.name || t("saAnSpecificCompany") : t("saAllCompanies")}</span>
                 </div>
                 <p style={{ fontSize: 12, color: THEME.text2, margin: "4px 0" }}>{a.message}</p>
                 {(a.startsAt || a.endsAt) && (
                   <p style={{ fontSize: 10.5, color: THEME.text3, margin: 0 }}>
-                    بازه: {a.startsAt ? toJalaliSafe(a.startsAt) : "از الان"} تا {a.endsAt ? toJalaliSafe(a.endsAt) : "نامحدود"}
+                    {t("saAnRange", { from: a.startsAt ? toJalaliSafe(a.startsAt) : t("saAnFromNow"), to: a.endsAt ? toJalaliSafe(a.endsAt) : t("saAnUnlimited") })}
                   </p>
                 )}
               </div>
             </div>
             <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-              <button type="button" style={{ ...btnStyle(THEME.navyMid), fontSize: 11 }} onClick={() => openEdit(a)}>ویرایش</button>
-              <button type="button" style={{ ...btnStyle(a.isActive ? "#92400e" : "#166534"), fontSize: 11 }} onClick={() => handleToggleActive(a)}>{a.isActive ? "غیرفعال کن" : "فعال کن"}</button>
-              <button type="button" style={{ ...btnStyle(THEME.danger), fontSize: 11 }} onClick={() => handleDelete(a)}>حذف</button>
+              <button type="button" style={{ ...btnStyle(THEME.navyMid), fontSize: 11 }} onClick={() => openEdit(a)}>{t("saEdit")}</button>
+              <button type="button" style={{ ...btnStyle(a.isActive ? "#92400e" : "#166534"), fontSize: 11 }} onClick={() => handleToggleActive(a)}>{a.isActive ? t("saDisableAction") : t("saEnableAction")}</button>
+              <button type="button" style={{ ...btnStyle(THEME.danger), fontSize: 11 }} onClick={() => handleDelete(a)}>{t("saDelete")}</button>
             </div>
           </div>
         );
@@ -1454,35 +1476,36 @@ function AnnouncementManagementTab({ currentAdmin, companies }) {
 }
 
 function AuditLogPage({ companies }) {
+  const { t } = useLanguage();
   const [rows, setRows] = useState(null);
   useEffect(() => { loadAuditLog(100).then(setRows); }, []);
 
   const ACTION_LABELS = {
-    create_account: "ایجاد حساب", update_account: "ویرایش حساب", deactivate_account: "غیرفعال‌سازی حساب",
-    reactivate_account: "فعال‌سازی حساب", reset_password: "بازنشانی رمز عبور", change_own_password: "تغییر رمز شخصی",
+    create_account: t("saActionCreateAccount"), update_account: t("saActionUpdateAccount"), deactivate_account: t("saActionDeactivateAccount"),
+    reactivate_account: t("saActionReactivateAccount"), reset_password: t("saActionResetPassword"), change_own_password: t("saActionChangeOwnPassword"),
   };
   const TARGET_LABELS = { admin: "Admin", employer: "Employer", contractor: "Contractor", super_admin: "Super Admin" };
 
   return (
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
       <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
-        <FileClock size={14} color={THEME.teal} /> گزارش تغییرات
+        <FileClock size={14} color={THEME.teal} /> {t("saAuditLogTitle")}
       </h3>
       <p style={{ fontSize: 11, color: THEME.text3, marginBottom: 12 }}>
-        هر تغییر حساب کاربری (ایجاد، ویرایش، فعال/غیرفعال، بازنشانی رمز) اینجا ثبت می‌شود — هرگز خودِ رمز عبور ثبت نمی‌شود.
+        {t("saAuditLogNote")}
       </p>
-      {rows === null && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>در حال بارگذاری...</p>}
-      {rows !== null && rows.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>هنوز رویدادی ثبت نشده است.</p>}
+      {rows === null && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("commonLoading")}</p>}
+      {rows !== null && rows.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("saNoEventsYet")}</p>}
       {rows && rows.length > 0 && (
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead>
               <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
-                <th style={{ textAlign: "right", padding: "6px 8px" }}>عملیات</th>
-                <th style={{ textAlign: "center", padding: "6px 8px" }}>نوع حساب</th>
-                <th style={{ textAlign: "center", padding: "6px 8px" }}>نام‌کاربری هدف</th>
-                <th style={{ textAlign: "center", padding: "6px 8px" }}>انجام‌شده توسط</th>
-                <th style={{ textAlign: "center", padding: "6px 8px" }}>زمان</th>
+                <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("saColAction")}</th>
+                <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColAccountType")}</th>
+                <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColTargetUsername")}</th>
+                <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColPerformedBy")}</th>
+                <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColTime")}</th>
               </tr>
             </thead>
             <tbody>
@@ -1509,13 +1532,14 @@ function AuditLogPage({ companies }) {
 // اینجا SuperAdmin همه‌ی گزارش‌های همه‌ی شرکت‌ها را می‌بیند و پیگیری
 // (تغییر وضعیت + یادداشت داخلی) می‌کند.
 const ERROR_REPORT_STATUS_META = {
-  open: { label: "باز", color: "#b45309", bg: "#fef3c7" },
-  reviewed: { label: "بررسی‌شده", color: "#1d4ed8", bg: "#dbeafe" },
-  resolved: { label: "برطرف‌شده", color: "#166534", bg: "#dcfce7" },
+  open: { labelKey: "saErStatusOpen", color: "#b45309", bg: "#fef3c7" },
+  reviewed: { labelKey: "saErStatusReviewed", color: "#1d4ed8", bg: "#dbeafe" },
+  resolved: { labelKey: "saErStatusResolved", color: "#166534", bg: "#dcfce7" },
 };
-const ERROR_REPORT_ROLE_LABELS = { ADMIN: "ادمین", EMPLOYER: "کارفرما", HSE_SUPERVISOR: "سرپرست HSE", CONTRACTOR: "پیمانکار" };
+const ERROR_REPORT_ROLE_LABELS = { ADMIN: "saRoleAdmin", EMPLOYER: "saRoleEmployer", HSE_SUPERVISOR: "saRoleHseSupervisor", CONTRACTOR: "saRoleContractor" };
 
 function ErrorReportsPage({ currentAdmin }) {
+  const { t } = useLanguage();
   const [statusFilter, setStatusFilter] = useState("all");
   const [rows, setRows] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
@@ -1546,7 +1570,7 @@ function ErrorReportsPage({ currentAdmin }) {
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
         <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
-          <AlertTriangle size={14} color="#b45309" /> گزارش‌های خطای کاربران
+          <AlertTriangle size={14} color="#b45309" /> {t("saErTitle")}
           {openCount > 0 && (
             <span style={{ background: THEME.danger, color: "#fff", fontSize: 10.5, fontWeight: 700, borderRadius: 999, minWidth: 19, height: 19, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>
               {openCount}
@@ -1554,30 +1578,30 @@ function ErrorReportsPage({ currentAdmin }) {
           )}
         </h3>
         <select style={{ ...inputStyle, width: "auto" }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir="rtl">
-          <option value="all">همه وضعیت‌ها</option>
-          <option value="open">باز</option>
-          <option value="reviewed">بررسی‌شده</option>
-          <option value="resolved">برطرف‌شده</option>
+          <option value="all">{t("saAllStatuses")}</option>
+          <option value="open">{t("saErStatusOpen")}</option>
+          <option value="reviewed">{t("saErStatusReviewed")}</option>
+          <option value="resolved">{t("saErStatusResolved")}</option>
         </select>
       </div>
       <p style={{ fontSize: 11, color: THEME.text3, marginBottom: 12 }}>
-        هر گزارشی که کاربران از هر جای سامانه ارسال کرده‌اند — شامل کاربر، زمان، ماژول/صفحه، شرح خطا و (در صورت وجود) اطلاعات فنی.
+        {t("saErNote")}
       </p>
 
-      {rows === null && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>در حال بارگذاری...</p>}
-      {rows !== null && rows.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>گزارشی با این وضعیت یافت نشد.</p>}
+      {rows === null && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("commonLoading")}</p>}
+      {rows !== null && rows.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("saErNoneFound")}</p>}
 
       {rows && rows.length > 0 && (
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead>
               <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
-                <th style={{ textAlign: "right", padding: "6px 8px" }}>شرکت</th>
-                <th style={{ textAlign: "right", padding: "6px 8px" }}>گزارش‌دهنده</th>
-                <th style={{ textAlign: "center", padding: "6px 8px" }}>ماژول/صفحه</th>
-                <th style={{ textAlign: "right", padding: "6px 8px" }}>شرح خطا</th>
-                <th style={{ textAlign: "center", padding: "6px 8px" }}>زمان</th>
-                <th style={{ textAlign: "center", padding: "6px 8px" }}>وضعیت</th>
+                <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("saColCompany")}</th>
+                <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("saErColReporter")}</th>
+                <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saErColModulePage")}</th>
+                <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("saErColDescription")}</th>
+                <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColTime")}</th>
+                <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("commonStatus")}</th>
               </tr>
             </thead>
             <tbody>
@@ -1587,12 +1611,12 @@ function ErrorReportsPage({ currentAdmin }) {
                   <React.Fragment key={r.id}>
                     <tr style={{ borderBottom: `1px solid ${THEME.border}`, cursor: "pointer" }} onClick={() => openRow(r)}>
                       <td style={{ padding: "8px", fontWeight: 600 }}>{r.companyName || "—"}</td>
-                      <td style={{ padding: "8px" }}>{r.reportedByName} <span style={{ color: THEME.text3, fontSize: 10.5 }}>({ERROR_REPORT_ROLE_LABELS[r.reportedByRole] || r.reportedByRole})</span></td>
+                      <td style={{ padding: "8px" }}>{r.reportedByName} <span style={{ color: THEME.text3, fontSize: 10.5 }}>({ERROR_REPORT_ROLE_LABELS[r.reportedByRole] ? t(ERROR_REPORT_ROLE_LABELS[r.reportedByRole]) : r.reportedByRole})</span></td>
                       <td style={{ padding: "8px", textAlign: "center", color: THEME.text3 }}>{r.pageLabel || r.moduleKey || "—"}</td>
                       <td style={{ padding: "8px", maxWidth: 260, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.description}</td>
                       <td style={{ padding: "8px", textAlign: "center", color: THEME.text3, whiteSpace: "nowrap" }}>{toJalaliDateTime(r.createdAt)}</td>
                       <td style={{ padding: "8px", textAlign: "center" }}>
-                        <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: sm.bg, color: sm.color, fontWeight: 700 }}>{sm.label}</span>
+                        <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: sm.bg, color: sm.color, fontWeight: 700 }}>{t(sm.labelKey)}</span>
                       </td>
                     </tr>
                     {expandedId === r.id && (
@@ -1604,16 +1628,16 @@ function ErrorReportsPage({ currentAdmin }) {
                               {r.technicalMessage}{r.technicalStack ? `\n${r.technicalStack}` : ""}
                             </pre>
                           )}
-                          {r.userAgent && <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 8px" }}>User Agent: {r.userAgent}</p>}
-                          <label style={smallLabelStyle}>یادداشت داخلی / پاسخ</label>
+                          {r.userAgent && <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 8px" }}>{t("saErUserAgent", { ua: r.userAgent })}</p>}
+                          <label style={smallLabelStyle}>{t("saErInternalNote")}</label>
                           <textarea style={{ ...inputStyle, minHeight: 60 }} value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} dir="rtl" />
                           {r.resolvedAt && (
-                            <p style={{ fontSize: 10.5, color: THEME.text3, margin: "6px 0" }}>برطرف‌شده توسط {r.resolvedBy || "—"} در {toJalaliDateTime(r.resolvedAt)}</p>
+                            <p style={{ fontSize: 10.5, color: THEME.text3, margin: "6px 0" }}>{t("saErResolvedBy", { by: r.resolvedBy || "—", at: toJalaliDateTime(r.resolvedAt) })}</p>
                           )}
                           <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                            <button type="button" style={btnStyle("#1d4ed8")} disabled={saving} onClick={() => handleSetStatus(r, "reviewed")}>علامت‌گذاری: بررسی‌شده</button>
-                            <button type="button" style={btnStyle("#166534")} disabled={saving} onClick={() => handleSetStatus(r, "resolved")}>علامت‌گذاری: برطرف‌شده</button>
-                            {r.status !== "open" && <button type="button" style={btnStyle(THEME.text3)} disabled={saving} onClick={() => handleSetStatus(r, "open")}>بازگرداندن به باز</button>}
+                            <button type="button" style={btnStyle("#1d4ed8")} disabled={saving} onClick={() => handleSetStatus(r, "reviewed")}>{t("saErMarkReviewed")}</button>
+                            <button type="button" style={btnStyle("#166534")} disabled={saving} onClick={() => handleSetStatus(r, "resolved")}>{t("saErMarkResolved")}</button>
+                            {r.status !== "open" && <button type="button" style={btnStyle(THEME.text3)} disabled={saving} onClick={() => handleSetStatus(r, "open")}>{t("saErReopen")}</button>}
                           </div>
                         </td>
                       </tr>
@@ -1634,12 +1658,13 @@ function ErrorReportsPage({ currentAdmin }) {
 // زرین‌پال جای دیگری (loadOnlinePaymentsForCompany، داخل جزئیات هر
 // شرکت) نمایش داده می‌شود و اینجا کاملاً دست‌نخورده می‌ماند.
 const CARD_PAYMENT_STATUS_META = {
-  awaiting_review: { label: "در انتظار تأیید", color: "#b45309", bg: "#fef3c7" },
-  paid: { label: "تأیید شده", color: "#166534", bg: "#dcfce7" },
-  rejected: { label: "رد شده", color: "#b91c1c", bg: "#fee2e2" },
+  awaiting_review: { labelKey: "saCtStatusAwaiting", color: "#b45309", bg: "#fef3c7" },
+  paid: { labelKey: "saCtStatusPaid", color: "#166534", bg: "#dcfce7" },
+  rejected: { labelKey: "saCtStatusRejected", color: "#b91c1c", bg: "#fee2e2" },
 };
 
 function CardTransferSettingsForm({ currentAdmin }) {
+  const { t } = useLanguage();
   const [settings, setSettings] = useState(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -1651,30 +1676,30 @@ function CardTransferSettingsForm({ currentAdmin }) {
     setSaving(true); setMessage("");
     const result = await saveCardTransferSettings(settings, currentAdmin?.fullName || currentAdmin?.username);
     setSaving(false);
-    setMessage(result?.__error ? result.message : "تنظیمات پرداخت ذخیره شد.");
+    setMessage(result?.__error ? result.message : t("saCtSettingsSaved"));
   };
 
-  if (!settings) return <p style={{ fontSize: 12, color: THEME.text3, padding: 12 }}>در حال بارگذاری...</p>;
+  if (!settings) return <p style={{ fontSize: 12, color: THEME.text3, padding: 12 }}>{t("commonLoading")}</p>;
 
   return (
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16, marginBottom: 16 }}>
       <h3 style={{ fontSize: 13.5, fontWeight: 700, color: THEME.navy, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
-        <CreditCard size={14} color={THEME.teal} /> تنظیمات نمایشی پرداخت کارت‌به‌کارت
+        <CreditCard size={14} color={THEME.teal} /> {t("saCtSettingsTitle")}
       </h3>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
         <div>
-          <label style={smallLabelStyle}>شماره کارت</label>
+          <label style={smallLabelStyle}>{t("saCtCardNumber")}</label>
           <input style={{ ...inputStyle, direction: "ltr", textAlign: "left" }} value={settings.cardNumber} onChange={(e) => setSettings({ ...settings, cardNumber: e.target.value })} placeholder="6037-XXXX-XXXX-XXXX" />
         </div>
         <div>
-          <label style={smallLabelStyle}>نام صاحب کارت</label>
+          <label style={smallLabelStyle}>{t("saCtHolderName")}</label>
           <input style={inputStyle} value={settings.holderName} onChange={(e) => setSettings({ ...settings, holderName: e.target.value })} dir="rtl" />
         </div>
       </div>
-      <label style={smallLabelStyle}>توضیحات (زیر مشخصات کارت، برای کاربر نمایش داده می‌شود)</label>
+      <label style={smallLabelStyle}>{t("saCtDescription")}</label>
       <textarea style={{ ...inputStyle, minHeight: 60 }} value={settings.description} onChange={(e) => setSettings({ ...settings, description: e.target.value })} dir="rtl" />
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
-        <button type="button" style={btnStyle()} onClick={handleSave} disabled={saving}>{saving ? "در حال ذخیره..." : "ذخیره‌ی تنظیمات"}</button>
+        <button type="button" style={btnStyle()} onClick={handleSave} disabled={saving}>{saving ? t("saSavingEllipsis") : t("saCtSaveSettings")}</button>
         {message && <span style={{ fontSize: 11.5, color: THEME.text3 }}>{message}</span>}
       </div>
     </div>
@@ -1682,6 +1707,7 @@ function CardTransferSettingsForm({ currentAdmin }) {
 }
 
 function CardTransferPaymentsPage({ currentAdmin }) {
+  const { t } = useLanguage();
   const [statusFilter, setStatusFilter] = useState("awaiting_review");
   const [rows, setRows] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
@@ -1694,7 +1720,7 @@ function CardTransferPaymentsPage({ currentAdmin }) {
   useEffect(() => { setRows(null); load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [statusFilter]);
 
   const handleApprove = async (r) => {
-    if (!confirm(`تأیید پرداخت و فعال‌سازی خودکار اشتراک شرکت «${r.companyName}»؟`)) return;
+    if (!confirm(t("saCtApproveConfirm", { company: r.companyName }))) return;
     setSaving(true);
     const result = await approveCardTransferPayment(r.id, currentAdmin?.fullName || currentAdmin?.username);
     setSaving(false);
@@ -1720,7 +1746,7 @@ function CardTransferPaymentsPage({ currentAdmin }) {
       <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
           <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
-            <CreditCard size={14} color={THEME.teal} /> رسیدهای پرداخت کارت‌به‌کارت
+            <CreditCard size={14} color={THEME.teal} /> {t("saCtTitle")}
             {awaitingCount > 0 && (
               <span style={{ background: THEME.danger, color: "#fff", fontSize: 10.5, fontWeight: 700, borderRadius: 999, minWidth: 19, height: 19, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>
                 {awaitingCount}
@@ -1728,27 +1754,27 @@ function CardTransferPaymentsPage({ currentAdmin }) {
             )}
           </h3>
           <select style={{ ...inputStyle, width: "auto" }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir="rtl">
-            <option value="all">همه وضعیت‌ها</option>
-            <option value="awaiting_review">در انتظار تأیید</option>
-            <option value="paid">تأیید شده</option>
-            <option value="rejected">رد شده</option>
+            <option value="all">{t("saAllStatuses")}</option>
+            <option value="awaiting_review">{t("saCtStatusAwaiting")}</option>
+            <option value="paid">{t("saCtStatusPaid")}</option>
+            <option value="rejected">{t("saCtStatusRejected")}</option>
           </select>
         </div>
 
-        {rows === null && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>در حال بارگذاری...</p>}
-        {rows !== null && rows.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>رسیدی با این وضعیت یافت نشد.</p>}
+        {rows === null && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("commonLoading")}</p>}
+        {rows !== null && rows.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("saCtNoneFound")}</p>}
 
         {rows && rows.length > 0 && (
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
               <thead>
                 <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
-                  <th style={{ textAlign: "right", padding: "6px 8px" }}>شرکت</th>
-                  <th style={{ textAlign: "right", padding: "6px 8px" }}>پلن / دوره</th>
-                  <th style={{ textAlign: "center", padding: "6px 8px" }}>مبلغ</th>
-                  <th style={{ textAlign: "right", padding: "6px 8px" }}>واریزکننده</th>
-                  <th style={{ textAlign: "center", padding: "6px 8px" }}>زمان</th>
-                  <th style={{ textAlign: "center", padding: "6px 8px" }}>وضعیت</th>
+                  <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("saColCompany")}</th>
+                  <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("saCtColPlanPeriod")}</th>
+                  <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saCtColAmount")}</th>
+                  <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("saCtColPayer")}</th>
+                  <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColTime")}</th>
+                  <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("commonStatus")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1758,36 +1784,36 @@ function CardTransferPaymentsPage({ currentAdmin }) {
                     <React.Fragment key={r.id}>
                       <tr style={{ borderBottom: `1px solid ${THEME.border}`, cursor: "pointer" }} onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}>
                         <td style={{ padding: "8px", fontWeight: 600 }}>{r.companyName || "—"}</td>
-                        <td style={{ padding: "8px" }}>{r.planName || "—"} — {r.billingCycle === "monthly" ? "ماهانه" : "سالانه"}</td>
+                        <td style={{ padding: "8px" }}>{r.planName || "—"} — {r.billingCycle === "monthly" ? t("saBillingMonthly") : t("saBillingYearly")}</td>
                         <td style={{ padding: "8px", textAlign: "center", fontWeight: 700, color: THEME.navy }}>{r.amount.toLocaleString("fa-IR")}</td>
                         <td style={{ padding: "8px" }}>{r.payerName} <span style={{ color: THEME.text3, fontSize: 10.5, direction: "ltr", display: "inline-block" }}>({r.payerPhone})</span></td>
                         <td style={{ padding: "8px", textAlign: "center", color: THEME.text3, whiteSpace: "nowrap" }}>{toJalaliDateTime(r.createdAt)}</td>
                         <td style={{ padding: "8px", textAlign: "center" }}>
-                          <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: sm.bg, color: sm.color, fontWeight: 700 }}>{sm.label}</span>
+                          <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: sm.bg, color: sm.color, fontWeight: 700 }}>{t(sm.labelKey)}</span>
                         </td>
                       </tr>
                       {expandedId === r.id && (
                         <tr>
                           <td colSpan={6} style={{ padding: "10px 12px", background: THEME.bg }}>
                             <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 10 }}>
-                              <p style={{ fontSize: 12, color: THEME.text2, margin: 0 }}>شماره پیگیری: <b style={{ direction: "ltr", display: "inline-block" }}>{r.trackingNumber || "—"}</b></p>
+                              <p style={{ fontSize: 12, color: THEME.text2, margin: 0 }}>{t("saCtTrackingNo", { num: r.trackingNumber || "—" })}</p>
                               {r.receiptImage && (
-                                <button type="button" style={btnStyle(THEME.navyMid)} onClick={() => setViewerSrc(r.receiptImage)}>مشاهده‌ی تصویر رسید</button>
+                                <button type="button" style={btnStyle(THEME.navyMid)} onClick={() => setViewerSrc(r.receiptImage)}>{t("saCtViewReceipt")}</button>
                               )}
                             </div>
-                            {r.adminNote && <p style={{ fontSize: 11.5, color: "#b91c1c", margin: "0 0 8px" }}>دلیل رد: {r.adminNote}</p>}
-                            {r.reviewedAt && <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 8px" }}>بررسی‌شده توسط {r.reviewedBy || "—"} در {toJalaliDateTime(r.reviewedAt)}</p>}
+                            {r.adminNote && <p style={{ fontSize: 11.5, color: "#b91c1c", margin: "0 0 8px" }}>{t("saCtRejectReason", { note: r.adminNote })}</p>}
+                            {r.reviewedAt && <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 8px" }}>{t("saCtReviewedBy", { by: r.reviewedBy || "—", at: toJalaliDateTime(r.reviewedAt) })}</p>}
 
                             {r.status === "awaiting_review" && (
                               <div>
                                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                                  <button type="button" style={btnStyle("#166534")} disabled={saving} onClick={() => handleApprove(r)}>تأیید و فعال‌سازی اشتراک</button>
-                                  <button type="button" style={btnStyle(THEME.danger)} disabled={saving} onClick={() => setShowRejectFor(showRejectFor === r.id ? null : r.id)}>رد رسید</button>
+                                  <button type="button" style={btnStyle("#166534")} disabled={saving} onClick={() => handleApprove(r)}>{t("saCtApproveActivate")}</button>
+                                  <button type="button" style={btnStyle(THEME.danger)} disabled={saving} onClick={() => setShowRejectFor(showRejectFor === r.id ? null : r.id)}>{t("saCtRejectReceipt")}</button>
                                 </div>
                                 {showRejectFor === r.id && (
                                   <div style={{ marginTop: 8 }}>
-                                    <textarea style={{ ...inputStyle, minHeight: 50 }} placeholder="دلیل رد (الزامی)" value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} dir="rtl" />
-                                    <button type="button" style={{ ...btnStyle(THEME.danger), marginTop: 6 }} disabled={saving || !rejectNote.trim()} onClick={() => handleReject(r)}>ثبت رد رسید</button>
+                                    <textarea style={{ ...inputStyle, minHeight: 50 }} placeholder={t("saCtRejectReasonPlaceholder")} value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} dir="rtl" />
+                                    <button type="button" style={{ ...btnStyle(THEME.danger), marginTop: 6 }} disabled={saving || !rejectNote.trim()} onClick={() => handleReject(r)}>{t("saCtSubmitReject")}</button>
                                   </div>
                                 )}
                               </div>
@@ -1815,12 +1841,13 @@ function CardTransferPaymentsPage({ currentAdmin }) {
 // مسیر موجود «شرکت‌ها» به‌صورت دستی انجام می‌شود (طبق طراحی صریح — نگاه
 // کنید به کامنت بالای این توابع در superAdminApi.js).
 const TRIAL_REQUEST_STATUS_META = {
-  pending: { label: "در انتظار بررسی", color: "#b45309", bg: "#fef3c7" },
-  approved: { label: "تأیید شده", color: "#166534", bg: "#dcfce7" },
-  rejected: { label: "رد شده", color: "#b91c1c", bg: "#fee2e2" },
+  pending: { labelKey: "saTrStatusPending", color: "#b45309", bg: "#fef3c7" },
+  approved: { labelKey: "saTrStatusApproved", color: "#166534", bg: "#dcfce7" },
+  rejected: { labelKey: "saTrStatusRejected", color: "#b91c1c", bg: "#fee2e2" },
 };
 
 function TrialRequestsPage({ currentAdmin }) {
+  const { t } = useLanguage();
   const [statusFilter, setStatusFilter] = useState("pending");
   const [rows, setRows] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
@@ -1864,7 +1891,7 @@ function TrialRequestsPage({ currentAdmin }) {
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
         <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
-          <ClipboardList size={14} color={THEME.teal} /> درخواست پلن آزمایشی
+          <ClipboardList size={14} color={THEME.teal} /> {t("saNavTrialRequests")}
           {pendingCount > 0 && (
             <span style={{ background: THEME.danger, color: "#fff", fontSize: 10.5, fontWeight: 700, borderRadius: 999, minWidth: 19, height: 19, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>
               {pendingCount}
@@ -1872,30 +1899,30 @@ function TrialRequestsPage({ currentAdmin }) {
           )}
         </h3>
         <select style={{ ...inputStyle, width: "auto" }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir="rtl">
-          <option value="all">همه وضعیت‌ها</option>
-          <option value="pending">در انتظار بررسی</option>
-          <option value="approved">تأیید شده</option>
-          <option value="rejected">رد شده</option>
+          <option value="all">{t("saAllStatuses")}</option>
+          <option value="pending">{t("saTrStatusPending")}</option>
+          <option value="approved">{t("saTrStatusApproved")}</option>
+          <option value="rejected">{t("saTrStatusRejected")}</option>
         </select>
       </div>
       <p style={{ fontSize: 11, color: THEME.text3, marginBottom: 12 }}>
-        تأیید یک درخواست، فقط تصمیم و مدت پلن آزمایشیِ انتخابی را ثبت می‌کند — ساخت واقعی شرکت و حساب کاربری همچنان از بخش «شرکت‌ها» به‌صورت دستی انجام می‌شود.
+        {t("saTrNote")}
       </p>
 
-      {rows === null && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>در حال بارگذاری...</p>}
-      {rows !== null && rows.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>درخواستی با این وضعیت یافت نشد.</p>}
+      {rows === null && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("commonLoading")}</p>}
+      {rows !== null && rows.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("saTrNoneFound")}</p>}
 
       {rows && rows.length > 0 && (
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead>
               <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
-                <th style={{ textAlign: "right", padding: "6px 8px" }}>شرکت / سازمان</th>
-                <th style={{ textAlign: "right", padding: "6px 8px" }}>متقاضی</th>
-                <th style={{ textAlign: "center", padding: "6px 8px" }}>تعداد پرسنل</th>
-                <th style={{ textAlign: "right", padding: "6px 8px" }}>پروژه / شهر</th>
-                <th style={{ textAlign: "center", padding: "6px 8px" }}>زمان</th>
-                <th style={{ textAlign: "center", padding: "6px 8px" }}>وضعیت</th>
+                <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("saTrColCompany")}</th>
+                <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("saTrColApplicant")}</th>
+                <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saTrColPersonnelCount")}</th>
+                <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("saTrColProjectCity")}</th>
+                <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColTime")}</th>
+                <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("commonStatus")}</th>
               </tr>
             </thead>
             <tbody>
@@ -1913,34 +1940,34 @@ function TrialRequestsPage({ currentAdmin }) {
                       <td style={{ padding: "8px", color: THEME.text3 }}>{r.projectName || "—"}{r.projectCity && ` — ${r.projectCity}`}</td>
                       <td style={{ padding: "8px", textAlign: "center", color: THEME.text3, whiteSpace: "nowrap" }}>{toJalaliDateTime(r.createdAt)}</td>
                       <td style={{ padding: "8px", textAlign: "center" }}>
-                        <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: sm.bg, color: sm.color, fontWeight: 700 }}>{sm.label}</span>
+                        <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: sm.bg, color: sm.color, fontWeight: 700 }}>{t(sm.labelKey)}</span>
                       </td>
                     </tr>
                     {expandedId === r.id && (
                       <tr>
                         <td colSpan={6} style={{ padding: "10px 12px", background: THEME.bg }}>
                           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 6, marginBottom: 10, fontSize: 12, color: THEME.text2 }}>
-                            <p style={{ margin: 0 }}>حوزه فعالیت: <b>{r.industry || "—"}</b></p>
-                            <p style={{ margin: 0 }}>ایمیل: <b style={{ direction: "ltr", display: "inline-block" }}>{r.email || "—"}</b></p>
+                            <p style={{ margin: 0 }}>{t("saTrIndustry")}<b>{r.industry || "—"}</b></p>
+                            <p style={{ margin: 0 }}>{t("saTrEmailLabel")}<b style={{ direction: "ltr", display: "inline-block" }}>{r.email || "—"}</b></p>
                             <p style={{ margin: 0, gridColumn: "1 / -1" }}>
-                              ماژول‌های موردنظر: <b>{r.desiredModules.length > 0 ? r.desiredModules.join("، ") : "—"}</b>
+                              {t("saTrDesiredModules")}<b>{r.desiredModules.length > 0 ? r.desiredModules.join("، ") : "—"}</b>
                             </p>
                           </div>
-                          {r.description && <p style={{ fontSize: 12, color: THEME.text2, lineHeight: 1.8, margin: "0 0 10px", whiteSpace: "pre-wrap" }}>توضیحات: {r.description}</p>}
-                          {r.adminNote && <p style={{ fontSize: 11.5, color: THEME.text3, margin: "0 0 8px" }}>یادداشت بررسی: {r.adminNote}</p>}
-                          {r.status === "approved" && <p style={{ fontSize: 11.5, color: "#166534", margin: "0 0 8px", fontWeight: 700 }}>مدت پلن آزمایشی تأییدشده: {r.approvedTrialDays} روز</p>}
-                          {r.reviewedAt && <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 8px" }}>بررسی‌شده توسط {r.reviewedBy || "—"} در {toJalaliDateTime(r.reviewedAt)}</p>}
+                          {r.description && <p style={{ fontSize: 12, color: THEME.text2, lineHeight: 1.8, margin: "0 0 10px", whiteSpace: "pre-wrap" }}>{t("saTrDescriptionLabel", { desc: r.description })}</p>}
+                          {r.adminNote && <p style={{ fontSize: 11.5, color: THEME.text3, margin: "0 0 8px" }}>{t("saTrReviewNote", { note: r.adminNote })}</p>}
+                          {r.status === "approved" && <p style={{ fontSize: 11.5, color: "#166534", margin: "0 0 8px", fontWeight: 700 }}>{t("saTrApprovedDays", { days: r.approvedTrialDays })}</p>}
+                          {r.reviewedAt && <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 8px" }}>{t("saTrReviewedBy", { by: r.reviewedBy || "—", at: toJalaliDateTime(r.reviewedAt) })}</p>}
 
                           {r.status === "pending" && (
                             <div>
                               <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 8 }}>
-                                <label style={{ fontSize: 11.5, color: THEME.text2 }}>مدت پلن آزمایشی (روز):</label>
+                                <label style={{ fontSize: 11.5, color: THEME.text2 }}>{t("saTrTrialDays")}</label>
                                 <input type="number" min="1" style={{ ...inputStyle, width: 80 }} value={trialDaysDraft} onChange={(e) => setTrialDaysDraft(e.target.value)} />
                               </div>
-                              <textarea style={{ ...inputStyle, minHeight: 45, marginBottom: 8 }} placeholder="یادداشت (اختیاری برای تأیید، الزامی برای رد)" value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} dir="rtl" />
+                              <textarea style={{ ...inputStyle, minHeight: 45, marginBottom: 8 }} placeholder={t("saTrNotePlaceholder")} value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} dir="rtl" />
                               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                                <button type="button" style={btnStyle("#166534")} disabled={saving || !trialDaysDraft} onClick={() => handleApprove(r)}>تأیید درخواست</button>
-                                <button type="button" style={btnStyle(THEME.danger)} disabled={saving || !noteDraft.trim()} onClick={() => handleReject(r)}>رد درخواست</button>
+                                <button type="button" style={btnStyle("#166534")} disabled={saving || !trialDaysDraft} onClick={() => handleApprove(r)}>{t("saTrApprove")}</button>
+                                <button type="button" style={btnStyle(THEME.danger)} disabled={saving || !noteDraft.trim()} onClick={() => handleReject(r)}>{t("saTrReject")}</button>
                               </div>
                             </div>
                           )}
@@ -1959,6 +1986,7 @@ function TrialRequestsPage({ currentAdmin }) {
 }
 
 function SuperAdminChangePassword({ onClose }) {
+  const { t } = useLanguage();
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -1968,9 +1996,9 @@ function SuperAdminChangePassword({ onClose }) {
 
   const handleSubmit = async () => {
     setError("");
-    if (!oldPassword || !newPassword) { setError("رمز فعلی و رمز جدید هر دو الزامی است"); return; }
-    if (newPassword.length < 8) { setError("رمز عبور جدید باید حداقل ۸ کاراکتر باشد"); return; }
-    if (newPassword !== confirmPassword) { setError("تکرار رمز عبور جدید با آن یکسان نیست"); return; }
+    if (!oldPassword || !newPassword) { setError(t("saCpBothRequired")); return; }
+    if (newPassword.length < 8) { setError(t("errPasswordMin8")); return; }
+    if (newPassword !== confirmPassword) { setError(t("saCpMismatch")); return; }
     setSaving(true);
     const result = await changeMyPassword(oldPassword, newPassword, "super_admin");
     setSaving(false);
@@ -1983,16 +2011,16 @@ function SuperAdminChangePassword({ onClose }) {
   return (
     <div style={{ background: THEME.surface, borderBottom: `1px solid ${THEME.border}`, padding: 16 }}>
       <div style={{ maxWidth: 420, margin: "0 auto" }}>
-        <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>تغییر رمز عبور من</h4>
+        <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>{t("saChangeMyPasswordTitle")}</h4>
         {done ? (
-          <p style={{ color: "#166534", fontSize: 12.5 }}>رمز عبور با موفقیت تغییر کرد.</p>
+          <p style={{ color: "#166534", fontSize: 12.5 }}>{t("saPasswordChanged")}</p>
         ) : (
           <>
-            <input type="password" style={{ ...inputStyle, marginBottom: 8 }} placeholder="رمز عبور فعلی" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} dir="ltr" />
-            <input type="password" style={{ ...inputStyle, marginBottom: 8 }} placeholder="رمز عبور جدید (حداقل ۸ کاراکتر)" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} dir="ltr" />
-            <input type="password" style={{ ...inputStyle, marginBottom: 8 }} placeholder="تکرار رمز عبور جدید" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} dir="ltr" />
+            <input type="password" style={{ ...inputStyle, marginBottom: 8 }} placeholder={t("saCurrentPassword")} value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} dir="ltr" />
+            <input type="password" style={{ ...inputStyle, marginBottom: 8 }} placeholder={t("saNewPasswordMin8")} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} dir="ltr" />
+            <input type="password" style={{ ...inputStyle, marginBottom: 8 }} placeholder={t("saConfirmNewPassword")} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} dir="ltr" />
             {error && <p style={{ color: THEME.danger, fontSize: 12, marginBottom: 8 }}>{error}</p>}
-            <button type="button" onClick={handleSubmit} disabled={saving} style={btnStyle()}>{saving ? "در حال ذخیره..." : "ثبت رمز جدید"}</button>
+            <button type="button" onClick={handleSubmit} disabled={saving} style={btnStyle()}>{saving ? t("saSavingEllipsis") : t("saSubmitNewPassword")}</button>
           </>
         )}
       </div>
@@ -2001,6 +2029,7 @@ function SuperAdminChangePassword({ onClose }) {
 }
 
 function PlansManager({ plans, companies, currentAdmin, onChanged }) {
+  const { t } = useLanguage();
   const [showCreate, setShowCreate] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
   const [form, setForm] = useState(emptyPlanForm());
@@ -2072,28 +2101,28 @@ function PlansManager({ plans, companies, currentAdmin, onChanged }) {
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16, marginBottom: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
         <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
-          <Layers size={14} color={THEME.teal} /> پلن‌های اشتراک
+          <Layers size={14} color={THEME.teal} /> {t("saSubscriptionPlans")}
         </h3>
         <button type="button" onClick={() => { setShowCreate((v) => !v); setForm(emptyPlanForm()); }} style={{ ...btnStyle(), display: "flex", alignItems: "center", gap: 6 }}>
-          <Plus size={13} /> پلن جدید
+          <Plus size={13} /> {t("saNewPlan")}
         </button>
       </div>
 
-      {showCreate && <PlanForm form={form} setForm={setForm} toggleModule={toggleModule} toggleSub={toggleSub} onSave={handleCreate} saving={saving} saveLabel="ثبت پلن" />}
+      {showCreate && <PlanForm form={form} setForm={setForm} toggleModule={toggleModule} toggleSub={toggleSub} onSave={handleCreate} saving={saving} saveLabel={t("saSubmitPlan")} />}
 
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
           <thead>
             <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
-              <th style={{ textAlign: "center", padding: "6px 8px" }}>ترتیب</th>
-              <th style={{ textAlign: "right", padding: "6px 8px" }}>نام پلن</th>
-              <th style={{ textAlign: "center", padding: "6px 8px" }}>قیمت ماهانه</th>
-              <th style={{ textAlign: "center", padding: "6px 8px" }}>قیمت سالانه</th>
-              <th style={{ textAlign: "center", padding: "6px 8px" }}>قیمت کلی</th>
-              <th style={{ textAlign: "center", padding: "6px 8px" }}>سقف کاربر</th>
-              <th style={{ textAlign: "center", padding: "6px 8px" }}>سقف پرسنل</th>
-              <th style={{ textAlign: "center", padding: "6px 8px" }}>سقف فضا (MB)</th>
-              <th style={{ textAlign: "center", padding: "6px 8px" }}>وضعیت</th>
+              <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColOrder")}</th>
+              <th style={{ textAlign: "right", padding: "6px 8px" }}>{t("saColPlanName")}</th>
+              <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColMonthlyPrice")}</th>
+              <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColYearlyPrice")}</th>
+              <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColTotalPrice")}</th>
+              <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColUserCap")}</th>
+              <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColPersonnelCap")}</th>
+              <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColStorageCapMb")}</th>
+              <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("commonStatus")}</th>
               <th style={{ padding: "6px 8px" }} />
             </tr>
           </thead>
@@ -2102,45 +2131,45 @@ function PlansManager({ plans, companies, currentAdmin, onChanged }) {
               <React.Fragment key={p.id}>
                 <tr style={{ borderBottom: `1px solid ${THEME.border}`, opacity: p.isActive ? 1 : 0.5 }}>
                   <td style={{ padding: "8px", textAlign: "center", whiteSpace: "nowrap" }}>
-                    <button type="button" onClick={() => movePlan(plans, p.id, "up").then(onChanged)} disabled={idx === 0} style={{ ...btnStyle(THEME.navyMid), fontSize: 10, padding: "3px 7px", opacity: idx === 0 ? 0.3 : 1, marginInlineEnd: 3 }} title="جابه‌جایی به بالا">▲</button>
-                    <button type="button" onClick={() => movePlan(plans, p.id, "down").then(onChanged)} disabled={idx === plans.length - 1} style={{ ...btnStyle(THEME.navyMid), fontSize: 10, padding: "3px 7px", opacity: idx === plans.length - 1 ? 0.3 : 1 }} title="جابه‌جایی به پایین">▼</button>
+                    <button type="button" onClick={() => movePlan(plans, p.id, "up").then(onChanged)} disabled={idx === 0} style={{ ...btnStyle(THEME.navyMid), fontSize: 10, padding: "3px 7px", opacity: idx === 0 ? 0.3 : 1, marginInlineEnd: 3 }} title={t("saMoveUp")}>▲</button>
+                    <button type="button" onClick={() => movePlan(plans, p.id, "down").then(onChanged)} disabled={idx === plans.length - 1} style={{ ...btnStyle(THEME.navyMid), fontSize: 10, padding: "3px 7px", opacity: idx === plans.length - 1 ? 0.3 : 1 }} title={t("saMoveDown")}>▼</button>
                   </td>
                   <td style={{ padding: "8px", fontWeight: 600 }}>{p.name}</td>
                   <td style={{ padding: "8px", textAlign: "center" }}>{p.priceMonthly.toLocaleString("fa-IR")}</td>
                   <td style={{ padding: "8px", textAlign: "center" }}>{p.priceYearly.toLocaleString("fa-IR")}</td>
                   <td style={{ padding: "8px", textAlign: "center" }}>{p.priceTotal ? p.priceTotal.toLocaleString("fa-IR") : "—"}</td>
-                  <td style={{ padding: "8px", textAlign: "center" }}>{p.maxUsers ?? "نامحدود"}</td>
-                  <td style={{ padding: "8px", textAlign: "center" }}>{p.maxPersonnel ?? "نامحدود"}</td>
-                  <td style={{ padding: "8px", textAlign: "center" }}>{p.maxStorageMb ?? "نامحدود"}</td>
+                  <td style={{ padding: "8px", textAlign: "center" }}>{p.maxUsers ?? t("saUnlimited")}</td>
+                  <td style={{ padding: "8px", textAlign: "center" }}>{p.maxPersonnel ?? t("saUnlimited")}</td>
+                  <td style={{ padding: "8px", textAlign: "center" }}>{p.maxStorageMb ?? t("saUnlimited")}</td>
                   <td style={{ padding: "8px", textAlign: "center" }}>
                     <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: p.isActive ? "#dcfce7" : "#eef1f5", color: p.isActive ? "#166534" : "#5b6b7d", fontWeight: 600 }}>
-                      {p.isActive ? "فعال" : "غیرفعال"}
+                      {p.isActive ? t("commonActive") : t("commonInactive")}
                     </span>
                   </td>
                   <td style={{ padding: "8px", textAlign: "left", whiteSpace: "nowrap" }}>
                     <button type="button" onClick={() => openEdit(p)} style={{ ...btnStyle(THEME.navyMid), fontSize: 11, marginInlineEnd: 6 }}>
-                      {expandedId === p.id ? "بستن" : "ویرایش"}
+                      {expandedId === p.id ? t("saClose") : t("saEdit")}
                     </button>
                     {p.isActive ? (
-                      <button type="button" onClick={() => { if (confirm(`پلن «${p.name}» غیرفعال شود؟ شرکت‌های فعلاً روی این پلن، تغییری نمی‌کنند؛ فقط دیگر برای تخصیص جدید قابل‌انتخاب نیست.`)) { deactivatePlan(p.id).then(onChanged); } }} style={{ ...btnStyle("#92400e"), fontSize: 11, marginInlineEnd: 6 }}>
-                        غیرفعال کردن
+                      <button type="button" onClick={() => { if (confirm(t("saDeactivateConfirm", { name: p.name }))) { deactivatePlan(p.id).then(onChanged); } }} style={{ ...btnStyle("#92400e"), fontSize: 11, marginInlineEnd: 6 }}>
+                        {t("saDeactivate")}
                       </button>
                     ) : (
                       <button type="button" onClick={() => { activatePlan(p.id).then(onChanged); }} style={{ ...btnStyle("#166534"), fontSize: 11, marginInlineEnd: 6 }}>
-                        فعال کردن پلن
+                        {t("saActivatePlan")}
                       </button>
                     )}
                     <button
                       type="button"
                       onClick={async () => {
-                        if (!confirm(`پلن «${p.name}» کاملاً حذف شود؟ این عمل قابل بازگشت نیست.`)) return;
+                        if (!confirm(t("saDeletePlanConfirm", { name: p.name }))) return;
                         const result = await deletePlan(p.id);
                         if (result?.__error) { alert(result.message); return; }
                         onChanged();
                       }}
                       style={{ ...btnStyle(THEME.danger), fontSize: 11 }}
                     >
-                      حذف
+                      {t("saDelete")}
                     </button>
                   </td>
                 </tr>
@@ -2152,14 +2181,14 @@ function PlansManager({ plans, companies, currentAdmin, onChanged }) {
                 {expandedId === p.id && (
                   <tr>
                     <td colSpan={10} style={{ padding: 0 }}>
-                      <PlanForm form={form} setForm={setForm} toggleModule={toggleModule} toggleSub={toggleSub} onSave={() => handleSaveEdit(p.id)} saving={saving} saveLabel="ذخیره‌ی تغییرات" />
+                      <PlanForm form={form} setForm={setForm} toggleModule={toggleModule} toggleSub={toggleSub} onSave={() => handleSaveEdit(p.id)} saving={saving} saveLabel={t("saSaveChanges")} />
                     </td>
                   </tr>
                 )}
               </React.Fragment>
             ))}
             {plans.length === 0 && (
-              <tr><td colSpan={10} style={{ padding: 20, textAlign: "center", color: THEME.text3 }}>هنوز پلنی ثبت نشده است</td></tr>
+              <tr><td colSpan={10} style={{ padding: 20, textAlign: "center", color: THEME.text3 }}>{t("saNoPlansYet")}</td></tr>
             )}
           </tbody>
         </table>
@@ -2169,14 +2198,15 @@ function PlansManager({ plans, companies, currentAdmin, onChanged }) {
 }
 
 function PlanCompanyUsage({ plan, companies }) {
+  const { t } = useLanguage();
   const usingCompanies = (companies || []).filter((c) => c.planId === plan.id);
   if (usingCompanies.length === 0) {
-    return <p style={{ fontSize: 11, color: THEME.text3, margin: 0 }}>هیچ شرکتی فعلاً این پلن را ندارد.</p>;
+    return <p style={{ fontSize: 11, color: THEME.text3, margin: 0 }}>{t("saPcuNone")}</p>;
   }
   return (
     <div style={{ background: THEME.bg, borderRadius: 8, padding: "8px 10px" }}>
       <p style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, margin: "0 0 6px" }}>
-        شرکت‌های دارای این پلن ({usingCompanies.length.toLocaleString("fa-IR")}) — بازه‌ی دقیق فعال‌بودن:
+        {t("saPcuHeader", { count: usingCompanies.length.toLocaleString("fa-IR") })}
       </p>
       {usingCompanies.map((c) => {
         const isTrial = c.subscriptionType === "trial";
@@ -2187,18 +2217,18 @@ function PlanCompanyUsage({ plan, companies }) {
           <div key={c.id} style={{ fontSize: 11, color: THEME.text2, padding: "4px 0", borderBottom: `1px solid ${THEME.border}`, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
             <span style={{ fontWeight: 700, color: THEME.navy }}>{c.name}</span>
             <span style={{ fontSize: 10, padding: "1px 8px", borderRadius: 999, background: isTrial ? "#ede9fe" : "#dbeafe", color: isTrial ? "#5b21b6" : "#1d4ed8", fontWeight: 600 }}>
-              {isTrial ? "Trial" : "اشتراک پولی"}
+              {isTrial ? t("saPcuTrial") : t("saPcuPaid")}
             </span>
             {isTrial && c.trialStart && c.trialEnd ? (
-              <span>از <b>{toJalaliDateTime(c.trialStart)}</b> تا <b>{toJalaliDateTime(c.trialEnd)}</b></span>
+              <span>{t("saFromTo", { start: toJalaliDateTime(c.trialStart), end: toJalaliDateTime(c.trialEnd) })}</span>
             ) : relevantEnd ? (
-              <span>تا <b>{toJalaliDateTime(relevantEnd)}</b></span>
+              <span>{t("saUntilDate", { end: toJalaliDateTime(relevantEnd) })}</span>
             ) : (
-              <span style={{ color: THEME.text3 }}>تاریخ پایان ثبت نشده</span>
+              <span style={{ color: THEME.text3 }}>{t("saPcuNoEndDate")}</span>
             )}
             {relevantEnd && (
               <span style={{ fontSize: 10, padding: "1px 8px", borderRadius: 999, background: isExpired ? "#fee2e2" : "#dcfce7", color: isExpired ? "#991b1b" : "#166534", fontWeight: 600 }}>
-                {isExpired ? "منقضی‌شده" : "فعال"}
+                {isExpired ? t("saExpiredStatus") : t("commonActive")}
               </span>
             )}
           </div>
@@ -2209,64 +2239,65 @@ function PlanCompanyUsage({ plan, companies }) {
 }
 
 function PlanForm({ form, setForm, toggleModule, toggleSub, onSave, saving, saveLabel }) {
+  const { t } = useLanguage();
   return (
     <div style={{ background: THEME.bg, padding: 14, borderRadius: 8, marginBottom: 14 }}>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8, marginBottom: 10 }}>
         <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>نام پلن</label>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saPlanName")}</label>
           <input style={inputStyle} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} dir="rtl" />
         </div>
         <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>قیمت ماهانه (تومان)</label>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saMonthlyPriceToman")}</label>
           <input type="number" style={inputStyle} value={form.priceMonthly} onChange={(e) => setForm({ ...form, priceMonthly: e.target.value })} dir="ltr" />
         </div>
         <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>قیمت سالانه (تومان)</label>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saYearlyPriceToman")}</label>
           <input type="number" style={inputStyle} value={form.priceYearly} onChange={(e) => setForm({ ...form, priceYearly: e.target.value })} dir="ltr" />
         </div>
         <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>قیمت کلی — خرید یک‌جا/دائمی (تومان)</label>
-          <input type="number" style={inputStyle} value={form.priceTotal} onChange={(e) => setForm({ ...form, priceTotal: e.target.value })} dir="ltr" placeholder="۰ = ندارد" />
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saPfPriceTotal")}</label>
+          <input type="number" style={inputStyle} value={form.priceTotal} onChange={(e) => setForm({ ...form, priceTotal: e.target.value })} dir="ltr" placeholder={t("saPfZeroNone")} />
         </div>
         <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>مدت دوره‌ی آزمایشی — روز (خالی = این پلن Trial ندارد)</label>
-          <input type="number" style={inputStyle} value={form.trialDays} onChange={(e) => setForm({ ...form, trialDays: e.target.value })} dir="ltr" placeholder="مثلاً ۷" />
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saPfTrialDays")}</label>
+          <input type="number" style={inputStyle} value={form.trialDays} onChange={(e) => setForm({ ...form, trialDays: e.target.value })} dir="ltr" placeholder={t("saPfEg7")} />
         </div>
         <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>سقف کاربر (خالی = نامحدود)</label>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saUserCapEmptyUnlimited")}</label>
           <input type="number" style={inputStyle} value={form.maxUsers} onChange={(e) => setForm({ ...form, maxUsers: e.target.value })} dir="ltr" />
         </div>
         <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>سقف پرسنل (خالی = نامحدود)</label>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saPersonnelCapEmptyUnlimited")}</label>
           <input type="number" style={inputStyle} value={form.maxPersonnel} onChange={(e) => setForm({ ...form, maxPersonnel: e.target.value })} dir="ltr" />
         </div>
         <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>سقف فضا — مگابایت (خالی = نامحدود)</label>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saStorageCapEmptyUnlimited")}</label>
           <input type="number" style={inputStyle} value={form.maxStorageMb} onChange={(e) => setForm({ ...form, maxStorageMb: e.target.value })} dir="ltr" />
         </div>
       </div>
-      <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>توضیحات پلن (در صفحه‌ی «حساب شرکت غیرفعال شده است» زیر همین پلن نمایش داده می‌شود)</label>
+      <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saPfDescription")}</label>
       <textarea
         style={{ ...inputStyle, minHeight: 60, resize: "vertical", marginBottom: 12 }}
         value={form.description}
         onChange={(e) => setForm({ ...form, description: e.target.value })}
         dir="rtl"
-        placeholder="مثلاً: مناسب پیمانکاران متوسط؛ شامل ماژول‌های ارزیابی ریسک و مدیریت پرسنل..."
+        placeholder={t("saPfDescPlaceholder")}
       />
-      <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 6 }}>ماژول‌ها و زیرماژول‌های فعال این پلن</label>
+      <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 6 }}>{t("saActiveModulesLabel")}</label>
       <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 12, background: THEME.surface, borderRadius: 8, padding: 10 }}>
         {PLAN_FEATURES.map((mod) => (
           <div key={mod.key} style={{ borderBottom: `1px solid ${THEME.border}`, paddingBottom: 6, marginBottom: 2 }}>
             <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: THEME.navy, fontWeight: 700, cursor: "pointer" }}>
               <input type="checkbox" checked={form.features.includes(mod.key)} onChange={() => toggleModule(mod)} />
-              {mod.label}
+              {mod.labelKey ? t(mod.labelKey) : mod.label}
             </label>
             {mod.sub && form.features.includes(mod.key) && (
               <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 6, paddingInlineStart: 22 }}>
                 {mod.sub.map((s) => (
                   <label key={s.key} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11.5, color: THEME.text2, cursor: "pointer" }}>
                     <input type="checkbox" checked={form.features.includes(s.key)} onChange={() => toggleSub(mod, s.key)} />
-                    {s.label}
+                    {s.labelKey ? t(s.labelKey) : s.label}
                   </label>
                 ))}
               </div>
@@ -2274,7 +2305,7 @@ function PlanForm({ form, setForm, toggleModule, toggleSub, onSave, saving, save
           </div>
         ))}
       </div>
-      <button type="button" onClick={onSave} disabled={saving} style={btnStyle()}>{saving ? "در حال ذخیره..." : saveLabel}</button>
+      <button type="button" onClick={onSave} disabled={saving} style={btnStyle()}>{saving ? t("saSavingEllipsis") : saveLabel}</button>
     </div>
   );
 }
@@ -2289,6 +2320,7 @@ function UsageChip({ label, value }) {
 }
 
 function SystemInsights({ companies }) {
+  const { t } = useLanguage();
   const [recentLogins, setRecentLogins] = useState([]);
   const [recentFailedLogins, setRecentFailedLogins] = useState([]);
   const [inactiveCompanies, setInactiveCompanies] = useState([]);
@@ -2340,23 +2372,23 @@ function SystemInsights({ companies }) {
     <>
       <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16, marginBottom: 16 }}>
         <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
-          <TrendingDown size={14} color={THEME.teal} /> تحلیل هوشمند
+          <TrendingDown size={14} color={THEME.teal} /> {t("saSmartAnalysis")}
         </h3>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
           <div>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#92400e", marginBottom: 6 }}>هشدار پایان اشتراک</p>
-            {subscriptionAlerts.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>موردی نیست.</p>}
+            <p style={{ fontSize: 12, fontWeight: 700, color: "#92400e", marginBottom: 6 }}>{t("saSubscriptionAlertTitle")}</p>
+            {subscriptionAlerts.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saNoneFound")}</p>}
             {subscriptionAlerts.map(({ company: c, tier }) => (
               <div key={c.id} style={{ fontSize: 12, padding: "5px 0", borderBottom: `1px solid ${THEME.border}`, display: "flex", justifyContent: "space-between" }}>
-                <span>{c.name} — انقضا: {toJalaliSafe(c.subscriptionEndDate)}</span>
-                <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: tier.bg, color: tier.color, fontWeight: 600 }}>{tier.label}</span>
+                <span>{c.name}{t("saExpiryLabel", { date: toJalaliSafe(c.subscriptionEndDate) })}</span>
+                <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: tier.bg, color: tier.color, fontWeight: 600 }}>{tier.labelKey ? t(tier.labelKey) : tier.label}</span>
               </div>
             ))}
           </div>
           <div>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#b91c1c", marginBottom: 6 }}>شرکت‌های کم‌فعالیت (۳۰ روز اخیر بدون ورود)</p>
-            {loading && <p style={{ fontSize: 11.5, color: THEME.text3 }}>در حال بررسی...</p>}
-            {!loading && inactiveCompanies.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>موردی نیست.</p>}
+            <p style={{ fontSize: 12, fontWeight: 700, color: "#b91c1c", marginBottom: 6 }}>{t("saLowActivityCompanies")}</p>
+            {loading && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saChecking")}</p>}
+            {!loading && inactiveCompanies.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saNoneFound")}</p>}
             {!loading && inactiveCompanies.map((c) => (
               <div key={c.id} style={{ fontSize: 12, padding: "5px 0", borderBottom: `1px solid ${THEME.border}` }}>{c.name}</div>
             ))}
@@ -2366,16 +2398,16 @@ function SystemInsights({ companies }) {
 
       <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16, marginBottom: 16 }}>
         <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
-          <CreditCard size={14} color={THEME.teal} /> هشدار پرداخت
+          <CreditCard size={14} color={THEME.teal} /> {t("saPaymentAlertTitle")}
         </h3>
-        {paymentsLoading && <p style={{ fontSize: 11.5, color: THEME.text3 }}>در حال بررسی...</p>}
-        {!paymentsLoading && paymentAlerts.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>هیچ شرکتی مانده‌حساب ندارد.</p>}
+        {paymentsLoading && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saChecking")}</p>}
+        {!paymentsLoading && paymentAlerts.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saNoOutstandingCompanies")}</p>}
         {!paymentsLoading && paymentAlerts.map(({ company: c, status, overdue }) => (
           <div key={c.id} style={{ fontSize: 12, padding: "6px 0", borderBottom: `1px solid ${THEME.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span>{c.name} — مانده: {status.remaining.toLocaleString("fa-IR")} تومان</span>
+            <span>{c.name}{t("saRemainingLabelToman", { amount: status.remaining.toLocaleString("fa-IR") })}</span>
             <span style={{ display: "flex", gap: 6 }}>
-              <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: status.bg, color: status.color, fontWeight: 600 }}>{status.label}</span>
-              {overdue && <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#fee2e2", color: "#b91c1c", fontWeight: 600 }}>معوق</span>}
+              <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: status.bg, color: status.color, fontWeight: 600 }}>{status.labelKey ? t(status.labelKey) : status.label}</span>
+              {overdue && <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#fee2e2", color: "#b91c1c", fontWeight: 600 }}>{t("saOverdue")}</span>}
             </span>
           </div>
         ))}
@@ -2383,32 +2415,32 @@ function SystemInsights({ companies }) {
 
       <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16, marginBottom: 16 }}>
         <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
-          <CreditCard size={14} color={THEME.teal} /> آلارم پرداخت ماهانهٔ مستمر
+          <CreditCard size={14} color={THEME.teal} /> {t("saMonthlyAlarmTitle")}
         </h3>
         <p style={{ fontSize: 11, color: THEME.text3, marginBottom: 10, lineHeight: 1.8 }}>
-          شرکت‌هایی که مبلغ مستمر ماهانه دارند ولی برای ماه جاری هنوز پرداختی ثبت نشده است.
+          {t("saMonthlyAlarmNote")}
         </p>
-        {paymentsLoading && <p style={{ fontSize: 11.5, color: THEME.text3 }}>در حال بررسی...</p>}
-        {!paymentsLoading && monthlyPaymentAlerts.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>همه‌ی شرکت‌ها برای این ماه به‌روز هستند.</p>}
+        {paymentsLoading && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saChecking")}</p>}
+        {!paymentsLoading && monthlyPaymentAlerts.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saAllUpToDate")}</p>}
         {!paymentsLoading && monthlyPaymentAlerts.map(({ company: c, alarm }) => (
           <div key={c.id} style={{ fontSize: 12, padding: "6px 0", borderBottom: `1px solid ${THEME.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span>{c.name}</span>
-            <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: alarm.bg, color: alarm.color, fontWeight: 600 }}>{alarm.label}</span>
+            <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: alarm.bg, color: alarm.color, fontWeight: 600 }}>{alarm.labelKey ? t(alarm.labelKey) : alarm.label}</span>
           </div>
         ))}
       </div>
 
       <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16, marginBottom: 16 }}>
         <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
-          <Activity size={14} color={THEME.teal} /> مانیتورینگ سیستم
+          <Activity size={14} color={THEME.teal} /> {t("saSystemMonitoring")}
         </h3>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
           <div>
             <p style={{ fontSize: 12, fontWeight: 700, color: THEME.text2, marginBottom: 6, display: "flex", alignItems: "center", gap: 5 }}>
-              <LogIn size={12} /> ورودهای اخیر
+              <LogIn size={12} /> {t("saRecentLogins")}
             </p>
-            {loading && <p style={{ fontSize: 11.5, color: THEME.text3 }}>در حال بارگذاری...</p>}
-            {!loading && recentLogins.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>ثبتی نیست.</p>}
+            {loading && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("commonLoading")}</p>}
+            {!loading && recentLogins.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saNoRecordsYet")}</p>}
             {recentLogins.map((r) => (
               <div key={r.id} style={{ fontSize: 11.5, padding: "5px 0", borderBottom: `1px solid ${THEME.border}` }}>
                 {r.full_name || r.username} — {companyName(r.company_id)} — {toJalaliSafe(r.created_at)}
@@ -2417,10 +2449,10 @@ function SystemInsights({ companies }) {
           </div>
           <div>
             <p style={{ fontSize: 12, fontWeight: 700, color: "#b91c1c", marginBottom: 6, display: "flex", alignItems: "center", gap: 5 }}>
-              <ShieldX size={12} /> تلاش‌های ناموفق ورود
+              <ShieldX size={12} /> {t("saRecentFailedLogins")}
             </p>
-            {loading && <p style={{ fontSize: 11.5, color: THEME.text3 }}>در حال بارگذاری...</p>}
-            {!loading && recentFailedLogins.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>ثبتی نیست.</p>}
+            {loading && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("commonLoading")}</p>}
+            {!loading && recentFailedLogins.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saNoRecordsYet")}</p>}
             {recentFailedLogins.map((r) => (
               <div key={r.id} style={{ fontSize: 11.5, padding: "5px 0", borderBottom: `1px solid ${THEME.border}` }}>
                 {r.username} — {companyName(r.company_id)} — {toJalaliSafe(r.created_at)}
@@ -2444,6 +2476,7 @@ function StatBox({ label, value, color }) {
 
 
 function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStats, onUpdate, onDelete, onSetActive, paymentsPromise, onAddPayment, onPlanChanged }) {
+  const { t } = useLanguage();
   const [status, setStatus] = useState(company.subscriptionStatus);
   const [quotaInput, setQuotaInput] = useState(company.storageQuotaMb);
   const [paymentsList, setPaymentsList] = useState([]);
@@ -2462,6 +2495,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
   const [copyingBowties, setCopyingBowties] = useState(false);
   const [copyingKnowledge, setCopyingKnowledge] = useState(false);
   const [copyResult, setCopyResult] = useState("");
+  const [copyErr, setCopyErr] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmInput, setDeleteConfirmInput] = useState("");
   const [deleting, setDeleting] = useState(false);
@@ -2512,8 +2546,9 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
     setCopyResult("");
     const result = await copyBowtiesToCompany(copySourceId, company.id);
     setCopyingBowties(false);
-    if (result?.__error) { setCopyResult("خطا: " + result.message); return; }
-    setCopyResult(`${result.count} مدل BowTie با موفقیت کپی شد.`);
+    if (result?.__error) { setCopyErr(true); setCopyResult(t("saErrorPrefix", { message: result.message })); return; }
+    setCopyErr(false);
+    setCopyResult(t("saCopyBowtieSuccess", { count: result.count }));
   };
 
   const handleCopyKnowledge = async () => {
@@ -2522,43 +2557,44 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
     setCopyResult("");
     const result = await copyRiskKnowledgeToCompany(copySourceId, company.id);
     setCopyingKnowledge(false);
-    if (result?.__error) { setCopyResult("خطا: " + result.message); return; }
-    setCopyResult(`${result.count} رکورد بانک دانش ریسک با موفقیت کپی شد.`);
+    if (result?.__error) { setCopyErr(true); setCopyResult(t("saErrorPrefix", { message: result.message })); return; }
+    setCopyErr(false);
+    setCopyResult(t("saCopyKnowledgeSuccess", { count: result.count }));
   };
 
   return (
     <div style={{ background: THEME.bg, padding: 16, borderTop: `2px solid ${THEME.teal}` }}>
       <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
-        <UsageChip label="پرسنل" value={usageStats?.personnelByCompany?.[company.id] || 0} />
-        <UsageChip label="آنومالی" value={usageStats?.anomalyByCompany?.[company.id] || 0} />
-        <UsageChip label="فایل/پیوست" value={usageStats?.attachmentByCompany?.[company.id] || 0} />
+        <UsageChip label={t("saPersonnelLabel")} value={usageStats?.personnelByCompany?.[company.id] || 0} />
+        <UsageChip label={t("saAnomalyLabel")} value={usageStats?.anomalyByCompany?.[company.id] || 0} />
+        <UsageChip label={t("saFileAttachmentLabel")} value={usageStats?.attachmentByCompany?.[company.id] || 0} />
       </div>
       <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
         {/* غیرفعال‌سازی: برای شرکتی که مثلاً پولشو نداده — کاملاً برگشت‌پذیر,
             هیچ داده‌ای پاک نمی‌شود، فقط ورود مسدود می‌شود */}
         {status !== "disabled" ? (
           <button type="button" style={btnStyle("#92400e")} onClick={() => { onSetActive(false); setStatus("disabled"); }}>
-            غیرفعال‌سازی شرکت
+            {t("saDeactivateCompany")}
           </button>
         ) : (
           <button type="button" style={btnStyle("#166534")} onClick={() => { onSetActive(true); setStatus("active"); }}>
-            فعال‌سازی مجدد شرکت
+            {t("saReactivateCompany")}
           </button>
         )}
         {/* حذف کامل: برای شرکتی که کلاً انصراف داده — برگشت‌ناپذیر، همه‌ی
             داده‌های وابسته (پرسنل، آنومالی، BowTie و...) هم پاک می‌شوند */}
         <button type="button" style={btnStyle(THEME.danger)} onClick={() => { setShowDeleteConfirm((v) => !v); setDeleteConfirmInput(""); }}>
-          حذف کامل شرکت
+          {t("saDeleteCompanyFull")}
         </button>
       </div>
 
       {showDeleteConfirm && (
         <div style={{ background: "#fee2e2", border: "1px solid #fca5a5", borderRadius: 8, padding: 12, marginBottom: 16 }}>
           <p style={{ fontSize: 12, color: "#991b1b", fontWeight: 600, marginBottom: 6 }}>
-            این عمل برگشت‌ناپذیر است — همه‌ی پرسنل، آنومالی، مدل‌های BowTie، ماشین‌آلات، داربست، حساب‌ها و سوابق پرداخت این شرکت برای همیشه پاک می‌شوند.
+            {t("saDeleteWarning")}
           </p>
           <p style={{ fontSize: 11.5, color: "#7f1d1d", marginBottom: 8 }}>
-            برای تأیید، نام دقیق شرکت را تایپ کنید: <b>{company.name}</b>
+            {t("saTypeToConfirm")} <b>{company.name}</b>
           </p>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <input style={{ ...inputStyle, width: 220 }} value={deleteConfirmInput} onChange={(e) => setDeleteConfirmInput(e.target.value)} dir="rtl" />
@@ -2567,7 +2603,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
               disabled={deleteConfirmInput !== company.name || deleting}
               onClick={async () => { setDeleting(true); await onDelete(deleteConfirmInput); setDeleting(false); setShowDeleteConfirm(false); }}
             >
-              {deleting ? "در حال حذف..." : "حذف قطعی"}
+              {deleting ? t("saDeletingEllipsis") : t("saFinalDelete")}
             </button>
           </div>
         </div>
@@ -2575,110 +2611,110 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
 
       <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 12, marginBottom: 16 }}>
         <h4 style={{ fontSize: 12.5, color: THEME.navy, fontWeight: 700, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 6 }}>
-          <Layers size={13} /> پلن و اشتراک شرکت
+          <Layers size={13} /> {t("saCompanyPlanSub")}
         </h4>
         <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 8 }}>
-          پلن فعلی: <b style={{ color: THEME.navy }}>{currentPlan ? currentPlan.name : "بدون پلن تخصیص‌یافته"}</b>
+          {t("saCurrentPlanLabel")} <b style={{ color: THEME.navy }}>{currentPlan ? currentPlan.name : t("saNoPlanAssigned")}</b>
           <span style={{
             marginInlineStart: 8, fontSize: 10.5, padding: "2px 9px", borderRadius: 999, fontWeight: 600,
             background: liveAccess.isLocked ? "#fee2e2" : "#dcfce7", color: liveAccess.isLocked ? "#991b1b" : "#166534",
           }}>
-            وضعیت: {liveAccess.label}
+            {t("saStatusLabel", { label: liveAccess.labelKey ? t(liveAccess.labelKey) : liveAccess.label })}
           </span>
         </p>
         {(liveAccess.trialStart || liveAccess.subscriptionStartDate) && (
           <p style={{ fontSize: 12, color: THEME.navy, fontWeight: 600, marginBottom: 8, background: THEME.bg, borderRadius: 8, padding: "8px 12px" }}>
             {liveAccess.trialStart ? (
-              <>شروع دوره‌ی آزمایشی: <b>{toJalaliDateTime(liveAccess.trialStart)}</b> — پایان: <b>{liveAccess.trialEnd ? toJalaliDateTime(liveAccess.trialEnd) : "—"}</b></>
+              <>{t("saTrialStartLabel")}<b>{toJalaliDateTime(liveAccess.trialStart)}</b>{t("saEndLabelSep")}<b>{liveAccess.trialEnd ? toJalaliDateTime(liveAccess.trialEnd) : "—"}</b></>
             ) : (
-              <>شروع اشتراک: <b>{liveAccess.subscriptionStartDate ? toJalaliDateTime(liveAccess.subscriptionStartDate) : "ثبت‌نشده"}</b> — پایان: <b>{liveAccess.subscriptionEndDate ? toJalaliDateTime(liveAccess.subscriptionEndDate) : "—"}</b></>
+              <>{t("saSubStartLabel")}<b>{liveAccess.subscriptionStartDate ? toJalaliDateTime(liveAccess.subscriptionStartDate) : t("saNotRecorded")}</b>{t("saEndLabelSep")}<b>{liveAccess.subscriptionEndDate ? toJalaliDateTime(liveAccess.subscriptionEndDate) : "—"}</b></>
             )}
           </p>
         )}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8, marginBottom: 8 }}>
           <select style={inputStyle} value={selectedPlanId} onChange={(e) => setSelectedPlanId(e.target.value)} dir="rtl">
-            <option value="">— انتخاب پلن —</option>
+            <option value="">{t("saSelectPlanPlaceholder")}</option>
             {plans.filter((p) => p.isActive).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
           <select style={inputStyle} value={assignType} onChange={(e) => setAssignType(e.target.value)} dir="rtl">
-            {SUBSCRIPTION_TYPES.filter((t) => {
+            {SUBSCRIPTION_TYPES.filter((st) => {
               if (!selectedPlanForAssign) return true; // پلنی هنوز انتخاب نشده — همه‌ی گزینه‌ها را نشان بده
-              if (t.value === "monthly") return selectedPlanForAssign.priceMonthly > 0;
-              if (t.value === "yearly") return selectedPlanForAssign.priceYearly > 0;
-              if (t.value === "monthly_and_yearly") return selectedPlanForAssign.priceMonthly > 0 && selectedPlanForAssign.priceYearly > 0;
+              if (st.value === "monthly") return selectedPlanForAssign.priceMonthly > 0;
+              if (st.value === "yearly") return selectedPlanForAssign.priceYearly > 0;
+              if (st.value === "monthly_and_yearly") return selectedPlanForAssign.priceMonthly > 0 && selectedPlanForAssign.priceYearly > 0;
               return true; // روزانه/آزمایشی/دائمی همیشه در دسترس‌اند
-            }).map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+            }).map((st) => <option key={st.value} value={st.value}>{t(st.labelKey)}</option>)}
           </select>
           {assignType === "daily" && (
-            <input type="number" style={inputStyle} placeholder="تعداد روز" value={assignDays} onChange={(e) => setAssignDays(e.target.value)} dir="ltr" />
+            <input type="number" style={inputStyle} placeholder={t("saDayCountPlaceholder")} value={assignDays} onChange={(e) => setAssignDays(e.target.value)} dir="ltr" />
           )}
-          <input type="number" style={inputStyle} placeholder="تخفیف (تومان، اختیاری)" value={discountInput} onChange={(e) => setDiscountInput(e.target.value)} dir="ltr" />
-          <input style={inputStyle} placeholder="یادداشت (اختیاری)" value={planNote} onChange={(e) => setPlanNote(e.target.value)} dir="rtl" />
+          <input type="number" style={inputStyle} placeholder={t("saDiscountTomanOptional")} value={discountInput} onChange={(e) => setDiscountInput(e.target.value)} dir="ltr" />
+          <input style={inputStyle} placeholder={t("saNoteOptional")} value={planNote} onChange={(e) => setPlanNote(e.target.value)} dir="rtl" />
         </div>
 
         {selectedPlanForAssign && (
           <div style={{ background: THEME.bg, borderRadius: 8, padding: "8px 12px", marginBottom: 8, fontSize: 11.5, color: THEME.text2, lineHeight: 1.9 }}>
-            <div>قیمت ماهانه‌ی این پلن: <b>{(selectedPlanForAssign.priceMonthly || 0).toLocaleString("fa-IR")}</b> تومان — قیمت سالانه: <b>{(selectedPlanForAssign.priceYearly || 0).toLocaleString("fa-IR")}</b> تومان</div>
+            <div>{t("saPlanMonthlyYearlyPrice", { monthly: (selectedPlanForAssign.priceMonthly || 0).toLocaleString("fa-IR"), yearly: (selectedPlanForAssign.priceYearly || 0).toLocaleString("fa-IR") })}</div>
             {(assignType === "monthly" || assignType === "yearly" || assignType === "daily" || assignType === "monthly_and_yearly") && (
               <div>
-                پیش‌نمایش بر اساس انتخاب فعلی:
-                {previewContractAmount > 0 && <> مبلغ یک‌بارهٔ ابتدای قرارداد: <b>{previewContractAmount.toLocaleString("fa-IR")}</b> تومان</>}
-                {previewContractAmount > 0 && Number(discountInput) > 0 && <> (با تخفیف: <b>{previewFinalAmount.toLocaleString("fa-IR")}</b> تومان)</>}
-                {previewMonthlyRecurring > 0 && <><br />مبلغ مستمر هرماه (جدا از بالا): <b>{previewMonthlyRecurring.toLocaleString("fa-IR")}</b> تومان</>}
+                {t("saPreviewBasedOnSelection")}
+                {previewContractAmount > 0 && t("saOneTimeContractAmount", { amount: previewContractAmount.toLocaleString("fa-IR") })}
+                {previewContractAmount > 0 && Number(discountInput) > 0 && t("saWithDiscount", { amount: previewFinalAmount.toLocaleString("fa-IR") })}
+                {previewMonthlyRecurring > 0 && <><br />{t("saMonthlyRecurringAmount", { amount: previewMonthlyRecurring.toLocaleString("fa-IR") })}</>}
               </div>
             )}
           </div>
         )}
 
         <div style={{ marginBottom: 10 }}>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>سقف فضا (مگابایت)</label>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saStorageCapMb")}</label>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <input type="number" style={{ ...inputStyle, maxWidth: 160 }} value={quotaInput} onChange={(e) => setQuotaInput(e.target.value)} dir="ltr" />
-            <button type="button" style={btnStyle(THEME.navyMid)} onClick={() => onUpdate({ storageQuotaMb: Number(quotaInput) })}>ذخیره‌ی سقف فضا</button>
+            <button type="button" style={btnStyle(THEME.navyMid)} onClick={() => onUpdate({ storageQuotaMb: Number(quotaInput) })}>{t("saSaveStorageCap")}</button>
           </div>
         </div>
 
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
           <button type="button" style={btnStyle()} onClick={handleAssignPlan} disabled={planSaving || !selectedPlanId}>
-            {planSaving ? "در حال ثبت..." : "ثبت پلن و قرارداد"}
+            {planSaving ? t("saSubmittingEllipsis") : t("saSubmitPlanAndContract")}
           </button>
           <button type="button" onClick={toggleHistory} style={{ ...btnStyle(THEME.navyMid), display: "flex", alignItems: "center", gap: 6 }}>
-            <History size={13} /> {showHistory ? "بستن تاریخچه" : "تاریخچه‌ی اشتراک"}
+            <History size={13} /> {showHistory ? t("saHideHistory") : t("saSubscriptionHistory")}
           </button>
         </div>
 
         {/* وضعیت مالی فعلی — ذخیره‌شده در دیتابیس، نه فقط پیش‌نمایش لحظه‌ای */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, marginTop: 12, background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 8, padding: 12 }}>
-          <MiniStat label="مبلغ یک‌بارهٔ قرارداد" value={`${company.contractAmount.toLocaleString("fa-IR")} ت`} />
-          <MiniStat label="تخفیف" value={`${company.discountAmount.toLocaleString("fa-IR")} ت`} />
-          <MiniStat label="مبلغ نهایی یک‌باره" value={`${company.finalAmount.toLocaleString("fa-IR")} ت`} />
-          {company.monthlyRecurringAmount > 0 && <MiniStat label="مبلغ مستمر هرماه" value={`${company.monthlyRecurringAmount.toLocaleString("fa-IR")} ت`} color="#1d4ed8" />}
-          <MiniStat label="مجموع پرداختی" value={`${paymentStatus.totalPaid.toLocaleString("fa-IR")} ت`} color="#166534" />
-          <MiniStat label="مانده بدهی" value={`${paymentStatus.remaining.toLocaleString("fa-IR")} ت`} color={paymentStatus.remaining > 0 ? "#b91c1c" : "#166534"} />
+          <MiniStat label={t("saOneTimeContract")} value={t("saTShort", { amount: company.contractAmount.toLocaleString("fa-IR") })} />
+          <MiniStat label={t("saDiscount")} value={t("saTShort", { amount: company.discountAmount.toLocaleString("fa-IR") })} />
+          <MiniStat label={t("saFinalOneTimeAmount")} value={t("saTShort", { amount: company.finalAmount.toLocaleString("fa-IR") })} />
+          {company.monthlyRecurringAmount > 0 && <MiniStat label={t("saMonthlyRecurring")} value={t("saTShort", { amount: company.monthlyRecurringAmount.toLocaleString("fa-IR") })} color="#1d4ed8" />}
+          <MiniStat label={t("saTotalPaid")} value={t("saTShort", { amount: paymentStatus.totalPaid.toLocaleString("fa-IR") })} color="#166534" />
+          <MiniStat label={t("saRemainingBalance")} value={t("saTShort", { amount: paymentStatus.remaining.toLocaleString("fa-IR") })} color={paymentStatus.remaining > 0 ? "#b91c1c" : "#166534"} />
         </div>
         <div style={{ display: "flex", gap: 8, marginTop: 8, alignItems: "center", flexWrap: "wrap" }}>
           <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 999, background: paymentStatus.bg, color: paymentStatus.color, fontWeight: 600 }}>
-            وضعیت پرداخت: {paymentStatus.label}
+            {t("saPaymentStatusLabel", { label: paymentStatus.labelKey ? t(paymentStatus.labelKey) : paymentStatus.label })}
           </span>
           {overdue && (
             <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 999, background: "#fee2e2", color: "#b91c1c", fontWeight: 600 }}>
-              معوق
+              {t("saOverdue")}
             </span>
           )}
           {monthlyAlarm && (
             <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 999, background: monthlyAlarm.bg, color: monthlyAlarm.color, fontWeight: 600 }}>
-              {monthlyAlarm.label}
+              {monthlyAlarm.labelKey ? t(monthlyAlarm.labelKey) : monthlyAlarm.label}
             </span>
           )}
         </div>
 
         {showHistory && (
           <div style={{ marginTop: 10, background: THEME.surface, borderRadius: 8, padding: 10 }}>
-            {history.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3, margin: 0 }}>هنوز تغییری در اشتراک این شرکت ثبت نشده است.</p>}
+            {history.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3, margin: 0 }}>{t("saNoHistoryYet")}</p>}
             {history.map((h) => (
               <div key={h.id} style={{ fontSize: 11, color: THEME.text2, padding: "5px 0", borderBottom: `1px solid ${THEME.border}` }}>
-                {toJalaliSafe(h.changed_at)} — <b>{h.action}</b> {h.note && `— ${h.note}`} {h.changed_by && <span style={{ color: THEME.text3 }}>(توسط {h.changed_by})</span>}
-                {h.final_amount != null && <span style={{ color: THEME.text3 }}> — مبلغ نهایی: {Number(h.final_amount).toLocaleString("fa-IR")} ت</span>}
+                {toJalaliSafe(h.changed_at)} — <b>{h.action}</b> {h.note && `— ${h.note}`} {h.changed_by && <span style={{ color: THEME.text3 }}>{t("saByUser", { name: h.changed_by })}</span>}
+                {h.final_amount != null && <span style={{ color: THEME.text3 }}>{t("saFinalAmountLabel", { amount: Number(h.final_amount).toLocaleString("fa-IR") })}</span>}
               </div>
             ))}
           </div>
@@ -2687,25 +2723,24 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
 
       <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 12, marginBottom: 16 }}>
         <h4 style={{ fontSize: 12.5, color: THEME.navy, fontWeight: 700, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 6 }}>
-          <Copy size={13} /> کپی محتوای آماده به این شرکت
+          <Copy size={13} /> {t("saCopyReadyContent")}
         </h4>
         <p style={{ fontSize: 11, color: THEME.text3, marginBottom: 8, lineHeight: 1.8 }}>
-          یک شرکت دیگر را به‌عنوان مبدأ انتخاب کن — مدل‌های BowTie یا بانک دانش ریسک آن، به‌صورت یک نسخه‌ی کاملاً مستقل برای «{company.name}» کپی می‌شود.
-          ویرایش نسخه‌ی جدید هیچ اثری روی نسخه‌ی مبدأ ندارد.
+          {t("saCopyContentNote", { name: company.name })}
         </p>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
           <select style={{ ...inputStyle, minWidth: 180 }} value={copySourceId} onChange={(e) => setCopySourceId(e.target.value)} dir="rtl">
-            <option value="">— شرکت مبدأ را انتخاب کن —</option>
+            <option value="">{t("saSelectSourceCompany")}</option>
             {companies.filter((c) => c.id !== company.id).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
           <button type="button" onClick={handleCopyBowties} disabled={!copySourceId || copyingBowties} style={btnStyle(THEME.navyMid)}>
-            {copyingBowties ? "در حال کپی..." : "کپی مدل‌های BowTie"}
+            {copyingBowties ? t("saCopyingEllipsis") : t("saCopyBowtieModels")}
           </button>
           <button type="button" onClick={handleCopyKnowledge} disabled={!copySourceId || copyingKnowledge} style={btnStyle(THEME.navyMid)}>
-            {copyingKnowledge ? "در حال کپی..." : "کپی بانک دانش ریسک"}
+            {copyingKnowledge ? t("saCopyingEllipsis") : t("saCopyKnowledgeBank")}
           </button>
         </div>
-        {copyResult && <p style={{ fontSize: 11.5, color: copyResult.startsWith("خطا") ? THEME.danger : "#166534", marginTop: 8 }}>{copyResult}</p>}
+        {copyResult && <p style={{ fontSize: 11.5, color: copyErr ? THEME.danger : "#166534", marginTop: 8 }}>{copyResult}</p>}
       </div>
 
       {/* شاخص‌های Proactive HSE دیگر اینجا کنترل نمی‌شوند — طبق خواسته‌ی
@@ -2714,18 +2749,18 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
 
       <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 12, marginBottom: 16 }}>
         <h4 style={{ fontSize: 12.5, color: THEME.navy, fontWeight: 700, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 6 }}>
-          <UserPlus size={13} /> حساب‌های کاربری این شرکت
+          <UserPlus size={13} /> {t("saCompanyAccountsTitle")}
         </h4>
         <p style={{ fontSize: 10.5, color: THEME.text3, marginBottom: 8 }}>
-          ساخت حساب جدید فقط از منوی «حساب‌ها» انجام می‌شود — این‌جا صرفاً نمایش است.
+          {t("saAccountsNote")}
         </p>
-        {accounts.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>هنوز هیچ حساب کاربری برای این شرکت ساخته نشده — بدون حساب، هیچ‌کس نمی‌تواند وارد سایت اصلی شود.</p>}
+        {accounts.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saNoAccountsYet")}</p>}
         {accounts.map((a) => (
           <div key={`${a.type}-${a.id}`} style={{ fontSize: 11.5, color: THEME.text2, padding: "4px 0", borderBottom: `1px solid ${THEME.border}`, display: "flex", gap: 8 }}>
             <span style={{ fontWeight: 600 }}>{a.name}</span>
             <span style={{ direction: "ltr" }}>({a.username})</span>
             <span style={{ marginInlineStart: "auto", fontSize: 10, padding: "2px 8px", borderRadius: 999, background: a.type === "contractor" ? "#e0e7ff" : "#dcfce7", color: a.type === "contractor" ? "#3730a3" : "#166534" }}>
-              {a.type === "contractor" ? "پیمانکار" : a.role === "admin" ? "ادمین" : a.role === "hse_supervisor" ? "سرپرست/مدیر HSE" : "کارفرما"}
+              {a.type === "contractor" ? t("saRoleContractor") : a.role === "admin" ? t("saRoleAdmin") : a.role === "hse_supervisor" ? t("saRoleHseSupervisorFull") : t("saRoleEmployer")}
             </span>
           </div>
         ))}
@@ -2733,52 +2768,52 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
 
       <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 12 }}>
         <h4 style={{ fontSize: 12.5, color: THEME.navy, fontWeight: 700, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 6 }}>
-          <CreditCard size={13} /> تاریخچه‌ی پرداخت
+          <CreditCard size={13} /> {t("saPaymentHistoryTitle")}
         </h4>
-        {paymentsList.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>پرداختی ثبت نشده است.</p>}
+        {paymentsList.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saNoPaymentsYet")}</p>}
         {paymentsList.map((p) => (
           <div key={p.id} style={{ fontSize: 11.5, color: THEME.text2, padding: "5px 0", borderBottom: `1px solid ${THEME.border}` }}>
-            {toJalaliSafe(p.payment_date)} — <b>{p.amount?.toLocaleString("fa-IR")}</b> تومان
-            {" "}({PAYMENT_TYPES.find((t) => t.value === p.payment_type)?.label || p.payment_type})
-            {p.tracking_number && <span style={{ color: THEME.text3 }}> — پیگیری: {p.tracking_number}</span>}
+            {toJalaliSafe(p.payment_date)} — <b>{p.amount?.toLocaleString("fa-IR")}</b> {t("saTomanUnit")}
+            {" "}({(() => { const pt = PAYMENT_TYPES.find((x) => x.value === p.payment_type); return pt ? t(pt.labelKey) : p.payment_type; })()})
+            {p.tracking_number && <span style={{ color: THEME.text3 }}>{t("saTracking", { num: p.tracking_number })}</span>}
             {p.note && <span style={{ color: THEME.text3 }}> — {p.note}</span>}
           </div>
         ))}
 
         {onlinePayments.length > 0 && (
           <div style={{ marginTop: 14, paddingTop: 10, borderTop: `1px dashed ${THEME.border}` }}>
-            <h5 style={{ fontSize: 11.5, color: THEME.navy, fontWeight: 700, margin: "0 0 6px" }}>پرداخت‌های آنلاین (زرین‌پال)</h5>
+            <h5 style={{ fontSize: 11.5, color: THEME.navy, fontWeight: 700, margin: "0 0 6px" }}>{t("saOnlinePaymentsZarinpal")}</h5>
             {onlinePayments.map((p) => {
-              const st = p.status === "paid" ? { label: "موفق", bg: "#dcfce7", color: "#166534" }
-                : p.status === "failed" ? { label: "ناموفق", bg: "#fee2e2", color: "#991b1b" }
-                : p.status === "cancelled" ? { label: "لغوشده", bg: "#eef1f5", color: THEME.text3 }
-                : { label: "در انتظار", bg: "#fef3c7", color: "#92400e" };
+              const st = p.status === "paid" ? { labelKey: "saPaySuccess", bg: "#dcfce7", color: "#166534" }
+                : p.status === "failed" ? { labelKey: "saPayFailed", bg: "#fee2e2", color: "#991b1b" }
+                : p.status === "cancelled" ? { labelKey: "saPayCancelled", bg: "#eef1f5", color: THEME.text3 }
+                : { labelKey: "saPayPending", bg: "#fef3c7", color: "#92400e" };
               return (
                 <div key={p.id} style={{ fontSize: 11.5, color: THEME.text2, padding: "5px 0", borderBottom: `1px solid ${THEME.border}`, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                   <span>{toJalaliSafe(p.createdAt)}</span>
-                  <b>{p.amount.toLocaleString("fa-IR")} تومان</b>
-                  <span>({p.billingCycle === "monthly" ? "ماهانه" : "سالانه"})</span>
-                  <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: st.bg, color: st.color, fontWeight: 600 }}>{st.label}</span>
-                  {p.refId && <span style={{ color: THEME.text3 }}>— کد رهگیری: {p.refId}</span>}
+                  <b>{t("saTomanAmount", { amount: p.amount.toLocaleString("fa-IR") })}</b>
+                  <span>({p.billingCycle === "monthly" ? t("saBillingMonthly") : t("saBillingYearly")})</span>
+                  <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: st.bg, color: st.color, fontWeight: 600 }}>{t(st.labelKey)}</span>
+                  {p.refId && <span style={{ color: THEME.text3 }}>{t("saTrackingCode", { ref: p.refId })}</span>}
                 </div>
               );
             })}
           </div>
         )}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 8, marginTop: 10 }}>
-          <input type="number" style={inputStyle} placeholder="مبلغ (تومان)" value={payAmount} onChange={(e) => setPayAmount(e.target.value)} dir="ltr" />
+          <input type="number" style={inputStyle} placeholder={t("saAmountToman")} value={payAmount} onChange={(e) => setPayAmount(e.target.value)} dir="ltr" />
           <select style={inputStyle} value={payType} onChange={(e) => setPayType(e.target.value)} dir="rtl">
-            {PAYMENT_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+            {PAYMENT_TYPES.map((pt) => <option key={pt.value} value={pt.value}>{t(pt.labelKey)}</option>)}
           </select>
-          <input style={inputStyle} placeholder="شماره پیگیری (اختیاری)" value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} dir="ltr" />
-          <input style={inputStyle} placeholder="توضیحات (اختیاری)" value={payNote} onChange={(e) => setPayNote(e.target.value)} dir="rtl" />
+          <input style={inputStyle} placeholder={t("saTrackingNumberOptional")} value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} dir="ltr" />
+          <input style={inputStyle} placeholder={t("saDescOptional")} value={payNote} onChange={(e) => setPayNote(e.target.value)} dir="rtl" />
         </div>
         <button
           type="button" style={{ ...btnStyle(), marginTop: 8 }}
           onClick={() => { onAddPayment(payAmount, payType, trackingNumber, payNote); setPayAmount(""); setTrackingNumber(""); setPayNote(""); }}
           disabled={!payAmount}
         >
-          ثبت پرداخت
+          {t("saRecordPayment")}
         </button>
       </div>
     </div>
