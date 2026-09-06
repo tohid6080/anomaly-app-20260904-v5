@@ -38,6 +38,10 @@ import ArchiveManager from "./offline/ArchiveManager.jsx";
 import CorrectiveActionsDashboard from "./correctiveActions/CorrectiveActionsDashboard.jsx";
 import EffectivenessThresholdsManager from "./bowtie/EffectivenessThresholdsManager.jsx";
 import { LanguageProvider, useLanguage } from "./i18n/LanguageContext.jsx";
+import { translate, getCurrentLang } from "./i18n/translations.js";
+
+// برای کدِ سطحِ ماژول (خارج از کامپوننت) که به Hook دسترسی ندارد
+const tr = (key, params) => translate(getCurrentLang(), key, params);
 import {
   isBiometricAvailable, isBiometricEnabledFor, getBiometricEnabledUsername,
   enableBiometricLogin, disableBiometricLogin,
@@ -86,13 +90,19 @@ const SEED_USERS = [
 ];
 
 const RISK_LEVELS = [
-  { value: "High", label: "بالا (High)", color: "#c92a2a", bg: "#fee2e2" },
-  { value: "Med", label: "متوسط (Med)", color: "#d97706", bg: "#fef3c7" },
-  { value: "Low", label: "پایین (Low)", color: "#16a34a", bg: "#dcfce7" },
+  { value: "High", labelKey: "riskLevelHigh", color: "#c92a2a", bg: "#fee2e2" },
+  { value: "Med", labelKey: "riskLevelMed", color: "#d97706", bg: "#fef3c7" },
+  { value: "Low", labelKey: "riskLevelLow", color: "#16a34a", bg: "#dcfce7" },
 ];
 
 const ANOMALY_FORMATS = [
-  "بازرسی", "مدیریت تغییر", "عوامل زیان‌آور محیط کار", "ممیزی", "معاینات ادواری", "گزارش روزانه", "سایر",
+  { value: "بازرسی", labelKey: "anomFormatInspection" },
+  { value: "مدیریت تغییر", labelKey: "anomFormatMoc" },
+  { value: "عوامل زیان‌آور محیط کار", labelKey: "anomFormatOccHazards" },
+  { value: "ممیزی", labelKey: "anomFormatAudit" },
+  { value: "معاینات ادواری", labelKey: "anomFormatPeriodicExam" },
+  { value: "گزارش روزانه", labelKey: "anomFormatDailyReport" },
+  { value: "سایر", labelKey: "anomFormatOther" },
 ];
 
 
@@ -472,21 +482,21 @@ function computeSmartNotifications(personnelList, anomaliesList, scopeContractor
     if (openAnomalies > 0) {
       items.push({
         key: `smart-${name}-anomaly`,
-        label: scopeContractorName ? `${openAnomalies} آنومالی باز دارید` : `شرکت ${display}: ${openAnomalies} آنومالی باز دارد`,
+        label: scopeContractorName ? tr("smartAnomOpenSelf", { count: openAnomalies }) : tr("smartAnomOpenCompany", { name: display, count: openAnomalies }),
         target: { module: "anomaly", statusFilter: "not_closed", contractorFilter: display },
       });
     }
     if (needVisit > 0) {
       items.push({
         key: `smart-${name}-visit`,
-        label: scopeContractorName ? `${needVisit} نفر نیاز به مراجعه به طب کار دارند` : `شرکت ${display}: ${needVisit} نفر نیاز به مراجعه به طب کار دارند`,
+        label: scopeContractorName ? tr("smartVisitSelf", { count: needVisit }) : tr("smartVisitCompany", { name: display, count: needVisit }),
         target: { module: "personnel", statusFilter: "pending_health_visit", contractorFilter: contractorId || "all" },
       });
     }
     if (needResult > 0) {
       items.push({
         key: `smart-${name}-result`,
-        label: scopeContractorName ? `${needResult} نفر نتیجه/مدارک طب کار را هنوز بارگذاری نکرده‌اند` : `شرکت ${display}: ${needResult} نفر نتیجه طب کار را هنوز بارگذاری نکرده‌اند`,
+        label: scopeContractorName ? tr("smartResultSelf", { count: needResult }) : tr("smartResultCompany", { name: display, count: needResult }),
         target: { module: "personnel", statusFilter: "pending_health_result", contractorFilter: contractorId || "all" },
       });
     }
@@ -532,14 +542,14 @@ function computeMachinerySmartItems(machineryList, scopeContractorName, warningD
       if (expiring > 0) {
         items.push({
           key: `machine-${name}-expiring`,
-          label: `${expiring} ماشین با بیمه/معاینه فنی منقضی یا نزدیک به انقضا`,
+          label: tr("smartMachExpiringSelf", { count: expiring }),
           target: { module: "machinery", approvalFilter: "all" },
         });
       }
       if (needsAttention > 0) {
         items.push({
           key: `machine-${name}-attention`,
-          label: `${needsAttention} ماشین رد شده یا نیاز به اصلاح دارد`,
+          label: tr("smartMachAttentionSelf", { count: needsAttention }),
           target: { module: "machinery", approvalFilter: "needs_correction" },
         });
       }
@@ -547,14 +557,14 @@ function computeMachinerySmartItems(machineryList, scopeContractorName, warningD
       if (pendingReview > 0) {
         items.push({
           key: `machine-${name}-pending`,
-          label: `شرکت ${display}: ${pendingReview} درخواست ثبت ماشین‌آلات در انتظار بررسی`,
+          label: tr("smartMachPendingCompany", { name: display, count: pendingReview }),
           target: { module: "machinery", approvalFilter: "pending", contractorFilter: contractorId || "all" },
         });
       }
       if (expiring > 0) {
         items.push({
           key: `machine-${name}-expiring`,
-          label: `شرکت ${display}: ${expiring} ماشین با بیمه/معاینه فنی منقضی یا نزدیک به انقضا`,
+          label: tr("smartMachExpiringCompany", { name: display, count: expiring }),
           target: { module: "machinery", approvalFilter: "all", contractorFilter: contractorId || "all" },
         });
       }
@@ -804,9 +814,9 @@ function JalaliDateInput({ value, onChange }) {
 
 // ---------- خروجی گزارش (Excel / PDF) ----------
 function statusLabelFa(status) {
-  if (status === "Closed") return "بسته";
-  if (status === "pending_review") return "در انتظار تأیید";
-  return "باز";
+  if (status === "Closed") return tr("anomStatusClosed");
+  if (status === "pending_review") return tr("anomStatusPendingReview");
+  return tr("anomStatusOpen");
 }
 
 function anomalyExportRows(list) {
@@ -995,7 +1005,7 @@ async function attemptCredentialLogin(username, password) {
   const seedMatch = SEED_USERS.find((u) => u.username === username.trim() && u.password === password);
   if (seedMatch) {
     console.warn("ورود از طریق حساب موقت SEED_USERS — لطفاً SQL مهاجرت فاز ۲ را اجرا کنید.");
-    const seedUser = { ...seedMatch, canEdit: true, name: seedMatch.role === "EMPLOYER" ? "کارفرما (حساب اصلی)" : seedMatch.username };
+    const seedUser = { ...seedMatch, canEdit: true, name: seedMatch.role === "EMPLOYER" ? tr("panelEmployer") : seedMatch.username };
     return { user: seedUser };
   }
 
@@ -1352,6 +1362,7 @@ function BiometricGateScreen({ currentUser, onUnlocked, onFallbackToPassword }) 
 // راه خروج نمایش داده می‌شود. توکن نشست پیش از رندر این صفحه پاک می‌شود،
 // پس هیچ درخواست داده‌ای دیگری با اعتبار قبلی انجام نمی‌شود.
 function AccountDeactivatedScreen({ onExit }) {
+  const { t } = useLanguage();
   return (
     <div style={{ ...styles.centerScreen, direction: "rtl" }}>
       <div style={{ ...styles.card, width: 360, textAlign: "center" }}>
@@ -1360,11 +1371,11 @@ function AccountDeactivatedScreen({ onExit }) {
             <ShieldOff size={30} color={THEME.danger} />
           </div>
         </div>
-        <h3 style={{ margin: "0 0 8px", color: THEME.navy, fontSize: 16 }}>دسترسی قطع شد</h3>
+        <h3 style={{ margin: "0 0 8px", color: THEME.navy, fontSize: 16 }}>{t("appDeactivatedTitle")}</h3>
         <p style={{ color: THEME.text2, fontSize: 13.5, lineHeight: 1.9, marginBottom: 20 }}>
-          دسترسی حساب کاربری شما توسط مدیر سامانه غیرفعال شده است.
+          {t("appDeactivatedBody")}
         </p>
-        <button type="button" style={styles.button} onClick={onExit}>بازگشت به صفحه ورود</button>
+        <button type="button" style={styles.button} onClick={onExit}>{t("appBackToLogin")}</button>
       </div>
     </div>
   );
@@ -1417,6 +1428,7 @@ function Avatar({ name, size = 40, bg }) {
 }
 
 function ChangePasswordSection() {
+  const { t } = useLanguage();
   const [showForm, setShowForm] = useState(false);
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -1427,9 +1439,9 @@ function ChangePasswordSection() {
 
   const handleSubmit = async () => {
     setError("");
-    if (!oldPassword || !newPassword) { setError("رمز فعلی و رمز جدید هر دو الزامی است"); return; }
-    if (!validatePasswordLength(newPassword)) { setError(`رمز عبور جدید باید حداقل ${MIN_PASSWORD_LENGTH} کاراکتر باشد`); return; }
-    if (newPassword !== confirmPassword) { setError("تکرار رمز عبور جدید با آن یکسان نیست"); return; }
+    if (!oldPassword || !newPassword) { setError(t("saCpBothRequired")); return; }
+    if (!validatePasswordLength(newPassword)) { setError(t("appPasswordMinChars", { n: MIN_PASSWORD_LENGTH })); return; }
+    if (newPassword !== confirmPassword) { setError(t("saCpMismatch")); return; }
     setSaving(true);
     const result = await changeMyPassword(oldPassword, newPassword);
     setSaving(false);
@@ -1443,23 +1455,23 @@ function ChangePasswordSection() {
   return (
     <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 14, marginTop: 14 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <p style={{ fontSize: 11, color: THEME.text3, fontWeight: 700, margin: 0 }}>تغییر رمز عبور</p>
+        <p style={{ fontSize: 11, color: THEME.text3, fontWeight: 700, margin: 0 }}>{t("appChangePasswordLabel")}</p>
         <button type="button" onClick={() => { setShowForm((v) => !v); setError(""); }} style={{ ...styles.smallButton, background: THEME.navyMid, fontSize: 11 }}>
-          {showForm ? "بستن" : "تغییر رمز"}
+          {showForm ? t("saClose") : t("appChangePasswordBtn")}
         </button>
       </div>
-      {done && <p style={{ color: "#166534", fontSize: 12.5, marginTop: 8 }}>رمز عبور با موفقیت تغییر کرد.</p>}
+      {done && <p style={{ color: "#166534", fontSize: 12.5, marginTop: 8 }}>{t("saPasswordChanged")}</p>}
       {showForm && (
         <div style={{ marginTop: 10 }}>
-          <label style={styles.label}>رمز عبور فعلی</label>
+          <label style={styles.label}>{t("saCurrentPassword")}</label>
           <input type="password" style={styles.input} value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} dir="ltr" />
-          <label style={styles.label}>رمز عبور جدید (حداقل {MIN_PASSWORD_LENGTH} کاراکتر)</label>
+          <label style={styles.label}>{t("appNewPasswordMinChars", { n: MIN_PASSWORD_LENGTH })}</label>
           <input type="password" style={styles.input} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} dir="ltr" />
-          <label style={styles.label}>تکرار رمز عبور جدید</label>
+          <label style={styles.label}>{t("saConfirmNewPassword")}</label>
           <input type="password" style={styles.input} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} dir="ltr" />
           {error && <p style={styles.error}>{error}</p>}
           <button type="button" style={{ ...styles.button, marginTop: 6 }} onClick={handleSubmit} disabled={saving}>
-            {saving ? "در حال ذخیره..." : "ثبت رمز جدید"}
+            {saving ? t("saSavingEllipsis") : t("saSubmitNewPassword")}
           </button>
         </div>
       )}
@@ -1543,7 +1555,7 @@ function ProfileView({ onBack, currentUser, roleLabel }) {
     const verify = await attemptCredentialLogin(currentUser?.username, bioPasswordInput);
     if (!verify?.user) {
       setBioBusy(false);
-      setBioError("رمز عبور واردشده صحیح نیست.");
+      setBioError(t("appBioPasswordWrong"));
       return;
     }
     const result = await enableBiometricLogin(currentUser?.username, bioPasswordInput);
@@ -1623,7 +1635,7 @@ function ProfileView({ onBack, currentUser, roleLabel }) {
           </div>
           {bioAskingPassword && (
             <div style={{ marginTop: 12, background: THEME.bg, borderRadius: 9, padding: 12 }}>
-              <label style={styles.label}>برای فعال‌سازی، رمز عبور فعلی خود را دوباره وارد کنید</label>
+              <label style={styles.label}>{t("appBioReenterPassword")}</label>
               <input
                 type="password" style={styles.input} value={bioPasswordInput}
                 onChange={(e) => setBioPasswordInput(e.target.value)} dir="ltr" autoFocus
@@ -1631,10 +1643,10 @@ function ProfileView({ onBack, currentUser, roleLabel }) {
               />
               <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                 <button type="button" style={styles.smallButton} onClick={handleConfirmBiometricPassword} disabled={bioBusy || !bioPasswordInput}>
-                  {bioBusy ? "در حال تأیید..." : "تأیید و فعال‌سازی"}
+                  {bioBusy ? t("appBioVerifying") : t("appBioConfirmEnable")}
                 </button>
                 <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => { setBioAskingPassword(false); setBioPasswordInput(""); setBioError(""); }}>
-                  انصراف
+                  {t("commonCancel")}
                 </button>
               </div>
             </div>
@@ -1715,6 +1727,7 @@ function AboutIhms({ onBack }) {
 
 // ---------- مدیریت یکپارچه پیمانکاران (اطلاعات شرکت + حساب کاربری ورود) ----------
 function ContractorManager({ onBack }) {
+  const { t } = useLanguage();
   const [contractors, setContractors] = useState([]);
   const [jobPositions, setJobPositions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1744,15 +1757,15 @@ function ContractorManager({ onBack }) {
 
   const handleAdd = async () => {
     const uname = username.trim();
-    if (!name.trim() || !uname || !password || !jobPositionId) { setFormError("نام پیمانکار، عنوان شغلی، نام کاربری و رمز عبور الزامی است"); return; }
-    if (!validatePasswordLength(password)) { setFormError(`رمز عبور باید حداقل ${MIN_PASSWORD_LENGTH} کاراکتر باشد`); return; }
-    if (usernameTaken(uname, null)) { setFormError("این نام کاربری قبلاً استفاده شده است"); return; }
+    if (!name.trim() || !uname || !password || !jobPositionId) { setFormError(t("cmErrContractorRequired")); return; }
+    if (!validatePasswordLength(password)) { setFormError(t("appPasswordMinCharsShort", { n: MIN_PASSWORD_LENGTH })); return; }
+    if (usernameTaken(uname, null)) { setFormError(t("cmErrUsernameTaken")); return; }
     const inserted = await insertContractor({ name: name.trim(), contactPersonName: contactPersonName.trim(), startDate, contractDetails: contractDetails.trim(), username: uname, password, jobPositionId });
-    if (!inserted || inserted.__error) { setFormError(`خطا در ذخیره‌سازی: ${inserted?.message || "نامشخص"}`); return; }
+    if (!inserted || inserted.__error) { setFormError(t("cmErrSaveDetail", { detail: inserted?.message || t("cmUnknown") })); return; }
     await initializeNoAccess("contractor", inserted.id);
     setContractors([...contractors, inserted]);
     setName(""); setContactPersonName(""); setStartDate(""); setContractDetails(""); setUsername(""); setPassword(""); setJobPositionId(""); setFormError(""); setShowForm(false);
-    alert("حساب پیمانکار ساخته شد. اکنون از «مدیریت نقش‌ها و دسترسی‌ها» دسترسی ماژول‌های این حساب را تعیین کنید.");
+    alert(t("cmContractorCreatedInfo"));
   };
 
   const startEdit = (c) => {
@@ -1763,84 +1776,84 @@ function ContractorManager({ onBack }) {
 
   const saveEdit = async (id) => {
     const uname = (editData.username || "").trim();
-    if (!editData.name?.trim() || !uname || !editData.password || !editData.jobPositionId) { alert("نام پیمانکار، عنوان شغلی، نام کاربری و رمز عبور نمی‌توانند خالی باشند"); return; }
-    if (!validatePasswordLength(editData.password)) { alert(`رمز عبور باید حداقل ${MIN_PASSWORD_LENGTH} کاراکتر باشد`); return; }
-    if (usernameTaken(uname, id)) { alert("این نام کاربری قبلاً برای پیمانکار دیگری استفاده شده است"); return; }
+    if (!editData.name?.trim() || !uname || !editData.password || !editData.jobPositionId) { alert(t("cmErrContractorFieldsEmpty")); return; }
+    if (!validatePasswordLength(editData.password)) { alert(t("appPasswordMinCharsShort", { n: MIN_PASSWORD_LENGTH })); return; }
+    if (usernameTaken(uname, id)) { alert(t("cmErrUsernameTakenOther")); return; }
     const updated = await updateContractorDB(id, { ...editData, name: editData.name.trim(), username: uname });
-    if (!updated || updated.__error) { alert(`خطا در ذخیره‌سازی: ${updated?.message || "نامشخص"}`); return; }
+    if (!updated || updated.__error) { alert(t("cmErrSaveDetail", { detail: updated?.message || t("cmUnknown") })); return; }
     setContractors(contractors.map((c) => (c.id === id ? updated : c)));
     cancelEdit();
   };
 
   const handleDelete = async (id, name) => {
-    if (confirm(`آیا از حذف پیمانکار «${name}» مطمئن هستید؟`)) {
+    if (confirm(t("cmDeleteContractorConfirm", { name }))) {
       await deleteContractorDB(id);
       setContractors(contractors.filter((c) => c.id !== id));
     }
   };
 
-  if (loading) return <div style={{ padding: 24, textAlign: "center", color: "#93a1b0" }}>در حال بارگذاری...</div>;
+  if (loading) return <div style={{ padding: 24, textAlign: "center", color: "#93a1b0" }}>{t("cmLoading")}</div>;
 
   return (
     <div style={{ maxWidth: 560, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>← بازگشت به منو</div>}
+      {onBack && <div style={styles.backLink} onClick={onBack}>{t("cmBackToMenu")}</div>}
 
       <div style={{ ...styles.menuCard, background: "#0d8f8a", color: "#fff", textAlign: "center" }} onClick={() => setShowForm((v) => !v)}>
-        {showForm ? "بستن فرم" : "+ افزودن پیمانکار جدید"}
+        {showForm ? t("cmCloseForm") : t("cmAddContractor")}
       </div>
 
       {showForm && (
         <div style={styles.card}>
-          <label style={styles.label}>نام پیمانکار</label>
-          <input style={styles.input} value={name} onChange={(e) => setName(e.target.value)} dir="rtl" placeholder="همین نام در لیست کشویی «پیمانکار» فرم آنومالی نشان داده می‌شود" />
-          <label style={styles.label}>نام و نام خانوادگی (نماینده/شخص رابط)</label>
+          <label style={styles.label}>{t("cmContractorName")}</label>
+          <input style={styles.input} value={name} onChange={(e) => setName(e.target.value)} dir="rtl" placeholder={t("cmContractorNamePlaceholder")} />
+          <label style={styles.label}>{t("cmContactPerson")}</label>
           <input style={styles.input} value={contactPersonName} onChange={(e) => setContactPersonName(e.target.value)} dir="rtl" />
-          <label style={styles.label}>عنوان شغلی</label>
+          <label style={styles.label}>{t("cmJobTitle")}</label>
           <select style={styles.input} value={jobPositionId} onChange={(e) => setJobPositionId(e.target.value)} dir="rtl">
-            <option value="">— انتخاب کنید —</option>
+            <option value="">{t("cmSelectPlaceholder")}</option>
             {jobPositions.map((jp) => <option key={jp.id} value={jp.id}>{jp.title}</option>)}
           </select>
-          <label style={styles.label}>تاریخ شروع به کار</label>
+          <label style={styles.label}>{t("cmStartDate")}</label>
           <JalaliDateInput value={startDate} onChange={setStartDate} />
-          <label style={styles.label}>مشخصات قرارداد</label>
+          <label style={styles.label}>{t("cmContractDetails")}</label>
           <textarea style={{ ...styles.input, minHeight: 70, resize: "vertical", fontFamily: "inherit" }} value={contractDetails} onChange={(e) => setContractDetails(e.target.value)} dir="rtl" />
-          <label style={styles.label}>نام کاربری (برای ورود پیمانکار به سامانه)</label>
+          <label style={styles.label}>{t("cmUsernameForLogin")}</label>
           <input style={styles.input} value={username} onChange={(e) => setUsername(e.target.value)} dir="rtl" />
-          <label style={styles.label}>رمز عبور</label>
+          <label style={styles.label}>{t("cmPassword")}</label>
           <input style={styles.input} value={password} onChange={(e) => setPassword(e.target.value)} dir="rtl" />
-          <p style={{ fontSize: 10.5, color: THEME.text3, margin: "-8px 0 8px" }}>حداقل {MIN_PASSWORD_LENGTH} کاراکتر</p>
+          <p style={{ fontSize: 10.5, color: THEME.text3, margin: "-8px 0 8px" }}>{t("appMinCharsHint", { n: MIN_PASSWORD_LENGTH })}</p>
           {formError && <p style={styles.error}>{formError}</p>}
-          <button type="button" style={styles.button} onClick={handleAdd}>افزودن پیمانکار</button>
+          <button type="button" style={styles.button} onClick={handleAdd}>{t("cmAddContractorBtn")}</button>
         </div>
       )}
 
-      <h3 style={{ marginTop: 24 }}>پیمانکاران ثبت‌شده ({contractors.length})</h3>
-      {contractors.length === 0 && <p style={{ color: "#93a1b0" }}>هنوز هیچ پیمانکاری ثبت نشده است.</p>}
+      <h3 style={{ marginTop: 24 }}>{t("cmRegisteredContractors", { count: contractors.length })}</h3>
+      {contractors.length === 0 && <p style={{ color: "#93a1b0" }}>{t("cmNoContractorsYet")}</p>}
 
       {contractors.map((c) =>
         editingId === c.id ? (
           <div key={c.id} style={styles.card}>
-            <label style={styles.label}>نام پیمانکار</label>
+            <label style={styles.label}>{t("cmContractorName")}</label>
             <input style={styles.input} value={editData.name} onChange={(e) => setEditData({ ...editData, name: e.target.value })} dir="rtl" />
-            <label style={styles.label}>نام و نام خانوادگی (نماینده/شخص رابط)</label>
+            <label style={styles.label}>{t("cmContactPerson")}</label>
             <input style={styles.input} value={editData.contactPersonName || ""} onChange={(e) => setEditData({ ...editData, contactPersonName: e.target.value })} dir="rtl" />
-            <label style={styles.label}>عنوان شغلی</label>
+            <label style={styles.label}>{t("cmJobTitle")}</label>
             <select style={styles.input} value={editData.jobPositionId || ""} onChange={(e) => setEditData({ ...editData, jobPositionId: e.target.value })} dir="rtl">
-              <option value="">— انتخاب کنید —</option>
+              <option value="">{t("cmSelectPlaceholder")}</option>
               {jobPositions.map((jp) => <option key={jp.id} value={jp.id}>{jp.title}</option>)}
             </select>
-            <label style={styles.label}>تاریخ شروع به کار</label>
+            <label style={styles.label}>{t("cmStartDate")}</label>
             <JalaliDateInput value={editData.startDate} onChange={(v) => setEditData({ ...editData, startDate: v })} />
-            <label style={styles.label}>مشخصات قرارداد</label>
+            <label style={styles.label}>{t("cmContractDetails")}</label>
             <textarea style={{ ...styles.input, minHeight: 70, fontFamily: "inherit" }} value={editData.contractDetails} onChange={(e) => setEditData({ ...editData, contractDetails: e.target.value })} dir="rtl" />
-            <label style={styles.label}>نام کاربری</label>
+            <label style={styles.label}>{t("cmUsername")}</label>
             <input style={styles.input} value={editData.username} onChange={(e) => setEditData({ ...editData, username: e.target.value })} dir="rtl" />
-            <label style={styles.label}>رمز عبور</label>
+            <label style={styles.label}>{t("cmPassword")}</label>
             <input style={styles.input} value={editData.password} onChange={(e) => setEditData({ ...editData, password: e.target.value })} dir="rtl" />
-            <p style={{ fontSize: 10.5, color: THEME.text3, margin: "-8px 0 8px" }}>حداقل {MIN_PASSWORD_LENGTH} کاراکتر</p>
+            <p style={{ fontSize: 10.5, color: THEME.text3, margin: "-8px 0 8px" }}>{t("appMinCharsHint", { n: MIN_PASSWORD_LENGTH })}</p>
             <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-              <button type="button" style={styles.button} onClick={() => saveEdit(c.id)}>ذخیره</button>
-              <button type="button" style={{ ...styles.button, background: "#5b6b7d" }} onClick={cancelEdit}>انصراف</button>
+              <button type="button" style={styles.button} onClick={() => saveEdit(c.id)}>{t("commonSave")}</button>
+              <button type="button" style={{ ...styles.button, background: "#5b6b7d" }} onClick={cancelEdit}>{t("commonCancel")}</button>
             </div>
           </div>
         ) : (
@@ -1848,15 +1861,15 @@ function ContractorManager({ onBack }) {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
                 <div style={{ fontWeight: "bold", fontSize: 16 }}>{c.name}</div>
-                {c.contactPersonName && <div style={{ fontSize: 13, color: "#555", marginTop: 2 }}>نماینده: {c.contactPersonName}</div>}
+                {c.contactPersonName && <div style={{ fontSize: 13, color: "#555", marginTop: 2 }}>{t("cmRepresentativeLabel", { name: c.contactPersonName })}</div>}
                 {c.jobPositionTitle && <div style={{ fontSize: 12.5, color: "#0d8f8a", marginTop: 3, fontWeight: 600 }}>{c.jobPositionTitle}</div>}
-                {c.startDate && <div style={{ fontSize: 13, color: "#666", marginTop: 4 }}>تاریخ شروع: {isoToJalaliDisplay(c.startDate)}</div>}
-                {c.contractDetails && <div style={{ fontSize: 13, color: "#666", marginTop: 4 }}>قرارداد: {c.contractDetails}</div>}
-                <div style={{ fontSize: 13, color: "#0d8f8a", marginTop: 4, direction: "ltr", textAlign: "right" }}>یوزر: {c.username}</div>
+                {c.startDate && <div style={{ fontSize: 13, color: "#666", marginTop: 4 }}>{t("cmStartLabel", { date: isoToJalaliDisplay(c.startDate) })}</div>}
+                {c.contractDetails && <div style={{ fontSize: 13, color: "#666", marginTop: 4 }}>{t("cmContractLabel", { details: c.contractDetails })}</div>}
+                <div style={{ fontSize: 13, color: "#0d8f8a", marginTop: 4, direction: "ltr", textAlign: "right" }}>{t("cmUserLabel", { username: c.username })}</div>
               </div>
               <div style={{ display: "flex", gap: 8 }}>
-                <button type="button" style={styles.smallButton} onClick={() => startEdit(c)}>تغییر</button>
-                <button type="button" style={{ ...styles.smallButton, background: "#c92a2a" }} onClick={() => handleDelete(c.id, c.name)}>حذف</button>
+                <button type="button" style={styles.smallButton} onClick={() => startEdit(c)}>{t("cmEdit")}</button>
+                <button type="button" style={{ ...styles.smallButton, background: "#c92a2a" }} onClick={() => handleDelete(c.id, c.name)}>{t("cmDelete")}</button>
               </div>
             </div>
           </div>
@@ -1868,6 +1881,7 @@ function ContractorManager({ onBack }) {
 
 // ---------- مدیریت حساب‌های کارفرما/همکاران (فقط ادمین) ----------
 function EmployerAccountManager({ onBack }) {
+  const { t } = useLanguage();
   const [accounts, setAccounts] = useState([]);
   const [jobPositions, setJobPositions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1896,15 +1910,15 @@ function EmployerAccountManager({ onBack }) {
 
   const handleAdd = async () => {
     const uname = username.trim();
-    if (!name.trim() || !uname || !password || !jobPositionId) { setFormError("نام، عنوان شغلی، نام کاربری و رمز عبور الزامی است"); return; }
-    if (!validatePasswordLength(password)) { setFormError(`رمز عبور باید حداقل ${MIN_PASSWORD_LENGTH} کاراکتر باشد`); return; }
-    if (usernameTaken(uname, null)) { setFormError("این نام کاربری قبلاً استفاده شده است"); return; }
+    if (!name.trim() || !uname || !password || !jobPositionId) { setFormError(t("eamErrRequired")); return; }
+    if (!validatePasswordLength(password)) { setFormError(t("appPasswordMinCharsShort", { n: MIN_PASSWORD_LENGTH })); return; }
+    if (usernameTaken(uname, null)) { setFormError(t("cmErrUsernameTaken")); return; }
     const inserted = await insertEmployerAccount({ name: name.trim(), companyName: companyName.trim(), username: uname, password, canEdit, jobPositionId });
-    if (!inserted || inserted.__error) { setFormError(`خطا در ذخیره‌سازی: ${inserted?.message || "نامشخص"}`); return; }
+    if (!inserted || inserted.__error) { setFormError(t("cmErrSaveDetail", { detail: inserted?.message || t("cmUnknown") })); return; }
     await initializeNoAccess("employer", inserted.id);
     setAccounts([...accounts, inserted]);
     setName(""); setCompanyName(""); setUsername(""); setPassword(""); setCanEdit(true); setJobPositionId(""); setFormError(""); setShowForm(false);
-    alert("حساب کارفرما ساخته شد. اکنون از «مدیریت نقش‌ها و دسترسی‌ها» دسترسی ماژول‌های این حساب را تعیین کنید.");
+    alert(t("eamAccountCreatedInfo"));
   };
 
   const startEdit = (a) => { setEditingId(a.id); setEditData({ name: a.name, companyName: a.companyName, username: a.username, password: a.password, canEdit: a.canEdit, jobPositionId: a.jobPositionId }); };
@@ -1912,87 +1926,87 @@ function EmployerAccountManager({ onBack }) {
 
   const saveEdit = async (id) => {
     const uname = (editData.username || "").trim();
-    if (!editData.name?.trim() || !uname || !editData.password || !editData.jobPositionId) { alert("نام، عنوان شغلی، نام کاربری و رمز عبور نمی‌توانند خالی باشند"); return; }
-    if (!validatePasswordLength(editData.password)) { alert(`رمز عبور باید حداقل ${MIN_PASSWORD_LENGTH} کاراکتر باشد`); return; }
-    if (usernameTaken(uname, id)) { alert("این نام کاربری قبلاً برای حساب دیگری استفاده شده است"); return; }
+    if (!editData.name?.trim() || !uname || !editData.password || !editData.jobPositionId) { alert(t("eamErrFieldsEmpty")); return; }
+    if (!validatePasswordLength(editData.password)) { alert(t("appPasswordMinCharsShort", { n: MIN_PASSWORD_LENGTH })); return; }
+    if (usernameTaken(uname, id)) { alert(t("eamErrUsernameTakenOther")); return; }
     const updated = await updateEmployerAccountDB(id, { ...editData, name: editData.name.trim(), username: uname });
-    if (!updated || updated.__error) { alert(`خطا در ذخیره‌سازی: ${updated?.message || "نامشخص"}`); return; }
+    if (!updated || updated.__error) { alert(t("cmErrSaveDetail", { detail: updated?.message || t("cmUnknown") })); return; }
     setAccounts(accounts.map((a) => (a.id === id ? updated : a)));
     cancelEdit();
   };
 
   const handleDelete = async (id, name) => {
-    if (confirm(`آیا از حذف حساب «${name}» مطمئن هستید؟`)) {
+    if (confirm(t("eamDeleteAccountConfirm", { name }))) {
       await deleteEmployerAccountDB(id);
       setAccounts(accounts.filter((a) => a.id !== id));
     }
   };
 
-  if (loading) return <div style={{ padding: 24, textAlign: "center", color: "#93a1b0" }}>در حال بارگذاری...</div>;
+  if (loading) return <div style={{ padding: 24, textAlign: "center", color: "#93a1b0" }}>{t("cmLoading")}</div>;
 
   return (
     <div style={{ maxWidth: 560, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>← بازگشت به منو</div>}
-      <p style={{ color: "#93a1b0", fontSize: 13 }}>حساب‌هایی که اینجا می‌سازی، نقش «کارفرما» دارند و می‌توانند وارد سامانه شوند. سطح دسترسی هرکدام را خودت مشخص می‌کنی.</p>
+      {onBack && <div style={styles.backLink} onClick={onBack}>{t("cmBackToMenu")}</div>}
+      <p style={{ color: "#93a1b0", fontSize: 13 }}>{t("eamIntro")}</p>
 
       <div style={{ ...styles.menuCard, background: "#0d8f8a", color: "#fff", textAlign: "center" }} onClick={() => setShowForm((v) => !v)}>
-        {showForm ? "بستن فرم" : "+ افزودن حساب کارفرما/همکار جدید"}
+        {showForm ? t("cmCloseForm") : t("eamAddAccount")}
       </div>
 
       {showForm && (
         <div style={styles.card}>
-          <label style={styles.label}>نام و نام خانوادگی</label>
+          <label style={styles.label}>{t("eamFullName")}</label>
           <input style={styles.input} value={name} onChange={(e) => setName(e.target.value)} dir="rtl" />
-          <label style={styles.label}>نام شرکت</label>
+          <label style={styles.label}>{t("eamCompanyName")}</label>
           <input style={styles.input} value={companyName} onChange={(e) => setCompanyName(e.target.value)} dir="rtl" />
-          <label style={styles.label}>عنوان شغلی</label>
+          <label style={styles.label}>{t("cmJobTitle")}</label>
           <select style={styles.input} value={jobPositionId} onChange={(e) => setJobPositionId(e.target.value)} dir="rtl">
-            <option value="">— انتخاب کنید —</option>
+            <option value="">{t("cmSelectPlaceholder")}</option>
             {jobPositions.map((jp) => <option key={jp.id} value={jp.id}>{jp.title}</option>)}
           </select>
-          <label style={styles.label}>نام کاربری</label>
+          <label style={styles.label}>{t("cmUsername")}</label>
           <input style={styles.input} value={username} onChange={(e) => setUsername(e.target.value)} dir="rtl" />
-          <label style={styles.label}>رمز عبور</label>
+          <label style={styles.label}>{t("cmPassword")}</label>
           <input style={styles.input} value={password} onChange={(e) => setPassword(e.target.value)} dir="rtl" />
-          <p style={{ fontSize: 10.5, color: THEME.text3, margin: "-8px 0 8px" }}>حداقل {MIN_PASSWORD_LENGTH} کاراکتر</p>
-          <label style={styles.label}>سطح دسترسی</label>
+          <p style={{ fontSize: 10.5, color: THEME.text3, margin: "-8px 0 8px" }}>{t("appMinCharsHint", { n: MIN_PASSWORD_LENGTH })}</p>
+          <label style={styles.label}>{t("eamAccessLevel")}</label>
           <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-            <button type="button" onClick={() => setCanEdit(true)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: canEdit ? "2px solid #0d8f8a" : "1px solid #e3e8ee", background: canEdit ? "#e3f5f4" : "#fff", color: "#0d8f8a", fontSize: 13, cursor: "pointer", fontWeight: canEdit ? "bold" : "normal" }}>دسترسی کامل (ثبت و تأیید)</button>
-            <button type="button" onClick={() => setCanEdit(false)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: !canEdit ? "2px solid #123a54" : "1px solid #e3e8ee", background: !canEdit ? "#f1f5f9" : "#fff", color: "#334155", fontSize: 13, cursor: "pointer", fontWeight: !canEdit ? "bold" : "normal" }}>فقط مشاهده</button>
+            <button type="button" onClick={() => setCanEdit(true)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: canEdit ? "2px solid #0d8f8a" : "1px solid #e3e8ee", background: canEdit ? "#e3f5f4" : "#fff", color: "#0d8f8a", fontSize: 13, cursor: "pointer", fontWeight: canEdit ? "bold" : "normal" }}>{t("eamFullAccess")}</button>
+            <button type="button" onClick={() => setCanEdit(false)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: !canEdit ? "2px solid #123a54" : "1px solid #e3e8ee", background: !canEdit ? "#f1f5f9" : "#fff", color: "#334155", fontSize: 13, cursor: "pointer", fontWeight: !canEdit ? "bold" : "normal" }}>{t("eamViewOnly")}</button>
           </div>
           {formError && <p style={styles.error}>{formError}</p>}
-          <button type="button" style={styles.button} onClick={handleAdd}>افزودن حساب</button>
+          <button type="button" style={styles.button} onClick={handleAdd}>{t("eamAddAccountBtn")}</button>
         </div>
       )}
 
-      <h3 style={{ marginTop: 24 }}>حساب‌های ثبت‌شده ({accounts.length})</h3>
-      {accounts.length === 0 && <p style={{ color: "#93a1b0" }}>هنوز هیچ حسابی اضافه نشده است.</p>}
+      <h3 style={{ marginTop: 24 }}>{t("eamRegisteredAccounts", { count: accounts.length })}</h3>
+      {accounts.length === 0 && <p style={{ color: "#93a1b0" }}>{t("eamNoAccountsYet")}</p>}
 
       {accounts.map((a) =>
         editingId === a.id ? (
           <div key={a.id} style={styles.card}>
-            <label style={styles.label}>نام و نام خانوادگی</label>
+            <label style={styles.label}>{t("eamFullName")}</label>
             <input style={styles.input} value={editData.name} onChange={(e) => setEditData({ ...editData, name: e.target.value })} dir="rtl" />
-            <label style={styles.label}>نام شرکت</label>
+            <label style={styles.label}>{t("eamCompanyName")}</label>
             <input style={styles.input} value={editData.companyName || ""} onChange={(e) => setEditData({ ...editData, companyName: e.target.value })} dir="rtl" />
-            <label style={styles.label}>عنوان شغلی</label>
+            <label style={styles.label}>{t("cmJobTitle")}</label>
             <select style={styles.input} value={editData.jobPositionId || ""} onChange={(e) => setEditData({ ...editData, jobPositionId: e.target.value })} dir="rtl">
-              <option value="">— انتخاب کنید —</option>
+              <option value="">{t("cmSelectPlaceholder")}</option>
               {jobPositions.map((jp) => <option key={jp.id} value={jp.id}>{jp.title}</option>)}
             </select>
-            <label style={styles.label}>نام کاربری</label>
+            <label style={styles.label}>{t("cmUsername")}</label>
             <input style={styles.input} value={editData.username} onChange={(e) => setEditData({ ...editData, username: e.target.value })} dir="rtl" />
-            <label style={styles.label}>رمز عبور</label>
+            <label style={styles.label}>{t("cmPassword")}</label>
             <input style={styles.input} value={editData.password} onChange={(e) => setEditData({ ...editData, password: e.target.value })} dir="rtl" />
-            <p style={{ fontSize: 10.5, color: THEME.text3, margin: "-8px 0 8px" }}>حداقل {MIN_PASSWORD_LENGTH} کاراکتر</p>
-            <label style={styles.label}>سطح دسترسی</label>
+            <p style={{ fontSize: 10.5, color: THEME.text3, margin: "-8px 0 8px" }}>{t("appMinCharsHint", { n: MIN_PASSWORD_LENGTH })}</p>
+            <label style={styles.label}>{t("eamAccessLevel")}</label>
             <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-              <button type="button" onClick={() => setEditData({ ...editData, canEdit: true })} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: editData.canEdit ? "2px solid #0d8f8a" : "1px solid #e3e8ee", background: editData.canEdit ? "#e3f5f4" : "#fff", color: "#0d8f8a", fontSize: 13, cursor: "pointer" }}>دسترسی کامل</button>
-              <button type="button" onClick={() => setEditData({ ...editData, canEdit: false })} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: !editData.canEdit ? "2px solid #123a54" : "1px solid #e3e8ee", background: !editData.canEdit ? "#f1f5f9" : "#fff", color: "#334155", fontSize: 13, cursor: "pointer" }}>فقط مشاهده</button>
+              <button type="button" onClick={() => setEditData({ ...editData, canEdit: true })} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: editData.canEdit ? "2px solid #0d8f8a" : "1px solid #e3e8ee", background: editData.canEdit ? "#e3f5f4" : "#fff", color: "#0d8f8a", fontSize: 13, cursor: "pointer" }}>{t("eamFullAccessShort")}</button>
+              <button type="button" onClick={() => setEditData({ ...editData, canEdit: false })} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: !editData.canEdit ? "2px solid #123a54" : "1px solid #e3e8ee", background: !editData.canEdit ? "#f1f5f9" : "#fff", color: "#334155", fontSize: 13, cursor: "pointer" }}>{t("eamViewOnly")}</button>
             </div>
             <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-              <button type="button" style={styles.button} onClick={() => saveEdit(a.id)}>ذخیره</button>
-              <button type="button" style={{ ...styles.button, background: "#5b6b7d" }} onClick={cancelEdit}>انصراف</button>
+              <button type="button" style={styles.button} onClick={() => saveEdit(a.id)}>{t("commonSave")}</button>
+              <button type="button" style={{ ...styles.button, background: "#5b6b7d" }} onClick={cancelEdit}>{t("commonCancel")}</button>
             </div>
           </div>
         ) : (
@@ -2000,16 +2014,16 @@ function EmployerAccountManager({ onBack }) {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
                 <div style={{ fontWeight: "bold", fontSize: 16 }}>{a.name}</div>
-                {a.companyName && <div style={{ fontSize: 13, color: "#555", marginTop: 2 }}>شرکت: {a.companyName}</div>}
+                {a.companyName && <div style={{ fontSize: 13, color: "#555", marginTop: 2 }}>{t("eamCompanyLabel", { name: a.companyName })}</div>}
                 {a.jobPositionTitle && <div style={{ fontSize: 12.5, color: "#0d8f8a", marginTop: 3, fontWeight: 600 }}>{a.jobPositionTitle}</div>}
-                <div style={{ fontSize: 13, color: "#0d8f8a", marginTop: 4, direction: "ltr", textAlign: "right" }}>یوزر: {a.username}</div>
+                <div style={{ fontSize: 13, color: "#0d8f8a", marginTop: 4, direction: "ltr", textAlign: "right" }}>{t("cmUserLabel", { username: a.username })}</div>
                 <span style={{ ...styles.badge, marginTop: 6, display: "inline-block", color: a.canEdit ? "#166534" : "#92400e", background: a.canEdit ? "#dcfce7" : "#fef3c7" }}>
-                  {a.canEdit ? "دسترسی کامل" : "فقط مشاهده"}
+                  {a.canEdit ? t("eamFullAccessShort") : t("eamViewOnly")}
                 </span>
               </div>
               <div style={{ display: "flex", gap: 8 }}>
-                <button type="button" style={styles.smallButton} onClick={() => startEdit(a)}>تغییر</button>
-                <button type="button" style={{ ...styles.smallButton, background: "#c92a2a" }} onClick={() => handleDelete(a.id, a.name)}>حذف</button>
+                <button type="button" style={styles.smallButton} onClick={() => startEdit(a)}>{t("cmEdit")}</button>
+                <button type="button" style={{ ...styles.smallButton, background: "#c92a2a" }} onClick={() => handleDelete(a.id, a.name)}>{t("cmDelete")}</button>
               </div>
             </div>
           </div>
@@ -2032,7 +2046,7 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
   const [riskLevel, setRiskLevel] = useState("Med");
   const [category, setCategory] = useState("");
   const [categoryOptions, setCategoryOptions] = useState([]);
-  const [format, setFormat] = useState(ANOMALY_FORMATS[0]);
+  const [format, setFormat] = useState(ANOMALY_FORMATS[0].value);
   const [description, setDescription] = useState("");
   const [follower, setFollower] = useState("");
   const [needsRiskAssessment, setNeedsRiskAssessment] = useState(false);
@@ -2229,7 +2243,7 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
           <div>
             <label style={styles.label}>پیمانکار</label>
             <select style={styles.input} value={contractor} onChange={(e) => setContractor(e.target.value)} dir="rtl">
-              <option value="">— انتخاب کنید —</option>
+              <option value="">{t("cmSelectPlaceholder")}</option>
               {contractorNames.map((n) => <option key={n} value={n}>{n}</option>)}
             </select>
           </div>
@@ -2285,7 +2299,7 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
           <div>
             <label style={styles.label}>فرمت</label>
             <select style={styles.input} value={format} onChange={(e) => setFormat(e.target.value)} dir="rtl">
-              {ANOMALY_FORMATS.map((f) => <option key={f} value={f}>{f}</option>)}
+              {ANOMALY_FORMATS.map((f) => <option key={f.value} value={f.value}>{f.value}</option>)}
             </select>
           </div>
         </div>
@@ -2320,7 +2334,7 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
             </p>
             <label style={styles.label}>BowTie</label>
             <select style={styles.input} value={selectedBowtieId} onChange={(e) => setSelectedBowtieId(e.target.value)} dir="rtl">
-              <option value="">— انتخاب کنید —</option>
+              <option value="">{t("cmSelectPlaceholder")}</option>
               {bowtieOptions.map((b) => <option key={b.id} value={b.id}>{b.title}</option>)}
             </select>
 
