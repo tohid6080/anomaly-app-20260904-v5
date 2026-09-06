@@ -7426,8 +7426,11 @@ export const translations = {
   "saScTabAnnouncements": { "fa": "اطلاعیه‌های سامانه", "en": "System Announcements" },
 
   // SuperAdmin › Module Management
-  "saMmNote": { "fa": "ترتیب، نام نمایشی و توضیح کوتاه هر ماژول اصلی — این تنظیمات مستقیم روی Sidebar همه‌ی کاربران سامانه اثر می‌گذارد. آیکون و دسترسی هر ماژول از تنظیمات پلن/مجوز تغییر نمی‌کند.", "en": "The order, display name and short description of each main module — these settings directly affect the sidebar for all system users. Each module's icon and access are not changed here; they come from plan/permission settings." },
+  "saMmNote": { "fa": "ترتیب و نام هر ماژول اصلی. نامِ فارسی و انگلیسی جداگانه تنظیم می‌شوند: در حالت فارسی نامِ فارسی و در حالت انگلیسی نامِ انگلیسی نمایش داده می‌شود (وب و موبایل یکسان). فیلدِ خالی = نامِ پیش‌فرضِ همان زبان. این تنظیمات مستقیم روی Sidebar همه‌ی کاربران اثر می‌گذارد؛ آیکون و دسترسی از پلن/مجوز می‌آید و اینجا تغییر نمی‌کند.", "en": "The order and name of each main module. The Persian and English names are set separately: Persian mode shows the Persian name, English mode the English one (web and mobile alike). An empty field = that language's default name. These settings directly affect the sidebar for all users; each module's icon and access come from plan/permission settings and are not changed here." },
   "saMmDescPlaceholder": { "fa": "توضیح کوتاه (اختیاری)", "en": "Short description (optional)" },
+  "saMmColFa": { "fa": "نام فارسی", "en": "Persian name" },
+  "saMmColEn": { "fa": "نام انگلیسی", "en": "English name" },
+  "saMmColDesc": { "fa": "توضیح", "en": "Description" },
   "saMmSaved": { "fa": "تنظیمات ماژول‌ها ذخیره شد.", "en": "Module settings saved." },
   "saRestoreDefaultOrder": { "fa": "بازگردانی ترتیب پیش‌فرض", "en": "Restore Default Order" },
   "saSaveChangesPlain": { "fa": "ذخیره تغییرات", "en": "Save Changes" },

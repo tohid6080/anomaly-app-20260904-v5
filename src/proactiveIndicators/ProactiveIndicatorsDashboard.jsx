@@ -52,7 +52,7 @@ function HseGuideOverlay({ onClose }) {
  * ارزیابی استعداد حادثه‌پذیری را برای همان پرسنل باز می‌کند.
  */
 export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role, readOnly, focusPersonnelId, focusJobTitle, focusPersonnelName }) {
-  const { t, dir } = useLanguage();
+  const { t, dir, lang } = useLanguage();
   const [indicators, setIndicators] = useState([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState(focusPersonnelId ? "form" : "list"); // list | results | form
@@ -61,17 +61,20 @@ export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role
   // (نه tab جدید با target=_blank) تا در موبایل هم همیشه یک راه خروج/بستن
   // با دکمه‌ی × داشته باشد.
   const [showGuide, setShowGuide] = useState(false);
-  // نامِ سفارشیِ ماژول از «پیکربندی سامانه → مدیریت ماژول‌ها» (اگر ادمین
-  // display_label تنظیم کرده باشد). خالی = ترجمه‌ی i18n استفاده می‌شود.
+  // نامِ ماژول از «پیکربندی سامانه → مدیریت ماژول‌ها»: فارسی/انگلیسی بر اساس
+  // زبانِ فعال. خالی = ترجمه‌ی i18n استفاده می‌شود.
   const [moduleTitle, setModuleTitle] = useState("");
 
   useEffect(() => {
     loadActiveIndicators().then((rows) => { setIndicators(rows); setLoading(false); });
     loadModuleConfig().then((cfg) => {
-      const custom = cfg?.find((c) => c.moduleKey === "proactiveIndicators")?.displayLabel;
+      const row = cfg?.find((c) => c.moduleKey === "proactiveIndicators");
+      const custom = row ? (lang === "en" ? row.displayLabelEn : row.displayLabel) : "";
       if (custom && custom.trim()) setModuleTitle(custom.trim());
+      else setModuleTitle("");
     }).catch(() => {});
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lang]);
 
   if (view === "form" && activeIndicatorKey === "accident_proneness") {
     return (

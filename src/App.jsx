@@ -4062,7 +4062,7 @@ function MobileAnnouncementBanner({ setView }) {
 }
 
 function AdminDashboard({ onLogout, currentUser }) {
-  const { t, dir } = useLanguage();
+  const { t, dir, lang } = useLanguage();
   // برچسب ماژول از یک منبع مشترک خوانده می‌شود تا تغییرِ نامِ ماژول در
   // «پیکربندی سامانه»ی SuperAdmin (جدولِ system_module_config، مشترک بین
   // دسکتاپ و موبایل) در همه‌ی نماها یکسان اعمال شود: اول override پنل
@@ -4072,10 +4072,13 @@ function AdminDashboard({ onLogout, currentUser }) {
   // خودکار به رفتار قبلی برمی‌گردند.
   const mt = (m) => {
     const cfg = Array.isArray(moduleConfig) ? moduleConfig.find((c) => c.moduleKey === m?.key) : null;
-    // نامِ سفارشیِ ادمین از «پیکربندی سامانه → مدیریت ماژول‌ها» (display_label)
-    // هرجا که خالی نباشد، اولویت دارد و در وب و موبایل یکسان نمایش داده می‌شود.
-    // اگر تنظیم نشده باشد، ترجمه‌ی دوزبانه‌ی i18n استفاده می‌شود.
-    if (cfg && typeof cfg.displayLabel === "string" && cfg.displayLabel.trim()) return cfg.displayLabel.trim();
+    // نامِ ماژول از «پیکربندی سامانه → مدیریت ماژول‌ها»: در حالت انگلیسی
+    // display_label_en و در حالت فارسی display_label. هرکدام که خالی باشد،
+    // به ترجمه‌ی i18n برمی‌گردد. در وب و موبایل یکسان است.
+    if (cfg) {
+      const custom = lang === "en" ? cfg.displayLabelEn : cfg.displayLabel;
+      if (typeof custom === "string" && custom.trim()) return custom.trim();
+    }
     return m?.labelKey ? t(m.labelKey) : m?.label;
   };
   const [view, setView] = usePersistedState("ihms_view_admin", "menu");
@@ -4299,7 +4302,7 @@ function AdminDashboard({ onLogout, currentUser }) {
 
 // ---------- پنل کارفرما ----------
 function EmployerDashboard({ onLogout, currentUser }) {
-  const { t, dir } = useLanguage();
+  const { t, dir, lang } = useLanguage();
   // برچسب ماژول از یک منبع مشترک خوانده می‌شود تا تغییرِ نامِ ماژول در
   // «پیکربندی سامانه»ی SuperAdmin (جدولِ system_module_config، مشترک بین
   // دسکتاپ و موبایل) در همه‌ی نماها یکسان اعمال شود: اول override پنل
@@ -4309,10 +4312,13 @@ function EmployerDashboard({ onLogout, currentUser }) {
   // خودکار به رفتار قبلی برمی‌گردند.
   const mt = (m) => {
     const cfg = Array.isArray(moduleConfig) ? moduleConfig.find((c) => c.moduleKey === m?.key) : null;
-    // نامِ سفارشیِ ادمین از «پیکربندی سامانه → مدیریت ماژول‌ها» (display_label)
-    // هرجا که خالی نباشد، اولویت دارد و در وب و موبایل یکسان نمایش داده می‌شود.
-    // اگر تنظیم نشده باشد، ترجمه‌ی دوزبانه‌ی i18n استفاده می‌شود.
-    if (cfg && typeof cfg.displayLabel === "string" && cfg.displayLabel.trim()) return cfg.displayLabel.trim();
+    // نامِ ماژول از «پیکربندی سامانه → مدیریت ماژول‌ها»: در حالت انگلیسی
+    // display_label_en و در حالت فارسی display_label. هرکدام که خالی باشد،
+    // به ترجمه‌ی i18n برمی‌گردد. در وب و موبایل یکسان است.
+    if (cfg) {
+      const custom = lang === "en" ? cfg.displayLabelEn : cfg.displayLabel;
+      if (typeof custom === "string" && custom.trim()) return custom.trim();
+    }
     return m?.labelKey ? t(m.labelKey) : m?.label;
   };
   const [view, setView] = usePersistedState("ihms_view_employer", "menu");
@@ -4541,7 +4547,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
 
 // ---------- پنل پیمانکار ----------
 function ContractorDashboard({ onLogout, currentUser }) {
-  const { t, dir } = useLanguage();
+  const { t, dir, lang } = useLanguage();
   // برچسب ماژول از یک منبع مشترک خوانده می‌شود تا تغییرِ نامِ ماژول در
   // «پیکربندی سامانه»ی SuperAdmin (جدولِ system_module_config، مشترک بین
   // دسکتاپ و موبایل) در همه‌ی نماها یکسان اعمال شود: اول override پنل
@@ -4551,10 +4557,13 @@ function ContractorDashboard({ onLogout, currentUser }) {
   // خودکار به رفتار قبلی برمی‌گردند.
   const mt = (m) => {
     const cfg = Array.isArray(moduleConfig) ? moduleConfig.find((c) => c.moduleKey === m?.key) : null;
-    // نامِ سفارشیِ ادمین از «پیکربندی سامانه → مدیریت ماژول‌ها» (display_label)
-    // هرجا که خالی نباشد، اولویت دارد و در وب و موبایل یکسان نمایش داده می‌شود.
-    // اگر تنظیم نشده باشد، ترجمه‌ی دوزبانه‌ی i18n استفاده می‌شود.
-    if (cfg && typeof cfg.displayLabel === "string" && cfg.displayLabel.trim()) return cfg.displayLabel.trim();
+    // نامِ ماژول از «پیکربندی سامانه → مدیریت ماژول‌ها»: در حالت انگلیسی
+    // display_label_en و در حالت فارسی display_label. هرکدام که خالی باشد،
+    // به ترجمه‌ی i18n برمی‌گردد. در وب و موبایل یکسان است.
+    if (cfg) {
+      const custom = lang === "en" ? cfg.displayLabelEn : cfg.displayLabel;
+      if (typeof custom === "string" && custom.trim()) return custom.trim();
+    }
     return m?.labelKey ? t(m.labelKey) : m?.label;
   };
   const [view, setView] = usePersistedState("ihms_view_contractor", "menu");

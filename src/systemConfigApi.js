@@ -15,13 +15,20 @@ const tr = (key, params) => translate(getCurrentLang(), key, params);
 export async function loadModuleConfig() {
   const rows = await sb("system_module_config?select=*&order=sort_order.asc");
   return sbOk(rows) ? rows.map((r) => ({
-    moduleKey: r.module_key, displayLabel: r.display_label, description: r.description || "", sortOrder: r.sort_order,
+    moduleKey: r.module_key,
+    displayLabel: r.display_label || "",        // نامِ فارسی
+    displayLabelEn: r.display_label_en || "",   // نامِ انگلیسی
+    description: r.description || "",
+    sortOrder: r.sort_order,
   })) : [];
 }
 
 export async function saveModuleConfig(list, updatedBy) {
   const payload = list.map((m, idx) => ({
-    module_key: m.moduleKey, display_label: m.displayLabel, description: m.description || null,
+    module_key: m.moduleKey,
+    display_label: m.displayLabel || "",
+    display_label_en: m.displayLabelEn || "",
+    description: m.description || null,
     sort_order: idx + 1, updated_at: new Date().toISOString(), updated_by: updatedBy || "",
   }));
   const rows = await sb("system_module_config?on_conflict=module_key", { method: "POST", body: JSON.stringify(payload), prefer: "resolution=merge-duplicates,return=representation" }, "super_admin");

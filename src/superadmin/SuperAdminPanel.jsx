@@ -946,26 +946,30 @@ function AppUpdateManagementTab({ currentAdmin }) {
 
 // همان لیست/ترتیب/برچسب پیش‌فرضی که در SQL seed شده — برای «بازگردانی
 // ترتیب پیش‌فرض» بدون نیاز به رفت‌وبرگشت اضافه با دیتابیس.
+// labelKey = کلیدِ i18n که هم fa و هم en دارد (همان نامی که تا امروز در
+// منو/ساید‌بار نشان داده می‌شده). descKey فقط برای placeholderِ ستونِ توضیح.
 const DEFAULT_MODULE_CONFIG = [
-  { moduleKey: "chat", labelKey: "saDmcLabelChat", descKey: "saDmcDescChat" },
-  { moduleKey: "archiveManagement", labelKey: "saDmcLabelArchive", descKey: "saDmcDescArchive" },
-  { moduleKey: "anomalyReport", labelKey: "saDmcLabelAnomaly", descKey: "saDmcDescAnomaly" },
-  { moduleKey: "riskAssessment", labelKey: "saDmcLabelRisk", descKey: "saDmcDescRisk" },
-  { moduleKey: "personnelAccess", labelKey: "saDmcLabelPersonnel", descKey: "saDmcDescPersonnel" },
-  { moduleKey: "proactiveIndicators", labelKey: "saDmcLabelProactive", descKey: "saDmcDescProactive" },
-  { moduleKey: "incidentManagement", labelKey: "saDmcLabelIncident", descKey: "saDmcDescIncident" },
-  { moduleKey: "machineryManagement", labelKey: "saDmcLabelMachinery", descKey: "saDmcDescMachinery" },
-  { moduleKey: "scaffoldManagement", labelKey: "saDmcLabelScaffold", descKey: "saDmcDescScaffold" },
-  { moduleKey: "managementDashboard", labelKey: "saDmcLabelMgmtDash", descKey: "saDmcDescMgmtDash" },
+  { moduleKey: "chat", labelKey: "moduleChat", descKey: "saDmcDescChat" },
+  { moduleKey: "archiveManagement", labelKey: "moduleArchive", descKey: "saDmcDescArchive" },
+  { moduleKey: "anomalyReport", labelKey: "moduleAnomalyReport", descKey: "saDmcDescAnomaly" },
+  { moduleKey: "riskAssessment", labelKey: "moduleRiskAssessment", descKey: "saDmcDescRisk" },
+  { moduleKey: "personnelAccess", labelKey: "modulePersonnelAccess", descKey: "saDmcDescPersonnel" },
+  { moduleKey: "proactiveIndicators", labelKey: "moduleProactiveIndicators", descKey: "saDmcDescProactive" },
+  { moduleKey: "incidentManagement", labelKey: "moduleIncidentManagement", descKey: "saDmcDescIncident" },
+  { moduleKey: "machineryManagement", labelKey: "moduleMachinery", descKey: "saDmcDescMachinery" },
+  { moduleKey: "scaffoldManagement", labelKey: "moduleScaffold", descKey: "saDmcDescScaffold" },
+  { moduleKey: "managementDashboard", labelKey: "moduleManagementDashboard", descKey: "saDmcDescMgmtDash" },
 ];
 
-// برچسب/توضیحِ پیش‌فرضِ ترجمه‌شده‌ی هر ماژول — برای placeholderِ فیلدها و
-// «بازگردانی پیش‌فرض». هنگام ساختِ اولیه‌ی ردیف‌ها displayLabel خالی گذاشته
-// می‌شود تا اگر ادمین چیزی تایپ نکند، همان ترجمه‌ی دوزبانه‌ی i18n استفاده شود.
-const buildDefaultModuleConfig = (t) => DEFAULT_MODULE_CONFIG.map((m) => ({ moduleKey: m.moduleKey, displayLabel: "", description: "" }));
-const moduleDefaultLabel = (t, moduleKey) => {
+// نامِ پیش‌فرضِ فارسی/انگلیسیِ هر ماژول — برای placeholderِ فیلدها و «بازگردانی
+// پیش‌فرض». هنگام ساختِ اولیه‌ی ردیف‌ها نام‌ها خالی گذاشته می‌شوند تا اگر ادمین
+// چیزی تایپ نکند، همان ترجمه‌ی i18n استفاده شود.
+const buildDefaultModuleConfig = () => DEFAULT_MODULE_CONFIG.map((m) => ({ moduleKey: m.moduleKey, displayLabel: "", displayLabelEn: "", description: "" }));
+const moduleDefaultNames = (moduleKey) => {
   const d = DEFAULT_MODULE_CONFIG.find((x) => x.moduleKey === moduleKey);
-  return d ? t(d.labelKey) : moduleKey;
+  return d
+    ? { fa: translate("fa", d.labelKey), en: translate("en", d.labelKey) }
+    : { fa: moduleKey, en: moduleKey };
 };
 
 function ModuleManagementTab({ currentAdmin }) {
@@ -976,14 +980,14 @@ function ModuleManagementTab({ currentAdmin }) {
   const [msgErr, setMsgErr] = useState(false);
   const [dragIndex, setDragIndex] = useState(null);
 
-  // نامِ سفارشیِ ادمین (display_label) هرجا که خالی نباشد، مبناست و در وب و
-  // موبایل نمایش داده می‌شود؛ اگر خالی بماند، ترجمه‌ی i18n استفاده می‌شود.
-  // پس اینجا مقدارِ واقعیِ دیتابیس نمایش داده می‌شود (نه ترجمه) و فیلدِ خالی
+  // نامِ فارسی (displayLabel) و انگلیسی (displayLabelEn) جداگانه‌اند. هرکدام
+  // که خالی نباشد در همان زبان (وب و موبایل) نمایش داده می‌شود؛ خالی =
+  // ترجمه‌ی i18n. اینجا مقدارِ واقعیِ دیتابیس نشان داده می‌شود و فیلدِ خالی
   // با placeholderِ نامِ پیش‌فرض همراه است.
   const load = () => loadModuleConfig().then((rows) => {
     setList(rows.length > 0
-      ? rows.map((r) => ({ moduleKey: r.moduleKey, displayLabel: r.displayLabel || "", description: r.description || "" }))
-      : buildDefaultModuleConfig(t));
+      ? rows.map((r) => ({ moduleKey: r.moduleKey, displayLabel: r.displayLabel || "", displayLabelEn: r.displayLabelEn || "", description: r.description || "" }))
+      : buildDefaultModuleConfig());
   });
   useEffect(() => { load(); }, []);
 
@@ -1021,14 +1025,30 @@ function ModuleManagementTab({ currentAdmin }) {
     if (!result?.__error) await load();
   };
 
-  const handleReset = () => setList(buildDefaultModuleConfig(t));
+  // «بازگردانی پیش‌فرض» = ترتیبِ کدِ پیش‌فرض + پُرکردنِ نام‌ها با مقادیرِ
+  // پیش‌فرضِ فارسی/انگلیسی (نه خالی‌کردن).
+  const handleReset = () => setList(DEFAULT_MODULE_CONFIG.map((d) => {
+    const n = moduleDefaultNames(d.moduleKey);
+    return { moduleKey: d.moduleKey, displayLabel: n.fa, displayLabelEn: n.en, description: "" };
+  }));
 
   return (
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
       <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 14, lineHeight: 1.8 }}>
         {t("saMmNote")}
       </p>
-      {list.map((m, idx) => (
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 8px 6px", borderBottom: `1.5px solid ${THEME.border}` }}>
+        <span style={{ width: 15, flexShrink: 0 }} />
+        <span style={{ width: 15, flexShrink: 0 }} />
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1.4fr", gap: 8, flex: 1, minWidth: 0, fontSize: 10.5, fontWeight: 700, color: THEME.text3 }}>
+          <span>{t("saMmColFa")}</span>
+          <span>{t("saMmColEn")}</span>
+          <span>{t("saMmColDesc")}</span>
+        </div>
+      </div>
+      {list.map((m, idx) => {
+        const def = moduleDefaultNames(m.moduleKey);
+        return (
         <div
           key={m.moduleKey}
           draggable
@@ -1042,12 +1062,14 @@ function ModuleManagementTab({ currentAdmin }) {
             <button type="button" onClick={() => move(idx, -1)} disabled={idx === 0} style={{ background: "none", border: "none", cursor: idx === 0 ? "default" : "pointer", opacity: idx === 0 ? 0.3 : 1, padding: 1 }}><ArrowUp size={13} color={THEME.text2} /></button>
             <button type="button" onClick={() => move(idx, 1)} disabled={idx === list.length - 1} style={{ background: "none", border: "none", cursor: idx === list.length - 1 ? "default" : "pointer", opacity: idx === list.length - 1 ? 0.3 : 1, padding: 1 }}><ArrowDown size={13} color={THEME.text2} /></button>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 8, flex: 1, minWidth: 0 }}>
-            <input style={inputStyle} placeholder={moduleDefaultLabel(t, m.moduleKey)} value={m.displayLabel} onChange={(e) => updateField(idx, "displayLabel", e.target.value)} dir="rtl" />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1.4fr", gap: 8, flex: 1, minWidth: 0 }}>
+            <input style={inputStyle} placeholder={def.fa} value={m.displayLabel} onChange={(e) => updateField(idx, "displayLabel", e.target.value)} dir="rtl" />
+            <input style={{ ...inputStyle, direction: "ltr" }} placeholder={def.en} value={m.displayLabelEn} onChange={(e) => updateField(idx, "displayLabelEn", e.target.value)} dir="ltr" />
             <input style={inputStyle} placeholder={t("saMmDescPlaceholder")} value={m.description} onChange={(e) => updateField(idx, "description", e.target.value)} dir="rtl" />
           </div>
         </div>
-      ))}
+        );
+      })}
       {message && <p style={{ fontSize: 11.5, color: msgErr ? THEME.danger : "#166534", marginTop: 10 }}>{message}</p>}
       <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
         <button type="button" style={btnStyle()} onClick={handleSave} disabled={saving}>{saving ? t("saSavingEllipsis") : t("saSaveChangesPlain")}</button>
