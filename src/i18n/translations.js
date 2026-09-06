@@ -8578,7 +8578,26 @@ export const translations = {
   "afProcessingPhoto": { "fa": "در حال پردازش عکس...", "en": "Processing photo..." },
   "afAttachmentAlt": { "fa": "پیوست {n}", "en": "Attachment {n}" },
   "afSubmit": { "fa": "ثبت آنومالی", "en": "Log Anomaly" },
-  "afSubmitting": { "fa": "در حال ثبت...", "en": "Logging..." }
+  "afSubmitting": { "fa": "در حال ثبت...", "en": "Logging..." },
+
+  // --- App.jsx AnomalyList (batch 24) ---
+  "alExportTitleMine": { "fa": "آنومالی‌های {name}", "en": "{name}'s anomalies" },
+  "alExportTitleAll": { "fa": "لیست آنومالی‌ها", "en": "Anomaly list" },
+  "alContractorFallback": { "fa": "پیمانکار", "en": "Contractor" },
+  "alAssignedToExpertPrefix": { "fa": "ارجاع به کارشناس:", "en": "Assigned to expert:" },
+  "alExpertOpinionLabel": { "fa": "نظر کارشناس:", "en": "Expert's comment:" },
+  "alGateApproveCloseAnomaly": { "fa": "تأیید نهایی و بستن آنومالی", "en": "Final approval & close anomaly" },
+  "alGateApproveSendContractor": { "fa": "تأیید نهایی و ارسال به پیمانکار", "en": "Final approval & send to contractor" },
+  "alGateAssignExpert": { "fa": "ارجاع به کارشناس برای بررسی", "en": "Assign to an expert for review" },
+  "alGateReject": { "fa": "رد", "en": "Reject" },
+  "alSelectExpert": { "fa": "انتخاب کارشناس", "en": "Select expert" },
+  "alSubmitAssignment": { "fa": "ثبت ارجاع", "en": "Submit assignment" },
+  "alSendReviewToSupervisor": { "fa": "ارسال نتیجه‌ی بررسی برای سرپرست/مدیر HSE", "en": "Send review result to the HSE supervisor/manager" },
+  "alReviewCommentOptional": { "fa": "نظر یا توضیح (اختیاری)", "en": "Comment or note (optional)" },
+  "alSend": { "fa": "ارسال", "en": "Send" },
+  "alRejectReasonOptional": { "fa": "دلیل رد (اختیاری)", "en": "Reason for rejection (optional)" },
+  "alSubmitReject": { "fa": "ثبت رد", "en": "Submit rejection" },
+  "alRejectReturnDefaultNote": { "fa": "رد و بازگشت به پیمانکار", "en": "Rejected and returned to the contractor" }
 };
 
 // برای فایل‌های غیر React (لایه‌ی داده / api.js) که به Hook دسترسی ندارند اما

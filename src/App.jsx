@@ -2463,7 +2463,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
       const uname = await resolveContractorUsername(a.contractor);
       if (uname) initialParticipants = [{ username: uname, fullName: a.contractor, role: "CONTRACTOR" }];
     }
-    const convId = await findOrCreateLinkedConversation(currentUser, "anomaly", a.id, `آنومالی ${a.trackingNumber}`, initialParticipants);
+    const convId = await findOrCreateLinkedConversation(currentUser, "anomaly", a.id, t("anomalyConvTitle", { num: a.trackingNumber }), initialParticipants);
     setLinkedChatBusy(false);
     if (convId?.__error) { alert(convId.message); return; }
     setLinkedChatId(convId);
@@ -2569,8 +2569,8 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
   });
 
   const handleBulkDelete = async (ids) => {
-    if (readOnly) { alert("شما مجوز حذف را ندارید"); return; }
-    if (!confirm(`${ids.length} مورد حذف شود؟`)) return;
+    if (readOnly) { alert(t("errNoDeletePermission")); return; }
+    if (!confirm(t("confirmDeleteCount", { count: ids.length }))) return;
     for (const id of ids) {
       await offlineWrite({ module: "anomalies", table: "anomalies", action: "delete", id, payload: {} });
       // طبق گزارش صریح: بعد از حذف خودِ رکورد، رکورد گیت (در انتظار
@@ -2634,8 +2634,8 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
   };
 
   const handleDelete = async (id, trackingNumber) => {
-    if (readOnly) { alert("شما مجوز حذف را ندارید"); return; }
-    if (confirm(`آیا از حذف آنومالی «${trackingNumber}» مطمئن هستید؟`)) {
+    if (readOnly) { alert(t("errNoDeletePermission")); return; }
+    if (confirm(t("confirmDeleteAnomaly", { num: trackingNumber }))) {
       await offlineWrite({ module: "anomalies", table: "anomalies", action: "delete", id, payload: {} });
       // طبق گزارش صریح: بعد از حذف خودِ رکورد، رکورد گیت مربوطه هم پاک
       // شود — وگرنه یتیم می‌ماند و برای همیشه در «کارهای در دست اقدام
@@ -2646,7 +2646,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
   };
 
   const handleActionPickFiles = async (fileList) => {
-    if (!canActAsContractor) { alert("شما مجوز ثبت اقدام اصلاحی را ندارید"); return; }
+    if (!canActAsContractor) { alert(t("errNoCorrectiveActionPermission")); return; }
     const files = Array.from(fileList || []).slice(0, 2 - actionPhotos.length);
     if (files.length === 0) return;
     setActionPhotoBusy(true);
@@ -2661,12 +2661,12 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
   const removeActionPhoto = (idx) => setActionPhotos((prev) => prev.filter((_, i) => i !== idx));
 
   const submitForReview = async (a) => {
-    if (!canActAsContractor) { alert("شما مجوز ثبت اقدام اصلاحی را ندارید"); return; }
+    if (!canActAsContractor) { alert(t("errNoCorrectiveActionPermission")); return; }
     if (!actionText.trim()) return;
     if (actionPhotos.length > 0 && isOnline()) {
       const { allowed, storageMb } = await checkUploadAllowed();
       if (!allowed) {
-        alert(`فضای ذخیره‌سازی پر شده است (${storageMb} مگابایت). لطفاً ابتدا از بخش «آرشیو فایل‌ها» عکس‌های قدیمی را حذف کنید، یا اقدام اصلاحی را بدون عکس ثبت کنید.`);
+        alert(t("errStorageFullNoPhoto", { mb: storageMb }));
         return;
       }
     }
@@ -2704,7 +2704,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
   };
 
   const approveAnomaly = async (a) => {
-    if (!isReviewer) { alert("شما مجوز تأیید را ندارید"); return; }
+    if (!isReviewer) { alert(t("errNoApprovePermission")); return; }
     setReviewSaving(true);
     const patch = { status: "Closed", closeDate: todayISO() };
     await offlineWrite({ module: "anomalies", table: "anomalies", action: "update", id: a.id, payload: anomalyPatchToDb(patch) });
@@ -2720,12 +2720,12 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
   };
 
   const rejectAnomaly = async (a) => {
-    if (!isReviewer) { alert("شما مجوز رد کردن را ندارید"); return; }
+    if (!isReviewer) { alert(t("errNoRejectPermission")); return; }
     setReviewSaving(true);
     const patch = { status: "open", reviewNote: rejectNote.trim() };
     await offlineWrite({ module: "anomalies", table: "anomalies", action: "update", id: a.id, payload: anomalyPatchToDb(patch) });
     setAnomalies(anomalies.map((x) => (x.id === a.id ? { ...x, ...patch, syncStatus: isOnline() ? "synced" : "pending" } : x)));
-    if (gateMap[a.id]) rejectGateItem(gateMap[a.id].id, currentUser?.name, rejectNote.trim() || "رد و بازگشت به پیمانکار").catch(() => {});
+    if (gateMap[a.id]) rejectGateItem(gateMap[a.id].id, currentUser?.name, rejectNote.trim() || t("alRejectReturnDefaultNote")).catch(() => {});
     setReviewSaving(false);
     setExpandedId(null);
     resetActionState();
@@ -2734,9 +2734,9 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
 
   const riskMeta = (level) => RISK_LEVELS.find((r) => r.value === level) || RISK_LEVELS[1];
   const statusMeta = (status) => {
-    if (status === "Closed") return { label: "بسته", color: "#166534", bg: "#dcfce7", Icon: CheckCircle2 };
-    if (status === "pending_review") return { label: "در انتظار تأیید", color: "#1d4ed8", bg: "#dbeafe", Icon: Clock };
-    return { label: "باز", color: "#92400e", bg: "#fef3c7", Icon: Clock };
+    if (status === "Closed") return { label: t("anomStatusClosed"), color: "#166534", bg: "#dcfce7", Icon: CheckCircle2 };
+    if (status === "pending_review") return { label: t("anomStatusPendingReview"), color: "#1d4ed8", bg: "#dbeafe", Icon: Clock };
+    return { label: t("anomStatusOpen"), color: "#92400e", bg: "#fef3c7", Icon: Clock };
   };
 
   // ---------- گیت تأیید سرپرست/مدیر HSE (گردش‌کار سه‌مرحله‌ای) ----------
@@ -2835,7 +2835,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
     await loadGateData();
   };
 
-  if (loading) return <div style={{ padding: 24, textAlign: "center", color: "#93a1b0" }}>در حال بارگذاری...</div>;
+  if (loading) return <div style={{ padding: 24, textAlign: "center", color: "#93a1b0" }}>{t("commonLoading")}</div>;
 
   if (linkedChatId) {
     return <ChatThread conversationId={linkedChatId} currentUser={currentUser} onBack={() => setLinkedChatId(null)} />;
@@ -2846,28 +2846,28 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
 
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>← بازگشت به منو</div>}
+      {onBack && <div style={styles.backLink} onClick={onBack}>{t("cmBackToMenu")}</div>}
 
       <div style={styles.statsRow}>
         <div style={styles.statBox}>
           <div style={styles.statNum}>{counts.total}</div>
-          <div style={styles.statLabel}>کل موارد</div>
+          <div style={styles.statLabel}>{t("statTotalItems")}</div>
         </div>
         <div style={{ ...styles.statBox, background: "#fef3c7" }}>
           <div style={{ ...styles.statNum, color: "#92400e" }}>{counts.open}</div>
-          <div style={styles.statLabel}>باز</div>
+          <div style={styles.statLabel}>{t("anomStatusOpen")}</div>
         </div>
         <div style={{ ...styles.statBox, background: "#dbeafe" }}>
           <div style={{ ...styles.statNum, color: "#1d4ed8" }}>{counts.review}</div>
-          <div style={styles.statLabel}>در انتظار تأیید</div>
+          <div style={styles.statLabel}>{t("anomStatusPendingReview")}</div>
         </div>
         <div style={{ ...styles.statBox, background: "#dcfce7" }}>
           <div style={{ ...styles.statNum, color: "#166534" }}>{counts.closed}</div>
-          <div style={styles.statLabel}>بسته</div>
+          <div style={styles.statLabel}>{t("anomStatusClosed")}</div>
         </div>
         <div style={{ ...styles.statBox, background: "#fee2e2" }}>
           <div style={{ ...styles.statNum, color: "#991b1b" }}>{counts.high}</div>
-          <div style={styles.statLabel}>ریسک بالای باز</div>
+          <div style={styles.statLabel}>{t("statHighRiskOpen")}</div>
         </div>
       </div>
 
@@ -2875,58 +2875,58 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
         <button
           type="button"
           style={{ ...styles.smallButton, flex: 1, background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
-          onClick={() => exportAnomaliesExcel(sorted, isContractor ? `آنومالی‌های ${currentUser?.name || "پیمانکار"}` : "لیست آنومالی‌ها", currentUser?.companyId)}
+          onClick={() => exportAnomaliesExcel(sorted, isContractor ? t("alExportTitleMine", { name: currentUser?.name || t("alContractorFallback") }) : t("alExportTitleAll"), currentUser?.companyId)}
           disabled={sorted.length === 0}
         >
-          <FileSpreadsheet size={15} /> خروجی Excel
+          <FileSpreadsheet size={15} /> {t("exportExcelButton")}
         </button>
         <button
           type="button"
           style={{ ...styles.smallButton, flex: 1, background: "#334155", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
-          onClick={() => exportAnomaliesPdf(sorted, isContractor ? `آنومالی‌های ${currentUser?.name || "پیمانکار"}` : "لیست آنومالی‌ها")}
+          onClick={() => exportAnomaliesPdf(sorted, isContractor ? t("alExportTitleMine", { name: currentUser?.name || t("alContractorFallback") }) : t("alExportTitleAll"))}
           disabled={sorted.length === 0}
         >
-          <FileText size={15} /> خروجی PDF
+          <FileText size={15} /> {t("exportPdfButton")}
         </button>
       </div>
 
-      <h3 style={{ marginTop: 22, fontSize: 15.5, color: THEME.navy, fontWeight: 700 }}>موارد ثبت‌شده ({sorted.length})</h3>
+      <h3 style={{ marginTop: 22, fontSize: 15.5, color: THEME.navy, fontWeight: 700 }}>{t("registeredItemsCount", { count: sorted.length })}</h3>
 
       <DataView
         items={sorted}
         getId={(a) => a.id}
         searchQuery={search}
         onSearchChange={setSearch}
-        searchPlaceholder="جستجو (شماره، پیمانکار، ناحیه، شرح)..."
-        sortOptions={[{ value: "newest", label: "جدیدترین" }, { value: "oldest", label: "قدیمی‌ترین" }, { value: "risk", label: "سطح ریسک" }]}
+        searchPlaceholder={t("anomalySearchPlaceholder")}
+        sortOptions={[{ value: "newest", label: t("sortNewest") }, { value: "oldest", label: t("sortOldest") }, { value: "risk", label: t("sortRisk") }]}
         sortValue={sort}
         onSortChange={setSort}
         filterSlot={
           <>
             <select style={styles.filterSelect} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir="rtl">
-              <option value="all">همه وضعیت‌ها</option>
-              <option value="not_closed">هنوز بسته نشده (باز + در انتظار تأیید)</option>
-              <option value="open">باز</option>
-              <option value="pending_review">در انتظار تأیید</option>
-              <option value="Closed">بسته</option>
+              <option value="all">{t("filterAllStatuses")}</option>
+              <option value="not_closed">{t("filterNotClosed")}</option>
+              <option value="open">{t("anomStatusOpen")}</option>
+              <option value="pending_review">{t("anomStatusPendingReview")}</option>
+              <option value="Closed">{t("anomStatusClosed")}</option>
             </select>
             <select style={styles.filterSelect} value={riskFilter} onChange={(e) => setRiskFilter(e.target.value)} dir="rtl">
-              <option value="all">همه سطوح ریسک</option>
+              <option value="all">{t("filterAllRiskLevels")}</option>
               {RISK_LEVELS.map((r) => <option key={r.value} value={r.value}>{r.value}</option>)}
             </select>
             {!isContractor && (
               <select style={styles.filterSelect} value={contractorFilter} onChange={(e) => setContractorFilter(e.target.value)} dir="rtl">
-                <option value="all">همه پیمانکاران</option>
+                <option value="all">{t("filterAllContractors")}</option>
                 {contractorNamesInList.map((name) => <option key={name} value={name}>{name}</option>)}
               </select>
             )}
           </>
         }
-        bulkActions={isReviewer && !readOnly ? [{ label: "حذف گروهی", danger: true, onClick: handleBulkDelete }] : null}
-        emptyMessage="موردی یافت نشد"
+        bulkActions={isReviewer && !readOnly ? [{ label: t("bulkDelete"), danger: true, onClick: handleBulkDelete }] : null}
+        emptyMessage={t("noItemsFound")}
         columns={[
           {
-            key: "tracking", label: "شماره / ریسک",
+            key: "tracking", label: t("colTrackingRisk"),
             render: (a) => (
               <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                 <span style={{ fontWeight: 700, color: THEME.navy }}>{a.trackingNumber}</span>
@@ -2946,13 +2946,13 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
               </div>
             ),
           },
-          { key: "desc", label: "شرح", render: (a) => <span style={{ display: "block", maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.description}</span> },
+          { key: "desc", label: t("colDescription"), render: (a) => <span style={{ display: "block", maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.description}</span> },
           {
-            key: "meta", label: "ناحیه / پیمانکار",
+            key: "meta", label: t("colAreaContractor"),
             render: (a) => <span style={{ fontSize: 11.5, color: THEME.text3 }}>{a.area} {a.contractor && `· ${a.contractor}`} {a.date && `· ${isoToJalaliDisplay(a.date)}`}</span>,
           },
           {
-            key: "status", label: "وضعیت",
+            key: "status", label: t("colStatus"),
             render: (a) => {
               const sm = statusMeta(a.status);
               const gi = gateMap[a.id];
@@ -2961,7 +2961,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                   <StatusPill label={sm.label} color={sm.color} bg={sm.bg} />
                   {assignedExpertName && (
-                    <span style={{ fontSize: 10.5, color: "#1d4ed8", fontWeight: 600 }}>ارجاع به کارشناس: {assignedExpertName}</span>
+                    <span style={{ fontSize: 10.5, color: "#1d4ed8", fontWeight: 600 }}>{t("alAssignedToExpertPrefix")} {assignedExpertName}</span>
                   )}
                 </div>
               );
@@ -2970,7 +2970,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
         ]}
         renderRowActions={(a) => (
           <button type="button" style={styles.smallButton} onClick={() => startExpand(a)}>
-            {expandedId === a.id ? "بستن" : "مشاهده"}
+            {expandedId === a.id ? t("commonClose") : t("viewAction")}
           </button>
         )}
         renderCard={(a) => {
@@ -3004,11 +3004,11 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
                     )}
                   </div>
                   {assignedExpertNameCard && (
-                    <div style={{ fontSize: 10.5, color: "#1d4ed8", fontWeight: 600, marginTop: 4 }}>ارجاع به کارشناس: {assignedExpertNameCard}</div>
+                    <div style={{ fontSize: 10.5, color: "#1d4ed8", fontWeight: 600, marginTop: 4 }}>{t("alAssignedToExpertPrefix")} {assignedExpertNameCard}</div>
                   )}
                   <div style={{ fontSize: 14, marginTop: 9, color: THEME.text }}>{a.description}</div>
                   <div style={{ fontSize: 11.5, color: THEME.text3, marginTop: 7, fontWeight: 500 }}>
-                    {a.area} {a.contractor && `· ${a.contractor}`} {a.date && `· ${isoToJalaliDisplay(a.date)}`} {a.sender && `· ثبت توسط ${a.sender}`}
+                    {a.area} {a.contractor && `· ${a.contractor}`} {a.date && `· ${isoToJalaliDisplay(a.date)}`} {a.sender && `· ${t("submittedByLabel", { name: a.sender })}`}
                   </div>
                 </div>
                 <ChevronRight size={18} color={THEME.text3} style={{ transform: isOpenCard ? "rotate(-90deg)" : "none", transition: "transform .15s", flexShrink: 0, marginRight: 6 }} />
@@ -3029,32 +3029,32 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
                 <p style={{ margin: 0, fontSize: 13, color: THEME.text, lineHeight: 1.8 }}>{a.description}</p>
               </div>
               <button type="button" style={{ ...styles.smallButton, background: THEME.teal, display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }} onClick={() => openLinkedChat(a)} disabled={linkedChatBusy}>
-                <MessageCircle size={13} /> {linkedChatBusy ? "..." : "چت درباره این مورد"}
+                <MessageCircle size={13} /> {linkedChatBusy ? "..." : t("chatAboutThis")}
               </button>
               <button type="button" style={{ ...styles.smallButton, background: THEME.navyMid, display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }} onClick={() => openLinkedHcms(a)} disabled={linkedHcmsBusy}>
-                <ShieldAlert size={13} /> {linkedHcmsBusy ? "..." : "ارزیابی ریسک HCMS"}
+                <ShieldAlert size={13} /> {linkedHcmsBusy ? "..." : t("hcmsRiskAssessment")}
               </button>
             </div>
 
             {a.reviewNote && a.status === "open" && (
               <div style={{ background: "#fee2e2", color: "#991b1b", padding: 10, borderRadius: 8, fontSize: 13, marginBottom: 14 }}>
-                <b>بازگشت توسط کارفرما:</b> {a.reviewNote}
+                <b>{t("returnedByEmployer")}</b> {a.reviewNote}
               </div>
             )}
 
             {a.photoCount > 0 && (
               <div style={{ marginBottom: 16 }}>
                 {photosLoading && !photosMap[a.id] ? (
-                  <p style={{ fontSize: 12, color: "#93a1b0" }}>در حال بارگذاری عکس‌ها...</p>
+                  <p style={{ fontSize: 12, color: "#93a1b0" }}>{t("loadingPhotos")}</p>
                 ) : (
                   <>
                     {reportPhotos.length > 0 && (
                       <>
-                        <label style={styles.label}>عکس‌های گزارش اولیه (کارفرما)</label>
+                        <label style={styles.label}>{t("initialReportPhotos")}</label>
                         <div style={styles.photoGrid}>
                           {reportPhotos.map((p, idx) => (
                             <div key={p.id} style={styles.photoThumbWrap}>
-                              <img src={p.photo} alt={`گزارش ${idx + 1}`} style={styles.photoThumb} onClick={() => setViewerSrc(p.photo)} />
+                              <img src={p.photo} alt={t("reportPhotoAlt", { n: idx + 1 })} style={styles.photoThumb} onClick={() => setViewerSrc(p.photo)} />
                               {isReviewer && (
                                 <button type="button" style={styles.photoRemoveBtn} onClick={() => removeExistingPhoto(a.id, p.id)}>
                                   <Trash2 size={12} color="#fff" />
@@ -3067,11 +3067,11 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
                     )}
                     {fixPhotos.length > 0 && (
                       <>
-                        <label style={styles.label}>عکس‌های اقدام اصلاحی (پیمانکار)</label>
+                        <label style={styles.label}>{t("correctiveActionPhotos")}</label>
                         <div style={styles.photoGrid}>
                           {fixPhotos.map((p, idx) => (
                             <div key={p.id} style={styles.photoThumbWrap}>
-                              <img src={p.photo} alt={`اقدام ${idx + 1}`} style={styles.photoThumb} onClick={() => setViewerSrc(p.photo)} />
+                              <img src={p.photo} alt={t("actionPhotoAlt", { n: idx + 1 })} style={styles.photoThumb} onClick={() => setViewerSrc(p.photo)} />
                             </div>
                           ))}
                         </div>
@@ -3085,10 +3085,10 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
             {/* ---- پیمانکار / ادمین: ثبت اقدام اصلاحی ---- */}
             {canActAsContractor && a.status === "open" && (
               <div>
-                <label style={styles.label}>شرح اقدام اصلاحی انجام‌شده</label>
-                <textarea style={{ ...styles.input, minHeight: 70, fontFamily: "inherit" }} value={actionText} onChange={(e) => setActionText(e.target.value)} dir="rtl" placeholder="توضیح دهید چه اقدامی برای رفع این آنومالی انجام دادید" />
+                <label style={styles.label}>{t("correctiveActionDescLabel")}</label>
+                <textarea style={{ ...styles.input, minHeight: 70, fontFamily: "inherit" }} value={actionText} onChange={(e) => setActionText(e.target.value)} dir="rtl" placeholder={t("correctiveActionPlaceholder")} />
 
-                <label style={styles.label}>عکس اقدام اصلاحی ({actionPhotos.length}/2)</label>
+                <label style={styles.label}>{t("correctiveActionPhotoCount", { count: actionPhotos.length })}</label>
                 <div style={{ display: "flex", gap: 8 }}>
                   <label style={{ ...styles.smallButton, flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", position: "relative", overflow: "hidden", opacity: actionPhotoBusy || actionPhotos.length >= 2 ? 0.5 : 1, pointerEvents: actionPhotoBusy || actionPhotos.length >= 2 ? "none" : "auto" }}>
                     <Camera size={16} /> {t("afTakePhoto")}
@@ -3099,12 +3099,12 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
                     <input type="file" accept="image/*" multiple style={{ position: "absolute", width: 1, height: 1, opacity: 0, overflow: "hidden", pointerEvents: "none" }} onChange={(e) => { handleActionPickFiles(e.target.files); e.target.value = ""; }} />
                   </label>
                 </div>
-                {actionPhotoBusy && <p style={{ fontSize: 12, color: "#93a1b0", marginTop: 8 }}>در حال پردازش عکس...</p>}
+                {actionPhotoBusy && <p style={{ fontSize: 12, color: "#93a1b0", marginTop: 8 }}>{t("afProcessingPhoto")}</p>}
                 {actionPhotos.length > 0 && (
                   <div style={styles.photoGrid}>
                     {actionPhotos.map((src, idx) => (
                       <div key={idx} style={styles.photoThumbWrap}>
-                        <img src={src} alt={`اقدام ${idx + 1}`} style={styles.photoThumb} />
+                        <img src={src} alt={t("actionPhotoAlt", { n: idx + 1 })} style={styles.photoThumb} />
                         <button type="button" style={styles.photoRemoveBtn} onClick={() => removeActionPhoto(idx)}>
                           <X size={12} color="#fff" />
                         </button>
@@ -3114,21 +3114,21 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
                 )}
 
                 <button type="button" style={styles.button} onClick={() => submitForReview(a)} disabled={actionSaving || !actionText.trim()}>
-                  {actionSaving ? "در حال ارسال..." : isAdmin ? "ثبت اقدام و ارسال برای تأیید" : "ارسال برای تأیید کارفرما"}
+                  {actionSaving ? t("sendingEllipsis") : isAdmin ? t("submitActionAndSendForApproval") : t("sendForEmployerApproval")}
                 </button>
               </div>
             )}
             {isContractor && a.status === "pending_review" && (
               <div style={{ fontSize: 13, color: "#1d4ed8", background: "#dbeafe", padding: 10, borderRadius: 8 }}>
-                اقدام شما ثبت شد و در انتظار بررسی و تأیید کارفرماست.
-                {a.contractorAction && <div style={{ marginTop: 6, color: "#333" }}><b>شرح اقدام شما:</b> {a.contractorAction}</div>}
+                {t("actionSubmittedAwaitingReview")}
+                {a.contractorAction && <div style={{ marginTop: 6, color: "#333" }}><b>{t("yourActionDescLabel")}</b> {a.contractorAction}</div>}
               </div>
             )}
             {isContractor && a.status === "Closed" && (
               <div style={{ fontSize: 13, color: "#555", lineHeight: 1.9 }}>
-                {a.contractorAction && <div><b>اقدام اصلاحی شما:</b> {a.contractorAction}</div>}
-                <div><b>وضعیت:</b> تأیید و بسته شد توسط کارفرما</div>
-                {a.closeDate && <div><b>تاریخ بسته شدن:</b> {isoToJalaliDisplay(a.closeDate)}</div>}
+                {a.contractorAction && <div><b>{t("yourCorrectiveActionLabel")}</b> {a.contractorAction}</div>}
+                <div><b>{t("statusColonLabel")}</b> {t("approvedClosedByEmployer")}</div>
+                {a.closeDate && <div><b>{t("closeDateColonLabel")}</b> {isoToJalaliDisplay(a.closeDate)}</div>}
               </div>
             )}
 
@@ -3137,28 +3137,28 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
               <div>
                 {a.contractorAction && (
                   <div style={{ fontSize: 13, background: "#f8fafc", padding: 10, borderRadius: 8, marginBottom: 12 }}>
-                    <b>شرح اقدام پیمانکار:</b> {a.contractorAction}
+                    <b>{t("contractorActionDescLabel")}</b> {a.contractorAction}
                   </div>
                 )}
                 {!gateMap[a.id] && (
                   !showRejectBox ? (
                     <div style={{ display: "flex", gap: 8 }}>
                       <button type="button" style={styles.button} onClick={() => approveAnomaly(a)} disabled={reviewSaving}>
-                        {reviewSaving ? "در حال ثبت..." : "تأیید و بستن"}
+                        {reviewSaving ? t("savingEllipsisShort") : t("approveAndClose")}
                       </button>
                       <button type="button" style={{ ...styles.smallButton, background: "#c92a2a" }} onClick={() => setShowRejectBox(true)}>
-                        رد و بازگشت
+                        {t("rejectAndReturn")}
                       </button>
                     </div>
                   ) : (
                     <>
-                      <label style={styles.label}>دلیل بازگشت (برای پیمانکار نمایش داده می‌شود)</label>
+                      <label style={styles.label}>{t("rejectReasonLabel")}</label>
                       <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} dir="rtl" />
                       <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
                         <button type="button" style={{ ...styles.button, background: "#c92a2a" }} onClick={() => rejectAnomaly(a)} disabled={reviewSaving}>
-                          {reviewSaving ? "در حال ثبت..." : "تأیید بازگشت"}
+                          {reviewSaving ? t("savingEllipsisShort") : t("confirmReturn")}
                         </button>
-                        <button type="button" style={{ ...styles.smallButton, background: "#5b6b7d" }} onClick={() => setShowRejectBox(false)}>انصراف</button>
+                        <button type="button" style={{ ...styles.smallButton, background: "#5b6b7d" }} onClick={() => setShowRejectBox(false)}>{t("commonCancel")}</button>
                       </div>
                     </>
                   )
@@ -3167,9 +3167,9 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
             )}
             {isReviewer && a.status === "Closed" && (
               <div style={{ fontSize: 13, color: "#555", lineHeight: 1.9 }}>
-                {a.contractorAction && <div><b>اقدام پیمانکار:</b> {a.contractorAction}</div>}
-                {a.closeDate && <div><b>تاریخ بسته شدن:</b> {isoToJalaliDisplay(a.closeDate)}</div>}
-                {a.effectiveness && <div><b>اثربخشی:</b> {a.effectiveness}</div>}
+                {a.contractorAction && <div><b>{t("contractorActionLabel")}</b> {a.contractorAction}</div>}
+                {a.closeDate && <div><b>{t("closeDateColonLabel")}</b> {isoToJalaliDisplay(a.closeDate)}</div>}
+                {a.effectiveness && <div><b>{t("effectivenessLabel")}</b> {a.effectiveness}</div>}
               </div>
             )}
             {gateMap[a.id] && (
@@ -3179,12 +3179,12 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
                 </p>
                 {gateMap[a.id].status === "assigned_review" && (
                   <p style={{ fontSize: 11.5, fontWeight: 600, color: "#1d4ed8", margin: "0 0 8px" }}>
-                    ارجاع به کارشناس: {gateStaff.find((s) => s.username === gateMap[a.id].assignedTo)?.name || gateMap[a.id].assignedTo}
+                    {t("alAssignedToExpertPrefix")} {gateStaff.find((s) => s.username === gateMap[a.id].assignedTo)?.name || gateMap[a.id].assignedTo}
                   </p>
                 )}
                 {gateMap[a.id].reviewerComment && (
                   <p style={{ fontSize: 11.5, color: "#374151", margin: "0 0 8px", lineHeight: 1.8 }}>
-                    <b>نظر کارشناس:</b> {gateMap[a.id].reviewerComment}
+                    <b>{t("alExpertOpinionLabel")}</b> {gateMap[a.id].reviewerComment}
                   </p>
                 )}
                 {gateMessage && <p style={styles.error}>{gateMessage}</p>}
@@ -3194,25 +3194,25 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
                   <div>
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
                       <button type="button" style={{ ...styles.smallButton, background: "#166534" }} onClick={() => handleApproveGate(a)} disabled={gateBusy === a.id}>
-                        {gateMap[a.id].direction === "contractor_to_employer" ? "تأیید نهایی و بستن آنومالی" : "تأیید نهایی و ارسال به پیمانکار"}
+                        {gateMap[a.id].direction === "contractor_to_employer" ? t("alGateApproveCloseAnomaly") : t("alGateApproveSendContractor")}
                       </button>
                       {gateMap[a.id].status === "pending_approval" && (
                         <button type="button" style={styles.smallButton} onClick={() => { setAssigningGateId(a.id); setAssignGateTo(""); }} disabled={gateBusy === a.id}>
-                          ارجاع به کارشناس برای بررسی
+                          {t("alGateAssignExpert")}
                         </button>
                       )}
                       <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => setShowRejectBox(true)} disabled={gateBusy === a.id}>
-                        رد
+                        {t("alGateReject")}
                       </button>
                     </div>
                     {assigningGateId === a.id && (
                       <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                         <select style={{ ...styles.input, marginTop: 0, maxWidth: 220 }} value={assignGateTo} onChange={(e) => setAssignGateTo(e.target.value)} dir="rtl">
-                          <option value="">انتخاب کارشناس</option>
+                          <option value="">{t("alSelectExpert")}</option>
                           {gateStaff.filter((s) => s.username !== currentUser?.username).map((s) => <option key={s.username} value={s.username}>{s.name}</option>)}
                         </select>
-                        <button type="button" style={styles.smallButton} onClick={() => handleAssignForReview(a)} disabled={gateBusy === a.id || !assignGateTo}>ثبت ارجاع</button>
-                        <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setAssigningGateId(null)}>انصراف</button>
+                        <button type="button" style={styles.smallButton} onClick={() => handleAssignForReview(a)} disabled={gateBusy === a.id || !assignGateTo}>{t("alSubmitAssignment")}</button>
+                        <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setAssigningGateId(null)}>{t("commonCancel")}</button>
                       </div>
                     )}
                   </div>
@@ -3223,15 +3223,15 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
                   <div>
                     {reviewingGateId !== a.id ? (
                       <button type="button" style={styles.smallButton} onClick={() => { setReviewingGateId(a.id); setReviewComment(""); }} disabled={gateBusy === a.id}>
-                        ارسال نتیجه‌ی بررسی برای سرپرست/مدیر HSE
+                        {t("alSendReviewToSupervisor")}
                       </button>
                     ) : (
                       <div>
-                        <label style={styles.label}>نظر یا توضیح (اختیاری)</label>
+                        <label style={styles.label}>{t("alReviewCommentOptional")}</label>
                         <textarea style={{ ...styles.input, minHeight: 50 }} value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} dir="rtl" />
                         <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                          <button type="button" style={styles.smallButton} onClick={() => handleSubmitReview(a)} disabled={gateBusy === a.id}>ارسال</button>
-                          <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setReviewingGateId(null)}>انصراف</button>
+                          <button type="button" style={styles.smallButton} onClick={() => handleSubmitReview(a)} disabled={gateBusy === a.id}>{t("alSend")}</button>
+                          <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setReviewingGateId(null)}>{t("commonCancel")}</button>
                         </div>
                       </div>
                     )}
@@ -3240,11 +3240,11 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
 
                 {isReviewer && showRejectBox && (
                   <div style={{ marginTop: 8 }}>
-                    <label style={styles.label}>دلیل رد (اختیاری)</label>
+                    <label style={styles.label}>{t("alRejectReasonOptional")}</label>
                     <textarea style={{ ...styles.input, minHeight: 50 }} value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} dir="rtl" />
                     <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                      <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => { handleRejectGate(a, rejectNote); setShowRejectBox(false); setRejectNote(""); }} disabled={gateBusy === a.id}>ثبت رد</button>
-                      <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setShowRejectBox(false)}>انصراف</button>
+                      <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => { handleRejectGate(a, rejectNote); setShowRejectBox(false); setRejectNote(""); }} disabled={gateBusy === a.id}>{t("alSubmitReject")}</button>
+                      <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setShowRejectBox(false)}>{t("commonCancel")}</button>
                     </div>
                   </div>
                 )}
@@ -3253,27 +3253,27 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
             {isReviewer && a.status === "open" && (
               <div>
                 <div style={styles.backLink} onClick={() => setShowManualEdit((v) => !v)}>
-                  {showManualEdit ? "بستن ویرایش دستی" : "ویرایش دستی (اختیاری)"}
+                  {showManualEdit ? t("closeManualEdit") : t("manualEditOptional")}
                 </div>
                 {showManualEdit && (
                   <>
-                    <label style={styles.label}>اقدام اصلاحی</label>
+                    <label style={styles.label}>{t("fieldCorrectiveAction")}</label>
                     <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={draft.correctiveAction} onChange={(e) => setDraft({ ...draft, correctiveAction: e.target.value })} dir="rtl" />
 
-                    <label style={styles.label}>موانع و مشکلات</label>
+                    <label style={styles.label}>{t("fieldObstacles")}</label>
                     <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={draft.obstacles} onChange={(e) => setDraft({ ...draft, obstacles: e.target.value })} dir="rtl" />
 
                     <div style={styles.formGrid}>
                       <div>
-                        <label style={styles.label}>شخص پیگیر</label>
+                        <label style={styles.label}>{t("fieldFollowerPerson")}</label>
                         <input style={styles.input} value={draft.follower} onChange={(e) => setDraft({ ...draft, follower: e.target.value })} dir="rtl" />
                       </div>
                       <div>
-                        <label style={styles.label}>وضعیت</label>
+                        <label style={styles.label}>{t("colStatus")}</label>
                         <select style={styles.input} value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value })} dir="rtl">
-                          <option value="open">باز</option>
-                          <option value="pending_review">در انتظار تأیید</option>
-                          <option value="Closed">بسته (Closed)</option>
+                          <option value="open">{t("anomStatusOpen")}</option>
+                          <option value="pending_review">{t("anomStatusPendingReview")}</option>
+                          <option value="Closed">{t("statusClosedParenthetical")}</option>
                         </select>
                       </div>
                     </div>
@@ -3281,18 +3281,18 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
                     {draft.status === "Closed" && (
                       <div style={styles.formGrid}>
                         <div>
-                          <label style={styles.label}>تاریخ بسته شدن</label>
+                          <label style={styles.label}>{t("fieldCloseDate")}</label>
                           <JalaliDateInput value={draft.closeDate} onChange={(v) => setDraft({ ...draft, closeDate: v })} />
                         </div>
                         <div>
-                          <label style={styles.label}>اثربخشی</label>
+                          <label style={styles.label}>{t("fieldEffectiveness")}</label>
                           <input style={styles.input} value={draft.effectiveness} onChange={(e) => setDraft({ ...draft, effectiveness: e.target.value })} dir="rtl" />
                         </div>
                       </div>
                     )}
 
                     <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-                      <button type="button" style={styles.button} onClick={() => saveDraft(a.id)}>ذخیره تغییرات</button>
+                      <button type="button" style={styles.button} onClick={() => saveDraft(a.id)}>{t("saveChangesBtn")}</button>
                     </div>
                   </>
                 )}
@@ -3300,19 +3300,19 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
             )}
             {isReviewer && a.status !== "pending_review" && (
               <div style={{ marginTop: 16 }}>
-                <button type="button" style={{ ...styles.smallButton, background: "#c92a2a" }} onClick={() => handleDelete(a.id, a.trackingNumber)}>حذف آنومالی</button>
+                <button type="button" style={{ ...styles.smallButton, background: "#c92a2a" }} onClick={() => handleDelete(a.id, a.trackingNumber)}>{t("deleteAnomalyBtn")}</button>
               </div>
             )}
             {isReadOnlyReviewer && (
               <div style={{ fontSize: 13, color: "#555", lineHeight: 1.9 }}>
-                <div style={{ background: "#f1f5f9", color: "#334155", padding: "4px 10px", borderRadius: 999, display: "inline-block", fontSize: 11, marginBottom: 8 }}>دسترسی فقط مشاهده</div>
-                {a.correctiveAction && <div><b>اقدام اصلاحی:</b> {a.correctiveAction}</div>}
-                {a.contractorAction && <div><b>اقدام پیمانکار:</b> {a.contractorAction}</div>}
-                {a.obstacles && <div><b>موانع و مشکلات:</b> {a.obstacles}</div>}
-                {a.follower && <div><b>شخص پیگیر:</b> {a.follower}</div>}
-                {a.reviewNote && <div><b>یادداشت بازگشت:</b> {a.reviewNote}</div>}
-                {a.status === "Closed" && a.closeDate && <div><b>تاریخ بسته شدن:</b> {isoToJalaliDisplay(a.closeDate)}</div>}
-                {a.effectiveness && <div><b>اثربخشی:</b> {a.effectiveness}</div>}
+                <div style={{ background: "#f1f5f9", color: "#334155", padding: "4px 10px", borderRadius: 999, display: "inline-block", fontSize: 11, marginBottom: 8 }}>{t("viewOnlyAccess")}</div>
+                {a.correctiveAction && <div><b>{t("correctiveActionLabel")}</b> {a.correctiveAction}</div>}
+                {a.contractorAction && <div><b>{t("contractorActionLabel")}</b> {a.contractorAction}</div>}
+                {a.obstacles && <div><b>{t("obstaclesLabel")}</b> {a.obstacles}</div>}
+                {a.follower && <div><b>{t("followerPersonLabel")}</b> {a.follower}</div>}
+                {a.reviewNote && <div><b>{t("returnNoteLabel")}</b> {a.reviewNote}</div>}
+                {a.status === "Closed" && a.closeDate && <div><b>{t("closeDateColonLabel")}</b> {isoToJalaliDisplay(a.closeDate)}</div>}
+                {a.effectiveness && <div><b>{t("effectivenessLabel")}</b> {a.effectiveness}</div>}
               </div>
             )}
           </div>
@@ -3325,7 +3325,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
           <button type="button" style={styles.photoViewerClose} onClick={() => setViewerSrc(null)}>
             <X size={20} color="#fff" />
           </button>
-          <img src={viewerSrc} alt="نمای بزرگ" style={styles.photoViewerImg} onClick={(e) => e.stopPropagation()} />
+          <img src={viewerSrc} alt={t("largeViewAlt")} style={styles.photoViewerImg} onClick={(e) => e.stopPropagation()} />
         </div>
       )}
     </div>
