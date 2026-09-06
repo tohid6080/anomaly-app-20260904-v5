@@ -3865,29 +3865,124 @@ function announcementActionUrl(announcement, setView) {
   };
 }
 
+// مودالِ بزرگ‌نماییِ اطلاعیه — با لمسِ کارتِ اطلاعیه (در اسلایدرِ دسکتاپ یا
+// نوارِ موبایل) باز می‌شود و کلِ عنوان/متن/تصویر را بدون بریدگی نشان می‌دهد.
+// بستن: دکمه‌ی ×، کلیک روی پس‌زمینه، یا کلید Escape.
+function AnnouncementDetailModal({ announcement, setView, onClose }) {
+  const { t } = useLanguage();
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [onClose]);
+
+  if (!announcement) return null;
+  const Icon = ANNOUNCEMENT_ICONS[announcement.iconKey] || Megaphone;
+  const doAction = announcementActionUrl(announcement, setView);
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed", inset: 0, zIndex: 1000, padding: 16, boxSizing: "border-box",
+        background: "rgba(15,42,63,0.55)", display: "flex", alignItems: "center", justifyContent: "center",
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          position: "relative", width: "100%", maxWidth: 560, maxHeight: "88vh", overflow: "hidden",
+          display: "flex", flexDirection: "column", background: THEME.surface, borderRadius: 18,
+          boxShadow: "0 24px 60px -12px rgba(15,42,63,0.5)",
+        }}
+      >
+        <button
+          type="button" onClick={onClose} title={t("commonClose")}
+          style={{
+            position: "absolute", top: 10, insetInlineEnd: 10, width: 32, height: 32, borderRadius: 10, border: "none",
+            background: "rgba(255,255,255,0.92)", display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", zIndex: 2, boxShadow: "0 1px 6px rgba(0,0,0,0.18)",
+          }}
+        >
+          <X size={17} color={THEME.navy} />
+        </button>
+
+        {announcement.imageUrl ? (
+          <div style={{ background: "#e9eef3", display: "flex", justifyContent: "center", maxHeight: "44vh", overflow: "hidden", flexShrink: 0 }}>
+            <img src={announcement.imageUrl} alt="" style={{ width: "100%", maxHeight: "44vh", objectFit: "contain", display: "block" }} />
+          </div>
+        ) : (
+          <div style={{ background: THEME.tealSoft, height: 116, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Icon size={44} color={THEME.tealDeep} />
+          </div>
+        )}
+
+        <div style={{ padding: "22px 24px", overflowY: "auto" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <Megaphone size={14} color={THEME.teal} />
+            <span style={{ fontSize: 11, fontWeight: 700, color: THEME.teal }}>{t("announcementsLabel")}</span>
+          </div>
+          {announcement.title && (
+            <h3 style={{ fontSize: 20, fontWeight: 800, color: THEME.navy, margin: "0 0 12px", lineHeight: 1.5 }}>{announcement.title}</h3>
+          )}
+          <p style={{ fontSize: 14, color: THEME.text2, lineHeight: 2, margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+            {announcement.message}
+          </p>
+          {announcement.buttonLabel && announcement.buttonUrl && (
+            <button
+              type="button" onClick={() => { doAction(); onClose(); }}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 5, marginTop: 18, background: THEME.teal, color: "#fff",
+                border: "none", borderRadius: 9, padding: "9px 18px", fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: THEME.font,
+              }}
+            >
+              {announcement.buttonLabel} <ArrowUpRight size={13} />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // اسلایدر اطلاعیه/تبلیغات — طبق درخواست بازطراحی: تمام‌عرض، تصویر بزرگ‌تر
 // سمت راست (در RTL)، متن سمت چپ، ارتفاع کاملاً ثابت (بدون aspect-ratio
 // مشتق‌شده) تا هیچ لرزشی بین اطلاعیه‌های مختلف ایجاد نشود. با ≤۱ اطلاعیه،
 // دکمه‌های ناوبری/نقاط پایینی مخفی می‌مانند (بدون تغییر رفتار قبلی).
+// لمسِ کارت، اطلاعیه را در یک مودالِ بزرگ‌نمایی باز می‌کند.
 function AnnouncementSlider({ announcements, setView }) {
   const { t } = useLanguage();
   const [index, setIndex] = useState(0);
+  const [detail, setDetail] = useState(null);
   const isSlider = announcements.length > 1;
   const current = announcements[Math.min(index, announcements.length - 1)];
 
   useEffect(() => {
-    if (!isSlider) return;
+    if (!isSlider || detail) return;
     const ms = (current.displaySeconds || 10) * 1000;
     const timer = setTimeout(() => setIndex((i) => (i + 1) % announcements.length), ms);
     return () => clearTimeout(timer);
-  }, [index, isSlider, current, announcements.length]);
+  }, [index, isSlider, current, announcements.length, detail]);
 
   const Icon = ANNOUNCEMENT_ICONS[current.iconKey] || Megaphone;
   const handleAction = announcementActionUrl(current, setView);
+  const stop = (e) => e.stopPropagation();
 
   return (
     <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 16, overflow: "hidden", position: "relative" }}>
-      <div style={{ display: "flex", flexWrap: "wrap" }}>
+      {detail && <AnnouncementDetailModal announcement={detail} setView={setView} onClose={() => setDetail(null)} />}
+      <div
+        onClick={() => setDetail(current)}
+        role="button"
+        title={t("commonView")}
+        style={{ display: "flex", flexWrap: "wrap", cursor: "pointer" }}
+      >
         {/* ناحیه‌ی تصویر — عرض واکنش‌گرا، ارتفاع کاملاً ثابت به پیکسل */}
         <div style={{ flex: "1 1 340px", minWidth: 260, height: 340, background: current.imageUrl ? "#e9eef3" : THEME.tealSoft, position: "relative", overflow: "hidden" }}>
           {current.imageUrl ? (
@@ -3899,10 +3994,10 @@ function AnnouncementSlider({ announcements, setView }) {
           )}
           {isSlider && (
             <div style={{ position: "absolute", top: 10, insetInlineEnd: 10, display: "flex", alignItems: "center", gap: 4 }}>
-              <button type="button" onClick={() => setIndex((i) => (i - 1 + announcements.length) % announcements.length)} title={t("announcementPrev")} style={sliderNavBtnStyle}>
+              <button type="button" onClick={(e) => { stop(e); setIndex((i) => (i - 1 + announcements.length) % announcements.length); }} title={t("announcementPrev")} style={sliderNavBtnStyle}>
                 <ChevronRight size={13} color={THEME.navy} />
               </button>
-              <button type="button" onClick={() => setIndex((i) => (i + 1) % announcements.length)} title={t("announcementNext")} style={sliderNavBtnStyle}>
+              <button type="button" onClick={(e) => { stop(e); setIndex((i) => (i + 1) % announcements.length); }} title={t("announcementNext")} style={sliderNavBtnStyle}>
                 <ChevronLeft size={13} color={THEME.navy} />
               </button>
             </div>
@@ -3929,7 +4024,7 @@ function AnnouncementSlider({ announcements, setView }) {
           </p>
           {current.buttonLabel && current.buttonUrl && (
             <button
-              type="button" onClick={handleAction}
+              type="button" onClick={(e) => { stop(e); handleAction(); }}
               style={{
                 display: "inline-flex", alignItems: "center", gap: 5, alignSelf: "flex-start", marginTop: 12,
                 background: THEME.teal, color: "#fff", border: "none", borderRadius: 9, padding: "8px 16px", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: THEME.font,
@@ -3942,7 +4037,7 @@ function AnnouncementSlider({ announcements, setView }) {
             <div style={{ display: "flex", gap: 6, marginTop: "auto", paddingTop: 12 }}>
               {announcements.map((a, i) => (
                 <button
-                  key={a.id} type="button" onClick={() => setIndex(i)} title={t("announcementNumbered", { n: i + 1 })}
+                  key={a.id} type="button" onClick={(e) => { stop(e); setIndex(i); }} title={t("announcementNumbered", { n: i + 1 })}
                   style={{ width: i === index ? 18 : 6, height: 6, borderRadius: 999, border: "none", padding: 0, cursor: "pointer", background: i === index ? THEME.teal : THEME.border, transition: "width .2s, background .2s" }}
                 />
               ))}
@@ -3976,19 +4071,20 @@ function MobileAnnouncementBanner({ setView }) {
   const [announcements, setAnnouncements] = useState(undefined);
   const [index, setIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
+  const [detail, setDetail] = useState(null);
   const [dismissed, setDismissed] = useState(getDismissedAnnouncementIds);
   useEffect(() => { loadActiveAnnouncements("home").then(setAnnouncements).catch(() => setAnnouncements([])); }, []);
 
   const visible = (announcements || []).filter((a) => !dismissed.includes(a.id));
   const isSlider = expanded && visible.length > 1;
   useEffect(() => {
-    if (!isSlider) return;
+    if (!isSlider || detail) return;
     const current = visible[index % visible.length];
     const ms = (current.displaySeconds || 10) * 1000;
     const timer = setTimeout(() => setIndex((i) => (i + 1) % visible.length), ms);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, isSlider, visible.length]);
+  }, [index, isSlider, visible.length, detail]);
 
   if (!announcements || visible.length === 0) return null;
   const current = visible[Math.min(index, visible.length - 1)];
@@ -4032,13 +4128,19 @@ function MobileAnnouncementBanner({ setView }) {
   // حالت باز — محتوای کامل + دکمه‌ی × برای بستنِ همین اطلاعیه.
   return (
     <div style={{ position: "relative", background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 14, padding: 14, marginBottom: 10 }}>
+      {detail && <AnnouncementDetailModal announcement={detail} setView={setView} onClose={() => setDetail(null)} />}
       <button
         type="button" onClick={handleDismiss} title={t("announcementDismiss")}
         style={{ position: "absolute", top: 6, insetInlineEnd: 6, width: 26, height: 26, borderRadius: 8, border: "none", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
       >
         <X size={15} color={THEME.text3} />
       </button>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, paddingInlineEnd: 26 }}>
+      <div
+        onClick={() => setDetail(current)}
+        role="button"
+        title={t("commonView")}
+        style={{ display: "flex", alignItems: "center", gap: 10, paddingInlineEnd: 26, cursor: "pointer" }}
+      >
         <div style={{ width: 44, height: 44, borderRadius: 10, background: current.imageUrl ? "#e9eef3" : THEME.tealSoft, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
           {current.imageUrl ? <img src={current.imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Icon size={20} color={THEME.tealDeep} />}
         </div>
