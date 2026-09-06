@@ -8581,9 +8581,6 @@ export const translations = {
   "afSubmitting": { "fa": "در حال ثبت...", "en": "Logging..." },
 
   // --- App.jsx AnomalyList (batch 24) ---
-  "alExportTitleMine": { "fa": "آنومالی‌های {name}", "en": "{name}'s anomalies" },
-  "alExportTitleAll": { "fa": "لیست آنومالی‌ها", "en": "Anomaly list" },
-  "alContractorFallback": { "fa": "پیمانکار", "en": "Contractor" },
   "alAssignedToExpertPrefix": { "fa": "ارجاع به کارشناس:", "en": "Assigned to expert:" },
   "alExpertOpinionLabel": { "fa": "نظر کارشناس:", "en": "Expert's comment:" },
   "alGateApproveCloseAnomaly": { "fa": "تأیید نهایی و بستن آنومالی", "en": "Final approval & close anomaly" },
@@ -8597,7 +8594,34 @@ export const translations = {
   "alSend": { "fa": "ارسال", "en": "Send" },
   "alRejectReasonOptional": { "fa": "دلیل رد (اختیاری)", "en": "Reason for rejection (optional)" },
   "alSubmitReject": { "fa": "ثبت رد", "en": "Submit rejection" },
-  "alRejectReturnDefaultNote": { "fa": "رد و بازگشت به پیمانکار", "en": "Rejected and returned to the contractor" }
+  "alRejectReturnDefaultNote": { "fa": "رد و بازگشت به پیمانکار", "en": "Rejected and returned to the contractor" },
+
+  // --- App.jsx shell: login / header / sidebar / welcome / tasks / announcements (batch 25) ---
+  "loginTrialRequestBtn": { "fa": "درخواست ارزیابی و پلن آزمایشی رایگان", "en": "Request a free assessment & trial plan" },
+  "errBoundaryReportBtn": { "fa": "گزارش این خطا به مدیر سامانه", "en": "Report this error to the system administrator" },
+  "errBoundaryPageLabel": { "fa": "خطای بحرانی برنامه (ErrorBoundary)", "en": "Critical app error (ErrorBoundary)" },
+  "sidebarExpandMenu": { "fa": "باز کردن منو", "en": "Expand menu" },
+  "sidebarCollapseMenu": { "fa": "جمع کردن منو", "en": "Collapse menu" },
+  "sidebarSearchModules": { "fa": "جستجوی ماژول‌ها...", "en": "Search modules..." },
+  "sidebarHome": { "fa": "صفحه اصلی", "en": "Home" },
+  "sidebarNoResults": { "fa": "موردی یافت نشد.", "en": "No results found." },
+  "announcementsLabel": { "fa": "اطلاعیه‌ها", "en": "Announcements" },
+  "announcementPrev": { "fa": "اطلاعیه‌ی قبلی", "en": "Previous announcement" },
+  "announcementNext": { "fa": "اطلاعیه‌ی بعدی", "en": "Next announcement" },
+  "announcementNumbered": { "fa": "اطلاعیه {n}", "en": "Announcement {n}" },
+  "announcementDismiss": { "fa": "بستن این اطلاعیه", "en": "Dismiss this announcement" },
+  "welcomeIntroText": { "fa": "به سامانه‌ی مدیریت HSE یکپارچه خوش آمدید. روز خوبی داشته باشید!", "en": "Welcome to the Integrated HSE Management System. Have a great day!" },
+  "welcomeLastLoginLabel": { "fa": "آخرین ورود:", "en": "Last login:" },
+  "tasksCardTitle": { "fa": "کارهای در دست اقدام من", "en": "My pending tasks" },
+  "tasksNoneRightNow": { "fa": "در حال حاضر هیچ کاری در دست اقدام شما نیست.", "en": "You have no pending tasks right now." },
+  "taskBadgeAssigned": { "fa": "واگذارشده", "en": "Assigned" },
+  "gateModAnomaly": { "fa": "عدم انطباق", "en": "Non-conformity" },
+  "gateModPersonnel": { "fa": "پرسنل", "en": "Personnel" },
+  "gateModMachinery": { "fa": "ماشین‌آلات", "en": "Machinery" },
+  "gateModScaffold": { "fa": "داربست", "en": "Scaffolding" },
+  "gateModRiskAssessment": { "fa": "ارزیابی ریسک", "en": "Risk Assessment" },
+  "subEffectivenessThresholds": { "fa": "Threshold اثربخشی Barrier", "en": "Barrier Effectiveness Threshold" },
+  "welcomeGreetingLine": { "fa": "خوش آمدید، {name}", "en": "Welcome, {name}" }
 };
 
 // برای فایل‌های غیر React (لایه‌ی داده / api.js) که به Hook دسترسی ندارند اما

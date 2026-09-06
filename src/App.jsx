@@ -771,6 +771,7 @@ const JALALI_MONTHS = ["فروردین", "اردیبهشت", "خرداد", "تی
 
 // انتخاب‌گر تاریخ شمسی (سه select: سال/ماه/روز) — مقدار ورودی/خروجی ISO میلادی (yyyy-mm-dd) برای سازگاری با دیتابیس
 function JalaliDateInput({ value, onChange }) {
+  const { lang } = useLanguage();
   const todayParts = todayJalaliParts();
   const parsed = isoToJalali(value);
   const jy = parsed ? parsed[0] : todayParts[0];
@@ -797,6 +798,21 @@ function JalaliDateInput({ value, onChange }) {
     onChange(`${gy}-${String(gm).padStart(2, "0")}-${String(gd).padStart(2, "0")}`);
   };
 
+  // نسخه‌ی انگلیسی: یک date input استاندارد میلادی (قرارداد مقدار همان
+  // "YYYY-MM-DD" باقی می‌ماند — فقط UI انتخاب تاریخ عوض می‌شود). دقیقاً
+  // همان رفتار نسخه‌ی جداگانه‌ی JalaliDateInput در personnel/jalaliDate.jsx.
+  if (lang === "en") {
+    return (
+      <input
+        type="date"
+        style={styles.input}
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
+        dir="ltr"
+      />
+    );
+  }
+
   return (
     <div style={{ display: "flex", gap: 6 }} dir="rtl">
       <select style={{ ...styles.input, flex: 1.2 }} value={jy} onChange={(e) => emit(Number(e.target.value), jm, jd)}>
@@ -821,17 +837,17 @@ function statusLabelFa(status) {
 
 function anomalyExportRows(list) {
   return list.map((a, idx) => ({
-    "ردیف": idx + 1,
-    "شماره پیگیری": a.trackingNumber,
-    "تاریخ": isoToJalaliDisplay(a.date),
-    "ناحیه": a.area,
-    "پیمانکار": a.contractor,
-    "دسته‌بندی": a.category,
-    "سطح ریسک": a.riskLevel,
-    "وضعیت": statusLabelFa(a.status),
-    "شرح آنومالی": a.description,
-    "اقدام پیمانکار": a.contractorAction || "",
-    "تاریخ بسته شدن": a.closeDate ? isoToJalaliDisplay(a.closeDate) : "",
+    row: idx + 1,
+    trackingNumber: a.trackingNumber,
+    date: isoToJalaliDisplay(a.date),
+    area: a.area,
+    contractor: a.contractor,
+    category: a.category,
+    riskLevel: a.riskLevel,
+    status: statusLabelFa(a.status),
+    description: a.description,
+    contractorAction: a.contractorAction || "",
+    closeDate: a.closeDate ? isoToJalaliDisplay(a.closeDate) : "",
   }));
 }
 
@@ -857,20 +873,20 @@ async function exportAnomaliesExcel(list, title, companyId) {
   }
 
   const headers = [
-    "ردیف", "شماره پیگیری", "پروژه", "پیمانکار", "محل/ناحیه", "تاریخ", "ساعت",
-    "سطح ریسک", "دسته‌بندی", "فرمت", "شرح کامل آنومالی", "اقدام اصلاحی (پیمانکار)",
-    "پیگیری‌کننده", "ثبت‌کننده", "وضعیت", "تاریخ بسته‌شدن", "اثربخشی", "یادداشت بررسی", "تاریخ ثبت",
-    "عکس گزارش ۱", "عکس گزارش ۲", "عکس اقدام اصلاحی ۱", "عکس اقدام اصلاحی ۲",
+    tr("expRow"), tr("expTrackingNumber"), tr("expXlsProject"), tr("expContractor"), tr("expXlsLocationArea"), tr("expDate"), tr("expXlsTime"),
+    tr("expRiskLevel"), tr("expCategory"), tr("expXlsFormat"), tr("expXlsFullDesc"), tr("expXlsCorrectiveAction"),
+    tr("expXlsFollower"), tr("expXlsSubmitter"), tr("expStatus"), tr("expCloseDate"), tr("expXlsEffectiveness"), tr("expXlsReviewNote"), tr("expXlsCreatedAt"),
+    tr("expXlsReportPhoto1"), tr("expXlsReportPhoto2"), tr("expXlsActionPhoto1"), tr("expXlsActionPhoto2"),
   ];
   const colWidths = [9.86, 25, 21.71, 15.29, 19, 15.71, 21.71, 14.29, 18.71, 16.86, 41.71, 15.71, 19.43, 10, 27.71, 20.43, 19.86, 27.57, 23.14, 25.14, 14.86, 18, 18];
 
   const wb = new ExcelJS.Workbook();
-  const ws = wb.addWorksheet("لیست آنومالی ها", { views: [{ rightToLeft: true, state: "frozen", xSplit: 3, ySplit: 2 }] });
+  const ws = wb.addWorksheet(tr("expXlsSheetName"), { views: [{ rightToLeft: getCurrentLang() !== "en", state: "frozen", xSplit: 3, ySplit: 2 }] });
   ws.columns = colWidths.map((w) => ({ width: w }));
 
   ws.mergeCells(1, 1, 1, headers.length);
   const titleCell = ws.getCell(1, 1);
-  titleCell.value = `لیست  گزارش شرایط و اعمال ناایمن شرکت ${companyName || "........"}`;
+  titleCell.value = tr("expXlsTitle", { company: companyName || "........" });
   titleCell.font = { name: "B Mitra", bold: true, size: 22 };
   titleCell.alignment = { horizontal: "center", vertical: "middle", wrapText: true, readingOrder: "rtl" };
   titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFBFBFBF" } };
@@ -910,7 +926,7 @@ async function exportAnomaliesExcel(list, title, companyId) {
       cell.border = { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } };
       cell.alignment = { horizontal: "center", vertical: "middle" };
       if (url) {
-        cell.value = { text: "مشاهده عکس", hyperlink: url };
+        cell.value = { text: tr("expXlsViewPhoto"), hyperlink: url };
         cell.font = { color: { argb: "FF0563C1" }, underline: true };
       } else {
         cell.value = "—";
@@ -933,11 +949,11 @@ function escapeHtml(s) {
 }
 
 async function exportAnomaliesPdf(list, title) {
-  const headers = ["ردیف", "شماره پیگیری", "تاریخ", "ناحیه", "پیمانکار", "دسته‌بندی", "سطح ریسک", "وضعیت", "شرح آنومالی", "اقدام پیمانکار", "تاریخ بسته شدن"];
+  const headers = [tr("expRow"), tr("expTrackingNumber"), tr("expDate"), tr("expArea"), tr("expContractor"), tr("expCategory"), tr("expRiskLevel"), tr("expStatus"), tr("expDescription"), tr("expContractorAction"), tr("expCloseDate")];
   const bodyRows = anomalyExportRows(list)
     .map((r) => `<tr>${Object.values(r).map((v) => `<td>${escapeHtml(v)}</td>`).join("")}</tr>`)
     .join("");
-  const html = `<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>${escapeHtml(title)}</title>
+  const html = `<!doctype html><html lang="${getCurrentLang()}" dir="${getCurrentLang() === "en" ? "ltr" : "rtl"}"><head><meta charset="utf-8"><title>${escapeHtml(title)}</title>
   <style>
     body { font-family: Tahoma, Arial, sans-serif; direction: rtl; padding: 20px; color: #111; }
     h2 { text-align: center; margin-bottom: 4px; }
@@ -949,14 +965,14 @@ async function exportAnomaliesPdf(list, title) {
   </style></head>
   <body>
     <h2>${escapeHtml(title)}</h2>
-    <p class="meta">${APP_NAME} — تعداد موارد: ${list.length}</p>
+    <p class="meta">${APP_NAME} — ${escapeHtml(tr("expItemCount", { count: list.length }))}</p>
     <table><thead><tr>${headers.map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead><tbody>${bodyRows}</tbody></table>
   </body></html>`;
 
   if (await exportHtmlReportNativeAware(html, title)) return;
 
   const win = window.open("", "_blank");
-  if (!win) { alert("اجازه‌ی باز شدن پنجره‌ی جدید داده نشد؛ لطفاً popup blocker مرورگر را غیرفعال کنید."); return; }
+  if (!win) { alert(tr("errPopupBlocked")); return; }
   win.document.write(html);
   win.document.close();
   win.focus();
@@ -1192,7 +1208,7 @@ function LoginScreen({ onLogin }) {
                 fontSize: 13, fontWeight: 600, background: "transparent", border: `1.5px solid ${THEME.teal}`, color: THEME.tealDeep,
               }}
             >
-              درخواست ارزیابی و پلن آزمایشی رایگان
+              {t("loginTrialRequestBtn")}
             </button>
 
             <p style={styles.hint}>{t("designedBy")}</p>
@@ -2875,7 +2891,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
         <button
           type="button"
           style={{ ...styles.smallButton, flex: 1, background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
-          onClick={() => exportAnomaliesExcel(sorted, isContractor ? t("alExportTitleMine", { name: currentUser?.name || t("alContractorFallback") }) : t("alExportTitleAll"), currentUser?.companyId)}
+          onClick={() => exportAnomaliesExcel(sorted, isContractor ? t("expAnomaliesTitleContractor", { name: currentUser?.name || t("expDefaultContractorName") }) : t("expAnomaliesTitleAll"), currentUser?.companyId)}
           disabled={sorted.length === 0}
         >
           <FileSpreadsheet size={15} /> {t("exportExcelButton")}
@@ -2883,7 +2899,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
         <button
           type="button"
           style={{ ...styles.smallButton, flex: 1, background: "#334155", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
-          onClick={() => exportAnomaliesPdf(sorted, isContractor ? t("alExportTitleMine", { name: currentUser?.name || t("alContractorFallback") }) : t("alExportTitleAll"))}
+          onClick={() => exportAnomaliesPdf(sorted, isContractor ? t("expAnomaliesTitleContractor", { name: currentUser?.name || t("expDefaultContractorName") }) : t("expAnomaliesTitleAll"))}
           disabled={sorted.length === 0}
         >
           <FileText size={15} /> {t("exportPdfButton")}
@@ -3426,7 +3442,7 @@ function DashboardHeader({ panelLabelKey, currentUser, onLogout, onOpenSettings,
       <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
         <OnlineIndicator />
         {smartItems && <NotificationPanel smartItems={smartItems} onNavigate={onNavigate} />}
-        <button type="button" onClick={() => setShowReportError(true)} style={headerIconBtnStyle} title="گزارش خطا به مدیر سامانه">
+        <button type="button" onClick={() => setShowReportError(true)} style={headerIconBtnStyle} title={t("erpTitle")}>
           <AlertTriangle size={16} color="#fff" />
         </button>
         {showReportError && (
@@ -3442,7 +3458,7 @@ function DashboardHeader({ panelLabelKey, currentUser, onLogout, onOpenSettings,
         </button>
         <button
           style={{ ...styles.logoutButton, padding: "8px clamp(10px, 3vw, 16px)" }}
-          onClick={() => { if (window.confirm("آیا مطمئن هستید که می‌خواهید از سامانه خارج شوید؟")) onLogout(); }}
+          onClick={() => { if (window.confirm(t("saLogoutConfirm"))) onLogout(); }}
         >
           <LogOut size={14} style={{ marginLeft: 6 }} />{t("logout")}
         </button>
@@ -3586,6 +3602,7 @@ function SidebarItem({ mod, view, setView, collapsed, openKey, setOpenKey }) {
 }
 
 function Sidebar({ modules, view, setView, collapsed, onToggleCollapse }) {
+  const { t } = useLanguage();
   // آکاردئون: اگر view فعلی زیرمجموعه‌ی یک ماژول است، همان ماژول را از
   // ابتدا باز نگه دار تا کاربر جهت‌یابی خودش را از دست ندهد.
   const [openKey, setOpenKey] = useState(() => {
@@ -3615,7 +3632,7 @@ function Sidebar({ modules, view, setView, collapsed, onToggleCollapse }) {
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8, padding: collapsed ? "12px 8px" : "12px 14px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
         <button
-          type="button" onClick={onToggleCollapse} title={collapsed ? "باز کردن منو" : "جمع کردن منو"}
+          type="button" onClick={onToggleCollapse} title={collapsed ? t("sidebarExpandMenu") : t("sidebarCollapseMenu")}
           style={{ background: "rgba(255,255,255,0.08)", border: "none", borderRadius: 7, width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}
         >
           {collapsed ? <ChevronsLeft size={15} color="#fff" /> : <ChevronsRight size={15} color="#fff" />}
@@ -3624,7 +3641,7 @@ function Sidebar({ modules, view, setView, collapsed, onToggleCollapse }) {
           <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.07)", borderRadius: 8, padding: "6px 10px", minWidth: 0 }}>
             <Search size={13} color="rgba(255,255,255,0.5)" style={{ flexShrink: 0 }} />
             <input
-              value={search} onChange={(e) => setSearch(e.target.value)} placeholder="جستجوی ماژول‌ها..." dir="rtl"
+              value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("sidebarSearchModules")} dir="rtl"
               style={{ flex: 1, minWidth: 0, background: "transparent", border: "none", outline: "none", color: "#fff", fontSize: 12, fontFamily: THEME.font }}
             />
           </div>
@@ -3633,7 +3650,7 @@ function Sidebar({ modules, view, setView, collapsed, onToggleCollapse }) {
       <div style={{ padding: collapsed ? "8px 8px 0" : "8px 10px 0" }}>
         <div
           onClick={() => setView("menu")}
-          title={collapsed ? "صفحه اصلی" : undefined}
+          title={collapsed ? t("sidebarHome") : undefined}
           style={{
             display: "flex", alignItems: "center", gap: 10, padding: collapsed ? "11px 0" : "10px 14px",
             justifyContent: collapsed ? "center" : "flex-start", borderRadius: 9, cursor: "pointer",
@@ -3646,7 +3663,7 @@ function Sidebar({ modules, view, setView, collapsed, onToggleCollapse }) {
           onMouseLeave={(e) => { if (view !== "menu") e.currentTarget.style.background = "transparent"; }}
         >
           <Home size={17} style={{ flexShrink: 0 }} />
-          {!collapsed && <span>صفحه اصلی</span>}
+          {!collapsed && <span>{t("sidebarHome")}</span>}
         </div>
       </div>
       <div style={{ flex: 1, overflowY: "auto", padding: collapsed ? "10px 8px" : "10px 10px", display: "flex", flexDirection: "column", gap: 3 }}>
@@ -3654,7 +3671,7 @@ function Sidebar({ modules, view, setView, collapsed, onToggleCollapse }) {
           <SidebarItem key={mod.key} mod={mod} view={view} setView={setView} collapsed={collapsed} openKey={q ? effectiveOpenKey : openKey} setOpenKey={setOpenKey} />
         ))}
         {q && filteredModules.length === 0 && (
-          <p style={{ fontSize: 11.5, color: "rgba(255,255,255,0.45)", textAlign: "center", padding: "14px 6px" }}>موردی یافت نشد.</p>
+          <p style={{ fontSize: 11.5, color: "rgba(255,255,255,0.45)", textAlign: "center", padding: "14px 6px" }}>{t("sidebarNoResults")}</p>
         )}
       </div>
     </aside>
@@ -3715,12 +3732,12 @@ const GATE_MODULE_TO_NAV_TARGET = {
   scaffoldManagement: { module: "scaffold" },
   riskAssessment: { module: "bowtie" },
 };
-const GATE_MODULE_LABELS = {
-  anomalyReport: "عدم انطباق",
-  personnelAccess: "پرسنل",
-  machineryManagement: "ماشین‌آلات",
-  scaffoldManagement: "داربست",
-  riskAssessment: "ارزیابی ریسک",
+const GATE_MODULE_LABEL_KEYS = {
+  anomalyReport: "gateModAnomaly",
+  personnelAccess: "gateModPersonnel",
+  machineryManagement: "gateModMachinery",
+  scaffoldManagement: "gateModScaffold",
+  riskAssessment: "gateModRiskAssessment",
 };
 
 function WelcomeScreen({ currentUser, setView, onNavigate, sidebarModules }) {
@@ -3785,19 +3802,20 @@ function WelcomeCard({ currentUser }) {
     }}>
       <span style={{ fontSize: 30, marginBottom: 10 }}>👋</span>
       <h2 style={{ fontSize: 18, fontWeight: 800, color: THEME.navy, margin: "0 0 8px" }}>
-        {t("welcomeGreeting")}، {currentUser?.name || ""}
+        {t("welcomeGreetingLine", { name: currentUser?.name || "" })}
       </h2>
       <p style={{ fontSize: 12.5, color: THEME.text2, lineHeight: 1.9, margin: "0 0 16px", maxWidth: 220 }}>
-        به سامانه‌ی مدیریت HSE یکپارچه خوش آمدید. روز خوبی داشته باشید!
+        {t("welcomeIntroText")}
       </p>
       <div style={{ fontSize: 11, color: THEME.text3, display: "flex", alignItems: "center", gap: 5 }}>
-        <Clock size={12} /> آخرین ورود: {toJalaliSafe(now.toISOString())}
+        <Clock size={12} /> {t("welcomeLastLoginLabel")} {toJalaliSafe(now.toISOString())}
       </div>
     </div>
   );
 }
 
 function TasksCard({ tasks, onTaskClick }) {
+  const { t } = useLanguage();
   // طبق گزارش صریح: اندازه‌ی این باکس باید ثابت بماند (هم‌تراز با کارت
   // خوش‌آمدگویی کنارش) و با زیاد شدن آیتم‌ها، خودِ باکس بزرگ نشود — فقط
   // ناحیه‌ی داخلی‌اش اسکرول بخورد. برای همین کل کارت یک ارتفاعِ ثابت
@@ -3808,15 +3826,15 @@ function TasksCard({ tasks, onTaskClick }) {
     <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 14, padding: 16, height: 280, display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: tasks && tasks.length > 0 ? 12 : 0, flexShrink: 0 }}>
         <h3 style={{ fontSize: 13.5, fontWeight: 700, color: THEME.navy, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
-          <ClipboardList size={15} color={THEME.teal} /> کارهای در دست اقدام من
+          <ClipboardList size={15} color={THEME.teal} /> {t("tasksCardTitle")}
         </h3>
         {tasks && tasks.length > 0 && (
           <span style={{ fontSize: 11, color: THEME.text3, fontWeight: 600 }}>{tasks.length.toLocaleString("fa-IR")}</span>
         )}
       </div>
-      {tasks === null && <p style={{ fontSize: 12, color: THEME.text3, margin: 0 }}>در حال بارگذاری...</p>}
+      {tasks === null && <p style={{ fontSize: 12, color: THEME.text3, margin: 0 }}>{t("commonLoading")}</p>}
       {tasks && tasks.length === 0 && (
-        <p style={{ fontSize: 12, color: THEME.text3, margin: 0 }}>در حال حاضر هیچ کاری در دست اقدام شما نیست.</p>
+        <p style={{ fontSize: 12, color: THEME.text3, margin: 0 }}>{t("tasksNoneRightNow")}</p>
       )}
       {tasks && tasks.length > 0 && (
         <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
@@ -3836,11 +3854,11 @@ function TasksCard({ tasks, onTaskClick }) {
                     background: it.kind === "pending_approval" ? "#fef3c7" : THEME.tealSoft,
                     color: it.kind === "pending_approval" ? "#b45309" : THEME.tealDeep,
                   }}>
-                    {it.kind === "pending_approval" ? "در انتظار تأیید" : "واگذارشده"}
+                    {it.kind === "pending_approval" ? t("anomStatusPendingReview") : t("taskBadgeAssigned")}
                   </span>
                 </div>
                 <span style={{ fontSize: 10.5, color: THEME.text3 }}>
-                  {GATE_MODULE_LABELS[it.moduleKey] || it.moduleKey} — {toJalaliSafe(it.reviewedAt || it.createdAt)}
+                  {GATE_MODULE_LABEL_KEYS[it.moduleKey] ? t(GATE_MODULE_LABEL_KEYS[it.moduleKey]) : it.moduleKey} — {toJalaliSafe(it.reviewedAt || it.createdAt)}
                 </span>
               </div>
               <ChevronRight size={13} color={THEME.text3} style={{ transform: "rotate(180deg)", flexShrink: 0 }} />
@@ -3871,6 +3889,7 @@ function announcementActionUrl(announcement, setView) {
 // مشتق‌شده) تا هیچ لرزشی بین اطلاعیه‌های مختلف ایجاد نشود. با ≤۱ اطلاعیه،
 // دکمه‌های ناوبری/نقاط پایینی مخفی می‌مانند (بدون تغییر رفتار قبلی).
 function AnnouncementSlider({ announcements, setView }) {
+  const { t } = useLanguage();
   const [index, setIndex] = useState(0);
   const isSlider = announcements.length > 1;
   const current = announcements[Math.min(index, announcements.length - 1)];
@@ -3899,10 +3918,10 @@ function AnnouncementSlider({ announcements, setView }) {
           )}
           {isSlider && (
             <div style={{ position: "absolute", top: 10, insetInlineEnd: 10, display: "flex", alignItems: "center", gap: 4 }}>
-              <button type="button" onClick={() => setIndex((i) => (i - 1 + announcements.length) % announcements.length)} title="اطلاعیه‌ی قبلی" style={sliderNavBtnStyle}>
+              <button type="button" onClick={() => setIndex((i) => (i - 1 + announcements.length) % announcements.length)} title={t("announcementPrev")} style={sliderNavBtnStyle}>
                 <ChevronRight size={13} color={THEME.navy} />
               </button>
-              <button type="button" onClick={() => setIndex((i) => (i + 1) % announcements.length)} title="اطلاعیه‌ی بعدی" style={sliderNavBtnStyle}>
+              <button type="button" onClick={() => setIndex((i) => (i + 1) % announcements.length)} title={t("announcementNext")} style={sliderNavBtnStyle}>
                 <ChevronLeft size={13} color={THEME.navy} />
               </button>
             </div>
@@ -3913,7 +3932,7 @@ function AnnouncementSlider({ announcements, setView }) {
         <div style={{ flex: "1 1 300px", minWidth: 260, height: 340, padding: "28px 30px", display: "flex", flexDirection: "column", boxSizing: "border-box" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
             <Megaphone size={14} color={THEME.teal} />
-            <span style={{ fontSize: 11, fontWeight: 700, color: THEME.teal }}>اطلاعیه‌ها</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: THEME.teal }}>{t("announcementsLabel")}</span>
           </div>
           <h3 style={{
             fontSize: 19, fontWeight: 800, color: THEME.navy, margin: "0 0 10px", minHeight: 25,
@@ -3942,7 +3961,7 @@ function AnnouncementSlider({ announcements, setView }) {
             <div style={{ display: "flex", gap: 6, marginTop: "auto", paddingTop: 12 }}>
               {announcements.map((a, i) => (
                 <button
-                  key={a.id} type="button" onClick={() => setIndex(i)} title={`اطلاعیه ${i + 1}`}
+                  key={a.id} type="button" onClick={() => setIndex(i)} title={t("announcementNumbered", { n: i + 1 })}
                   style={{ width: i === index ? 18 : 6, height: 6, borderRadius: 999, border: "none", padding: 0, cursor: "pointer", background: i === index ? THEME.teal : THEME.border, transition: "width .2s, background .2s" }}
                 />
               ))}
@@ -3972,6 +3991,7 @@ function persistDismissedAnnouncementId(id) {
 // نسخه‌ی جمع‌وجور مخصوص موبایل — طبق خواسته‌ی صریح: ابتدا کوچک (یک نوار
 // تک‌خطی)، با لمس بزرگ می‌شود و در حالت باز یک × برای بستن دارد.
 function MobileAnnouncementBanner({ setView }) {
+  const { t } = useLanguage();
   const [announcements, setAnnouncements] = useState(undefined);
   const [index, setIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
@@ -4032,7 +4052,7 @@ function MobileAnnouncementBanner({ setView }) {
   return (
     <div style={{ position: "relative", background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 14, padding: 14, marginBottom: 10 }}>
       <button
-        type="button" onClick={handleDismiss} title="بستن این اطلاعیه"
+        type="button" onClick={handleDismiss} title={t("announcementDismiss")}
         style={{ position: "absolute", top: 6, insetInlineEnd: 6, width: 26, height: 26, borderRadius: 8, border: "none", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
       >
         <X size={15} color={THEME.text3} />
@@ -4150,7 +4170,7 @@ function AdminDashboard({ onLogout, currentUser }) {
         isModuleInPlan(planFeatures, "trainingManagement") && { key: "trainingManagement", label: t("subTraining") },
         isModuleInPlan(planFeatures, "chatAccessManagement") && { key: "chatAccessManagement", label: t("subChatAccess") },
         isModuleInPlan(planFeatures, "hcmsMatrixManagement") && { key: "hcmsMatrixManagement", label: t("subHcmsMatrix") },
-        isModuleInPlan(planFeatures, "effectivenessThresholds") && { key: "effectivenessThresholds", label: "Threshold اثربخشی Barrier" },
+        isModuleInPlan(planFeatures, "effectivenessThresholds") && { key: "effectivenessThresholds", label: t("subEffectivenessThresholds") },
         isModuleInPlan(planFeatures, "riskKnowledgeManagement") && { key: "riskKnowledgeManagement", label: t("subRiskKnowledge") },
         isModuleInPlan(planFeatures, "anomalyCategoryManagement") && { key: "anomalyCategoryManagement", label: t("subAnomalyCategories") },
         { key: "aboutIhms", label: t("aboutMenuLabel") },
@@ -4190,7 +4210,7 @@ function AdminDashboard({ onLogout, currentUser }) {
               مجاز است، هم در UI هم در Backend (Edge Function manage-account
               درخواست هر کاربری غیر از Super Admin را رد می‌کند). */}
           <div style={{ background: "#fef3c7", border: "1px solid #fde68a", borderRadius: 8, padding: 12, marginBottom: 14, fontSize: 12, color: "#92400e", lineHeight: 1.8 }}>
-            مدیریت حساب‌های کارفرما و پیمانکار از این پنل به پنل Super Admin منتقل شده است.
+            {t("adminAccountsMovedNotice")}
           </div>
           <div style={styles.menuList2}>
             {isModuleInPlan(planFeatures, "permissionManagement") && <MenuRow icon={ShieldCheck} label={t("subPermissions")} onClick={() => setView("permissionManagement")} />}
@@ -4200,7 +4220,7 @@ function AdminDashboard({ onLogout, currentUser }) {
             {isModuleInPlan(planFeatures, "trainingManagement") && <MenuRow icon={GraduationCap} label={t("subTraining")} onClick={() => setView("trainingManagement")} />}
             {isModuleInPlan(planFeatures, "chatAccessManagement") && <MenuRow icon={ShieldOff} label={t("subChatAccess")} onClick={() => setView("chatAccessManagement")} />}
             {isModuleInPlan(planFeatures, "hcmsMatrixManagement") && <MenuRow icon={ShieldAlert} label={t("subHcmsMatrix")} onClick={() => setView("hcmsMatrixManagement")} />}
-            {isModuleInPlan(planFeatures, "effectivenessThresholds") && <MenuRow icon={Sliders} label="Threshold اثربخشی Barrier" onClick={() => setView("effectivenessThresholds")} />}
+            {isModuleInPlan(planFeatures, "effectivenessThresholds") && <MenuRow icon={Sliders} label={t("subEffectivenessThresholds")} onClick={() => setView("effectivenessThresholds")} />}
             {isModuleInPlan(planFeatures, "riskKnowledgeManagement") && <MenuRow icon={Database} label={t("subRiskKnowledge")} onClick={() => setView("riskKnowledgeManagement")} />}
             {isModuleInPlan(planFeatures, "anomalyCategoryManagement") && <MenuRow icon={Tag} label={t("subAnomalyCategories")} onClick={() => setView("anomalyCategoryManagement")} />}
             <MenuRow icon={Info} label={t("aboutMenuLabel")} onClick={() => setView("aboutIhms")} />
@@ -4391,12 +4411,12 @@ function EmployerDashboard({ onLogout, currentUser }) {
     if (mod.key === "profile") { setView("profile"); return; }
     if (mod.key === "chat") { setView("chat"); return; }
     if (mod.key === "archiveManagement") { setView("archiveManagement"); return; }
-    if (!isModuleVisible(permMap, mod.key)) { alert("شما مجوز دسترسی به این بخش را ندارید"); return; }
-    if (mod.employerOnly && !canEdit) { alert("این بخش فقط با دسترسی کامل در دسترس است"); return; }
+    if (!isModuleVisible(permMap, mod.key)) { alert(t("errNoModulePermission")); return; }
+    if (mod.employerOnly && !canEdit) { alert(t("errEditAccessOnly")); return; }
     if (mod.key === "managementDashboard") { setView("managementDashboard"); return; }
     if (mod.key === "proactiveIndicators") { setView("proactiveIndicators"); return; }
     if (mod.sub) { setView(mod.key); return; }
-    alert(`ماژول «${mt(mod)}» به‌زودی اضافه می‌شود`);
+    alert(t("moduleComingSoon", { name: mt(mod) }));
   };
 
   const handleHomeNavigate = (target) => {
@@ -4628,12 +4648,12 @@ function ContractorDashboard({ onLogout, currentUser }) {
     if (mod.key === "profile") { setView("profile"); return; }
     if (mod.key === "chat") { setView("chat"); return; }
     if (mod.key === "archiveManagement") { setView("archiveManagement"); return; }
-    if (!isModuleVisible(permMap, mod.key)) { alert("شما مجوز دسترسی به این بخش را ندارید"); return; }
-    if (mod.employerOnly) { alert("این بخش فقط برای کارفرما/ادمین در دسترس است"); return; }
+    if (!isModuleVisible(permMap, mod.key)) { alert(t("errNoModulePermission")); return; }
+    if (mod.employerOnly) { alert(t("errEmployerAdminOnly")); return; }
     if (mod.key === "managementDashboard") { setView("managementDashboard"); return; }
     if (mod.key === "proactiveIndicators") { setView("proactiveIndicators"); return; }
     if (mod.sub) { setView(mod.key); return; }
-    alert(`ماژول «${mt(mod)}» به‌زودی اضافه می‌شود`);
+    alert(t("moduleComingSoon", { name: mt(mod) }));
   };
 
   const handleHomeNavigate = (target) => {
@@ -4807,8 +4827,8 @@ class ErrorBoundary extends React.Component {
       const currentUser = this.getCurrentUserForReport();
       return (
         <div style={{ padding: 24, fontFamily: "Tahoma, Arial, sans-serif", direction: "rtl", maxWidth: 560, margin: "40px auto" }}>
-          <h3 style={{ color: "#c92a2a" }}>مشکلی در اجرای اپلیکیشن پیش آمد</h3>
-          <p style={{ fontSize: 13, color: "#555" }}>لطفاً متن زیر را برای بررسی ارسال کنید:</p>
+          <h3 style={{ color: "#c92a2a" }}>{tr("errBoundaryTitle")}</h3>
+          <p style={{ fontSize: 13, color: "#555" }}>{tr("errBoundaryDesc")}</p>
           <pre style={{ whiteSpace: "pre-wrap", fontSize: 12, color: "#991b1b", background: "#fee2e2", padding: 12, borderRadius: 8 }}>
             {String((this.state.error && this.state.error.message) || this.state.error)}
           </pre>
@@ -4818,14 +4838,14 @@ class ErrorBoundary extends React.Component {
               onClick={() => this.setState({ showReport: true })}
               style={{ marginTop: 8, padding: "9px 16px", borderRadius: 8, border: "none", background: "#c92a2a", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Tahoma, Arial, sans-serif" }}
             >
-              گزارش این خطا به مدیر سامانه
+              {tr("errBoundaryReportBtn")}
             </button>
           )}
           {this.state.showReport && currentUser && (
             <ReportErrorModal
               currentUser={currentUser}
               moduleKey="app_crash"
-              pageLabel="خطای بحرانی برنامه (ErrorBoundary)"
+              pageLabel={tr("errBoundaryPageLabel")}
               technicalMessage={String((this.state.error && this.state.error.message) || this.state.error)}
               technicalStack={String((this.state.error && this.state.error.stack) || "") + "\n" + String((this.state.info && this.state.info.componentStack) || "")}
               onClose={() => this.setState({ showReport: false })}
