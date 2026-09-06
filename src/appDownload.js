@@ -1,6 +1,4 @@
 import { Capacitor } from "@capacitor/core";
-import { Filesystem, Directory } from "@capacitor/filesystem";
-import { Share } from "@capacitor/share";
 
 // ریپوی GitHub که Releaseهای APK در آن منتشر می‌شوند (ثابت — همان مقداری که
 // در Edge Function trigger-mobile-build و ورک‌فلو استفاده شده).
@@ -27,20 +25,13 @@ export async function resolveLatestApkUrl(fallbackUrl = "") {
   return fallbackUrl || "";
 }
 
-function filenameFromUrl(url) {
-  try {
-    const p = new URL(url).pathname.split("/").pop();
-    return p && p.toLowerCase().endsWith(".apk") ? decodeURIComponent(p) : "ihms-update.apk";
-  } catch {
-    return "ihms-update.apk";
-  }
-}
-
 // دانلودِ مستقیمِ APK.
-//   • موبایل: فایل با موتورِ HTTP بومیِ Capacitor (نه WebView، بدونِ CORS و
-//     بدونِ باز شدنِ صفحه‌ی GitHub) دانلود می‌شود؛ سپس با «اشتراک‌گذاری» به
-//     نصب‌کننده‌ی بسته‌ی اندروید سپرده می‌شود. اگر این مسیر شکست خورد،
-//     fallback: باز کردنِ URL در مرورگرِ سیستم.
+//   • موبایل: لینک را مستقیم به مرورگرِ سیستم (Download Manager اندروید)
+//     می‌سپاریم. مرورگر فایل را در پوشه‌ی Downloads دانلود می‌کند و در
+//     نوتیفیکیشن دکمه‌ی «باز کردن / نصب» می‌گذارد — بدون پنجره‌ی
+//     «اشتراک‌گذاری با دیگران»، بدون دانلودِ ۲۰ مگابایتیِ بی‌صدا داخلِ اپ،
+//     و بدون FileProvider. چون امضای همه‌ی بیلدها از v1.0.5 یکی است،
+//     نسخه‌ی جدید روی نسخه‌ی قبلی نصب می‌شود (نیاز به حذفِ نسخه‌ی قبلی نیست).
 //   • دسکتاپ/وب: یک لینکِ مخفی با صفتِ download کلیک می‌شود؛ مرورگر به‌خاطر
 //     هدرِ «Content-Disposition: attachment» خودِ فایل را دانلود می‌کند
 //     (نه اینکه صفحه‌ی GitHub باز شود).
@@ -48,17 +39,10 @@ export async function openApkDownload(url) {
   if (!url) return false;
 
   if (Capacitor.isNativePlatform()) {
-    try {
-      const name = filenameFromUrl(url);
-      const dl = await Filesystem.downloadFile({ url, path: name, directory: Directory.Cache });
-      const path = dl?.path || name;
-      const { uri } = await Filesystem.getUri({ path, directory: Directory.Cache });
-      await Share.share({ title: name, url: uri, dialogTitle: name });
-      return true;
-    } catch {
-      try { window.open(url, "_system"); return true; } catch { /* در ادامه */ }
-      try { window.location.href = url; return true; } catch { return false; }
-    }
+    // «_system» را Capacitor به یک Intent.ACTION_VIEW تبدیل می‌کند و مرورگرِ
+    // پیش‌فرضِ گوشی باز می‌شود؛ همان مسیری که برای دانلود+نصبِ APK مطمئن است.
+    try { window.open(url, "_system"); return true; } catch { /* در ادامه */ }
+    try { window.location.href = url; return true; } catch { return false; }
   }
 
   // دسکتاپ / وب
