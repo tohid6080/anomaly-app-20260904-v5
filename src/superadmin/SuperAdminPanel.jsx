@@ -135,7 +135,6 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
           <h1 style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>{t("saHeaderTitle")}</h1>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <span style={{ fontSize: 12, opacity: 0.8 }}>{currentAdmin?.fullName}</span>
           <button type="button" onClick={() => setShowChangePassword((v) => !v)} style={{ ...btnStyle("rgba(255,255,255,0.15)"), display: "flex", alignItems: "center", gap: 6 }}>
             <KeyRound size={13} /> {t("saChangeMyPassword")}
           </button>
