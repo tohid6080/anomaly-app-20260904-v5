@@ -642,8 +642,9 @@ function Dot({ level }) {
 }
 
 function MiniBarChart({ data, suffix = "" }) {
+  const { t } = useLanguage();
   const max = Math.max(1, ...data.map((d) => d.value));
-  if (data.length === 0) return <p style={emptyTextStyle}>داده‌ای موجود نیست</p>;
+  if (data.length === 0) return <p style={emptyTextStyle}>{t("commonNoData")}</p>;
   return (
     <div>
       {data.map((d) => (
@@ -663,8 +664,9 @@ function MiniBarChart({ data, suffix = "" }) {
 
 // دونات ساده با SVG خام (بدون کتابخانه‌ی نمودار، برای سبک نگه‌داشتن باندل)
 function MiniDonut({ data }) {
+  const { t } = useLanguage();
   const total = data.reduce((s, d) => s + d.value, 0);
-  if (total === 0) return <p style={emptyTextStyle}>داده‌ای موجود نیست</p>;
+  if (total === 0) return <p style={emptyTextStyle}>{t("commonNoData")}</p>;
   const r = 34, cx = 40, cy = 40, circumference = 2 * Math.PI * r;
   let offset = 0;
   return (
