@@ -2,6 +2,27 @@ name: Build Android APK
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: "شماره نسخه (versionName) — مثل 1.0.1"
+        required: true
+        default: "1.0.1"
+      version_code:
+        description: "versionCode عددی (باید از نسخه‌ی قبلی بزرگ‌تر باشد)"
+        required: true
+        default: "2"
+      release_notes:
+        description: "Release Notes — تغییرات این نسخه (اختیاری)"
+        required: false
+        default: ""
+      publish_release:
+        description: "یک GitHub Release عمومی هم ساخته شود؟"
+        type: boolean
+        required: false
+        default: true
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -30,6 +51,14 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
+      - name: Set app version in Gradle
+        run: |
+          GRADLE=android/app/build.gradle
+          sed -i "s/versionCode .*/versionCode ${{ github.event.inputs.version_code }}/" "$GRADLE"
+          sed -i "s/versionName .*/versionName \"${{ github.event.inputs.version }}\"/" "$GRADLE"
+          echo "----- versions in build.gradle -----"
+          grep -E "versionCode|versionName" "$GRADLE"
+
       - name: Generate Splash Screen assets
         run: npx capacitor-assets generate --android
 
@@ -43,8 +72,32 @@ jobs:
         working-directory: android
         run: ./gradlew assembleDebug
 
-      - name: Upload APK
+      - name: Rename APK
+        run: |
+          mkdir -p out
+          cp android/app/build/outputs/apk/debug/app-debug.apk "out/ihms-${{ github.event.inputs.version }}.apk"
+          ls -lh out
+
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ihms-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: ihms-apk-${{ github.event.inputs.version }}
+          path: out/ihms-${{ github.event.inputs.version }}.apk
+
+      # یک Release عمومی می‌سازد تا APK یک لینک دانلود پایدار و بدون نیاز به
+      # ورود داشته باشد — همان لینکی که در پنل «مدیریت آپدیت نرم‌افزار و
+      # موبایل» سوپرادمین وارد می‌شود.
+      - name: Publish GitHub Release
+        if: ${{ github.event.inputs.publish_release == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v${{ github.event.inputs.version }}"
+          NOTES="${{ github.event.inputs.release_notes }}"
+          if [ -z "$NOTES" ]; then NOTES="IHMS ${{ github.event.inputs.version }} (build ${{ github.event.inputs.version_code }})"; fi
+          gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
+          gh release create "$TAG" "out/ihms-${{ github.event.inputs.version }}.apk" \
+            --title "IHMS ${{ github.event.inputs.version }}" \
+            --notes "$NOTES"
+          echo "APK download URL:"
+          echo "https://github.com/${{ github.repository }}/releases/download/$TAG/ihms-${{ github.event.inputs.version }}.apk"

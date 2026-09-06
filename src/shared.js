@@ -17,8 +17,8 @@ export const APP_NAME = "Integrated HSE Management System";
 // version_code آخرین انتشارِ ثبت‌شده در جدول app_releases مقایسه می‌کند.
 // هنگام انتشار یک نسخه‌ی جدید، این دو مقدار باید هم‌زمان با ساخت APK
 // جدید به‌روزرسانی شوند.
-export const APP_VERSION = "1.0.0";
-export const APP_VERSION_CODE = 1;
+export const APP_VERSION = "1.0.1";
+export const APP_VERSION_CODE = 2;
 
 // نکته امنیتی: فقط از کلید publishable/anon استفاده می‌شود، هرگز کلید secret را
 // داخل کد سمت مرورگر قرار ندهید چون هرکسی که اپ را باز کند می‌تواند آن را ببیند.
