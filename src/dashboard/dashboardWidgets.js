@@ -12,6 +12,10 @@
  */
 
 export const DASHBOARD_WIDGET_GROUPS = [
+  // «صفحه اصلی» — بلوک‌های صفحه‌ی نخستِ سایت (WelcomeScreen)، نه داشبورد مدیریتی.
+  // از همین رجیستری و همان جدولِ system_dashboard_widgets استفاده می‌کنند تا
+  // SuperAdmin بتواند از همان تبِ «مدیریت داشبورد» روشن/خاموش و جابه‌جاشان کند.
+  { key: "home", labelKey: "dwGroupHome" },
   { key: "kpi", labelKey: "dwGroupKpi" },
   { key: "comparison", labelKey: "dwGroupComparison" },
   { key: "alerts", labelKey: "dwGroupAlerts" },
@@ -22,6 +26,9 @@ export const DASHBOARD_WIDGET_GROUPS = [
 // چیز دیگری ذخیره نکرده باشد). employerOnly یعنی این پنل برای نقش
 // CONTRACTOR اصلاً رندر نمی‌شود (داده‌ی مقایسه‌ی بین‌پیمانکاری).
 export const DASHBOARD_WIDGETS = [
+  // صفحه‌ی اصلی (WelcomeScreen) — ترتیب و نمایش از همین‌جا کنترل می‌شود
+  { key: "homeHeader", group: "home", labelKey: "dwHomeHeader", defaultVisible: true },
+  { key: "homeAnnouncements", group: "home", labelKey: "dwHomeAnnouncements", defaultVisible: true },
   { key: "kpiStrip", group: "kpi", labelKey: "dwKpiStrip", defaultVisible: true },
   { key: "contractorHse", group: "comparison", labelKey: "dwContractorHse", defaultVisible: true, employerOnly: true },
   { key: "contractorPerformance", group: "comparison", labelKey: "dwContractorPerformance", defaultVisible: true, employerOnly: true },

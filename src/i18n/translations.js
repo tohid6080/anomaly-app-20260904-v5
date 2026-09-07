@@ -7941,10 +7941,13 @@ export const translations = {
   "pfAnomalyCategoryManagement": { "fa": "مدیریت دسته‌بندی آنومالی", "en": "Anomaly Category Management" },
 
   // --- dashboardWidgets.js: management-dashboard panel registry (batch 14) ---
+  "dwGroupHome": { "fa": "صفحه اصلی سایت", "en": "Site Home Page" },
   "dwGroupKpi": { "fa": "شاخص‌های کلیدی (نوار بالا)", "en": "Key Indicators (top strip)" },
   "dwGroupComparison": { "fa": "مقایسه و رتبه‌بندی پیمانکاران", "en": "Contractor Comparison & Ranking" },
   "dwGroupAlerts": { "fa": "هشدارها و تحلیل", "en": "Alerts & Analysis" },
   "dwGroupTrends": { "fa": "روندها و توزیع‌ها", "en": "Trends & Distributions" },
+  "dwHomeHeader": { "fa": "کارت خوش‌آمدگویی و کارهای در دست اقدام", "en": "Welcome card & pending tasks" },
+  "dwHomeAnnouncements": { "fa": "کادر اطلاعیه‌های سامانه", "en": "System announcements box" },
   "dwKpiStrip": { "fa": "نوار شاخص‌های کلیدی", "en": "Key Indicators Strip" },
   "dwContractorHse": { "fa": "جدول امتیاز HSE پیمانکاران", "en": "Contractor HSE Scorecard" },
   "dwContractorPerformance": { "fa": "نمودار امتیاز عملکرد پیمانکاران", "en": "Contractor Performance Score Chart" },

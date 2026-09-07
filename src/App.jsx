@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, Suspense, lazy } from "react";
+import React, { useState, useEffect, useRef, useMemo, Suspense, lazy } from "react";
 import { AlertTriangle, Plus, X, ChevronRight, ChevronLeft, ChevronDown, ChevronsRight, ChevronsLeft, LogOut, CheckCircle2, Clock, Camera, ImagePlus, Trash2, FileSpreadsheet, FileText, User, Users, ShieldCheck, LayoutGrid, BarChart3, Briefcase, Settings, Archive, Truck, Tag, MessageCircle, GraduationCap, ShieldOff, ShieldAlert, Database, Fingerprint, Info, Sliders, TrendingUp, Search, Home, Megaphone, Sparkles, Gift, Bell, ArrowUpRight, ClipboardList, MoreVertical } from "lucide-react";
 import BowTieDashboard from "./bowtie/BowTieDashboard.jsx";
 import HcmsDashboard from "./hcms/HcmsDashboard.jsx";
@@ -17,7 +17,8 @@ import PersonnelDashboard from "./personnel/PersonnelDashboard.jsx";
 import ProactiveIndicatorsDashboard from "./proactiveIndicators/ProactiveIndicatorsDashboard.jsx";
 import IncidentsListPage from "./incidents/IncidentsListPage.jsx";
 import { loadHomeKpiSummary } from "./dashboard/homeKpiApi.js";
-import { loadModuleConfig, loadDashboardConfig, loadNotificationTypes, loadAppearanceConfig, applyAppearanceToDom, loadActiveAnnouncements } from "./systemConfigApi.js";
+import { loadModuleConfig, loadDashboardConfig, loadNotificationTypes, loadAppearanceConfig, applyAppearanceToDom, loadActiveAnnouncements, loadDashboardWidgetConfig } from "./systemConfigApi.js";
+import { mergeWidgetConfig, defaultWidgetConfig } from "./dashboard/dashboardWidgets.js";
 import { submitToGate, loadPendingGateItems, loadAssignedGateItems, loadAssignedReviewItemsForModule, deleteGateItemsForRecord, loadCompanyStaffOptions, assignForReview, submitReview, approveGateItem, rejectGateItem, GATE_STATUS_LABELS, gateStatusLabel } from "./hseGateApi.js";
 import SubscriptionGate from "./subscription/SubscriptionGate.jsx";
 import { checkMyAccountActive } from "./subscriptionApi.js";
@@ -3732,8 +3733,17 @@ function WelcomeScreen({ currentUser, setView, onNavigate, sidebarModules }) {
   const { t } = useLanguage();
   const [tasks, setTasks] = useState(null);
   const [announcements, setAnnouncements] = useState(undefined); // undefined=در حال بارگذاری، []=هیچ اطلاعیه‌ی واجدشرایطی نیست
+  // ترتیب/نمایشِ بلوک‌های صفحه‌ی اصلی — همان جدولِ system_dashboard_widgets،
+  // تنظیم‌شده توسط SuperAdmin در تبِ «مدیریت داشبورد». null = هنوز بارگذاری‌نشده
+  // (fail-open: تا آن زمان چیدمانِ پیش‌فرضِ رجیستری).
+  const [homeWidgetRows, setHomeWidgetRows] = useState(null);
+  const homeBlocks = useMemo(() => {
+    const merged = homeWidgetRows === null ? defaultWidgetConfig() : mergeWidgetConfig(homeWidgetRows);
+    return merged.filter((w) => w.group === "home" && w.isVisible !== false).map((w) => w.key);
+  }, [homeWidgetRows]);
   useEffect(() => {
     loadActiveAnnouncements("home").then(setAnnouncements).catch(() => setAnnouncements([]));
+    loadDashboardWidgetConfig().then((rows) => setHomeWidgetRows(rows || [])).catch(() => setHomeWidgetRows([]));
     // پیمانکار نه گیرنده‌ی واگذاری است، نه گیت‌کیپر — این کارت برایش خالی می‌ماند
     if (currentUser?.role === "CONTRACTOR") { setTasks([]); return; }
 
@@ -3756,26 +3766,28 @@ function WelcomeScreen({ currentUser, setView, onNavigate, sidebarModules }) {
     if (target && onNavigate) onNavigate({ ...target, recordId: task.recordId });
   };
 
-  return (
-    <div>
-      {/* ردیف اول — طبق خواسته‌ی دقیق: خوش‌آمدگویی سمت راست (اولین فرزند
-          در RTL)، کارهای در دست اقدام روبه‌رویش سمت چپ. بنر Hero و بخش
-          دسترسی سریع طبق درخواست کاملاً حذف شدند. */}
-      <div style={{ display: "flex", gap: 14, alignItems: "stretch", marginBottom: 14, flexWrap: "wrap" }}>
-        <div style={{ flex: "1 1 40%", minWidth: 280, display: "flex" }}>
-          <WelcomeCard currentUser={currentUser} />
+  // بلوک‌های صفحه‌ی اصلی به ترتیب و نمایشِ تنظیم‌شده‌ی SuperAdmin رندر می‌شوند.
+  const renderHomeBlock = (key) => {
+    if (key === "homeHeader") {
+      return (
+        <div key="homeHeader" style={{ display: "flex", gap: 14, alignItems: "stretch", marginBottom: 14, flexWrap: "wrap" }}>
+          <div style={{ flex: "1 1 40%", minWidth: 280, display: "flex" }}>
+            <WelcomeCard currentUser={currentUser} />
+          </div>
+          <div style={{ flex: "1 1 55%", minWidth: 300 }}>
+            <TasksCard tasks={tasks} onTaskClick={handleTaskClick} />
+          </div>
         </div>
-        <div style={{ flex: "1 1 55%", minWidth: 300 }}>
-          <TasksCard tasks={tasks} onTaskClick={handleTaskClick} />
-        </div>
-      </div>
+      );
+    }
+    if (key === "homeAnnouncements") {
+      if (!announcements || announcements.length === 0) return null;
+      return <div key="homeAnnouncements" style={{ marginBottom: 14 }}><AnnouncementSlider announcements={announcements} setView={setView} /></div>;
+    }
+    return null;
+  };
 
-      {/* ردیف دوم — اطلاعیه‌ها، همان عرض قبلی (تمام‌عرض)، فقط ارتفاع کارت بیشتر */}
-      {announcements && announcements.length > 0 && (
-        <AnnouncementSlider announcements={announcements} setView={setView} />
-      )}
-    </div>
-  );
+  return <div>{homeBlocks.map(renderHomeBlock)}</div>;
 }
 
 // بنر اصلی — پیام کلی سامانه + ۴ نکته‌ی برجسته (متن ثابت محصول، نه داده‌ی
