@@ -22,6 +22,7 @@ import {
   loadAuditLog, loadStorageUsage, setStorageCapacity, storageUsageStatus,
   loadCompanyBackups, loadBackupStorageUsage, triggerCompanyBackup, getBackupDownloadUrl,
   deleteCompanyBackup, restoreCompanyBackup, backupStatusMeta, BACKUP_TIERS,
+  createBackupImportUpload, uploadBackupImport, validateBackupImport, restoreBackupImport, deleteBackupImport,
   copyBowtiesToCompany, copyRiskKnowledgeToCompany,
   loadCardTransferPayments, approveCardTransferPayment, rejectCardTransferPayment, saveCardTransferSettings,
   loadTrialRequests, approveTrialRequest, rejectTrialRequest,
@@ -625,16 +626,153 @@ function CompanyBackupsSection() {
     await load();
   };
 
+  // ---------- Import & Restore از فایلِ ZIPِ دانلودشده ----------
+  const [importOpen, setImportOpen] = useState(false);
+  const [importPhase, setImportPhase] = useState("");   // "" | uploading | validating | restoring
+  const [importPath, setImportPath] = useState("");
+  const [importPreview, setImportPreview] = useState(null);
+  const [importErr, setImportErr] = useState("");
+
+  const resetImport = () => {
+    setImportPhase(""); setImportPath(""); setImportPreview(null); setImportErr("");
+  };
+  const closeImport = async () => {
+    if (importPath) await deleteBackupImport(importPath);
+    resetImport();
+    setImportOpen(false);
+  };
+
+  const handleImportFile = async (file) => {
+    if (!file) return;
+    resetImport();
+    // اگر از قبل فایلی آپلود شده، پاکش کن
+    setImportErr("");
+    setImportPhase("uploading");
+    const sig = await createBackupImportUpload();
+    if (sig?.__error || !sig?.uploadUrl) { setImportPhase(""); setImportErr(sig?.message || t("backupImportErrUpload")); return; }
+    const up = await uploadBackupImport(sig.uploadUrl, file);
+    if (up?.__error) { setImportPhase(""); setImportErr(up.message || t("backupImportErrUpload")); await deleteBackupImport(sig.path); return; }
+    setImportPath(sig.path);
+    setImportPhase("validating");
+    const pv = await validateBackupImport(sig.path);
+    setImportPhase("");
+    if (pv?.__error) { setImportErr((pv.message || t("backupImportErrValidate")) + (pv.errors ? "\n" + pv.errors.join("\n") : "")); return; }
+    setImportPreview(pv);
+  };
+
+  const handleImportRestore = async () => {
+    const pv = importPreview;
+    if (!pv) return;
+    const targetName = pv.target?.companyName || pv.manifest?.companyName || "";
+    if (!confirm(t("backupConfirmRestore", { name: targetName }))) return;
+    setImportPhase("restoring");
+    let res = await restoreBackupImport(importPath, "auto");
+    if (res?.needsConfirmation) {
+      const typed = prompt(t("backupReplacePrompt", { name: res.companyName || targetName }));
+      if (typed == null || typed.trim() !== (res.companyName || targetName)) {
+        setImportPhase(""); alert(t("backupReplaceNameMismatch")); return;
+      }
+      res = await restoreBackupImport(importPath, "replace");
+    }
+    setImportPhase("");
+    if (res?.__error || res?.error) { alert((res.message || res.error) + (res.detail ? `\n${JSON.stringify(res.detail)}` : "")); return; }
+    const rep = res.report || {};
+    const pwList = (rep.passwordResetNeeded || []).join("، ");
+    alert(
+      t("backupImportDone") + "\n\n" +
+      t("backupRestoreDoneBody", {
+        company: rep.companyName || targetName,
+        mode: rep.mode || "-",
+        rows: rep.dbResult?.totalRows ?? "?",
+        files: `${rep.filesRestored ?? 0}/${rep.filesInBackup ?? 0}`,
+        safety: rep.safetyBackupId || "—",
+      }) +
+      (pwList ? "\n\n" + t("backupRestorePwReset", { list: pwList }) : "") +
+      (rep.schemaVersionMismatch ? "\n\n⚠ " + t("backupSchemaMismatchWarn") : "")
+    );
+    resetImport();
+    setImportOpen(false);
+    await load();
+  };
+
   return (
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16, marginTop: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6, flexWrap: "wrap", gap: 8 }}>
         <h3 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
           <HardDrive size={13} color={THEME.teal} /> {t("backupSectionTitle")}
         </h3>
-        <button type="button" onClick={load} disabled={loading} style={{ ...btnStyle(THEME.navyMid), fontSize: 11, display: "flex", alignItems: "center", gap: 5 }}>
-          <RefreshCw size={11} /> {loading ? t("saRefreshing") : t("saRefresh")}
-        </button>
+        <div style={{ display: "flex", gap: 6 }}>
+          <button type="button" onClick={() => (importOpen ? closeImport() : setImportOpen(true))} style={{ ...btnStyle(importOpen ? THEME.danger : "#b45309"), fontSize: 11, display: "flex", alignItems: "center", gap: 5 }}>
+            <UploadCloud size={11} /> {importOpen ? t("backupImportCancel") : t("backupImportBtn")}
+          </button>
+          <button type="button" onClick={load} disabled={loading} style={{ ...btnStyle(THEME.navyMid), fontSize: 11, display: "flex", alignItems: "center", gap: 5 }}>
+            <RefreshCw size={11} /> {loading ? t("saRefreshing") : t("saRefresh")}
+          </button>
+        </div>
       </div>
+
+      {importOpen && (
+        <div style={{ background: THEME.bg, border: `1px solid ${THEME.border}`, borderRadius: 8, padding: 14, marginBottom: 14 }}>
+          <p style={{ fontSize: 11.5, fontWeight: 700, color: THEME.navy, margin: "0 0 8px" }}>{t("backupImportTitle")}</p>
+          <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 10px", lineHeight: 1.8 }}>{t("backupImportHint")}</p>
+
+          <input
+            type="file" accept=".zip,application/zip"
+            disabled={!!importPhase}
+            onChange={(e) => handleImportFile(e.target.files?.[0])}
+            style={{ fontSize: 12, marginBottom: 10 }}
+          />
+          {importPhase && (
+            <p style={{ fontSize: 11.5, color: THEME.text2, margin: "4px 0" }}>
+              {importPhase === "uploading" ? t("backupImportUploading")
+                : importPhase === "validating" ? t("backupImportValidating")
+                : t("backupImportRestoring")} …
+            </p>
+          )}
+          {importErr && <p style={{ color: THEME.danger, fontSize: 11.5, whiteSpace: "pre-wrap", margin: "6px 0" }}>{importErr}</p>}
+
+          {importPreview && (
+            <div style={{ border: `1px solid ${THEME.border}`, borderRadius: 8, padding: 12, background: THEME.surface, marginTop: 8 }}>
+              <p style={{ fontSize: 11.5, fontWeight: 700, color: THEME.navy, margin: "0 0 8px" }}>{t("backupImportPreviewTitle")}</p>
+              {!importPreview.valid && (
+                <p style={{ color: THEME.danger, fontSize: 11.5, whiteSpace: "pre-wrap", margin: "0 0 8px" }}>
+                  {t("backupImportInvalid")}{"\n"}{(importPreview.errors || []).map((x) => "• " + x).join("\n")}
+                </p>
+              )}
+              {(importPreview.warnings || []).length > 0 && (
+                <p style={{ color: "#b45309", fontSize: 11, whiteSpace: "pre-wrap", margin: "0 0 8px" }}>
+                  {(importPreview.warnings || []).map((x) => "⚠ " + x).join("\n")}
+                </p>
+              )}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10, fontSize: 11.5 }}>
+                <div><span style={{ color: THEME.text3 }}>{t("backupImportCompany")}:</span> <b>{importPreview.manifest?.companyName || "—"}</b></div>
+                <div><span style={{ color: THEME.text3 }}>{t("backupImportCompanyId")}:</span> <span style={{ direction: "ltr", fontSize: 10.5 }}>{importPreview.target?.companyId || "—"}</span></div>
+                <div><span style={{ color: THEME.text3 }}>{t("backupImportSchema")}:</span> {importPreview.manifest?.schemaVersion || "—"} {importPreview.schemaVersionMatch ? "✓" : "⚠"}</div>
+                <div><span style={{ color: THEME.text3 }}>{t("backupImportCreatedAt")}:</span> {importPreview.manifest?.createdAt ? toJalaliDateTime(importPreview.manifest.createdAt) : "—"}</div>
+                <div><span style={{ color: THEME.text3 }}>{t("backupImportTables")}:</span> {importPreview.computed?.tablesWithRows ?? "—"}</div>
+                <div><span style={{ color: THEME.text3 }}>{t("backupImportRows")}:</span> {(importPreview.computed?.dataRows ?? 0).toLocaleString(numLocale())}</div>
+                <div><span style={{ color: THEME.text3 }}>{t("backupImportFiles")}:</span> {importPreview.computed?.fileEntries ?? 0}</div>
+                <div><span style={{ color: THEME.text3 }}>{t("backupImportSize")}:</span> {formatBytes(importPreview.manifest?.totalFileBytes || 0)}</div>
+              </div>
+              <p style={{ fontSize: 11.5, margin: "10px 0 0", color: importPreview.willReplace ? "#b45309" : THEME.text2 }}>
+                {importPreview.target?.companyExists
+                  ? (importPreview.willReplace ? t("backupImportWillReplace") : t("backupImportCompanyExistsEmpty"))
+                  : t("backupImportCompanyAbsent")}
+              </p>
+              <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
+                <button
+                  type="button" disabled={!importPreview.valid || !!importPhase}
+                  onClick={handleImportRestore}
+                  style={{ ...btnStyle(importPreview.willReplace ? "#b45309" : THEME.teal), fontSize: 12, display: "flex", alignItems: "center", gap: 5 }}
+                >
+                  <RotateCcw size={12} /> {importPreview.willReplace ? t("backupImportBtnReplace") : t("backupImportBtnRestore")}
+                </button>
+                <button type="button" onClick={closeImport} disabled={!!importPhase} style={{ ...btnStyle(THEME.navyMid), fontSize: 12 }}>{t("backupImportCancel")}</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
       <p style={{ fontSize: 10.5, color: THEME.text3, marginBottom: 12, lineHeight: 1.8 }}>{t("backupSectionNote")}</p>
       {error && <p style={{ color: THEME.danger, fontSize: 12, marginBottom: 10 }}>{error}</p>}
 

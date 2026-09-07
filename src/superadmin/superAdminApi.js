@@ -1070,24 +1070,68 @@ export async function deleteCompanyBackup(backupId) {
   return callBackupAdmin({ action: "delete", backupId });
 }
 
-// Restore یک Backup. mode: "auto" (پیش‌فرض) | "replace"
-// در حالتِ auto، اگر شرکت داده‌ی فعال داشته باشد پاسخ { needsConfirmation: true }
-// برمی‌گردد و هیچ تغییری اعمال نمی‌شود؛ برای ادامه mode="replace" لازم است.
-export async function restoreCompanyBackup(backupId, mode = "auto") {
+// فراخوانیِ خامِ restore-company-backup با هر بدنه‌ای
+async function callRestore(payload) {
   const token = getSessionToken("super_admin");
   if (!token) return { __error: true, message: tr("saErrInvalidSession") };
   try {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/restore-company-backup`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, apikey: SUPABASE_ANON_KEY },
-      body: JSON.stringify({ backupId, mode }),
+      body: JSON.stringify(payload),
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok && !data?.needsConfirmation) return { __error: true, message: data?.error || tr("saErrServerConn"), detail: data?.detail };
+    if (!res.ok && !data?.needsConfirmation) return { __error: true, message: data?.error || tr("saErrServerConn"), detail: data?.detail, errors: data?.errors };
     return data;
   } catch {
     return { __error: true, message: tr("saErrServerConn") };
   }
+}
+
+// Restore یک Backupِ موجود در Storage. mode: "auto" (پیش‌فرض) | "replace"
+// در حالتِ auto، اگر شرکت داده‌ی فعال داشته باشد پاسخ { needsConfirmation: true }
+// برمی‌گردد و هیچ تغییری اعمال نمی‌شود؛ برای ادامه mode="replace" لازم است.
+export async function restoreCompanyBackup(backupId, mode = "auto") {
+  return callRestore({ backupId, mode });
+}
+
+// ---------- Import & Restore از فایلِ ZIPِ دانلودشده ----------
+// جریان: ۱) گرفتنِ signed upload URL  ۲) PUT فایل به Storage
+//        ۳) validate (Preview)  ۴) restore (auto | replace)  ۵) پاکسازی
+
+// signed upload URL برای گذاشتنِ ZIP در company-backups/imports/<uuid>.zip
+export async function createBackupImportUpload() {
+  return callBackupAdmin({ action: "create_import_upload_url" });
+}
+
+// آپلودِ مستقیمِ فایل به Storage با URL امضاشده (بدون هدرِ Authorization)
+export async function uploadBackupImport(uploadUrl, file) {
+  try {
+    const res = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": "application/zip", "x-upsert": "true" },
+      body: file,
+    });
+    if (!res.ok) return { __error: true, message: (await res.text().catch(() => "")) || `HTTP ${res.status}` };
+    return { ok: true };
+  } catch {
+    return { __error: true, message: tr("saErrServerConn") };
+  }
+}
+
+// اعتبارسنجی + Preview یک فایلِ importشده — هیچ تغییری اعمال نمی‌شود
+export async function validateBackupImport(importPath) {
+  return callRestore({ importPath, mode: "validate" });
+}
+
+// Restore از یک فایلِ importشده. mode: "auto" | "replace"
+export async function restoreBackupImport(importPath, mode = "auto") {
+  return callRestore({ importPath, mode });
+}
+
+// حذفِ فایلِ importِ موقت (روی لغو یا خطا)
+export async function deleteBackupImport(path) {
+  return callBackupAdmin({ action: "delete_import", path });
 }
 
 export function backupStatusMeta(status) {

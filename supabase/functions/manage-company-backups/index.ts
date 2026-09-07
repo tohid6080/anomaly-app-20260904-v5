@@ -5,14 +5,17 @@
 // super_admin در کلاینت انجام می‌شود؛ اینجا فقط کارهایی که کلاینت نمی‌تواند.)
 //
 // body: { action, ... }
-//   - "storage_usage"                → مصرفِ باکتِ company-backups (کل + هر شرکت)
-//   - "sign_download" { backupId }   → لینکِ موقتِ دانلودِ فایلِ zip
-//   - "delete"        { backupId }   → حذفِ فایل + سطرِ متادیتا
-//   - "trigger"       { companyId }  → ساختِ یک Backup دستیِ جدید (به
-//                                      run-company-backup واگذار می‌شود)
+//   - "storage_usage"                     → مصرفِ باکتِ company-backups (کل + هر شرکت)
+//   - "sign_download" { backupId }        → لینکِ موقتِ دانلودِ فایلِ zip
+//   - "delete"        { backupId }        → حذفِ فایل + سطرِ متادیتا
+//   - "trigger"       { companyId }       → ساختِ یک Backup دستیِ جدید
+//   - "create_import_upload_url"          → signed upload URL برای گذاشتنِ یک
+//                                           فایلِ ZIPِ دانلودشده در
+//                                           company-backups/imports/<uuid>.zip
+//   - "delete_import" { path }            → حذفِ یک فایلِ importِ موقت
 //
 // Deploy:
-//   supabase functions deploy manage-company-backups
+//   supabase functions deploy manage-company-backups --no-verify-jwt
 
 import { getCallerClaims } from "../_shared/jwtUtils.ts";
 import { json, CORS_HEADERS, SUPABASE_URL, SERVICE_ROLE_KEY, callRpc, restFetch } from "../_shared/supabaseAdmin.ts";
@@ -68,6 +71,30 @@ Deno.serve(async (req) => {
       }).catch(() => {});
       const del = await restFetch(`company_backups?id=eq.${backupId}`, { method: "DELETE", headers: { Prefer: "return=minimal" } });
       if (!del.ok) return json({ error: "خطا در حذفِ متادیتا", detail: del.error }, 500);
+      return json({ ok: true });
+    }
+
+    if (action === "create_import_upload_url") {
+      // یک مسیرِ یکتا در همان باکتِ خصوصی؛ کلاینت ZIP را مستقیم آنجا PUT می‌کند
+      const path = `imports/${crypto.randomUUID()}.zip`;
+      const sign = await fetch(`${SUPABASE_URL}/storage/v1/object/upload/sign/${BACKUP_BUCKET}/${path}`, {
+        method: "POST",
+        headers: { apikey: SERVICE_ROLE_KEY, Authorization: `Bearer ${SERVICE_ROLE_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      if (!sign.ok) return json({ error: "خطا در ساختِ لینکِ آپلود", detail: await sign.text().catch(() => "") }, 500);
+      const { url } = await sign.json(); // "/object/upload/sign/<bucket>/<path>?token=..."
+      return json({ ok: true, bucket: BACKUP_BUCKET, path, uploadUrl: `${SUPABASE_URL}/storage/v1${url}` });
+    }
+
+    if (action === "delete_import") {
+      const path = String(body?.path || "");
+      // فقط داخلِ imports/ — نه هیچ آبجکتِ دیگری از باکت
+      if (!path.startsWith("imports/")) return json({ error: "path نامعتبر" }, 400);
+      await fetch(`${SUPABASE_URL}/storage/v1/object/${BACKUP_BUCKET}/${path}`, {
+        method: "DELETE",
+        headers: { apikey: SERVICE_ROLE_KEY, Authorization: `Bearer ${SERVICE_ROLE_KEY}` },
+      }).catch(() => {});
       return json({ ok: true });
     }
 

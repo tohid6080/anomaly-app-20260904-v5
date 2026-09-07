@@ -1526,6 +1526,44 @@ export const translations = {
     "fa": "خالی بگذارید تا از سطحِ پلن استفاده شود؛ مقدار صریح، پلن را Override می‌کند.",
     "en": "Leave empty to use the plan tier; an explicit value overrides the plan."
   },
+
+  "backupImportBtn":   { "fa": "Import Backup", "en": "Import backup" },
+  "backupImportCancel": { "fa": "لغو", "en": "Cancel" },
+  "backupImportTitle": { "fa": "بازیابی از فایل ZIP دانلودشده", "en": "Restore from a downloaded ZIP file" },
+  "backupImportHint": {
+    "fa": "برای زمانی که شرکت حذف شده و فقط فایلِ ZIPِ Backup در دست است. فایل انتخاب می‌شود، به‌صورت خصوصی آپلود و اعتبارسنجی می‌شود، سپس با تأیید، شرکت و همه‌ی داده‌ها/فایل‌ها/روابط بازسازی می‌شوند.",
+    "en": "For when a company has been deleted and only the backup ZIP is left. The file is uploaded privately and validated, then on confirmation the company and all data / files / relationships are rebuilt."
+  },
+  "backupImportUploading":  { "fa": "در حال آپلود فایل", "en": "Uploading file" },
+  "backupImportValidating": { "fa": "در حال اعتبارسنجی", "en": "Validating" },
+  "backupImportRestoring":  { "fa": "در حال بازیابی", "en": "Restoring" },
+  "backupImportErrUpload":   { "fa": "خطا در آپلود فایل", "en": "Upload failed" },
+  "backupImportErrValidate": { "fa": "خطا در اعتبارسنجی فایل", "en": "Validation failed" },
+  "backupImportPreviewTitle": { "fa": "پیش‌نمایش فایل Backup", "en": "Backup preview" },
+  "backupImportInvalid": { "fa": "این فایل معتبر نیست و قابل بازیابی نیست:", "en": "This file is not valid and cannot be restored:" },
+  "backupImportCompany":   { "fa": "شرکت", "en": "Company" },
+  "backupImportCompanyId": { "fa": "شناسه شرکت", "en": "Company ID" },
+  "backupImportSchema":    { "fa": "نسخه Schema", "en": "Schema version" },
+  "backupImportCreatedAt": { "fa": "تاریخ Backup", "en": "Backup date" },
+  "backupImportTables":    { "fa": "جدول‌های دارای داده", "en": "Tables with data" },
+  "backupImportRows":      { "fa": "ردیف", "en": "Rows" },
+  "backupImportFiles":     { "fa": "فایل", "en": "Files" },
+  "backupImportSize":      { "fa": "حجم فایل‌ها", "en": "Files size" },
+  "backupImportWillReplace": {
+    "fa": "این شرکت در سامانه وجود دارد و داده‌ی فعال دارد — بازیابی فقط با Replace کامل و تأیید نام شرکت ممکن است (اول یک Backup ایمنی گرفته می‌شود).",
+    "en": "This company exists and has live data — restore is only possible via a full Replace with name confirmation (a safety backup is taken first)."
+  },
+  "backupImportCompanyExistsEmpty": {
+    "fa": "این شرکت در سامانه هست ولی داده‌ای ندارد — داده‌ها داخل همان شرکت بازیابی می‌شوند.",
+    "en": "This company exists but has no data — data is restored into it."
+  },
+  "backupImportCompanyAbsent": {
+    "fa": "این شرکت در سامانه وجود ندارد — شرکت و همه‌ی داده‌ها/فایل‌ها از نو ساخته می‌شوند.",
+    "en": "This company does not exist — it and all data / files are created from scratch."
+  },
+  "backupImportBtnRestore": { "fa": "بازیابی", "en": "Restore" },
+  "backupImportBtnReplace": { "fa": "Replace و بازیابی", "en": "Replace & restore" },
+  "backupImportDone": { "fa": "بازیابی از فایل با موفقیت انجام شد", "en": "Restore from file completed successfully" },
   "saStorageNote": {
     "fa": "عدد «ظرفیت کل» یک تنظیمات سیستمی است (مطابق پلن اشتراک واقعی Supabase شما) — چون خودِ Supabase این عدد را از طریق API عمومی نمی‌دهد. بقیه‌ی اعداد (مصرف کل، مصرف هر شرکت، تفکیک هر Bucket) مستقیم و زنده از Storage واقعی خوانده می‌شوند. این صفحه حداکثر هر ۶۰ ثانیه خودکار به‌روز می‌شود.",
     "en": "The \"total capacity\" figure is a system setting (matching your actual Supabase subscription plan) — Supabase itself doesn't expose this number via a public API. The other figures (total usage, per-company usage, per-bucket breakdown) are read live and directly from actual Storage. This page auto-refreshes at most every 60 seconds."
