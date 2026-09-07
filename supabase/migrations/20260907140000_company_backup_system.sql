@@ -15,10 +15,31 @@
 --
 -- زمان‌بندیِ cron در فایلِ جداگانه‌ی 20260907140100_company_backup_cron.sql
 -- ثبت می‌شود و فقط بعد از افزودنِ سکرت‌ها به Vault باید اجرا شود.
+--
+-- نکته: اگر نقشِ اجراکننده‌ی migration مجازِ ساختِ اکستنشن نباشد (روی بعضی
+-- پروژه‌های Supabase باید pg_cron/pg_net را از Dashboard → Database →
+-- Extensions فعال کرد)، این فایل باز هم کامل اعمال می‌شود؛ فقط تابعِ
+-- dispatch_company_backups تا زمانِ نصبِ pg_net عملاً کار نمی‌کند.
 -- =============================================================================
 
-create extension if not exists pg_cron;
-create extension if not exists pg_net;
+-- بدنه‌ی توابع plpgsql هنگامِ ساخت اعتبارسنجی نمی‌شود تا ارجاع به http_post
+-- (pg_net) پیش از نصبِ آن، ساختِ تابع را نشکند.
+set check_function_bodies = off;
+
+-- ساختِ اکستنشن‌ها — اگر مجوز نبود، فقط هشدار بده و ادامه بده (Dashboard).
+do $$
+begin
+  create extension if not exists pg_cron;
+exception when insufficient_privilege or feature_not_supported then
+  raise notice 'pg_cron ساخته نشد — از Dashboard → Database → Extensions فعالش کن، بعد دوباره supabase db push';
+end $$;
+
+do $$
+begin
+  create extension if not exists pg_net;
+exception when insufficient_privilege or feature_not_supported then
+  raise notice 'pg_net ساخته نشد — از Dashboard → Database → Extensions فعالش کن، بعد دوباره supabase db push';
+end $$;
 
 -- -----------------------------------------------------------------------------
 -- 1) سطحِ Backup روی پلن و شرکت

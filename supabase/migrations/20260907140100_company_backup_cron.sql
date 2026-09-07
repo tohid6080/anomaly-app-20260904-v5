@@ -1,40 +1,38 @@
 -- =============================================================================
 -- زمان‌بندیِ Job روزانه‌ی Backup خودکارِ شرکت‌ها  (pg_cron)
 -- =============================================================================
--- ⚠️ این migration را فقط بعد از این دو کار اجرا کنید:
+-- پیش‌نیازها (یک‌بار):
 --
---   1) افزودنِ سکرت‌ها به Supabase Vault (Dashboard → Project Settings → Vault،
---      یا با SQL زیر — مقادیر واقعیِ پروژه را جایگزین کنید):
+--   1) اکستنشن‌های pg_cron و pg_net نصب شده باشند (Migration قبلی تلاش می‌کند؛
+--      اگر با خطای مجوز رد شد، از Dashboard → Database → Extensions فعالشان کن).
 --
---        select vault.create_secret(
---          'https://<PROJECT-REF>.supabase.co/functions/v1',
---          'backup_edge_base_url',
---          'Base URL برای فراخوانیِ Edge Functionهای Backup'
---        );
---        select vault.create_secret(
---          '<یک رشته‌ی تصادفیِ قوی>',
---          'backup_cron_secret',
---          'سکرتِ مشترک بین cron و Edge Functionهای Backup'
---        );
+--   2) دو سکرت در Supabase Vault موجود باشند (مقادیر واقعیِ پروژه):
+--        - backup_edge_base_url   مثلاً https://<PROJECT-REF>.supabase.co/functions/v1
+--        - backup_cron_secret     همان مقدارِ env به نامِ BACKUP_CRON_SECRET روی Edge Functionها
 --
---   2) ست‌کردنِ همان مقدارِ backup_cron_secret به‌عنوان env روی Edge Functionها:
---
---        supabase secrets set BACKUP_CRON_SECRET='<همان رشته‌ی بالا>'
---
--- بدون این دو، تابعِ dispatch_company_backups بی‌اثر برمی‌گردد (خطا نمی‌دهد).
+-- اگر pg_cron هنوز نصب نباشد، این فایل بی‌اثر رد می‌شود (خطا نمی‌دهد) و در
+-- اجرای بعدیِ supabase db push دوباره تلاش می‌شود.
 -- =============================================================================
 
--- اگر Job قبلاً ثبت شده، اول حذفش کن (idempotent)
 do $$
 begin
-  perform cron.unschedule('company-backups-daily');
-exception when others then
-  null;
-end $$;
+  if to_regnamespace('cron') is null then
+    raise notice 'pg_cron نصب نیست — زمان‌بندی ثبت نشد. بعد از فعال‌سازی pg_cron دوباره supabase db push بزن.';
+    return;
+  end if;
 
--- هر روز ساعت ۰۲:۳۰ UTC
-select cron.schedule(
-  'company-backups-daily',
-  '30 2 * * *',
-  $$ select public.dispatch_company_backups(); $$
-);
+  -- idempotent: اگر Job قبلاً ثبت شده، اول حذفش کن
+  begin
+    perform cron.unschedule('company-backups-daily');
+  exception when others then
+    null;
+  end;
+
+  -- هر روز ساعت ۰۲:۳۰ UTC
+  perform cron.schedule(
+    'company-backups-daily',
+    '30 2 * * *',
+    'select public.dispatch_company_backups();'
+  );
+  raise notice 'Job روزانه‌ی company-backups-daily ثبت شد.';
+end $$;
