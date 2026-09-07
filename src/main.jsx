@@ -20,15 +20,15 @@ baseStyle.textContent = `
        بعد از بارگذاری از دیتابیس (systemConfigApi.js::applyAppearanceToDom)،
        این مقادیر override می‌شوند. تا آن لحظه، ظاهر سامانه بدون کوچک‌ترین
        تغییری همان قبلی است. */
-    --ihms-navy: #0e2a3f;
-    --ihms-teal: #0d8f8a;
-    --ihms-bg: #f2f5f8;
+    --ihms-navy: #0e2c3f;
+    --ihms-teal: #127c72;
+    --ihms-bg: #eef1f4;
     --ihms-surface: #ffffff;
-    --ihms-border: #e3e8ee;
+    --ihms-border: #d9e0e6;
     --ihms-border-strong: #cbd5e1;
-    --ihms-text: #152535;
-    --ihms-text2: #5b6b7d;
-    --ihms-text3: #93a1b0;
+    --ihms-text: #15222e;
+    --ihms-text2: #556571;
+    --ihms-text3: #8695a1;
     --ihms-font: 'Vazirmatn', 'Inter', Tahoma, Arial, sans-serif;
   }
 `;

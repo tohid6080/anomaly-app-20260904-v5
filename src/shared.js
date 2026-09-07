@@ -216,27 +216,38 @@ export function todayISO() {
 }
 
 // ---------- توکن‌های طراحی (پالت و تایپوگرافی سازمانی) ----------
+// پالت پایه = همان پالتِ نمونه‌طراحی‌های داشبورد (navy/teal مات، زمینهٔ
+// خنک‌تر، قرمزِ مرجانی، به‌علاوهٔ توکن‌های ok/warn). مقادیرِ navy/teal/bg/…
+// اگر شرکت در «ظاهر سامانه» چیز دیگری تنظیم کرده باشد از همان می‌آید
+// (var(--ihms-*))؛ وگرنه همین fallbackها.
 export const THEME = {
-  navy: "var(--ihms-navy, #0e2a3f)",
-  navyDeep: "#0a1f30",
-  navyMid: "#123a54",
-  teal: "var(--ihms-teal, #0d8f8a)",
-  tealDeep: "#0a7570",
-  tealSoft: "#e3f5f4",
-  bg: "var(--ihms-bg, #f2f5f8)",
+  navy: "var(--ihms-navy, #0e2c3f)",
+  navyDeep: "#0a2331",
+  navyMid: "#123f59",
+  teal: "var(--ihms-teal, #127c72)",
+  tealDeep: "#0c5b54",
+  tealSoft: "#e0f0ee",
+  bg: "var(--ihms-bg, #eef1f4)",
   surface: "var(--ihms-surface, #ffffff)",
-  border: "var(--ihms-border, #e3e8ee)",
+  surface2: "#f6f8fa",
+  border: "var(--ihms-border, #d9e0e6)",
+  borderSoft: "#e7ecf0",
   borderStrong: "var(--ihms-border-strong, #cbd5e1)",
-  text: "var(--ihms-text, #152535)",
-  text2: "var(--ihms-text2, #5b6b7d)",
-  text3: "var(--ihms-text3, #93a1b0)",
-  danger: "#c92a2a",
-  dangerBg: "#fdecec",
+  text: "var(--ihms-text, #15222e)",
+  text2: "var(--ihms-text2, #556571)",
+  text3: "var(--ihms-text3, #8695a1)",
+  danger: "#cf4a3f",
+  dangerBg: "#fbe7e4",
+  warn: "#c47f28",
+  warnBg: "#f8eddb",
+  ok: "#2f8f57",
+  okBg: "#e2f1e8",
+  accentSoft: "#e0f0ee",
   font: "var(--ihms-font)",
 };
 
 export const styles = {
-  centerScreen: { display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: `radial-gradient(1100px 500px at 15% -10%, ${THEME.tealSoft} 0%, transparent 55%), linear-gradient(160deg, #f6f8fa 0%, #e9eef3 100%)`, fontFamily: THEME.font, padding: 20 },
+  centerScreen: { display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: `radial-gradient(1100px 500px at 15% -10%, ${THEME.tealSoft} 0%, transparent 55%), linear-gradient(160deg, #f4f6f8 0%, #e7ebee 100%)`, fontFamily: THEME.font, padding: 20 },
   brandBadge: { width: 44, height: 44, borderRadius: 12, background: THEME.teal, display: "flex", alignItems: "center", justifyContent: "center" },
   card: { background: THEME.surface, padding: "clamp(18px, 5vw, 30px)", borderRadius: 16, boxShadow: "0 1px 2px rgba(15,42,63,0.04), 0 12px 32px -12px rgba(15,42,63,0.14)", border: `1px solid ${THEME.border}`, width: 340, maxWidth: "100%", boxSizing: "border-box", marginBottom: 14 },
   label: { display: "block", marginBottom: 6, marginTop: 16, fontSize: 13, fontWeight: 600, color: THEME.text2, letterSpacing: "0.01em" },

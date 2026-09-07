@@ -174,8 +174,8 @@ export async function loadAppearanceConfig() {
     logoUrl: map.appearance_logo_url || "",
     faviconUrl: map.appearance_favicon_url || "",
     apkIconUrl: map.appearance_apk_icon_url || "",
-    colorPrimary: map.appearance_color_primary || "#0e2a3f",
-    colorAccent: map.appearance_color_accent || "#0d8f8a",
+    colorPrimary: map.appearance_color_primary || "#0e2c3f",
+    colorAccent: map.appearance_color_accent || "#127c72",
     themeMode: map.appearance_theme_mode || "light",
     fontFamily: map.appearance_font_family || "'Vazirmatn', 'Inter', Tahoma, Arial, sans-serif",
     fontSizeBase: map.appearance_font_size_base != null ? Number(map.appearance_font_size_base) : null,
@@ -218,8 +218,8 @@ const DARK_PALETTE = {
   text: "#e5eaf0", text2: "#a7b3c2", text3: "#7c8a9a",
 };
 const LIGHT_PALETTE = {
-  bg: "#f2f5f8", surface: "#ffffff", border: "#e3e8ee", borderStrong: "#cbd5e1",
-  text: "#152535", text2: "#5b6b7d", text3: "#93a1b0",
+  bg: "#eef1f4", surface: "#ffffff", border: "#d9e0e6", borderStrong: "#cbd5e1",
+  text: "#15222e", text2: "#556571", text3: "#8695a1",
 };
 
 // اعمال زنده‌ی تنظیمات ظاهری روی DOM — از طریق CSS Custom Properties، نه
@@ -234,8 +234,8 @@ export function applyAppearanceToDom(config) {
   const root = document.documentElement.style;
   const palette = config.themeMode === "dark" ? DARK_PALETTE : LIGHT_PALETTE;
 
-  root.setProperty("--ihms-navy", config.colorPrimary || "#0e2a3f");
-  root.setProperty("--ihms-teal", config.colorAccent || "#0d8f8a");
+  root.setProperty("--ihms-navy", config.colorPrimary || "#0e2c3f");
+  root.setProperty("--ihms-teal", config.colorAccent || "#127c72");
   root.setProperty("--ihms-bg", palette.bg);
   root.setProperty("--ihms-surface", palette.surface);
   root.setProperty("--ihms-border", palette.border);
