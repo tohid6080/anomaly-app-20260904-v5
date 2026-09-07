@@ -16,6 +16,9 @@ self.addEventListener("activate", (event) => {
 // استراتژی network-first: همیشه نسخه‌ی جدید را ترجیح می‌دهد، فقط وقتی آفلاین است از کش استفاده می‌کند
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
+  // درخواست‌های افزونه‌های مرورگر (chrome-extension:// و مشابه) هم وارد این
+  // event می‌شوند ولی Cache API فقط از scheme های http/https پشتیبانی می‌کند
+  if (!event.request.url.startsWith("http")) return;
   event.respondWith(
     fetch(event.request)
       .then((res) => {
