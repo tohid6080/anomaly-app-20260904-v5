@@ -236,6 +236,10 @@ export const translations = {
   "wtqEmptyAll": { "fa": "امروز کاری در صف شما نیست", "en": "Your queue is clear today" },
   "wtqPartialError": { "fa": "بخشی از داده‌ها بارگذاری نشد", "en": "Some data didn’t load" },
   "wtqRetry": { "fa": "تلاش دوباره", "en": "Retry" },
+  "atrTitle": { "fa": "روند آنومالی", "en": "Anomaly trend" },
+  "atrWindowMonths": { "fa": "{n} ماه", "en": "{n} mo" },
+  "atrEmpty": { "fa": "هنوز داده‌ی کافی برای روند نیست", "en": "Not enough data for a trend yet" },
+  "atrFooter": { "fa": "{total} ثبت‌شده · نرخ بستن {rate}٪", "en": "{total} registered · {rate}% close rate" },
   "moduleAdminAnalytics": {
     "fa": "داشبورد فعالیت کاربران",
     "en": "User Activity Dashboard"

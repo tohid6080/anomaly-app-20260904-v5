@@ -5,6 +5,7 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { loadHomeKpiSummary } from "./homeKpiApi.js";
 import { CounterWidget } from "./widgets/primitives.jsx";
 import MyTaskQueueWidget from "./widgets/MyTaskQueueWidget.jsx";
+import AnomalyTrendWidget from "./widgets/AnomalyTrendWidget.jsx";
 
 /**
  * داشبورد کاری (Operational) — شبکهٔ ویجت برای کارِ روزمرهٔ سرپرست/کارشناس/پیمانکار،
@@ -46,6 +47,8 @@ export default function OperationalDashboard({ role, currentUser, onNavigate, on
           value={num(k.incidentsCount)} tone={k.incidentsCount > 0 ? "bad" : "ok"}
           onClick={() => onNavigate && onNavigate({ module: "incidents" })}
         />
+
+        <AnomalyTrendWidget role={role} currentUser={currentUser} onNavigate={onNavigate} />
       </div>
     </div>
   );
