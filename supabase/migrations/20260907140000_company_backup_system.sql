@@ -2,43 +2,32 @@
 -- سیستم Backup / Restore کامل شرکت‌ها  (SuperAdmin → Storage & Usage)
 -- =============================================================================
 -- این migration:
---   1) اکستنشن‌های pg_cron و pg_net را فعال می‌کند (برای زمان‌بندی خودکار).
+--   1) پیش‌نیازها را بررسی می‌کند: pg_cron و pg_net باید از قبل نصب باشند
+--      (روی Supabase فعال‌سازی‌شان از Dashboard → Database → Extensions است،
+--      نه از داخلِ migration). اگر نصب نباشند، این migration با خطای واضح
+--      متوقف می‌شود — هیچ وانمودی به نصبِ موفق نمی‌کند.
 --   2) ستون‌های سطحِ Backup را به plans و companies اضافه می‌کند.
 --   3) جدول company_backups را می‌سازد — عمداً بدون FK به companies، تا با
 --      حذف کاملِ شرکت، متادیتای Backupهای قبلی باقی بماند.
 --   4) باکتِ خصوصیِ Storage به نام company-backups را می‌سازد.
---   5) توابع SQL کمکی: تعیین دوره‌ی مؤثر، فهرست شرکت‌های سررسیدشده،
---      مصرفِ Storageِ Backupها، و restore_company_from_bundle (Restoreِ
---      اتمیک با حفظ PK و روابط FK).
---   6) dispatch_company_backups — تابعی که Job روزانه صدا می‌زند؛ سکرت و
---      آدرس را از Supabase Vault می‌خواند (هیچ سکرتی در این فایل نیست).
+--   5) توابع SQL: تعیین دوره‌ی مؤثر، فهرست شرکت‌های سررسیدشده، مصرفِ Storageِ
+--      Backupها، restore_company_from_bundle (Restoreِ اتمیک با گاردِ Replace)،
+--      purge_company_data، و dispatch_company_backups.
 --
--- زمان‌بندیِ cron در فایلِ جداگانه‌ی 20260907140100_company_backup_cron.sql
--- ثبت می‌شود و فقط بعد از افزودنِ سکرت‌ها به Vault باید اجرا شود.
---
--- نکته: اگر نقشِ اجراکننده‌ی migration مجازِ ساختِ اکستنشن نباشد (روی بعضی
--- پروژه‌های Supabase باید pg_cron/pg_net را از Dashboard → Database →
--- Extensions فعال کرد)، این فایل باز هم کامل اعمال می‌شود؛ فقط تابعِ
--- dispatch_company_backups تا زمانِ نصبِ pg_net عملاً کار نمی‌کند.
+-- زمان‌بندیِ cron در فایلِ جداگانه‌ی 20260907140100_company_backup_cron.sql است.
+-- Secretهای Vault (نام‌های ثابت، هیچ مقداری اینجا نیست):
+--   backup_edge_base_url , backup_cron_secret
 -- =============================================================================
 
--- بدنه‌ی توابع plpgsql هنگامِ ساخت اعتبارسنجی نمی‌شود تا ارجاع به http_post
--- (pg_net) پیش از نصبِ آن، ساختِ تابع را نشکند.
-set check_function_bodies = off;
-
--- ساختِ اکستنشن‌ها — اگر مجوز نبود، فقط هشدار بده و ادامه بده (Dashboard).
+-- ---------- 0) پیش‌نیازِ اکستنشن‌ها — بدون وانمود، خطای واضح ----------
 do $$
 begin
-  create extension if not exists pg_cron;
-exception when insufficient_privilege or feature_not_supported then
-  raise notice 'pg_cron ساخته نشد — از Dashboard → Database → Extensions فعالش کن، بعد دوباره supabase db push';
-end $$;
-
-do $$
-begin
-  create extension if not exists pg_net;
-exception when insufficient_privilege or feature_not_supported then
-  raise notice 'pg_net ساخته نشد — از Dashboard → Database → Extensions فعالش کن، بعد دوباره supabase db push';
+  if not exists (select 1 from pg_extension where extname = 'pg_cron') then
+    raise exception 'pg_cron نصب نیست. اول از Dashboard -> Database -> Extensions فعالش کن، بعد این migration را اجرا کن.';
+  end if;
+  if not exists (select 1 from pg_extension where extname = 'pg_net') then
+    raise exception 'pg_net نصب نیست. اول از Dashboard -> Database -> Extensions فعالش کن، بعد این migration را اجرا کن.';
+  end if;
 end $$;
 
 -- -----------------------------------------------------------------------------
@@ -48,11 +37,8 @@ alter table public.plans
   add column if not exists backup_tier text not null default 'none';
 
 do $$ begin
-  if not exists (
-    select 1 from pg_constraint where conname = 'plans_backup_tier_check'
-  ) then
-    alter table public.plans
-      add constraint plans_backup_tier_check
+  if not exists (select 1 from pg_constraint where conname = 'plans_backup_tier_check') then
+    alter table public.plans add constraint plans_backup_tier_check
       check (backup_tier in ('none','weekly','monthly','yearly'));
   end if;
 end $$;
@@ -64,11 +50,8 @@ alter table public.companies
   add column if not exists backup_frequency text;
 
 do $$ begin
-  if not exists (
-    select 1 from pg_constraint where conname = 'companies_backup_frequency_check'
-  ) then
-    alter table public.companies
-      add constraint companies_backup_frequency_check
+  if not exists (select 1 from pg_constraint where conname = 'companies_backup_frequency_check') then
+    alter table public.companies add constraint companies_backup_frequency_check
       check (backup_frequency is null or backup_frequency in ('none','weekly','monthly','yearly'));
   end if;
 end $$;
@@ -112,8 +95,7 @@ create index if not exists company_backups_status_idx   on public.company_backup
 create index if not exists company_backups_started_idx  on public.company_backups (started_at desc);
 
 comment on table public.company_backups is
-  'متادیتای هر نسخه‌ی Backup شرکت. فایلِ واقعیِ zip در باکتِ company-backups. '
-  'عمداً بدون FK به companies تا با حذف شرکت پاک نشود.';
+  'متادیتای هر نسخه‌ی Backup شرکت. فایلِ zip در باکتِ company-backups. عمداً بدون FK به companies تا با حذف شرکت پاک نشود.';
 
 alter table public.company_backups enable row level security;
 
@@ -129,24 +111,18 @@ create policy company_backups_superadmin_all on public.company_backups
 insert into storage.buckets (id, name, public)
 values ('company-backups', 'company-backups', false)
 on conflict (id) do nothing;
-
--- هیچ policyِ anon/authenticated روی این باکت گذاشته نمی‌شود — دسترسی فقط
--- از Edge Functionها با service_role (که RLS را دور می‌زند). دانلود از UI
--- از طریق signed URL که همان Edge Function می‌سازد انجام می‌شود.
+-- هیچ policyِ anon/authenticated روی این باکت — دسترسی فقط از Edge Functionها
+-- با service_role. دانلود از UI از طریق signed URL که همان Edge Function می‌سازد.
 
 -- -----------------------------------------------------------------------------
--- 4) تابع: دوره‌ی مؤثرِ Backup یک شرکت
+-- 4) تابع: دوره‌ی مؤثرِ Backup یک شرکت (Override شرکت > سطحِ پلن > none)
 -- -----------------------------------------------------------------------------
 create or replace function public.company_backup_effective_frequency(p_company_id uuid)
 returns text
 language sql
 stable
 as $$
-  select coalesce(
-    nullif(c.backup_frequency, ''),
-    p.backup_tier,
-    'none'
-  )
+  select coalesce(nullif(c.backup_frequency, ''), p.backup_tier, 'none')
   from public.companies c
   left join public.plans p on p.id = c.plan_id
   where c.id = p_company_id;
@@ -183,10 +159,9 @@ $$;
 
 -- -----------------------------------------------------------------------------
 -- 6) تابع: مصرفِ Storageِ Backupها  (جدا از Storageِ عادیِ شرکت)
+--    عمداً از anon/authenticated بسته است؛ فقط Edge Function با service_role
+--    (که خودش احرازِ Super Admin را انجام می‌دهد).
 -- -----------------------------------------------------------------------------
--- مثل توابعِ get_storage_* در storage-usage: عمداً از anon/authenticated
--- بسته است و فقط از Edge Function (با service_role) صدا زده می‌شود؛ خودِ
--- آن Edge Function احرازِ Super Admin را انجام می‌دهد.
 create or replace function public.get_backup_storage_usage()
 returns jsonb
 language plpgsql
@@ -227,14 +202,25 @@ revoke all on function public.get_backup_storage_usage() from public, anon, auth
 grant execute on function public.get_backup_storage_usage() to service_role;
 
 -- -----------------------------------------------------------------------------
--- 7) تابع اصلیِ Restore — اتمیک، با حفظ PK و روابط FK
+-- 7) تابع اصلیِ Restore — اتمیک، با گاردِ Replace و حفظ PK / روابط FK
 -- -----------------------------------------------------------------------------
 -- p_company_id : شناسه‌ی شرکتِ مقصد
--- p_order      : ترتیبِ والد→فرزندِ جداول (از _shared/companyBackup.ts می‌آید)
+-- p_order      : ترتیبِ والد→فرزندِ جداول (از _shared/companyBackup.ts می‌آید —
+--                منبعِ واحدِ حقیقت؛ شاملِ همه‌ی ۶۱ جدولِ company-scoped +
+--                anomaly_notifications)
 -- p_bundle     : { "companies":[...], "<table>":[...], ... }  (خامِ ردیف‌ها)
--- p_replace    : اگر true، اول همه‌ی داده‌ی فعلیِ شرکت پاک می‌شود
+-- p_replace    : اگر true، اول همه‌ی داده‌ی فعلیِ شرکت با ترتیبِ معکوسِ FK
+--                حذف و بعد جایگزین می‌شود.
 --
--- کلِ عملیات در یک تراکنش است؛ هر خطایی → Rollback کامل.
+-- رفتار:
+--   • شرکت وجود ندارد            → Restore کامل (companies + همه‌ی جداول).
+--   • شرکت هست ولی داده ندارد     → فقط جداول پر می‌شوند (ردیفِ companies حفظ).
+--   • شرکت هست و داده دارد، p_replace=false → هیچ تغییری؛ برمی‌گردد
+--        { "ok": false, "status": "replace_required" }.
+--   • شرکت هست و داده دارد، p_replace=true  → Purge (معکوسِ FK) + جایگزینی.
+--
+-- کلِ عملیات یک تراکنش است؛ هر خطا → Rollback کامل. چون درج فقط داخلِ
+-- شرکتِ خالی/تازه انجام می‌شود، Restoreِ عادی هرگز Duplicate PK نمی‌سازد.
 create or replace function public.restore_company_from_bundle(
   p_company_id uuid,
   p_order      text[],
@@ -252,43 +238,74 @@ declare
   v_scope      text;
   v_rows       jsonb;
   v_inserted   bigint;
+  v_bool       boolean;
   v_counts     jsonb := '{}'::jsonb;
   v_total      bigint := 0;
+  v_exists     boolean;
+  v_has_data   boolean := false;
 begin
-  -- ولیدیشنِ ساده‌ی نامِ جدول‌ها (فقط حروف کوچک و زیرخط)
+  -- ولیدیشنِ نامِ جدول‌ها
   foreach v_tbl in array p_order loop
     if v_tbl !~ '^[a-z_]+$' then
-      raise exception 'invalid table name in order: %', v_tbl;
+      raise exception 'invalid table name in p_order: %', v_tbl;
     end if;
   end loop;
 
-  -- ---------- Purge (فقط در حالتِ replace) ----------
-  if p_replace then
+  select exists (select 1 from public.companies where id = p_company_id) into v_exists;
+
+  -- آیا شرکت داده‌ی فعال دارد؟ (همه‌ی جداولِ p_order — نه فقط چند نمونه)
+  if v_exists then
+    foreach v_tbl in array p_order loop
+      if v_tbl = 'anomaly_notifications' then
+        v_scope := format('anomaly_id in (select id from public.anomalies where company_id = %L)', p_company_id);
+      else
+        v_scope := format('company_id = %L', p_company_id);
+      end if;
+      execute format('select exists (select 1 from public.%I where %s)', v_tbl, v_scope) into v_bool;
+      if v_bool then
+        v_has_data := true;
+        exit;
+      end if;
+    end loop;
+  end if;
+
+  -- گاردِ Replace: شرکتِ دارای داده بدون p_replace → هیچ تغییری
+  if v_exists and v_has_data and not p_replace then
+    return jsonb_build_object(
+      'ok', false,
+      'status', 'replace_required',
+      'companyId', p_company_id,
+      'companyExists', true,
+      'hasData', true
+    );
+  end if;
+
+  -- ---------- Purge (فقط p_replace روی شرکتِ موجود) — معکوسِ ترتیبِ FK ----------
+  if p_replace and v_exists then
     for v_i in reverse array_length(p_order, 1) .. 1 loop
       v_tbl := p_order[v_i];
       if v_tbl = 'anomaly_notifications' then
-        v_scope := format(
-          'anomaly_id in (select id from public.anomalies where company_id = %L)',
-          p_company_id
-        );
+        v_scope := format('anomaly_id in (select id from public.anomalies where company_id = %L)', p_company_id);
       else
         v_scope := format('company_id = %L', p_company_id);
       end if;
       execute format('delete from public.%I where %s', v_tbl, v_scope);
     end loop;
     delete from public.companies where id = p_company_id;
+    v_exists := false;
   end if;
 
-  -- ---------- درجِ ردیفِ companies ----------
+  -- ---------- درجِ ردیفِ companies (فقط اگر وجود ندارد) ----------
   v_rows := coalesce(p_bundle -> 'companies', '[]'::jsonb);
-  if jsonb_array_length(v_rows) > 0
-     and not exists (select 1 from public.companies where id = p_company_id) then
+  if jsonb_array_length(v_rows) > 0 and not v_exists then
     execute 'insert into public.companies
              select * from jsonb_populate_recordset(null::public.companies, $1)'
       using v_rows;
+    v_counts := v_counts || jsonb_build_object('companies', jsonb_array_length(v_rows));
+    v_total  := v_total + jsonb_array_length(v_rows);
+  else
+    v_counts := v_counts || jsonb_build_object('companies', 0);
   end if;
-  v_counts := v_counts || jsonb_build_object('companies', jsonb_array_length(v_rows));
-  v_total  := v_total + jsonb_array_length(v_rows);
 
   -- ---------- درجِ جداول به ترتیبِ والد→فرزند ----------
   foreach v_tbl in array p_order loop
@@ -306,6 +323,7 @@ begin
 
   return jsonb_build_object(
     'ok', true,
+    'status', case when p_replace then 'replaced' else 'restored' end,
     'companyId', p_company_id,
     'replace', p_replace,
     'tables', v_counts,
@@ -317,11 +335,9 @@ $$;
 
 revoke all on function public.restore_company_from_bundle(uuid, text[], jsonb, boolean) from public, anon, authenticated;
 grant execute on function public.restore_company_from_bundle(uuid, text[], jsonb, boolean) to service_role;
--- فقط از Edge Function restore-company-backup (با service_role) صدا زده می‌شود.
 
 -- -----------------------------------------------------------------------------
--- 8) تابع: پاکسازیِ اتمیکِ داده‌ی یک شرکت (برای Backupِ pre_restore + replace
---    مستقل). همان ترتیبِ فرزند→والدِ delete-company.
+-- 8) تابع: Purge اتمیکِ داده‌ی یک شرکت (ابزارِ مستقل — معکوسِ ترتیبِ FK)
 -- -----------------------------------------------------------------------------
 create or replace function public.purge_company_data(
   p_company_id uuid,
@@ -341,17 +357,14 @@ declare
 begin
   foreach v_tbl in array p_order loop
     if v_tbl !~ '^[a-z_]+$' then
-      raise exception 'invalid table name in order: %', v_tbl;
+      raise exception 'invalid table name in p_order: %', v_tbl;
     end if;
   end loop;
 
   for v_i in reverse array_length(p_order, 1) .. 1 loop
     v_tbl := p_order[v_i];
     if v_tbl = 'anomaly_notifications' then
-      v_scope := format(
-        'anomaly_id in (select id from public.anomalies where company_id = %L)',
-        p_company_id
-      );
+      v_scope := format('anomaly_id in (select id from public.anomalies where company_id = %L)', p_company_id);
     else
       v_scope := format('company_id = %L', p_company_id);
     end if;
@@ -368,14 +381,10 @@ revoke all on function public.purge_company_data(uuid, text[]) from public, anon
 grant execute on function public.purge_company_data(uuid, text[]) to service_role;
 
 -- -----------------------------------------------------------------------------
--- 9) تابع: dispatch — Job روزانه این را صدا می‌زند
---    سکرت و آدرسِ Edge Function از Supabase Vault خوانده می‌شوند.
---    Vault باید این دو سکرت را داشته باشد (بعد از این migration اضافه می‌شوند):
---      - backup_edge_base_url   مثلاً: https://<project-ref>.supabase.co/functions/v1
---      - backup_cron_secret     همان مقدارِ env به نامِ BACKUP_CRON_SECRET روی Edge Functionها
+-- 9) تابع: dispatch — Job روزانه‌ی pg_cron این را صدا می‌زند.
+--    آدرس و سکرت از Supabase Vault خوانده می‌شوند (نام‌های ثابت؛ هیچ مقداری
+--    اینجا hardcode نیست). فراخوانیِ HTTP با API فعلیِ pg_net: net.http_post.
 -- -----------------------------------------------------------------------------
--- search_path شاملِ net و extensions است تا http_post هرجا که pg_net نصب
--- شده باشد (نسخه‌های جدیدِ Supabase: schema net؛ قدیمی‌ترها: extensions) پیدا شود.
 create or replace function public.dispatch_company_backups()
 returns jsonb
 language plpgsql
@@ -383,12 +392,12 @@ security definer
 set search_path = public, net, extensions
 as $$
 declare
-  v_base_url text;
-  v_secret   text;
-  v_rec      record;
+  v_base_url  text;
+  v_secret    text;
+  v_rec       record;
   v_backup_id uuid;
   v_dispatched int := 0;
-  v_skipped   int := 0;
+  v_skipped    int := 0;
 begin
   select decrypted_secret into v_base_url
     from vault.decrypted_secrets where name = 'backup_edge_base_url' limit 1;
@@ -396,11 +405,12 @@ begin
     from vault.decrypted_secrets where name = 'backup_cron_secret' limit 1;
 
   if v_base_url is null or v_secret is null then
-    return jsonb_build_object('ok', false, 'error', 'vault secrets backup_edge_base_url / backup_cron_secret missing');
+    return jsonb_build_object('ok', false,
+      'error', 'vault secrets backup_edge_base_url / backup_cron_secret missing');
   end if;
 
   for v_rec in select * from public.companies_due_for_backup() loop
-    -- idempotent: اگر همین حالا یک Backupِ در جریان/در صف برای این شرکت هست، رد شو
+    -- idempotent: اگر Backupِ در جریان/در صف برای این شرکت هست، رد شو
     if exists (
       select 1 from public.company_backups
       where company_id = v_rec.company_id and status in ('pending','running')
@@ -410,14 +420,14 @@ begin
     end if;
 
     v_backup_id := gen_random_uuid();
-    insert into public.company_backups (id, company_id, company_name, storage_path, status, trigger, schema_version, created_by)
-    values (
-      v_backup_id, v_rec.company_id, v_rec.company_name,
-      v_rec.company_id || '/' || v_backup_id || '.zip',
-      'pending', 'scheduled', '2026-09-07.1', 'cron'
-    );
+    insert into public.company_backups
+      (id, company_id, company_name, storage_path, status, trigger, schema_version, created_by)
+    values
+      (v_backup_id, v_rec.company_id, v_rec.company_name,
+       v_rec.company_id::text || '/' || v_backup_id::text || '.zip',
+       'pending', 'scheduled', '2026-09-07.1', 'cron');
 
-    perform http_post(
+    perform net.http_post(
       url     := v_base_url || '/run-company-backup',
       headers := jsonb_build_object(
         'Content-Type', 'application/json',
@@ -438,4 +448,4 @@ $$;
 
 revoke all on function public.dispatch_company_backups() from public, anon, authenticated;
 grant execute on function public.dispatch_company_backups() to service_role;
--- توجه: Job روزانه‌ی pg_cron این را به‌عنوان نقشِ صاحبِ Job (postgres) اجرا می‌کند.
+-- Job روزانه‌ی pg_cron این را به‌عنوان نقشِ صاحبِ Job (postgres) اجرا می‌کند.

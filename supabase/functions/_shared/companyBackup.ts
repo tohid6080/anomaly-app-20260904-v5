@@ -5,8 +5,25 @@
 //
 // ⚠️ نگهداری حیاتی: هر جدول جدیدی که ستون company_id بگیرد باید به
 // COMPANY_TABLE_ORDER (در جای درستِ ترتیب والد→فرزند) اضافه شود؛ وگرنه آن
-// جدول در Backup نمی‌آید و Restore ناقص می‌شود. همین فهرست، معکوسِ
-// DELETE_ORDER در supabase/functions/delete-company/index.ts است.
+// جدول در Backup نمی‌آید و Restore ناقص می‌شود.
+//
+// حسابرسیِ schema (۲۰۲۶-۰۹): ۶۱ جدولِ دارای ستون company_id + جدولِ
+// anomaly_notifications (که company_id ندارد و از طریق FKِ غیرمستقیم
+// anomaly_id → anomalies به شرکت وصل است). همه‌ی این ۶۲ جدول اینجا هستند.
+//
+// جداولی که عمداً بیرون‌اند چون داده‌ی یک شرکتِ خاص نیستند:
+//   - admin_audit_log            (لاگ سراسریِ سوپرادمین، بدون company_id)
+//   - trial_requests             (پیش از ساختِ شرکت)
+//   - app_releases, login_attempts, super_admins
+//   - جداولِ مرجعِ سراسری: plans, sbs_ref_*, tripod_ref_*,
+//     proactive_indicator_definitions / proactive_indicator_questions
+//   - پیکربندیِ سراسریِ سیستم: system_dashboard_config / _widgets /
+//     system_module_config / system_notification_types / system_settings
+//
+// تنها جدولِ «وابستگیِ غیرمستقیم» anomaly_notifications است؛ بقیه‌ی جداولِ
+// فرزند همگی ستونِ company_id مستقلِ خودشان را دارند، پس هم Backup و هم
+// Purge با فیلترِ مستقیمِ company_id درست کار می‌کند (به‌جز anomaly_notifications
+// که هرجا لازم است با نامْ به‌صورت خاص هندل می‌شود).
 
 import { SUPABASE_URL, SERVICE_ROLE_KEY, restFetch } from "./supabaseAdmin.ts";
 
@@ -23,8 +40,10 @@ export const COMPANY_TABLE_ORDER: string[] = [
   "job_positions",
   "contractors",
   "employer_accounts",
+  "company_proactive_settings",
   "anomaly_categories",
   "user_activity",
+  "error_reports",
   "archive_log",
   "chat_matrix_extra_identities",
   "chat_visibility_rules",

@@ -127,7 +127,10 @@ Deno.serve(async (req) => {
     });
   }
 
-  const replace = companyExists && hasData; // در این نقطه یعنی mode==="replace"
+  // replace فقط وقتی که صراحتاً خواسته شده و شرکت وجود دارد. (Purgeِ شرکتِ
+  // ناموجود بی‌معناست.) این را از mode می‌گیریم نه از probe — تا اگر داده در
+  // جدولی خارج از probe باشد، درخواستِ replace در گیر نیفتد.
+  const replace = mode === "replace" && companyExists;
   const report: Record<string, unknown> = {
     backupId, companyId,
     companyName: manifest?.companyName || bundle.companies[0]?.["name"],
@@ -136,7 +139,7 @@ Deno.serve(async (req) => {
     schemaVersionMismatch: !!schemaMismatch,
   };
 
-  // ---------- Backupِ ایمنیِ pre_restore (فقط در حالتِ replace) ----------
+  // ---------- Backupِ ایمنیِ pre_restore (قبل از هر Replace) ----------
   if (replace) {
     const safety = await createAndStoreBackup({
       companyId,
@@ -169,7 +172,25 @@ Deno.serve(async (req) => {
       report,
     }, 500);
   }
-  report.dbResult = rpcText ? JSON.parse(rpcText) : null;
+  const dbResult = rpcText ? JSON.parse(rpcText) : null;
+  report.dbResult = dbResult;
+
+  // گاردِ دوم (سمتِ DB): اگر تابع تشخیص داد شرکت داده دارد و replace نبوده،
+  // هیچ تغییری نداده — این را به needsConfirmation ترجمه می‌کنیم.
+  if (dbResult && dbResult.ok === false && dbResult.status === "replace_required") {
+    return json({
+      needsConfirmation: true,
+      reason: "company_has_data",
+      companyId,
+      companyName: compRes.data?.[0]?.name || report.companyName,
+      currentData,
+      backupId,
+      message: "شرکت داده‌ی فعال دارد. برای جایگزینی، Restore را با mode=\"replace\" و تأییدِ نام شرکت اجرا کنید.",
+    });
+  }
+  if (dbResult && dbResult.ok === false) {
+    return json({ error: "Restore انجام نشد.", detail: dbResult, report }, 500);
+  }
 
   // ---------- بازآپلودِ فایل‌ها ----------
   const fileNames = Object.keys(zip.files).filter((n) => n.startsWith("files/") && !zip.files[n].dir);
