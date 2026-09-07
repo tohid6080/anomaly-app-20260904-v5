@@ -23,7 +23,7 @@ export default function IncidentDetailPage({ incidentId, currentUser, role, read
   const [error, setError] = useState("");
   const [openWorkspace, setOpenWorkspace] = useState(false);
 
-  const isEmployerSide = role === "EMPLOYER" || role === "ADMIN";
+  const isEmployerSide = role === "EMPLOYER";
 
   const load = async () => {
     const [inc, a] = await Promise.all([loadIncidentById(incidentId), loadAnalysisForIncident(incidentId)]);

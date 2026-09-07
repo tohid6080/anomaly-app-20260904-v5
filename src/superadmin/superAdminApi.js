@@ -229,7 +229,7 @@ export async function createCompanyUserAccount(companyId, { name, username, pass
   if (sbOk(existing) && existing.length > 0) {
     return { __error: true, message: tr("saErrUsernameTaken") };
   }
-  const validRoles = ["admin", "employer", "hse_supervisor"];
+  const validRoles = ["employer", "hse_supervisor"];
   const payload = {
     name: name.trim(), username: clean, password, can_edit: true,
     role: validRoles.includes(role) ? role : "employer", company_id: companyId,
@@ -683,10 +683,10 @@ async function callManageAccount(payload) {
   }
 }
 
-// targetType: "admin" | "employer" | "contractor"
+// targetType: "employer" | "hse_supervisor" | "contractor"
 export async function loadAccountsByType(targetType, companyId) {
   const table = targetType === "contractor" ? "contractors" : "employer_accounts";
-  const roleFilter = targetType === "admin" ? "&role=eq.admin" : targetType === "employer" ? "&role=eq.employer" : targetType === "hse_supervisor" ? "&role=eq.hse_supervisor" : "";
+  const roleFilter = targetType === "employer" ? "&role=eq.employer" : targetType === "hse_supervisor" ? "&role=eq.hse_supervisor" : "";
   const companyFilter = companyId ? `&company_id=eq.${companyId}` : "";
   const selectCols = targetType === "contractor"
     ? "id,name,username,company_id,job_position_id,contact_person_name,start_date,contract_details,phone,email,is_active"

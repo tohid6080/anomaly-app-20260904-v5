@@ -24,7 +24,6 @@ import { getCallerClaims } from "../_shared/jwtUtils.ts";
 import { json, CORS_HEADERS, restFetch } from "../_shared/supabaseAdmin.ts";
 
 const TABLE_BY_ROLE: Record<string, string> = {
-  admin: "employer_accounts",
   employer: "employer_accounts",
   hse_supervisor: "employer_accounts",
   contractor: "contractors",

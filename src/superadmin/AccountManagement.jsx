@@ -11,7 +11,6 @@ const inputStyle = { width: "100%", padding: "8px 10px", borderRadius: 8, border
 const btnStyle = (bg) => ({ padding: "7px 14px", borderRadius: 8, border: "none", background: bg || THEME.teal, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font });
 
 const TABS = [
-  { key: "admin", labelKey: "amTabAdmin" },
   { key: "hse_supervisor", labelKey: "amTabHseSupervisor" },
   { key: "employer", labelKey: "amTabEmployer" },
   { key: "contractor", labelKey: "amTabContractor" },
@@ -32,7 +31,7 @@ function emptyForm() {
 
 export default function AccountManagement({ currentAdmin }) {
   const { t, dir } = useLanguage();
-  const [tab, setTab] = useState("admin");
+  const [tab, setTab] = useState("hse_supervisor");
   const [companies, setCompanies] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);

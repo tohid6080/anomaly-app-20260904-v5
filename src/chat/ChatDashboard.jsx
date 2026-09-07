@@ -38,7 +38,8 @@ export default function ChatDashboard({ onBack, currentUser }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const isAdmin = currentUser?.role === "ADMIN";
+  // ساخت گروه چت که قبلاً فقط برای نقش ادمین بود، حالا به عهده‌ی سرپرست/مدیر HSE است.
+  const isAdmin = currentUser?.role === "HSE_SUPERVISOR";
 
   const openNew = async () => {
     setShowNew(true);

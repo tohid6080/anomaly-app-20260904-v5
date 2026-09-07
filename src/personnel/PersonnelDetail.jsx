@@ -57,7 +57,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
   const [gateMessage, setGateMessage] = useState("");
   const [contractorSubmitMsg, setContractorSubmitMsg] = useState("");
   const [contractorSubmitOk, setContractorSubmitOk] = useState(false);
-  const isGatekeeper = (currentUser?.role === "HSE_SUPERVISOR" || role === "ADMIN") && !readOnly;
+  const isGatekeeper = currentUser?.role === "HSE_SUPERVISOR" && !readOnly;
 
   const loadGate = () => {
     // وضعیتِ گیت برای پیمانکار هم خوانده می‌شود تا دکمهٔ «ثبت و ارسال به
@@ -133,7 +133,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
   // role (prop) همیشه "EMPLOYER" است (حتی برای حساب سرپرست HSE — هر دو
   // در EmployerDashboard میزبانی می‌شوند)، مستقیم currentUser?.role چک
   // می‌شود که واقعاً نقش سیستمی کاربر جاری را نشان می‌دهد.
-  const isEmployer = (currentUser?.role === "HSE_SUPERVISOR" || role === "ADMIN" || (gateItem?.status === "assigned_review" && gateItem?.assignedTo === currentUser?.username)) && !readOnly;
+  const isEmployer = (currentUser?.role === "HSE_SUPERVISOR" || (gateItem?.status === "assigned_review" && gateItem?.assignedTo === currentUser?.username)) && !readOnly;
   const isContractor = role === "CONTRACTOR" && !readOnly;
 
   const load = async () => {

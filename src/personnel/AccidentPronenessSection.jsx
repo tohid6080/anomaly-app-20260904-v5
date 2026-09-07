@@ -60,7 +60,7 @@ export default function AccidentPronenessSection({ personnel, role, currentUser,
   }
 
   // حالت ۲/۳: ارزیابی موجود است — نتیجه را نشان بده
-  const canIssueCorrectiveAction = (role === "EMPLOYER" || role === "ADMIN") && !correctiveAction;
+  const canIssueCorrectiveAction = role === "EMPLOYER" && !correctiveAction;
   const levelInfo = accidentPronenessLevel(assessment.finalScore);
   // طبق آستانه‌ی درخواستی: از سطح «متوسط» به بالا، لازم است اقدام اصلاحی
   // برای پیمانکار صادر شود — اینجا فقط با یک هشدار برجسته پیشنهاد می‌شود؛

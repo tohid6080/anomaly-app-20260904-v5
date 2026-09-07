@@ -22,7 +22,7 @@ export default function BarrierEffectivenessDashboard({ currentUser, role, onBac
   const [subView, setSubView] = useState(null); // null | 'weights' | 'mapping'
   const [recalculating, setRecalculating] = useState(false);
 
-  const isEmployerSide = role === "EMPLOYER" || role === "ADMIN";
+  const isEmployerSide = role === "EMPLOYER";
 
   const load = async () => setData(await loadDashboardData());
   useEffect(() => { load(); }, []);

@@ -20,7 +20,7 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
 export default function HseClimateCampaignManager({ currentUser, role, onBack }) {
   const { t, dir } = useLanguage();
   const isContractor = role === "CONTRACTOR";
-  const isEmployerSide = role === "EMPLOYER" || role === "ADMIN";
+  const isEmployerSide = role === "EMPLOYER";
 
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);

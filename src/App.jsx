@@ -83,10 +83,9 @@ import { APP_NAME, sb, sbOk, sbErrMsg, uid, todayISO, THEME, styles, usePersiste
  */
 
 // ---------- نوع نقش‌ها ----------
-// Role: "ADMIN" | "EMPLOYER" | "CONTRACTOR"
+// Role: "EMPLOYER" | "HSE_SUPERVISOR" | "CONTRACTOR"
 
 const SEED_USERS = [
-  { id: "admin-1", username: "admin", password: "Admin@123", role: "ADMIN" },
   { id: "emp-1", username: "karfarma", password: "1234", role: "EMPLOYER" },
 ];
 
@@ -287,7 +286,7 @@ function employerAccountFromRow(r) {
     canEdit: r.can_edit !== false,
     jobPositionId: r.job_position_id || "",
     jobPositionTitle: r.job_positions?.title || "",
-    role: r.role === "admin" ? "ADMIN" : "EMPLOYER",
+    role: r.role === "hse_supervisor" ? "HSE_SUPERVISOR" : "EMPLOYER",
     companyId: r.company_id || "",
     phone: r.phone || "",
     email: r.email || "",
@@ -1643,7 +1642,7 @@ function ProfileView({ onBack, currentUser, roleLabel }) {
           )}
         </div>
 
-        {(currentUser?.role === "ADMIN" || currentUser?.role === "HSE_SUPERVISOR") && <ChangePasswordSection />}
+        {currentUser?.role === "HSE_SUPERVISOR" && <ChangePasswordSection />}
 
         <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 14, marginTop: 14 }}>
           <p style={{ fontSize: 11, color: THEME.text3, fontWeight: 700, marginBottom: 10 }}>{t("contactInfoTitle")}</p>
@@ -2371,17 +2370,14 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
 // ---------- لیست و پیگیری آنومالی‌ها ----------
 function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter, initialRiskFilter, initialContractorFilter, initialExpandedAnomalyId }) {
   const { t, dir } = useLanguage();
-  const isAdmin = role === "ADMIN";
   // طبق تصمیم تأییدشده: تأیید نهایی آنومالی (بستن بعد از اقدام اصلاحی
-  // پیمانکار) فقط برای سرپرست/مدیر HSE و ادمین مجاز است، نه هر
-  // کارفرمایی معمولی. role (prop) همیشه "EMPLOYER" است (حتی برای حساب
-  // سرپرست HSE — هر دو در EmployerDashboard میزبانی می‌شوند)، پس
-  // مستقیم currentUser?.role چک می‌شود.
-  const isReviewer = (currentUser?.role === "HSE_SUPERVISOR" || isAdmin) && !readOnly;
-  const isReadOnlyReviewer = (currentUser?.role === "HSE_SUPERVISOR" || isAdmin) && !!readOnly;
+  // پیمانکار) فقط برای سرپرست/مدیر HSE مجاز است، نه هر کارفرمایی معمولی.
+  // role (prop) همیشه "EMPLOYER" است (حتی برای حساب سرپرست HSE — هر دو در
+  // EmployerDashboard میزبانی می‌شوند)، پس مستقیم currentUser?.role چک می‌شود.
+  const isReviewer = currentUser?.role === "HSE_SUPERVISOR" && !readOnly;
+  const isReadOnlyReviewer = currentUser?.role === "HSE_SUPERVISOR" && !!readOnly;
   const isContractor = role === "CONTRACTOR";
-  // ادمین علاوه بر تأیید/رد، می‌تواند مثل پیمانکار هم اقدام اصلاحی ثبت و ارسال کند
-  const canActAsContractor = (isContractor || isAdmin) && !readOnly;
+  const canActAsContractor = isContractor && !readOnly;
   const myContractorName = (currentUser?.name || "").trim().toLowerCase();
 
   const [anomalies, setAnomalies] = useState([]);
@@ -3060,7 +3056,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
                 )}
 
                 <button type="button" style={styles.button} onClick={() => submitForReview(a)} disabled={actionSaving || !actionText.trim()}>
-                  {actionSaving ? t("sendingEllipsis") : isAdmin ? t("submitActionAndSendForApproval") : t("sendForEmployerApproval")}
+                  {actionSaving ? t("sendingEllipsis") : t("sendForEmployerApproval")}
                 </button>
               </div>
             )}
@@ -3729,7 +3725,7 @@ function WelcomeScreen({ currentUser, setView, onNavigate, sidebarModules }) {
     // پیمانکار نه گیرنده‌ی واگذاری است، نه گیت‌کیپر — این کارت برایش خالی می‌ماند
     if (currentUser?.role === "CONTRACTOR") { setTasks([]); return; }
 
-    const isGatekeeper = currentUser?.role === "HSE_SUPERVISOR" || currentUser?.role === "ADMIN";
+    const isGatekeeper = currentUser?.role === "HSE_SUPERVISOR";
     Promise.all([
       loadAssignedGateItems(currentUser?.username).catch(() => []),
       isGatekeeper ? loadPendingGateItems().catch(() => []) : Promise.resolve([]),
@@ -4174,251 +4170,6 @@ function MobileAnnouncementBanner({ setView }) {
         </div>
       )}
     </div>
-  );
-}
-
-function AdminDashboard({ onLogout, currentUser }) {
-  const { t, dir, lang } = useLanguage();
-  // برچسب ماژول از یک منبع مشترک خوانده می‌شود تا تغییرِ نامِ ماژول در
-  // «پیکربندی سامانه»ی SuperAdmin (جدولِ system_module_config، مشترک بین
-  // دسکتاپ و موبایل) در همه‌ی نماها یکسان اعمال شود: اول override پنل
-  // SuperAdmin، بعد ترجمه‌ی i18n، بعد برچسبِ ثابتِ کد. moduleConfig کمی
-  // پایین‌تر تعریف می‌شود ولی این تابع فقط هنگام رندر صدا زده می‌شود (پس
-  // تا آن لحظه مقداردهی شده). زیرماژول‌ها کلیدشان در این جدول نیست و
-  // خودکار به رفتار قبلی برمی‌گردند.
-  const mt = (m) => {
-    const cfg = Array.isArray(moduleConfig) ? moduleConfig.find((c) => c.moduleKey === m?.key) : null;
-    // نامِ ماژول از «پیکربندی سامانه → مدیریت ماژول‌ها»: در حالت انگلیسی
-    // display_label_en و در حالت فارسی display_label. هرکدام که خالی باشد،
-    // به ترجمه‌ی i18n برمی‌گردد. در وب و موبایل یکسان است.
-    if (cfg) {
-      const custom = lang === "en" ? cfg.displayLabelEn : (lang === "fa" ? cfg.displayLabel : "");
-      if (typeof custom === "string" && custom.trim()) return custom.trim();
-    }
-    return m?.labelKey ? t(m.labelKey) : m?.label;
-  };
-  const [view, setView] = usePersistedState("ihms_view_admin", "menu");
-  useEffect(() => { trackPageView(currentUser, view); }, [view]);
-  // دکمهٔ برگشت گوشی مثل برگشت داخلی سامانه: اگر داخل یک ماژول هستیم به
-  // منو برمی‌گردیم؛ روی خودِ منو رویداد را مصرف نمی‌کنیم تا (طبق الزام)
-  // اپ بسته نشود، بلکه فقط به پس‌زمینه برود.
-  useAndroidBackButton(() => { if (view !== "menu") { setView("menu"); return true; } return false; });
-  const [navFilter, setNavFilter] = useState(null);
-  const [assessmentContext, setAssessmentContext] = useState(null);
-  const [planFeatures, setPlanFeatures] = useState(null);
-  useEffect(() => { loadCurrentCompanyPlanFeatures().then(setPlanFeatures); }, []);
-  const [moduleConfig, setModuleConfig] = useState(null);
-  // با هر جابه‌جایی در داشبورد دوباره خوانده می‌شود تا تغییرِ نامِ ماژول‌ها در
-  // «پیکربندی سامانه» بلافاصله (بدون نیاز به reload یا نصب مجدد اپ) اعمال شود.
-  useEffect(() => { loadModuleConfig().then(setModuleConfig); }, [view]);
-  const [chatUnread, setChatUnread] = useState(0);
-  useEffect(() => {
-    const load = () => loadUnreadTotal(currentUser?.username).then(setChatUnread);
-    load();
-    const timer = setInterval(load, 15000);
-    return () => clearInterval(timer);
-  }, [currentUser?.username]);
-  const anomalyMod = HSE_MODULES.find((m) => m.key === "anomalyReport");
-  const riskMod = HSE_MODULES.find((m) => m.key === "riskAssessment");
-  const personnelMod = HSE_MODULES.find((m) => m.key === "personnelAccess");
-  const machineryMod = HSE_MODULES.find((m) => m.key === "machineryManagement");
-  const scaffoldMod = HSE_MODULES.find((m) => m.key === "scaffoldManagement");
-  const managementMod = HSE_MODULES.find((m) => m.key === "managementDashboard");
-  const proactiveMod = HSE_MODULES.find((m) => m.key === "proactiveIndicators");
-  const incidentMod = HSE_MODULES.find((m) => m.key === "incidentManagement");
-
-  useEffect(() => {
-    loadPersonnelList().then(checkAndUpdateDeadlines); // فقط برای انتقال خودکار به «منقضی»
-  }, []);
-
-  const handleHomeNavigate = (target) => {
-    setNavFilter(target);
-    if (target.module === "personnel") setView("personnelDashboard");
-    else if (target.module === "anomaly") setView("anomalyList");
-    else if (target.module === "machinery") setView("machineryDashboard");
-    else if (target.module === "scaffold") setView("scaffoldDashboard");
-    else if (target.module === "bowtie") setView("bowtieDashboard");
-  };
-
-  const sidebarModules = applyModuleConfig([
-    isModuleInPlan(planFeatures, "anomalyReport") && { key: "anomalyReport", icon: AlertTriangle, label: mt(anomalyMod), sub: anomalyMod.sub.map((s) => ({ key: s.key, label: mt(s) })) },
-    isModuleInPlan(planFeatures, "riskAssessment") && { key: "riskAssessment", icon: ShieldCheck, label: mt(riskMod), sub: riskMod.sub.map((s) => ({ key: s.key, label: mt(s) })) },
-    isModuleInPlan(planFeatures, "personnelAccess") && { key: "personnelAccess", icon: Users, label: mt(personnelMod), sub: personnelMod.sub.map((s) => ({ key: s.key, label: mt(s) })) },
-    isModuleInPlan(planFeatures, "machineryManagement") && { key: "machineryManagement", icon: Truck, label: mt(machineryMod), sub: machineryMod.sub.map((s) => ({ key: s.key, label: mt(s) })) },
-    isModuleInPlan(planFeatures, "scaffoldManagement") && { key: "scaffoldManagement", icon: Tag, label: mt(scaffoldMod), sub: scaffoldMod.sub.map((s) => ({ key: s.key, label: mt(s) })) },
-    isModuleInPlan(planFeatures, "managementDashboard") && { key: "managementDashboard", icon: BarChart3, label: mt(managementMod) },
-    isModuleInPlan(planFeatures, "proactiveIndicators") && { key: "proactiveIndicators", icon: TrendingUp, label: mt(proactiveMod) },
-    isModuleInPlan(planFeatures, "incidentManagement") && { key: "incidentManagement", icon: ShieldAlert, label: mt(incidentMod), sub: incidentMod.sub.map((s) => ({ key: s.key, label: mt(s) })) },
-    isModuleInPlan(planFeatures, "systemManagement") && {
-      key: "systemManagement", icon: Settings, label: t("moduleSystemManagement"),
-      sub: [
-        isModuleInPlan(planFeatures, "permissionManagement") && { key: "permissionManagement", label: t("subPermissions") },
-        isModuleInPlan(planFeatures, "jobPositionManagement") && { key: "jobPositionManagement", label: t("subJobPositions") },
-        isModuleInPlan(planFeatures, "archiveManagement") && { key: "archiveManagement", label: t("moduleArchive") },
-        isModuleInPlan(planFeatures, "scaffoldCodeManagement") && { key: "scaffoldCodeManagement", label: t("subScaffoldCodes") },
-        isModuleInPlan(planFeatures, "trainingManagement") && { key: "trainingManagement", label: t("subTraining") },
-        isModuleInPlan(planFeatures, "chatAccessManagement") && { key: "chatAccessManagement", label: t("subChatAccess") },
-        isModuleInPlan(planFeatures, "hcmsMatrixManagement") && { key: "hcmsMatrixManagement", label: t("subHcmsMatrix") },
-        isModuleInPlan(planFeatures, "effectivenessThresholds") && { key: "effectivenessThresholds", label: t("subEffectivenessThresholds") },
-        isModuleInPlan(planFeatures, "riskKnowledgeManagement") && { key: "riskKnowledgeManagement", label: t("subRiskKnowledge") },
-        isModuleInPlan(planFeatures, "anomalyCategoryManagement") && { key: "anomalyCategoryManagement", label: t("subAnomalyCategories") },
-      ].filter(Boolean),
-    },
-  ].filter(Boolean), moduleConfig);
-
-  return (
-    <ResponsiveDashboardShell panelLabelKey="panelAdmin" currentUser={currentUser} onLogout={onLogout} onOpenSettings={() => setView("profile")} view={view} setView={setView} sidebarModules={sidebarModules}>
-      {view === "menu" && (
-        <div style={styles.menuList}>
-          <MobileAnnouncementBanner setView={setView} />
-          <DbSizeWarningBanner />
-          {isModuleInPlan(planFeatures, "chat") && <MenuRow icon={MessageCircle} label={t("moduleChat")} onClick={() => setView("chat")} badge={chatUnread} />}
-          {/* دقیقاً همان لیست و ترتیبِ Sidebarِ دسکتاپ (sidebarModules ساخته‌شده
-              با applyModuleConfig) — تا ترتیبِ «مدیریت ماژول‌ها» در وب و موبایل یکی باشد. */}
-          {sidebarModules.map((m) => (
-            <MenuRow
-              key={m.key}
-              icon={m.icon}
-              label={m.label}
-              onClick={() => setView(m.key)}
-              accent
-              sub={!!(m.sub && m.sub.length)}
-            />
-          ))}
-        </div>
-      )}
-
-      {view === "systemManagement" && (
-        <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
-          <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
-          <h3 style={{ marginBottom: 12, color: THEME.navy }}>{t("moduleSystemManagement")}</h3>
-          {/* مدیریت حساب کارفرما/پیمانکار عمداً از اینجا حذف شد — طبق سیاست
-              امنیتی سازمانی، ایجاد/ویرایش این حساب‌ها فقط از پنل Super Admin
-              مجاز است، هم در UI هم در Backend (Edge Function manage-account
-              درخواست هر کاربری غیر از Super Admin را رد می‌کند). */}
-          <div style={styles.menuList2}>
-            {isModuleInPlan(planFeatures, "permissionManagement") && <MenuRow icon={ShieldCheck} label={t("subPermissions")} onClick={() => setView("permissionManagement")} />}
-            {isModuleInPlan(planFeatures, "jobPositionManagement") && <MenuRow icon={Briefcase} label={t("subJobPositions")} onClick={() => setView("jobPositionManagement")} />}
-            {isModuleInPlan(planFeatures, "archiveManagement") && <MenuRow icon={Archive} label={t("moduleArchive")} onClick={() => setView("archiveManagement")} />}
-            {isModuleInPlan(planFeatures, "scaffoldCodeManagement") && <MenuRow icon={Tag} label={t("subScaffoldCodes")} onClick={() => setView("scaffoldCodeManagement")} />}
-            {isModuleInPlan(planFeatures, "trainingManagement") && <MenuRow icon={GraduationCap} label={t("subTraining")} onClick={() => setView("trainingManagement")} />}
-            {isModuleInPlan(planFeatures, "chatAccessManagement") && <MenuRow icon={ShieldOff} label={t("subChatAccess")} onClick={() => setView("chatAccessManagement")} />}
-            {isModuleInPlan(planFeatures, "hcmsMatrixManagement") && <MenuRow icon={ShieldAlert} label={t("subHcmsMatrix")} onClick={() => setView("hcmsMatrixManagement")} />}
-            {isModuleInPlan(planFeatures, "effectivenessThresholds") && <MenuRow icon={Sliders} label={t("subEffectivenessThresholds")} onClick={() => setView("effectivenessThresholds")} />}
-            {isModuleInPlan(planFeatures, "riskKnowledgeManagement") && <MenuRow icon={Database} label={t("subRiskKnowledge")} onClick={() => setView("riskKnowledgeManagement")} />}
-            {isModuleInPlan(planFeatures, "anomalyCategoryManagement") && <MenuRow icon={Tag} label={t("subAnomalyCategories")} onClick={() => setView("anomalyCategoryManagement")} />}
-          </div>
-        </div>
-      )}
-
-      {view === "trainingManagement" && <TrainingManager onBack={() => setView("systemManagement")} />}
-      {view === "chatAccessManagement" && <ChatAccessManager onBack={() => setView("systemManagement")} />}
-      {view === "hcmsMatrixManagement" && <HcmsMatrixManager onBack={() => setView("systemManagement")} />}
-      {view === "effectivenessThresholds" && <EffectivenessThresholdsManager onBack={() => setView("systemManagement")} currentUser={currentUser} />}
-      {view === "riskKnowledgeManagement" && <RiskKnowledgeManager onBack={() => setView("systemManagement")} currentUser={currentUser} />}
-      {view === "anomalyCategoryManagement" && <AnomalyCategoryManager onBack={() => setView("systemManagement")} />}
-
-      {view === "anomalyReport" && (
-        <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
-          <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
-          <h3 style={{ marginBottom: 12, color: THEME.navy }}>{mt(anomalyMod)}</h3>
-          <div style={styles.menuList2}>
-            {anomalyMod.sub.map((s) => (
-              <MenuRow key={s.key} icon={AlertTriangle} label={mt(s)} onClick={() => setView(s.key)} accent />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {view === "riskAssessment" && (
-        <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
-          <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
-          <h3 style={{ marginBottom: 12, color: THEME.navy }}>{mt(riskMod)}</h3>
-          <div style={styles.menuList2}>
-            {riskMod.sub.map((s) => (
-              <MenuRow key={s.key} icon={ShieldCheck} label={mt(s)} onClick={() => setView(s.key)} accent />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {view === "personnelAccess" && (
-        <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
-          <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
-          <h3 style={{ marginBottom: 12, color: THEME.navy }}>{mt(personnelMod)}</h3>
-          <div style={styles.menuList2}>
-            {personnelMod.sub.map((s) => (
-              <MenuRow key={s.key} icon={Users} label={mt(s)} onClick={() => setView(s.key)} accent />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {view === "machineryManagement" && (
-        <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
-          <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
-          <h3 style={{ marginBottom: 12, color: THEME.navy }}>{mt(machineryMod)}</h3>
-          <div style={styles.menuList2}>
-            {machineryMod.sub.map((s) => (
-              <MenuRow key={s.key} icon={Truck} label={mt(s)} onClick={() => setView(s.key)} accent />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {view === "scaffoldManagement" && (
-        <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
-          <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
-          <h3 style={{ marginBottom: 12, color: THEME.navy }}>{mt(scaffoldMod)}</h3>
-          <div style={styles.menuList2}>
-            {scaffoldMod.sub.map((s) => (
-              <MenuRow key={s.key} icon={Tag} label={mt(s)} onClick={() => setView(s.key)} accent />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {view === "incidentManagement" && incidentMod && (
-        <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
-          <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
-          <h3 style={{ marginBottom: 12, color: THEME.navy }}>{mt(incidentMod)}</h3>
-          <div style={styles.menuList2}>
-            {incidentMod.sub.map((s) => (
-              <MenuRow key={s.key} icon={ShieldAlert} label={mt(s)} onClick={() => setView(s.key)} accent />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {view === "profile" && <ProfileView onBack={() => setView("menu")} currentUser={currentUser} roleLabel={t("roleLabelAdmin")} />}
-      {view === "chat" && <ChatDashboard onBack={() => setView("menu")} currentUser={currentUser} />}
-      {/* مدیریت حساب کارفرما/پیمانکار: عمداً دیگر اینجا رندر نمی‌شود — به پنل Super Admin منتقل شد */}
-      {view === "anomalyForm" && <AnomalyForm onBack={() => setView("anomalyReport")} currentUser={currentUser} onSaved={() => setView("anomalyList")} />}
-      {view === "anomalyList" && <AnomalyList onBack={() => setView("anomalyReport")} role="ADMIN" currentUser={currentUser} initialStatusFilter={navFilter?.module === "anomaly" ? navFilter.statusFilter : undefined} initialRiskFilter={navFilter?.module === "anomaly" ? navFilter.riskFilter : undefined} initialContractorFilter={navFilter?.module === "anomaly" ? navFilter.contractorFilter : undefined} initialExpandedAnomalyId={navFilter?.module === "anomaly" ? navFilter.recordId : undefined} />}
-      {view === "correctiveActionsList" && <CorrectiveActionsDashboard onBack={() => setView("anomalyReport")} currentUser={currentUser} />}
-      {view === "bowtieDashboard" && <BowTieDashboard role="ADMIN" onBack={() => setView("riskAssessment")} currentUser={currentUser} readOnly={false} />}
-      {view === "hcmsDashboard" && <HcmsDashboard onBack={() => setView("riskAssessment")} currentUser={currentUser} />}
-      {view === "personnelForm" && <PersonnelForm onBack={() => setView("personnelAccess")} currentUser={currentUser} onSaved={() => setView("personnelAccess")} />}
-      {view === "personnelDashboard" && <PersonnelDashboard onBack={() => setView("personnelAccess")} currentUser={currentUser} role="ADMIN" initialStatusFilter={navFilter?.module === "personnel" ? navFilter.statusFilter : undefined} initialContractorFilter={navFilter?.module === "personnel" ? navFilter.contractorFilter : undefined} onNavigateToAssessment={(ctx) => { setAssessmentContext(ctx); setView("proactiveIndicators"); }} initialSelectedPersonnelId={assessmentContext?.personnelId} />}
-      {view === "proactiveIndicators" && (
-        <ProactiveIndicatorsDashboard
-          role="ADMIN"
-          onBack={() => { setAssessmentContext(null); setView(assessmentContext ? "personnelDashboard" : "menu"); }}
-          currentUser={currentUser}
-          focusPersonnelId={assessmentContext?.personnelId}
-          focusJobTitle={assessmentContext?.jobTitle}
-          focusPersonnelName={assessmentContext?.personnelName}
-        />
-      )}
-      {view === "incidentsList" && <IncidentsListPage currentUser={currentUser} role="ADMIN" readOnly={false} />}
-      {view === "machineryDashboard" && <MachineryDashboard onBack={() => setView("machineryManagement")} currentUser={currentUser} role="ADMIN" initialApprovalFilter={navFilter?.module === "machinery" ? navFilter.approvalFilter : undefined} initialContractorFilter={navFilter?.module === "machinery" ? navFilter.contractorFilter : undefined} />}
-      {view === "scaffoldDashboard" && <ScaffoldDashboard onBack={() => setView("scaffoldManagement")} currentUser={currentUser} role="ADMIN" initialStatusFilter={navFilter?.module === "scaffold" ? navFilter.statusFilter : undefined} initialContractorFilter={navFilter?.module === "scaffold" ? navFilter.contractorFilter : undefined} />}
-      {view === "scaffoldCodeManagement" && <ScaffoldTagCodeManager onBack={() => setView("systemManagement")} />}
-      {view === "managementDashboard" && <HomeDashboard role="ADMIN" currentUser={currentUser} onNavigate={handleHomeNavigate} onBack={() => setView("menu")} />}
-      {view === "permissionManagement" && <PermissionManager onBack={() => setView("systemManagement")} />}
-      {view === "jobPositionManagement" && <JobPositionManager onBack={() => setView("systemManagement")} />}
-      {view === "archiveManagement" && <ArchiveManager onBack={() => setView("systemManagement")} currentUser={currentUser} />}
-    </ResponsiveDashboardShell>
   );
 }
 
@@ -5184,7 +4935,6 @@ function AppInner() {
 
   return (
     <SubscriptionGate currentUser={currentUser} onLogout={handleLogout}>
-      {currentUser.role === "ADMIN" && <AdminDashboard onLogout={handleLogout} currentUser={currentUser} />}
       {(currentUser.role === "EMPLOYER" || currentUser.role === "HSE_SUPERVISOR") && <EmployerDashboard onLogout={handleLogout} currentUser={currentUser} />}
       {currentUser.role === "CONTRACTOR" && <ContractorDashboard onLogout={handleLogout} currentUser={currentUser} />}
     </SubscriptionGate>

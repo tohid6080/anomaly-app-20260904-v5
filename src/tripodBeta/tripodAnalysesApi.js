@@ -111,7 +111,7 @@ export async function transitionAnalysis(analysisId, action, role, actorName, re
   if (!current) return { __error: true, message: tr("tpErrAnalysisNotFound") };
 
   const requiredRole = ACTION_REQUIRED_ROLE[action];
-  if (requiredRole && role !== requiredRole && role !== "ADMIN") {
+  if (requiredRole && role !== requiredRole) {
     return { __error: true, message: tr("tpErrActionRoleOnly", { role: requiredRole === "EMPLOYER" ? tr("tpRoleEmployer") : tr("tpRoleContractor") }) };
   }
   const toStatus = TRANSITIONS[`${current.status}|${action}`];

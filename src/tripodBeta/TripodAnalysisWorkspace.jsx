@@ -133,10 +133,10 @@ function WorkflowActions({ analysis, role, busy, onAction }) {
   const s = analysis.status;
   const buttons = [];
 
-  if ((s === "NOT_REQUIRED" || s === "CANDIDATE") && (role === "EMPLOYER" || role === "ADMIN")) buttons.push({ label: t("twActionRequest"), icon: Send, action: "request" });
+  if ((s === "NOT_REQUIRED" || s === "CANDIDATE") && role === "EMPLOYER") buttons.push({ label: t("twActionRequest"), icon: Send, action: "request" });
   if (s === "REQUESTED" && role === "CONTRACTOR") buttons.push({ label: t("twActionStart"), icon: Play, action: "start" });
   if (s === "IN_PROGRESS" && role === "CONTRACTOR") buttons.push({ label: t("twActionSubmit"), icon: Send, action: "submit" });
-  if (s === "EMPLOYER_REVIEW" && (role === "EMPLOYER" || role === "ADMIN")) {
+  if (s === "EMPLOYER_REVIEW" && role === "EMPLOYER") {
     buttons.push({ label: t("twActionApprove"), icon: CheckCircle2, action: "approve" });
   }
   if (s === "REJECTED" && role === "CONTRACTOR") buttons.push({ label: t("twActionRevise"), icon: RotateCcw, action: "revise" });
@@ -148,7 +148,7 @@ function WorkflowActions({ analysis, role, busy, onAction }) {
           <b.icon size={13} /> {b.label}
         </button>
       ))}
-      {s === "EMPLOYER_REVIEW" && (role === "EMPLOYER" || role === "ADMIN") && !showReject && (
+      {s === "EMPLOYER_REVIEW" && role === "EMPLOYER" && !showReject && (
         <button type="button" disabled={busy} onClick={() => setShowReject(true)} style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 5, background: THEME.danger }}>
           <XCircle size={13} /> {t("twActionReject")}
         </button>

@@ -16,7 +16,7 @@ import { pctSign } from "../i18n/translations.js";
  */
 export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
   const { t, lang, dir } = useLanguage();
-  const isEmployerSide = role === "EMPLOYER" || role === "ADMIN";
+  const isEmployerSide = role === "EMPLOYER";
   const [categories, setCategories] = useState([]);
   const [observations, setObservations] = useState(null);
   const [seasonFilter, setSeasonFilter] = useState("all");

@@ -998,7 +998,8 @@ export default function ArchiveManager({ onBack, currentUser }) {
     // مقادیر "BowTie" و "HCMS" کلید ترجمه نیستند، متن نمایشی ثابت‌اند (نام محصول)
     return (key === "bowtie" || key === "hcms") ? lk : t(lk);
   };
-  const isAdmin = currentUser?.role === "ADMIN";
+  // حذف رکوردهای آرشیوشده که قبلاً فقط برای نقش ادمین بود، حالا به عهده‌ی سرپرست/مدیر HSE است.
+  const isAdmin = currentUser?.role === "HSE_SUPERVISOR";
   const [tab, setTab] = useState("personnel");
   const [counts, setCounts] = useState({ personnel: 0, anomaly: 0, bowtie: 0, machinery: 0, scaffold: 0, hcms: 0 });
   const [storageMb, setStorageMb] = useState(null);

@@ -48,12 +48,12 @@ Deno.serve(async (req) => {
       return json({ ok: true });
     }
 
-    // ادمین/کارفرما — هر دو در employer_accounts هستند
+    // کارفرما/سرپرست HSE — هر دو در employer_accounts هستند
     const verify = await callRpc("verify_employer_password", { p_username: username, p_password: oldPassword });
     const match = verify.ok && Array.isArray(verify.data) && verify.data.length > 0 ? verify.data[0] : null;
     if (!match) return json({ error: "رمز عبور فعلی اشتباه است" }, 401);
     await callRpc("set_employer_password", { p_id: match.id, p_new_password: newPassword });
-    await logAudit({ action: "change_own_password", target_type: match.role === "admin" ? "admin" : "employer", target_id: match.id, target_username: username, performed_by: username, performed_by_role: match.role === "admin" ? "admin" : "employer" });
+    await logAudit({ action: "change_own_password", target_type: "employer", target_id: match.id, target_username: username, performed_by: username, performed_by_role: "employer" });
     return json({ ok: true });
   } catch (e) {
     return json({ error: "خطای داخلی: " + String((e as Error)?.message || e) }, 500);

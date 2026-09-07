@@ -15,7 +15,6 @@ import { getCallerClaims } from "../_shared/jwtUtils.ts";
 import { json, CORS_HEADERS, callRpc, restFetch } from "../_shared/supabaseAdmin.ts";
 
 const TABLE_BY_TYPE: Record<string, string> = {
-  admin: "employer_accounts",
   employer: "employer_accounts",
   hse_supervisor: "employer_accounts",
   contractor: "contractors",
@@ -110,7 +109,7 @@ Deno.serve(async (req) => {
           : {
               name: f.name.trim(), username: f.username.trim(), company_id: f.companyId || null,
               job_position_id: f.jobPositionId || null,
-              role: targetType === "admin" ? "admin" : targetType === "hse_supervisor" ? "hse_supervisor" : "employer",
+              role: targetType === "hse_supervisor" ? "hse_supervisor" : "employer",
               can_edit: f.canEdit !== false, phone: f.phone || "", email: f.email || "",
             };
 
@@ -159,7 +158,7 @@ Deno.serve(async (req) => {
         if ("contractDetails" in f) payload.contract_details = f.contractDetails;
       } else {
         if ("canEdit" in f) payload.can_edit = f.canEdit !== false;
-        if (targetType === "admin" || targetType === "employer" || targetType === "hse_supervisor") payload.role = targetType;
+        if (targetType === "employer" || targetType === "hse_supervisor") payload.role = targetType;
       }
       const updated = await restFetch(`${table}?id=eq.${targetId}`, { method: "PATCH", body: JSON.stringify(payload) });
       if (!updated.ok) return json({ error: "خطا در ویرایش حساب" }, 500);

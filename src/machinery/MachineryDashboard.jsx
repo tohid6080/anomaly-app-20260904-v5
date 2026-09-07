@@ -39,7 +39,7 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
   // ماشین‌آلات فقط برای سرپرست/مدیر HSE و ادمین مجاز است، نه هر
   // کارفرمایی معمولی. role (prop) همیشه "EMPLOYER" است (حتی برای حساب
   // سرپرست HSE)، پس مستقیم currentUser?.role چک می‌شود.
-  const isGatekeeper = (currentUser?.role === "HSE_SUPERVISOR" || role === "ADMIN") && !isContractor;
+  const isGatekeeper = currentUser?.role === "HSE_SUPERVISOR" && !isContractor;
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
