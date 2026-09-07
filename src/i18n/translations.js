@@ -244,6 +244,12 @@ export const translations = {
   "hrmSummary": { "fa": "{high} ریسک باز سطح بالا · {total} ارزیابی فعال", "en": "{high} open high-level risks · {total} active assessments" },
   "hrmEmpty": { "fa": "هیچ ارزیابی ریسک فعالی ثبت نشده", "en": "No active risk assessments" },
   "hrmUnplaced": { "fa": "{n} ارزیابی بدون کد RPN معتبر — طبقه‌بندی نشد", "en": "{n} assessments without a valid RPN code — not placed" },
+  "bbhTitle": { "fa": "بریرها و اثربخشی", "en": "Barriers & effectiveness" },
+  "bbhSubcount": { "fa": "{models} مدل · {barriers} بریر", "en": "{models} models · {barriers} barriers" },
+  "bbhEmpty": { "fa": "هنوز مدل BowTie‌ای ساخته نشده", "en": "No BowTie models yet" },
+  "bbhAllNotAssessed": { "fa": "هیچ بریری هنوز ارزیابی اثربخشی نشده — موتور DBEE را اجرا کنید", "en": "No barrier has an effectiveness assessment yet — run the DBEE engine" },
+  "bbhCriticalLabel": { "fa": "بریر بحرانی (ناکارآمد، یا ضعیفِ با بحرانیت بالا)", "en": "Critical barriers (failed, or weak & high-criticality)" },
+  "bbhDegradedHeader": { "fa": "بدترین بریرهای رو به افت", "en": "Most degraded barriers" },
   "moduleAdminAnalytics": {
     "fa": "داشبورد فعالیت کاربران",
     "en": "User Activity Dashboard"

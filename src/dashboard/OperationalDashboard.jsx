@@ -7,6 +7,7 @@ import { CounterWidget } from "./widgets/primitives.jsx";
 import MyTaskQueueWidget from "./widgets/MyTaskQueueWidget.jsx";
 import AnomalyTrendWidget from "./widgets/AnomalyTrendWidget.jsx";
 import HcmsRiskMatrixWidget from "./widgets/HcmsRiskMatrixWidget.jsx";
+import BowtieBarrierHealthWidget from "./widgets/BowtieBarrierHealthWidget.jsx";
 
 /**
  * داشبورد کاری (Operational) — شبکهٔ ویجت برای کارِ روزمرهٔ سرپرست/کارشناس/پیمانکار،
@@ -51,6 +52,7 @@ export default function OperationalDashboard({ role, currentUser, onNavigate, on
 
         <AnomalyTrendWidget role={role} currentUser={currentUser} onNavigate={onNavigate} />
         <HcmsRiskMatrixWidget onNavigate={onNavigate} />
+        <BowtieBarrierHealthWidget role={role} currentUser={currentUser} onNavigate={onNavigate} />
       </div>
     </div>
   );
