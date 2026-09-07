@@ -1,21 +1,23 @@
 import React, { useState, useEffect, useRef, useMemo, Suspense, lazy } from "react";
 import { AlertTriangle, Plus, X, ChevronRight, ChevronLeft, ChevronDown, ChevronsRight, ChevronsLeft, LogOut, CheckCircle2, Clock, Camera, ImagePlus, Trash2, FileSpreadsheet, FileText, User, Users, ShieldCheck, LayoutGrid, BarChart3, Briefcase, Settings, Archive, Truck, Tag, MessageCircle, GraduationCap, ShieldOff, ShieldAlert, Database, Fingerprint, Info, Sliders, TrendingUp, Search, Home, Megaphone, Sparkles, Gift, Bell, ArrowUpRight, ClipboardList, MoreVertical } from "lucide-react";
-import BowTieDashboard from "./bowtie/BowTieDashboard.jsx";
-import HcmsDashboard from "./hcms/HcmsDashboard.jsx";
-import HcmsMatrixManager from "./hcms/HcmsMatrixManager.jsx";
+// بارگذاری تنبلِ صفحه‌های ماژول — هرکدام چانکِ جدای خودش، فقط با باز شدنِ
+// آن ماژول بارگذاری می‌شود؛ از باندلِ اولیه‌ی سنگینِ App.jsx بیرون می‌مانند.
+const BowTieDashboard = lazy(() => import("./bowtie/BowTieDashboard.jsx"));
+const HcmsDashboard = lazy(() => import("./hcms/HcmsDashboard.jsx"));
+const HcmsMatrixManager = lazy(() => import("./hcms/HcmsMatrixManager.jsx"));
 // بارگذاری تنبل: پنل‌های بزرگ و کم‌استفاده که کتابخانه‌های سنگینِ خروجی
 // (xlsx / exceljs / jszip) را با خود می‌آورند؛ از باندلِ اولیه جدا می‌شوند
 // و فقط هنگام باز شدنِ همان بخش بارگذاری می‌شوند.
 const RiskKnowledgeManager = lazy(() => import("./riskknowledge/RiskKnowledgeManager.jsx"));
-import AnomalyCategoryManager from "./anomalycategories/AnomalyCategoryManager.jsx";
+const AnomalyCategoryManager = lazy(() => import("./anomalycategories/AnomalyCategoryManager.jsx"));
 import { loadActiveAnomalyCategories } from "./anomalycategories/anomalyCategoriesApi.js";
 import { getOrCreateHcmsForAnomaly, createSuggestedHcmsFromAnomaly } from "./hcms/hcmsApi.js";
 import { loadBowtiesForLinking, loadBarriersForBowtie, linkAnomalyToBarriers, loadBarrierLinksForAnomaly } from "./bowtie/anomalyBarrierLinksApi.js";
 import { recalculateForLinkedBarriers, loadDegradedBarrierAlerts } from "./bowtie/effectivenessApi.js";
-import PersonnelForm from "./personnel/PersonnelForm.jsx";
-import PersonnelDashboard from "./personnel/PersonnelDashboard.jsx";
-import ProactiveIndicatorsDashboard from "./proactiveIndicators/ProactiveIndicatorsDashboard.jsx";
-import IncidentsListPage from "./incidents/IncidentsListPage.jsx";
+const PersonnelForm = lazy(() => import("./personnel/PersonnelForm.jsx"));
+const PersonnelDashboard = lazy(() => import("./personnel/PersonnelDashboard.jsx"));
+const ProactiveIndicatorsDashboard = lazy(() => import("./proactiveIndicators/ProactiveIndicatorsDashboard.jsx"));
+const IncidentsListPage = lazy(() => import("./incidents/IncidentsListPage.jsx"));
 import { loadHomeKpiSummary } from "./dashboard/homeKpiApi.js";
 import { loadModuleConfig, loadDashboardConfig, loadNotificationTypes, loadAppearanceConfig, applyAppearanceToDom, loadActiveAnnouncements, loadDashboardWidgetConfig } from "./systemConfigApi.js";
 import { mergeWidgetConfig, defaultWidgetConfig } from "./dashboard/dashboardWidgets.js";
@@ -23,11 +25,11 @@ import { submitToGate, loadPendingGateItems, loadAssignedGateItems, loadAssigned
 import SubscriptionGate from "./subscription/SubscriptionGate.jsx";
 import { checkMyAccountActive } from "./subscriptionApi.js";
 import { AppearanceProvider, useAppearance } from "./shared/AppearanceContext.jsx";
-import PublicHseClimateSurvey from "./proactiveIndicators/PublicHseClimateSurvey.jsx";
-import HomeDashboard from "./dashboard/HomeDashboard.jsx";
-import PermissionManager from "./permissions/PermissionManager.jsx";
+const PublicHseClimateSurvey = lazy(() => import("./proactiveIndicators/PublicHseClimateSurvey.jsx"));
+const HomeDashboard = lazy(() => import("./dashboard/HomeDashboard.jsx"));
+const PermissionManager = lazy(() => import("./permissions/PermissionManager.jsx"));
 import { loadPermissionsMap, isModuleVisible, getAccessLevel, initializeNoAccess } from "./permissions/permissionsApi.js";
-import JobPositionManager from "./jobpositions/JobPositionManager.jsx";
+const JobPositionManager = lazy(() => import("./jobpositions/JobPositionManager.jsx"));
 import { loadActiveJobPositions, loadJobPositionTitle } from "./jobpositions/jobPositionsApi.js";
 import NotificationPanel from "./personnel/NotificationPanel.jsx";
 import { loadNotifications, loadPersonnelList, checkAndUpdateDeadlines, markNotificationRead } from "./personnel/personnelApi.js";
@@ -38,8 +40,8 @@ import { offlineWrite, offlineWriteFile } from "./offline/offlineWrite.js";
 import DbSizeWarningBanner from "./offline/DbSizeWarningBanner.jsx";
 import { checkUploadAllowed } from "./offline/dbSizeMonitor.js";
 const ArchiveManager = lazy(() => import("./offline/ArchiveManager.jsx"));
-import CorrectiveActionsDashboard from "./correctiveActions/CorrectiveActionsDashboard.jsx";
-import EffectivenessThresholdsManager from "./bowtie/EffectivenessThresholdsManager.jsx";
+const CorrectiveActionsDashboard = lazy(() => import("./correctiveActions/CorrectiveActionsDashboard.jsx"));
+const EffectivenessThresholdsManager = lazy(() => import("./bowtie/EffectivenessThresholdsManager.jsx"));
 import { LanguageProvider, useLanguage } from "./i18n/LanguageContext.jsx";
 import { translate, getCurrentLang, numLocale, listSep } from "./i18n/translations.js";
 import LanguageSelect from "./i18n/LanguageSelect.jsx";
@@ -54,22 +56,22 @@ import {
 import { checkLoginLockout, recordLoginAttempt, validatePasswordLength, MIN_PASSWORD_LENGTH } from "./loginSecurity.js";
 import { useAndroidBackButton } from "./backButtonHandler.js";
 import { issueSessionToken, clearSessionToken, changeMyPassword } from "./sessionToken.js";
-import ChatDashboard from "./chat/ChatDashboard.jsx";
-import TrainingManager from "./training/TrainingManager.jsx";
-import ChatAccessManager from "./chat/ChatAccessManager.jsx";
+const ChatDashboard = lazy(() => import("./chat/ChatDashboard.jsx"));
+const TrainingManager = lazy(() => import("./training/TrainingManager.jsx"));
+const ChatAccessManager = lazy(() => import("./chat/ChatAccessManager.jsx"));
 import { loadUnreadTotal } from "./chat/chatApi.js";
 import ChatThread from "./chat/ChatThread.jsx";
 import { findOrCreateLinkedConversation, resolveContractorUsername } from "./chat/chatApi.js";
 import { trackLogin, trackLogout, trackPageView, trackFailedLogin } from "./admin/activityApi.js";
-import SuperAdminLogin from "./superadmin/SuperAdminLogin.jsx";
-import SuperAdminPanel from "./superadmin/SuperAdminPanel.jsx";
+const SuperAdminLogin = lazy(() => import("./superadmin/SuperAdminLogin.jsx"));
+const SuperAdminPanel = lazy(() => import("./superadmin/SuperAdminPanel.jsx"));
 import DataView, { StatusPill } from "./shared/DataView.jsx";
 import ReportErrorModal from "./shared/ReportErrorModal.jsx";
 import TrialRequestModal from "./TrialRequestModal.jsx";
-import MachineryDashboard from "./machinery/MachineryDashboard.jsx";
+const MachineryDashboard = lazy(() => import("./machinery/MachineryDashboard.jsx"));
 import { loadMachineryListOfflineFirst } from "./machinery/machineryApi.js";
-import ScaffoldDashboard from "./scaffold/ScaffoldDashboard.jsx";
-import ScaffoldTagCodeManager from "./scaffold/ScaffoldTagCodeManager.jsx";
+const ScaffoldDashboard = lazy(() => import("./scaffold/ScaffoldDashboard.jsx"));
+const ScaffoldTagCodeManager = lazy(() => import("./scaffold/ScaffoldTagCodeManager.jsx"));
 import { syncOfflineCacheCompanyScope } from "./offline/offlineDb.js";
 import { getRecordsByModule, putRecord, getQueue } from "./offline/offlineDb.js";
 import SyncStatusBadge from "./offline/SyncStatusBadge.jsx";
@@ -3684,7 +3686,7 @@ function ResponsiveDashboardShell({ panelLabelKey, currentUser, onLogout, onOpen
       <div style={{ ...styles.dashboardWrapper, direction: dir }}>
         <DashboardHeader panelLabelKey={panelLabelKey} currentUser={currentUser} onLogout={onLogout} onOpenSettings={onOpenSettings} smartItems={smartItems} onNavigate={onNavigate} currentModuleKey={view} />
         <UpdateAvailableBanner />
-        {children}
+        <LazyPanel>{children}</LazyPanel>
       </div>
     );
   }
@@ -3701,7 +3703,7 @@ function ResponsiveDashboardShell({ panelLabelKey, currentUser, onLogout, onOpen
       <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
         <Sidebar modules={sidebarModules} view={view} setView={setView} collapsed={collapsed} onToggleCollapse={() => setCollapsed((v) => !v)} />
         <main style={{ flex: 1, minWidth: 0, overflowY: "auto", padding: "28px clamp(20px, 3vw, 40px)" }}>
-          <div style={{ maxWidth: 1400, margin: "0 auto" }}>{mainContent}</div>
+          <div style={{ maxWidth: 1400, margin: "0 auto" }}><LazyPanel>{mainContent}</LazyPanel></div>
         </main>
       </div>
     </div>
@@ -4971,8 +4973,13 @@ function AppInner() {
 // نشست‌ش هم جدا از ihms_current_user است.
 function SuperAdminRoot() {
   const [admin, setAdmin] = usePersistedState("ihms_super_admin", null);
-  if (!admin) return <SuperAdminLogin onLogin={setAdmin} />;
-  return <SuperAdminPanel currentAdmin={admin} onLogout={() => { clearSessionToken("super_admin"); setAdmin(null); }} />;
+  return (
+    <LazyPanel>
+      {!admin
+        ? <SuperAdminLogin onLogin={setAdmin} />
+        : <SuperAdminPanel currentAdmin={admin} onLogout={() => { clearSessionToken("super_admin"); setAdmin(null); }} />}
+    </LazyPanel>
+  );
 }
 
 // بارگذاری تنظیمات ظاهری (لوگو، نام سامانه، رنگ سازمانی، تم روشن/تیره،
@@ -5013,7 +5020,7 @@ export default function App() {
     <ErrorBoundary>
       <LanguageProvider>
         {hseClimateSurveyMatch ? (
-          <PublicHseClimateSurvey publicToken={hseClimateSurveyMatch[1]} />
+          <LazyPanel><PublicHseClimateSurvey publicToken={hseClimateSurveyMatch[1]} /></LazyPanel>
         ) : (
           <AppInnerWithAppearance />
         )}
