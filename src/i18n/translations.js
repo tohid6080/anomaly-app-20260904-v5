@@ -259,6 +259,9 @@ export const translations = {
   "piwSbs": { "fa": "SBS", "en": "SBS" },
   "piwSbsUnsafePct": { "fa": "{pct}٪ ناایمن", "en": "{pct}% unsafe" },
   "piwSbsCount": { "fa": "{unsafe} ناایمن از {total}", "en": "{unsafe} unsafe of {total}" },
+  "opDashEditLayout": { "fa": "چیدمانِ من", "en": "My layout" },
+  "opDashSaveLayout": { "fa": "ذخیرهٔ چیدمان", "en": "Save layout" },
+  "opDashResetDefault": { "fa": "بازنشانی به پیش‌فرض", "en": "Reset to default" },
   "moduleAdminAnalytics": {
     "fa": "داشبورد فعالیت کاربران",
     "en": "User Activity Dashboard"
