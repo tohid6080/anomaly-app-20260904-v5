@@ -20,6 +20,8 @@ import {
   computePaymentStatus, isPaymentOverdue, computeMonthlyPaymentAlarm, computeSubscriptionAlertTier,
   loadCompanyUsageStats, loadRecentLogins, loadRecentFailedLogins, computeInactiveCompanies,
   loadAuditLog, loadStorageUsage, setStorageCapacity, storageUsageStatus,
+  loadCompanyBackups, loadBackupStorageUsage, triggerCompanyBackup, getBackupDownloadUrl,
+  deleteCompanyBackup, restoreCompanyBackup, backupStatusMeta, BACKUP_TIERS,
   copyBowtiesToCompany, copyRiskKnowledgeToCompany,
   loadCardTransferPayments, approveCardTransferPayment, rejectCardTransferPayment, saveCardTransferSettings,
   loadTrialRequests, approveTrialRequest, rejectTrialRequest,
@@ -518,6 +520,203 @@ function StorageUsagePage() {
         </>
       )}
       {!data && loading && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 30 }}>{t("commonLoading")}</p>}
+
+      <CompanyBackupsSection />
+    </div>
+  );
+}
+
+// ---------- Backup / Restore کامل اطلاعات شرکت‌ها ----------
+function CompanyBackupsSection() {
+  const { t } = useLanguage();
+  const [backups, setBackups] = useState([]);
+  const [usage, setUsage] = useState(null);
+  const [companies, setCompanies] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [busyId, setBusyId] = useState("");
+  const [expanded, setExpanded] = useState("");
+
+  const load = async () => {
+    setLoading(true);
+    setError("");
+    const [bk, us, co] = await Promise.all([loadCompanyBackups(), loadBackupStorageUsage(), loadCompanies()]);
+    if (bk?.__error) setError(bk.message);
+    setBackups(Array.isArray(bk) ? bk : []);
+    setUsage(us && !us.__error ? us : null);
+    setCompanies(Array.isArray(co) ? co : []);
+    setLoading(false);
+  };
+  useEffect(() => { load(); }, []);
+
+  const byCompany = React.useMemo(() => {
+    const map = {};
+    for (const b of backups) {
+      (map[b.companyId] = map[b.companyId] || []).push(b);
+    }
+    // شرکت‌هایی که فعلاً Backup ندارند هم بتوانند «Backup فوری» بگیرند
+    for (const c of companies) if (!map[c.id]) map[c.id] = [];
+    return map;
+  }, [backups, companies]);
+
+  const usageByCompany = React.useMemo(() => {
+    const m = {};
+    (usage?.byCompany || []).forEach((r) => { m[r.company_id] = r; });
+    return m;
+  }, [usage]);
+
+  const companyName = (id) => companies.find((c) => c.id === id)?.name || backups.find((b) => b.companyId === id)?.companyName || id;
+
+  const handleBackupNow = async (companyId) => {
+    if (!confirm(t("backupConfirmRunNow", { name: companyName(companyId) }))) return;
+    setBusyId("run-" + companyId);
+    const res = await triggerCompanyBackup(companyId);
+    setBusyId("");
+    if (res?.__error || res?.error) { alert(res.message || res.error); return; }
+    await load();
+  };
+
+  const handleDownload = async (backupId) => {
+    setBusyId("dl-" + backupId);
+    const res = await getBackupDownloadUrl(backupId);
+    setBusyId("");
+    if (res?.__error || !res?.url) { alert(res?.message || t("backupErrDownload")); return; }
+    window.open(res.url, "_blank", "noopener");
+  };
+
+  const handleDelete = async (backupId) => {
+    if (!confirm(t("backupConfirmDelete"))) return;
+    setBusyId("del-" + backupId);
+    const res = await deleteCompanyBackup(backupId);
+    setBusyId("");
+    if (res?.__error || res?.error) { alert(res.message || res.error); return; }
+    await load();
+  };
+
+  const handleRestore = async (backup) => {
+    if (!confirm(t("backupConfirmRestore", { name: backup.companyName }))) return;
+    setBusyId("res-" + backup.id);
+    let res = await restoreCompanyBackup(backup.id, "auto");
+    if (res?.needsConfirmation) {
+      const typed = prompt(t("backupReplacePrompt", { name: res.companyName || backup.companyName }));
+      if (typed == null || typed.trim() !== (res.companyName || backup.companyName)) {
+        setBusyId("");
+        alert(t("backupReplaceNameMismatch"));
+        return;
+      }
+      res = await restoreCompanyBackup(backup.id, "replace");
+    }
+    setBusyId("");
+    if (res?.__error || res?.error) { alert((res.message || res.error) + (res.detail ? `\n${res.detail}` : "")); return; }
+    const rep = res.report || {};
+    const pwList = (rep.passwordResetNeeded || []).join("، ");
+    alert(
+      t("backupRestoreDoneTitle") + "\n\n" +
+      t("backupRestoreDoneBody", {
+        company: rep.companyName || backup.companyName,
+        mode: rep.mode || "-",
+        rows: rep.dbResult?.totalRows ?? "?",
+        files: `${rep.filesRestored ?? 0}/${rep.filesInBackup ?? 0}`,
+        safety: rep.safetyBackupId || "—",
+      }) +
+      (pwList ? "\n\n" + t("backupRestorePwReset", { list: pwList }) : "") +
+      (rep.schemaVersionMismatch ? "\n\n⚠ " + t("backupSchemaMismatchWarn") : "")
+    );
+    await load();
+  };
+
+  return (
+    <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16, marginTop: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+        <h3 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+          <HardDrive size={13} color={THEME.teal} /> {t("backupSectionTitle")}
+        </h3>
+        <button type="button" onClick={load} disabled={loading} style={{ ...btnStyle(THEME.navyMid), fontSize: 11, display: "flex", alignItems: "center", gap: 5 }}>
+          <RefreshCw size={11} /> {loading ? t("saRefreshing") : t("saRefresh")}
+        </button>
+      </div>
+      <p style={{ fontSize: 10.5, color: THEME.text3, marginBottom: 12, lineHeight: 1.8 }}>{t("backupSectionNote")}</p>
+      {error && <p style={{ color: THEME.danger, fontSize: 12, marginBottom: 10 }}>{error}</p>}
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: 14 }}>
+        <MiniStat label={t("backupStatTotalSize")} value={formatBytes(usage?.totalBytesUsed || 0)} />
+        <MiniStat label={t("backupStatTotalCount")} value={(usage?.totalObjects ?? backups.filter((b) => b.status === "completed").length).toLocaleString(numLocale())} />
+        <MiniStat label={t("backupStatFailed")} value={backups.filter((b) => b.status === "failed").length.toLocaleString(numLocale())} color={backups.some((b) => b.status === "failed") ? THEME.danger : undefined} />
+      </div>
+
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+          <thead>
+            <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
+              <th style={{ textAlign: "start", padding: "6px 8px" }}>{t("saColCompany")}</th>
+              <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("backupColVersions")}</th>
+              <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("backupColLast")}</th>
+              <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("backupColSize")}</th>
+              <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("commonStatus")}</th>
+              <th style={{ padding: "6px 8px" }} />
+            </tr>
+          </thead>
+          <tbody>
+            {Object.keys(byCompany).sort((a, b) => companyName(a).localeCompare(companyName(b))).map((cid) => {
+              const list = [...byCompany[cid]].sort((a, b) => new Date(b.startedAt) - new Date(a.startedAt));
+              const last = list[0];
+              const meta = last ? backupStatusMeta(last.status) : null;
+              const isOpen = expanded === cid;
+              return (
+                <React.Fragment key={cid}>
+                  <tr style={{ borderBottom: `1px solid ${THEME.border}` }}>
+                    <td style={{ padding: "8px", fontWeight: 600 }}>{companyName(cid)}</td>
+                    <td style={{ padding: "8px", textAlign: "center" }}>{list.length}</td>
+                    <td style={{ padding: "8px", textAlign: "center" }}>{last ? toJalaliDateTime(last.completedAt || last.startedAt) : "—"}</td>
+                    <td style={{ padding: "8px", textAlign: "center" }}>{formatBytes(usageByCompany[cid]?.bytes_used || list.reduce((s, b) => s + (b.sizeBytes || 0), 0))}</td>
+                    <td style={{ padding: "8px", textAlign: "center" }}>
+                      {meta ? <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: meta.bg, color: meta.color, fontWeight: 600 }}>{t(meta.labelKey)}</span> : "—"}
+                    </td>
+                    <td style={{ padding: "8px", textAlign: "end", whiteSpace: "nowrap" }}>
+                      <button type="button" onClick={() => handleBackupNow(cid)} disabled={!!busyId} style={{ ...btnStyle(), fontSize: 11, marginInlineEnd: 4, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                        <UploadCloud size={11} /> {busyId === "run-" + cid ? t("backupRunning") : t("backupBtnNow")}
+                      </button>
+                      {list.length > 0 && (
+                        <button type="button" onClick={() => setExpanded(isOpen ? "" : cid)} style={{ ...btnStyle(THEME.navyMid), fontSize: 11 }}>
+                          {isOpen ? t("backupHideVersions") : t("backupShowVersions")}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                  {isOpen && list.map((b) => {
+                    const bm = backupStatusMeta(b.status);
+                    return (
+                      <tr key={b.id} style={{ borderBottom: `1px solid ${THEME.border}`, background: THEME.bg }}>
+                        <td style={{ padding: "6px 8px", paddingInlineStart: 20, fontSize: 11 }}>
+                          {toJalaliDateTime(b.startedAt)} · <span style={{ color: THEME.text3 }}>{t("backupTrigger_" + b.trigger)}</span>
+                        </td>
+                        <td style={{ padding: "6px 8px", textAlign: "center", fontSize: 11 }}>{b.rowCount != null ? t("backupRowsFiles", { rows: b.rowCount, files: b.fileCount ?? 0 }) : "—"}</td>
+                        <td style={{ padding: "6px 8px", textAlign: "center", fontSize: 11 }} colSpan={2}>{formatBytes(b.sizeBytes || 0)}{b.checksum ? ` · ${b.checksum.slice(0, 8)}` : ""}</td>
+                        <td style={{ padding: "6px 8px", textAlign: "center" }}>
+                          <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: bm.bg, color: bm.color, fontWeight: 600 }}>{t(bm.labelKey)}</span>
+                        </td>
+                        <td style={{ padding: "6px 8px", textAlign: "end", whiteSpace: "nowrap" }}>
+                          <button type="button" title={t("backupBtnDownload")} onClick={() => handleDownload(b.id)} disabled={!!busyId || b.status !== "completed"} style={{ ...btnStyle(THEME.navyMid), fontSize: 10, marginInlineEnd: 4 }}><Download size={10} /></button>
+                          <button type="button" title={t("backupBtnRestore")} onClick={() => handleRestore(b)} disabled={!!busyId || b.status !== "completed"} style={{ ...btnStyle("#b45309"), fontSize: 10, marginInlineEnd: 4 }}><RotateCcw size={10} /></button>
+                          <button type="button" title={t("backupBtnDelete")} onClick={() => handleDelete(b.id)} disabled={!!busyId} style={{ ...btnStyle(THEME.danger), fontSize: 10 }}><Trash2 size={10} /></button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {isOpen && list.some((b) => b.status === "failed" && b.error) && (
+                    <tr style={{ background: THEME.bg }}><td colSpan={6} style={{ padding: "4px 20px 8px", fontSize: 10.5, color: THEME.danger }}>
+                      {list.filter((b) => b.status === "failed" && b.error).map((b) => `• ${b.error}`).join("  ")}
+                    </td></tr>
+                  )}
+                </React.Fragment>
+              );
+            })}
+            {Object.keys(byCompany).length === 0 && (
+              <tr><td colSpan={6} style={{ padding: 20, textAlign: "center", color: THEME.text3 }}>{loading ? t("commonLoading") : t("backupNone")}</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -2325,7 +2524,7 @@ function PlansManager({ plans, companies, currentAdmin, onChanged }) {
   const [saving, setSaving] = useState(false);
 
   function emptyPlanForm() {
-    return { name: "", description: "", priceMonthly: 0, priceYearly: 0, priceTotal: 0, trialDays: "", maxUsers: "", maxPersonnel: "", maxStorageMb: "", features: [] };
+    return { name: "", description: "", priceMonthly: 0, priceYearly: 0, priceTotal: 0, trialDays: "", maxUsers: "", maxPersonnel: "", maxStorageMb: "", features: [], backupTier: "none" };
   }
 
   const handleCreate = async () => {
@@ -2337,6 +2536,7 @@ function PlansManager({ plans, companies, currentAdmin, onChanged }) {
       trialDays: form.trialDays ? Number(form.trialDays) : null,
       maxUsers: form.maxUsers ? Number(form.maxUsers) : null, maxPersonnel: form.maxPersonnel ? Number(form.maxPersonnel) : null,
       maxStorageMb: form.maxStorageMb ? Number(form.maxStorageMb) : null, features: form.features,
+      backupTier: form.backupTier || "none",
     });
     await syncNotificationTypesWithPlans((await loadPlans()).map((p) => p.features));
     setSaving(false);
@@ -2347,7 +2547,7 @@ function PlansManager({ plans, companies, currentAdmin, onChanged }) {
 
   const openEdit = (p) => {
     setExpandedId(expandedId === p.id ? null : p.id);
-    setForm({ name: p.name, description: p.description ?? "", priceMonthly: p.priceMonthly, priceYearly: p.priceYearly, priceTotal: p.priceTotal ?? 0, trialDays: p.trialDays ?? "", maxUsers: p.maxUsers ?? "", maxPersonnel: p.maxPersonnel ?? "", maxStorageMb: p.maxStorageMb ?? "", features: p.features });
+    setForm({ name: p.name, description: p.description ?? "", priceMonthly: p.priceMonthly, priceYearly: p.priceYearly, priceTotal: p.priceTotal ?? 0, trialDays: p.trialDays ?? "", maxUsers: p.maxUsers ?? "", maxPersonnel: p.maxPersonnel ?? "", maxStorageMb: p.maxStorageMb ?? "", features: p.features, backupTier: p.backupTier || "none" });
   };
 
   const handleSaveEdit = async (id) => {
@@ -2358,6 +2558,7 @@ function PlansManager({ plans, companies, currentAdmin, onChanged }) {
       trialDays: form.trialDays ? Number(form.trialDays) : null,
       maxUsers: form.maxUsers ? Number(form.maxUsers) : null, maxPersonnel: form.maxPersonnel ? Number(form.maxPersonnel) : null,
       maxStorageMb: form.maxStorageMb ? Number(form.maxStorageMb) : null, features: form.features,
+      backupTier: form.backupTier || "none",
     });
     await syncNotificationTypesWithPlans((await loadPlans()).map((p) => p.features));
     setSaving(false);
@@ -2564,6 +2765,12 @@ function PlanForm({ form, setForm, toggleModule, toggleSub, onSave, saving, save
           <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saStorageCapEmptyUnlimited")}</label>
           <input type="number" style={inputStyle} value={form.maxStorageMb} onChange={(e) => setForm({ ...form, maxStorageMb: e.target.value })} dir="ltr" />
         </div>
+        <div>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("backupPlanTierLabel")}</label>
+          <select style={inputStyle} value={form.backupTier || "none"} onChange={(e) => setForm({ ...form, backupTier: e.target.value })} dir={dir}>
+            {BACKUP_TIERS.map((b) => <option key={b.value} value={b.value}>{t(b.labelKey)}</option>)}
+          </select>
+        </div>
       </div>
       <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saPfDescription")}</label>
       <textarea
@@ -2768,6 +2975,8 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
   const { t, dir } = useLanguage();
   const [status, setStatus] = useState(company.subscriptionStatus);
   const [quotaInput, setQuotaInput] = useState(company.storageQuotaMb);
+  // "" یعنی از سطحِ پلن ارث می‌برد؛ مقدار صریح، Override پلن است
+  const [backupFreqInput, setBackupFreqInput] = useState(company.backupFrequency || "");
   const [paymentsList, setPaymentsList] = useState([]);
   const [onlinePayments, setOnlinePayments] = useState([]);
   const [payAmount, setPayAmount] = useState("");
@@ -2961,6 +3170,18 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
             <input type="number" style={{ ...inputStyle, maxWidth: 160 }} value={quotaInput} onChange={(e) => setQuotaInput(e.target.value)} dir="ltr" />
             <button type="button" style={btnStyle(THEME.navyMid)} onClick={() => onUpdate({ storageQuotaMb: Number(quotaInput) })}>{t("saSaveStorageCap")}</button>
           </div>
+        </div>
+
+        <div style={{ marginBottom: 10 }}>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("backupCompanyFreqLabel")}</label>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <select style={{ ...inputStyle, maxWidth: 200 }} value={backupFreqInput} onChange={(e) => setBackupFreqInput(e.target.value)} dir={dir}>
+              <option value="">{t("backupCompanyFreqInherit")}</option>
+              {BACKUP_TIERS.map((b) => <option key={b.value} value={b.value}>{t(b.labelKey)}</option>)}
+            </select>
+            <button type="button" style={btnStyle(THEME.navyMid)} onClick={() => onUpdate({ backupFrequency: backupFreqInput })}>{t("commonSave")}</button>
+          </div>
+          <p style={{ fontSize: 10, color: THEME.text3, margin: "4px 0 0" }}>{t("backupCompanyFreqHint")}</p>
         </div>
 
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>

@@ -32,6 +32,10 @@ import { json, CORS_HEADERS, restFetch } from "../_shared/supabaseAdmin.ts";
 // دوباره رخ می‌دهد. این فهرست را از روی حسابرسی کامل schema (بخش
 // «Audit دیتابیس» در تاریخچه‌ی این پروژه) بازسازی کردم؛ اگر ماژول جدیدی
 // بعد از این اضافه شود، این‌جا را هم به‌روزرسانی کنید.
+//
+// جدولِ public.company_backups عمداً اینجا نیست: متادیتای Backupهای قبلیِ
+// شرکت باید حتی بعد از حذفِ کاملِ شرکت باقی بماند تا امکانِ Restore وجود
+// داشته باشد. فایل‌های zip در باکتِ company-backups هم دست‌نخورده می‌مانند.
 const DELETE_ORDER = [
   // عمیق‌ترین فرزندان
   "bowtie_escalation_controls", "anomaly_barrier_links", "dbee_score_history", "dbee_source_barrier_map",

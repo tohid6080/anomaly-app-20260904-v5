@@ -1456,6 +1456,76 @@ export const translations = {
     "fa": "Storage & Usage",
     "en": "Storage & Usage"
   },
+
+  "backupTierNone":    { "fa": "بدون Backup", "en": "No backup" },
+  "backupTierWeekly":  { "fa": "هفتگی", "en": "Weekly" },
+  "backupTierMonthly": { "fa": "ماهیانه", "en": "Monthly" },
+  "backupTierYearly":  { "fa": "سالیانه", "en": "Yearly" },
+
+  "backupStatusCompleted": { "fa": "کامل", "en": "Completed" },
+  "backupStatusRunning":   { "fa": "در حال اجرا", "en": "Running" },
+  "backupStatusPending":   { "fa": "در صف", "en": "Pending" },
+  "backupStatusFailed":    { "fa": "ناموفق", "en": "Failed" },
+
+  "backupSectionTitle": { "fa": "Backup / Restore اطلاعات شرکت‌ها", "en": "Company Backup / Restore" },
+  "backupSectionNote": {
+    "fa": "هر Backup یک نسخه‌ی کاملِ مستقل از داده‌ها، تنظیمات و فایل‌های شرکت است (فایل zip در باکتِ خصوصیِ company-backups). Restore با حفظ شناسه‌ها و روابط انجام می‌شود؛ اگر شرکت داده‌ی فعال داشته باشد، ابتدا یک Backupِ ایمنی گرفته و سپس جایگزین می‌شود. دوره‌ی Backup خودکار از پلنِ شرکت تعیین می‌شود.",
+    "en": "Each backup is a complete, self-contained copy of a company's data, settings and files (a zip in the private company-backups bucket). Restore preserves IDs and relationships; if the company still has live data, a safety backup is taken first, then it is replaced. The automatic backup interval comes from the company's plan."
+  },
+  "backupStatTotalSize":  { "fa": "حجم کل Backupها", "en": "Total backup size" },
+  "backupStatTotalCount": { "fa": "تعداد نسخه‌ها", "en": "Version count" },
+  "backupStatFailed":     { "fa": "ناموفق", "en": "Failed" },
+
+  "backupColVersions": { "fa": "نسخه‌ها", "en": "Versions" },
+  "backupColLast":     { "fa": "آخرین Backup", "en": "Last backup" },
+  "backupColSize":     { "fa": "حجم", "en": "Size" },
+
+  "backupBtnNow":       { "fa": "Backup فوری", "en": "Back up now" },
+  "backupRunning":      { "fa": "در حال ساخت…", "en": "Running…" },
+  "backupShowVersions": { "fa": "نسخه‌ها", "en": "Versions" },
+  "backupHideVersions": { "fa": "بستن", "en": "Hide" },
+  "backupNone":         { "fa": "هنوز هیچ Backup ای وجود ندارد.", "en": "No backups yet." },
+
+  "backupTrigger_manual":      { "fa": "دستی", "en": "manual" },
+  "backupTrigger_scheduled":   { "fa": "زمان‌بندی‌شده", "en": "scheduled" },
+  "backupTrigger_pre_restore": { "fa": "پیش از Restore", "en": "pre-restore" },
+  "backupRowsFiles": { "fa": "{rows} ردیف · {files} فایل", "en": "{rows} rows · {files} files" },
+
+  "backupBtnDownload": { "fa": "دانلود", "en": "Download" },
+  "backupBtnRestore":  { "fa": "Restore", "en": "Restore" },
+  "backupBtnDelete":   { "fa": "حذف", "en": "Delete" },
+  "backupErrDownload": { "fa": "خطا در ساختِ لینکِ دانلود", "en": "Failed to create download link" },
+
+  "backupConfirmRunNow":  { "fa": "برای شرکت «{name}» یک Backup کامل ساخته شود؟", "en": "Create a full backup for \"{name}\"?" },
+  "backupConfirmDelete":  { "fa": "این نسخه‌ی Backup برای همیشه حذف شود؟ (فایل + متادیتا)", "en": "Permanently delete this backup version? (file + metadata)" },
+  "backupConfirmRestore": { "fa": "Restore از این Backup برای شرکت «{name}» شروع شود؟", "en": "Start restoring this backup for \"{name}\"?" },
+  "backupReplacePrompt": {
+    "fa": "شرکت «{name}» داده‌ی فعال دارد. برای جایگزینیِ کامل، نام دقیق شرکت را تایپ کنید. (اول یک Backupِ ایمنی گرفته می‌شود)",
+    "en": "\"{name}\" has live data. To fully replace it, type the exact company name. (A safety backup is taken first.)"
+  },
+  "backupReplaceNameMismatch": { "fa": "نام واردشده مطابقت ندارد — Restore لغو شد.", "en": "Name did not match — restore cancelled." },
+
+  "backupRestoreDoneTitle": { "fa": "Restore با موفقیت انجام شد", "en": "Restore completed successfully" },
+  "backupRestoreDoneBody": {
+    "fa": "شرکت: {company}\nحالت: {mode}\nردیف‌های Restore شده: {rows}\nفایل‌ها: {files}\nBackup ایمنیِ قبل از جایگزینی: {safety}",
+    "en": "Company: {company}\nMode: {mode}\nRows restored: {rows}\nFiles: {files}\nPre-replace safety backup: {safety}"
+  },
+  "backupRestorePwReset": {
+    "fa": "این حساب‌ها بدون رمز Restore شدند و نیاز به بازنشانیِ رمز دارند: {list}",
+    "en": "These accounts were restored without a password and need a password reset: {list}"
+  },
+  "backupSchemaMismatchWarn": {
+    "fa": "نسخه‌ی schema این Backup با نسخه‌ی فعلی فرق دارد — نتیجه را با دقت بررسی کنید.",
+    "en": "This backup's schema version differs from the current one — review the result carefully."
+  },
+
+  "backupPlanTierLabel":     { "fa": "دوره‌ی Backup قابل‌ارائه", "en": "Available backup interval" },
+  "backupCompanyFreqLabel":  { "fa": "دوره‌ی Backup این شرکت", "en": "This company's backup interval" },
+  "backupCompanyFreqInherit": { "fa": "— از پلن ارث می‌برد —", "en": "— inherit from plan —" },
+  "backupCompanyFreqHint": {
+    "fa": "خالی بگذارید تا از سطحِ پلن استفاده شود؛ مقدار صریح، پلن را Override می‌کند.",
+    "en": "Leave empty to use the plan tier; an explicit value overrides the plan."
+  },
   "saStorageNote": {
     "fa": "عدد «ظرفیت کل» یک تنظیمات سیستمی است (مطابق پلن اشتراک واقعی Supabase شما) — چون خودِ Supabase این عدد را از طریق API عمومی نمی‌دهد. بقیه‌ی اعداد (مصرف کل، مصرف هر شرکت، تفکیک هر Bucket) مستقیم و زنده از Storage واقعی خوانده می‌شوند. این صفحه حداکثر هر ۶۰ ثانیه خودکار به‌روز می‌شود.",
     "en": "The \"total capacity\" figure is a system setting (matching your actual Supabase subscription plan) — Supabase itself doesn't expose this number via a public API. The other figures (total usage, per-company usage, per-bucket breakdown) are read live and directly from actual Storage. This page auto-refreshes at most every 60 seconds."

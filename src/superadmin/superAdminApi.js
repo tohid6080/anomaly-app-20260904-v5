@@ -62,6 +62,9 @@ function companyFromRow(r) {
     discountAmount: Number(r.discount_amount) || 0,
     finalAmount: Number(r.final_amount) || 0,
     monthlyRecurringAmount: Number(r.monthly_recurring_amount) || 0,
+    // "" یعنی از سطحِ پلن ارث می‌برد؛ مقدار صریح، Override پلن است
+    backupFrequency: r.backup_frequency || "",
+    backupLastRunAt: r.backup_last_run_at || "",
   };
 }
 
@@ -89,6 +92,8 @@ export async function updateCompany(id, patch) {
   if ("subscriptionEndDate" in patch) dbPatch.subscription_end_date = patch.subscriptionEndDate || null;
   if ("storageQuotaMb" in patch) dbPatch.storage_quota_mb = patch.storageQuotaMb;
   if ("notes" in patch) dbPatch.notes = patch.notes;
+  // "" / null → از سطحِ پلن ارث می‌برد
+  if ("backupFrequency" in patch) dbPatch.backup_frequency = patch.backupFrequency || null;
   const rows = await sb(`companies?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(dbPatch) }, "super_admin");
   if (!sbOk(rows)) return { __error: true, message: tr("saErrSave") };
 
@@ -267,8 +272,18 @@ function planFromRow(r) {
     features: Array.isArray(r.features) ? r.features : [],
     isActive: !!r.is_active,
     sortOrder: r.sort_order ?? 0,
+    // دوره‌ی Backup خودکارِ قابل‌ارائه در این پلن
+    backupTier: r.backup_tier || "none",
   };
 }
+
+// سطوحِ Backup — برای selectهای «مدیریت پلن‌ها» و «تنظیمِ شرکت»
+export const BACKUP_TIERS = [
+  { value: "none", labelKey: "backupTierNone" },
+  { value: "weekly", labelKey: "backupTierWeekly" },
+  { value: "monthly", labelKey: "backupTierMonthly" },
+  { value: "yearly", labelKey: "backupTierYearly" },
+];
 
 // فهرست فیچرهایی که یک پلن می‌تواند فعال/غیرفعال کند — کلیدها با HSE_MODULES هماهنگ‌اند
 // درخت واقعی ماژول/زیرماژول اپ — دقیقاً منطبق با HSE_MODULES در App.jsx،
@@ -361,6 +376,7 @@ export async function createPlan(rec) {
     trial_days: rec.trialDays || null,
     max_users: rec.maxUsers || null, max_personnel: rec.maxPersonnel || null, max_storage_mb: rec.maxStorageMb || null,
     features: rec.features || [], is_active: true, sort_order: nextOrder,
+    backup_tier: rec.backupTier || "none",
   };
   const rows = await sb("plans", { method: "POST", body: JSON.stringify([payload]) }, "super_admin");
   if (!sbOk(rows)) return { __error: true, message: tr("saErrCreatePlan") };
@@ -380,6 +396,7 @@ export async function updatePlan(id, patch) {
   if ("maxStorageMb" in patch) dbPatch.max_storage_mb = patch.maxStorageMb || null;
   if ("features" in patch) dbPatch.features = patch.features;
   if ("isActive" in patch) dbPatch.is_active = patch.isActive;
+  if ("backupTier" in patch) dbPatch.backup_tier = patch.backupTier || "none";
   const rows = await sb(`plans?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(dbPatch) }, "super_admin");
   if (!sbOk(rows)) return { __error: true, message: tr("saErrSavePlan") };
   return planFromRow(rows[0]);
@@ -978,4 +995,106 @@ export async function setCompanyProactiveSettings(companyId, patch, updatedBy) {
     : await sb("company_proactive_settings", { method: "POST", body: JSON.stringify([payload]) }, "super_admin");
   if (!sbOk(rows)) return { __error: true, message: tr("saErrSaveSettings") };
   return { ok: true };
+}
+
+// ==========================================================================
+// سیستم Backup / Restore شرکت‌ها — فقط Super Admin
+// ==========================================================================
+// فهرستِ Backupها مستقیم از جدولِ company_backups خوانده می‌شود (RLS فقط به
+// Super Admin اجازه می‌دهد). عملیاتِ Storage/service_role از طریق Edge
+// Functionهای manage-company-backups و restore-company-backup.
+
+function backupFromRow(r) {
+  return {
+    id: r.id,
+    companyId: r.company_id,
+    companyName: r.company_name,
+    storagePath: r.storage_path,
+    status: r.status,
+    trigger: r.trigger,
+    schemaVersion: r.schema_version,
+    sizeBytes: r.size_bytes == null ? null : Number(r.size_bytes),
+    checksum: r.checksum || "",
+    manifest: r.manifest || null,
+    tableCount: r.table_count ?? null,
+    rowCount: r.row_count == null ? null : Number(r.row_count),
+    fileCount: r.file_count ?? null,
+    error: r.error || "",
+    createdBy: r.created_by || "",
+    startedAt: r.started_at,
+    completedAt: r.completed_at || "",
+  };
+}
+
+// همه‌ی Backupها، یا فقط یک شرکت. جدیدترین اول.
+export async function loadCompanyBackups(companyId) {
+  const filter = companyId ? `&company_id=eq.${companyId}` : "";
+  const rows = await sb(`company_backups?select=*&order=started_at.desc${filter}`, {}, "super_admin");
+  return (sbOk(rows) ? rows : []).map(backupFromRow);
+}
+
+async function callBackupAdmin(payload) {
+  const token = getSessionToken("super_admin");
+  if (!token) return { __error: true, message: tr("saErrInvalidSession") };
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/manage-company-backups`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, apikey: SUPABASE_ANON_KEY },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) return { __error: true, message: data?.error || tr("saErrServerConn") };
+    return data;
+  } catch {
+    return { __error: true, message: tr("saErrServerConn") };
+  }
+}
+
+// مصرفِ Storageِ Backupها — جدا از Storageِ عادیِ شرکت
+export async function loadBackupStorageUsage() {
+  return callBackupAdmin({ action: "storage_usage" });
+}
+
+// ساختِ یک Backup دستیِ جدید برای یک شرکت
+export async function triggerCompanyBackup(companyId) {
+  return callBackupAdmin({ action: "trigger", companyId });
+}
+
+// لینکِ موقتِ دانلودِ فایلِ zip یک Backup
+export async function getBackupDownloadUrl(backupId) {
+  return callBackupAdmin({ action: "sign_download", backupId });
+}
+
+// حذفِ کاملِ یک Backup (فایل + متادیتا)
+export async function deleteCompanyBackup(backupId) {
+  return callBackupAdmin({ action: "delete", backupId });
+}
+
+// Restore یک Backup. mode: "auto" (پیش‌فرض) | "replace"
+// در حالتِ auto، اگر شرکت داده‌ی فعال داشته باشد پاسخ { needsConfirmation: true }
+// برمی‌گردد و هیچ تغییری اعمال نمی‌شود؛ برای ادامه mode="replace" لازم است.
+export async function restoreCompanyBackup(backupId, mode = "auto") {
+  const token = getSessionToken("super_admin");
+  if (!token) return { __error: true, message: tr("saErrInvalidSession") };
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/restore-company-backup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, apikey: SUPABASE_ANON_KEY },
+      body: JSON.stringify({ backupId, mode }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok && !data?.needsConfirmation) return { __error: true, message: data?.error || tr("saErrServerConn"), detail: data?.detail };
+    return data;
+  } catch {
+    return { __error: true, message: tr("saErrServerConn") };
+  }
+}
+
+export function backupStatusMeta(status) {
+  switch (status) {
+    case "completed": return { color: "#166534", bg: "#dcfce7", labelKey: "backupStatusCompleted" };
+    case "running":   return { color: "#92400e", bg: "#fef3c7", labelKey: "backupStatusRunning" };
+    case "pending":   return { color: "#3730a3", bg: "#e0e7ff", labelKey: "backupStatusPending" };
+    default:          return { color: "#b91c1c", bg: "#fee2e2", labelKey: "backupStatusFailed" };
+  }
 }
