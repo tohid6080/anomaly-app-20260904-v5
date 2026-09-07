@@ -1,4 +1,3 @@
-import * as XLSX from "xlsx";
 import { bowtieStatusMeta } from "./bowtieApi.js";
 import { isNativeApp, writeAndShare, exportWorkbookNativeAware, exportHtmlReportNativeAware } from "../offline/nativeFile.js";
 import { translate, getCurrentLang } from "../i18n/translations.js";
@@ -111,6 +110,7 @@ function escapeHtml(s) {
 }
 
 export async function exportBowtieExcel(bowtie, threats, consequences, barriers, escalationFactors, escalationControls, filename) {
+  const XLSX = await import("xlsx"); // فقط هنگام خروجی اکسل بارگذاری می‌شود
   const lang = getCurrentLang();
   const nameOfThreat = (id) => threats.find((t) => t.id === id)?.label || "";
   const nameOfCons = (id) => consequences.find((c) => c.id === id)?.label || "";

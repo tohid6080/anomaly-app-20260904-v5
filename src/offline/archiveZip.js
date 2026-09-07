@@ -1,5 +1,3 @@
-import * as XLSX from "xlsx";
-import JSZip from "jszip";
 import { isNativeApp, writeAndShare } from "./nativeFile.js";
 import { translate, getCurrentLang } from "../i18n/translations.js";
 
@@ -28,8 +26,14 @@ const tr = (key, params) => translate(getCurrentLang(), key, params);
  * شود، workbook نادیده گرفته می‌شود.
  */
 export async function buildArchiveZip({ workbook, excelBuffer, excelFileName, attachments, zipFileName }) {
+  // jszip و xlsx فقط در مسیرِ ساختِ آرشیو لازم‌اند — با import()‎ پویا بارگذاری می‌شوند
+  const { default: JSZip } = await import("jszip");
   const zip = new JSZip();
-  const excelArray = excelBuffer || XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+  let excelArray = excelBuffer;
+  if (!excelArray) {
+    const XLSX = await import("xlsx");
+    excelArray = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+  }
   zip.file(excelFileName, excelArray);
 
   for (const att of attachments) {

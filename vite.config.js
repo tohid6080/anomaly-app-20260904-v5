@@ -9,4 +9,18 @@ export default defineConfig({
   define: {
     __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
   },
+  build: {
+    // Code splitting: کتابخانه‌های پایه در چانک‌های ثابتِ جدا تا cache بلندمدت
+    // بگیرند و از چانکِ اپ جدا بمانند. کتابخانه‌های سنگینِ خروجی/بکاپ
+    // (xlsx / exceljs / jszip) عمداً اینجا نیستند — آن‌ها با import()‎ پویا
+    // فقط هنگام کلیکِ کاربر روی «خروجی» بارگذاری می‌شوند.
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-react": ["react", "react-dom"],
+          "vendor-icons": ["lucide-react"],
+        },
+      },
+    },
+  },
 });

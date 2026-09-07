@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense, lazy } from "react";
 import { AlertTriangle, Plus, X, ChevronRight, ChevronLeft, ChevronDown, ChevronsRight, ChevronsLeft, LogOut, CheckCircle2, Clock, Camera, ImagePlus, Trash2, FileSpreadsheet, FileText, User, Users, ShieldCheck, LayoutGrid, BarChart3, Briefcase, Settings, Archive, Truck, Tag, MessageCircle, GraduationCap, ShieldOff, ShieldAlert, Database, Fingerprint, Info, Sliders, TrendingUp, Search, Home, Megaphone, Sparkles, Gift, Bell, ArrowUpRight, ClipboardList, MoreVertical } from "lucide-react";
-import * as XLSX from "xlsx";
-import ExcelJS from "exceljs";
 import BowTieDashboard from "./bowtie/BowTieDashboard.jsx";
 import HcmsDashboard from "./hcms/HcmsDashboard.jsx";
 import HcmsMatrixManager from "./hcms/HcmsMatrixManager.jsx";
-import RiskKnowledgeManager from "./riskknowledge/RiskKnowledgeManager.jsx";
+// بارگذاری تنبل: پنل‌های بزرگ و کم‌استفاده که کتابخانه‌های سنگینِ خروجی
+// (xlsx / exceljs / jszip) را با خود می‌آورند؛ از باندلِ اولیه جدا می‌شوند
+// و فقط هنگام باز شدنِ همان بخش بارگذاری می‌شوند.
+const RiskKnowledgeManager = lazy(() => import("./riskknowledge/RiskKnowledgeManager.jsx"));
 import AnomalyCategoryManager from "./anomalycategories/AnomalyCategoryManager.jsx";
 import { loadActiveAnomalyCategories } from "./anomalycategories/anomalyCategoriesApi.js";
 import { getOrCreateHcmsForAnomaly, createSuggestedHcmsFromAnomaly } from "./hcms/hcmsApi.js";
@@ -35,7 +36,7 @@ import { isOnline, subscribeNetworkStatus } from "./offline/networkStatus.js";
 import { offlineWrite, offlineWriteFile } from "./offline/offlineWrite.js";
 import DbSizeWarningBanner from "./offline/DbSizeWarningBanner.jsx";
 import { checkUploadAllowed } from "./offline/dbSizeMonitor.js";
-import ArchiveManager from "./offline/ArchiveManager.jsx";
+const ArchiveManager = lazy(() => import("./offline/ArchiveManager.jsx"));
 import CorrectiveActionsDashboard from "./correctiveActions/CorrectiveActionsDashboard.jsx";
 import EffectivenessThresholdsManager from "./bowtie/EffectivenessThresholdsManager.jsx";
 import { LanguageProvider, useLanguage } from "./i18n/LanguageContext.jsx";
@@ -81,6 +82,15 @@ import { APP_NAME, sb, sbOk, sbErrMsg, uid, todayISO, THEME, styles, usePersiste
  * اپلیکیشن کارفرما / پیمانکار / ادمین + ماژول ثبت و پیگیری آنومالی HSE
  * داده‌ها روی دیتابیس واقعی Supabase (Postgres) ذخیره می‌شوند تا مستقل از artifact و پایدار بمانند.
  */
+
+// پوشش Suspense برای پنل‌های lazy — یک fallbackِ سبک تا چانکِ جدا بارگذاری شود
+function LazyPanel({ children }) {
+  return (
+    <Suspense fallback={<div style={{ padding: 40, textAlign: "center", color: THEME.text3, fontFamily: THEME.font }}>…</div>}>
+      {children}
+    </Suspense>
+  );
+}
 
 // ---------- نوع نقش‌ها ----------
 // Role: "EMPLOYER" | "HSE_SUPERVISOR" | "CONTRACTOR"
@@ -858,6 +868,8 @@ function anomalyExportRows(list) {
 }
 
 async function exportAnomaliesExcel(list, title, companyId) {
+  // exceljs (~۹۴۰KB) فقط همین‌جا لازم است — با import()‎ پویا، از باندلِ اولیه بیرون می‌ماند
+  const ExcelJS = (await import("exceljs")).default;
   let companyName = "";
   if (companyId) companyName = await loadMyCompanyName(companyId);
 
@@ -4460,13 +4472,13 @@ function EmployerDashboard({ onLogout, currentUser }) {
 
       {view === "profile" && <ProfileView onBack={() => setView("menu")} currentUser={currentUser} roleLabel={canEdit ? t("roleLabelEmployer") : t("roleLabelEmployerViewOnly")} />}
       {view === "chat" && <ChatDashboard onBack={() => setView("menu")} currentUser={currentUser} />}
-      {view === "riskKnowledgeManagement" && <RiskKnowledgeManager onBack={() => setView("riskAssessment")} currentUser={currentUser} />}
+      {view === "riskKnowledgeManagement" && <LazyPanel><RiskKnowledgeManager onBack={() => setView("riskAssessment")} currentUser={currentUser} /></LazyPanel>}
       {view === "anomalyForm" && anomalyCanEdit && <AnomalyForm onBack={() => setView("anomalyReport")} currentUser={currentUser} onSaved={() => setView("anomalyList")} />}
       {view === "anomalyList" && <AnomalyList onBack={() => setView("anomalyReport")} role="EMPLOYER" currentUser={currentUser} readOnly={!canEdit || getAccessLevel(permMap, "anomalyReport") === "view"} initialStatusFilter={navFilter?.module === "anomaly" ? navFilter.statusFilter : undefined} initialRiskFilter={navFilter?.module === "anomaly" ? navFilter.riskFilter : undefined} initialContractorFilter={navFilter?.module === "anomaly" ? navFilter.contractorFilter : undefined} initialExpandedAnomalyId={navFilter?.module === "anomaly" ? navFilter.recordId : undefined} />}
       {view === "correctiveActionsList" && <CorrectiveActionsDashboard onBack={() => setView("anomalyReport")} currentUser={currentUser} />}
       {view === "bowtieDashboard" && <BowTieDashboard role="EMPLOYER" onBack={() => setView("riskAssessment")} currentUser={currentUser} readOnly={!canEdit || getAccessLevel(permMap, "riskAssessment") === "view"} />}
       {view === "hcmsDashboard" && <HcmsDashboard onBack={() => setView("riskAssessment")} currentUser={currentUser} />}
-      {view === "archiveManagement" && <ArchiveManager onBack={() => setView("menu")} currentUser={currentUser} />}
+      {view === "archiveManagement" && <LazyPanel><ArchiveManager onBack={() => setView("menu")} currentUser={currentUser} /></LazyPanel>}
       {view === "personnelForm" && <PersonnelForm onBack={() => setView("personnelAccess")} currentUser={currentUser} onSaved={() => setView("personnelAccess")} />}
       {view === "personnelDashboard" && <PersonnelDashboard onBack={() => setView("personnelAccess")} currentUser={currentUser} role="EMPLOYER" readOnly={!canEdit || getAccessLevel(permMap, "personnelAccess") === "view"} initialStatusFilter={navFilter?.module === "personnel" ? navFilter.statusFilter : undefined} initialContractorFilter={navFilter?.module === "personnel" ? navFilter.contractorFilter : undefined} onNavigateToAssessment={(ctx) => { setAssessmentContext(ctx); setView("proactiveIndicators"); }} initialSelectedPersonnelId={assessmentContext?.personnelId} />}
       {view === "proactiveIndicators" && (
@@ -4717,7 +4729,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
       {view === "chat" && <ChatDashboard onBack={() => setView("menu")} currentUser={currentUser} />}
       {view === "hcmsDashboard" && <HcmsDashboard onBack={() => setView("riskAssessment")} currentUser={currentUser} />}
       {view === "bowtieDashboard" && <BowTieDashboard role="CONTRACTOR" onBack={() => setView("riskAssessment")} currentUser={currentUser} readOnly={getAccessLevel(permMap, "riskAssessment") === "view"} />}
-      {view === "archiveManagement" && <ArchiveManager onBack={() => setView("menu")} currentUser={currentUser} />}
+      {view === "archiveManagement" && <LazyPanel><ArchiveManager onBack={() => setView("menu")} currentUser={currentUser} /></LazyPanel>}
       {view === "anomalyList" && <AnomalyList onBack={() => setView("anomalyReport")} role="CONTRACTOR" currentUser={currentUser} readOnly={getAccessLevel(permMap, "anomalyReport") === "view"} initialStatusFilter={navFilter?.module === "anomaly" ? navFilter.statusFilter : undefined} initialRiskFilter={navFilter?.module === "anomaly" ? navFilter.riskFilter : undefined} />}
       {view === "correctiveActionsList" && <CorrectiveActionsDashboard onBack={() => setView("anomalyReport")} currentUser={currentUser} />}
       {view === "personnelForm" && getAccessLevel(permMap, "personnelAccess") !== "view" && <PersonnelForm onBack={() => setView("personnelAccess")} currentUser={currentUser} onSaved={() => setView("personnelAccess")} />}

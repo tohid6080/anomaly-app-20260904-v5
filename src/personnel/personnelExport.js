@@ -1,4 +1,3 @@
-import * as XLSX from "xlsx";
 import { DOC_TYPES, personnelStatusMeta, docStatusMeta, loadPersonnelDocuments } from "./personnelApi.js";
 import { isoToJalaliDisplay } from "./jalaliDate.jsx";
 import { exportWorkbookNativeAware, exportHtmlReportNativeAware } from "../offline/nativeFile.js";
@@ -117,6 +116,7 @@ export async function exportPersonnelPdf(personnelList, title) {
 }
 
 export async function exportPersonnelExcel(personnelList, title) {
+  const XLSX = await import("xlsx"); // فقط هنگام خروجی اکسل بارگذاری می‌شود
   const documentsMap = await fetchAllDocuments(personnelList);
   const lang = getCurrentLang();
 

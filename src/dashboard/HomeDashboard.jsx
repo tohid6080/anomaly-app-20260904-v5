@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from "react";
-import * as XLSX from "xlsx";
 import {
   Users, AlertTriangle, ShieldCheck, Building2, Truck, Tag, GitBranch,
   FileClock, Bell, TrendingUp, Sparkles, RadioTower, FileWarning, ClipboardCheck,
@@ -330,7 +329,9 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
       .slice(0, 6);
   }, [correctiveActions, contractors, t]);
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
+    // xlsx (~۴۳۰KB) فقط هنگام کلیکِ «خروجی» بارگذاری می‌شود تا لودِ اولِ داشبورد سبک بماند
+    const XLSX = await import("xlsx");
     const rows = contractorRows.map((c) => ({
       [t("colContractor")]: c.name,
       [t("colScore")]: c.score,
