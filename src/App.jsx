@@ -52,7 +52,6 @@ import {
 import { checkLoginLockout, recordLoginAttempt, validatePasswordLength, MIN_PASSWORD_LENGTH } from "./loginSecurity.js";
 import { useAndroidBackButton } from "./backButtonHandler.js";
 import { issueSessionToken, clearSessionToken, changeMyPassword } from "./sessionToken.js";
-import AdminAnalytics from "./admin/AdminAnalytics.jsx";
 import ChatDashboard from "./chat/ChatDashboard.jsx";
 import TrainingManager from "./training/TrainingManager.jsx";
 import ChatAccessManager from "./chat/ChatAccessManager.jsx";
@@ -4250,7 +4249,6 @@ function AdminDashboard({ onLogout, currentUser }) {
     isModuleInPlan(planFeatures, "managementDashboard") && { key: "managementDashboard", icon: BarChart3, label: mt(managementMod) },
     isModuleInPlan(planFeatures, "proactiveIndicators") && { key: "proactiveIndicators", icon: TrendingUp, label: mt(proactiveMod) },
     isModuleInPlan(planFeatures, "incidentManagement") && { key: "incidentManagement", icon: ShieldAlert, label: mt(incidentMod), sub: incidentMod.sub.map((s) => ({ key: s.key, label: mt(s) })) },
-    isModuleInPlan(planFeatures, "adminAnalytics") && { key: "adminAnalytics", icon: BarChart3, label: t("moduleAdminAnalytics") },
     isModuleInPlan(planFeatures, "systemManagement") && {
       key: "systemManagement", icon: Settings, label: t("moduleSystemManagement"),
       sub: [
@@ -4283,7 +4281,7 @@ function AdminDashboard({ onLogout, currentUser }) {
               icon={m.icon}
               label={m.label}
               onClick={() => setView(m.key)}
-              accent={m.key !== "adminAnalytics"}
+              accent
               sub={!!(m.sub && m.sub.length)}
             />
           ))}
@@ -4419,7 +4417,6 @@ function AdminDashboard({ onLogout, currentUser }) {
       {view === "managementDashboard" && <HomeDashboard role="ADMIN" currentUser={currentUser} onNavigate={handleHomeNavigate} onBack={() => setView("menu")} />}
       {view === "permissionManagement" && <PermissionManager onBack={() => setView("systemManagement")} />}
       {view === "jobPositionManagement" && <JobPositionManager onBack={() => setView("systemManagement")} />}
-      {view === "adminAnalytics" && <AdminAnalytics onBack={() => setView("menu")} currentUser={currentUser} />}
       {view === "archiveManagement" && <ArchiveManager onBack={() => setView("systemManagement")} currentUser={currentUser} />}
     </ResponsiveDashboardShell>
   );

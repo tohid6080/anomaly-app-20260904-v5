@@ -932,6 +932,18 @@ export const translations = {
     "fa": "همه کاربران",
     "en": "All Users"
   },
+  "adminAnalyticsCompanyLabel": {
+    "fa": "شرکت",
+    "en": "Company"
+  },
+  "adminAnalyticsAllCompanies": {
+    "fa": "همه شرکت‌ها",
+    "en": "All Companies"
+  },
+  "adminAnalyticsColCompany": {
+    "fa": "شرکت",
+    "en": "Company"
+  },
   "adminAnalyticsFromDate": {
     "fa": "از تاریخ",
     "en": "From Date"
@@ -1599,6 +1611,14 @@ export const translations = {
   "saAuditLogTitle": {
     "fa": "گزارش تغییرات",
     "en": "Change Log"
+  },
+  "saAuditSubtabAccounts": {
+    "fa": "تغییرات حساب‌ها",
+    "en": "Account Changes"
+  },
+  "saAuditSubtabActivity": {
+    "fa": "فعالیت کاربران",
+    "en": "User Activity"
   },
   "saAuditLogNote": {
     "fa": "هر تغییر حساب کاربری (ایجاد، ویرایش، فعال/غیرفعال، بازنشانی رمز) اینجا ثبت می‌شود — هرگز خودِ رمز عبور ثبت نمی‌شود.",

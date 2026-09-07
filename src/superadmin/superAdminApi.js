@@ -331,7 +331,6 @@ export const PLAN_FEATURES = [
     sub: [{ key: "scaffoldDashboard", labelKey: "pfScaffoldDashboard" }],
   },
   { key: "managementDashboard", labelKey: "pfManagementDashboard" },
-  { key: "adminAnalytics", labelKey: "pfAdminAnalytics" },
   {
     key: "systemManagement", labelKey: "pfSystemManagement",
     sub: [

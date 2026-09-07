@@ -46,9 +46,14 @@ export function trackPageView(user, page) {
 // bازه‌ی پیش‌فرض ۳۰ روز اخیر؛ می‌توان با fromDate/toDate (رشته‌ی ISO تاریخ،
 // بدون زمان) محدوده‌ی دیگری خواست. محاسبه‌ی جفت‌شدن ورود/خروج و مدت حضور
 // سمت کلاینت انجام می‌شود (در AdminAnalytics.jsx)، نه اینجا.
-export async function loadActivitySummary(fromDate, toDate) {
-  const companyId = getCurrentCompanyId();
-  const filter = companyId ? `&company_id=eq.${companyId}` : "";
+//
+// دامنه‌ی شرکت (companyId):
+//   undefined            → شرکت جاری (رفتار پیش‌فرض داخل اپ مستأجر)
+//   "" یا "all"           → همه‌ی شرکت‌ها، بدون فیلتر (فقط از پنل Super Admin)
+//   یک شناسه‌ی مشخص       → همان یک شرکت (انتخاب‌شده در پنل Super Admin)
+export async function loadActivitySummary(fromDate, toDate, companyId) {
+  const scope = companyId === undefined ? getCurrentCompanyId() : companyId;
+  const filter = scope && scope !== "all" ? `&company_id=eq.${scope}` : "";
   const since = fromDate ? `${fromDate}T00:00:00` : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
   const until = toDate ? `${toDate}T23:59:59` : null;
   const untilFilter = until ? `&created_at=lte.${until}` : "";

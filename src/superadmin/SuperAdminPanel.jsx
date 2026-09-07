@@ -8,6 +8,7 @@ import { loadModuleConfig, saveModuleConfig, loadNotificationTypes, saveNotifica
 import { DASHBOARD_WIDGET_GROUPS, mergeWidgetConfig, defaultWidgetConfig } from "../dashboard/dashboardWidgets.js";
 import { uploadBase64ToStorage, deleteFromStorage, parseStorageUrl } from "../offline/storageUpload.js";
 import AccountManagement from "./AccountManagement.jsx";
+import AdminAnalytics from "../admin/AdminAnalytics.jsx";
 import { toJalaliSafe, toJalaliDateTime, JalaliDateInput } from "../personnel/jalaliDate.jsx";
 import {
   loadCompanies, createCompany, updateCompany, deleteCompanySecure, setCompanyActive,
@@ -197,7 +198,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
           {page === "storage" && <StorageUsagePage />}
           {page === "monitoring" && <SystemInsights companies={companies} />}
           {page === "systemConfig" && <SystemConfigPage currentAdmin={currentAdmin} companies={companies} />}
-          {page === "auditLog" && <AuditLogPage companies={companies} />}
+          {page === "auditLog" && <ChangeLogPage companies={companies} />}
           {page === "errorReports" && <ErrorReportsPage currentAdmin={currentAdmin} />}
           {page === "cardTransferPayments" && <CardTransferPaymentsPage currentAdmin={currentAdmin} />}
           {page === "trialRequests" && <TrialRequestsPage currentAdmin={currentAdmin} />}
@@ -1726,6 +1727,39 @@ function AnnouncementManagementTab({ currentAdmin, companies }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+// تب «گزارش تغییرات» دو زیرتب دارد: «تغییرات حساب‌ها» (لاگ ممیزی حساب‌ها،
+// همان AuditLogPage) و «فعالیت کاربران» (داشبورد حضور/ورود که پیش‌تر یک
+// ماژول در پنل ادمینِ مستأجر بود و به اینجا منتقل شد — با انتخابگر شرکت).
+const CHANGE_LOG_SUBTABS = [
+  { key: "accounts", labelKey: "saAuditSubtabAccounts", icon: FileClock },
+  { key: "activity", labelKey: "saAuditSubtabActivity", icon: Users },
+];
+
+function ChangeLogPage({ companies }) {
+  const { t } = useLanguage();
+  const [tab, setTab] = useState("accounts");
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 4, borderBottom: `1.5px solid ${THEME.border}`, marginBottom: 16 }}>
+        {CHANGE_LOG_SUBTABS.map((tb) => (
+          <button
+            key={tb.key} type="button" onClick={() => setTab(tb.key)}
+            style={{
+              display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", border: "none", background: "none", cursor: "pointer", fontFamily: THEME.font, fontSize: 12.5,
+              color: tab === tb.key ? THEME.teal : THEME.text3, fontWeight: tab === tb.key ? 700 : 500,
+              borderBottom: tab === tb.key ? `2.5px solid ${THEME.teal}` : "2.5px solid transparent",
+            }}
+          >
+            <tb.icon size={14} /> {t(tb.labelKey)}
+          </button>
+        ))}
+      </div>
+      {tab === "accounts" && <AuditLogPage companies={companies} />}
+      {tab === "activity" && <AdminAnalytics companies={companies} />}
     </div>
   );
 }

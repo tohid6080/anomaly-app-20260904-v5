@@ -30,13 +30,16 @@ function formatDuration(ms) {
  * زدن دکمه‌ی خروج، مرورگر را ببندد، آن نشست بدون تاریخ/ساعت خروج و بدون
  * مدت‌زمان نمایش داده می‌شود (نه یک عدد نادرست حدسی).
  */
-function computeAttendance(rows) {
+function computeAttendance(rows, groupByCompany) {
   const byUser = {};
   rows.forEach((r) => {
     if (!r.username) return;
-    if (!byUser[r.username]) byUser[r.username] = { username: r.username, fullName: r.full_name || r.username, role: r.role || "", events: [], failedCount: 0 };
-    if (r.event_type === "login" || r.event_type === "logout") byUser[r.username].events.push(r);
-    if (r.event_type === "failed_login") byUser[r.username].failedCount += 1;
+    // در نمای «همه‌ی شرکت‌ها» (فقط Super Admin) یک نام‌کاربری یکسان ممکن است
+    // در چند شرکت وجود داشته باشد؛ پس کلید گروه‌بندی را با شناسه‌ی شرکت ترکیب می‌کنیم.
+    const key = groupByCompany ? `${r.username}||${r.company_id || ""}` : r.username;
+    if (!byUser[key]) byUser[key] = { username: r.username, companyId: r.company_id || null, fullName: r.full_name || r.username, role: r.role || "", events: [], failedCount: 0 };
+    if (r.event_type === "login" || r.event_type === "logout") byUser[key].events.push(r);
+    if (r.event_type === "failed_login") byUser[key].failedCount += 1;
   });
 
   return Object.values(byUser).map((u) => {
@@ -59,6 +62,7 @@ function computeAttendance(rows) {
 
     return {
       username: u.username,
+      companyId: u.companyId,
       fullName: u.fullName,
       role: u.role,
       lastLoginAt: lastSession ? lastSession.login.created_at : null,
@@ -79,22 +83,38 @@ function computeRecentFailedAttempts(rows) {
     .slice(0, 20);
 }
 
-export default function AdminAnalytics({ onBack, currentUser }) {
+export default function AdminAnalytics({ onBack, currentUser, companies }) {
   const { t, dir } = useLanguage();
+  // وقتی از پنل Super Admin آورده می‌شود، فهرست شرکت‌ها پاس داده می‌شود و یک
+  // انتخابگر شرکت (+ گزینه‌ی «همه‌ی شرکت‌ها») بالای داشبورد ظاهر می‌شود؛ داخل
+  // اپ مستأجر این prop نیست و رفتار قبلی (شرکت جاری) حفظ می‌شود.
+  const isMultiCompany = Array.isArray(companies);
   const [rawRows, setRawRows] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [companyScope, setCompanyScope] = useState("all");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [userFilter, setUserFilter] = useState("all");
 
-  const load = async () => {
+  const load = async (scopeOverride) => {
     setLoading(true);
-    setRawRows(await loadActivitySummary(fromDate || undefined, toDate || undefined));
+    const scope = isMultiCompany ? (scopeOverride ?? companyScope) : undefined;
+    setRawRows(await loadActivitySummary(fromDate || undefined, toDate || undefined, scope));
     setLoading(false);
   };
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const attendance = useMemo(() => computeAttendance(rawRows), [rawRows]);
+  // انتخاب شرکت یک عمل اتمیک است (برخلاف تایپِ تدریجیِ تاریخ) پس بلافاصله
+  // بازخوانی می‌کنیم؛ فیلتر تاریخ همچنان با دکمه‌ی «اعمال فیلتر» اعمال می‌شود.
+  const onChangeCompanyScope = (v) => { setCompanyScope(v); load(v); };
+
+  const showCompanyCol = isMultiCompany && companyScope === "all";
+  const companyName = useMemo(() => {
+    const m = {};
+    (companies || []).forEach((c) => { m[c.id] = c.name; });
+    return m;
+  }, [companies]);
+  const attendance = useMemo(() => computeAttendance(rawRows, showCompanyCol), [rawRows, showCompanyCol]);
   const recentFailed = useMemo(() => computeRecentFailedAttempts(rawRows), [rawRows]);
 
   const userOptions = useMemo(() => {
@@ -115,6 +135,15 @@ export default function AdminAnalytics({ onBack, currentUser }) {
       <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 16 }}>{t("adminAnalyticsDesc")}</p>
 
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 16, background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 10, padding: 14 }}>
+        {isMultiCompany && (
+          <div>
+            <label style={{ ...styles.label, display: "flex", alignItems: "center", gap: 4 }}><Filter size={12} /> {t("adminAnalyticsCompanyLabel")}</label>
+            <select style={styles.filterSelect} value={companyScope} onChange={(e) => onChangeCompanyScope(e.target.value)} dir={dir}>
+              <option value="all">{t("adminAnalyticsAllCompanies")}</option>
+              {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+        )}
         <div>
           <label style={{ ...styles.label, display: "flex", alignItems: "center", gap: 4 }}><Filter size={12} /> {t("adminAnalyticsUserLabel")}</label>
           <select style={styles.filterSelect} value={userFilter} onChange={(e) => setUserFilter(e.target.value)} dir={dir}>
@@ -141,6 +170,7 @@ export default function AdminAnalytics({ onBack, currentUser }) {
             <thead>
               <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
                 <th style={{ textAlign: dir === "rtl" ? "right" : "left", padding: "8px 10px" }}>{t("adminAnalyticsColUsername")}</th>
+                {showCompanyCol && <th style={{ textAlign: "center", padding: "8px 10px" }}>{t("adminAnalyticsColCompany")}</th>}
                 <th style={{ textAlign: "center", padding: "8px 10px" }}>{t("adminAnalyticsColRole")}</th>
                 <th style={{ textAlign: "center", padding: "8px 10px" }}>{t("adminAnalyticsColLastLoginDate")}</th>
                 <th style={{ textAlign: "center", padding: "8px 10px" }}>{t("adminAnalyticsColLoginTime")}</th>
@@ -153,8 +183,9 @@ export default function AdminAnalytics({ onBack, currentUser }) {
             </thead>
             <tbody>
               {filtered.map((a) => (
-                <tr key={a.username} style={{ borderBottom: `1px solid ${THEME.border}` }}>
+                <tr key={showCompanyCol ? `${a.username}||${a.companyId || ""}` : a.username} style={{ borderBottom: `1px solid ${THEME.border}` }}>
                   <td style={{ padding: "8px 10px", fontWeight: 600 }}>{a.fullName}</td>
+                  {showCompanyCol && <td style={{ padding: "8px 10px", textAlign: "center" }}>{companyName[a.companyId] || "—"}</td>}
                   <td style={{ padding: "8px 10px", textAlign: "center" }}>{(ROLE_LABEL_KEY[a.role] ? t(ROLE_LABEL_KEY[a.role]) : null) || a.role || "—"}</td>
                   <td style={{ padding: "8px 10px", textAlign: "center" }}>{toJalaliSafe(a.lastLoginAt) || "—"}</td>
                   <td style={{ padding: "8px 10px", textAlign: "center" }}>{formatTime(a.lastLoginAt)}</td>
@@ -166,7 +197,7 @@ export default function AdminAnalytics({ onBack, currentUser }) {
                 </tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={9} style={{ padding: 20, textAlign: "center", color: THEME.text3 }}>{t("adminAnalyticsNoActivity")}</td></tr>
+                <tr><td colSpan={showCompanyCol ? 10 : 9} style={{ padding: 20, textAlign: "center", color: THEME.text3 }}>{t("adminAnalyticsNoActivity")}</td></tr>
               )}
             </tbody>
           </table>
@@ -178,7 +209,7 @@ export default function AdminAnalytics({ onBack, currentUser }) {
           <p style={{ fontSize: 12.5, fontWeight: 700, color: THEME.navy, marginTop: 0, marginBottom: 10 }}>{t("adminAnalyticsRecentFailed")}</p>
           {recentFailed.map((r, i) => (
             <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: i < recentFailed.length - 1 ? `1px solid ${THEME.border}` : "none", fontSize: 12 }}>
-              <span style={{ color: THEME.text, fontWeight: 600 }}>{r.username}</span>
+              <span style={{ color: THEME.text, fontWeight: 600 }}>{r.username}{showCompanyCol && r.company_id ? ` — ${companyName[r.company_id] || ""}` : ""}</span>
               <span style={{ color: THEME.text3 }}>{toJalaliSafe(r.created_at)} — {formatTime(r.created_at)}</span>
             </div>
           ))}
