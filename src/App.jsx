@@ -4298,9 +4298,6 @@ function AdminDashboard({ onLogout, currentUser }) {
               امنیتی سازمانی، ایجاد/ویرایش این حساب‌ها فقط از پنل Super Admin
               مجاز است، هم در UI هم در Backend (Edge Function manage-account
               درخواست هر کاربری غیر از Super Admin را رد می‌کند). */}
-          <div style={{ background: "#fef3c7", border: "1px solid #fde68a", borderRadius: 8, padding: 12, marginBottom: 14, fontSize: 12, color: "#92400e", lineHeight: 1.8 }}>
-            {t("adminAccountsMovedNotice")}
-          </div>
           <div style={styles.menuList2}>
             {isModuleInPlan(planFeatures, "permissionManagement") && <MenuRow icon={ShieldCheck} label={t("subPermissions")} onClick={() => setView("permissionManagement")} />}
             {isModuleInPlan(planFeatures, "jobPositionManagement") && <MenuRow icon={Briefcase} label={t("subJobPositions")} onClick={() => setView("jobPositionManagement")} />}
