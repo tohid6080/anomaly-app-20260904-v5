@@ -1481,6 +1481,8 @@ export const translations = {
   "backupColSize":     { "fa": "حجم", "en": "Size" },
 
   "backupBtnNow":       { "fa": "Backup فوری", "en": "Back up now" },
+  "backupRestoreLatest": { "fa": "Restore آخرین", "en": "Restore latest" },
+  "backupRestoreLatestHint": { "fa": "بازیابی آخرین نسخه‌ی کامل ({date})", "en": "Restore the latest completed version ({date})" },
   "backupRunning":      { "fa": "در حال ساخت…", "en": "Running…" },
   "backupShowVersions": { "fa": "نسخه‌ها", "en": "Versions" },
   "backupHideVersions": { "fa": "بستن", "en": "Hide" },

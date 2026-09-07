@@ -374,6 +374,8 @@ export const de = {
   "backupColLast": "Letzte Sicherung",
   "backupColSize": "Größe",
   "backupBtnNow": "Jetzt sichern",
+  "backupRestoreLatest": "Neueste wiederherstellen",
+  "backupRestoreLatestHint": "Die neueste abgeschlossene Version wiederherstellen ({date})",
   "backupRunning": "Läuft …",
   "backupShowVersions": "Versionen",
   "backupHideVersions": "Ausblenden",

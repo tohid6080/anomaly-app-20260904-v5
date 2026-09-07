@@ -798,6 +798,7 @@ function CompanyBackupsSection() {
             {Object.keys(byCompany).sort((a, b) => companyName(a).localeCompare(companyName(b))).map((cid) => {
               const list = [...byCompany[cid]].sort((a, b) => new Date(b.startedAt) - new Date(a.startedAt));
               const last = list[0];
+              const latestCompleted = list.find((b) => b.status === "completed");
               const meta = last ? backupStatusMeta(last.status) : null;
               const isOpen = expanded === cid;
               return (
@@ -814,6 +815,15 @@ function CompanyBackupsSection() {
                       <button type="button" onClick={() => handleBackupNow(cid)} disabled={!!busyId} style={{ ...btnStyle(), fontSize: 11, marginInlineEnd: 4, display: "inline-flex", alignItems: "center", gap: 4 }}>
                         <UploadCloud size={11} /> {busyId === "run-" + cid ? t("backupRunning") : t("backupBtnNow")}
                       </button>
+                      {latestCompleted && (
+                        <button
+                          type="button" onClick={() => handleRestore(latestCompleted)} disabled={!!busyId}
+                          title={t("backupRestoreLatestHint", { date: toJalaliDateTime(latestCompleted.completedAt || latestCompleted.startedAt) })}
+                          style={{ ...btnStyle("#b45309"), fontSize: 11, marginInlineEnd: 4, display: "inline-flex", alignItems: "center", gap: 4 }}
+                        >
+                          <RotateCcw size={11} /> {busyId === "res-" + latestCompleted.id ? t("backupImportRestoring") : t("backupRestoreLatest")}
+                        </button>
+                      )}
                       {list.length > 0 && (
                         <button type="button" onClick={() => setExpanded(isOpen ? "" : cid)} style={{ ...btnStyle(THEME.navyMid), fontSize: 11 }}>
                           {isOpen ? t("backupHideVersions") : t("backupShowVersions")}
