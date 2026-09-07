@@ -166,12 +166,16 @@ export default function AccountManagement({ currentAdmin }) {
               <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
                 {tab === "contractor" ? (
                   <>
-                    <th style={{ textAlign: dir === "rtl" ? "right" : "left", padding: "6px 8px" }}>{t("amColContractorName")}</th>
-                    <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("amColName")}</th>
+                    {/* ستون اول همیشه «نام و نام خانوادگی» شخص است (contact_person_name)،
+                        ستون دوم نام شرکت پیمانکار (a.name) — قبلاً این دو برچسب برعکس
+                        روی هم قرار گرفته بودند (amColContractorName روی نام شخص، amColName
+                        روی نام شرکت)، که با ستون‌بندی سایر تب‌ها ناهم‌خوان بود. */}
+                    <th style={{ textAlign: dir === "rtl" ? "right" : "left", padding: "6px 8px" }}>{t("amFullName")}</th>
+                    <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("amContractorCompanyName")}</th>
                     <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("amColEmployerCompany")}</th>
                   </>
                 ) : (
-                  <th style={{ textAlign: dir === "rtl" ? "right" : "left", padding: "6px 8px" }}>{t("amColName")}</th>
+                  <th style={{ textAlign: dir === "rtl" ? "right" : "left", padding: "6px 8px" }}>{t("amFullName")}</th>
                 )}
                 <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("amColUsername")}</th>
                 {tab !== "contractor" && <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("amColCompany")}</th>}
@@ -265,7 +269,7 @@ function AccountForm({ tab, form, setForm, companies, onSave, saving, saveLabel,
           </div>
         )}
         <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{isContractor ? t("amContractorCompanyName") : t("amColName")}</label>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{isContractor ? t("amContractorCompanyName") : t("amFullName")}</label>
           <input style={inputStyle} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} dir={dir} />
         </div>
         <div>
