@@ -29,6 +29,7 @@ export const PERMISSION_MODULES = [
   { key: "machineryManagement", labelKey: "moduleMachinery" },
   { key: "scaffoldManagement", labelKey: "moduleScaffold" },
   { key: "managementDashboard", labelKey: "moduleManagementDashboard" },
+  { key: "operationalDashboard", labelKey: "moduleOperationalDashboard" },
 ];
 
 function rowFromDb(r) {

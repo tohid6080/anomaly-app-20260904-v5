@@ -27,6 +27,7 @@ import { checkMyAccountActive } from "./subscriptionApi.js";
 import { AppearanceProvider, useAppearance } from "./shared/AppearanceContext.jsx";
 const PublicHseClimateSurvey = lazy(() => import("./proactiveIndicators/PublicHseClimateSurvey.jsx"));
 const HomeDashboard = lazy(() => import("./dashboard/HomeDashboard.jsx"));
+const OperationalDashboard = lazy(() => import("./dashboard/OperationalDashboard.jsx"));
 const PermissionManager = lazy(() => import("./permissions/PermissionManager.jsx"));
 import { loadPermissionsMap, isModuleVisible, getAccessLevel, initializeNoAccess } from "./permissions/permissionsApi.js";
 const JobPositionManager = lazy(() => import("./jobpositions/JobPositionManager.jsx"));
@@ -194,6 +195,12 @@ const HSE_MODULES = [
     key: "managementDashboard",
     label: "داشبورد مدیریتی و گزارش‌های تحلیلی",
     labelKey: "moduleManagementDashboard",
+    icon: true,
+  },
+  {
+    key: "operationalDashboard",
+    label: "داشبورد کاری",
+    labelKey: "moduleOperationalDashboard",
     icon: true,
   },
 ];
@@ -3290,7 +3297,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
 }
 
 // ---------- پنل ادمین ----------
-const MODULE_ICON = { profile: User, chat: MessageCircle, anomalyReport: AlertTriangle, personnelAccess: Users, managementDashboard: BarChart3, proactiveIndicators: TrendingUp, incidentManagement: ShieldAlert };
+const MODULE_ICON = { profile: User, chat: MessageCircle, anomalyReport: AlertTriangle, personnelAccess: Users, managementDashboard: BarChart3, operationalDashboard: ClipboardList, proactiveIndicators: TrendingUp, incidentManagement: ShieldAlert };
 
 // اعمال «پیکربندی سامانه» (ترتیب + برچسب نمایشی، از پنل Super Admin) روی
 // لیست ماژول‌های از‌قبل فیلترشده‌ی هر داشبورد. آیکون/badge/muted/sub که از
@@ -4292,6 +4299,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
     if (!isModuleVisible(permMap, mod.key)) { alert(t("errNoModulePermission")); return; }
     if (mod.employerOnly && !canEdit) { alert(t("errEditAccessOnly")); return; }
     if (mod.key === "managementDashboard") { setView("managementDashboard"); return; }
+    if (mod.key === "operationalDashboard") { setView("operationalDashboard"); return; }
     if (mod.key === "proactiveIndicators") { setView("proactiveIndicators"); return; }
     if (mod.sub) { setView(mod.key); return; }
     alert(t("moduleComingSoon", { name: mt(mod) }));
@@ -4509,6 +4517,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       {view === "machineryDashboard" && <MachineryDashboard onBack={() => setView("machineryManagement")} currentUser={currentUser} role="EMPLOYER" readOnly={!canEdit || getAccessLevel(permMap, "machineryManagement") === "view"} initialApprovalFilter={navFilter?.module === "machinery" ? navFilter.approvalFilter : undefined} initialContractorFilter={navFilter?.module === "machinery" ? navFilter.contractorFilter : undefined} />}
       {view === "scaffoldDashboard" && <ScaffoldDashboard onBack={() => setView("scaffoldManagement")} currentUser={currentUser} role="EMPLOYER" readOnly={!canEdit || getAccessLevel(permMap, "scaffoldManagement") === "view"} initialStatusFilter={navFilter?.module === "scaffold" ? navFilter.statusFilter : undefined} initialContractorFilter={navFilter?.module === "scaffold" ? navFilter.contractorFilter : undefined} />}
       {view === "managementDashboard" && <HomeDashboard role="EMPLOYER" currentUser={currentUser} onNavigate={handleHomeNavigate} onBack={() => setView("menu")} />}
+      {view === "operationalDashboard" && <OperationalDashboard role={currentUser?.role || "EMPLOYER"} currentUser={currentUser} onNavigate={handleHomeNavigate} onBack={() => setView("menu")} />}
     </ResponsiveDashboardShell>
   );
 }
@@ -4606,6 +4615,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
     if (!isModuleVisible(permMap, mod.key)) { alert(t("errNoModulePermission")); return; }
     if (mod.employerOnly) { alert(t("errEmployerAdminOnly")); return; }
     if (mod.key === "managementDashboard") { setView("managementDashboard"); return; }
+    if (mod.key === "operationalDashboard") { setView("operationalDashboard"); return; }
     if (mod.key === "proactiveIndicators") { setView("proactiveIndicators"); return; }
     if (mod.sub) { setView(mod.key); return; }
     alert(t("moduleComingSoon", { name: mt(mod) }));
@@ -4762,6 +4772,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
       {view === "machineryDashboard" && <MachineryDashboard onBack={() => setView("machineryManagement")} currentUser={currentUser} role="CONTRACTOR" readOnly={getAccessLevel(permMap, "machineryManagement") === "view"} initialApprovalFilter={navFilter?.module === "machinery" ? navFilter.approvalFilter : undefined} />}
       {view === "scaffoldDashboard" && <ScaffoldDashboard onBack={() => setView("scaffoldManagement")} currentUser={currentUser} role="CONTRACTOR" readOnly={getAccessLevel(permMap, "scaffoldManagement") === "view"} initialStatusFilter={navFilter?.module === "scaffold" ? navFilter.statusFilter : undefined} />}
       {view === "managementDashboard" && <HomeDashboard role="CONTRACTOR" currentUser={currentUser} onNavigate={handleHomeNavigate} onBack={() => setView("menu")} />}
+      {view === "operationalDashboard" && <OperationalDashboard role="CONTRACTOR" currentUser={currentUser} onNavigate={handleHomeNavigate} onBack={() => setView("menu")} />}
     </ResponsiveDashboardShell>
   );
 }

@@ -324,5 +324,9 @@ export async function loadCurrentCompanyPlanFeatures() {
 // planFeatures === null یعنی «بدون محدودیت» (fail-open) — نه یک آرایه‌ی خالی
 export function isModuleInPlan(planFeatures, moduleKey) {
   if (planFeatures === null || planFeatures === undefined) return true;
+  // «داشبورد کاری» و «داشبورد مدیریتی» یک جفت‌اند — هر پلنی که یکی را دارد، دیگری را هم دارد.
+  if (moduleKey === "operationalDashboard") {
+    return planFeatures.includes("operationalDashboard") || planFeatures.includes("managementDashboard");
+  }
   return planFeatures.includes(moduleKey);
 }
