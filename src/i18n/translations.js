@@ -240,6 +240,10 @@ export const translations = {
   "atrWindowMonths": { "fa": "{n} ماه", "en": "{n} mo" },
   "atrEmpty": { "fa": "هنوز داده‌ی کافی برای روند نیست", "en": "Not enough data for a trend yet" },
   "atrFooter": { "fa": "{total} ثبت‌شده · نرخ بستن {rate}٪", "en": "{total} registered · {rate}% close rate" },
+  "hrmTitle": { "fa": "ماتریس ریسک HCMS", "en": "HCMS risk matrix" },
+  "hrmSummary": { "fa": "{high} ریسک باز سطح بالا · {total} ارزیابی فعال", "en": "{high} open high-level risks · {total} active assessments" },
+  "hrmEmpty": { "fa": "هیچ ارزیابی ریسک فعالی ثبت نشده", "en": "No active risk assessments" },
+  "hrmUnplaced": { "fa": "{n} ارزیابی بدون کد RPN معتبر — طبقه‌بندی نشد", "en": "{n} assessments without a valid RPN code — not placed" },
   "moduleAdminAnalytics": {
     "fa": "داشبورد فعالیت کاربران",
     "en": "User Activity Dashboard"
