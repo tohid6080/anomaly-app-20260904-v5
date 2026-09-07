@@ -1522,6 +1522,17 @@ export const translations = {
   },
 
   "backupPlanTierLabel":     { "fa": "دوره‌ی Backup قابل‌ارائه", "en": "Available backup interval" },
+  "currencyToman": { "fa": "تومان", "en": "Toman" },
+  "backupPriceWeeklyLabel":  { "fa": "قیمت Backup هفتگی (تومان)", "en": "Weekly backup price (Toman)" },
+  "backupPriceMonthlyLabel": { "fa": "قیمت Backup ماهیانه (تومان)", "en": "Monthly backup price (Toman)" },
+  "backupPriceYearlyLabel":  { "fa": "قیمت Backup سالیانه (تومان)", "en": "Yearly backup price (Toman)" },
+  "backupPriceHint": {
+    "fa": "قیمتِ افزودنیِ هر دوره‌ی Backup. هنگام خریدِ این پلن، خریدار یک دوره را انتخاب می‌کند و همین مبلغ به مبلغِ نهاییِ پلن اضافه می‌شود. ۰ یعنی همان دوره رایگان است.",
+    "en": "Add-on price per backup interval. When this plan is purchased, the buyer picks one interval and this amount is added to the plan's final price. 0 means that interval is free."
+  },
+  "backupBuyPeriodLabel": { "fa": "دوره‌ی Backup", "en": "Backup interval" },
+  "backupBuyLineLabel": { "fa": "Backup", "en": "Backup" },
+  "backupBuyAddLine": { "fa": "Backup {period}: + {amount} تومان", "en": "{period} backup: + {amount} Toman" },
   "backupCompanyFreqLabel":  { "fa": "دوره‌ی Backup این شرکت", "en": "This company's backup interval" },
   "backupCompanyFreqInherit": { "fa": "— از پلن ارث می‌برد —", "en": "— inherit from plan —" },
   "backupCompanyFreqHint": {

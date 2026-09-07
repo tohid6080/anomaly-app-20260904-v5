@@ -60,25 +60,30 @@ function computeSubscriptionEndDate(billingCycle: string, fromDate = new Date())
   return d.toISOString().slice(0, 10);
 }
 
-async function activateSubscription(companyId: string, planId: string, billingCycle: string) {
+const BACKUP_PERIODS = ["weekly", "monthly", "yearly"];
+
+async function activateSubscription(companyId: string, planId: string, billingCycle: string, backupPeriod?: string | null) {
   const endDate = computeSubscriptionEndDate(billingCycle);
   const companyRows = await restFetch(`companies?id=eq.${companyId}&select=plan_id`);
   const previousPlanId = companyRows.ok && Array.isArray(companyRows.data) && companyRows.data.length > 0 ? companyRows.data[0].plan_id : null;
 
-  await restFetch(`companies?id=eq.${companyId}`, {
-    method: "PATCH",
-    body: JSON.stringify({
-      plan_id: planId, subscription_type: billingCycle, subscription_status: "active",
-      subscription_start_date: new Date().toISOString(), subscription_end_date: endDate,
-    }),
-  });
+  const patch: Record<string, unknown> = {
+    plan_id: planId, subscription_type: billingCycle, subscription_status: "active",
+    subscription_start_date: new Date().toISOString(), subscription_end_date: endDate,
+  };
+  // دوره‌ی Backup این شرکت روی همان چیزی که خریده تنظیم می‌شود (مبنای Job روزانه).
+  if (backupPeriod && BACKUP_PERIODS.includes(backupPeriod)) patch.backup_frequency = backupPeriod;
 
+  await restFetch(`companies?id=eq.${companyId}`, { method: "PATCH", body: JSON.stringify(patch) });
+
+  const bpNote = backupPeriod && BACKUP_PERIODS.includes(backupPeriod) ? ` + Backup ${backupPeriod}` : "";
   await restFetch("company_subscription_history", {
     method: "POST",
     headers: { Prefer: "return=minimal" },
     body: JSON.stringify([{
       company_id: companyId, plan_id: planId, previous_plan_id: previousPlanId,
-      action: "auto_activated_online_payment", note: `پرداخت آنلاین زرین‌پال — دوره‌ی ${billingCycle === "monthly" ? "ماهانه" : "سالانه"}`,
+      action: "auto_activated_online_payment",
+      note: `پرداخت آنلاین زرین‌پال — دوره‌ی ${billingCycle === "monthly" ? "ماهانه" : "سالانه"}${bpNote}`,
       changed_by: "zarinpal-payment (system)",
     }]),
   });
@@ -117,15 +122,23 @@ Deno.serve(async (req: Request) => {
 
     // قیمت همیشه از خودِ دیتابیس خوانده می‌شود — هرگز از Client، دقیقاً
     // طبق الزام صریح «تغییر مبلغ از سمت Client» را نپذیرد.
-    const planRes = await restFetch(`plans?id=eq.${planId}&select=id,name,price_monthly,price_yearly,is_active`);
+    const planRes = await restFetch(`plans?id=eq.${planId}&select=id,name,price_monthly,price_yearly,backup_price_weekly,backup_price_monthly,backup_price_yearly,is_active`);
     if (!planRes.ok || !Array.isArray(planRes.data) || planRes.data.length === 0) {
       return json({ error: "پلن موردنظر پیدا نشد" }, 404);
     }
     const plan = planRes.data[0];
     if (!plan.is_active) return json({ error: "این پلن دیگر قابل‌خرید نیست" }, 400);
 
-    const amountToman = billingCycle === "monthly" ? Number(plan.price_monthly) || 0 : Number(plan.price_yearly) || 0;
-    if (amountToman <= 0) return json({ error: "قیمت این پلن برای این دوره تعریف نشده است" }, 400);
+    const planToman = billingCycle === "monthly" ? Number(plan.price_monthly) || 0 : Number(plan.price_yearly) || 0;
+    if (planToman <= 0) return json({ error: "قیمت این پلن برای این دوره تعریف نشده است" }, 400);
+
+    // قیمتِ افزودنیِ Backup — هم از دیتابیس، نه از Client.
+    const backupPeriod = BACKUP_PERIODS.includes(String(body.backupPeriod || "")) ? String(body.backupPeriod) : null;
+    const backupToman = backupPeriod
+      ? Number(plan[`backup_price_${backupPeriod}`]) || 0
+      : 0;
+
+    const amountToman = planToman + backupToman;
     const amountRial = amountToman * TOMAN_TO_RIAL;
 
     const orderId = `pay-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
@@ -135,6 +148,7 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify([{
         id: orderId, company_id: companyId, plan_id: planId, billing_cycle: billingCycle,
         amount: amountToman, order_id: orderId, status: "pending", requested_by: String(claims.username || ""),
+        backup_period: backupPeriod,
       }]),
     });
     if (!insertRes.ok) return json({ error: "خطا در ثبت درخواست پرداخت" }, 500);
@@ -230,7 +244,7 @@ Deno.serve(async (req: Request) => {
         method: "PATCH",
         body: JSON.stringify({ status: "paid", ref_id: refId, card_pan: cardPan, verified_at: new Date().toISOString() }),
       });
-      await activateSubscription(payment.company_id, payment.plan_id, payment.billing_cycle);
+      await activateSubscription(payment.company_id, payment.plan_id, payment.billing_cycle, payment.backup_period);
       return json({ activated: true, refId });
     }
 

@@ -103,7 +103,16 @@ export async function loadPurchasablePlans() {
     priceMonthly: Number(r.price_monthly) || 0, priceYearly: Number(r.price_yearly) || 0, priceTotal: Number(r.price_total) || 0,
     maxUsers: r.max_users, maxPersonnel: r.max_personnel, maxStorageMb: r.max_storage_mb,
     features: Array.isArray(r.features) ? r.features : [], trialDays: r.trial_days || null,
+    backupPriceWeekly: Number(r.backup_price_weekly) || 0,
+    backupPriceMonthly: Number(r.backup_price_monthly) || 0,
+    backupPriceYearly: Number(r.backup_price_yearly) || 0,
   }));
+}
+
+// قیمتِ افزودنیِ یک دوره‌ی Backup برای یک پلن (تومان). "none"/نامعتبر → ۰
+export function planBackupPeriodPrice(plan, period) {
+  if (!plan || !period || period === "none") return 0;
+  return Number(plan[`backupPrice${period.charAt(0).toUpperCase()}${period.slice(1)}`]) || 0;
 }
 
 // تاریخچه‌ی پرداخت‌های آنلاین شرکت جاری — برای نمایش در پنل شرکت
@@ -125,6 +134,7 @@ function paymentFromRow(r) {
   return {
     id: r.id, companyId: r.company_id, planId: r.plan_id, billingCycle: r.billing_cycle,
     amount: Number(r.amount) || 0, orderId: r.order_id, status: r.status, refId: r.ref_id || "",
+    backupPeriod: r.backup_period || "none",
     createdAt: r.created_at, verifiedAt: r.verified_at,
   };
 }
@@ -153,8 +163,8 @@ async function callPaymentFunction(body) {
 // شروع پرداخت — پلن و دوره را می‌فرستد، سرور قیمت واقعی را از دیتابیس
 // می‌خواند (نه از Frontend)، رکورد payments می‌سازد، و لینک انتقال به
 // زرین‌پال را برمی‌گرداند.
-export async function initiatePayment(planId, billingCycle) {
-  const result = await callPaymentFunction({ action: "request", planId, billingCycle });
+export async function initiatePayment(planId, billingCycle, backupPeriod) {
+  const result = await callPaymentFunction({ action: "request", planId, billingCycle, backupPeriod: backupPeriod || "none" });
   if (result?.__error) return result;
   return { ok: true, redirectUrl: result.url };
 }
@@ -217,7 +227,7 @@ export async function loadCardTransferSettings() {
 // ثبت رسید پرداخت — وضعیت اولیه همیشه «در انتظار تأیید» است (خودِ RLS هم
 // این را در with_check اجبار می‌کند، پس این فقط یک لایه‌ی اطمینانِ دوم
 // سمت کلاینت است، نه مرز امنیتی واقعی).
-export async function submitCardTransferReceipt({ planId, billingCycle, amount, payerName, payerPhone, trackingNumber, receiptImage }, requestedBy) {
+export async function submitCardTransferReceipt({ planId, billingCycle, amount, backupPeriod, payerName, payerPhone, trackingNumber, receiptImage }, requestedBy) {
   const companyId = getCurrentCompanyId();
   if (!companyId) return { __error: true, message: tr("subErrCompanyUnknown") };
   if (!planId || !billingCycle) return { __error: true, message: tr("subErrPlanCycleInvalid") };
@@ -228,6 +238,7 @@ export async function submitCardTransferReceipt({ planId, billingCycle, amount, 
   const payload = {
     id, company_id: companyId, plan_id: planId, billing_cycle: billingCycle,
     amount: Math.round(Number(amount) || 0), order_id: id,
+    backup_period: backupPeriod && backupPeriod !== "none" ? backupPeriod : null,
     method: "card_transfer", status: "awaiting_review",
     payer_name: payerName.trim(), payer_phone: payerPhone.trim(),
     tracking_number: trackingNumber.trim(), receipt_image: receiptImage || null,

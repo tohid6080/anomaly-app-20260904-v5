@@ -4,7 +4,7 @@ import { styles, THEME } from "../shared.js";
 import { toJalaliDateTime } from "../personnel/jalaliDate.jsx";
 import {
   computeSubscriptionAccess, loadMySubscriptionInfo, loadPurchasablePlans,
-  verifyPayment,
+  verifyPayment, planBackupPeriodPrice,
 } from "../subscriptionApi.js";
 import PaymentMethodsSection from "./CardTransferPayment.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
@@ -122,11 +122,14 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
   const [plans, setPlans] = useState(null);
   const [selectedPlanId, setSelectedPlanId] = useState("");
   const [billingCycle, setBillingCycle] = useState("yearly");
+  const [backupPeriod, setBackupPeriod] = useState("none");
 
   useEffect(() => { loadPurchasablePlans().then(setPlans); }, []);
 
   const selectedPlan = plans?.find((p) => p.id === selectedPlanId);
-  const amount = selectedPlan ? (billingCycle === "monthly" ? selectedPlan.priceMonthly : selectedPlan.priceYearly) : 0;
+  const planAmount = selectedPlan ? (billingCycle === "monthly" ? selectedPlan.priceMonthly : selectedPlan.priceYearly) : 0;
+  const backupAmount = planBackupPeriodPrice(selectedPlan, backupPeriod);
+  const amount = planAmount + backupAmount;
 
   const handleSelectPlan = (p, cycle) => {
     setSelectedPlanId(p.id);
@@ -226,9 +229,32 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
           <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 14, padding: 20, maxWidth: 460, margin: "0 auto" }}>
             <h4 style={{ fontSize: 13, fontWeight: 700, color: THEME.navy, margin: "0 0 10px" }}>{t("sgPurchaseSummary")}</h4>
             <p style={{ fontSize: 12.5, color: THEME.text2, margin: "0 0 4px" }}>{t("sgPlanLabel")}<b>{selectedPlan.name}</b></p>
-            <p style={{ fontSize: 12.5, color: THEME.text2, margin: "0 0 4px" }}>{t("sgCycleLabel")}<b>{billingCycle === "monthly" ? t("subTypeMonthly") : t("subTypeYearly")}</b></p>
-            <p style={{ fontSize: 15, fontWeight: 800, color: THEME.teal, margin: "10px 0" }}>{t("sgFinalAmount", { amount: amount.toLocaleString(numLocale(lang)) })}</p>
-            <PaymentMethodsSection currentUser={currentUser} selectedPlan={selectedPlan} billingCycle={billingCycle} amount={amount} />
+            <p style={{ fontSize: 12.5, color: THEME.text2, margin: "0 0 8px" }}>{t("sgCycleLabel")}<b>{billingCycle === "monthly" ? t("subTypeMonthly") : t("subTypeYearly")}</b></p>
+
+            <label style={{ fontSize: 11.5, color: THEME.text2, fontWeight: 700, display: "block", marginBottom: 6 }}>{t("backupBuyPeriodLabel")}</label>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 8 }}>
+              {[
+                { v: "none", label: t("backupTierNone"), price: 0 },
+                { v: "weekly", label: t("backupTierWeekly"), price: selectedPlan.backupPriceWeekly || 0 },
+                { v: "monthly", label: t("backupTierMonthly"), price: selectedPlan.backupPriceMonthly || 0 },
+                { v: "yearly", label: t("backupTierYearly"), price: selectedPlan.backupPriceYearly || 0 },
+              ].map((o) => (
+                <label key={o.v} style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                  <input type="radio" name="backupPeriod" checked={backupPeriod === o.v} onChange={() => setBackupPeriod(o.v)} />
+                  <span>{o.label}</span>
+                  <span style={{ color: THEME.text3, marginInlineStart: "auto" }}>
+                    {o.v === "none" ? "—" : `+ ${o.price.toLocaleString(numLocale(lang))} ${t("currencyToman")}`}
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 8, fontSize: 12, color: THEME.text2 }}>
+              <div style={{ display: "flex", justifyContent: "space-between" }}><span>{t("sgPlanLabel").replace(":", "")}</span><span>{planAmount.toLocaleString(numLocale(lang))}</span></div>
+              {backupAmount > 0 && <div style={{ display: "flex", justifyContent: "space-between", color: "#b45309" }}><span>{t("backupBuyLineLabel")}</span><span>+ {backupAmount.toLocaleString(numLocale(lang))}</span></div>}
+            </div>
+            <p style={{ fontSize: 15, fontWeight: 800, color: THEME.teal, margin: "8px 0 10px" }}>{t("sgFinalAmount", { amount: amount.toLocaleString(numLocale(lang)) })}</p>
+            <PaymentMethodsSection currentUser={currentUser} selectedPlan={selectedPlan} billingCycle={billingCycle} amount={amount} backupPeriod={backupPeriod} />
           </div>
         )}
       </div>

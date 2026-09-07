@@ -14,7 +14,7 @@ import { numLocale } from "../i18n/translations.js";
  *    verifyPayment در subscriptionApi.js دست‌نخورده باقی می‌ماند تا
  *    بعداً با اتصال Zarinpal واقعی دوباره فعال شود.
  */
-export default function PaymentMethodsSection({ currentUser, selectedPlan, billingCycle, amount }) {
+export default function PaymentMethodsSection({ currentUser, selectedPlan, billingCycle, amount, backupPeriod }) {
   const { t, lang, dir } = useLanguage();
   const [method, setMethod] = useState("card_transfer");
   const [settings, setSettings] = useState(undefined); // undefined = در حال بارگذاری
@@ -61,7 +61,7 @@ export default function PaymentMethodsSection({ currentUser, selectedPlan, billi
     }
     setSaving(true);
     const result = await submitCardTransferReceipt(
-      { planId: selectedPlan.id, billingCycle, amount, payerName, payerPhone, trackingNumber, receiptImage },
+      { planId: selectedPlan.id, billingCycle, amount, backupPeriod, payerName, payerPhone, trackingNumber, receiptImage },
       currentUser?.username
     );
     setSaving(false);

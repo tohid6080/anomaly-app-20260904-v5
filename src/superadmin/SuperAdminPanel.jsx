@@ -15,7 +15,7 @@ import {
   loadCompanyPayments, addCompanyPayment, PAYMENT_TYPES,
   loadCompanyUserAccounts,
   SUBSCRIPTION_TYPES, SUBSCRIPTION_STATUSES,
-  loadPlans, createPlan, updatePlan, deactivatePlan, activatePlan, movePlan, deletePlan, assignPlanToCompany, loadCompanySubscriptionHistory,
+  loadPlans, createPlan, updatePlan, deactivatePlan, activatePlan, movePlan, deletePlan, assignPlanToCompany, loadCompanySubscriptionHistory, backupPeriodPrice,
   PLAN_FEATURES, computeContractAmount, computeMonthlyRecurringAmount,
   computePaymentStatus, isPaymentOverdue, computeMonthlyPaymentAlarm, computeSubscriptionAlertTier,
   loadCompanyUsageStats, loadRecentLogins, loadRecentFailedLogins, computeInactiveCompanies,
@@ -2769,7 +2769,7 @@ function PlansManager({ plans, companies, currentAdmin, onChanged }) {
   const [saving, setSaving] = useState(false);
 
   function emptyPlanForm() {
-    return { name: "", description: "", priceMonthly: 0, priceYearly: 0, priceTotal: 0, trialDays: "", maxUsers: "", maxPersonnel: "", maxStorageMb: "", features: [], backupTier: "none" };
+    return { name: "", description: "", priceMonthly: 0, priceYearly: 0, priceTotal: 0, trialDays: "", maxUsers: "", maxPersonnel: "", maxStorageMb: "", features: [], backupTier: "none", backupPriceWeekly: 0, backupPriceMonthly: 0, backupPriceYearly: 0 };
   }
 
   const handleCreate = async () => {
@@ -2782,6 +2782,9 @@ function PlansManager({ plans, companies, currentAdmin, onChanged }) {
       maxUsers: form.maxUsers ? Number(form.maxUsers) : null, maxPersonnel: form.maxPersonnel ? Number(form.maxPersonnel) : null,
       maxStorageMb: form.maxStorageMb ? Number(form.maxStorageMb) : null, features: form.features,
       backupTier: form.backupTier || "none",
+      backupPriceWeekly: Number(form.backupPriceWeekly) || 0,
+      backupPriceMonthly: Number(form.backupPriceMonthly) || 0,
+      backupPriceYearly: Number(form.backupPriceYearly) || 0,
     });
     await syncNotificationTypesWithPlans((await loadPlans()).map((p) => p.features));
     setSaving(false);
@@ -2792,7 +2795,7 @@ function PlansManager({ plans, companies, currentAdmin, onChanged }) {
 
   const openEdit = (p) => {
     setExpandedId(expandedId === p.id ? null : p.id);
-    setForm({ name: p.name, description: p.description ?? "", priceMonthly: p.priceMonthly, priceYearly: p.priceYearly, priceTotal: p.priceTotal ?? 0, trialDays: p.trialDays ?? "", maxUsers: p.maxUsers ?? "", maxPersonnel: p.maxPersonnel ?? "", maxStorageMb: p.maxStorageMb ?? "", features: p.features, backupTier: p.backupTier || "none" });
+    setForm({ name: p.name, description: p.description ?? "", priceMonthly: p.priceMonthly, priceYearly: p.priceYearly, priceTotal: p.priceTotal ?? 0, trialDays: p.trialDays ?? "", maxUsers: p.maxUsers ?? "", maxPersonnel: p.maxPersonnel ?? "", maxStorageMb: p.maxStorageMb ?? "", features: p.features, backupTier: p.backupTier || "none", backupPriceWeekly: p.backupPriceWeekly ?? 0, backupPriceMonthly: p.backupPriceMonthly ?? 0, backupPriceYearly: p.backupPriceYearly ?? 0 });
   };
 
   const handleSaveEdit = async (id) => {
@@ -2804,6 +2807,9 @@ function PlansManager({ plans, companies, currentAdmin, onChanged }) {
       maxUsers: form.maxUsers ? Number(form.maxUsers) : null, maxPersonnel: form.maxPersonnel ? Number(form.maxPersonnel) : null,
       maxStorageMb: form.maxStorageMb ? Number(form.maxStorageMb) : null, features: form.features,
       backupTier: form.backupTier || "none",
+      backupPriceWeekly: Number(form.backupPriceWeekly) || 0,
+      backupPriceMonthly: Number(form.backupPriceMonthly) || 0,
+      backupPriceYearly: Number(form.backupPriceYearly) || 0,
     });
     await syncNotificationTypesWithPlans((await loadPlans()).map((p) => p.features));
     setSaving(false);
@@ -3011,12 +3017,19 @@ function PlanForm({ form, setForm, toggleModule, toggleSub, onSave, saving, save
           <input type="number" style={inputStyle} value={form.maxStorageMb} onChange={(e) => setForm({ ...form, maxStorageMb: e.target.value })} dir="ltr" />
         </div>
         <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("backupPlanTierLabel")}</label>
-          <select style={inputStyle} value={form.backupTier || "none"} onChange={(e) => setForm({ ...form, backupTier: e.target.value })} dir={dir}>
-            {BACKUP_TIERS.map((b) => <option key={b.value} value={b.value}>{t(b.labelKey)}</option>)}
-          </select>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("backupPriceWeeklyLabel")}</label>
+          <input type="number" style={inputStyle} value={form.backupPriceWeekly} onChange={(e) => setForm({ ...form, backupPriceWeekly: e.target.value })} dir="ltr" placeholder="0" />
+        </div>
+        <div>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("backupPriceMonthlyLabel")}</label>
+          <input type="number" style={inputStyle} value={form.backupPriceMonthly} onChange={(e) => setForm({ ...form, backupPriceMonthly: e.target.value })} dir="ltr" placeholder="0" />
+        </div>
+        <div>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("backupPriceYearlyLabel")}</label>
+          <input type="number" style={inputStyle} value={form.backupPriceYearly} onChange={(e) => setForm({ ...form, backupPriceYearly: e.target.value })} dir="ltr" placeholder="0" />
         </div>
       </div>
+      <p style={{ fontSize: 10, color: THEME.text3, margin: "-4px 0 10px" }}>{t("backupPriceHint")}</p>
       <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saPfDescription")}</label>
       <textarea
         style={{ ...inputStyle, minHeight: 60, resize: "vertical", marginBottom: 12 }}
@@ -3257,8 +3270,10 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
 
   const currentPlan = plans.find((p) => p.id === company.planId);
   const selectedPlanForAssign = plans.find((p) => p.id === selectedPlanId);
-  // پیش‌نمایش زنده‌ی مبلغ قرارداد — قبل از ذخیره، همین که پلن/نوع/روز عوض بشه
-  const previewContractAmount = computeContractAmount(selectedPlanForAssign, assignType, assignDays);
+  const [assignBackupPeriod, setAssignBackupPeriod] = useState("none");
+  const previewBackupAdd = backupPeriodPrice(selectedPlanForAssign, assignBackupPeriod);
+  // پیش‌نمایش زنده‌ی مبلغ قرارداد — قبل از ذخیره، همین که پلن/نوع/روز/Backup عوض بشه
+  const previewContractAmount = computeContractAmount(selectedPlanForAssign, assignType, assignDays) + previewBackupAdd;
   const previewMonthlyRecurring = computeMonthlyRecurringAmount(selectedPlanForAssign, assignType);
   const previewFinalAmount = Math.max(0, previewContractAmount - (Number(discountInput) || 0));
 
@@ -3271,7 +3286,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
   const handleAssignPlan = async () => {
     if (!selectedPlanId) return;
     setPlanSaving(true);
-    const result = await assignPlanToCompany(company.id, selectedPlanId, "assigned", currentAdmin?.fullName, planNote.trim(), assignType, assignDays, discountInput);
+    const result = await assignPlanToCompany(company.id, selectedPlanId, "assigned", currentAdmin?.fullName, planNote.trim(), assignType, assignDays, discountInput, assignBackupPeriod);
     setPlanSaving(false);
     if (result?.__error) { alert(result.message); return; }
     setPlanNote("");
@@ -3392,12 +3407,19 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
             <input type="number" style={inputStyle} placeholder={t("saDayCountPlaceholder")} value={assignDays} onChange={(e) => setAssignDays(e.target.value)} dir="ltr" />
           )}
           <input type="number" style={inputStyle} placeholder={t("saDiscountTomanOptional")} value={discountInput} onChange={(e) => setDiscountInput(e.target.value)} dir="ltr" />
+          <select style={inputStyle} value={assignBackupPeriod} onChange={(e) => setAssignBackupPeriod(e.target.value)} dir={dir} title={t("backupBuyPeriodLabel")}>
+            <option value="none">{t("backupTierNone")}</option>
+            <option value="weekly">{t("backupTierWeekly")} — {(selectedPlanForAssign?.backupPriceWeekly || 0).toLocaleString(numLocale())} {t("currencyToman")}</option>
+            <option value="monthly">{t("backupTierMonthly")} — {(selectedPlanForAssign?.backupPriceMonthly || 0).toLocaleString(numLocale())} {t("currencyToman")}</option>
+            <option value="yearly">{t("backupTierYearly")} — {(selectedPlanForAssign?.backupPriceYearly || 0).toLocaleString(numLocale())} {t("currencyToman")}</option>
+          </select>
           <input style={inputStyle} placeholder={t("saNoteOptional")} value={planNote} onChange={(e) => setPlanNote(e.target.value)} dir={dir} />
         </div>
 
         {selectedPlanForAssign && (
           <div style={{ background: THEME.bg, borderRadius: 8, padding: "8px 12px", marginBottom: 8, fontSize: 11.5, color: THEME.text2, lineHeight: 1.9 }}>
             <div>{t("saPlanMonthlyYearlyPrice", { monthly: (selectedPlanForAssign.priceMonthly || 0).toLocaleString(numLocale()), yearly: (selectedPlanForAssign.priceYearly || 0).toLocaleString(numLocale()) })}</div>
+            {previewBackupAdd > 0 && <div style={{ color: "#b45309" }}>{t("backupBuyAddLine", { period: t("backupTier" + assignBackupPeriod.charAt(0).toUpperCase() + assignBackupPeriod.slice(1)), amount: previewBackupAdd.toLocaleString(numLocale()) })}</div>}
             {(assignType === "monthly" || assignType === "yearly" || assignType === "daily" || assignType === "monthly_and_yearly") && (
               <div>
                 {t("saPreviewBasedOnSelection")}

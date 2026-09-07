@@ -272,8 +272,12 @@ function planFromRow(r) {
     features: Array.isArray(r.features) ? r.features : [],
     isActive: !!r.is_active,
     sortOrder: r.sort_order ?? 0,
-    // دوره‌ی Backup خودکارِ قابل‌ارائه در این پلن
+    // دوره‌ی Backup خودکارِ قابل‌ارائه در این پلن (میراث؛ برای سازگاری)
     backupTier: r.backup_tier || "none",
+    // قیمتِ افزودنیِ هر دوره‌ی Backup هنگام خرید این پلن (تومان)
+    backupPriceWeekly: Number(r.backup_price_weekly) || 0,
+    backupPriceMonthly: Number(r.backup_price_monthly) || 0,
+    backupPriceYearly: Number(r.backup_price_yearly) || 0,
   };
 }
 
@@ -284,6 +288,15 @@ export const BACKUP_TIERS = [
   { value: "monthly", labelKey: "backupTierMonthly" },
   { value: "yearly", labelKey: "backupTierYearly" },
 ];
+
+// قیمتِ افزودنیِ یک دوره‌ی Backup برای یک پلن (تومان). "none"/نامعتبر → ۰
+export function backupPeriodPrice(plan, period) {
+  if (!plan || !period || period === "none") return 0;
+  if (period === "weekly") return Number(plan.backupPriceWeekly) || 0;
+  if (period === "monthly") return Number(plan.backupPriceMonthly) || 0;
+  if (period === "yearly") return Number(plan.backupPriceYearly) || 0;
+  return 0;
+}
 
 // فهرست فیچرهایی که یک پلن می‌تواند فعال/غیرفعال کند — کلیدها با HSE_MODULES هماهنگ‌اند
 // درخت واقعی ماژول/زیرماژول اپ — دقیقاً منطبق با HSE_MODULES در App.jsx،
@@ -377,6 +390,9 @@ export async function createPlan(rec) {
     max_users: rec.maxUsers || null, max_personnel: rec.maxPersonnel || null, max_storage_mb: rec.maxStorageMb || null,
     features: rec.features || [], is_active: true, sort_order: nextOrder,
     backup_tier: rec.backupTier || "none",
+    backup_price_weekly: Number(rec.backupPriceWeekly) || 0,
+    backup_price_monthly: Number(rec.backupPriceMonthly) || 0,
+    backup_price_yearly: Number(rec.backupPriceYearly) || 0,
   };
   const rows = await sb("plans", { method: "POST", body: JSON.stringify([payload]) }, "super_admin");
   if (!sbOk(rows)) return { __error: true, message: tr("saErrCreatePlan") };
@@ -397,6 +413,9 @@ export async function updatePlan(id, patch) {
   if ("features" in patch) dbPatch.features = patch.features;
   if ("isActive" in patch) dbPatch.is_active = patch.isActive;
   if ("backupTier" in patch) dbPatch.backup_tier = patch.backupTier || "none";
+  if ("backupPriceWeekly" in patch)  dbPatch.backup_price_weekly  = Number(patch.backupPriceWeekly) || 0;
+  if ("backupPriceMonthly" in patch) dbPatch.backup_price_monthly = Number(patch.backupPriceMonthly) || 0;
+  if ("backupPriceYearly" in patch)  dbPatch.backup_price_yearly  = Number(patch.backupPriceYearly) || 0;
   const rows = await sb(`plans?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(dbPatch) }, "super_admin");
   if (!sbOk(rows)) return { __error: true, message: tr("saErrSavePlan") };
   return planFromRow(rows[0]);
@@ -480,13 +499,16 @@ export function computeMonthlyRecurringAmount(plan, type) {
   return 0;
 }
 
-export async function assignPlanToCompany(companyId, planId, action, changedBy, note, subscriptionType, days, discountAmount) {
+export async function assignPlanToCompany(companyId, planId, action, changedBy, note, subscriptionType, days, discountAmount, backupPeriod) {
   const companyRows = await sb(`companies?id=eq.${companyId}&select=plan_id`, {}, "super_admin");
   const previousPlanId = sbOk(companyRows) && companyRows.length > 0 ? companyRows[0].plan_id : null;
 
   const plans = await loadPlans();
   const plan = plans.find((p) => p.id === planId);
-  const contractAmount = computeContractAmount(plan, subscriptionType, days);
+  const bp = backupPeriod && backupPeriod !== "none" ? backupPeriod : null;
+  const backupAdd = backupPeriodPrice(plan, bp);
+  // قیمتِ افزودنیِ Backup هم به مبلغِ یک‌باره‌ی قرارداد اضافه می‌شود.
+  const contractAmount = computeContractAmount(plan, subscriptionType, days) + backupAdd;
   const monthlyRecurringAmount = computeMonthlyRecurringAmount(plan, subscriptionType);
   const discount = Number(discountAmount) || 0;
   // تخفیف فقط روی مبلغ یک‌باره اعمال می‌شود؛ مبلغ ماهانه‌ی مستمر مستقل و
@@ -503,15 +525,19 @@ export async function assignPlanToCompany(companyId, planId, action, changedBy, 
     discount_amount: discount,
     final_amount: finalAmount,
     monthly_recurring_amount: monthlyRecurringAmount,
+    // دوره‌ی Backup این شرکت — مبنای Job روزانه. اگر none/خالی، پاک می‌شود
+    // تا از سطحِ پلن ارث ببرد.
+    backup_frequency: bp,
   };
   if (endDate) updatePayload.subscription_end_date = endDate;
 
   const updateResult = await sb(`companies?id=eq.${companyId}`, { method: "PATCH", body: JSON.stringify(updatePayload) }, "super_admin");
   if (!sbOk(updateResult)) return { __error: true, message: tr("saErrChangeCompanyPlan") };
 
+  const bpNote = bp ? ` — Backup ${bp} (+${backupAdd.toLocaleString()})` : "";
   const historyPayload = {
     company_id: companyId, plan_id: planId, previous_plan_id: previousPlanId,
-    action: action || "assigned", note: note || "", changed_by: changedBy || "",
+    action: action || "assigned", note: (note || "") + bpNote, changed_by: changedBy || "",
     contract_amount: contractAmount, discount_amount: discount, final_amount: finalAmount,
   };
   await sb("company_subscription_history", { method: "POST", body: JSON.stringify([historyPayload]), prefer: "return=minimal" }, "super_admin");
@@ -532,7 +558,7 @@ function cardTransferPaymentFromRow(r) {
   return {
     id: r.id, companyId: r.company_id, companyName: r.companies?.name || "",
     planId: r.plan_id, planName: r.plans?.name || "", billingCycle: r.billing_cycle,
-    amount: Number(r.amount) || 0, status: r.status,
+    amount: Number(r.amount) || 0, status: r.status, backupPeriod: r.backup_period || "none",
     payerName: r.payer_name || "", payerPhone: r.payer_phone || "",
     trackingNumber: r.tracking_number || "", receiptImage: r.receipt_image || "",
     adminNote: r.admin_note || "", reviewedBy: r.reviewed_by || "", reviewedAt: r.reviewed_at || "",
@@ -565,12 +591,15 @@ export async function approveCardTransferPayment(paymentId, reviewedBy) {
   const companyRows = await sb(`companies?id=eq.${payment.company_id}&select=plan_id`, {}, "super_admin");
   const previousPlanId = sbOk(companyRows) && companyRows.length > 0 ? companyRows[0].plan_id : null;
 
+  const bp = ["weekly", "monthly", "yearly"].includes(payment.backup_period) ? payment.backup_period : null;
+  const companyPatch = {
+    plan_id: payment.plan_id, subscription_type: payment.billing_cycle, subscription_status: "active",
+    subscription_start_date: new Date().toISOString(), subscription_end_date: endDate,
+  };
+  // دوره‌ی Backup این شرکت روی همان چیزی که در رسید خریده تنظیم می‌شود.
+  if (bp) companyPatch.backup_frequency = bp;
   await sb(`companies?id=eq.${payment.company_id}`, {
-    method: "PATCH",
-    body: JSON.stringify({
-      plan_id: payment.plan_id, subscription_type: payment.billing_cycle, subscription_status: "active",
-      subscription_start_date: new Date().toISOString(), subscription_end_date: endDate,
-    }),
+    method: "PATCH", body: JSON.stringify(companyPatch),
   }, "super_admin");
 
   await sb("company_subscription_history", {
@@ -578,7 +607,7 @@ export async function approveCardTransferPayment(paymentId, reviewedBy) {
     body: JSON.stringify([{
       company_id: payment.company_id, plan_id: payment.plan_id, previous_plan_id: previousPlanId,
       action: "auto_activated_card_transfer",
-      note: tr("saCardTransferHistoryNote", { cycle: payment.billing_cycle === "monthly" ? tr("subTypeMonthly") : tr("subTypeYearly"), tracking: payment.tracking_number || "—" }),
+      note: tr("saCardTransferHistoryNote", { cycle: payment.billing_cycle === "monthly" ? tr("subTypeMonthly") : tr("subTypeYearly"), tracking: payment.tracking_number || "—" }) + (bp ? ` + Backup ${bp}` : ""),
       changed_by: reviewedBy || "",
     }]),
   }, "super_admin");
