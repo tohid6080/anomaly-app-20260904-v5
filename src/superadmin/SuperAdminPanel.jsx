@@ -23,6 +23,7 @@ import {
   loadCompanyBackups, loadBackupStorageUsage, triggerCompanyBackup, getBackupDownloadUrl,
   deleteCompanyBackup, restoreCompanyBackup, backupStatusMeta, BACKUP_TIERS,
   createBackupImportUpload, uploadBackupImport, validateBackupImport, restoreBackupImport, deleteBackupImport,
+  BACKUP_MODULES, BACKUP_MODULE_KEYS, SHAREABLE_MODULES,
   copyBowtiesToCompany, copyRiskKnowledgeToCompany,
   loadCardTransferPayments, approveCardTransferPayment, rejectCardTransferPayment, saveCardTransferSettings,
   loadTrialRequests, approveTrialRequest, rejectTrialRequest,
@@ -537,6 +538,14 @@ function CompanyBackupsSection() {
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState("");
   const [expanded, setExpanded] = useState("");
+  // انتخاب ماژول برای «Backup فوری». پیش‌فرض: همه.
+  const [showModPicker, setShowModPicker] = useState(false);
+  const [backupMods, setBackupMods] = useState(() => new Set(BACKUP_MODULE_KEYS));
+  const toggleMod = (k) => setBackupMods((s) => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n; });
+  const allMods = backupMods.size === BACKUP_MODULE_KEYS.length;
+  // انتخاب ماژولِ مشترک برای Import بین‌شرکتی. پیش‌فرض: همه‌ی shareableها.
+  const [importMods, setImportMods] = useState(() => new Set(SHAREABLE_MODULES.map((m) => m.key)));
+  const toggleImportMod = (k) => setImportMods((s) => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n; });
 
   const load = async () => {
     setLoading(true);
@@ -569,9 +578,14 @@ function CompanyBackupsSection() {
   const companyName = (id) => companies.find((c) => c.id === id)?.name || backups.find((b) => b.companyId === id)?.companyName || id;
 
   const handleBackupNow = async (companyId) => {
-    if (!confirm(t("backupConfirmRunNow", { name: companyName(companyId) }))) return;
+    const mods = allMods ? undefined : [...backupMods];
+    if (mods && mods.length === 0) { alert(t("backupModNonePicked")); return; }
+    const msg = mods
+      ? t("backupConfirmRunNowPartial", { name: companyName(companyId), n: mods.length })
+      : t("backupConfirmRunNow", { name: companyName(companyId) });
+    if (!confirm(msg)) return;
     setBusyId("run-" + companyId);
-    const res = await triggerCompanyBackup(companyId);
+    const res = await triggerCompanyBackup(companyId, mods);
     setBusyId("");
     if (res?.__error || res?.error) { alert(res.message || res.error); return; }
     await load();
@@ -660,19 +674,20 @@ function CompanyBackupsSection() {
     setImportPreview(pv);
   };
 
+  // بازیابیِ کاملِ خودِ شرکتِ صاحبِ ZIP (از پنلِ Import)
   const handleImportRestore = async () => {
     const pv = importPreview;
     if (!pv) return;
     const targetName = pv.target?.companyName || pv.manifest?.companyName || "";
     if (!confirm(t("backupConfirmRestore", { name: targetName }))) return;
     setImportPhase("restoring");
-    let res = await restoreBackupImport(importPath, "auto");
+    let res = await restoreBackupImport(importPath, { mode: "auto" });
     if (res?.needsConfirmation) {
       const typed = prompt(t("backupReplacePrompt", { name: res.companyName || targetName }));
       if (typed == null || typed.trim() !== (res.companyName || targetName)) {
         setImportPhase(""); alert(t("backupReplaceNameMismatch")); return;
       }
-      res = await restoreBackupImport(importPath, "replace");
+      res = await restoreBackupImport(importPath, { mode: "replace" });
     }
     setImportPhase("");
     if (res?.__error || res?.error) { alert((res.message || res.error) + (res.detail ? `\n${JSON.stringify(res.detail)}` : "")); return; }
@@ -695,13 +710,56 @@ function CompanyBackupsSection() {
     await load();
   };
 
+  // دکمه‌ی Restore روی ردیفِ هر شرکت — از فایلِ ZIPِ بارگذاری‌شده در پنلِ Import.
+  //  • همان شرکتِ صاحبِ ZIP  → بازیابیِ کامل (auto → در صورت داشتنِ داده، Replace).
+  //  • شرکتِ دیگر            → Import بین‌شرکتیِ ماژول‌های مشترکِ انتخاب‌شده (نسخه‌ی نو، additive).
+  const handleRowRestore = async (cid) => {
+    if (!importPreview || !importPath) return;
+    const zipCompanyId = importPreview.manifest?.companyId || importPreview.target?.companyId;
+    const sameCompany = cid === zipCompanyId;
+    setBusyId("res-" + cid);
+    try {
+      if (sameCompany) {
+        if (!confirm(t("backupConfirmRestore", { name: companyName(cid) }))) return;
+        let res = await restoreBackupImport(importPath, { mode: "auto" });
+        if (res?.needsConfirmation) {
+          const typed = prompt(t("backupReplacePrompt", { name: res.companyName || companyName(cid) }));
+          if (typed == null || typed.trim() !== (res.companyName || companyName(cid))) { alert(t("backupReplaceNameMismatch")); return; }
+          res = await restoreBackupImport(importPath, { mode: "replace" });
+        }
+        if (res?.__error || res?.error) { alert(res.message || res.error); return; }
+        const rep = res.report || {};
+        alert(t("backupImportDone") + "\n\n" + t("backupRestoreDoneBody", {
+          company: rep.companyName || companyName(cid), mode: rep.mode || "-",
+          rows: rep.dbResult?.totalRows ?? "?", files: `${rep.filesRestored ?? 0}/${rep.filesInBackup ?? 0}`,
+          safety: rep.safetyBackupId || "—",
+        }));
+      } else {
+        const mods = [...importMods];
+        if (mods.length === 0) { alert(t("backupImportSharedNoneChecked")); return; }
+        if (!confirm(t("backupImportSharedConfirm", { name: companyName(cid), n: mods.length }))) return;
+        const res = await restoreBackupImport(importPath, { targetCompanyId: cid, modules: mods });
+        if (res?.__error || res?.error) { alert((res.message || res.error) + (res.detail ? `\n${JSON.stringify(res.detail)}` : "")); return; }
+        const rep = res.report || {};
+        const per = Object.entries(rep.perModule || {}).map(([k, v]) => `${k}: ${v}`).join("، ");
+        alert(t("backupImportSharedDone", { name: companyName(cid), total: rep.total ?? 0 }) + (per ? `\n${per}` : ""));
+      }
+      await load();
+    } finally {
+      setBusyId("");
+    }
+  };
+
   return (
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16, marginTop: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6, flexWrap: "wrap", gap: 8 }}>
         <h3 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
           <HardDrive size={13} color={THEME.teal} /> {t("backupSectionTitle")}
         </h3>
-        <div style={{ display: "flex", gap: 6 }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <button type="button" onClick={() => setShowModPicker((v) => !v)} style={{ ...btnStyle(showModPicker ? THEME.navyDeep : THEME.navyMid), fontSize: 11, display: "flex", alignItems: "center", gap: 5 }}>
+            <LayoutGrid size={11} /> {allMods ? t("backupModAll") : t("backupModSome", { n: backupMods.size })}
+          </button>
           <button type="button" onClick={() => (importOpen ? closeImport() : setImportOpen(true))} style={{ ...btnStyle(importOpen ? THEME.danger : "#b45309"), fontSize: 11, display: "flex", alignItems: "center", gap: 5 }}>
             <UploadCloud size={11} /> {importOpen ? t("backupImportCancel") : t("backupImportBtn")}
           </button>
@@ -710,6 +768,27 @@ function CompanyBackupsSection() {
           </button>
         </div>
       </div>
+
+      {showModPicker && (
+        <div style={{ background: THEME.bg, border: `1px solid ${THEME.border}`, borderRadius: 8, padding: 12, marginBottom: 14 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <span style={{ fontSize: 11.5, fontWeight: 700, color: THEME.navy }}>{t("backupModPickerTitle")}</span>
+            <span style={{ display: "flex", gap: 6 }}>
+              <button type="button" onClick={() => setBackupMods(new Set(BACKUP_MODULE_KEYS))} style={{ ...btnStyle(THEME.navyMid), fontSize: 10 }}>{t("backupModSelectAll")}</button>
+              <button type="button" onClick={() => setBackupMods(new Set())} style={{ ...btnStyle(THEME.navyMid), fontSize: 10 }}>{t("backupModSelectNone")}</button>
+            </span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 6 }}>
+            {BACKUP_MODULES.filter((m) => !m.virtual).map((m) => (
+              <label key={m.key} style={{ fontSize: 11.5, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                <input type="checkbox" checked={backupMods.has(m.key)} onChange={() => toggleMod(m.key)} />
+                {t(m.labelKey)}{m.shareable ? " ↔" : ""}
+              </label>
+            ))}
+          </div>
+          <p style={{ fontSize: 10, color: THEME.text3, margin: "8px 0 0" }}>{t("backupModPickerHint")}</p>
+        </div>
+      )}
 
       {importOpen && (
         <div style={{ background: THEME.bg, border: `1px solid ${THEME.border}`, borderRadius: 8, padding: 14, marginBottom: 14 }}>
@@ -759,7 +838,23 @@ function CompanyBackupsSection() {
                   ? (importPreview.willReplace ? t("backupImportWillReplace") : t("backupImportCompanyExistsEmpty"))
                   : t("backupImportCompanyAbsent")}
               </p>
-              <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
+
+              {importPreview.valid && (
+                <div style={{ marginTop: 10, borderTop: `1px dashed ${THEME.border}`, paddingTop: 10 }}>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: THEME.navy, margin: "0 0 6px" }}>{t("backupImportSharedTitle")}</p>
+                  <p style={{ fontSize: 10, color: THEME.text3, margin: "0 0 8px", lineHeight: 1.8 }}>{t("backupImportSharedHint")}</p>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                    {SHAREABLE_MODULES.map((m) => (
+                      <label key={m.key} style={{ fontSize: 11.5, display: "flex", alignItems: "center", gap: 5, cursor: "pointer" }}>
+                        <input type="checkbox" checked={importMods.has(m.key)} onChange={() => toggleImportMod(m.key)} />
+                        {t(m.labelKey)}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button
                   type="button" disabled={!importPreview.valid || !!importPhase}
                   onClick={handleImportRestore}
@@ -767,7 +862,8 @@ function CompanyBackupsSection() {
                 >
                   <RotateCcw size={12} /> {importPreview.willReplace ? t("backupImportBtnReplace") : t("backupImportBtnRestore")}
                 </button>
-                <button type="button" onClick={closeImport} disabled={!!importPhase} style={{ ...btnStyle(THEME.navyMid), fontSize: 12 }}>{t("backupImportCancel")}</button>
+                <span style={{ fontSize: 10.5, color: THEME.text3, alignSelf: "center" }}>{t("backupImportRowHint")}</span>
+                <button type="button" onClick={closeImport} disabled={!!importPhase} style={{ ...btnStyle(THEME.navyMid), fontSize: 12, marginInlineStart: "auto" }}>{t("backupImportCancel")}</button>
               </div>
             </div>
           )}
@@ -798,9 +894,10 @@ function CompanyBackupsSection() {
             {Object.keys(byCompany).sort((a, b) => companyName(a).localeCompare(companyName(b))).map((cid) => {
               const list = [...byCompany[cid]].sort((a, b) => new Date(b.startedAt) - new Date(a.startedAt));
               const last = list[0];
-              const latestCompleted = list.find((b) => b.status === "completed");
               const meta = last ? backupStatusMeta(last.status) : null;
               const isOpen = expanded === cid;
+              const zipCompanyId = importPreview && (importPreview.manifest?.companyId || importPreview.target?.companyId);
+              const rowRestoreSame = importPreview && cid === zipCompanyId;
               return (
                 <React.Fragment key={cid}>
                   <tr style={{ borderBottom: `1px solid ${THEME.border}` }}>
@@ -815,13 +912,13 @@ function CompanyBackupsSection() {
                       <button type="button" onClick={() => handleBackupNow(cid)} disabled={!!busyId} style={{ ...btnStyle(), fontSize: 11, marginInlineEnd: 4, display: "inline-flex", alignItems: "center", gap: 4 }}>
                         <UploadCloud size={11} /> {busyId === "run-" + cid ? t("backupRunning") : t("backupBtnNow")}
                       </button>
-                      {latestCompleted && (
+                      {importPreview && importPreview.valid && (
                         <button
-                          type="button" onClick={() => handleRestore(latestCompleted)} disabled={!!busyId}
-                          title={t("backupRestoreLatestHint", { date: toJalaliDateTime(latestCompleted.completedAt || latestCompleted.startedAt) })}
+                          type="button" onClick={() => handleRowRestore(cid)} disabled={!!busyId}
+                          title={rowRestoreSame ? t("backupRowRestoreSameHint") : t("backupRowRestoreCrossHint", { name: importPreview.manifest?.companyName || "" })}
                           style={{ ...btnStyle("#b45309"), fontSize: 11, marginInlineEnd: 4, display: "inline-flex", alignItems: "center", gap: 4 }}
                         >
-                          <RotateCcw size={11} /> {busyId === "res-" + latestCompleted.id ? t("backupImportRestoring") : t("backupRestoreLatest")}
+                          <RotateCcw size={11} /> {busyId === "res-" + cid ? t("backupImportRestoring") : (rowRestoreSame ? t("backupRowRestoreSame") : t("backupRowRestoreCross"))}
                         </button>
                       )}
                       {list.length > 0 && (

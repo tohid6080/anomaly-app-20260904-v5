@@ -9,10 +9,11 @@
 //   - دستی از UIِ SuperAdmin  → هدر Authorization: Bearer <super-admin JWT>
 //   - Job روزانه‌ی pg_cron     → هدر x-cron-secret: <BACKUP_CRON_SECRET>
 //
-// body: { backupId?: uuid, companyId: uuid, trigger?: "manual"|"scheduled"|"pre_restore" }
+// body: { backupId?, companyId, trigger?, includeModules?: string[] }
+//   includeModules → فقط همان ماژول‌ها Backup می‌شوند (partial backup).
 //
 // Deploy:
-//   supabase functions deploy run-company-backup
+//   supabase functions deploy run-company-backup --no-verify-jwt
 
 import JSZip from "npm:jszip@3.10.1";
 import { getCallerClaims } from "../_shared/jwtUtils.ts";
@@ -32,6 +33,8 @@ Deno.serve(async (req) => {
 
   const companyId = String(body?.companyId || "");
   const trigger = ["manual", "scheduled", "pre_restore"].includes(body?.trigger) ? body.trigger : "manual";
+  const includeModules = Array.isArray(body?.includeModules)
+    ? body.includeModules.filter((x: unknown) => typeof x === "string") : undefined;
   if (!companyId) return json({ error: "companyId الزامی است" }, 400);
 
   const result = await createAndStoreBackup({
@@ -39,6 +42,7 @@ Deno.serve(async (req) => {
     trigger,
     createdBy: claims?.username || (isSuper ? "super_admin" : "cron"),
     backupId: body?.backupId ? String(body.backupId) : undefined,
+    includeModules,
     makeZip: () => new JSZip() as any,
   });
 

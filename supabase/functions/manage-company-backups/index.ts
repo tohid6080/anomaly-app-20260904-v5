@@ -101,6 +101,8 @@ Deno.serve(async (req) => {
     if (action === "trigger") {
       const companyId = String(body?.companyId || "");
       if (!companyId) return json({ error: "companyId الزامی است" }, 400);
+      const includeModules = Array.isArray(body?.modules)
+        ? body.modules.filter((m: unknown) => typeof m === "string") : undefined;
       // به run-company-backup واگذار می‌شود؛ همان توکنِ SuperAdminِ فراخوان را جلو می‌بریم
       const res = await fetch(`${SUPABASE_URL}/functions/v1/run-company-backup`, {
         method: "POST",
@@ -109,7 +111,7 @@ Deno.serve(async (req) => {
           Authorization: req.headers.get("Authorization") || "",
           apikey: SERVICE_ROLE_KEY,
         },
-        body: JSON.stringify({ companyId, trigger: "manual" }),
+        body: JSON.stringify({ companyId, trigger: "manual", ...(includeModules ? { includeModules } : {}) }),
       });
       const text = await res.text();
       return new Response(text, { status: res.status, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } });

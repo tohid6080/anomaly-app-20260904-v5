@@ -1055,9 +1055,38 @@ export async function loadBackupStorageUsage() {
   return callBackupAdmin({ action: "storage_usage" });
 }
 
-// ساختِ یک Backup دستیِ جدید برای یک شرکت
-export async function triggerCompanyBackup(companyId) {
-  return callBackupAdmin({ action: "trigger", companyId });
+// درختِ ماژول‌های Backup — معادلِ MODULE_TABLES در
+// supabase/functions/_shared/companyBackup.ts (هماهنگ بمانند).
+// shareable=true یعنی می‌شود این ماژول را بین شرکت‌ها به‌صورت نسخه‌ی نو Import کرد.
+export const BACKUP_MODULES = [
+  { key: "bowtie",            labelKey: "bmBowtie",            shareable: true },
+  { key: "riskKnowledge",     labelKey: "bmRiskKnowledge",     shareable: true },
+  { key: "hcms",              labelKey: "bmHcms" },
+  { key: "hcmsMatrix",        labelKey: "bmHcmsMatrix",        shareable: true, virtual: true },
+  { key: "anomalyCategories", labelKey: "bmAnomalyCategories", shareable: true, virtual: true },
+  { key: "trainingCourses",   labelKey: "bmTrainingCourses",   shareable: true, virtual: true },
+  { key: "anomalies",         labelKey: "bmAnomalies" },
+  { key: "personnel",         labelKey: "bmPersonnel" },
+  { key: "machinery",         labelKey: "bmMachinery" },
+  { key: "scaffold",          labelKey: "bmScaffold" },
+  { key: "incidents",         labelKey: "bmIncidents" },
+  { key: "chat",              labelKey: "bmChat" },
+  { key: "training",          labelKey: "bmTraining" },
+  { key: "proactiveExtra",    labelKey: "bmProactiveExtra" },
+  { key: "settings",          labelKey: "bmSettings" },
+  { key: "accounts",          labelKey: "bmAccounts" },
+  { key: "financial",         labelKey: "bmFinancial" },
+  { key: "logs",              labelKey: "bmLogs" },
+];
+// ماژول‌های واقعیِ Backup (بدونِ virtualها که فقط برای Import مشترک‌اند)
+export const BACKUP_MODULE_KEYS = BACKUP_MODULES.filter((m) => !m.virtual).map((m) => m.key);
+export const SHAREABLE_MODULES = BACKUP_MODULES.filter((m) => m.shareable);
+
+// ساختِ یک Backup دستیِ جدید برای یک شرکت. modules خالی/undefined = کامل.
+export async function triggerCompanyBackup(companyId, modules) {
+  const payload = { action: "trigger", companyId };
+  if (Array.isArray(modules) && modules.length) payload.modules = modules;
+  return callBackupAdmin(payload);
 }
 
 // لینکِ موقتِ دانلودِ فایلِ zip یک Backup
@@ -1119,14 +1148,26 @@ export async function uploadBackupImport(uploadUrl, file) {
   }
 }
 
-// اعتبارسنجی + Preview یک فایلِ importشده — هیچ تغییری اعمال نمی‌شود
-export async function validateBackupImport(importPath) {
-  return callRestore({ importPath, mode: "validate" });
+// اعتبارسنجی + Preview یک فایلِ importشده — هیچ تغییری اعمال نمی‌شود.
+// اگر targetCompanyId + modules بدهی و شرکتِ مقصد با شرکتِ صاحبِ ZIP فرق کند،
+// Preview حالتِ «Import بین‌شرکتی» را برمی‌گرداند.
+export async function validateBackupImport(importPath, opts = {}) {
+  const p = { importPath, mode: "validate" };
+  if (opts.targetCompanyId) p.targetCompanyId = opts.targetCompanyId;
+  if (Array.isArray(opts.modules) && opts.modules.length) p.modules = opts.modules;
+  return callRestore(p);
 }
 
-// Restore از یک فایلِ importشده. mode: "auto" | "replace"
-export async function restoreBackupImport(importPath, mode = "auto") {
-  return callRestore({ importPath, mode });
+// Restore از یک فایلِ importشده.
+//  • بازیابیِ کاملِ همان شرکت:   restoreBackupImport(path, { mode: "auto" | "replace" })
+//  • Import بین‌شرکتیِ ماژول‌های مشترک:
+//        restoreBackupImport(path, { targetCompanyId, modules: [...] })
+export async function restoreBackupImport(importPath, opts = {}) {
+  const mode = opts.mode === "replace" ? "replace" : "auto";
+  const p = { importPath, mode };
+  if (opts.targetCompanyId) p.targetCompanyId = opts.targetCompanyId;
+  if (Array.isArray(opts.modules) && opts.modules.length) p.modules = opts.modules;
+  return callRestore(p);
 }
 
 // حذفِ فایلِ importِ موقت (روی لغو یا خطا)

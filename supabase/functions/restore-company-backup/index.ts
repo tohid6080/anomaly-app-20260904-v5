@@ -9,11 +9,16 @@
 //                      (سناریو: شرکت کاملاً حذف شده و فقط فایلِ ZIP در دست است)
 //
 // mode:
-//   • "validate" → فقط اعتبارسنجی + Preview (Manifest، Company، Schema، شمارش
-//                  جدول/ردیف/فایل، وضعیتِ شرکتِ مقصد). هیچ تغییری اعمال نمی‌شود.
-//   • "auto"     → Restore. اگر شرکت داده‌ی فعال داشته باشد، بدون تغییر
-//                  { needsConfirmation:true } برمی‌گردد.
+//   • "validate" → فقط اعتبارسنجی + Preview. هیچ تغییری اعمال نمی‌شود.
+//   • "auto"     → Restore. اگر شرکت داده‌ی فعال داشته باشد { needsConfirmation:true }.
 //   • "replace"  → اول Backupِ ایمنیِ pre_restore، بعد Purge (معکوسِ FK) + جایگزینی.
+//
+// Import بین‌شرکتی (پکیجِ مشترک در شرکتِ دیگر):
+//   body: { importPath|backupId, targetCompanyId, modules: string[], mode? }
+//   وقتی targetCompanyId با شرکتِ صاحبِ ZIP فرق دارد → فقط ماژول‌های مرجعِ
+//   انتخاب‌شده (BowTie / بانک دانش ریسک / ماتریس HCMS / دسته‌بندی آنومالی /
+//   دوره‌های آموزشی) به‌صورتِ نسخه‌ی مستقلِ جدید (PK نو، FK بازنگاشت) به شرکتِ
+//   مقصد اضافه می‌شوند — additive، بدون Purge.
 //
 // درجِ داده اتمیک است (RPC restore_company_from_bundle). فایل‌ها بعد از
 // موفقیتِ DB دوباره آپلود می‌شوند؛ خطای هر فایل در گزارش می‌آید.
@@ -28,9 +33,20 @@ import {
   BACKUP_BUCKET,
   BACKUP_SCHEMA_VERSION,
   COMPANY_TABLE_ORDER,
+  SHAREABLE_MODULE_KEYS,
   createAndStoreBackup,
+  importSharedModules,
   sha256Hex,
 } from "../_shared/companyBackup.ts";
+
+// چند ردیفِ نمونه از یک ماژولِ مشترک در bundle، برای Preview
+const SHAREABLE_COUNT_TABLE: Record<string, string> = {
+  bowtie: "bowties",
+  riskKnowledge: "risk_knowledge_base",
+  hcmsMatrix: "hcms_risk_matrix",
+  anomalyCategories: "anomaly_categories",
+  trainingCourses: "training_courses",
+};
 
 const PROBE_TABLES = ["employer_accounts", "job_positions", "personnel", "anomalies", "bowties", "machinery", "scaffold_tags", "incidents"];
 
@@ -156,6 +172,75 @@ Deno.serve(async (req) => {
 
   const valid = errors.length === 0;
   const companyId = manifestCompanyId || bundleCompanyId;
+
+  // =========================================================================
+  // Import بین‌شرکتی: هدفِ متفاوت از شرکتِ صاحبِ ZIP + انتخابِ ماژول‌های مشترک.
+  // نسخه‌ی مستقلِ جدید (PK نو، FK بازنگاشت) — additive، بدون Purge.
+  // =========================================================================
+  const targetCompanyId = String(body?.targetCompanyId || "");
+  const reqModules: string[] = Array.isArray(body?.modules)
+    ? body.modules.filter((m: unknown) => typeof m === "string") : [];
+
+  if (targetCompanyId && targetCompanyId !== companyId) {
+    const mods = reqModules.filter((m) => (SHAREABLE_MODULE_KEYS as readonly string[]).includes(m));
+    if (!valid) return json({ error: "فایلِ Backup نامعتبر است.", errors, warnings }, 422);
+    if (mods.length === 0) {
+      return json({ error: "برای Import بین‌شرکتی حداقل یک ماژولِ مشترک انتخاب کن.", shareableModules: SHAREABLE_MODULE_KEYS }, 400);
+    }
+    const tRes = await restFetch(`companies?id=eq.${targetCompanyId}&select=id,name`);
+    if (!tRes.ok || !Array.isArray(tRes.data) || tRes.data.length === 0) {
+      return json({ error: "شرکتِ مقصد پیدا نشد" }, 404);
+    }
+    const tName = tRes.data[0].name;
+    const moduleCounts: Record<string, number> = {};
+    for (const m of mods) moduleCounts[m] = ((bundle[SHAREABLE_COUNT_TABLE[m]] as unknown[]) || []).length;
+
+    if (mode === "validate") {
+      return json({
+        ok: true,
+        crossCompany: true,
+        source: sourceLabel,
+        zipChecksum,
+        valid: true,
+        warnings,
+        sourceCompany: { id: companyId, name: manifest?.companyName || bundleCompanyId },
+        target: { companyId: targetCompanyId, companyName: tName },
+        modules: mods,
+        moduleCounts,
+        mode: "shared-import (additive, new copies)",
+      });
+    }
+
+    const imp = await importSharedModules(bundle as Record<string, Record<string, unknown>[]>, targetCompanyId, mods);
+    const report: Record<string, unknown> = {
+      mode: "shared-import",
+      source: sourceLabel,
+      sourceCompany: { id: companyId, name: manifest?.companyName },
+      target: { companyId: targetCompanyId, companyName: tName },
+      modules: mods,
+      perModule: imp.perModule,
+      total: imp.total,
+      completedAt: new Date().toISOString(),
+    };
+    if (!imp.ok) {
+      return json({ error: "Import بین‌شرکتی ناتمام ماند: " + imp.error, report }, 500);
+    }
+    await restFetch("admin_audit_log", {
+      method: "POST",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify([{
+        action: "import_shared_modules",
+        target_type: "company",
+        target_id: targetCompanyId,
+        target_username: tName,
+        performed_by: claims.username || "super_admin",
+        performed_by_role: "super_admin",
+        note: `Import از ${sourceLabel} → ماژول‌ها [${mods.join(", ")}]، ${imp.total} ردیف`,
+      }]),
+    }).catch(() => {});
+    if (isImport) await deleteImport(importPath);
+    return json({ ok: true, report });
+  }
 
   // ---------- وضعیتِ شرکتِ مقصد ----------
   let companyExists = false;
