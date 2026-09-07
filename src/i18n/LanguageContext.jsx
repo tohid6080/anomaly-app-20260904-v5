@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
-import { translate, setActiveLangStorageKey, normalizeLang, dirOf } from "./translations.js";
+import { translate, setActiveLangStorageKey, normalizeLang, dirOf, ensureGermanTranslations } from "./translations.js";
 
 const LanguageContext = createContext(null);
 
@@ -27,6 +27,10 @@ export function LanguageProvider({ children, storageKey = DEFAULT_STORAGE_KEY })
   setActiveLangStorageKey(storageKey);
 
   const [lang, setLangState] = useState(() => readStoredLang(storageKey));
+  // وقتی زبان «de» است، بستهٔ آلمانی با import()‎ پویا بارگذاری می‌شود؛
+  // این پرچم پس از تزریقِ کلیدها true می‌شود تا t() دوباره اجرا و متنِ
+  // آلمانی جایگزینِ fallbackِ انگلیسی شود.
+  const [germanReady, setGermanReady] = useState(false);
 
   const setLang = useCallback((next) => {
     const value = normalizeLang(next);
@@ -34,9 +38,15 @@ export function LanguageProvider({ children, storageKey = DEFAULT_STORAGE_KEY })
     try { localStorage.setItem(storageKey, value); } catch { /* بی‌اهمیت */ }
   }, [storageKey]);
 
+  useEffect(() => {
+    if (lang === "de" && !germanReady) {
+      ensureGermanTranslations().then(() => setGermanReady(true));
+    }
+  }, [lang, germanReady]);
+
   // پارامترِ اختیاریِ params برای درون‌ریزیِ جای‌نگه‌دارهای {name} در متنِ
   // ترجمه — سازگار با فراخوانی‌های بدونِ پارامترِ موجود.
-  const t = useCallback((key, params) => translate(lang, key, params), [lang]);
+  const t = useCallback((key, params) => translate(lang, key, params), [lang, germanReady]);
   const dir = dirOf(lang);
 
   // جهت و زبانِ ریشه‌ی صفحه (<html>) را با زبان فعال هم‌گام می‌کنیم تا کلِ

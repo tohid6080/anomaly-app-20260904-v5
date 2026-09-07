@@ -5,8 +5,6 @@
 // ترجمهٔ آلمانی (Deutsch) در یک فایلِ جدا (translations.de.js) نگه‌داری
 // می‌شود و پایینِ همین فایل، کلید به کلید، به همین دیکشنری تزریق می‌شود —
 // تا فایلِ اصلی شلوغ نشود و افزودن/بازبینیِ آلمانی مستقل بماند.
-import { de as _deTranslations } from "./translations.de.js";
-
 export const translations = {
   "language": {
     "fa": "زبان",
@@ -8966,12 +8964,27 @@ export const translations = {
   "headerMoreMenu": { "fa": "بیشتر", "en": "More", "de": "Mehr" }
 };
 
-// ---------- تزریقِ ترجمهٔ آلمانی ----------
-// برای هر کلیدی که در translations.de.js مقدار دارد، شاخهٔ de را به همان
-// entry اضافه می‌کنیم. کلیدهایی که آلمانی ندارند، در translate() به انگلیسی
-// (و سپس فارسی) برمی‌گردند — پس چیزی نمی‌شکند.
-for (const _k in _deTranslations) {
-  if (translations[_k]) translations[_k].de = _deTranslations[_k];
+// ---------- تزریقِ تنبلِ ترجمهٔ آلمانی ----------
+// translations.de.js (~۲۰۰KB) دیگر به‌صورت ایستا وارد نمی‌شود — فقط وقتی
+// کاربر واقعاً زبان را «de» انتخاب کند با import()‎ پویا بارگذاری و کلید به
+// کلید به همین دیکشنری تزریق می‌شود. تا آن لحظه، translate('de', key) طبق
+// منطقِ خودش به انگلیسی برمی‌گردد — چیزی نمی‌شکند. برای کاربران fa/en این
+// حجم اصلاً دانلود نمی‌شود.
+let _germanLoaded = false;
+let _germanLoadingPromise = null;
+export function ensureGermanTranslations() {
+  if (_germanLoaded) return Promise.resolve();
+  if (_germanLoadingPromise) return _germanLoadingPromise;
+  _germanLoadingPromise = import("./translations.de.js")
+    .then((mod) => {
+      const de = mod.de || {};
+      for (const _k in de) {
+        if (translations[_k]) translations[_k].de = de[_k];
+      }
+      _germanLoaded = true;
+    })
+    .catch(() => { /* اگر بارگذاری نشد، de همچنان به en fallback می‌کند */ });
+  return _germanLoadingPromise;
 }
 
 // ---------- زبان‌های پشتیبانی‌شده ----------
