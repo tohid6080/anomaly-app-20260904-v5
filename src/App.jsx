@@ -1644,7 +1644,7 @@ function ProfileView({ onBack, currentUser, roleLabel }) {
           )}
         </div>
 
-        {currentUser?.role === "ADMIN" && <ChangePasswordSection />}
+        {(currentUser?.role === "ADMIN" || currentUser?.role === "HSE_SUPERVISOR") && <ChangePasswordSection />}
 
         <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 14, marginTop: 14 }}>
           <p style={{ fontSize: 11, color: THEME.text3, fontWeight: 700, marginBottom: 10 }}>{t("contactInfoTitle")}</p>
@@ -4541,16 +4541,40 @@ function EmployerDashboard({ onLogout, currentUser }) {
   const scaffoldMod = HSE_MODULES.find((m) => m.key === "scaffoldManagement");
   const incidentMod = HSE_MODULES.find((m) => m.key === "incidentManagement");
 
+  // فقط نقش «سرپرست/مدیر HSE» — نه «کارفرما» — زیرمنوی «مدیریت سیستم» را
+  // می‌بیند (طبق خواسته‌ی صریح کاربر). این بخش مستقل از permMap است و
+  // دقیقاً همان ۱۰ زیرماژول و همان gate بر پایه‌ی پلن (isModuleInPlan) را
+  // دارد که قبلاً فقط در AdminDashboard وجود داشت.
+  const isSupervisor = currentUser?.role === "HSE_SUPERVISOR";
+  const systemManagementEntry = isSupervisor && isModuleInPlan(planFeatures, "systemManagement") ? {
+    key: "systemManagement", icon: Settings, label: t("moduleSystemManagement"),
+    sub: [
+      isModuleInPlan(planFeatures, "permissionManagement") && { key: "permissionManagement", label: t("subPermissions") },
+      isModuleInPlan(planFeatures, "jobPositionManagement") && { key: "jobPositionManagement", label: t("subJobPositions") },
+      isModuleInPlan(planFeatures, "archiveManagement") && { key: "archiveManagement", label: t("moduleArchive") },
+      isModuleInPlan(planFeatures, "scaffoldCodeManagement") && { key: "scaffoldCodeManagement", label: t("subScaffoldCodes") },
+      isModuleInPlan(planFeatures, "trainingManagement") && { key: "trainingManagement", label: t("subTraining") },
+      isModuleInPlan(planFeatures, "chatAccessManagement") && { key: "chatAccessManagement", label: t("subChatAccess") },
+      isModuleInPlan(planFeatures, "hcmsMatrixManagement") && { key: "hcmsMatrixManagement", label: t("subHcmsMatrix") },
+      isModuleInPlan(planFeatures, "effectivenessThresholds") && { key: "effectivenessThresholds", label: t("subEffectivenessThresholds") },
+      isModuleInPlan(planFeatures, "riskKnowledgeManagement") && { key: "riskKnowledgeManagement", label: t("subRiskKnowledge") },
+      isModuleInPlan(planFeatures, "anomalyCategoryManagement") && { key: "anomalyCategoryManagement", label: t("subAnomalyCategories") },
+    ].filter(Boolean),
+  } : null;
+
   // دقیقاً همان فیلتر مجوز+پلن که منوی موبایل استفاده می‌کند — فقط این‌بار
   // به‌شکل داده برای Sidebar، بدون تکرار منطق فیلترکردن.
-  const sidebarModules = applyModuleConfig(HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key)).map((mod) => ({
-    key: mod.key,
-    icon: MODULE_ICON[mod.key] || LayoutGrid,
-    label: mt(mod),
-    badge: mod.key === "chat" ? chatUnread : undefined,
-    muted: mod.employerOnly && !canEdit,
-    sub: mod.sub ? mod.sub.filter((s) => canEdit || !s.employerOnly).map((s) => ({ key: s.key, label: mt(s) })) : undefined,
-  })), moduleConfig);
+  const sidebarModules = applyModuleConfig([
+    ...HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key)).map((mod) => ({
+      key: mod.key,
+      icon: MODULE_ICON[mod.key] || LayoutGrid,
+      label: mt(mod),
+      badge: mod.key === "chat" ? chatUnread : undefined,
+      muted: mod.employerOnly && !canEdit,
+      sub: mod.sub ? mod.sub.filter((s) => canEdit || !s.employerOnly).map((s) => ({ key: s.key, label: mt(s) })) : undefined,
+    })),
+    systemManagementEntry,
+  ].filter(Boolean), moduleConfig);
 
   return (
     <ResponsiveDashboardShell
@@ -4581,8 +4605,38 @@ function EmployerDashboard({ onLogout, currentUser }) {
               badge={mod.key === "chat" ? chatUnread : undefined}
             />
           ))}
+          {systemManagementEntry && (
+            <MenuRow icon={Settings} label={systemManagementEntry.label} onClick={() => setView("systemManagement")} accent sub />
+          )}
         </div>
       )}
+
+      {view === "systemManagement" && systemManagementEntry && (
+        <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
+          <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
+          <h3 style={{ marginBottom: 12, color: THEME.navy }}>{t("moduleSystemManagement")}</h3>
+          <div style={styles.menuList2}>
+            {isModuleInPlan(planFeatures, "permissionManagement") && <MenuRow icon={ShieldCheck} label={t("subPermissions")} onClick={() => setView("permissionManagement")} />}
+            {isModuleInPlan(planFeatures, "jobPositionManagement") && <MenuRow icon={Briefcase} label={t("subJobPositions")} onClick={() => setView("jobPositionManagement")} />}
+            {isModuleInPlan(planFeatures, "archiveManagement") && <MenuRow icon={Archive} label={t("moduleArchive")} onClick={() => setView("archiveManagement")} />}
+            {isModuleInPlan(planFeatures, "scaffoldCodeManagement") && <MenuRow icon={Tag} label={t("subScaffoldCodes")} onClick={() => setView("scaffoldCodeManagement")} />}
+            {isModuleInPlan(planFeatures, "trainingManagement") && <MenuRow icon={GraduationCap} label={t("subTraining")} onClick={() => setView("trainingManagement")} />}
+            {isModuleInPlan(planFeatures, "chatAccessManagement") && <MenuRow icon={ShieldOff} label={t("subChatAccess")} onClick={() => setView("chatAccessManagement")} />}
+            {isModuleInPlan(planFeatures, "hcmsMatrixManagement") && <MenuRow icon={ShieldAlert} label={t("subHcmsMatrix")} onClick={() => setView("hcmsMatrixManagement")} />}
+            {isModuleInPlan(planFeatures, "effectivenessThresholds") && <MenuRow icon={Sliders} label={t("subEffectivenessThresholds")} onClick={() => setView("effectivenessThresholds")} />}
+            {isModuleInPlan(planFeatures, "riskKnowledgeManagement") && <MenuRow icon={Database} label={t("subRiskKnowledge")} onClick={() => setView("riskKnowledgeManagement")} />}
+            {isModuleInPlan(planFeatures, "anomalyCategoryManagement") && <MenuRow icon={Tag} label={t("subAnomalyCategories")} onClick={() => setView("anomalyCategoryManagement")} />}
+          </div>
+        </div>
+      )}
+      {isSupervisor && view === "permissionManagement" && <PermissionManager onBack={() => setView("systemManagement")} />}
+      {isSupervisor && view === "jobPositionManagement" && <JobPositionManager onBack={() => setView("systemManagement")} />}
+      {isSupervisor && view === "scaffoldCodeManagement" && <ScaffoldTagCodeManager onBack={() => setView("systemManagement")} />}
+      {isSupervisor && view === "trainingManagement" && <TrainingManager onBack={() => setView("systemManagement")} />}
+      {isSupervisor && view === "chatAccessManagement" && <ChatAccessManager onBack={() => setView("systemManagement")} />}
+      {isSupervisor && view === "hcmsMatrixManagement" && <HcmsMatrixManager onBack={() => setView("systemManagement")} />}
+      {isSupervisor && view === "effectivenessThresholds" && <EffectivenessThresholdsManager onBack={() => setView("systemManagement")} currentUser={currentUser} />}
+      {isSupervisor && view === "anomalyCategoryManagement" && <AnomalyCategoryManager onBack={() => setView("systemManagement")} />}
 
       {view === "anomalyReport" && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
