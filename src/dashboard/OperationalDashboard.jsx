@@ -133,7 +133,7 @@ export default function OperationalDashboard({ role, currentUser, onNavigate, on
               <span style={{ flex: 1, fontSize: 12.5, color: THEME.text, fontWeight: 600 }}>{t(opWidgetLabelKey(r.key))}</span>
               <button
                 type="button" onClick={() => toggle(r.key)}
-                style={{ display: "flex", alignItems: "center", gap: 5, background: r.visible ? "#dcfce7" : "#eef1f5", color: r.visible ? "#166534" : THEME.text3, border: "none", borderRadius: 999, padding: "5px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font }}
+                style={{ display: "flex", alignItems: "center", gap: 5, background: r.visible ? THEME.okBg : THEME.borderSoft, color: r.visible ? THEME.ok : THEME.text3, border: "none", borderRadius: 999, padding: "5px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font }}
               >
                 {r.visible ? <Eye size={13} /> : <EyeOff size={13} />} {r.visible ? t("saVisibleShown") : t("saHidden")}
               </button>

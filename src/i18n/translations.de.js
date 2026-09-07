@@ -99,6 +99,7 @@ export const de = {
   "piwSbs": "SBS",
   "piwSbsUnsafePct": "{pct}% unsicher",
   "piwSbsCount": "{unsafe} unsicher von {total}",
+  "piwNoData": "Noch keine Daten",
   "opDashEditLayout": "Mein Layout",
   "opDashSaveLayout": "Layout speichern",
   "opDashResetDefault": "Auf Standard zurücksetzen",

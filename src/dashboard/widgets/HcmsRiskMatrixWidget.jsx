@@ -74,7 +74,7 @@ export default function HcmsRiskMatrixWidget({ onNavigate }) {
             <div style={{ fontSize: 9, color: THEME.text3 }}>{t("hrmSummary", { high: d.byLevel.High, total: d.total })}</div>
           )}
           {d.unplacedCount > 0 && (
-            <div style={{ fontSize: 8.5, color: "#c47f28" }}>{t("hrmUnplaced", { n: d.unplacedCount })}</div>
+            <div style={{ fontSize: 8.5, color: THEME.warn }}>{t("hrmUnplaced", { n: d.unplacedCount })}</div>
           )}
         </>
       )}

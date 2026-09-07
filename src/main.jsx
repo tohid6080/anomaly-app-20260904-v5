@@ -16,21 +16,34 @@ baseStyle.textContent = `
   img { max-width: 100%; }
   input, select, textarea, button { max-width: 100%; }
   :root {
-    /* مقادیر پیش‌فرض تنظیمات ظاهری — دقیقاً همان مقادیر قبلی ثابت THEME؛
-       بعد از بارگذاری از دیتابیس (systemConfigApi.js::applyAppearanceToDom)،
-       این مقادیر override می‌شوند. تا آن لحظه، ظاهر سامانه بدون کوچک‌ترین
-       تغییری همان قبلی است. */
-    --ihms-navy: #0e2c3f;
-    --ihms-teal: #127c72;
-    --ihms-bg: #eef1f4;
-    --ihms-surface: #ffffff;
-    --ihms-border: #d9e0e6;
-    --ihms-border-strong: #cbd5e1;
-    --ihms-text: #15222e;
-    --ihms-text2: #556571;
-    --ihms-text3: #8695a1;
+    color-scheme: dark;
+    /* پیش‌فرضِ تمِ تیرهٔ نئونی (نمونهٔ طراحی). بعد از بارگذاری از دیتابیس
+       (systemConfigApi.js::applyAppearanceToDom) در صورت وجودِ تنظیمِ
+       سفارشیِ شرکت override می‌شود. */
+    --ihms-navy: #0a1620;
+    --ihms-navy-deep: #07121a;
+    --ihms-navy-mid: #123a49;
+    --ihms-teal: #14b8a6;
+    --ihms-teal-deep: #0f9488;
+    --ihms-teal-soft: #0f2e2b;
+    --ihms-bg: #0b1a24;
+    --ihms-surface: #0f2a3a;
+    --ihms-surface-2: #123240;
+    --ihms-border: #1e3d4d;
+    --ihms-border-soft: #17303c;
+    --ihms-border-strong: #274a5c;
+    --ihms-text: #e8eef2;
+    --ihms-text2: #9fb4c0;
+    --ihms-text3: #6a8290;
+    --ihms-danger: #ef4444;
+    --ihms-danger-bg: #3a1e1e;
+    --ihms-warn: #f59e0b;
+    --ihms-warn-bg: #3a2c14;
+    --ihms-ok: #22c55e;
+    --ihms-ok-bg: #173021;
     --ihms-font: 'Vazirmatn', 'Inter', Tahoma, Arial, sans-serif;
   }
+  body { background: #0b1a24; }
 `;
 document.head.appendChild(baseStyle);
 

@@ -174,9 +174,9 @@ export async function loadAppearanceConfig() {
     logoUrl: map.appearance_logo_url || "",
     faviconUrl: map.appearance_favicon_url || "",
     apkIconUrl: map.appearance_apk_icon_url || "",
-    colorPrimary: map.appearance_color_primary || "#0e2c3f",
-    colorAccent: map.appearance_color_accent || "#127c72",
-    themeMode: map.appearance_theme_mode || "light",
+    colorPrimary: map.appearance_color_primary || "#0a1620",
+    colorAccent: map.appearance_color_accent || "#14b8a6",
+    themeMode: map.appearance_theme_mode || "dark",
     fontFamily: map.appearance_font_family || "'Vazirmatn', 'Inter', Tahoma, Arial, sans-serif",
     fontSizeBase: map.appearance_font_size_base != null ? Number(map.appearance_font_size_base) : null,
     sidebarDefaultCollapsed: map.appearance_sidebar_default_collapsed === "true" || map.appearance_sidebar_default_collapsed === true,
@@ -213,13 +213,22 @@ export async function saveAppearanceConfig(config, updatedBy) {
 // پالت کامل حالت تیره — چون سایه‌روشن یک تم واقعی به تغییر هم‌زمان
 // پس‌زمینه/متن/حاشیه نیاز دارد، نه فقط دو رنگ اصلی؛ رنگ‌های سازمانی
 // (primary/accent) کاربر همچنان از تنظیمات خودش می‌آید، نه از این پالت.
+// تمِ تیرهٔ نئونی = نمونهٔ طراحی (پیش‌فرضِ سامانه)
 const DARK_PALETTE = {
-  bg: "#0f1720", surface: "#17212c", border: "#26313d", borderStrong: "#374151",
-  text: "#e5eaf0", text2: "#a7b3c2", text3: "#7c8a9a",
+  navy: "#0a1620", navyDeep: "#07121a", navyMid: "#123a49",
+  tealDeep: "#0f9488", tealSoft: "#0f2e2b",
+  bg: "#0b1a24", surface: "#0f2a3a", surface2: "#123240",
+  border: "#1e3d4d", borderSoft: "#17303c", borderStrong: "#274a5c",
+  text: "#e8eef2", text2: "#9fb4c0", text3: "#6a8290",
+  danger: "#ef4444", dangerBg: "#3a1e1e", warn: "#f59e0b", warnBg: "#3a2c14", ok: "#22c55e", okBg: "#173021",
 };
 const LIGHT_PALETTE = {
-  bg: "#eef1f4", surface: "#ffffff", border: "#d9e0e6", borderStrong: "#cbd5e1",
+  navy: "#0e2c3f", navyDeep: "#0a2331", navyMid: "#123f59",
+  tealDeep: "#0c5b54", tealSoft: "#e0f0ee",
+  bg: "#eef1f4", surface: "#ffffff", surface2: "#f6f8fa",
+  border: "#d9e0e6", borderSoft: "#e7ecf0", borderStrong: "#cbd5e1",
   text: "#15222e", text2: "#556571", text3: "#8695a1",
+  danger: "#cf4a3f", dangerBg: "#fbe7e4", warn: "#c47f28", warnBg: "#f8eddb", ok: "#2f8f57", okBg: "#e2f1e8",
 };
 
 // اعمال زنده‌ی تنظیمات ظاهری روی DOM — از طریق CSS Custom Properties، نه
@@ -232,17 +241,32 @@ const LIGHT_PALETTE = {
 export function applyAppearanceToDom(config) {
   if (typeof document === "undefined" || !config) return;
   const root = document.documentElement.style;
-  const palette = config.themeMode === "dark" ? DARK_PALETTE : LIGHT_PALETTE;
+  const light = config.themeMode === "light";
+  const palette = light ? LIGHT_PALETTE : DARK_PALETTE;
 
-  root.setProperty("--ihms-navy", config.colorPrimary || "#0e2c3f");
-  root.setProperty("--ihms-teal", config.colorAccent || "#127c72");
+  // navy/teal: انتخابِ سفارشیِ شرکت اگر بود، وگرنه پالتِ همان تم
+  root.setProperty("--ihms-navy", config.colorPrimary || palette.navy);
+  root.setProperty("--ihms-teal", config.colorAccent || (light ? "#127c72" : "#14b8a6"));
+  root.setProperty("--ihms-navy-deep", palette.navyDeep);
+  root.setProperty("--ihms-navy-mid", palette.navyMid);
+  root.setProperty("--ihms-teal-deep", palette.tealDeep);
+  root.setProperty("--ihms-teal-soft", palette.tealSoft);
   root.setProperty("--ihms-bg", palette.bg);
   root.setProperty("--ihms-surface", palette.surface);
+  root.setProperty("--ihms-surface-2", palette.surface2);
   root.setProperty("--ihms-border", palette.border);
+  root.setProperty("--ihms-border-soft", palette.borderSoft);
   root.setProperty("--ihms-border-strong", palette.borderStrong);
   root.setProperty("--ihms-text", palette.text);
   root.setProperty("--ihms-text2", palette.text2);
   root.setProperty("--ihms-text3", palette.text3);
+  root.setProperty("--ihms-danger", palette.danger);
+  root.setProperty("--ihms-danger-bg", palette.dangerBg);
+  root.setProperty("--ihms-warn", palette.warn);
+  root.setProperty("--ihms-warn-bg", palette.warnBg);
+  root.setProperty("--ihms-ok", palette.ok);
+  root.setProperty("--ihms-ok-bg", palette.okBg);
+  try { document.documentElement.style.colorScheme = light ? "light" : "dark"; } catch { /* بی‌اهمیت */ }
   if (config.fontFamily) root.setProperty("--ihms-font", config.fontFamily);
   if (config.fontSizeBase) root.setProperty("--ihms-font-size-base", `${config.fontSizeBase}px`);
 

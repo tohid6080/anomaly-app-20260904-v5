@@ -17,7 +17,7 @@ const cardStyle = {
 };
 
 export function WidgetCard({ title, icon: Icon, tone, tools, children, style }) {
-  const barColor = tone === "bad" ? THEME.danger : tone === "warn" ? "#c47f28" : tone === "ok" ? "#2f8f57" : null;
+  const barColor = tone === "bad" ? THEME.danger : tone === "warn" ? THEME.warn : tone === "ok" ? THEME.ok : null;
   return (
     <div style={{ ...cardStyle, ...style, position: "relative", overflow: "hidden" }}>
       {barColor && <span style={{ position: "absolute", insetInlineStart: 0, top: 0, bottom: 0, width: 3, background: barColor }} />}
@@ -34,9 +34,9 @@ export function WidgetCard({ title, icon: Icon, tone, tools, children, style }) 
 export function WidgetSkeleton({ rows = 3 }) {
   return (
     <div aria-hidden="true" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      <div style={{ height: 12, width: "45%", borderRadius: 5, background: "#eef1f5" }} />
+      <div style={{ height: 12, width: "45%", borderRadius: 5, background: THEME.borderSoft }} />
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} style={{ height: 26, borderRadius: 7, background: "#f2f5f8" }} />
+        <div key={i} style={{ height: 26, borderRadius: 7, background: THEME.surface2 }} />
       ))}
     </div>
   );
@@ -45,7 +45,7 @@ export function WidgetSkeleton({ rows = 3 }) {
 export function WidgetEmpty({ text, good }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, padding: "18px 8px", textAlign: "center" }}>
-      {good && <span style={{ color: "#2f8f57", fontSize: 15, lineHeight: 1 }}>✓</span>}
+      {good && <span style={{ color: THEME.ok, fontSize: 15, lineHeight: 1 }}>✓</span>}
       <span style={{ fontSize: 11, color: THEME.text3 }}>{text}</span>
     </div>
   );
@@ -79,7 +79,7 @@ export function CounterWidget({ title, icon, value, sub, tone, onClick }) {
       >
         <div style={{
           fontSize: 26, fontWeight: 800, lineHeight: 1, fontVariantNumeric: "tabular-nums",
-          color: tone === "bad" ? THEME.danger : tone === "warn" ? "#c47f28" : tone === "ok" ? "#2f8f57" : THEME.navy,
+          color: tone === "bad" ? THEME.danger : tone === "warn" ? THEME.warn : tone === "ok" ? THEME.ok : THEME.navy,
         }}>
           {value}
         </div>
@@ -150,7 +150,7 @@ export function MiniBarWidget({ title, icon, data, suffix = "" }) {
                 <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 150 }}>{d.label}</span>
                 <span style={{ fontWeight: 700, fontFamily: THEME.font }}>{d.value}{suffix}</span>
               </div>
-              <div style={{ background: "#eef1f5", borderRadius: 4, height: 5, overflow: "hidden" }}>
+              <div style={{ background: THEME.borderSoft, borderRadius: 4, height: 5, overflow: "hidden" }}>
                 <div style={{ width: `${(d.value / max) * 100}%`, height: "100%", background: d.color || THEME.navy, borderRadius: 4 }} />
               </div>
             </div>

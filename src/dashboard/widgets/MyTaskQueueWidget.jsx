@@ -14,10 +14,10 @@ function Chip({ chip }) {
   const { t } = useLanguage();
   if (!chip) return null;
   const map = {
-    overdue: { bg: "#fbe7e4", fg: "#cf4a3f", text: t("wtqChipOverdue", { n: chip.days }) },
-    due: { bg: "#f6f8fa", fg: THEME.text3, text: toJalaliSafe(chip.date) },
-    queueAge: { bg: "#f6f8fa", fg: THEME.text3, text: t("wtqChipQueueAge", { n: chip.days }) },
-    risk: { bg: "#efe4de", fg: "#7c2d12", text: t("wtqChipHighRisk") },
+    overdue: { bg: THEME.dangerBg, fg: THEME.danger, text: t("wtqChipOverdue", { n: chip.days }) },
+    due: { bg: THEME.surface2, fg: THEME.text3, text: toJalaliSafe(chip.date) },
+    queueAge: { bg: THEME.surface2, fg: THEME.text3, text: t("wtqChipQueueAge", { n: chip.days }) },
+    risk: { bg: THEME.dangerBg, fg: THEME.danger, text: t("wtqChipHighRisk") },
   };
   const s = map[chip.type] || map.due;
   return (
@@ -43,7 +43,7 @@ export default function MyTaskQueueWidget({ role, currentUser, onNavigate }) {
   useEffect(() => { load(); }, [load]);
 
   const tools = state.status === "ok" && state.data.overdueTotal > 0
-    ? <span style={{ fontSize: 8.5, fontWeight: 700, color: "#cf4a3f", fontFamily: THEME.font }}>{t("wtqOverdueBadge", { n: state.data.overdueTotal })}</span>
+    ? <span style={{ fontSize: 8.5, fontWeight: 700, color: THEME.danger, fontFamily: THEME.font }}>{t("wtqOverdueBadge", { n: state.data.overdueTotal })}</span>
     : null;
 
   return (
@@ -56,7 +56,7 @@ export default function MyTaskQueueWidget({ role, currentUser, onNavigate }) {
       {state.status === "ok" && state.data.total > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {state.data.errors.gate || state.data.errors.ca || state.data.errors.anomaly ? (
-            <div style={{ fontSize: 9, color: "#c47f28", background: "#f8eddb", borderRadius: 6, padding: "4px 8px" }}>
+            <div style={{ fontSize: 9, color: THEME.warn, background: THEME.warnBg, borderRadius: 6, padding: "4px 8px" }}>
               {t("wtqPartialError", { group: "" })}
               <button type="button" onClick={load} style={{ marginInlineStart: 6, fontWeight: 700, color: THEME.tealDeep, background: "none", border: "none", cursor: "pointer", fontFamily: THEME.font }}>{t("wtqRetry")}</button>
             </div>
@@ -66,7 +66,7 @@ export default function MyTaskQueueWidget({ role, currentUser, onNavigate }) {
             <div key={g.key} style={{ display: "flex", flexDirection: "column", gap: 5 }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: THEME.text2, display: "flex", alignItems: "center", gap: 6 }}>
                 {t(g.labelKey)}
-                <span style={{ fontFamily: THEME.font, fontSize: 8.5, fontWeight: 700, padding: "1px 6px", borderRadius: 20, background: g.overdueCount > 0 ? "#fbe7e4" : "#f0f3f6", color: g.overdueCount > 0 ? "#cf4a3f" : THEME.text3 }}>
+                <span style={{ fontFamily: THEME.font, fontSize: 8.5, fontWeight: 700, padding: "1px 6px", borderRadius: 20, background: g.overdueCount > 0 ? THEME.dangerBg : THEME.surface2, color: g.overdueCount > 0 ? THEME.danger : THEME.text3 }}>
                   {g.overdueCount > 0 ? t("wtqOverdueBadge", { n: g.overdueCount }) : g.total}
                 </span>
               </div>
@@ -77,7 +77,7 @@ export default function MyTaskQueueWidget({ role, currentUser, onNavigate }) {
                   onClick={() => onNavigate && onNavigate(row.nav)}
                   style={{
                     display: "flex", alignItems: "center", gap: 8, padding: "7px 9px", borderRadius: 8,
-                    background: "#f6f8fa", border: "1px solid #e7ecf0", cursor: "pointer", width: "100%",
+                    background: THEME.surface2, border: `1px solid ${THEME.borderSoft}`, cursor: "pointer", width: "100%",
                     textAlign: "start", fontFamily: THEME.font,
                   }}
                 >

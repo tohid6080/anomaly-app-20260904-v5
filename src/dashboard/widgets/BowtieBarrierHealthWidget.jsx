@@ -45,7 +45,7 @@ export default function BowtieBarrierHealthWidget({ role, currentUser, onNavigat
       )}
       {state.status === "ok" && d.barrierTotal > 0 && (
         <>
-          <div style={{ display: "flex", height: 14, borderRadius: 5, overflow: "hidden", background: "#f2f5f8" }}>
+          <div style={{ display: "flex", height: 14, borderRadius: 5, overflow: "hidden", background: THEME.surface2 }}>
             {EFF.map((e) => d.dist[e.k] > 0 && (
               <div key={e.k} style={{ width: `${(d.dist[e.k] / d.barrierTotal) * 100}%`, background: e.c }} />
             ))}
@@ -61,10 +61,10 @@ export default function BowtieBarrierHealthWidget({ role, currentUser, onNavigat
           </div>
 
           {allNa ? (
-            <div style={{ fontSize: 8.5, color: "#c47f28", background: "#f8eddb", borderRadius: 6, padding: "4px 8px" }}>{t("bbhAllNotAssessed")}</div>
+            <div style={{ fontSize: 8.5, color: THEME.warn, background: THEME.warnBg, borderRadius: 6, padding: "4px 8px" }}>{t("bbhAllNotAssessed")}</div>
           ) : (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 9px", borderRadius: 8, background: "#fbe7e4", border: "1px solid rgba(207,74,63,0.35)" }}>
-              <span style={{ fontFamily: THEME.font, fontSize: 18, fontWeight: 800, color: "#cf4a3f", lineHeight: 1 }}>{d.critical}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 9px", borderRadius: 8, background: THEME.dangerBg, border: "1px solid rgba(207,74,63,0.35)" }}>
+              <span style={{ fontFamily: THEME.font, fontSize: 18, fontWeight: 800, color: THEME.danger, lineHeight: 1 }}>{d.critical}</span>
               <span style={{ fontSize: 9, color: THEME.text2, lineHeight: 1.5 }}>{t("bbhCriticalLabel")}</span>
             </div>
           )}
@@ -76,7 +76,7 @@ export default function BowtieBarrierHealthWidget({ role, currentUser, onNavigat
                 <button
                   key={a.key} type="button"
                   onClick={() => onNavigate && onNavigate(a.target || { module: "bowtie" })}
-                  style={{ display: "block", width: "100%", textAlign: "start", fontSize: 9.5, color: THEME.navy, background: "#f6f8fa", border: "1px solid #e7ecf0", borderRadius: 7, padding: "6px 8px", cursor: "pointer", fontFamily: THEME.font, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                  style={{ display: "block", width: "100%", textAlign: "start", fontSize: 9.5, color: THEME.navy, background: THEME.surface2, border: `1px solid ${THEME.borderSoft}`, borderRadius: 7, padding: "6px 8px", cursor: "pointer", fontFamily: THEME.font, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
                 >
                   {a.label}
                 </button>
