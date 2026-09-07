@@ -250,6 +250,15 @@ export const translations = {
   "bbhAllNotAssessed": { "fa": "هیچ بریری هنوز ارزیابی اثربخشی نشده — موتور DBEE را اجرا کنید", "en": "No barrier has an effectiveness assessment yet — run the DBEE engine" },
   "bbhCriticalLabel": { "fa": "بریر بحرانی (ناکارآمد، یا ضعیفِ با بحرانیت بالا)", "en": "Critical barriers (failed, or weak & high-criticality)" },
   "bbhDegradedHeader": { "fa": "بدترین بریرهای رو به افت", "en": "Most degraded barriers" },
+  "piwTitle": { "fa": "شاخص‌های پیشرو", "en": "Leading indicators" },
+  "piwClimate": { "fa": "جوّ ایمنی", "en": "Safety climate" },
+  "piwWeakest": { "fa": "ضعیف‌ترین", "en": "Weakest" },
+  "piwAccidentProneness": { "fa": "استعداد حادثه‌پذیری", "en": "Accident proneness" },
+  "piwApAtRisk": { "fa": "{n} در سطح بالا", "en": "{n} at high level" },
+  "piwApCount": { "fa": "{n} ارزیابی", "en": "{n} assessments" },
+  "piwSbs": { "fa": "SBS", "en": "SBS" },
+  "piwSbsUnsafePct": { "fa": "{pct}٪ ناایمن", "en": "{pct}% unsafe" },
+  "piwSbsCount": { "fa": "{unsafe} ناایمن از {total}", "en": "{unsafe} unsafe of {total}" },
   "moduleAdminAnalytics": {
     "fa": "داشبورد فعالیت کاربران",
     "en": "User Activity Dashboard"
