@@ -26,6 +26,7 @@ export const DASHBOARD_WIDGETS = [
   { key: "contractorHse", group: "comparison", labelKey: "dwContractorHse", defaultVisible: true, employerOnly: true },
   { key: "contractorPerformance", group: "comparison", labelKey: "dwContractorPerformance", defaultVisible: true, employerOnly: true },
   { key: "correctiveActionPerf", group: "comparison", labelKey: "dwCorrectiveActionPerf", defaultVisible: true, employerOnly: true },
+  { key: "systemAnnouncements", group: "alerts", labelKey: "dwSystemAnnouncements", defaultVisible: true },
   { key: "urgentAlerts", group: "alerts", labelKey: "dwUrgentAlerts", defaultVisible: true },
   { key: "smartInsights", group: "alerts", labelKey: "dwSmartInsights", defaultVisible: true },
   { key: "incidentSafety", group: "trends", labelKey: "dwIncidentSafety", defaultVisible: true },

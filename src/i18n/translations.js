@@ -344,6 +344,14 @@ export const translations = {
     "fa": "پیمانکاری ثبت نشده است",
     "en": "No contractors registered"
   },
+  "panelSystemAnnouncements": {
+    "fa": "اطلاعیه‌های سامانه",
+    "en": "System Announcements"
+  },
+  "noSystemAnnouncements": {
+    "fa": "اطلاعیه‌ی فعالی وجود ندارد.",
+    "en": "No active announcements."
+  },
   "panelUrgentAlerts": {
     "fa": "هشدارهای فوری",
     "en": "Urgent Alerts"
@@ -7949,6 +7957,7 @@ export const translations = {
   "dwContractorHse": { "fa": "جدول امتیاز HSE پیمانکاران", "en": "Contractor HSE Scorecard" },
   "dwContractorPerformance": { "fa": "نمودار امتیاز عملکرد پیمانکاران", "en": "Contractor Performance Score Chart" },
   "dwCorrectiveActionPerf": { "fa": "عملکرد اقدامات اصلاحی به تفکیک پیمانکار", "en": "Corrective Action Performance by Contractor" },
+  "dwSystemAnnouncements": { "fa": "اطلاعیه‌های سامانه", "en": "System Announcements" },
   "dwUrgentAlerts": { "fa": "هشدارهای فوری", "en": "Urgent Alerts" },
   "dwSmartInsights": { "fa": "تحلیل هوشمند", "en": "Smart Insights" },
   "dwIncidentSafety": { "fa": "آمار ایمنی حوادث (هرم و روند)", "en": "Incident Safety Stats (pyramid & trend)" },

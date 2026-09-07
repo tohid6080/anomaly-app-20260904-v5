@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import {
   Users, AlertTriangle, ShieldCheck, Building2, Truck, Tag, GitBranch,
   FileClock, Bell, TrendingUp, Sparkles, RadioTower, FileWarning, ClipboardCheck,
-  Activity, Download,
+  Activity, Download, Megaphone,
 } from "lucide-react";
 import { THEME } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
@@ -11,7 +11,7 @@ import {
   loadDashboardAnomalies, loadDashboardContractors, loadDashboardMachinery, loadDashboardScaffold, loadDashboardBowties,
   loadDashboardIncidents, loadDashboardCorrectiveActions, loadDashboardTripod, loadDashboardProactive,
 } from "./homeDashboardApi.js";
-import { loadDashboardWidgetConfig } from "../systemConfigApi.js";
+import { loadDashboardWidgetConfig, loadActiveAnnouncements } from "../systemConfigApi.js";
 import { mergeWidgetConfig, defaultWidgetConfig } from "./dashboardWidgets.js";
 import { INCIDENT_TYPES } from "../incidents/incidentsApi.js";
 import { TRIPOD_STATUS_LABELS } from "../tripodBeta/tripodAnalysesApi.js";
@@ -58,6 +58,7 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
   const [scaffold, setScaffold] = useState([]);
   const [bowties, setBowties] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [announcements, setAnnouncements] = useState([]);
   const [incidents, setIncidents] = useState([]);
   const [correctiveActions, setCorrectiveActions] = useState([]);
   const [tripod, setTripod] = useState([]);
@@ -81,6 +82,8 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
       setLoading(false);
     })();
     loadDashboardWidgetConfig().then((rows) => setWidgetRows(rows || []));
+    // کادر اطلاعیه‌های سامانه روی داشبورد — فقط اطلاعیه‌هایی که برای «home» تنظیم شده‌اند
+    loadActiveAnnouncements("home").then((rows) => setAnnouncements(rows || []));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -414,6 +417,23 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
                   <span style={{ color: THEME.text3 }}>{t("hdOpenCount", { count: r.open })}</span>
                   <span style={{ color: r.overdue > 0 ? "#c92a2a" : THEME.text3, fontWeight: r.overdue > 0 ? 700 : 400 }}>{t("hdOverdueCount", { count: r.overdue })}</span>
                 </span>
+              </div>
+            ))}
+          </Panel>
+        );
+      case "systemAnnouncements":
+        return (
+          <Panel key={key} title={t("panelSystemAnnouncements")} icon={Megaphone} compact>
+            {announcements.length === 0 && <p style={emptyTextStyle}>{t("noSystemAnnouncements")}</p>}
+            {announcements.map((an, i) => (
+              <div key={an.id} style={{ padding: "6px 0", borderBottom: i < announcements.length - 1 ? `1px solid ${THEME.border}` : "none" }}>
+                {an.title && <div style={{ fontSize: 11.5, fontWeight: 700, color: THEME.navy, marginBottom: 2 }}>{an.title}</div>}
+                <div style={{ fontSize: 11, color: THEME.text2, lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{an.message}</div>
+                {an.buttonUrl && an.buttonLabel && (
+                  <a href={an.buttonUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 10.5, fontWeight: 700, color: THEME.teal, textDecoration: "none", display: "inline-block", marginTop: 3 }}>
+                    {an.buttonLabel} ›
+                  </a>
+                )}
               </div>
             ))}
           </Panel>
