@@ -1187,7 +1187,7 @@ function LoginScreen({ onLogin }) {
         onUserLogin={() => setShowLogin(true)}
         announcements={landingAnnouncements}
         logoUrl={appearance?.logoUrl}
-        systemName={appearance?.systemName || APP_NAME}
+        systemName={appearance?.systemName || ""}
         heroImageUrl={ann0?.loginImageUrl || appearance?.loginImageUrl || ""}
       />
 
