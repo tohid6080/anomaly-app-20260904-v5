@@ -2216,6 +2216,7 @@ function AnomalyForm({ onBack, currentUser, onSaved, embedded }) {
     }
   };
 
+  const afPair = embedded ? { display: "contents" } : styles.formGrid;
   return (
     <div style={embedded ? { direction: dir } : { maxWidth: 620, margin: "0 auto", padding: 24 }}>
       {!embedded && onBack && <div style={styles.backLink} onClick={onBack}>{t("cmBackToMenu")}</div>}
@@ -2231,7 +2232,8 @@ function AnomalyForm({ onBack, currentUser, onSaved, embedded }) {
           </>
         )}
 
-        <div style={styles.formGrid}>
+        <div style={embedded ? styles.formGridWide : undefined}>
+        <div style={afPair}>
           <div>
             <label style={styles.label}>{t("afProject")}</label>
             <input style={styles.input} value={project} onChange={(e) => setProject(e.target.value)} dir={dir} />
@@ -2242,7 +2244,7 @@ function AnomalyForm({ onBack, currentUser, onSaved, embedded }) {
           </div>
         </div>
 
-        <div style={styles.formGrid}>
+        <div style={afPair}>
           <div>
             <label style={styles.label}>{t("afContractor")}</label>
             <select style={styles.input} value={contractor} onChange={(e) => setContractor(e.target.value)} dir={dir}>
@@ -2256,7 +2258,7 @@ function AnomalyForm({ onBack, currentUser, onSaved, embedded }) {
           </div>
         </div>
 
-        <div style={styles.formGrid}>
+        <div style={afPair}>
           <div>
             <label style={styles.label}>{t("afAreaLocation")}</label>
             <input style={styles.input} value={area} onChange={(e) => setArea(e.target.value)} dir={dir} placeholder={t("afAreaPlaceholder")} />
@@ -2267,7 +2269,7 @@ function AnomalyForm({ onBack, currentUser, onSaved, embedded }) {
           </div>
         </div>
 
-        <div style={styles.formGrid}>
+        <div style={afPair}>
           <div>
             <label style={styles.label}>{t("afTime")}</label>
             <input style={styles.input} type="time" value={time} onChange={(e) => setTime(e.target.value)} />
@@ -2292,7 +2294,7 @@ function AnomalyForm({ onBack, currentUser, onSaved, embedded }) {
           </div>
         </div>
 
-        <div style={styles.formGrid}>
+        <div style={afPair}>
           <div>
             <label style={styles.label}>{t("afCategory")}</label>
             <select style={styles.input} value={category} onChange={(e) => setCategory(e.target.value)} dir={dir}>
@@ -2305,13 +2307,15 @@ function AnomalyForm({ onBack, currentUser, onSaved, embedded }) {
               {ANOMALY_FORMATS.map((f) => <option key={f.value} value={f.value}>{t(f.labelKey)}</option>)}
             </select>
           </div>
+          <div>
+            <label style={styles.label}>{t("afFollower")}</label>
+            <input style={styles.input} value={follower} onChange={(e) => setFollower(e.target.value)} dir={dir} />
+          </div>
+        </div>
         </div>
 
         <label style={styles.label}>{t("afDescription")}</label>
         <textarea style={{ ...styles.input, minHeight: 100, resize: "vertical", fontFamily: "inherit" }} value={description} onChange={(e) => setDescription(e.target.value)} dir={dir} />
-
-        <label style={styles.label}>{t("afFollower")}</label>
-        <input style={styles.input} value={follower} onChange={(e) => setFollower(e.target.value)} dir={dir} />
 
         <label style={styles.label}>{t("afNeedsRiskAssessment")}</label>
         <div style={{ display: "flex", gap: 8, marginBottom: needsRiskAssessment ? 10 : 0 }}>

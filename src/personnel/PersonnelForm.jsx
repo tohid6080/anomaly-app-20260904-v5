@@ -127,8 +127,9 @@ export default function PersonnelForm({ onBack, onSaved, currentUser, wide, embe
     onSaved ? onSaved(inserted) : onBack && onBack();
   };
 
-  const bare = !!embedded;
+  const bare = !!(embedded || wide);
   const cardStyle = bare ? { ...styles.cardWide, width: "auto" } : styles.card;
+  const pairStyle = bare ? { display: "contents" } : styles.formGrid;
   return (
     <div style={bare ? { direction: dir } : wide ? { maxWidth: 820, direction: dir } : { maxWidth: 560, margin: "0 auto", padding: 24, direction: dir }}>
       {!bare && onBack && <div style={styles.backLink} onClick={onBack}>{t("pfBack")}</div>}
@@ -142,7 +143,8 @@ export default function PersonnelForm({ onBack, onSaved, currentUser, wide, embe
       )}
 
       <div style={cardStyle}>
-        <div style={styles.formGrid}>
+        <div style={bare ? styles.formGridWide : undefined}>
+        <div style={pairStyle}>
           <div>
             <label style={styles.label}>{t("pfFullName")}</label>
             <input style={styles.input} value={fullName} onChange={(e) => setFullName(e.target.value)} dir={dir} />
@@ -155,7 +157,7 @@ export default function PersonnelForm({ onBack, onSaved, currentUser, wide, embe
           </div>
         </div>
 
-        <div style={styles.formGrid}>
+        <div style={pairStyle}>
           <div>
             <label style={styles.label}>{t("pfContractorCompany")}</label>
             {currentUser?.role === "CONTRACTOR" ? (
@@ -181,7 +183,7 @@ export default function PersonnelForm({ onBack, onSaved, currentUser, wide, embe
         </div>
 
         {special && (
-          <div style={{ background: "#fff7ed", border: "1px solid #fdba74", borderRadius: 10, padding: 12, marginTop: 12, display: "flex", gap: 8 }}>
+          <div style={{ background: "#fff7ed", border: "1px solid #fdba74", borderRadius: 10, padding: 12, marginTop: 12, display: "flex", gap: 8, ...(bare ? { gridColumn: "1 / -1" } : null) }}>
             <AlertTriangle size={17} color="#c2410c" style={{ flexShrink: 0, marginTop: 1 }} />
             <p style={{ fontSize: 12, color: "#7c2d12", margin: 0, lineHeight: 1.7 }}>
               {t("pfSpecialJobWarning")}
@@ -189,7 +191,7 @@ export default function PersonnelForm({ onBack, onSaved, currentUser, wide, embe
           </div>
         )}
 
-        <div style={styles.formGrid}>
+        <div style={pairStyle}>
           <div>
             <label style={styles.label}>{t("pfPhone")}</label>
             <input style={styles.input} value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 11))} dir="ltr" inputMode="numeric" placeholder="09123456789" />
@@ -200,6 +202,7 @@ export default function PersonnelForm({ onBack, onSaved, currentUser, wide, embe
             <JalaliDateInput value={startDate} onChange={setStartDate} />
             {errors.startDate && <p style={styles.error}>{errors.startDate}</p>}
           </div>
+        </div>
         </div>
       </div>
 

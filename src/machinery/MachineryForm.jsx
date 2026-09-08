@@ -143,6 +143,8 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
     });
   };
 
+  const wideGrid = !!(wide || embedded);
+  const pairStyle = wideGrid ? { display: "contents" } : styles.formGrid;
   return (
     <div style={(wide || embedded) ? { direction: dir } : { maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
       {!embedded && onBack && <div style={styles.backLink} onClick={onBack}>{t("mfBack")}</div>}
@@ -162,7 +164,8 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
       )}
 
       <div style={{ ...(embedded ? styles.cardWide : styles.card), width: "auto" }}>
-        <div style={styles.formGrid}>
+        <div style={wideGrid ? styles.formGridWide : undefined}>
+        <div style={pairStyle}>
           <div>
             <label style={styles.label}>{t("mfSiteCompany")}</label>
             <input style={styles.input} value={project} onChange={(e) => setProject(e.target.value)} dir={dir} />
@@ -173,7 +176,7 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
           </div>
         </div>
 
-        <div style={styles.formGrid}>
+        <div style={pairStyle}>
           <div>
             <label style={styles.label}>{t("mfMachineType")}</label>
             <select style={styles.input} value={machineType} onChange={(e) => setMachineType(e.target.value)} dir={dir}>
@@ -186,7 +189,7 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
           </div>
         </div>
 
-        <div style={styles.formGrid}>
+        <div style={pairStyle}>
           <div>
             <label style={styles.label}>{t("mfChassisNumber")}</label>
             <input style={styles.input} value={chassisNumber} onChange={(e) => setChassisNumber(e.target.value)} dir={dir} />
@@ -197,7 +200,7 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
           </div>
         </div>
 
-        <div style={styles.formGrid}>
+        <div style={pairStyle}>
           <div>
             <label style={styles.label}>{t("mfOwnershipStatus")}</label>
             <select style={styles.input} value={ownershipStatus} onChange={(e) => setOwnershipStatus(e.target.value)} dir={dir}>
@@ -212,7 +215,7 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
           </div>
         </div>
 
-        <div style={styles.formGrid}>
+        <div style={pairStyle}>
           <div>
             <label style={styles.label}>{t("mfInsuranceIssueDate")}</label>
             <JalaliDateInput value={insuranceIssueDate} onChange={setInsuranceIssueDate} allowEmpty />
@@ -223,7 +226,7 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
           </div>
         </div>
 
-        <div style={styles.formGrid}>
+        <div style={pairStyle}>
           <div>
             <label style={styles.label}>{t("mfInspectionIssueDate")}</label>
             <JalaliDateInput value={inspectionIssueDate} onChange={setInspectionIssueDate} allowEmpty />
@@ -234,7 +237,7 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
           </div>
         </div>
 
-        <div style={styles.formGrid}>
+        <div style={pairStyle}>
           <div>
             <label style={styles.label}>{t("mfHealthCertIssueDate")}</label>
             <JalaliDateInput value={healthCertIssueDate} onChange={setHealthCertIssueDate} allowEmpty />
@@ -245,7 +248,7 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
           </div>
         </div>
 
-        <div style={styles.formGrid}>
+        <div style={pairStyle}>
           <div>
             <label style={styles.label}>{t("mfDriverName")}</label>
             <input style={styles.input} value={driverName} onChange={(e) => setDriverName(e.target.value)} dir={dir} />
@@ -258,7 +261,7 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
           </div>
         </div>
 
-        <div style={styles.formGrid}>
+        <div style={pairStyle}>
           <div>
             <label style={styles.label}>{t("mfDriverLicenseIssueDate")}</label>
             <JalaliDateInput value={driverLicenseIssueDate} onChange={setDriverLicenseIssueDate} allowEmpty />
@@ -269,7 +272,7 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
           </div>
         </div>
 
-        <div style={styles.formGrid}>
+        <div style={pairStyle}>
           <div>
             <label style={styles.label}>{t("mfBackupDriverName")}</label>
             <input style={styles.input} value={backupDriverName} onChange={(e) => setBackupDriverName(e.target.value)} dir={dir} />
@@ -280,7 +283,7 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
           </div>
         </div>
 
-        <div style={styles.formGrid}>
+        <div style={pairStyle}>
           <div>
             <label style={styles.label}>{t("mfBackupDriverLicenseIssueDate")}</label>
             <JalaliDateInput value={backupDriverLicenseIssueDate} onChange={setBackupDriverLicenseIssueDate} allowEmpty />
@@ -291,9 +294,10 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
           </div>
         </div>
 
-        <div>
+        <div style={wideGrid ? { gridColumn: "1 / -1" } : undefined}>
           <label style={styles.label}>{t("mfUnsafeBehavior")}</label>
           <textarea style={{ ...styles.input, minHeight: 50, fontFamily: "inherit" }} value={unsafeBehavior} onChange={(e) => setUnsafeBehavior(e.target.value)} dir={dir} />
+        </div>
         </div>
 
         {error && <p style={styles.error}>{error}</p>}

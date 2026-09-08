@@ -307,6 +307,10 @@ export const styles = {
   userRow: { background: THEME.cardBg, padding: "14px 18px", borderRadius: THEME.radiusCard, border: `1px solid ${THEME.cardBorder}`, display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 14.5 },
   backLink: { cursor: "pointer", color: THEME.text3, marginBottom: 12, fontSize: 12, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 },
   formGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))", gap: 12 },
+  // نسخهٔ عریض برای فرم‌های وب: هر سطر تا ~۴ فیلد کنار هم تا صفحه جمع‌وجور
+  // شود. فیلدهای بلند (متن چندخطی، ردیفِ دکمه‌ها) با gridColumn:"1 / -1"
+  // تمام‌عرض می‌شوند.
+  formGridWide: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(250px, 100%), 1fr))", gap: "12px 16px", alignItems: "start" },
   statsRow: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(78px, 1fr))", gap: 10, marginTop: 8 },
   statBox: { background: THEME.cardBg, border: `1px solid ${THEME.cardBorder}`, borderRadius: THEME.radiusCard, padding: "14px 8px", textAlign: "center", boxShadow: "0 1px 2px rgba(15,42,63,0.03)" },
   statNum: { fontSize: 21, fontWeight: 700, color: THEME.navy, fontFamily: THEME.font },
