@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useId, useContext, createContext } from "react";
 import { ShieldAlert, Plus, LogOut, Send, CreditCard, AlertTriangle, UserPlus, KeyRound, Layers, Trash2, History, Activity, TrendingDown, Clock, LogIn, ShieldX, LayoutDashboard, Building2, Users, FileClock, ChevronLeft, HardDrive, RefreshCw, Settings2, Copy, GripVertical, ArrowUp, ArrowDown, RotateCcw, Eye, EyeOff, LayoutGrid, PanelsTopLeft, Bell, Palette, Megaphone, Sparkles, Gift, Info, ImagePlus, X, ClipboardList, Smartphone, UploadCloud, CheckCircle2, Download } from "lucide-react";
 import { loadAppReleases, createAppRelease, setReleasePublished, deleteAppRelease, loadLatestPublishedRelease, nextPatchVersion, triggerMobileBuild } from "./appReleaseApi.js";
 import { APP_VERSION, APP_VERSION_CODE } from "../shared.js";
@@ -1918,11 +1918,11 @@ const APPEARANCE_SECTION_RESETS = {
   geometry: (u) => APPEARANCE_GEO_FIELDS.forEach((f) => u(f, null)),
 };
 
-function NumField({ label, value, placeholder, onChange, min, max, step }) {
+function NumField({ label, value, placeholder, onChange, min, max, step, help }) {
   const has = value != null && value !== "";
   return (
     <div style={{ minWidth: 110 }}>
-      <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{label}</label>
+      <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{label}{help && <HelpDot helpKey={help} />}</label>
       <input
         type="number" min={min} max={max} step={step || 1} dir="ltr"
         style={{ ...inputStyle, width: 96 }} value={has ? value : ""} placeholder={placeholder == null ? "" : String(placeholder)}
@@ -1962,10 +1962,10 @@ function ChoiceRow({ options, value, onChange, t }) {
   );
 }
 
-function SectionHead({ children, onReset, resetLabel }) {
+function SectionHead({ children, onReset, resetLabel, help }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "0 0 10px", paddingBottom: 6, borderBottom: `1px solid ${THEME.border}` }}>
-      <h4 style={{ fontSize: 12.5, color: THEME.heading, fontWeight: 700, margin: 0, flex: 1 }}>{children}</h4>
+      <h4 style={{ fontSize: 12.5, color: THEME.heading, fontWeight: 700, margin: 0, flex: 1 }}>{children}{help && <HelpDot helpKey={help} />}</h4>
       {onReset && (
         <button type="button" onClick={onReset} style={{ fontSize: 10, color: THEME.warn, background: "none", border: "none", cursor: "pointer", fontFamily: THEME.font, whiteSpace: "nowrap" }}>
           ↺ {resetLabel}
@@ -2037,54 +2037,87 @@ const APPEARANCE_SCOPES = [
   { key: "superadmin", labelKey: "saApScopeSuperadmin" },
 ];
 
-// راهنمای درون‌ساخت: هر کنترل → چه چیزی را تغییر می‌دهد. ستونِ «کنترل» از
-// همان کلیدهای ترجمه‌شده‌ی خودِ کنترل‌ها می‌آید؛ فقط ستونِ «توضیح» کلیدِ جدید دارد.
-const APPEARANCE_GUIDE = [
-  { titleKey: "saApBasePreset", rows: [["saApTheme", "saApGuideTheme"], ["saApVisualMode", "saApGuideVisualMode"], ["saApUiScale", "saApGuideUiScale"]] },
-  { titleKey: "saApColors", rows: [["saApColorPrimary", "saApGuidePrimary"], ["saApColorAccent", "saApGuideAccent"]] },
-  { titleKey: "saApGroupSurface", rows: [["saApTokBg", "saApGuideBg"], ["saApTokSurface", "saApGuideSurface"], ["saApTokSurface2", "saApGuideSurface2"], ["saApTokBorder", "saApGuideBorder"]] },
-  { titleKey: "saApGroupText", rows: [["saApTokText", "saApGuideText"], ["saApTokText2", "saApGuideText2"], ["saApTokText3", "saApGuideText3"]] },
-  { titleKey: "saApGroupStatus", rows: [["saApTokOk", "saApGuideOk"], ["saApTokWarn", "saApGuideWarn"], ["saApTokDanger", "saApGuideDanger"]] },
-  { titleKey: "saApRegionColors", rows: [["saApRegionHeader", "saApGuideRegionHeader"], ["saApRegionSidebar", "saApGuideRegionSidebar"], ["saApRegionCard", "saApGuideRegionCard"], ["saApRegionWidget", "saApGuideRegionWidget"]] },
-  { titleKey: "saApThemeFont", rows: [
-    ["saApFontFamily", "saApGuideFontFamily"], ["saApFontWeightBase", "saApGuideFontWeightBase"],
-    ["saApRoleHeader", "saApGuideRoleHeader"], ["saApRoleMenu", "saApGuideRoleMenu"], ["saApRoleTitle", "saApGuideRoleTitle"],
-    ["saApRoleBody", "saApGuideRoleBody"], ["saApRoleCard", "saApGuideRoleCard"], ["saApRoleKpi", "saApGuideRoleKpi"], ["saApRoleTable", "saApGuideRoleTable"],
-  ] },
-  { titleKey: "saApGeometry", rows: [
-    ["saApGeoRadiusCard", "saApGuideRadiusCard"], ["saApGeoRadiusBtn", "saApGuideRadiusBtn"],
-    ["saApGeoPad", "saApGuidePad"], ["saApGeoGap", "saApGuideGap"],
-    ["saApGeoIconSize", "saApGuideIconSize"], ["saApGeoIconStroke", "saApGuideIconStroke"],
-  ] },
-];
+// نگاشتِ «کلیدِ برچسبِ کنترل → کلیدِ متنِ راهنما». برای آیکونِ ? کنارِ هر فیلد.
+const APPEARANCE_HELP = {
+  // پایه
+  saApTheme: "saApGuideTheme", saApVisualMode: "saApGuideVisualMode", saApUiScale: "saApGuideUiScale",
+  // برند + سطوح + متن + وضعیت
+  saApColorPrimary: "saApGuidePrimary", saApColorAccent: "saApGuideAccent",
+  saApTokBg: "saApGuideBg", saApTokSurface: "saApGuideSurface", saApTokSurface2: "saApGuideSurface2", saApTokBorder: "saApGuideBorder",
+  saApTokText: "saApGuideText", saApTokText2: "saApGuideText2", saApTokText3: "saApGuideText3",
+  saApTokOk: "saApGuideOk", saApTokWarn: "saApGuideWarn", saApTokDanger: "saApGuideDanger",
+  // ناحیه‌ها
+  saApRegionHeader: "saApGuideRegionHeader", saApRegionSidebar: "saApGuideRegionSidebar",
+  saApRegionCard: "saApGuideRegionCard", saApRegionWidget: "saApGuideRegionWidget",
+  // تایپوگرافی
+  saApFontFamily: "saApGuideFontFamily", saApFontWeightBase: "saApGuideFontWeightBase",
+  saApRoleHeader: "saApGuideRoleHeader", saApRoleMenu: "saApGuideRoleMenu", saApRoleTitle: "saApGuideRoleTitle",
+  saApRoleBody: "saApGuideRoleBody", saApRoleCard: "saApGuideRoleCard", saApRoleKpi: "saApGuideRoleKpi", saApRoleTable: "saApGuideRoleTable",
+  // هندسه
+  saApGeoRadiusCard: "saApGuideRadiusCard", saApGeoRadiusBtn: "saApGuideRadiusBtn",
+  saApGeoPad: "saApGuidePad", saApGeoGap: "saApGuideGap",
+  saApGeoIconSize: "saApGuideIconSize", saApGeoIconStroke: "saApGuideIconStroke",
+  // سرگروه‌ها
+  saApBasePreset: "saApGuideGrpBase", saApColors: "saApGuideGrpColors",
+  saApRegionColors: "saApGuideGrpRegion", saApThemeFont: "saApGuideGrpFont", saApGeometry: "saApGuideGrpGeometry",
+};
 
-function AppearanceGuide() {
+// فقط یک راهنما هم‌زمان باز است. Provider یک openId مشترک و listenerهای
+// «کلیک بیرون / Escape» را نگه می‌دارد؛ هر HelpDot با useId شناسه‌ی یکتا می‌گیرد.
+const AppearanceHelpContext = createContext({ openId: null, setOpenId: () => {} });
+function AppearanceHelpProvider({ children }) {
+  const [openId, setOpenId] = useState(null);
+  useEffect(() => {
+    if (openId == null) return undefined;
+    const onOutside = (e) => { if (!e.target.closest || !e.target.closest("[data-help-dot]")) setOpenId(null); };
+    const onKey = (e) => { if (e.key === "Escape") setOpenId(null); };
+    document.addEventListener("pointerdown", onOutside, true);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("pointerdown", onOutside, true); document.removeEventListener("keydown", onKey); };
+  }, [openId]);
+  return <AppearanceHelpContext.Provider value={{ openId, setOpenId }}>{children}</AppearanceHelpContext.Provider>;
+}
+
+// آیکونِ ? داخلِ دایره + Popover کوچک. layout جابه‌جا نمی‌شود (position:absolute).
+function HelpDot({ helpKey, align = "start" }) {
   const { t, dir } = useLanguage();
+  const id = useId();
+  const { openId, setOpenId } = useContext(AppearanceHelpContext);
+  const open = openId === id;
+  const text = helpKey ? t(helpKey) : "";
+  if (!text || text === helpKey) return null;
   return (
-    <details style={{ border: `1px solid ${THEME.border}`, borderRadius: 9, background: THEME.surface2, marginBottom: 16 }}>
-      <summary style={{ cursor: "pointer", padding: "10px 14px", fontSize: 12.5, fontWeight: 700, color: THEME.navy, listStyle: "none" }}>
-        ⓘ {t("saApGuideShow")}
-      </summary>
-      <div style={{ padding: "4px 14px 14px" }}>
-        <p style={{ fontSize: 11, color: THEME.text2, lineHeight: 1.9, margin: "0 0 8px" }}>{t("saApGuideIntro")}</p>
-        <p style={{ fontSize: 11, color: THEME.text3, lineHeight: 1.9, margin: "0 0 12px", borderInlineStart: `2px solid ${THEME.border}`, paddingInlineStart: 10 }}>{t("saApGuideScopeNote")}</p>
-        {APPEARANCE_GUIDE.map((sec) => (
-          <div key={sec.titleKey} style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 11.5, fontWeight: 800, color: THEME.navy, margin: "0 0 5px" }}>{t(sec.titleKey)}</div>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }} dir={dir}>
-              <tbody>
-                {sec.rows.map(([ctrlKey, whereKey]) => (
-                  <tr key={ctrlKey} style={{ borderBottom: `1px solid ${THEME.borderSoft}` }}>
-                    <td style={{ padding: "6px 8px 6px 0", fontWeight: 700, color: THEME.text, whiteSpace: "nowrap", verticalAlign: "top", width: 130 }}>{t(ctrlKey)}</td>
-                    <td style={{ padding: "6px 0", color: THEME.text2, lineHeight: 1.8 }}>{t(whereKey)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ))}
-      </div>
-    </details>
+    <span data-help-dot style={{ position: "relative", display: "inline-flex", verticalAlign: "middle", marginInlineStart: 5 }}>
+      <button
+        type="button"
+        aria-label={t("saApHelpAria")}
+        aria-expanded={open}
+        onClick={() => setOpenId(open ? null : id)}
+        style={{
+          width: 15, height: 15, borderRadius: "50%", flexShrink: 0, padding: 0, cursor: "pointer",
+          border: `1px solid ${open ? THEME.teal : THEME.border}`, background: open ? THEME.teal : "transparent",
+          color: open ? "#fff" : THEME.text3, fontSize: 9.5, fontWeight: 800, lineHeight: 1,
+          display: "inline-flex", alignItems: "center", justifyContent: "center", fontFamily: THEME.font,
+        }}
+      >?</button>
+      {open && (
+        <div
+          role="tooltip"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            position: "absolute", top: "calc(100% + 6px)", zIndex: 60,
+            [align === "end" ? "insetInlineEnd" : "insetInlineStart"]: 0,
+            width: "min(280px, 76vw)", background: THEME.surface2, color: THEME.text,
+            border: `1px solid ${THEME.borderStrong}`, borderRadius: 8, padding: "9px 11px",
+            fontSize: 11, lineHeight: 1.85, fontWeight: 400, direction: dir, textAlign: "start",
+            whiteSpace: "normal", overflowWrap: "break-word",
+            boxShadow: "0 10px 30px -8px rgba(0,0,0,0.55)",
+          }}
+        >
+          {text}
+        </div>
+      )}
+    </span>
   );
 }
 const nonEmptyOverride = (o) => {
@@ -2150,12 +2183,11 @@ function AppearanceManagementTab({ currentAdmin }) {
   };
 
   return (
+   <AppearanceHelpProvider>
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
       <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 12, lineHeight: 1.8 }}>
         {t("saApNote")}
       </p>
-
-      <AppearanceGuide />
 
       {/* انتخابِ scope: وب / موبایل / سوپرادمین */}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
@@ -2204,7 +2236,7 @@ function AppearanceManagementTab({ currentAdmin }) {
       </>)}
 
       {/* ===== ۱. پایه: پریست، تم، حالتِ بصری، مقیاسِ UI ===== */}
-      <SectionHead onReset={() => APPEARANCE_SECTION_RESETS.base(update)} resetLabel={t("saApResetSection")}>{t("saApBasePreset")}</SectionHead>
+      <SectionHead onReset={() => APPEARANCE_SECTION_RESETS.base(update)} resetLabel={t("saApResetSection")} help={APPEARANCE_HELP.saApBasePreset}>{t("saApBasePreset")}</SectionHead>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
         {[["darkNeon", "saApPresetDarkNeon"], ["light", "saApPresetLight"], ["midnight", "saApPresetMidnight"]].map(([key, lk]) => (
           <button
@@ -2218,27 +2250,27 @@ function AppearanceManagementTab({ currentAdmin }) {
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14, marginBottom: 18 }}>
         <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 6 }}>{t("saApTheme")}</label>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 6 }}>{t("saApTheme")}<HelpDot helpKey={APPEARANCE_HELP.saApTheme} /></label>
           <select style={{ ...inputStyle, maxWidth: 180 }} value={config.themeMode} onChange={(e) => update("themeMode", e.target.value)} dir={dir}>
             <option value="light">{t("saApThemeLight")}</option>
             <option value="dark">{t("saApThemeDark")}</option>
           </select>
         </div>
         <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 6 }}>{t("saApVisualMode")}</label>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 6 }}>{t("saApVisualMode")}<HelpDot helpKey={APPEARANCE_HELP.saApVisualMode} /></label>
           <ChoiceRow options={APPEARANCE_VISUAL_MODES} value={config.visualMode} onChange={(v) => update("visualMode", v)} t={t} />
         </div>
         <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 6 }}>{t("saApUiScale")}</label>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 6 }}>{t("saApUiScale")}<HelpDot helpKey={APPEARANCE_HELP.saApUiScale} /></label>
           <ChoiceRow options={APPEARANCE_UI_SCALES} value={config.uiScale} onChange={(v) => update("uiScale", v)} t={t} />
         </div>
       </div>
 
       {/* ===== ۲. رنگ‌ها: برند، سطوح، متن، وضعیت، ناحیه‌ها ===== */}
-      <SectionHead onReset={() => APPEARANCE_SECTION_RESETS.colors(update)} resetLabel={t("saApResetSection")}>{t("saApColors")}</SectionHead>
+      <SectionHead onReset={() => APPEARANCE_SECTION_RESETS.colors(update)} resetLabel={t("saApResetSection")} help={APPEARANCE_HELP.saApColors}>{t("saApColors")}</SectionHead>
       <div style={{ display: "flex", gap: 18, flexWrap: "wrap", marginBottom: 14 }}>
-        <ColorField label={t("saApColorPrimary")} value={config.colorPrimary} onChange={(v) => update("colorPrimary", v)} />
-        <ColorField label={t("saApColorAccent")} value={config.colorAccent} onChange={(v) => update("colorAccent", v)} />
+        <ColorField label={t("saApColorPrimary")} value={config.colorPrimary} onChange={(v) => update("colorPrimary", v)} help={APPEARANCE_HELP.saApColorPrimary} />
+        <ColorField label={t("saApColorAccent")} value={config.colorAccent} onChange={(v) => update("colorAccent", v)} help={APPEARANCE_HELP.saApColorAccent} />
       </div>
       {APPEARANCE_TOKEN_GROUPS.map((g) => (
         <div key={g.key} style={{ marginBottom: 14 }}>
@@ -2246,7 +2278,7 @@ function AppearanceManagementTab({ currentAdmin }) {
           <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
             {g.fields.map(([field, cssVar, lk]) => (
               <TokenColorField
-                key={field} label={t(lk)} cssVar={cssVar}
+                key={field} label={t(lk)} cssVar={cssVar} help={APPEARANCE_HELP[lk]}
                 value={config[field]} fallback={tokenDefaults[cssVar]}
                 clearLabel={t("saApUseThemeDefault")}
                 onChange={(v) => update(field, v)} onClear={() => update(field, "")}
@@ -2255,11 +2287,11 @@ function AppearanceManagementTab({ currentAdmin }) {
           </div>
         </div>
       ))}
-      <div style={{ fontSize: 11, fontWeight: 700, color: THEME.text2, margin: "4px 0 8px" }}>{t("saApRegionColors")}</div>
+      <div style={{ fontSize: 11, fontWeight: 700, color: THEME.text2, margin: "4px 0 8px" }}>{t("saApRegionColors")}<HelpDot helpKey={APPEARANCE_HELP.saApRegionColors} /></div>
       <div style={{ display: "flex", gap: 20, flexWrap: "wrap", marginBottom: 18 }}>
         {APPEARANCE_REGION_GROUPS.map((r) => (
           <div key={r.labelKey}>
-            <div style={{ fontSize: 10.5, fontWeight: 700, color: THEME.text3, marginBottom: 6 }}>{t(r.labelKey)}</div>
+            <div style={{ fontSize: 10.5, fontWeight: 700, color: THEME.text3, marginBottom: 6 }}>{t(r.labelKey)}<HelpDot helpKey={APPEARANCE_HELP[r.labelKey]} /></div>
             <div style={{ display: "flex", gap: 10 }}>
               <TokenColorField
                 label={t("saApRegionBg")} cssVar={r.varBg} value={config[r.bg]} fallback={tokenDefaults[r.varBg]}
@@ -2275,17 +2307,17 @@ function AppearanceManagementTab({ currentAdmin }) {
       </div>
 
       {/* ===== ۳. تایپوگرافی: فونت، وزنِ پایه، سایز/وزن به تفکیکِ نقش ===== */}
-      <SectionHead onReset={() => APPEARANCE_SECTION_RESETS.typography(update)} resetLabel={t("saApResetSection")}>{t("saApThemeFont")}</SectionHead>
+      <SectionHead onReset={() => APPEARANCE_SECTION_RESETS.typography(update)} resetLabel={t("saApResetSection")} help={APPEARANCE_HELP.saApThemeFont}>{t("saApThemeFont")}</SectionHead>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginBottom: 8 }}>
         <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApFontFamily")}</label>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApFontFamily")}<HelpDot helpKey={APPEARANCE_HELP.saApFontFamily} /></label>
           <select style={inputStyle} value={config.fontFamily} onChange={(e) => update("fontFamily", e.target.value)} dir="ltr">
             {!fontInList && <option value={config.fontFamily}>{t("saApFontCurrentCustom")}</option>}
             {APPEARANCE_FONT_PRESETS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
           </select>
         </div>
         <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApFontWeightBase")}</label>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApFontWeightBase")}<HelpDot helpKey={APPEARANCE_HELP.saApFontWeightBase} /></label>
           <WeightSelect value={config.fontWeightBase} placeholder={t("saApFontDefault")} onChange={(v) => update("fontWeightBase", v)} />
         </div>
       </div>
@@ -2296,7 +2328,7 @@ function AppearanceManagementTab({ currentAdmin }) {
         </div>
         {APPEARANCE_FONT_ROLES.map(([sf, wf, cssVar, lk]) => (
           <div key={sf} style={{ display: "grid", gridTemplateColumns: "1fr 96px 96px", gap: 10, alignItems: "center" }}>
-            <span style={{ fontSize: 12, color: THEME.text }}>{t(lk)}</span>
+            <span style={{ fontSize: 12, color: THEME.text }}>{t(lk)}<HelpDot helpKey={APPEARANCE_HELP[lk]} /></span>
             <input
               type="number" min={8} max={60} step={0.5} dir="ltr"
               style={{ ...inputStyle, width: 96 }} value={config[sf] ?? ""} placeholder={String(parseFloat(tokenDefaults[cssVar]))}
@@ -2308,11 +2340,11 @@ function AppearanceManagementTab({ currentAdmin }) {
       </div>
 
       {/* ===== ۴. هندسه و فاصله ===== */}
-      <SectionHead onReset={() => APPEARANCE_SECTION_RESETS.geometry(update)} resetLabel={t("saApResetSection")}>{t("saApGeometry")}</SectionHead>
+      <SectionHead onReset={() => APPEARANCE_SECTION_RESETS.geometry(update)} resetLabel={t("saApResetSection")} help={APPEARANCE_HELP.saApGeometry}>{t("saApGeometry")}</SectionHead>
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 18 }}>
         {APPEARANCE_GEOMETRY_FIELDS.map(([f, cssVar, lk]) => (
           <NumField
-            key={f} label={t(lk)} value={config[f]} placeholder={parseFloat(tokenDefaults[cssVar])}
+            key={f} label={t(lk)} value={config[f]} placeholder={parseFloat(tokenDefaults[cssVar])} help={APPEARANCE_HELP[lk]}
             onChange={(v) => update(f, v)} min={0} max={f === "iconStroke" ? 4 : 60} step={f === "iconStroke" ? 0.25 : 1}
           />
         ))}
@@ -2362,6 +2394,7 @@ function AppearanceManagementTab({ currentAdmin }) {
         <button type="button" style={btnStyle(THEME.text3)} onClick={resetAll} disabled={saving}>{t("saApResetAll")}</button>
       </div>
     </div>
+   </AppearanceHelpProvider>
   );
 }
 
@@ -2369,10 +2402,10 @@ function SectionLabel({ children }) {
   return <h4 style={{ fontSize: 12.5, color: THEME.heading, fontWeight: 700, margin: "0 0 10px", paddingBottom: 6, borderBottom: `1px solid ${THEME.border}` }}>{children}</h4>;
 }
 
-function ColorField({ label, value, onChange }) {
+function ColorField({ label, value, onChange, help }) {
   return (
     <div>
-      <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{label}</label>
+      <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{label}{help && <HelpDot helpKey={help} />}</label>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <input type="color" value={value} onChange={(e) => onChange(e.target.value)} style={{ width: 40, height: 34, border: `1.5px solid ${THEME.border}`, borderRadius: 8, cursor: "pointer", padding: 2 }} />
         <input style={{ ...inputStyle, width: 100 }} value={value} onChange={(e) => onChange(e.target.value)} dir="ltr" />
@@ -2384,13 +2417,13 @@ function ColorField({ label, value, onChange }) {
 // مثل ColorField ولی مقدارِ خالی مجاز است و یعنی «پیش‌فرضِ تم» — swatch و
 // placeholder همان رنگِ پیش‌فرض (fallback) را نشان می‌دهند و تا وقتی
 // سوپرادمین رنگی ست نکند، چیزی روی این توکن ذخیره نمی‌شود.
-function TokenColorField({ label, cssVar, value, fallback, clearLabel, onChange, onClear }) {
+function TokenColorField({ label, cssVar, value, fallback, clearLabel, onChange, onClear, help }) {
   const isCustom = !!(value && String(value).trim());
   const hex6 = /^#[0-9a-fA-F]{6}$/;
   const swatch = isCustom && hex6.test(value) ? value : (hex6.test(fallback || "") ? fallback : "#000000");
   return (
     <div style={{ minWidth: 150 }}>
-      <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{label}</label>
+      <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{label}{help && <HelpDot helpKey={help} />}</label>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <input type="color" value={swatch} onChange={(e) => onChange(e.target.value)} style={{ width: 40, height: 34, border: `1.5px solid ${THEME.border}`, borderRadius: 8, cursor: "pointer", padding: 2 }} />
         <input style={{ ...inputStyle, width: 96 }} value={isCustom ? value : ""} placeholder={fallback} onChange={(e) => onChange(e.target.value)} dir="ltr" />
