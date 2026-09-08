@@ -2104,7 +2104,9 @@ function AppearanceManagementTab({ currentAdmin }) {
   const [message, setMessage] = useState("");
   const [msgErr, setMsgErr] = useState(false);
 
-  const load = () => loadAppearanceConfig().then(setRaw);
+  // فقط داده‌ی واقعیِ سرور را می‌نشانیم؛ اگر شبکه قطع بود (__ok=false)
+  // اسپینر می‌ماند تا ادمین اشتباهاً روی «پیش‌فرض‌ها» ذخیره نکند.
+  const load = () => loadAppearanceConfig().then((c) => { if (c && c.__ok) setRaw(c); });
   useEffect(() => { load(); }, []);
 
   if (!raw) return <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 30 }}>{t("commonLoading")}</p>;

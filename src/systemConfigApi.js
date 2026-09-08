@@ -162,6 +162,7 @@ const APPEARANCE_KEYS = [
   "appearance_system_name", "appearance_system_title", "appearance_logo_url", "appearance_favicon_url", "appearance_apk_icon_url",
   "appearance_color_primary", "appearance_color_accent", "appearance_theme_mode", "appearance_font_family",
   "appearance_font_size_base", "appearance_sidebar_default_collapsed", "appearance_header_show_company_name",
+  "appearance_updated_at", // مُهرِ زمانِ آخرین ذخیره — کلاینت با مقایسه‌اش می‌فهمد ظاهر تغییر کرده
   // پالت کاملِ سطوح/متن/وضعیت — هر کدام خالی بماند، مقدارِ همان تمِ
   // پایه (تیره/روشن) استفاده می‌شود؛ پس تنظیمِ نکردنشان = رفتارِ فعلی.
   "appearance_color_bg", "appearance_color_surface", "appearance_color_surface_2", "appearance_color_border",
@@ -264,10 +265,18 @@ const VISUAL_MODE_ELEV = {
 };
 
 export async function loadAppearanceConfig() {
-  const rows = await sb(`system_settings?key=in.(${APPEARANCE_KEYS.map((k) => `"${k}"`).join(",")})&select=key,value_text,value_numeric`);
+  // شبکه قطع/خطا نباید throw کند — فقط __ok=false برمی‌گردانیم تا کلاینت
+  // بداند «داده‌ی تازه‌ای نگرفتیم» و به کشِ محلی برگردد (نه به پیش‌فرض‌ها).
+  let rows = null;
+  try {
+    rows = await sb(`system_settings?key=in.(${APPEARANCE_KEYS.map((k) => `"${k}"`).join(",")})&select=key,value_text,value_numeric`);
+  } catch { rows = null; }
+  const ok = sbOk(rows);
   const map = {};
-  if (sbOk(rows)) rows.forEach((r) => { map[r.key] = r.value_numeric != null ? r.value_numeric : r.value_text; });
+  if (ok) rows.forEach((r) => { map[r.key] = r.value_numeric != null ? r.value_numeric : r.value_text; });
   return {
+    __ok: ok,
+    updatedAt: map.appearance_updated_at || null,
     systemName: map.appearance_system_name || "IHMS",
     systemTitle: map.appearance_system_title || tr("defaultSystemTitle"),
     logoUrl: map.appearance_logo_url || "",
@@ -336,6 +345,7 @@ export async function saveAppearanceConfig(config, updatedBy) {
     ["appearance_font_size_base", config.fontSizeBase, "numeric"],
     ["appearance_sidebar_default_collapsed", String(!!config.sidebarDefaultCollapsed), "text"],
     ["appearance_header_show_company_name", String(config.headerShowCompanyName !== false), "text"],
+    ["appearance_updated_at", String(Date.now()), "text"],
     ["appearance_visual_mode", config.visualMode, "text"],
     ["appearance_ui_scale", config.uiScale, "text"],
     ["appearance_font_weight_base", config.fontWeightBase, "numeric"],
@@ -517,6 +527,36 @@ export function readCachedAppearanceConfig() {
     const parsed = JSON.parse(localStorage.getItem(APPEARANCE_CACHE_KEY) || "null");
     return parsed && parsed.v === 3 && parsed.config ? parsed.config : null;
   } catch { return null; }
+}
+
+// scopeِ ظاهریِ کلاینت بر اساسِ عرضِ صفحه (همان مرزِ ۱۰۲۴px که useIsDesktop
+// در App.jsx استفاده می‌کند). پنلِ سوپرادمین scopeِ خودش را جدا اعمال می‌کند.
+export function pickAppearanceScope() {
+  try { return window.matchMedia("(min-width: 1024px)").matches ? "web" : "mobile"; }
+  catch { return "web"; }
+}
+
+// همگام‌سازیِ فوریِ ظاهر: تنظیماتِ تازه را از سرور بگیر، کش را به‌روزرسانی
+// کن و همین‌الان روی DOM اعمال کن — بدون رفرش/ری‌استارت. اگر آفلاین بود یا
+// سرور جواب نداد، آخرین کش دوباره اعمال می‌شود. برای هر دو مسیر:
+// دکمه‌ی «به‌روزرسانی ظاهر» و رویدادِ فعال‌شدنِ اپ.
+export async function syncAppearanceNow() {
+  const scope = pickAppearanceScope();
+  let cfg = null;
+  try { cfg = await loadAppearanceConfig(); } catch { cfg = null; }
+  if (cfg && cfg.__ok) {
+    const prev = readCachedAppearanceConfig();
+    cacheAppearanceConfig(cfg);
+    applyAppearanceToDom(effectiveAppearance(cfg, scope));
+    const changed = !prev || String(prev.updatedAt || "") !== String(cfg.updatedAt || "");
+    return { status: "synced", changed, updatedAt: cfg.updatedAt || null };
+  }
+  const cached = readCachedAppearanceConfig();
+  if (cached) {
+    applyAppearanceToDom(effectiveAppearance(cached, scope));
+    return { status: "offline", changed: false };
+  }
+  return { status: "failed", changed: false };
 }
 
 // ---------- اطلاعیه‌های سامانه ----------

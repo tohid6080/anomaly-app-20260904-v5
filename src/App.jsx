@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, Suspense, lazy } from "react";
-import { AlertTriangle, Plus, X, ChevronRight, ChevronLeft, ChevronDown, ChevronsRight, ChevronsLeft, LogOut, CheckCircle2, Clock, Camera, ImagePlus, Trash2, FileSpreadsheet, FileText, User, Users, ShieldCheck, LayoutGrid, BarChart3, Briefcase, Settings, Archive, Truck, Tag, MessageCircle, GraduationCap, ShieldOff, ShieldAlert, Database, Fingerprint, Info, Sliders, TrendingUp, Search, Home, Megaphone, Sparkles, Gift, Bell, ArrowUpRight, ClipboardList, MoreVertical } from "lucide-react";
+import { AlertTriangle, Plus, X, ChevronRight, ChevronLeft, ChevronDown, ChevronsRight, ChevronsLeft, LogOut, CheckCircle2, Clock, Camera, ImagePlus, Trash2, FileSpreadsheet, FileText, User, Users, ShieldCheck, LayoutGrid, BarChart3, Briefcase, Settings, Archive, Truck, Tag, MessageCircle, GraduationCap, ShieldOff, ShieldAlert, Database, Fingerprint, Info, Sliders, TrendingUp, Search, Home, Megaphone, Sparkles, Gift, Bell, ArrowUpRight, ClipboardList, MoreVertical, RefreshCw } from "lucide-react";
 // بارگذاری تنبلِ صفحه‌های ماژول — هرکدام چانکِ جدای خودش، فقط با باز شدنِ
 // آن ماژول بارگذاری می‌شود؛ از باندلِ اولیه‌ی سنگینِ App.jsx بیرون می‌مانند.
 const BowTieDashboard = lazy(() => import("./bowtie/BowTieDashboard.jsx"));
@@ -19,7 +19,7 @@ const PersonnelDashboard = lazy(() => import("./personnel/PersonnelDashboard.jsx
 const ProactiveIndicatorsDashboard = lazy(() => import("./proactiveIndicators/ProactiveIndicatorsDashboard.jsx"));
 const IncidentsListPage = lazy(() => import("./incidents/IncidentsListPage.jsx"));
 import { loadHomeKpiSummary } from "./dashboard/homeKpiApi.js";
-import { loadModuleConfig, loadDashboardConfig, loadNotificationTypes, loadAppearanceConfig, applyAppearanceToDom, effectiveAppearance, cacheAppearanceConfig, loadActiveAnnouncements, loadDashboardWidgetConfig } from "./systemConfigApi.js";
+import { loadModuleConfig, loadDashboardConfig, loadNotificationTypes, loadAppearanceConfig, applyAppearanceToDom, effectiveAppearance, cacheAppearanceConfig, readCachedAppearanceConfig, syncAppearanceNow, loadActiveAnnouncements, loadDashboardWidgetConfig } from "./systemConfigApi.js";
 import { mergeWidgetConfig, defaultWidgetConfig } from "./dashboard/dashboardWidgets.js";
 import { submitToGate, loadPendingGateItems, loadAssignedGateItems, loadAssignedReviewItemsForModule, deleteGateItemsForRecord, loadCompanyStaffOptions, assignForReview, submitReview, approveGateItem, rejectGateItem, GATE_STATUS_LABELS, gateStatusLabel } from "./hseGateApi.js";
 import SubscriptionGate from "./subscription/SubscriptionGate.jsx";
@@ -1520,6 +1520,20 @@ function ProfileView({ onBack, currentUser, roleLabel }) {
   const [bioSupported, setBioSupported] = useState(true);
   const [bioAskingPassword, setBioAskingPassword] = useState(false);
   const [bioPasswordInput, setBioPasswordInput] = useState("");
+  const [apRefreshing, setApRefreshing] = useState(false);
+  const [apMsg, setApMsg] = useState("");
+
+  const handleRefreshAppearance = async () => {
+    setApRefreshing(true); setApMsg("");
+    const r = await syncAppearanceNow();
+    setApRefreshing(false);
+    setApMsg(
+      r.status === "synced" ? (r.changed ? t("apRefreshUpdated") : t("apRefreshNoChange"))
+      : r.status === "offline" ? t("apRefreshOffline")
+      : t("apRefreshFailed")
+    );
+    setTimeout(() => setApMsg(""), 4000);
+  };
 
   useEffect(() => {
     if (currentUser?.role === "CONTRACTOR") {
@@ -1662,6 +1676,20 @@ function ProfileView({ onBack, currentUser, roleLabel }) {
               </div>
             </div>
           )}
+        </div>
+
+        <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 14, marginTop: 14 }}>
+          <p style={{ fontSize: 11, color: THEME.text3, fontWeight: 700, marginBottom: 10 }}>{t("apRefreshTitle")}</p>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+            <div style={{ fontSize: 11.5, color: THEME.text3, flex: 1, lineHeight: 1.7 }}>{t("apRefreshHint")}</div>
+            <button
+              type="button" onClick={handleRefreshAppearance} disabled={apRefreshing}
+              style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6, flexShrink: 0, opacity: apRefreshing ? 0.6 : 1 }}
+            >
+              <RefreshCw size={13} /> {apRefreshing ? t("apRefreshing") : t("apRefreshBtn")}
+            </button>
+          </div>
+          {apMsg && <p style={{ fontSize: 12, color: THEME.ok, marginTop: 8 }}>{apMsg}</p>}
         </div>
 
         {currentUser?.role === "HSE_SUPERVISOR" && <ChangePasswordSection />}
@@ -5152,27 +5180,48 @@ function AppInnerWithAppearance() {
       const scope = window.matchMedia(APPEARANCE_DESKTOP_MQ).matches ? "web" : "mobile";
       applyAppearanceToDom(effectiveAppearance(raw, scope));
     };
-    const refresh = () => loadAppearanceConfig().then((cfg) => {
-      raw = cfg;
-      setAppearance(cfg);
-      cacheAppearanceConfig(cfg);
+    // خواندن از سرور؛ اگر داده‌ی تازه نگرفتیم (__ok=false → آفلاین/خطا) به
+    // آخرین کش برمی‌گردیم، نه به پیش‌فرض‌ها. زیرو رگرسیون.
+    const refresh = async () => {
+      let cfg = null;
+      try { cfg = await loadAppearanceConfig(); } catch { cfg = null; }
+      if (cfg && cfg.__ok) {
+        raw = cfg;
+        setAppearance(cfg);
+        cacheAppearanceConfig(cfg);
+      } else if (!raw) {
+        const cached = readCachedAppearanceConfig();
+        if (cached) { raw = cached; setAppearance(cached); }
+      }
       applyForViewport();
-    }).catch(() => {});
+    };
     refresh();
     // عبور از مرزِ ۱۰۲۴px (چرخش/تغییرِ اندازه) → تمِ وب↔موبایل بدونِ رفرش سوییچ می‌شود
     const mq = window.matchMedia(APPEARANCE_DESKTOP_MQ);
     const onChange = () => applyForViewport();
     mq.addEventListener ? mq.addEventListener("change", onChange) : mq.addListener(onChange);
-    // بازگشت به اپ (بستن پنلِ سوپرادمین، سوییچ تب، برگشت از پس‌زمینه روی
-    // موبایل) → تنظیماتِ ظاهریِ تازه دوباره خوانده و اعمال می‌شود، بدون
-    // نیاز به رفرش/ری‌استارت دستی.
+    // بازگشت به اپ (بستن پنلِ سوپرادمین، سوییچ تب، برگشتِ اپ از پس‌زمینه روی
+    // موبایل) → تنظیماتِ ظاهریِ تازه دوباره خوانده و اعمال می‌شود، بدونِ
+    // رفرش/ری‌استارتِ دستی.
     const onVisible = () => { if (document.visibilityState === "visible") refresh(); };
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("focus", onVisible);
+    // Capacitor: سیگنالِ مطمئنِ «اپ دوباره فعال شد» روی نیتیو (اندروید)
+    let capRemove = null;
+    (async () => {
+      try {
+        const { Capacitor } = await import("@capacitor/core");
+        if (!Capacitor.isNativePlatform()) return;
+        const { App: CapApp } = await import("@capacitor/app");
+        const h = await CapApp.addListener("appStateChange", ({ isActive }) => { if (isActive) refresh(); });
+        capRemove = () => h.remove();
+      } catch { /* پلاگین نبود — بی‌اهمیت */ }
+    })();
     return () => {
       mq.removeEventListener ? mq.removeEventListener("change", onChange) : mq.removeListener(onChange);
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("focus", onVisible);
+      if (capRemove) capRemove();
     };
   }, []);
   return (

@@ -504,6 +504,14 @@ export const translations = {
     "fa": "امنیت",
     "en": "Security"
   },
+  "apRefreshTitle": { "fa": "ظاهر برنامه", "en": "App appearance" },
+  "apRefreshHint": { "fa": "اگر مدیر رنگ/فونت را در سرور تغییر داده، با این دکمه بدونِ بستنِ برنامه به‌روز می‌شود.", "en": "If an admin changed the colours/font on the server, this pulls them in without restarting the app." },
+  "apRefreshBtn": { "fa": "به‌روزرسانی ظاهر", "en": "Refresh appearance" },
+  "apRefreshing": { "fa": "در حال بررسی…", "en": "Checking…" },
+  "apRefreshUpdated": { "fa": "ظاهر به‌روزرسانی شد.", "en": "Appearance updated." },
+  "apRefreshNoChange": { "fa": "ظاهر از قبل به‌روز بود.", "en": "Appearance was already up to date." },
+  "apRefreshOffline": { "fa": "اینترنت در دسترس نیست — همان ظاهرِ ذخیره‌شده حفظ شد.", "en": "Offline — kept the last saved appearance." },
+  "apRefreshFailed": { "fa": "دریافت نشد. بعداً دوباره امتحان کنید.", "en": "Couldn’t fetch. Try again later." },
   "biometricToggleLabel": {
     "fa": "ورود با اثر انگشت",
     "en": "Fingerprint Login"
