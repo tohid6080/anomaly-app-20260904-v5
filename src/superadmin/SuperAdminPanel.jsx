@@ -4,7 +4,7 @@ import { loadAppReleases, createAppRelease, setReleasePublished, deleteAppReleas
 import { APP_VERSION, APP_VERSION_CODE } from "../shared.js";
 import { THEME } from "../shared.js";
 import { changeMyPassword } from "../sessionToken.js";
-import { loadModuleConfig, saveModuleConfig, loadNotificationTypes, saveNotificationType, syncNotificationTypesWithPlans, loadAppearanceConfig, saveAppearanceConfig, loadAllAnnouncements, createAnnouncement, updateAnnouncement, setAnnouncementActive, deleteAnnouncement, loadDashboardWidgetConfig, saveDashboardWidgetsBulk, notificationTypeLabel, notificationTypeDescription } from "../systemConfigApi.js";
+import { loadModuleConfig, saveModuleConfig, loadNotificationTypes, saveNotificationType, syncNotificationTypesWithPlans, loadAppearanceConfig, saveAppearanceConfig, resolveAppearanceTokens, loadAllAnnouncements, createAnnouncement, updateAnnouncement, setAnnouncementActive, deleteAnnouncement, loadDashboardWidgetConfig, saveDashboardWidgetsBulk, notificationTypeLabel, notificationTypeDescription } from "../systemConfigApi.js";
 import { DASHBOARD_WIDGET_GROUPS, mergeWidgetConfig, defaultWidgetConfig } from "../dashboard/dashboardWidgets.js";
 import { uploadBase64ToStorage, deleteFromStorage, parseStorageUrl } from "../offline/storageUpload.js";
 import AccountManagement from "./AccountManagement.jsx";
@@ -1752,6 +1752,54 @@ function NotificationManagementTab({ currentAdmin }) {
   );
 }
 
+// فونت‌های در دسترسِ همین حالا — از همان لینکِ Google Fonts در index.html
+// (Vazirmatn از قبل، Estedad و Markazi Text تازه اضافه شده). فایلِ هر
+// خانواده فقط وقتی در جایی استفاده شود دانلود می‌شود، پس هزینه‌ی
+// اضافه‌کردنشان به لینک ناچیز است (رعایتِ بودجه‌ی کارایی D-011).
+const APPEARANCE_FONT_PRESETS = [
+  { value: "'Vazirmatn', 'Inter', Tahoma, Arial, sans-serif", label: "Vazirmatn · وزیرمتن" },
+  { value: "'Estedad', 'Vazirmatn', Tahoma, sans-serif", label: "Estedad · استعداد" },
+  { value: "'Markazi Text', 'Vazirmatn', serif", label: "Markazi Text · مرکزی" },
+];
+
+// پریست‌های آماده — فقط فیلدهای در معرضِ شخصی‌سازی را ست می‌کنند. رشته‌ی
+// خالی یعنی «از پیش‌فرضِ همان تم استفاده کن» (رفتارِ فعلیِ سامانه).
+const APPEARANCE_PRESET_EMPTY = {
+  colorBg: "", colorSurface: "", colorSurface2: "", colorBorder: "",
+  colorText: "", colorText2: "", colorText3: "", colorOk: "", colorWarn: "", colorDanger: "",
+};
+const APPEARANCE_PRESETS = {
+  darkNeon: { themeMode: "dark", colorPrimary: "#0a1620", colorAccent: "#14b8a6", ...APPEARANCE_PRESET_EMPTY },
+  light: { themeMode: "light", colorPrimary: "#0e2c3f", colorAccent: "#127c72", ...APPEARANCE_PRESET_EMPTY },
+  midnight: {
+    themeMode: "dark", colorPrimary: "#0a0f1e", colorAccent: "#6366f1",
+    colorBg: "#0a0f1e", colorSurface: "#141b30", colorSurface2: "#1b2340", colorBorder: "#2a3357",
+    colorText: "#eef1fb", colorText2: "#a5add0", colorText3: "#6d769e",
+    colorOk: "#34d399", colorWarn: "#fbbf24", colorDanger: "#fb7185",
+  },
+};
+
+// نگاشتِ فیلدِ config ↔ متغیرِ CSS ↔ کلیدِ ترجمه — ترتیبِ همین‌جا ترتیبِ
+// نمایش در پنل است.
+const APPEARANCE_TOKEN_GROUPS = [
+  { key: "surface", labelKey: "saApGroupSurface", fields: [
+    ["colorBg", "--ihms-bg", "saApTokBg"],
+    ["colorSurface", "--ihms-surface", "saApTokSurface"],
+    ["colorSurface2", "--ihms-surface-2", "saApTokSurface2"],
+    ["colorBorder", "--ihms-border", "saApTokBorder"],
+  ] },
+  { key: "text", labelKey: "saApGroupText", fields: [
+    ["colorText", "--ihms-text", "saApTokText"],
+    ["colorText2", "--ihms-text2", "saApTokText2"],
+    ["colorText3", "--ihms-text3", "saApTokText3"],
+  ] },
+  { key: "status", labelKey: "saApGroupStatus", fields: [
+    ["colorOk", "--ihms-ok", "saApTokOk"],
+    ["colorWarn", "--ihms-warn", "saApTokWarn"],
+    ["colorDanger", "--ihms-danger", "saApTokDanger"],
+  ] },
+];
+
 function AppearanceManagementTab({ currentAdmin }) {
   const { t, dir } = useLanguage();
   const [config, setConfig] = useState(null);
@@ -1765,6 +1813,12 @@ function AppearanceManagementTab({ currentAdmin }) {
   if (!config) return <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 30 }}>{t("commonLoading")}</p>;
 
   const update = (field, value) => setConfig((prev) => ({ ...prev, [field]: value }));
+
+  // پیش‌فرضِ هر توکن برای تمِ انتخابی (بدون رنگ‌های سفارشی) — برای
+  // نمایشِ swatch و placeholder وقتی سوپرادمین هنوز رنگی ست نکرده.
+  const tokenDefaults = resolveAppearanceTokens({ themeMode: config.themeMode });
+  const previewTokens = resolveAppearanceTokens(config);
+  const fontInList = APPEARANCE_FONT_PRESETS.some((f) => f.value === config.fontFamily);
 
   const handleSave = async () => {
     setSaving(true); setMessage("");
@@ -1807,28 +1861,87 @@ function AppearanceManagementTab({ currentAdmin }) {
         </div>
       )}
 
+      <SectionLabel>{t("saApBasePreset")}</SectionLabel>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+        {[["darkNeon", "saApPresetDarkNeon"], ["light", "saApPresetLight"], ["midnight", "saApPresetMidnight"]].map(([key, lk]) => (
+          <button
+            key={key} type="button"
+            onClick={() => setConfig((prev) => ({ ...prev, ...APPEARANCE_PRESETS[key] }))}
+            style={{ flex: "1 1 130px", padding: "9px 10px", borderRadius: 9, border: `1px solid ${THEME.border}`, background: THEME.surface2, color: THEME.text2, fontFamily: THEME.font, fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+          >
+            {t(lk)}
+          </button>
+        ))}
+      </div>
+      <div style={{ maxWidth: 240, marginBottom: 18 }}>
+        <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApTheme")}</label>
+        <select style={inputStyle} value={config.themeMode} onChange={(e) => update("themeMode", e.target.value)} dir={dir}>
+          <option value="light">{t("saApThemeLight")}</option>
+          <option value="dark">{t("saApThemeDark")}</option>
+        </select>
+      </div>
+
       <SectionLabel>{t("saApBrandColor")}</SectionLabel>
       <div style={{ display: "flex", gap: 18, flexWrap: "wrap", marginBottom: 18 }}>
         <ColorField label={t("saApColorPrimary")} value={config.colorPrimary} onChange={(v) => update("colorPrimary", v)} />
         <ColorField label={t("saApColorAccent")} value={config.colorAccent} onChange={(v) => update("colorAccent", v)} />
       </div>
 
+      {APPEARANCE_TOKEN_GROUPS.map((g) => (
+        <React.Fragment key={g.key}>
+          <SectionLabel>{t(g.labelKey)}</SectionLabel>
+          <div style={{ display: "flex", gap: 18, flexWrap: "wrap", marginBottom: 18 }}>
+            {g.fields.map(([field, cssVar, lk]) => (
+              <TokenColorField
+                key={field} label={t(lk)} cssVar={cssVar}
+                value={config[field]} fallback={tokenDefaults[cssVar]}
+                clearLabel={t("saApUseThemeDefault")}
+                onChange={(v) => update(field, v)} onClear={() => update(field, "")}
+              />
+            ))}
+          </div>
+        </React.Fragment>
+      ))}
+
       <SectionLabel>{t("saApThemeFont")}</SectionLabel>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginBottom: 18 }}>
-        <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApTheme")}</label>
-          <select style={inputStyle} value={config.themeMode} onChange={(e) => update("themeMode", e.target.value)} dir={dir}>
-            <option value="light">{t("saApThemeLight")}</option>
-            <option value="dark">{t("saApThemeDark")}</option>
-          </select>
-        </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginBottom: 8 }}>
         <div>
           <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApFontFamily")}</label>
-          <input style={inputStyle} value={config.fontFamily} onChange={(e) => update("fontFamily", e.target.value)} dir="ltr" />
+          <select style={inputStyle} value={config.fontFamily} onChange={(e) => update("fontFamily", e.target.value)} dir="ltr">
+            {!fontInList && <option value={config.fontFamily}>{t("saApFontCurrentCustom")}</option>}
+            {APPEARANCE_FONT_PRESETS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
+          </select>
         </div>
         <div>
           <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApFontSizeBase")}</label>
           <input type="number" style={inputStyle} value={config.fontSizeBase ?? ""} onChange={(e) => update("fontSizeBase", e.target.value ? Number(e.target.value) : null)} dir="ltr" />
+        </div>
+      </div>
+      <p style={{ fontSize: 10.5, color: THEME.text3, lineHeight: 1.9, margin: "0 0 18px" }}>{t("saApFontHostNote")}</p>
+
+      <SectionLabel>{t("saApLivePreview")}</SectionLabel>
+      <div style={{ ...previewTokens, fontFamily: config.fontFamily, background: "var(--ihms-bg)", border: "1px solid var(--ihms-border)", borderRadius: 12, padding: 14, marginBottom: 18 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: "var(--ihms-navy)", borderRadius: 8, marginBottom: 10 }}>
+          <span style={{ width: 22, height: 22, borderRadius: 6, background: "var(--ihms-teal)", display: "inline-block", flexShrink: 0 }} />
+          <span style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ihms-text)" }}>{config.systemName || "IHMS"}</span>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          <div style={{ background: "var(--ihms-surface)", border: "1px solid var(--ihms-border)", borderRadius: 10, padding: 10 }}>
+            <div style={{ fontSize: 9, color: "var(--ihms-text3)", fontWeight: 700, marginBottom: 4 }}>{t("saApPvCardTitle")}</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: "var(--ihms-text)" }}>۲۴</div>
+          </div>
+          <div style={{ background: "var(--ihms-surface)", border: "1px solid var(--ihms-border)", borderRadius: 10, padding: 10, display: "flex", flexDirection: "column", gap: 7 }}>
+            <div style={{ fontSize: 10, color: "var(--ihms-text2)" }}>{t("saApPvBody")}</div>
+            <div style={{ display: "flex", gap: 5 }}>
+              <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 10, color: "var(--ihms-ok)", background: "var(--ihms-ok-bg)" }}>OK</span>
+              <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 10, color: "var(--ihms-warn)", background: "var(--ihms-warn-bg)" }}>!</span>
+              <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 10, color: "var(--ihms-danger)", background: "var(--ihms-danger-bg)" }}>×</span>
+            </div>
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 8, marginTop: 10, alignItems: "center" }}>
+          <span style={{ fontSize: 11, fontWeight: 700, padding: "6px 14px", borderRadius: 8, background: "var(--ihms-teal)", color: "#fff" }}>{t("saApPvBtn")}</span>
+          <span style={{ fontSize: 11, padding: "6px 14px", borderRadius: 8, border: "1px solid var(--ihms-border)", color: "var(--ihms-text2)" }}>{t("commonCancel")}</span>
         </div>
       </div>
 
@@ -1884,6 +1997,28 @@ function ColorField({ label, value, onChange }) {
         <input type="color" value={value} onChange={(e) => onChange(e.target.value)} style={{ width: 40, height: 34, border: `1.5px solid ${THEME.border}`, borderRadius: 8, cursor: "pointer", padding: 2 }} />
         <input style={{ ...inputStyle, width: 100 }} value={value} onChange={(e) => onChange(e.target.value)} dir="ltr" />
       </div>
+    </div>
+  );
+}
+
+// مثل ColorField ولی مقدارِ خالی مجاز است و یعنی «پیش‌فرضِ تم» — swatch و
+// placeholder همان رنگِ پیش‌فرض (fallback) را نشان می‌دهند و تا وقتی
+// سوپرادمین رنگی ست نکند، چیزی روی این توکن ذخیره نمی‌شود.
+function TokenColorField({ label, cssVar, value, fallback, clearLabel, onChange, onClear }) {
+  const isCustom = !!(value && String(value).trim());
+  const hex6 = /^#[0-9a-fA-F]{6}$/;
+  const swatch = isCustom && hex6.test(value) ? value : (hex6.test(fallback || "") ? fallback : "#000000");
+  return (
+    <div style={{ minWidth: 150 }}>
+      <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{label}</label>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <input type="color" value={swatch} onChange={(e) => onChange(e.target.value)} style={{ width: 40, height: 34, border: `1.5px solid ${THEME.border}`, borderRadius: 8, cursor: "pointer", padding: 2 }} />
+        <input style={{ ...inputStyle, width: 96 }} value={isCustom ? value : ""} placeholder={fallback} onChange={(e) => onChange(e.target.value)} dir="ltr" />
+      </div>
+      <div style={{ fontSize: 9, color: THEME.text3, fontFamily: "monospace", direction: "ltr", marginTop: 3 }}>{cssVar}</div>
+      {isCustom
+        ? <button type="button" onClick={onClear} style={{ marginTop: 2, fontSize: 10, color: THEME.warn, background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: THEME.font }}>↺ {clearLabel}</button>
+        : <div style={{ marginTop: 2, fontSize: 10, color: THEME.text3 }}>{clearLabel}</div>}
     </div>
   );
 }

@@ -162,6 +162,11 @@ const APPEARANCE_KEYS = [
   "appearance_system_name", "appearance_system_title", "appearance_logo_url", "appearance_favicon_url", "appearance_apk_icon_url",
   "appearance_color_primary", "appearance_color_accent", "appearance_theme_mode", "appearance_font_family",
   "appearance_font_size_base", "appearance_sidebar_default_collapsed", "appearance_header_show_company_name",
+  // پالت کاملِ سطوح/متن/وضعیت — هر کدام خالی بماند، مقدارِ همان تمِ
+  // پایه (تیره/روشن) استفاده می‌شود؛ پس تنظیمِ نکردنشان = رفتارِ فعلی.
+  "appearance_color_bg", "appearance_color_surface", "appearance_color_surface_2", "appearance_color_border",
+  "appearance_color_text", "appearance_color_text2", "appearance_color_text3",
+  "appearance_color_ok", "appearance_color_warn", "appearance_color_danger",
 ];
 
 export async function loadAppearanceConfig() {
@@ -176,6 +181,16 @@ export async function loadAppearanceConfig() {
     apkIconUrl: map.appearance_apk_icon_url || "",
     colorPrimary: map.appearance_color_primary || "#0a1620",
     colorAccent: map.appearance_color_accent || "#14b8a6",
+    colorBg: map.appearance_color_bg || "",
+    colorSurface: map.appearance_color_surface || "",
+    colorSurface2: map.appearance_color_surface_2 || "",
+    colorBorder: map.appearance_color_border || "",
+    colorText: map.appearance_color_text || "",
+    colorText2: map.appearance_color_text2 || "",
+    colorText3: map.appearance_color_text3 || "",
+    colorOk: map.appearance_color_ok || "",
+    colorWarn: map.appearance_color_warn || "",
+    colorDanger: map.appearance_color_danger || "",
     themeMode: map.appearance_theme_mode || "dark",
     fontFamily: map.appearance_font_family || "'Vazirmatn', 'Inter', Tahoma, Arial, sans-serif",
     fontSizeBase: map.appearance_font_size_base != null ? Number(map.appearance_font_size_base) : null,
@@ -193,6 +208,16 @@ export async function saveAppearanceConfig(config, updatedBy) {
     ["appearance_apk_icon_url", config.apkIconUrl, "text"],
     ["appearance_color_primary", config.colorPrimary, "text"],
     ["appearance_color_accent", config.colorAccent, "text"],
+    ["appearance_color_bg", config.colorBg, "text"],
+    ["appearance_color_surface", config.colorSurface, "text"],
+    ["appearance_color_surface_2", config.colorSurface2, "text"],
+    ["appearance_color_border", config.colorBorder, "text"],
+    ["appearance_color_text", config.colorText, "text"],
+    ["appearance_color_text2", config.colorText2, "text"],
+    ["appearance_color_text3", config.colorText3, "text"],
+    ["appearance_color_ok", config.colorOk, "text"],
+    ["appearance_color_warn", config.colorWarn, "text"],
+    ["appearance_color_danger", config.colorDanger, "text"],
     ["appearance_theme_mode", config.themeMode, "text"],
     ["appearance_font_family", config.fontFamily, "text"],
     ["appearance_font_size_base", config.fontSizeBase, "numeric"],
@@ -231,6 +256,41 @@ const LIGHT_PALETTE = {
   danger: "#cf4a3f", dangerBg: "#fbe7e4", warn: "#c47f28", warnBg: "#f8eddb", ok: "#2f8f57", okBg: "#e2f1e8",
 };
 
+// حلِ نهاییِ توکن‌های ظاهری از روی config: برای هر توکنِ در معرضِ
+// شخصی‌سازی، مقدارِ سفارشیِ سوپرادمین (اگر ست شده) وگرنه مقدارِ همان تمِ
+// پایه (تیره/روشن). توکن‌های مشتق (border-soft، navy-deep، *-bg و…) فقط
+// از پالتِ تم می‌آیند و در پنل نمایش داده نمی‌شوند. هم applyAppearanceToDom
+// و هم پیش‌نمایشِ زندهٔ پنلِ سوپرادمین از همین تابع استفاده می‌کنند تا
+// دو جا از هم جدا نیفتند.
+export function resolveAppearanceTokens(config) {
+  const light = config.themeMode === "light";
+  const palette = light ? LIGHT_PALETTE : DARK_PALETTE;
+  const pick = (custom, fallback) => (custom && String(custom).trim() ? custom : fallback);
+  return {
+    "--ihms-navy": pick(config.colorPrimary, palette.navy),
+    "--ihms-teal": pick(config.colorAccent, light ? "#127c72" : "#14b8a6"),
+    "--ihms-navy-deep": palette.navyDeep,
+    "--ihms-navy-mid": palette.navyMid,
+    "--ihms-teal-deep": palette.tealDeep,
+    "--ihms-teal-soft": palette.tealSoft,
+    "--ihms-bg": pick(config.colorBg, palette.bg),
+    "--ihms-surface": pick(config.colorSurface, palette.surface),
+    "--ihms-surface-2": pick(config.colorSurface2, palette.surface2),
+    "--ihms-border": pick(config.colorBorder, palette.border),
+    "--ihms-border-soft": palette.borderSoft,
+    "--ihms-border-strong": palette.borderStrong,
+    "--ihms-text": pick(config.colorText, palette.text),
+    "--ihms-text2": pick(config.colorText2, palette.text2),
+    "--ihms-text3": pick(config.colorText3, palette.text3),
+    "--ihms-danger": pick(config.colorDanger, palette.danger),
+    "--ihms-danger-bg": palette.dangerBg,
+    "--ihms-warn": pick(config.colorWarn, palette.warn),
+    "--ihms-warn-bg": palette.warnBg,
+    "--ihms-ok": pick(config.colorOk, palette.ok),
+    "--ihms-ok-bg": palette.okBg,
+  };
+}
+
 // اعمال زنده‌ی تنظیمات ظاهری روی DOM — از طریق CSS Custom Properties، نه
 // دستکاری مستقیم ماژول shared.js. با این روش، هیچ‌کدام از ~۹۸۵ ارجاع
 // موجود به THEME.xxx در کل پروژه نیازی به تغییر ندارند: خودِ THEME در
@@ -242,30 +302,9 @@ export function applyAppearanceToDom(config) {
   if (typeof document === "undefined" || !config) return;
   const root = document.documentElement.style;
   const light = config.themeMode === "light";
-  const palette = light ? LIGHT_PALETTE : DARK_PALETTE;
 
-  // navy/teal: انتخابِ سفارشیِ شرکت اگر بود، وگرنه پالتِ همان تم
-  root.setProperty("--ihms-navy", config.colorPrimary || palette.navy);
-  root.setProperty("--ihms-teal", config.colorAccent || (light ? "#127c72" : "#14b8a6"));
-  root.setProperty("--ihms-navy-deep", palette.navyDeep);
-  root.setProperty("--ihms-navy-mid", palette.navyMid);
-  root.setProperty("--ihms-teal-deep", palette.tealDeep);
-  root.setProperty("--ihms-teal-soft", palette.tealSoft);
-  root.setProperty("--ihms-bg", palette.bg);
-  root.setProperty("--ihms-surface", palette.surface);
-  root.setProperty("--ihms-surface-2", palette.surface2);
-  root.setProperty("--ihms-border", palette.border);
-  root.setProperty("--ihms-border-soft", palette.borderSoft);
-  root.setProperty("--ihms-border-strong", palette.borderStrong);
-  root.setProperty("--ihms-text", palette.text);
-  root.setProperty("--ihms-text2", palette.text2);
-  root.setProperty("--ihms-text3", palette.text3);
-  root.setProperty("--ihms-danger", palette.danger);
-  root.setProperty("--ihms-danger-bg", palette.dangerBg);
-  root.setProperty("--ihms-warn", palette.warn);
-  root.setProperty("--ihms-warn-bg", palette.warnBg);
-  root.setProperty("--ihms-ok", palette.ok);
-  root.setProperty("--ihms-ok-bg", palette.okBg);
+  const tokens = resolveAppearanceTokens(config);
+  Object.keys(tokens).forEach((k) => root.setProperty(k, tokens[k]));
   try { document.documentElement.style.colorScheme = light ? "light" : "dark"; } catch { /* بی‌اهمیت */ }
   if (config.fontFamily) root.setProperty("--ihms-font", config.fontFamily);
   if (config.fontSizeBase) root.setProperty("--ihms-font-size-base", `${config.fontSizeBase}px`);
