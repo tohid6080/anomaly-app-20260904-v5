@@ -3569,12 +3569,12 @@ function MobileModuleList({ items, setView }) {
   const query = q.trim().toLowerCase();
   const filtered = query ? items.filter((it) => it.label.toLowerCase().includes(query)) : items;
   return (
-    // پس‌زمینه از توکنِ سایدبار — همان توکنی که سایدبارِ دسکتاپ استفاده می‌کند،
-    // تا «لیستِ ماژول‌ها» در وب و موبایل یک ظاهر داشته باشد (و scopeِ موبایل
-    // بتواند در صورت تمایل جداگانه تغییرش دهد).
-    <div style={{ ...styles.menuList, gap: 0, background: THEME.sidebarBg, minHeight: "100%" }}>
+    // «لیستِ ماژول‌ها» روی موبایل یک صفحهٔ کامل است (نه یک ریلِ کناری مثلِ
+    // دسکتاپ)، پس مثلِ هر صفحهٔ دیگرِ موبایل از «رنگِ پس‌زمینهٔ اصلی»
+    // (--ihms-bg) استفاده می‌کند — همان کنترلی که در scopeِ موبایل تنظیمش می‌کنی.
+    <div style={{ ...styles.menuList, gap: 0, background: THEME.bg, minHeight: "100%" }}>
       <MobileAnnouncementBanner setView={setView} />
-      <div style={{ position: "sticky", top: 52, zIndex: 2, background: THEME.sidebarBg, padding: "6px 0 10px" }}>
+      <div style={{ position: "sticky", top: 52, zIndex: 2, background: THEME.bg, padding: "6px 0 10px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, background: THEME.surface2, border: `1px solid ${THEME.border}`, borderRadius: THEME.radiusBtn, padding: "9px 12px" }}>
           <Search size={15} color={THEME.text3} style={{ flexShrink: 0 }} />
           <input
