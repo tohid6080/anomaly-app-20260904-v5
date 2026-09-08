@@ -31,7 +31,7 @@ const SORT_OPTIONS_KEYS = [
  * follow this same structure: DataView owns the toolbar/view-toggle/rows,
  * this file only supplies columns, the card, and the actions.
  */
-export default function MachineryDashboard({ onBack, currentUser, role, initialApprovalFilter, initialContractorFilter, readOnly, wide }) {
+export default function MachineryDashboard({ onBack, currentUser, role, initialApprovalFilter, initialContractorFilter, readOnly, wide, hideCreate }) {
   const { t, dir } = useLanguage();
   const SORT_OPTIONS = SORT_OPTIONS_KEYS.map((o) => ({ value: o.value, label: t(o.labelKey) }));
   const isContractor = role === "CONTRACTOR";
@@ -470,7 +470,7 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
         </>
       )}
 
-      {isContractor && !readOnly && (
+      {!hideCreate && isContractor && !readOnly && (
         <button type="button" style={{ ...styles.button, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 14 }} onClick={startCreate}>
           <Plus size={15} /> {t("mdRegisterNewMachinery")}
         </button>

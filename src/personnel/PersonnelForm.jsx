@@ -25,7 +25,7 @@ function isValidMobile(phone) {
   return /^09\d{9}$/.test((phone || "").trim());
 }
 
-export default function PersonnelForm({ onBack, onSaved, currentUser, wide }) {
+export default function PersonnelForm({ onBack, onSaved, currentUser, wide, embedded }) {
   const { t, dir } = useLanguage();
   const [contractors, setContractors] = useState([]);
   const [loadingContractors, setLoadingContractors] = useState(true);
@@ -127,42 +127,58 @@ export default function PersonnelForm({ onBack, onSaved, currentUser, wide }) {
     onSaved ? onSaved(inserted) : onBack && onBack();
   };
 
+  const bare = !!embedded;
+  const cardStyle = bare ? { ...styles.cardWide, width: "auto" } : styles.card;
   return (
-    <div style={wide ? { maxWidth: 820, direction: dir } : { maxWidth: 560, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("pfBack")}</div>}
-      <h2 style={{ margin: "0 0 4px", color: THEME.heading, fontSize: 18, fontWeight: 700 }}>{t("pfRegisterNewPersonnel")}</h2>
-      <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 18 }}>
-        {t("pfSubtitle")}
-      </p>
+    <div style={bare ? { direction: dir } : wide ? { maxWidth: 820, direction: dir } : { maxWidth: 560, margin: "0 auto", padding: 24, direction: dir }}>
+      {!bare && onBack && <div style={styles.backLink} onClick={onBack}>{t("pfBack")}</div>}
+      {!bare && (
+        <>
+          <h2 style={{ margin: "0 0 4px", color: THEME.heading, fontSize: 18, fontWeight: 700 }}>{t("pfRegisterNewPersonnel")}</h2>
+          <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 18 }}>
+            {t("pfSubtitle")}
+          </p>
+        </>
+      )}
 
-      <div style={styles.card}>
-        <label style={styles.label}>{t("pfFullName")}</label>
-        <input style={styles.input} value={fullName} onChange={(e) => setFullName(e.target.value)} dir={dir} />
-        {errors.fullName && <p style={styles.error}>{errors.fullName}</p>}
+      <div style={cardStyle}>
+        <div style={styles.formGrid}>
+          <div>
+            <label style={styles.label}>{t("pfFullName")}</label>
+            <input style={styles.input} value={fullName} onChange={(e) => setFullName(e.target.value)} dir={dir} />
+            {errors.fullName && <p style={styles.error}>{errors.fullName}</p>}
+          </div>
+          <div>
+            <label style={styles.label}>{t("pfNationalCode")}</label>
+            <input style={styles.input} value={nationalCode} onChange={(e) => setNationalCode(e.target.value.replace(/\D/g, "").slice(0, 10))} dir="ltr" inputMode="numeric" />
+            {errors.nationalCode && <p style={styles.error}>{errors.nationalCode}</p>}
+          </div>
+        </div>
 
-        <label style={styles.label}>{t("pfNationalCode")}</label>
-        <input style={styles.input} value={nationalCode} onChange={(e) => setNationalCode(e.target.value.replace(/\D/g, "").slice(0, 10))} dir="ltr" inputMode="numeric" />
-        {errors.nationalCode && <p style={styles.error}>{errors.nationalCode}</p>}
-
-        <label style={styles.label}>{t("pfContractorCompany")}</label>
-        {currentUser?.role === "CONTRACTOR" ? (
-          <input style={{ ...styles.input, background: THEME.bg, color: THEME.text3 }} value={currentUser?.name || ""} disabled dir={dir} />
-        ) : loadingContractors ? (
-          <p style={{ fontSize: 12.5, color: THEME.text3 }}>{t("pfLoadingContractors")}</p>
-        ) : (
-          <select style={styles.input} value={contractorId} onChange={(e) => setContractorId(e.target.value)} dir={dir}>
-            <option value="">{t("pfSelectPlaceholder")}</option>
-            {contractors.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
-        )}
-        {errors.contractorId && <p style={styles.error}>{errors.contractorId}</p>}
-
-        <label style={styles.label}>{t("pfJobTitle")}</label>
-        <input style={styles.input} list="job-title-suggestions" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} dir={dir} placeholder={t("pfJobTitlePlaceholder")} />
-        <datalist id="job-title-suggestions">
-          <option value="داربست‌بند" /><option value="اپراتور جرثقیل" /><option value="ریگر" /><option value="نصاب" /><option value="برقکار" />
-        </datalist>
-        {errors.jobTitle && <p style={styles.error}>{errors.jobTitle}</p>}
+        <div style={styles.formGrid}>
+          <div>
+            <label style={styles.label}>{t("pfContractorCompany")}</label>
+            {currentUser?.role === "CONTRACTOR" ? (
+              <input style={{ ...styles.input, background: THEME.bg, color: THEME.text3 }} value={currentUser?.name || ""} disabled dir={dir} />
+            ) : loadingContractors ? (
+              <p style={{ fontSize: 12.5, color: THEME.text3 }}>{t("pfLoadingContractors")}</p>
+            ) : (
+              <select style={styles.input} value={contractorId} onChange={(e) => setContractorId(e.target.value)} dir={dir}>
+                <option value="">{t("pfSelectPlaceholder")}</option>
+                {contractors.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            )}
+            {errors.contractorId && <p style={styles.error}>{errors.contractorId}</p>}
+          </div>
+          <div>
+            <label style={styles.label}>{t("pfJobTitle")}</label>
+            <input style={styles.input} list="job-title-suggestions" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} dir={dir} placeholder={t("pfJobTitlePlaceholder")} />
+            <datalist id="job-title-suggestions">
+              <option value="داربست‌بند" /><option value="اپراتور جرثقیل" /><option value="ریگر" /><option value="نصاب" /><option value="برقکار" />
+            </datalist>
+            {errors.jobTitle && <p style={styles.error}>{errors.jobTitle}</p>}
+          </div>
+        </div>
 
         {special && (
           <div style={{ background: "#fff7ed", border: "1px solid #fdba74", borderRadius: 10, padding: 12, marginTop: 12, display: "flex", gap: 8 }}>
@@ -173,16 +189,21 @@ export default function PersonnelForm({ onBack, onSaved, currentUser, wide }) {
           </div>
         )}
 
-        <label style={styles.label}>{t("pfPhone")}</label>
-        <input style={styles.input} value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 11))} dir="ltr" inputMode="numeric" placeholder="09123456789" />
-        {errors.phone && <p style={styles.error}>{errors.phone}</p>}
-
-        <label style={styles.label}>{t("pfStartDate")}</label>
-        <JalaliDateInput value={startDate} onChange={setStartDate} />
-        {errors.startDate && <p style={styles.error}>{errors.startDate}</p>}
+        <div style={styles.formGrid}>
+          <div>
+            <label style={styles.label}>{t("pfPhone")}</label>
+            <input style={styles.input} value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 11))} dir="ltr" inputMode="numeric" placeholder="09123456789" />
+            {errors.phone && <p style={styles.error}>{errors.phone}</p>}
+          </div>
+          <div>
+            <label style={styles.label}>{t("pfStartDate")}</label>
+            <JalaliDateInput value={startDate} onChange={setStartDate} />
+            {errors.startDate && <p style={styles.error}>{errors.startDate}</p>}
+          </div>
+        </div>
       </div>
 
-      <div style={styles.card}>
+      <div style={cardStyle}>
         <h3 style={{ fontSize: 14.5, color: THEME.heading, margin: "0 0 4px", fontWeight: 700 }}>{t("pfOccHealthStatus")}</h3>
         <p style={{ fontSize: 11.5, color: THEME.text3, marginTop: 0, marginBottom: 12 }}>{t("pfOccHealthQuestion")}</p>
 
@@ -238,7 +259,7 @@ export default function PersonnelForm({ onBack, onSaved, currentUser, wide }) {
       </div>
 
       {formError && <p style={styles.error}>{formError}</p>}
-      <button type="button" style={styles.button} onClick={handleSubmit} disabled={saving}>
+      <button type="button" style={bare ? { ...styles.button, width: "auto", minWidth: 260, paddingInline: 36 } : styles.button} onClick={handleSubmit} disabled={saving}>
         {saving ? t("pfSubmitting") : t("pfSubmitPersonnel")}
       </button>
 

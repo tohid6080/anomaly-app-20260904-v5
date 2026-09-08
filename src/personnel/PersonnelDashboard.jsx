@@ -21,7 +21,7 @@ const SORT_OPTIONS_KEYS = [
  * Self-contained internal routing (list ⇄ form ⇄ detail), same pattern as
  * BowTieDashboard ⇄ BowTieEditor — App.jsx only needs one route to this file.
  */
-export default function PersonnelDashboard({ onBack, currentUser, role, initialStatusFilter, initialContractorFilter, readOnly, onNavigateToAssessment, initialSelectedPersonnelId, wide }) {
+export default function PersonnelDashboard({ onBack, currentUser, role, initialStatusFilter, initialContractorFilter, readOnly, onNavigateToAssessment, initialSelectedPersonnelId, wide, hideCreate }) {
   const { t, dir } = useLanguage();
   const SORT_OPTIONS = SORT_OPTIONS_KEYS.map((o) => ({ value: o.value, label: t(o.labelKey) }));
   const [list, setList] = useState([]);
@@ -195,13 +195,13 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
         </div>
       )}
 
-      <div style={{ display: "flex", gap: 8, marginTop: 18 }}>
-        {!readOnly && (
+      {!hideCreate && !readOnly && (
+        <div style={{ display: "flex", gap: 8, marginTop: 18 }}>
           <div style={{ ...styles.menuCard, background: THEME.teal, color: "#fff", justifyContent: "center", flex: 1 }} onClick={() => setShowForm(true)}>
             <Plus size={16} style={{ marginLeft: 6 }} /> {t("pdRegisterNewPersonnel")}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <div
         style={{

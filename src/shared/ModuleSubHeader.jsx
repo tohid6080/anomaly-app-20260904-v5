@@ -1,17 +1,42 @@
 import React from "react";
+import { ChevronRight, ChevronLeft } from "lucide-react";
 import { THEME } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 /**
- * Sub Headerِ کوچکِ زیرِ Header برای صفحاتِ وب — یک عنوانِ صفحه و یک خطِ
- * توضیحِ کوتاه (مثلاً «این قسمت توسط کارفرما تکمیل می‌شود»). جایگزینِ
- * Breadcrumb/«بازگشت» در این صفحه‌هاست و کاملاً با Appearance Tokens و RTL
- * ساخته شده. فقط ظاهر است؛ هیچ منطقی ندارد.
+ * Sub Headerِ کوچکِ زیرِ Header برای صفحاتِ وب — یک دکمهٔ «بازگشت»، عنوانِ
+ * صفحه و یک خطِ توضیحِ کوتاه (مثلاً «این قسمت توسط کارفرما تکمیل می‌شود»).
+ * کاملاً با Appearance Tokens و RTL ساخته شده.
  */
-export default function ModuleSubHeader({ icon: Icon, title, note }) {
+export default function ModuleSubHeader({ icon: Icon, title, note, onBack, backLabel }) {
   const { dir } = useLanguage();
+  const BackIcon = dir === "rtl" ? ChevronRight : ChevronLeft;
   return (
     <div style={{ direction: dir, margin: "0 0 16px", display: "flex", alignItems: "flex-start", gap: 10 }}>
+      {onBack && (
+        <button
+          type="button"
+          onClick={onBack}
+          title={backLabel}
+          aria-label={backLabel}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 30,
+            height: 30,
+            marginTop: 1,
+            borderRadius: 9,
+            flexShrink: 0,
+            border: `1px solid ${THEME.border}`,
+            background: THEME.surface,
+            color: THEME.text2,
+            cursor: "pointer",
+          }}
+        >
+          <BackIcon size={16} />
+        </button>
+      )}
       {Icon && (
         <span
           style={{

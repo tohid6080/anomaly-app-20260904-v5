@@ -27,7 +27,7 @@ import {
  *     list) until every one of them is uploaded. Only this action makes
  *     the machine visible/actionable to the employer.
  */
-export default function MachineryForm({ existingMachinery, existingDocuments, currentUser, onSaved, onBack, wide }) {
+export default function MachineryForm({ existingMachinery, existingDocuments, currentUser, onSaved, onBack, wide, embedded }) {
   const { t, dir } = useLanguage();
   const [machinery, setMachinery] = useState(existingMachinery || null);
   const [project, setProject] = useState(existingMachinery?.project || "");
@@ -144,14 +144,16 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
   };
 
   return (
-    <div style={wide ? { direction: dir } : { maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("mfBack")}</div>}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-        <Truck size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>
-          {machinery ? t("mfEditTitle") : t("mfNewTitle")}
-        </h2>
-      </div>
+    <div style={(wide || embedded) ? { direction: dir } : { maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
+      {!embedded && onBack && <div style={styles.backLink} onClick={onBack}>{t("mfBack")}</div>}
+      {!embedded && (
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+          <Truck size={20} color={THEME.teal} />
+          <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>
+            {machinery ? t("mfEditTitle") : t("mfNewTitle")}
+          </h2>
+        </div>
+      )}
 
       {machinery?.reviewNote && (
         <div style={{ ...styles.card, width: "auto", marginBottom: 14, background: THEME.warnBg, border: "1px solid #fde68a" }}>
@@ -159,7 +161,7 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
         </div>
       )}
 
-      <div style={{ ...styles.card, width: "auto" }}>
+      <div style={{ ...(embedded ? styles.cardWide : styles.card), width: "auto" }}>
         <div style={styles.formGrid}>
           <div>
             <label style={styles.label}>{t("mfSiteCompany")}</label>
@@ -295,13 +297,13 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
         </div>
 
         {error && <p style={styles.error}>{error}</p>}
-        <button type="button" style={{ ...styles.button, background: THEME.text3 }} onClick={handleSave} disabled={saving}>
+        <button type="button" style={{ ...styles.button, background: THEME.text3, ...(embedded ? { width: "auto", minWidth: 260, paddingInline: 36 } : null) }} onClick={handleSave} disabled={saving}>
           {saving ? t("saSavingEllipsis") : machinery ? t("saSaveChanges") : t("mfSaveInfoAddDocs")}
         </button>
       </div>
 
       {machinery && (
-        <div style={{ ...styles.card, width: "auto", marginTop: 14 }}>
+        <div style={{ ...(embedded ? styles.cardWide : styles.card), width: "auto", marginTop: 14 }}>
           <h3 style={{ fontSize: 14, color: THEME.heading, margin: "0 0 4px", fontWeight: 700 }}>{t("mfDocuments")}</h3>
           <p style={{ fontSize: 11.5, color: THEME.text3, margin: "0 0 12px" }}>{t("mfStarredRequiredNote")}</p>
           {MACHINERY_DOC_TYPES.map((dt) => (
@@ -327,7 +329,7 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
 
           <button
             type="button"
-            style={{ ...styles.button, background: missingRequired.length > 0 ? THEME.text3 : THEME.teal }}
+            style={{ ...styles.button, background: missingRequired.length > 0 ? THEME.text3 : THEME.teal, ...(embedded ? { width: "auto", minWidth: 260, paddingInline: 36 } : null) }}
             onClick={handleSubmitForReview}
             disabled={submitting}
           >
