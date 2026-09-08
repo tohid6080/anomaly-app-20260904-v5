@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>دانلود اپلیکیشن IHMS</title>
+<style>
+  html,body{margin:0;height:100%}
+  body{background:#0b1a24;color:#e8eef2;font-family:Tahoma,Arial,sans-serif;
+       display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px}
+  .box{max-width:340px}
+  h1{font-size:17px;margin:0 0 10px;color:#eef4f7}
+  p{font-size:13px;line-height:1.9;color:#9fb4c0;margin:0 0 18px}
+  a.btn{display:inline-block;background:#14b8a6;color:#fff;text-decoration:none;
+        font-size:14px;font-weight:700;padding:12px 26px;border-radius:10px}
+  .spin{width:26px;height:26px;border:3px solid #1e3d4d;border-top-color:#14b8a6;
+        border-radius:50%;animation:s 1s linear infinite;margin:0 auto 16px}
+  @keyframes s{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="spin" id="spin"></div>
+  <h1>در حال آماده‌سازی دانلود…</h1>
+  <p id="msg">اگر دانلود به‌صورت خودکار شروع نشد، روی دکمه‌ی زیر بزنید.</p>
+  <a class="btn" id="dl" href="#" rel="noopener">دانلود اپلیکیشن</a>
+</div>
+<script>
+(function () {
+  var SUPABASE_URL = "https://zmmxiyqlwkqjzghbcydi.supabase.co";
+  var ANON = "sb_publishable_pvobGcp2snOD3oFTX2LVMg_bZx2A9CR";
+
+  function qp(name) {
+    var m = new RegExp("[?&]" + name + "=([^&]+)").exec(location.search || "");
+    return m ? decodeURIComponent(m[1].replace(/\+/g, " ")) : "";
+  }
+  // برای فایل‌های Storageِ سوپابیس، ?download هدرِ attachment می‌گذارد تا
+  // مرورگر به‌جای بازکردن، فایل را دانلود کند.
+  function forceDownload(u) {
+    if (u.indexOf("/storage/v1/object/public/") !== -1 && u.indexOf("download") === -1) {
+      return u + (u.indexOf("?") !== -1 ? "&" : "?") + "download";
+    }
+    return u;
+  }
+  function go(u) {
+    if (!u) { fail(); return; }
+    u = forceDownload(u);
+    var a = document.getElementById("dl");
+    a.href = u;
+    // یک تلاشِ خودکار؛ اگر مرورگر اجازه نداد، کاربر دکمه را می‌زند.
+    try { window.location.replace(u); } catch (e) { window.location.href = u; }
+  }
+  function fail() {
+    document.getElementById("spin").style.display = "none";
+    document.getElementById("msg").textContent = "دریافتِ لینکِ دانلود ممکن نشد. لطفاً دوباره تلاش کنید یا با پشتیبانی تماس بگیرید.";
+  }
+
+  var u = qp("u");
+  if (u) { go(u); return; }
+
+  // بدونِ ?u — آخرین APKِ منتشرشده را از app_releases بخوان.
+  fetch(SUPABASE_URL + "/rest/v1/app_releases?is_published=eq.true&select=apk_url,download_url&order=version_code.desc&limit=1&_=" + Date.now(),
+        { headers: { apikey: ANON, Authorization: "Bearer " + ANON }, cache: "no-store" })
+    .then(function (r) { return r.ok ? r.json() : []; })
+    .then(function (rows) {
+      var row = rows && rows[0];
+      go((row && (row.apk_url || row.download_url)) || "");
+    })
+    .catch(fail);
+})();
+</script>
+</body>
+</html>

@@ -123,12 +123,16 @@ jobs:
           echo "APK download URL:"
           echo "https://github.com/${{ github.repository }}/releases/download/$TAG/ihms-${{ github.event.inputs.version }}.apk"
 
-      # ردیفِ app_releases که Edge Function «trigger-mobile-build» با
-      # is_published=false درج کرده بود را حالا که APK واقعاً ساخته و
-      # Release عمومی شد، به «منتشرشده» تبدیل می‌کند — تا گوشی‌های کاربران
-      # نوار «نسخه جدید موجود است» را ببینند. اگر ساخت از این مسیر شروع
-      # نشده باشد (اجرای دستی)، ردیفی برای آپدیت نیست و این مرحله بی‌اثر است.
-      - name: Mark release published in Supabase
+      # APK را در Storageِ سوپابیس (باکتِ عمومیِ app-releases) آپلود می‌کند و
+      # همان لینکِ عمومی را در ردیفِ app_releases می‌نشاند، سپس ردیف را
+      # «منتشرشده» می‌کند. مزیت‌ها نسبت به لینکِ مستقیمِ GitHub:
+      #   • مسیرِ objectِ آپلود «نسخه‌محور و یکتا» است (v<code>/ihms-...-<code>.apk)
+      #     → CDN/Download Manager هیچ‌وقت بایت‌های نسخه‌ی قبلی را جای این
+      #     نسخه سرو نمی‌کند (رفعِ باگِ «نسخه‌ی قدیمی دانلود می‌شود / روی
+      #     نسخه‌ی قبلی نصب نمی‌شود»).
+      #   • نامِ GitHub در لینکِ دانلود دیده نمی‌شود.
+      # اگر سکرت تنظیم نشده باشد، همان لینکِ GitHub به‌عنوان fallback می‌ماند.
+      - name: Upload APK to Supabase Storage & publish
         if: ${{ github.event.inputs.publish_release == 'true' }}
         env:
           SUPABASE_URL: https://zmmxiyqlwkqjzghbcydi.supabase.co
@@ -138,13 +142,30 @@ jobs:
             echo "SUPABASE_SERVICE_ROLE_KEY secret not set — skipping auto-publish. Publish this version manually in the SuperAdmin panel."
             exit 0
           fi
-          APK_URL="https://github.com/${{ github.repository }}/releases/download/v${{ github.event.inputs.version }}/ihms-${{ github.event.inputs.version }}.apk"
+          V="${{ github.event.inputs.version }}"
+          VC="${{ github.event.inputs.version_code }}"
+          GH_URL="https://github.com/${{ github.repository }}/releases/download/v${V}/ihms-${V}.apk"
+          OBJ="v${VC}/ihms-${V}-${VC}.apk"
+          APK_URL="$GH_URL"
+          HTTP="$(curl -sS -o /tmp/up.txt -w '%{http_code}' -X POST \
+            "$SUPABASE_URL/storage/v1/object/app-releases/$OBJ" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/vnd.android.package-archive" \
+            -H "x-upsert: true" \
+            --data-binary "@out/ihms-${V}.apk")"
+          echo "Storage upload HTTP $HTTP: $(cat /tmp/up.txt)"
+          if [ "$HTTP" = "200" ] || [ "$HTTP" = "201" ]; then
+            APK_URL="$SUPABASE_URL/storage/v1/object/public/app-releases/$OBJ"
+          else
+            echo "Storage upload failed — falling back to the GitHub release URL."
+          fi
           NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           curl -sS -X PATCH \
-            "$SUPABASE_URL/rest/v1/app_releases?version_code=eq.${{ github.event.inputs.version_code }}" \
+            "$SUPABASE_URL/rest/v1/app_releases?version_code=eq.$VC" \
             -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
             -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
             -H "Content-Type: application/json" \
             -H "Prefer: return=minimal" \
             -d "{\"is_published\":true,\"apk_url\":\"$APK_URL\",\"download_url\":\"$APK_URL\",\"published_at\":\"$NOW\"}"
-          echo "Supabase app_releases row for version_code ${{ github.event.inputs.version_code }} marked published."
+          echo "Published version_code $VC — download URL: $APK_URL"
