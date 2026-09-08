@@ -101,8 +101,11 @@ export const getWidgetDef = (type) => BY_TYPE[type] || null;
 export const opWidgetLabelKey = (type) => BY_TYPE[type]?.labelKey || type;
 
 // ---- چیدمانِ پیش‌فرضِ حرفه‌ای: ردیفِ KPI، سپس کارتابل + روند، سپس ماتریسِ
-// ریسک، سپس ویجت‌های پهنِ مدیریتی. md/sm از روی lg با کوچک‌کردنِ w و
-// گذاشتن compactType به‌عهده‌ی خودِ گرید ساخته می‌شوند.
+// ریسک، سپس ویجت‌های پهنِ مدیریتی. md/sm/xs از روی lg ساخته می‌شوند: عرضِ
+// هر ویجت نسبتِ 12→cols کوچک می‌شود و ویجت‌ها از چپ‌به‌راست چیده می‌شوند و
+// در پرشدنِ ردیف به سطرِ بعد می‌روند. چون هر ویجت مختصاتِ صریحِ x/y می‌گیرد،
+// تغییرِ بزرگ‌نماییِ مرورگر (که ممکن است breakpoint را عوض کند) دیگر باعثِ
+// جابه‌جاییِ بی‌قاعده و بالا/پایین‌پریدنِ ویجت‌ها نمی‌شود.
 function itemId(type, n) { return `${type}-${n}`; }
 
 const LG = [
@@ -117,10 +120,17 @@ const LG = [
 ];
 
 function scaleLayout(list, cols) {
-  return list.map((r, idx) => {
-    const def = BY_TYPE[r.type];
-    const w = Math.max(def?.minW || 1, Math.min(r.w, cols));
-    return { i: itemId(r.type, 1), x: 0, y: idx, w: Math.min(w, cols), h: r.h };
+  let x = 0, y = 0, rowH = 0;
+  return list.map((r) => {
+    const def = BY_TYPE[r.type] || {};
+    const minW = Math.min(def.minW || 1, cols);
+    let w = Math.round((r.w * cols) / 12);
+    w = Math.max(minW, Math.min(w, cols));
+    if (x + w > cols) { x = 0; y += rowH || 1; rowH = 0; }
+    const rect = { i: itemId(r.type, 1), x, y, w, h: r.h };
+    x += w;
+    rowH = Math.max(rowH, r.h);
+    return rect;
   });
 }
 

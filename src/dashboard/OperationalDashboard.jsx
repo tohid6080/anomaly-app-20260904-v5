@@ -22,11 +22,15 @@ const Grid = WidthProvider(Responsive);
  */
 
 const RGL_CSS = `
-.react-grid-layout { position: relative; transition: height 200ms ease; }
-.react-grid-item { transition: all 180ms ease; transition-property: left, top, width, height; box-sizing: border-box; }
-.react-grid-item.cssTransforms { transition-property: transform, width, height; }
-.react-grid-item.resizing { transition: none; z-index: 3; }
-.react-grid-item.react-draggable-dragging { transition: none; z-index: 3; }
+.react-grid-layout { position: relative; }
+.react-grid-item { box-sizing: border-box; }
+/* انیمیشنِ جابه‌جایی فقط در حالتِ ویرایش (بازخوردِ درگ/افزودن/حذف). در
+   حالتِ نمایش هیچ transitionی نیست تا تغییرِ بزرگ‌نمایی/اندازهٔ پنجره
+   باعثِ سُر خوردنِ آبشاریِ ویجت‌ها نشود. */
+.dash-rgl--edit .react-grid-item { transition: transform 160ms ease, width 160ms ease, height 160ms ease; }
+.dash-rgl--edit .react-grid-item.resizing { transition: none; z-index: 3; }
+.dash-rgl--edit .react-grid-item.react-draggable-dragging { transition: none; z-index: 3; }
+@media (prefers-reduced-motion: reduce) { .dash-rgl--edit .react-grid-item { transition: none; } }
 .react-grid-item.react-grid-placeholder { background: var(--ihms-teal, #14b8a6); opacity: 0.16; border-radius: 12px; transition-duration: 100ms; z-index: 2; user-select: none; }
 .react-grid-item > .react-resizable-handle { position: absolute; width: 18px; height: 18px; }
 .react-grid-item > .react-resizable-handle::after { content: ""; position: absolute; right: 4px; bottom: 4px; width: 6px; height: 6px; border-right: 2px solid var(--ihms-text3, #6a8290); border-bottom: 2px solid var(--ihms-text3, #6a8290); }
@@ -140,7 +144,7 @@ export default function OperationalDashboard({ role, currentUser, onNavigate, on
   const addWidget = (type) => { mutate((d) => addWidgetInstance(d, type)); setAddOpen(false); };
 
   const gridProps = {
-    className: "dash-rgl",
+    className: isEditing ? "dash-rgl dash-rgl--edit" : "dash-rgl",
     breakpoints: DASHBOARD_GRID.breakpoints,
     cols: DASHBOARD_GRID.cols,
     rowHeight: DASHBOARD_GRID.rowHeight,
@@ -154,7 +158,11 @@ export default function OperationalDashboard({ role, currentUser, onNavigate, on
     isResizable: isEditing,
     draggableHandle: ".dash-drag",
     resizeHandles: ["se", "sw", "s", "e"],
-    measureBeforeMount: false,
+    // بدون این، WidthProvider ابتدا با عرضِ ۰ رندر می‌کند → گرید کوچک‌ترین
+    // breakpoint را می‌گیرد و همه‌ی ویجت‌ها یک‌ستونه روی هم می‌افتند، بعد
+    // که عرضِ واقعی اندازه‌گیری شد ناگهان به چیدمانِ درست می‌پرند. این
+    // «پرشِ» موقعِ تغییرِ بزرگ‌نمایی/تغییرِ اندازه را حذف می‌کند.
+    measureBeforeMount: true,
     useCSSTransforms: true,
   };
 
