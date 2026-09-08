@@ -31,7 +31,7 @@ const SORT_OPTIONS_KEYS = [
  * follow this same structure: DataView owns the toolbar/view-toggle/rows,
  * this file only supplies columns, the card, and the actions.
  */
-export default function MachineryDashboard({ onBack, currentUser, role, initialApprovalFilter, initialContractorFilter, readOnly }) {
+export default function MachineryDashboard({ onBack, currentUser, role, initialApprovalFilter, initialContractorFilter, readOnly, wide }) {
   const { t, dir } = useLanguage();
   const SORT_OPTIONS = SORT_OPTIONS_KEYS.map((o) => ({ value: o.value, label: t(o.labelKey) }));
   const isContractor = role === "CONTRACTOR";
@@ -256,6 +256,7 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
   if (showForm) {
     return (
       <MachineryForm
+        wide={wide}
         existingMachinery={editingItem}
         existingDocuments={editingDocs}
         currentUser={currentUser}
@@ -455,15 +456,19 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
   );
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-        <Truck size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("mdModuleTitle")}</h2>
-      </div>
-      <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 14 }}>
-        {isContractor ? t("mdContractorSubtitle") : t("mdEmployerSubtitle")}
-      </p>
+    <div style={wide ? { ...styles.cardWide, direction: dir } : { maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
+      {!wide && onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
+      {!wide && (
+        <>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+            <Truck size={20} color={THEME.teal} />
+            <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("mdModuleTitle")}</h2>
+          </div>
+          <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 14 }}>
+            {isContractor ? t("mdContractorSubtitle") : t("mdEmployerSubtitle")}
+          </p>
+        </>
+      )}
 
       {isContractor && !readOnly && (
         <button type="button" style={{ ...styles.button, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 14 }} onClick={startCreate}>

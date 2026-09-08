@@ -287,6 +287,9 @@ export const styles = {
   centerScreen: { display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: `radial-gradient(1100px 500px at 15% -10%, rgba(20,184,166,0.12) 0%, transparent 55%), linear-gradient(160deg, #0b1a24 0%, #081319 100%)`, fontFamily: THEME.font, padding: 20 },
   brandBadge: { width: 44, height: 44, borderRadius: 12, background: THEME.teal, display: "flex", alignItems: "center", justifyContent: "center" },
   card: { background: THEME.surface, padding: "clamp(18px, 5vw, 30px)", borderRadius: 16, boxShadow: "0 1px 2px rgba(15,42,63,0.04), 0 12px 32px -12px rgba(15,42,63,0.14)", border: `1px solid ${THEME.border}`, width: 340, maxWidth: "100%", boxSizing: "border-box", marginBottom: 14 },
+  // کارتِ عریض برای صفحاتِ وب که باید از کلِ عرضِ ناحیهٔ محتوا استفاده کنند
+  // (نه کادرِ باریکِ وسطِ صفحه). در موبایل تفاوتی ندارد چون عرض کم است.
+  cardWide: { background: THEME.surface, padding: "clamp(16px, 2.2vw, 24px)", borderRadius: 16, boxShadow: "0 1px 2px rgba(15,42,63,0.04), 0 14px 34px -16px rgba(15,42,63,0.16)", border: `1px solid ${THEME.border}`, width: "100%", maxWidth: "100%", boxSizing: "border-box", marginBottom: 16 },
   label: { display: "block", marginBottom: 6, marginTop: 16, fontSize: 13, fontWeight: 600, color: THEME.text2, letterSpacing: "0.01em" },
   input: { width: "100%", padding: "11px 13px", borderRadius: 9, border: `1.5px solid ${THEME.border}`, fontSize: 14.5, boxSizing: "border-box", fontFamily: THEME.font, color: THEME.text, background: THEME.surface, outline: "none", transition: "border-color .15s" },
   button: { width: "100%", marginTop: 24, padding: "13px", borderRadius: 10, border: "none", background: `linear-gradient(180deg, ${THEME.teal}, ${THEME.tealDeep})`, color: "#fff", fontSize: 15, fontWeight: 600, cursor: "pointer", boxShadow: "0 1px 2px rgba(0,0,0,0.06), 0 6px 16px -6px rgba(13,143,138,0.5)", fontFamily: THEME.font, letterSpacing: "0.01em" },

@@ -69,6 +69,7 @@ const SuperAdminPanel = lazy(() => import("./superadmin/SuperAdminPanel.jsx"));
 import DataView, { StatusPill } from "./shared/DataView.jsx";
 import ReportErrorModal from "./shared/ReportErrorModal.jsx";
 import PageBar, { PageBarContext } from "./shared/PageBar.jsx";
+import ModuleSubHeader from "./shared/ModuleSubHeader.jsx";
 import TrialRequestModal from "./TrialRequestModal.jsx";
 const MachineryDashboard = lazy(() => import("./machinery/MachineryDashboard.jsx"));
 import { loadMachineryListOfflineFirst } from "./machinery/machineryApi.js";
@@ -2030,7 +2031,7 @@ function EmployerAccountManager({ onBack }) {
 }
 
 // ---------- ثبت آنومالی جدید (بر اساس «فرم آنومالی») ----------
-function AnomalyForm({ onBack, currentUser, onSaved }) {
+function AnomalyForm({ onBack, currentUser, onSaved, embedded }) {
   const { t, dir } = useLanguage();
   const [contractorNames, setContractorNames] = useState([]);
   const [project, setProject] = useState("");
@@ -2215,15 +2216,19 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
   };
 
   return (
-    <div style={{ maxWidth: 620, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("cmBackToMenu")}</div>}
+    <div style={embedded ? { direction: dir } : { maxWidth: 620, margin: "0 auto", padding: 24 }}>
+      {!embedded && onBack && <div style={styles.backLink} onClick={onBack}>{t("cmBackToMenu")}</div>}
 
-      <div style={{ ...styles.card, width: "auto" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-          <AlertTriangle size={20} color={THEME.danger} />
-          <h3 style={{ margin: 0 }}>{t("afFormTitle")}</h3>
-        </div>
-        <p style={{ color: "#93a1b0", fontSize: 13, marginTop: 4 }}>{t("afFilledByEmployer")}</p>
+      <div style={embedded ? {} : { ...styles.card, width: "auto" }}>
+        {!embedded && (
+          <>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <AlertTriangle size={20} color={THEME.danger} />
+              <h3 style={{ margin: 0 }}>{t("afFormTitle")}</h3>
+            </div>
+            <p style={{ color: "#93a1b0", fontSize: 13, marginTop: 4 }}>{t("afFilledByEmployer")}</p>
+          </>
+        )}
 
         <div style={styles.formGrid}>
           <div>
@@ -2410,7 +2415,12 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
 
         {error && <p style={styles.error}>{error}</p>}
 
-        <button type="button" style={styles.button} onClick={handleSubmit} disabled={saving}>
+        <button
+          type="button"
+          style={embedded ? { ...styles.button, width: "auto", minWidth: 260, paddingInline: 40, marginTop: 20 } : styles.button}
+          onClick={handleSubmit}
+          disabled={saving}
+        >
           {saving ? t("afSubmitting") : t("afSubmit")}
         </button>
       </div>
@@ -2419,7 +2429,7 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
 }
 
 // ---------- لیست و پیگیری آنومالی‌ها ----------
-function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter, initialRiskFilter, initialContractorFilter, initialExpandedAnomalyId }) {
+function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter, initialRiskFilter, initialContractorFilter, initialExpandedAnomalyId, embedded }) {
   const { t, dir } = useLanguage();
   // طبق تصمیم تأییدشده: تأیید نهایی آنومالی (بستن بعد از اقدام اصلاحی
   // پیمانکار) فقط برای سرپرست/مدیر HSE مجاز است، نه هر کارفرمایی معمولی.
@@ -2838,8 +2848,8 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
   }
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("cmBackToMenu")}</div>}
+    <div style={embedded ? { direction: dir } : { maxWidth: 900, margin: "0 auto", padding: 24 }}>
+      {!embedded && onBack && <div style={styles.backLink} onClick={onBack}>{t("cmBackToMenu")}</div>}
 
       <div style={styles.statsRow}>
         <div style={styles.statBox}>
@@ -3889,10 +3899,13 @@ function ResponsiveDashboardShell({ panelLabelKey, currentUser, onLogout, onOpen
       const sub = (m.sub || []).find((s) => s && s.key === view);
       if (sub) { mod = sub; parent = m; break; }
     }
+    // صفحاتی که خودشان Sub Headerِ اختصاصی دارند (بازطراحیِ وب: آنومالی،
+    // ماشین‌آلات، ورود و تردد پرسنل) نباید Breadcrumb/«بازگشت» بگیرند.
+    const OWN_SUBHEADER = view === "anomalyReport" || view === "personnelAccess" || view === "machineryManagement";
     // فقط برای ماژول‌هایی که در فهرستِ Sidebar شناخته می‌شوند نوارِ پیش‌فرض
     // می‌سازیم؛ صفحاتِ جزئیات/فرم (که کلیدشان در Sidebar نیست) دقیقاً مثلِ
     // قبل بدونِ نوار می‌مانند (بی‌regression).
-    if (mod) {
+    if (mod && !OWN_SUBHEADER) {
       parentCrumb = parent ? `${t(panelLabelKey)} › ${parent.label}` : t(panelLabelKey);
       fallbackBar = {
         crumb: `${parentCrumb} › ${mod.label}`,
@@ -4443,7 +4456,11 @@ function EmployerDashboard({ onLogout, currentUser }) {
     }
     return m?.labelKey ? t(m.labelKey) : m?.label;
   };
+  const isDesktop = useIsDesktop();
   const [view, setView] = usePersistedState("ihms_view_employer", "menu");
+  // شمارنده‌ی نوسازی: بعد از ثبتِ فرم در صفحاتِ ترکیبیِ وب، لیستِ زیرِ آن با
+  // تغییرِ key دوباره mount و داده‌ی تازه بارگذاری می‌کند.
+  const [webListRefresh, setWebListRefresh] = useState(0);
   useEffect(() => { trackPageView(currentUser, view); }, [view]);
   // دکمهٔ برگشت گوشی مثل برگشت داخلی سامانه (بدون خروج از نرم‌افزار).
   useAndroidBackButton(() => { if (view !== "menu") { setView("menu"); return true; } return false; });
@@ -4639,15 +4656,42 @@ function EmployerDashboard({ onLogout, currentUser }) {
       {isSupervisor && view === "anomalyCategoryManagement" && <AnomalyCategoryManager onBack={() => setView("systemManagement")} />}
 
       {view === "anomalyReport" && (
-        <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
-          <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
-          <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(anomalyMod)}</h3>
-          <div style={styles.menuList2}>
-            {anomalySub.map((s) => (
-              <MenuRow key={s.key} icon={AlertTriangle} label={mt(s)} onClick={() => setView(s.key)} accent />
-            ))}
+        isDesktop ? (
+          // وب: تمامِ عرضِ ناحیهٔ محتوا — Sub Header + فرم در یک Card عریض +
+          // «لیست آنومالی‌ها» دقیقاً زیرِ آن در Card عریضِ دیگر. بدون
+          // Breadcrumb/«بازگشت». (موبایل کاملاً دست‌نخورده در شاخهٔ دیگر.)
+          <div style={{ direction: dir }}>
+            <ModuleSubHeader icon={AlertTriangle} title={t("webAnomalyPageTitle")} note={t("webAnomalyPageNote")} />
+            {anomalyCanEdit && (
+              <div style={styles.cardWide}>
+                <AnomalyForm key={`anomaly-form-${webListRefresh}`} embedded currentUser={currentUser} onSaved={() => setWebListRefresh((n) => n + 1)} />
+              </div>
+            )}
+            <div style={styles.cardWide}>
+              <AnomalyList
+                key={`anomaly-web-${webListRefresh}`}
+                embedded
+                role="EMPLOYER"
+                currentUser={currentUser}
+                readOnly={!canEdit || getAccessLevel(permMap, "anomalyReport") === "view"}
+                initialStatusFilter={navFilter?.module === "anomaly" ? navFilter.statusFilter : undefined}
+                initialRiskFilter={navFilter?.module === "anomaly" ? navFilter.riskFilter : undefined}
+                initialContractorFilter={navFilter?.module === "anomaly" ? navFilter.contractorFilter : undefined}
+                initialExpandedAnomalyId={navFilter?.module === "anomaly" ? navFilter.recordId : undefined}
+              />
+            </div>
           </div>
-        </div>
+        ) : (
+          <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
+            <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
+            <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(anomalyMod)}</h3>
+            <div style={styles.menuList2}>
+              {anomalySub.map((s) => (
+                <MenuRow key={s.key} icon={AlertTriangle} label={mt(s)} onClick={() => setView(s.key)} accent />
+              ))}
+            </div>
+          </div>
+        )
       )}
 
       {view === "riskAssessment" && (
@@ -4663,27 +4707,57 @@ function EmployerDashboard({ onLogout, currentUser }) {
       )}
 
       {view === "personnelAccess" && (
-        <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
-          <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
-          <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(personnelMod)}</h3>
-          <div style={styles.menuList2}>
-            {personnelMod.sub.map((s) => (
-              <MenuRow key={s.key} icon={Users} label={mt(s)} onClick={() => setView(s.key)} accent />
-            ))}
+        isDesktop ? (
+          <div style={{ direction: dir }}>
+            <ModuleSubHeader icon={Users} title={mt(personnelMod)} note={t("webPersonnelPageNote")} />
+            <PersonnelDashboard
+              wide
+              currentUser={currentUser}
+              role="EMPLOYER"
+              readOnly={!canEdit || getAccessLevel(permMap, "personnelAccess") === "view"}
+              initialStatusFilter={navFilter?.module === "personnel" ? navFilter.statusFilter : undefined}
+              initialContractorFilter={navFilter?.module === "personnel" ? navFilter.contractorFilter : undefined}
+              onNavigateToAssessment={(ctx) => { setAssessmentContext(ctx); setView("proactiveIndicators"); }}
+              initialSelectedPersonnelId={assessmentContext?.personnelId}
+            />
           </div>
-        </div>
+        ) : (
+          <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
+            <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
+            <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(personnelMod)}</h3>
+            <div style={styles.menuList2}>
+              {personnelMod.sub.map((s) => (
+                <MenuRow key={s.key} icon={Users} label={mt(s)} onClick={() => setView(s.key)} accent />
+              ))}
+            </div>
+          </div>
+        )
       )}
 
       {view === "machineryManagement" && (
-        <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
-          <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
-          <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(machineryMod)}</h3>
-          <div style={styles.menuList2}>
-            {machineryMod.sub.map((s) => (
-              <MenuRow key={s.key} icon={Truck} label={mt(s)} onClick={() => setView(s.key)} accent />
-            ))}
+        isDesktop ? (
+          <div style={{ direction: dir }}>
+            <ModuleSubHeader icon={Truck} title={mt(machineryMod)} note={t("webMachineryPageNote")} />
+            <MachineryDashboard
+              wide
+              currentUser={currentUser}
+              role="EMPLOYER"
+              readOnly={!canEdit || getAccessLevel(permMap, "machineryManagement") === "view"}
+              initialApprovalFilter={navFilter?.module === "machinery" ? navFilter.approvalFilter : undefined}
+              initialContractorFilter={navFilter?.module === "machinery" ? navFilter.contractorFilter : undefined}
+            />
           </div>
-        </div>
+        ) : (
+          <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
+            <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
+            <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(machineryMod)}</h3>
+            <div style={styles.menuList2}>
+              {machineryMod.sub.map((s) => (
+                <MenuRow key={s.key} icon={Truck} label={mt(s)} onClick={() => setView(s.key)} accent />
+              ))}
+            </div>
+          </div>
+        )
       )}
 
       {view === "scaffoldManagement" && (

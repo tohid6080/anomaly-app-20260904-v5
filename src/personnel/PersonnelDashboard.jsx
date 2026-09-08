@@ -21,7 +21,7 @@ const SORT_OPTIONS_KEYS = [
  * Self-contained internal routing (list ⇄ form ⇄ detail), same pattern as
  * BowTieDashboard ⇄ BowTieEditor — App.jsx only needs one route to this file.
  */
-export default function PersonnelDashboard({ onBack, currentUser, role, initialStatusFilter, initialContractorFilter, readOnly, onNavigateToAssessment, initialSelectedPersonnelId }) {
+export default function PersonnelDashboard({ onBack, currentUser, role, initialStatusFilter, initialContractorFilter, readOnly, onNavigateToAssessment, initialSelectedPersonnelId, wide }) {
   const { t, dir } = useLanguage();
   const SORT_OPTIONS = SORT_OPTIONS_KEYS.map((o) => ({ value: o.value, label: t(o.labelKey) }));
   const [list, setList] = useState([]);
@@ -144,7 +144,7 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
   if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</div>;
 
   if (showForm && !readOnly) {
-    return <PersonnelForm onBack={() => setShowForm(false)} currentUser={currentUser} onSaved={() => { setShowForm(false); load(); }} />;
+    return <PersonnelForm wide={wide} onBack={() => setShowForm(false)} currentUser={currentUser} onSaved={() => { setShowForm(false); load(); }} />;
   }
   if (selected) {
     return (
@@ -161,15 +161,19 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
   }
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 4 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Users size={20} color={THEME.teal} />
-          <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("pdModuleTitle")}</h2>
-        </div>
-      </div>
-      <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 18 }}>{t("pdModuleSubtitle")}</p>
+    <div style={wide ? { ...styles.cardWide, direction: dir } : { maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
+      {!wide && onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
+      {!wide && (
+        <>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 4 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <Users size={20} color={THEME.teal} />
+              <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("pdModuleTitle")}</h2>
+            </div>
+          </div>
+          <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 18 }}>{t("pdModuleSubtitle")}</p>
+        </>
+      )}
 
       <div style={styles.statsRow}>
         <div style={{ ...styles.statBox, background: THEME.okBg }}><div style={{ ...styles.statNum, color: THEME.ok }}>{counts.active}</div><div style={styles.statLabel}>{t("commonActive")}</div></div>

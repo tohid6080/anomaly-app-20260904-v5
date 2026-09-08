@@ -27,7 +27,7 @@ import {
  *     list) until every one of them is uploaded. Only this action makes
  *     the machine visible/actionable to the employer.
  */
-export default function MachineryForm({ existingMachinery, existingDocuments, currentUser, onSaved, onBack }) {
+export default function MachineryForm({ existingMachinery, existingDocuments, currentUser, onSaved, onBack, wide }) {
   const { t, dir } = useLanguage();
   const [machinery, setMachinery] = useState(existingMachinery || null);
   const [project, setProject] = useState(existingMachinery?.project || "");
@@ -144,7 +144,7 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
   };
 
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
+    <div style={wide ? { direction: dir } : { maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
       {onBack && <div style={styles.backLink} onClick={onBack}>{t("mfBack")}</div>}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
         <Truck size={20} color={THEME.teal} />

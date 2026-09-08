@@ -25,7 +25,7 @@ function isValidMobile(phone) {
   return /^09\d{9}$/.test((phone || "").trim());
 }
 
-export default function PersonnelForm({ onBack, onSaved, currentUser }) {
+export default function PersonnelForm({ onBack, onSaved, currentUser, wide }) {
   const { t, dir } = useLanguage();
   const [contractors, setContractors] = useState([]);
   const [loadingContractors, setLoadingContractors] = useState(true);
@@ -128,7 +128,7 @@ export default function PersonnelForm({ onBack, onSaved, currentUser }) {
   };
 
   return (
-    <div style={{ maxWidth: 560, margin: "0 auto", padding: 24, direction: dir }}>
+    <div style={wide ? { maxWidth: 820, direction: dir } : { maxWidth: 560, margin: "0 auto", padding: 24, direction: dir }}>
       {onBack && <div style={styles.backLink} onClick={onBack}>{t("pfBack")}</div>}
       <h2 style={{ margin: "0 0 4px", color: THEME.heading, fontSize: 18, fontWeight: 700 }}>{t("pfRegisterNewPersonnel")}</h2>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 18 }}>
