@@ -87,7 +87,10 @@ function IconBtn({ icon: Icon, label, onClick, danger }) {
 
 export default function OperationalDashboard({ role, currentUser, onNavigate, onBack }) {
   const { t, dir } = useLanguage();
-  const canEdit = ["EMPLOYER", "HSE_SUPERVISOR"].includes(currentUser?.role);
+  // چیدمانِ داشبورد کاری per-user در localStorage است و هیچ داده‌ی HSE‌ای
+  // را تغییر نمی‌دهد؛ پس هر کاربرِ واردشده می‌تواند چیدمانِ خودش را ویرایش
+  // و جابه‌جا کند (پیمانکار و کارفرما یکسان).
+  const canEdit = !!currentUser;
 
   const [gridRef, gridWidth] = useElementWidth();
   const [kpi, setKpi] = useState(null);

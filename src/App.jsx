@@ -1667,7 +1667,7 @@ function ProfileView({ onBack, currentUser, roleLabel, mobileTabsProps }) {
         <h3 style={{ textAlign: "center", marginBottom: 2 }}>{currentUser?.name || "—"}</h3>
         <p style={{ textAlign: "center", color: THEME.text3, fontSize: 12.5, marginTop: 0, marginBottom: 20 }}>{roleLabel}</p>
 
-        {!isDesktop && mobileTabsProps && currentUser?.role === "HSE_SUPERVISOR" && (
+        {!isDesktop && mobileTabsProps && (
           <MobileTabsEditor {...mobileTabsProps} />
         )}
 
@@ -3699,8 +3699,9 @@ function MobileTabBar({ view, setView, notifCount, tabKeys }) {
   );
 }
 
-// ویرایشگرِ نوارِ پایینِ موبایل — فقط برای «سرپرست کارفرما»، داخلِ «تنظیمات».
-// draft محلی + دکمهٔ «ذخیره» صریح (مطابقِ CLAUDE.md؛ هیچ نوشتنی روی هر کلیک).
+// ویرایشگرِ نوارِ پایینِ موبایل — برای همهٔ کاربران (کارفرما و پیمانکار)،
+// داخلِ «تنظیمات». draft محلی + دکمهٔ «ذخیره» صریح (مطابقِ CLAUDE.md؛ هیچ
+// نوشتنی روی هر کلیک). چیدمان per-user در localStorage ذخیره می‌شود.
 function MobileTabsEditor({ candidates, value, onSave }) {
   const { t } = useLanguage();
   const known = candidates.filter((c) => c && mobileTabMeta(t)[c.key]);
@@ -5064,6 +5065,8 @@ function ContractorDashboard({ onLogout, currentUser }) {
   };
   const isDesktop = useIsDesktop();
   const [view, setView] = usePersistedState("ihms_view_contractor", "menu");
+  // شخصی‌سازیِ نوارِ پایینِ موبایل — همان قابلیتِ پنلِ کارفرما، per-user.
+  const [mobileTabs, setMobileTabs] = usePersistedState("ihms_mobile_tabs_" + (currentUser?.username || "anon"), null);
   useEffect(() => { trackPageView(currentUser, view); }, [view]);
   // دکمهٔ برگشت گوشی مثل برگشت داخلی سامانه (بدون خروج از نرم‌افزار).
   useAndroidBackButton(() => { if (view !== "menu") { setView("menu"); return true; } return false; });
@@ -5228,6 +5231,19 @@ function ContractorDashboard({ onLogout, currentUser }) {
     sub: mod.sub ? mod.sub.filter((s) => !s.employerOnly).map((s) => ({ key: s.key, label: mt(s) })) : undefined,
   })), moduleConfig);
 
+  const bottomNavCandidates = (() => {
+    const meta = mobileTabMeta(t);
+    const nav = [
+      { key: "menu", label: t("mobTabHome") },
+      { key: "modules", label: t("mobTabModules") },
+      { key: "notifications", label: t("mobTabAlerts") },
+      { key: "profile", label: t("mobTabSettings") },
+    ];
+    const seen = new Set();
+    return [...nav, ...sidebarModules.map((m) => ({ key: m.key, label: m.label }))]
+      .filter((c) => meta[c.key] && !seen.has(c.key) && (seen.add(c.key), true));
+  })();
+
   return (
     <ResponsiveDashboardShell
       panelLabelKey="panelContractor"
@@ -5239,6 +5255,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
       view={view}
       setView={setView}
       sidebarModules={sidebarModules}
+      mobileTabs={mobileTabs}
     >
       {/* موبایل: تبِ «ماژول‌ها» — جست‌وجوشونده و گروه‌بندی‌شده، همان ترتیبِ Sidebarِ دسکتاپ. */}
       {view === "modules" && (
@@ -5333,7 +5350,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
         </div>
       )}
 
-      {view === "profile" && <ProfileView onBack={() => setView("menu")} currentUser={currentUser} roleLabel={t("roleLabelContractor")} />}
+      {view === "profile" && <ProfileView onBack={() => setView("menu")} currentUser={currentUser} roleLabel={t("roleLabelContractor")} mobileTabsProps={{ candidates: bottomNavCandidates, value: mobileTabs, onSave: setMobileTabs }} />}
       {view === "chat" && <ChatDashboard onBack={() => setView("menu")} currentUser={currentUser} />}
       {view === "hcmsDashboard" && <HcmsDashboard wide={isDesktop} onBack={() => setView("riskAssessment")} currentUser={currentUser} />}
       {view === "bowtieDashboard" && <BowTieDashboard wide={isDesktop} role="CONTRACTOR" onBack={() => setView("riskAssessment")} currentUser={currentUser} readOnly={getAccessLevel(permMap, "riskAssessment") === "view"} />}
