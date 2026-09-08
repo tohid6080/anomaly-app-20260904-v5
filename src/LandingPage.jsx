@@ -92,16 +92,11 @@ const LP_CSS = `
 .ihms-lp .hero-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .ihms-lp .hero-photo .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.5);font-weight:700;font-size:13px;padding:24px;text-align:center}
 .ihms-lp .hero-photo .grid-lines{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:34px 34px}
-.ihms-lp .mock{position:absolute;background:#fff;border:1px solid ${C.line};border-radius:16px;box-shadow:0 30px 60px -30px rgba(12,34,51,.4);padding:14px}
-.ihms-lp .mock.dash{inset-inline-start:-26px;bottom:-26px;width:min(300px,64%)}
-.ihms-lp .mock.kpi{inset-inline-end:-18px;top:24px;width:min(214px,48%);padding:12px 14px}
 @media (max-width:900px){
   .ihms-lp .hero-grid{grid-template-columns:1fr;text-align:center}
   .ihms-lp .hero .lede,.ihms-lp .hero h1{margin-inline:auto}
   .ihms-lp .hero .cta,.ihms-lp .hero .ticks{justify-content:center}
   .ihms-lp .hero-visual{margin-top:8px}
-  .ihms-lp .mock.dash{inset-inline-start:-8px;bottom:-16px;width:64%}
-  .ihms-lp .mock.kpi{inset-inline-end:-6px}
 }
 
 .ihms-lp .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
@@ -656,15 +651,7 @@ export default function LandingPage({ onStartFree, onUserLogin, announcements, l
                 {heroImageUrl
                   ? <img src={heroImageUrl} alt="HSE" />
                   : (<><div className="grid-lines" /><div className="ph">{x.heroPh}</div></>)}
-                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,rgba(8,26,39,.05),rgba(8,26,39,.35))" }} />
-              </div>
-              <div className="mock dash"><DashMock x={x} /></div>
-              <div className="mock kpi">
-                <div style={{ fontSize: 9.5, color: C.ink3 }}>{x.kpiToday}</div>
-                <div style={{ fontSize: 24, fontWeight: 900, color: C.tealDeep, fontVariantNumeric: "tabular-nums" }}>{x.pct94}</div>
-                <div style={{ height: 4, background: "#e4ecf1", borderRadius: 4, marginTop: 6 }}>
-                  <div style={{ width: "94%", height: "100%", background: C.tealDeep, borderRadius: 4 }} />
-                </div>
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,rgba(8,26,39,.05),rgba(8,26,39,.28))" }} />
               </div>
             </div>
           </div>
