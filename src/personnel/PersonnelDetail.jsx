@@ -27,7 +27,7 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
  * document approvals — drives the occupational-health workflow via
  * progressPersonnelWorkflow() in personnelApi.js.
  */
-export default function PersonnelDetail({ personnel: initialPersonnel, role, currentUser, onBack, onUpdated, readOnly, onNavigateToAssessment }) {
+export default function PersonnelDetail({ personnel: initialPersonnel, role, currentUser, onBack, onUpdated, readOnly, onNavigateToAssessment, wide }) {
   const { t, dir } = useLanguage();
   const [personnel, setPersonnel] = useState(initialPersonnel);
   const [documents, setDocuments] = useState([]);
@@ -225,7 +225,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
   if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</div>;
 
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
+    <div style={wide ? { direction: dir } : { maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
       {onBack && <div style={styles.backLink} onClick={onBack}>{t("pdetBackToList")}</div>}
 
       <div style={{ ...styles.card, width: "auto" }}>

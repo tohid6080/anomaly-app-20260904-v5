@@ -189,7 +189,7 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId, wid
 
   if (showForm) {
     return (
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: 24, direction: dir }}>
+      <div style={wide ? { direction: dir } : { maxWidth: 720, margin: "0 auto", padding: 24, direction: dir }}>
         <div style={styles.backLink} onClick={() => setShowForm(false)}>{t("hcmsCancel")}</div>
         <h2 style={{ fontSize: 17, color: THEME.heading, fontWeight: 700, marginBottom: 4 }}>{editingId ? t("hcmsEditAssessment") : t("hcmsNewAssessment")}</h2>
         {form.linkedAnomalyId && (

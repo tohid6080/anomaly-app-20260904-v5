@@ -17,7 +17,7 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
  * (org_type="employer") و می‌تواند نتایج پیمانکاران را هم به‌صورت
  * تجمیعی ببیند.
  */
-export default function HseClimateCampaignManager({ currentUser, role, onBack }) {
+export default function HseClimateCampaignManager({ currentUser, role, onBack, wide }) {
   const { t, dir } = useLanguage();
   const isContractor = role === "CONTRACTOR";
   const isEmployerSide = role === "EMPLOYER";
@@ -85,7 +85,7 @@ export default function HseClimateCampaignManager({ currentUser, role, onBack })
   };
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
+    <div style={wide ? { direction: dir } : { maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
       {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>}
       <h3 style={{ marginBottom: 4, color: THEME.heading }}>{t("hccmCampaignsTitle")}</h3>
       <p style={{ color: THEME.text3, fontSize: 12, marginTop: 0, marginBottom: 16 }}>

@@ -149,6 +149,7 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
   if (selected) {
     return (
       <PersonnelDetail
+        wide={wide}
         personnel={selected}
         role={role}
         currentUser={currentUser}

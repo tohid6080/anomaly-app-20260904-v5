@@ -14,7 +14,7 @@ const SCALE_OPTIONS_KEYS = [
   { value: 1, labelKey: "hseOptStronglyDisagree" },
 ];
 
-export default function AccidentPronenessAssessmentForm({ personnelId, jobTitle, personnelName, currentUser, onBack, onSaved }) {
+export default function AccidentPronenessAssessmentForm({ personnelId, jobTitle, personnelName, currentUser, onBack, onSaved, wide }) {
   const { t, dir } = useLanguage();
   const SCALE_OPTIONS = SCALE_OPTIONS_KEYS.map((o) => ({ value: o.value, label: t(o.labelKey) }));
   const [questions, setQuestions] = useState([]);
@@ -64,7 +64,7 @@ export default function AccidentPronenessAssessmentForm({ personnelId, jobTitle,
   }
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: 24, direction: dir }}>
+    <div style={wide ? { direction: dir } : { maxWidth: 720, margin: "0 auto", padding: 24, direction: dir }}>
       <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>
       <h3 style={{ marginBottom: 4, color: THEME.heading }}>{t("apAssessmentTitle")}</h3>
       {personnelName && <p style={{ color: THEME.text3, fontSize: 13, marginTop: 0, marginBottom: 4 }}>{t("apPersonnelInline")} <b>{personnelName}</b>{jobTitle && ` — ${jobTitle}`}</p>}

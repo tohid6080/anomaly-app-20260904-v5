@@ -79,6 +79,7 @@ export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role
   if (view === "form" && activeIndicatorKey === "accident_proneness") {
     return (
       <AccidentPronenessAssessmentForm
+        wide={wide}
         personnelId={focusPersonnelId}
         jobTitle={focusJobTitle}
         personnelName={focusPersonnelName}
@@ -90,16 +91,17 @@ export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role
   }
 
   if (view === "results" && activeIndicatorKey === "hse_climate") {
-    return <HseClimateCampaignManager currentUser={currentUser} role={role} onBack={() => setView("list")} />;
+    return <HseClimateCampaignManager wide={wide} currentUser={currentUser} role={role} onBack={() => setView("list")} />;
   }
 
   if (view === "results" && activeIndicatorKey === "sbs") {
-    return <SbsSubmodule currentUser={currentUser} role={role} readOnly={readOnly} onBack={() => setView("list")} />;
+    return <SbsSubmodule wide={wide} currentUser={currentUser} role={role} readOnly={readOnly} onBack={() => setView("list")} />;
   }
 
   if (view === "results" && activeIndicatorKey) {
     return (
       <ResultsList
+        wide={wide}
         indicatorKey={activeIndicatorKey}
         indicatorName={indicatorLabel(indicators.find((i) => i.key === activeIndicatorKey))}
         currentUser={currentUser}
@@ -157,7 +159,7 @@ export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role
 }
 
 // ---------- نتایج استعداد حادثه‌پذیری — جدول شخص‌محور ----------
-function ResultsList({ indicatorKey, indicatorName, currentUser, onBack }) {
+function ResultsList({ indicatorKey, indicatorName, currentUser, onBack, wide }) {
   const { t, dir } = useLanguage();
   const [rows, setRows] = useState(null);
   const [caByAssessment, setCaByAssessment] = useState({});
@@ -170,7 +172,7 @@ function ResultsList({ indicatorKey, indicatorName, currentUser, onBack }) {
   }, [indicatorKey]);
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
+    <div style={wide ? { direction: dir } : { maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
       <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>
       <h3 style={{ marginBottom: 4, color: THEME.heading, display: "flex", alignItems: "center", gap: 8 }}>
         <ClipboardList size={18} /> {t("pidResultsOf", { name: indicatorName })}

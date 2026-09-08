@@ -172,7 +172,7 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser, wide }
   // ---------- فرم ثبت/ویرایش ----------
   if (showForm) {
     return (
-      <div style={{ maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
+      <div style={wide ? { direction: dir } : { maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
         <div style={styles.backLink} onClick={() => setShowForm(false)}>{t("cadCancel")}</div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
           <h2 style={{ fontSize: 17, color: THEME.heading, fontWeight: 700, margin: 0 }}>{editingId ? t("cadEditTitle") : t("cadNewTitle")}</h2>

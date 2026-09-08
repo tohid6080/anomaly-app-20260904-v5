@@ -147,7 +147,7 @@ export default function RiskKnowledgeManager({ onBack, currentUser, wide }) {
 
   if (showForm) {
     return (
-      <div style={{ maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
+      <div style={wide ? { direction: dir } : { maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
         <div style={styles.backLink} onClick={() => setShowForm(false)}>{t("rkCancel")}</div>
         <h2 style={{ fontSize: 17, color: THEME.heading, fontWeight: 700, marginBottom: 14 }}>{editingId ? t("rkEditRecord") : t("rkNewRecord")}</h2>
         <label style={styles.label}>{t("rkFieldActivity")}</label>

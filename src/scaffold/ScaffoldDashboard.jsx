@@ -203,6 +203,7 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
   if (showForm) {
     return (
       <ScaffoldRequestForm
+        wide={wide}
         currentUser={currentUser}
         contractorCode={myContractorCode}
         onBack={() => { setShowForm(false); load(); }}

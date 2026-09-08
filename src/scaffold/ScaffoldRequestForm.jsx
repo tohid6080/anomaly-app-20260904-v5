@@ -13,7 +13,7 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
  * number is generated the request already exists; photos are just an
  * optional attachment the contractor can add before or after.
  */
-export default function ScaffoldRequestForm({ currentUser, contractorCode, onCreated, onBack }) {
+export default function ScaffoldRequestForm({ currentUser, contractorCode, onCreated, onBack, wide }) {
   const { t, dir } = useLanguage();
   const [location, setLocation] = useState("");
   const [erectionDate, setErectionDate] = useState("");
@@ -57,7 +57,7 @@ export default function ScaffoldRequestForm({ currentUser, contractorCode, onCre
 
   if (created) {
     return (
-      <div style={{ maxWidth: 520, margin: "0 auto", padding: 24, direction: dir }}>
+      <div style={wide ? { direction: dir } : { maxWidth: 520, margin: "0 auto", padding: 24, direction: dir }}>
         <div style={{ ...styles.card, width: "auto", textAlign: "center" }}>
           <CheckCircle2 size={36} color={THEME.ok} style={{ margin: "0 auto 10px" }} />
           <h3 style={{ margin: "0 0 6px", color: THEME.heading }}>{t("scaffRequestSubmitted")}</h3>
@@ -83,7 +83,7 @@ export default function ScaffoldRequestForm({ currentUser, contractorCode, onCre
   }
 
   return (
-    <div style={{ maxWidth: 520, margin: "0 auto", padding: 24, direction: dir }}>
+    <div style={wide ? { direction: dir } : { maxWidth: 520, margin: "0 auto", padding: 24, direction: dir }}>
       {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
         <Tag size={20} color={THEME.teal} />

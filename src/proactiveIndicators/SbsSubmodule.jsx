@@ -14,7 +14,7 @@ import { pctSign } from "../i18n/translations.js";
  * نیست؛ خودِ داده‌ی ۱۲ دسته/۳۲ کد مصداق در فرم ثبت (به‌شکل dropdown
  * آبشاری) کاملاً استفاده می‌شود.
  */
-export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
+export default function SbsSubmodule({ currentUser, role, readOnly, onBack, wide }) {
   const { t, lang, dir } = useLanguage();
   const isEmployerSide = role === "EMPLOYER";
   const [categories, setCategories] = useState([]);
