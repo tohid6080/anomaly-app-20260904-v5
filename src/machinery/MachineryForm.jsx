@@ -154,8 +154,8 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
       </div>
 
       {machinery?.reviewNote && (
-        <div style={{ ...styles.card, width: "auto", marginBottom: 14, background: "#fef3c7", border: "1px solid #fde68a" }}>
-          <p style={{ fontSize: 12.5, color: "#92400e", margin: 0 }}><b>{t("mfEmployerNote")}</b> {machinery.reviewNote}</p>
+        <div style={{ ...styles.card, width: "auto", marginBottom: 14, background: THEME.warnBg, border: "1px solid #fde68a" }}>
+          <p style={{ fontSize: 12.5, color: THEME.warn, margin: 0 }}><b>{t("mfEmployerNote")}</b> {machinery.reviewNote}</p>
         </div>
       )}
 
@@ -308,7 +308,7 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
             <div key={dt.value} style={{ marginBottom: 14 }}>
               <label style={styles.label}>
                 {t(dt.labelKey)}{dt.required && <span style={{ color: THEME.danger }}> *</span>}
-                {docs[dt.value] && <CheckCircle2 size={13} color="#166534" style={{ marginInlineStart: 6, verticalAlign: "middle" }} />}
+                {docs[dt.value] && <CheckCircle2 size={13} color={THEME.ok} style={{ marginInlineStart: 6, verticalAlign: "middle" }} />}
               </label>
               <DocUploadField
                 existingDoc={docs[dt.value] || null}

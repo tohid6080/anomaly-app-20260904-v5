@@ -38,7 +38,7 @@ export default function ReportErrorModal({ currentUser, moduleKey, pageLabel, te
       <div style={{ background: THEME.surface, borderRadius: 14, padding: 20, maxWidth: 440, width: "100%", direction: dir, maxHeight: "90vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
         {done ? (
           <div style={{ textAlign: "center", padding: "10px 0" }}>
-            <CheckCircle2 size={40} color="#166534" style={{ marginBottom: 10 }} />
+            <CheckCircle2 size={40} color={THEME.ok} style={{ marginBottom: 10 }} />
             <h3 style={{ color: THEME.heading, fontSize: 14, marginBottom: 6 }}>{t("erpDoneTitle")}</h3>
             <p style={{ fontSize: 12, color: THEME.text3, marginBottom: 16 }}>{t("erpDoneBody")}</p>
             <button type="button" style={{ ...styles.button, width: "auto", marginTop: 0, padding: "9px 24px" }} onClick={onClose}>{t("saClose")}</button>
@@ -47,7 +47,7 @@ export default function ReportErrorModal({ currentUser, moduleKey, pageLabel, te
           <>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
               <h3 style={{ fontSize: 14, color: THEME.heading, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
-                <AlertTriangle size={16} color="#b45309" /> {t("erpTitle")}
+                <AlertTriangle size={16} color={THEME.warn} /> {t("erpTitle")}
               </h3>
               <button type="button" onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>
                 <X size={16} color={THEME.text3} />

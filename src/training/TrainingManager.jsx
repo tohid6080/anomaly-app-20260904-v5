@@ -123,7 +123,7 @@ export default function TrainingManager({ onBack }) {
         {courses.map((c) => (
           <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${THEME.border}` }}>
             <span style={{ flex: 1, fontSize: 13, color: c.isActive ? THEME.text : THEME.text3, textDecoration: c.isActive ? "none" : "line-through" }}>{c.title}</span>
-            <button type="button" style={{ ...styles.smallButton, background: c.isActive ? THEME.text3 : "#166534" }} onClick={() => handleToggleActive(c)}>
+            <button type="button" style={{ ...styles.smallButton, background: c.isActive ? THEME.text3 : THEME.ok }} onClick={() => handleToggleActive(c)}>
               {c.isActive ? t("trainingDeactivate") : t("trainingActivate")}
             </button>
             <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => handleDelete(c)}>
@@ -177,8 +177,8 @@ export default function TrainingManager({ onBack }) {
           </div>
         )}
         {isMatrixDirty && (
-          <div style={{ position: "sticky", bottom: 10, display: "flex", alignItems: "center", gap: 8, background: "#fef3c7", border: "1px solid #f59e0b", borderRadius: 10, padding: "10px 14px", marginTop: 12 }}>
-            <span style={{ fontSize: 11.5, color: "#92400e", fontWeight: 600, flex: 1 }}>{t("draftUnsavedCellsBar", { count: changedCells().length })}</span>
+          <div style={{ position: "sticky", bottom: 10, display: "flex", alignItems: "center", gap: 8, background: THEME.warnBg, border: "1px solid #f59e0b", borderRadius: 10, padding: "10px 14px", marginTop: 12 }}>
+            <span style={{ fontSize: 11.5, color: THEME.warn, fontWeight: 600, flex: 1 }}>{t("draftUnsavedCellsBar", { count: changedCells().length })}</span>
             <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setDraftMatrix(matrix)} disabled={matrixSaving}>{t("commonCancel")}</button>
             <button type="button" style={styles.smallButton} onClick={handleSaveMatrix} disabled={matrixSaving}>{matrixSaving ? t("saSavingEllipsis") : t("draftCommitChanges")}</button>
           </div>

@@ -1,4 +1,4 @@
-import { sb, sbOk, getCurrentCompanyId } from "../shared.js";
+import { sb, sbOk, getCurrentCompanyId, THEME } from "../shared.js";
 import { uploadBase64ToStorage } from "../offline/storageUpload.js";
 import { translate, getCurrentLang } from "../i18n/translations.js";
 
@@ -17,9 +17,9 @@ export const SOURCE_OPTIONS = [
 ];
 
 export const PRIORITY_OPTIONS = [
-  { value: "low", labelKey: "caPriorityLow", color: "#166534", bg: "#dcfce7" },
-  { value: "medium", labelKey: "caPriorityMedium", color: "#92400e", bg: "#fef3c7" },
-  { value: "high", labelKey: "caPriorityHigh", color: "#c92a2a", bg: "#fee2e2" },
+  { value: "low", labelKey: "caPriorityLow", color: THEME.ok, bg: THEME.okBg },
+  { value: "medium", labelKey: "caPriorityMedium", color: THEME.warn, bg: THEME.warnBg },
+  { value: "high", labelKey: "caPriorityHigh", color: "#c92a2a", bg: THEME.dangerBg },
   { value: "critical", labelKey: "caPriorityCritical", color: "#fff", bg: "#7c2d12" },
 ];
 

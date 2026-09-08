@@ -34,7 +34,7 @@ export const SUBSCRIPTION_TYPES = [
   { value: "permanent", labelKey: "subTypePermanent" },
 ];
 export const SUBSCRIPTION_STATUSES = [
-  { value: "active", labelKey: "commonActive", color: "#166534", bg: "#dcfce7" },
+  { value: "active", labelKey: "commonActive", color: THEME.ok, bg: THEME.okBg },
   { value: "expired", labelKey: "subStatusExpired", color: "#c92a2a", bg: "#fdecec" },
   { value: "disabled", labelKey: "commonInactive", color: "#5b6b7d", bg: THEME.surface2 },
 ];
@@ -176,8 +176,8 @@ export function computePaymentStatus(finalAmount, payments) {
   const totalPaid = yearlyPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
   const remaining = Math.max(0, (Number(finalAmount) || 0) - totalPaid);
   if (totalPaid === 0) return { status: "unpaid", labelKey: "payStatusUnpaid", color: "#5b6b7d", bg: THEME.surface2, remaining, totalPaid };
-  if (remaining <= 0) return { status: "settled", labelKey: "payStatusSettled", color: "#166534", bg: "#dcfce7", remaining: 0, totalPaid };
-  return { status: "partial", labelKey: "payStatusPartial", color: "#92400e", bg: "#fef3c7", remaining, totalPaid };
+  if (remaining <= 0) return { status: "settled", labelKey: "payStatusSettled", color: THEME.ok, bg: THEME.okBg, remaining: 0, totalPaid };
+  return { status: "partial", labelKey: "payStatusPartial", color: THEME.warn, bg: THEME.warnBg, remaining, totalPaid };
 }
 
 // وضعیت مبلغ مستمر ماهانه — طبق خواسته‌ی صریح: چون این مبلغ باید هرماه
@@ -192,8 +192,8 @@ export function computeMonthlyPaymentAlarm(company, payments) {
     const d = new Date(p.payment_date);
     return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
   });
-  if (paidThisMonth) return { overdue: false, labelKey: "monthlyAlarmPaid", color: "#166534", bg: "#dcfce7" };
-  return { overdue: true, label: tr("monthlyAlarmOverdue", { amount: monthlyAmount.toLocaleString(numLocale(getCurrentLang())) }), color: "#b91c1c", bg: "#fee2e2" };
+  if (paidThisMonth) return { overdue: false, labelKey: "monthlyAlarmPaid", color: THEME.ok, bg: THEME.okBg };
+  return { overdue: true, label: tr("monthlyAlarmOverdue", { amount: monthlyAmount.toLocaleString(numLocale(getCurrentLang())) }), color: THEME.danger, bg: THEME.dangerBg };
 }
 
 // معوق: هنوز بدهی باقی مانده و دوره‌ی اشتراک هم به پایان رسیده
@@ -210,12 +210,12 @@ export function computeSubscriptionAlertTier(endDate) {
   const end = new Date(endDate); end.setHours(0, 0, 0, 0);
   const daysLeft = Math.round((end - now) / (1000 * 60 * 60 * 24));
   const daysLeftLabel = tr("subTierDaysLeft", { days: daysLeft });
-  if (daysLeft < 0) return { tier: "expired", label: tr("subTierExpired"), daysLeft, color: "#b91c1c", bg: "#fee2e2" };
-  if (daysLeft === 0) return { tier: "today", label: tr("subTierToday"), daysLeft, color: "#b91c1c", bg: "#fee2e2" };
-  if (daysLeft <= 3) return { tier: "3days", label: daysLeftLabel, daysLeft, color: "#b91c1c", bg: "#fee2e2" };
-  if (daysLeft <= 7) return { tier: "7days", label: daysLeftLabel, daysLeft, color: "#92400e", bg: "#fef3c7" };
-  if (daysLeft <= 15) return { tier: "15days", label: daysLeftLabel, daysLeft, color: "#92400e", bg: "#fef3c7" };
-  if (daysLeft <= 30) return { tier: "30days", label: daysLeftLabel, daysLeft, color: "#92400e", bg: "#fef3c7" };
+  if (daysLeft < 0) return { tier: "expired", label: tr("subTierExpired"), daysLeft, color: THEME.danger, bg: THEME.dangerBg };
+  if (daysLeft === 0) return { tier: "today", label: tr("subTierToday"), daysLeft, color: THEME.danger, bg: THEME.dangerBg };
+  if (daysLeft <= 3) return { tier: "3days", label: daysLeftLabel, daysLeft, color: THEME.danger, bg: THEME.dangerBg };
+  if (daysLeft <= 7) return { tier: "7days", label: daysLeftLabel, daysLeft, color: THEME.warn, bg: THEME.warnBg };
+  if (daysLeft <= 15) return { tier: "15days", label: daysLeftLabel, daysLeft, color: THEME.warn, bg: THEME.warnBg };
+  if (daysLeft <= 30) return { tier: "30days", label: daysLeftLabel, daysLeft, color: THEME.warn, bg: THEME.warnBg };
   return null;
 }
 
@@ -877,9 +877,9 @@ export async function setStorageCapacity(capacityMb) {
 
 // وضعیت رنگی مصرف — دقیقاً همان سه آستانه‌ی درخواست‌شده
 export function storageUsageStatus(percent) {
-  if (percent >= 90) return { label: tr("storageStatusCritical"), color: "#b91c1c", bg: "#fee2e2" };
-  if (percent >= 80) return { label: tr("storageStatusWarning"), color: "#92400e", bg: "#fef3c7" };
-  return { label: tr("storageStatusNormal"), color: "#166534", bg: "#dcfce7" };
+  if (percent >= 90) return { label: tr("storageStatusCritical"), color: THEME.danger, bg: THEME.dangerBg };
+  if (percent >= 80) return { label: tr("storageStatusWarning"), color: THEME.warn, bg: THEME.warnBg };
+  return { label: tr("storageStatusNormal"), color: THEME.ok, bg: THEME.okBg };
 }
 
 // ---------- کپی محتوای آماده بین شرکت‌ها — فقط Super Admin ----------
@@ -1207,9 +1207,9 @@ export async function deleteBackupImport(path) {
 
 export function backupStatusMeta(status) {
   switch (status) {
-    case "completed": return { color: "#166534", bg: "#dcfce7", labelKey: "backupStatusCompleted" };
-    case "running":   return { color: "#92400e", bg: "#fef3c7", labelKey: "backupStatusRunning" };
+    case "completed": return { color: THEME.ok, bg: THEME.okBg, labelKey: "backupStatusCompleted" };
+    case "running":   return { color: THEME.warn, bg: THEME.warnBg, labelKey: "backupStatusRunning" };
     case "pending":   return { color: "#3730a3", bg: "#e0e7ff", labelKey: "backupStatusPending" };
-    default:          return { color: "#b91c1c", bg: "#fee2e2", labelKey: "backupStatusFailed" };
+    default:          return { color: THEME.danger, bg: THEME.dangerBg, labelKey: "backupStatusFailed" };
   }
 }

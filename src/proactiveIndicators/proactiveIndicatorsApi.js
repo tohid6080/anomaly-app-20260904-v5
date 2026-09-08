@@ -1,4 +1,4 @@
-import { sb, sbOk, getCurrentCompanyId, loadCurrentCompanyPlanFeatures, isModuleInPlan } from "../shared.js";
+import { sb, sbOk, getCurrentCompanyId, loadCurrentCompanyPlanFeatures, isModuleInPlan, THEME } from "../shared.js";
 import { scoreHseClimate, isCompleteHseClimate } from "./hseClimateScoring.js";
 import { translate, getCurrentLang } from "../i18n/translations.js";
 
@@ -33,10 +33,10 @@ export function needsAccidentPronenessAssessment(jobTitle) {
 // ۳۹-۷۸ پایین (سبز)، ۷۹-۱۱۷ متوسط (آبی)، ۱۱۸-۱۵۶ بالا (نارنجی)، ۱۵۷-۱۹۵ بسیار بالا (قرمز)
 export function accidentPronenessLevel(score) {
   const lang = getCurrentLang();
-  if (score >= 157) return { level: translate(lang, "accidentPronenessVeryHigh"), levelCode: "veryHigh", color: "#dc2626", bg: "#fee2e2" };
+  if (score >= 157) return { level: translate(lang, "accidentPronenessVeryHigh"), levelCode: "veryHigh", color: "#dc2626", bg: THEME.dangerBg };
   if (score >= 118) return { level: translate(lang, "accidentPronenessHigh"), levelCode: "high", color: "#ea580c", bg: "#ffedd5" };
   if (score >= 79) return { level: translate(lang, "accidentPronenessMedium"), levelCode: "medium", color: "#2563eb", bg: "#dbeafe" };
-  return { level: translate(lang, "accidentPronenessLow"), levelCode: "low", color: "#16a34a", bg: "#dcfce7" };
+  return { level: translate(lang, "accidentPronenessLow"), levelCode: "low", color: "#16a34a", bg: THEME.okBg };
 }
 
 // بررسی جداگانه‌ی فعال‌بودن شاخص برای شرکت — چون needsAccidentPronenessAssessment

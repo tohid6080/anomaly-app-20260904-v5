@@ -274,7 +274,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
           {isGatekeeper && (gateItem.status === "pending_approval" || gateItem.status === "reviewed") && (
             <div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
-                <button type="button" style={{ ...styles.smallButton, background: "#166534" }} onClick={handleApproveGate} disabled={gateBusy}>
+                <button type="button" style={{ ...styles.smallButton, background: THEME.ok }} onClick={handleApproveGate} disabled={gateBusy}>
                   {t("gateApproveInitialReview")}
                 </button>
                 {gateItem.status === "pending_approval" && (
@@ -385,7 +385,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
                       <textarea style={{ ...styles.input, minHeight: 50, fontFamily: "inherit", marginTop: 6 }} value={reviewDraft[doc.id] || ""} onChange={(e) => setReviewDraft({ ...reviewDraft, [doc.id]: e.target.value })} placeholder={t("pdetRejectCorrectionPlaceholder")} dir={dir} />
                       <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
                         <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => handleReviewDoc(doc, "rejected", reviewDraft[doc.id])}>{t("pdetReject")}</button>
-                        <button type="button" style={{ ...styles.smallButton, background: "#b45309" }} onClick={() => handleReviewDoc(doc, "needs_correction", reviewDraft[doc.id])}>{t("pdetRejectNeedsCorrection")}</button>
+                        <button type="button" style={{ ...styles.smallButton, background: THEME.warn }} onClick={() => handleReviewDoc(doc, "needs_correction", reviewDraft[doc.id])}>{t("pdetRejectNeedsCorrection")}</button>
                         <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setShowRejectFor(null)}>{t("commonCancel")}</button>
                       </div>
                     </>
@@ -454,7 +454,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
                   <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={qualNote} onChange={(e) => setQualNote(e.target.value)} placeholder={t("pdetRejectReasonPlaceholder")} dir={dir} />
                   <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                     <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => handleQualificationDecision("rejected")}>{t("pdetRegisterRejection")}</button>
-                    <button type="button" style={{ ...styles.smallButton, background: "#b45309" }} onClick={() => handleQualificationDecision("needs_correction")}>{t("pdetRejectNeedsCorrection")}</button>
+                    <button type="button" style={{ ...styles.smallButton, background: THEME.warn }} onClick={() => handleQualificationDecision("needs_correction")}>{t("pdetRejectNeedsCorrection")}</button>
                     <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setShowQualReject(false)}>{t("commonCancel")}</button>
                   </div>
                 </>
@@ -518,7 +518,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
                       <textarea style={{ ...styles.input, minHeight: 50, fontFamily: "inherit", marginTop: 6 }} value={reviewDraft[doc.id] || ""} onChange={(e) => setReviewDraft({ ...reviewDraft, [doc.id]: e.target.value })} placeholder={t("pdetRejectCorrectionPlaceholder")} dir={dir} />
                       <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
                         <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => handleReviewDoc(doc, "rejected", reviewDraft[doc.id])}>{t("pdetReject")}</button>
-                        <button type="button" style={{ ...styles.smallButton, background: "#b45309" }} onClick={() => handleReviewDoc(doc, "needs_correction", reviewDraft[doc.id])}>{t("pdetRejectNeedsCorrection")}</button>
+                        <button type="button" style={{ ...styles.smallButton, background: THEME.warn }} onClick={() => handleReviewDoc(doc, "needs_correction", reviewDraft[doc.id])}>{t("pdetRejectNeedsCorrection")}</button>
                         <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setShowRejectFor(null)}>{t("commonCancel")}</button>
                       </div>
                     </>
@@ -536,7 +536,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
             <ShieldCheck size={16} color={THEME.teal} /> {t("pdetSendToEmployerSupervisor")}
           </h3>
           {gateItem && (gateItem.status === "pending_approval" || gateItem.status === "assigned_review" || gateItem.status === "reviewed") ? (
-            <p style={{ fontSize: 12.5, color: "#166534", margin: 0, fontWeight: 600 }}>
+            <p style={{ fontSize: 12.5, color: THEME.ok, margin: 0, fontWeight: 600 }}>
               {t("pdetSentStatus", { status: GATE_STATUS_LABELS[gateItem.status] ? gateStatusLabel(gateItem.status) : t("pdetGateAwaitingReview") })}
             </p>
           ) : documents.length === 0 ? (
@@ -554,7 +554,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
             </>
           )}
           {contractorSubmitMsg && (
-            <p style={{ fontSize: 11.5, color: contractorSubmitOk ? "#166534" : THEME.danger, marginTop: 8 }}>{contractorSubmitMsg}</p>
+            <p style={{ fontSize: 11.5, color: contractorSubmitOk ? THEME.ok : THEME.danger, marginTop: 8 }}>{contractorSubmitMsg}</p>
           )}
         </div>
       )}
@@ -571,10 +571,10 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
             <p style={{ fontSize: 12, color: THEME.text3 }}>{t("pdetVisitDeadlineAutoNote")}</p>
           )}
           {personnel.occHealthVisitDeadline && !docByType("health_visit_receipt") && (
-            <p style={{ fontSize: 12, color: "#b45309" }}>{t("pdetVisitDeadlineUntil", { date: isoToJalaliDisplay(personnel.occHealthVisitDeadline) })}</p>
+            <p style={{ fontSize: 12, color: THEME.warn }}>{t("pdetVisitDeadlineUntil", { date: isoToJalaliDisplay(personnel.occHealthVisitDeadline) })}</p>
           )}
           {personnel.occHealthResultDeadline && !docByType("health_final_result") && (
-            <p style={{ fontSize: 12, color: "#b45309" }}>{t("pdetResultDeadlineUntil", { date: isoToJalaliDisplay(personnel.occHealthResultDeadline) })}</p>
+            <p style={{ fontSize: 12, color: THEME.warn }}>{t("pdetResultDeadlineUntil", { date: isoToJalaliDisplay(personnel.occHealthResultDeadline) })}</p>
           )}
           {isEmployer && (personnel.occHealthVisitDeadline || personnel.occHealthResultDeadline) && (
             <button

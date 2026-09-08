@@ -198,7 +198,7 @@ export default function AccountManagement({ currentAdmin }) {
                     <td style={{ padding: "8px", textAlign: "center", direction: "ltr" }}>{a.username}</td>
                     {tab !== "contractor" && <td style={{ padding: "8px", textAlign: "center" }}>{companyName(a.company_id)}</td>}
                     <td style={{ padding: "8px", textAlign: "center" }}>
-                      <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: a.is_active === false ? THEME.surface2 : "#dcfce7", color: a.is_active === false ? "#5b6b7d" : "#166534", fontWeight: 600 }}>
+                      <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: a.is_active === false ? THEME.surface2 : THEME.okBg, color: a.is_active === false ? "#5b6b7d" : THEME.ok, fontWeight: 600 }}>
                         {a.is_active === false ? t("commonInactive") : t("commonActive")}
                       </span>
                     </td>
@@ -206,10 +206,10 @@ export default function AccountManagement({ currentAdmin }) {
                       <button type="button" onClick={() => openEdit(a)} style={{ ...btnStyle(THEME.navyMid), fontSize: 11, marginInlineEnd: 4 }} title={t("amEditTitle")}>
                         <Pencil size={11} />
                       </button>
-                      <button type="button" onClick={() => { setResettingId(resettingId === a.id ? null : a.id); setNewPassword(""); setError(""); }} style={{ ...btnStyle("#b45309"), fontSize: 11, marginInlineEnd: 4 }} title="Reset Password">
+                      <button type="button" onClick={() => { setResettingId(resettingId === a.id ? null : a.id); setNewPassword(""); setError(""); }} style={{ ...btnStyle(THEME.warn), fontSize: 11, marginInlineEnd: 4 }} title="Reset Password">
                         <KeyRound size={11} />
                       </button>
-                      <button type="button" onClick={() => handleToggleActive(a)} style={{ ...btnStyle(a.is_active === false ? "#166534" : THEME.danger), fontSize: 11, marginInlineEnd: 4 }} title={a.is_active === false ? t("amActivate") : t("amDeactivate")}>
+                      <button type="button" onClick={() => handleToggleActive(a)} style={{ ...btnStyle(a.is_active === false ? THEME.ok : THEME.danger), fontSize: 11, marginInlineEnd: 4 }} title={a.is_active === false ? t("amActivate") : t("amDeactivate")}>
                         <Power size={11} />
                       </button>
                       <button type="button" onClick={() => handleDeleteAccount(a)} style={{ ...btnStyle(THEME.danger), fontSize: 11 }} title={t("amDeleteAccountTitle")}>

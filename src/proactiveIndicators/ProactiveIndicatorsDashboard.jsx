@@ -210,7 +210,7 @@ function ResultsList({ indicatorKey, indicatorName, currentUser, onBack }) {
                     })() : "—"}
                   </td>
                   <td style={{ padding: "8px", textAlign: "center" }}>
-                    <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: r.status === "completed" ? "#dcfce7" : "#fef3c7", color: r.status === "completed" ? "#166534" : "#b45309", fontWeight: 600 }}>
+                    <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: r.status === "completed" ? THEME.okBg : THEME.warnBg, color: r.status === "completed" ? THEME.ok : THEME.warn, fontWeight: 600 }}>
                       {r.status === "completed" ? t("pidStatusCompletedSent") : (r.status || "—")}
                     </span>
                   </td>

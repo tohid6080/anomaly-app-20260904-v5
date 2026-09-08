@@ -83,7 +83,7 @@ export default function SubscriptionGate({ currentUser, onLogout, children }) {
 function TrialWarningBanner({ access }) {
   const { t, lang } = useLanguage();
   return (
-    <div style={{ background: "#fef3c7", borderBottom: "1px solid #f59e0b", padding: "8px 20px", textAlign: "center", fontSize: 12.5, color: "#92400e", fontWeight: 600 }}>
+    <div style={{ background: THEME.warnBg, borderBottom: "1px solid #f59e0b", padding: "8px 20px", textAlign: "center", fontSize: 12.5, color: THEME.warn, fontWeight: 600 }}>
       <Clock size={13} style={{ display: "inline", verticalAlign: "middle", marginInlineEnd: 5 }} />
       {access.label}
       {access.trialEnd && <span style={{ fontWeight: 500 }}>{t("sgTrialEndSuffix", { date: toJalaliDateTime(access.trialEnd) })}</span>}
@@ -99,7 +99,7 @@ function PaymentResultScreen({ result, onContinue, onLogout }) {
       <div style={{ ...styles.card, width: 380, textAlign: "center" }}>
         {success ? (
           <>
-            <CheckCircle2 size={48} color="#166534" style={{ margin: "0 auto 14px" }} />
+            <CheckCircle2 size={48} color={THEME.ok} style={{ margin: "0 auto 14px" }} />
             <h2 style={{ fontSize: 17, color: THEME.heading, fontWeight: 800, margin: "0 0 8px" }}>{t("sgPaymentSuccess")}</h2>
             <p style={{ fontSize: 12.5, color: THEME.text2, lineHeight: 1.9, marginBottom: 6 }}>{t("sgPaymentSuccessBody")}</p>
             {result.refId && <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 18 }}>{t("sgRefCode", { ref: result.refId })}</p>}
@@ -251,7 +251,7 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
 
             <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 8, fontSize: 12, color: THEME.text2 }}>
               <div style={{ display: "flex", justifyContent: "space-between" }}><span>{t("sgPlanLabel").replace(":", "")}</span><span>{planAmount.toLocaleString(numLocale(lang))}</span></div>
-              {backupAmount > 0 && <div style={{ display: "flex", justifyContent: "space-between", color: "#b45309" }}><span>{t("backupBuyLineLabel")}</span><span>+ {backupAmount.toLocaleString(numLocale(lang))}</span></div>}
+              {backupAmount > 0 && <div style={{ display: "flex", justifyContent: "space-between", color: THEME.warn }}><span>{t("backupBuyLineLabel")}</span><span>+ {backupAmount.toLocaleString(numLocale(lang))}</span></div>}
             </div>
             <p style={{ fontSize: 15, fontWeight: 800, color: THEME.teal, margin: "8px 0 10px" }}>{t("sgFinalAmount", { amount: amount.toLocaleString(numLocale(lang)) })}</p>
             <PaymentMethodsSection currentUser={currentUser} selectedPlan={selectedPlan} billingCycle={billingCycle} amount={amount} backupPeriod={backupPeriod} />

@@ -4,8 +4,8 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 const LEVEL_META = {
   "پایین": { color: "#c92a2a", bg: "#fdecec", labelKey: "hseLevelLow" },
-  "متوسط": { color: "#b45309", bg: "#fef3c7", labelKey: "hseLevelMedium" },
-  "بالا": { color: "#166534", bg: "#dcfce7", labelKey: "hseLevelHigh" },
+  "متوسط": { color: THEME.warn, bg: THEME.warnBg, labelKey: "hseLevelMedium" },
+  "بالا": { color: THEME.ok, bg: THEME.okBg, labelKey: "hseLevelHigh" },
 };
 
 const cardStyle = { background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 10, padding: 16 };

@@ -1,11 +1,12 @@
 import React from "react";
 import { Clock, RefreshCw, Check, AlertTriangle } from "lucide-react";
+import { THEME } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 const META = {
-  pending: { labelKey: "syncBadgePending", color: "#b45309", bg: "#fef3c7", Icon: Clock, spin: false },
+  pending: { labelKey: "syncBadgePending", color: THEME.warn, bg: THEME.warnBg, Icon: Clock, spin: false },
   syncing: { labelKey: "syncBadgeSyncing", color: "#1d4ed8", bg: "#dbeafe", Icon: RefreshCw, spin: true },
-  synced: { labelKey: "syncBadgeSynced", color: "#166534", bg: "#dcfce7", Icon: Check, spin: false },
+  synced: { labelKey: "syncBadgeSynced", color: THEME.ok, bg: THEME.okBg, Icon: Check, spin: false },
   failed: { labelKey: "syncBadgeFailed", color: "#c92a2a", bg: "#fdecec", Icon: AlertTriangle, spin: false },
   conflict: { labelKey: "syncBadgeConflict", color: "#c92a2a", bg: "#fdecec", Icon: AlertTriangle, spin: false },
 };

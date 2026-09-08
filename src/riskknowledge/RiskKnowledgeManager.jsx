@@ -200,7 +200,7 @@ export default function RiskKnowledgeManager({ onBack, currentUser }) {
         <div style={{ ...styles.card, width: "auto", marginBottom: 14, background: importSummary.error ? "#fef2f2" : "#f0fdf4" }}>
           {importSummary.error
             ? <p style={{ color: THEME.danger, margin: 0, fontSize: 12.5 }}>{importSummary.error}</p>
-            : <p style={{ color: "#166534", margin: 0, fontSize: 12.5 }}>{t("rkImportedCount", { count: importSummary.imported })} {importSummary.skippedDuplicates > 0 ? t("rkDuplicatesSkipped", { count: importSummary.skippedDuplicates }) : ""}</p>}
+            : <p style={{ color: THEME.ok, margin: 0, fontSize: 12.5 }}>{t("rkImportedCount", { count: importSummary.imported })} {importSummary.skippedDuplicates > 0 ? t("rkDuplicatesSkipped", { count: importSummary.skippedDuplicates }) : ""}</p>}
         </div>
       )}
 
@@ -255,7 +255,7 @@ export default function RiskKnowledgeManager({ onBack, currentUser }) {
               <button type="button" title={t("rkMergeWithAnother")} style={{ ...styles.smallButton, background: mergeSourceId === rec.id ? THEME.teal : THEME.navyMid }} onClick={() => handleStartMerge(rec.id)}>
                 <GitMerge size={12} />
               </button>
-              <button type="button" style={{ ...styles.smallButton, background: rec.approved ? THEME.text3 : "#166534" }} onClick={() => handleToggleActive(rec)}>
+              <button type="button" style={{ ...styles.smallButton, background: rec.approved ? THEME.text3 : THEME.ok }} onClick={() => handleToggleActive(rec)}>
                 {rec.approved ? t("rkDeactivate") : t("rkActivate")}
               </button>
               <button type="button" title={t("rkDeleteRecordFull")} style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => handleDeleteOne(rec)}>

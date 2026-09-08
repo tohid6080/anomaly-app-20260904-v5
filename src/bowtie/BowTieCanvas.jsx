@@ -564,9 +564,9 @@ export default function BowTieCanvas({ bowtie, threats, consequences, barriers, 
             {pendingPositionCount > 0 && (
               <>
                 <div style={{ width: 1, height: 22, background: THEME.border, margin: "0 2px" }} />
-                <span style={{ fontSize: 11, color: "#92400e", fontWeight: 600 }}>{t("bowtiePendingPositionCount", { count: pendingPositionCount })}</span>
+                <span style={{ fontSize: 11, color: THEME.warn, fontWeight: 600 }}>{t("bowtiePendingPositionCount", { count: pendingPositionCount })}</span>
                 <button type="button" onClick={discardPositions} style={toolBtnStyle(THEME.text3)}>{t("commonCancel")}</button>
-                <button type="button" onClick={commitPositions} style={{ ...toolBtnStyle("#166534"), display: "flex", alignItems: "center", gap: 5 }}>
+                <button type="button" onClick={commitPositions} style={{ ...toolBtnStyle(THEME.ok), display: "flex", alignItems: "center", gap: 5 }}>
                   <Check size={13} /> {t("bowtieCommitPositions")}
                 </button>
               </>
@@ -751,7 +751,7 @@ function SaveIndicator({ status }) {
   const { t } = useLanguage();
   if (status === "idle") return null;
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11.5, color: status === "saving" ? THEME.text3 : "#166534", fontFamily: THEME.font }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11.5, color: status === "saving" ? THEME.text3 : THEME.ok, fontFamily: THEME.font }}>
       {status === "saving" ? (
         <>
           <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />

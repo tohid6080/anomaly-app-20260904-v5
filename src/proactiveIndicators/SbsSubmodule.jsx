@@ -149,8 +149,8 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
             <button
               type="button" onClick={() => setForm({ ...form, status: "safe", categoryCode: "", subitemId: "", note: "" })}
               style={{
-                flex: 1, padding: 12, borderRadius: 9, border: `2px solid ${form.status === "safe" ? "#166534" : THEME.border}`,
-                background: form.status === "safe" ? "#dcfce7" : THEME.surface, color: form.status === "safe" ? "#166534" : THEME.text2,
+                flex: 1, padding: 12, borderRadius: 9, border: `2px solid ${form.status === "safe" ? THEME.ok : THEME.border}`,
+                background: form.status === "safe" ? THEME.okBg : THEME.surface, color: form.status === "safe" ? THEME.ok : THEME.text2,
                 fontWeight: 700, fontSize: 13.5, cursor: "pointer", fontFamily: THEME.font,
               }}
             >
@@ -219,9 +219,9 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, marginBottom: 20 }}>
           <StatCard label={t("sbsStatTotal")} value={analysis.total} />
-          <StatCard label={t("sbsStatSafe")} value={analysis.safe} color="#166534" bg="#dcfce7" />
+          <StatCard label={t("sbsStatSafe")} value={analysis.safe} color={THEME.ok} bg={THEME.okBg} />
           <StatCard label={t("sbsStatUnsafe")} value={analysis.unsafe} color={THEME.danger} bg={THEME.dangerBg} />
-          <StatCard label={t("sbsStatUnsafePct")} value={`${analysis.unsafePct.toFixed(1)}${pctSign(lang)}`} color="#b45309" bg="#fef3c7" />
+          <StatCard label={t("sbsStatUnsafePct")} value={`${analysis.unsafePct.toFixed(1)}${pctSign(lang)}`} color={THEME.warn} bg={THEME.warnBg} />
         </div>
 
         <h4 style={{ fontSize: 13, color: THEME.heading, fontWeight: 700, margin: "0 0 10px" }}>{t("sbsUnsafeByCategory")}</h4>
@@ -280,7 +280,7 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
                     <td style={{ padding: "6px 8px", textAlign: "center" }}>{seasonLabel(o.season)}</td>
                     <td style={{ padding: "6px 8px", textAlign: "center" }}>{o.jobTitle || "—"}</td>
                     <td style={{ padding: "6px 8px", textAlign: "center" }}>
-                      <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: o.status === "safe" ? "#dcfce7" : THEME.dangerBg, color: o.status === "safe" ? "#166534" : THEME.danger, fontWeight: 600 }}>
+                      <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: o.status === "safe" ? THEME.okBg : THEME.dangerBg, color: o.status === "safe" ? THEME.ok : THEME.danger, fontWeight: 600 }}>
                         {o.status === "safe" ? t("sbsStatusSafe") : t("sbsStatusUnsafe")}
                       </span>
                     </td>

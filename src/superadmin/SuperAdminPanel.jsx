@@ -280,7 +280,7 @@ function DashboardOverview({ companies, summary, usageStats, onNavigate }) {
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 1, background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, overflow: "hidden", marginBottom: 16 }}>
         <StatBox label={t("saStatTotalCompanies")} value={summary.total} />
-        <StatBox label={t("saStatActiveSub")} value={summary.active} color="#166534" />
+        <StatBox label={t("saStatActiveSub")} value={summary.active} color={THEME.ok} />
         <StatBox label={t("saStatExpired")} value={summary.expired} color="#c92a2a" />
         <StatBox label={t("saStatDisabled")} value={summary.disabled} color="#5b6b7d" />
         <StatBox label={t("saStatTotalPersonnel")} value={totalPersonnel} />
@@ -290,32 +290,32 @@ function DashboardOverview({ companies, summary, usageStats, onNavigate }) {
       <h3 style={{ fontSize: 13, color: THEME.heading, fontWeight: 700, margin: "0 0 10px" }}>{t("saNeedsAttention")}</h3>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, marginBottom: 16 }}>
         <AttentionCard
-          icon={AlertTriangle} color="#92400e" bg="#fef3c7"
+          icon={AlertTriangle} color={THEME.warn} bg={THEME.warnBg}
           label={t("saSubAlertLabel")} value={subscriptionAlertCount}
           onClick={() => onNavigate("monitoring")}
         />
         <AttentionCard
-          icon={CreditCard} color="#b91c1c" bg="#fee2e2"
+          icon={CreditCard} color={THEME.danger} bg={THEME.dangerBg}
           label={t("saPaymentAlertLabel")} value={paymentAlertCount}
           onClick={() => onNavigate("monitoring")}
         />
         <AttentionCard
-          icon={TrendingDown} color="#b91c1c" bg="#fee2e2"
+          icon={TrendingDown} color={THEME.danger} bg={THEME.dangerBg}
           label={t("saInactiveLabel")} value={inactiveCount}
           onClick={() => onNavigate("monitoring")}
         />
         <AttentionCard
-          icon={ShieldX} color="#b91c1c" bg="#fee2e2"
+          icon={ShieldX} color={THEME.danger} bg={THEME.dangerBg}
           label={t("saFailedLoginLabel")} value={failedLoginCount}
           onClick={() => onNavigate("monitoring")}
         />
         <AttentionCard
-          icon={AlertTriangle} color="#b91c1c" bg="#fee2e2"
+          icon={AlertTriangle} color={THEME.danger} bg={THEME.dangerBg}
           label={t("saOpenErrorsLabel")} value={openErrorCount}
           onClick={() => onNavigate("errorReports")}
         />
         <AttentionCard
-          icon={ClipboardList} color="#92400e" bg="#fef3c7"
+          icon={ClipboardList} color={THEME.warn} bg={THEME.warnBg}
           label={t("saPendingTrialsLabel")} value={pendingTrialCount}
           onClick={() => onNavigate("trialRequests")}
         />
@@ -822,7 +822,7 @@ function CompanyBackupsSection() {
           <button type="button" onClick={() => setShowModPicker((v) => !v)} style={{ ...btnStyle(showModPicker ? THEME.navyDeep : THEME.navyMid), fontSize: 11, display: "flex", alignItems: "center", gap: 5 }}>
             <LayoutGrid size={11} /> {allMods ? t("backupModAll") : t("backupModSome", { n: backupMods.size })}
           </button>
-          <button type="button" onClick={() => (importOpen ? closeImport() : setImportOpen(true))} style={{ ...btnStyle(importOpen ? THEME.danger : "#b45309"), fontSize: 11, display: "flex", alignItems: "center", gap: 5 }}>
+          <button type="button" onClick={() => (importOpen ? closeImport() : setImportOpen(true))} style={{ ...btnStyle(importOpen ? THEME.danger : THEME.warn), fontSize: 11, display: "flex", alignItems: "center", gap: 5 }}>
             <UploadCloud size={11} /> {importOpen ? t("backupImportCancel") : t("backupImportBtn")}
           </button>
           <button type="button" onClick={load} disabled={loading} style={{ ...btnStyle(THEME.navyMid), fontSize: 11, display: "flex", alignItems: "center", gap: 5 }}>
@@ -881,7 +881,7 @@ function CompanyBackupsSection() {
                 </p>
               )}
               {(importPreview.warnings || []).length > 0 && (
-                <p style={{ color: "#b45309", fontSize: 11, whiteSpace: "pre-wrap", margin: "0 0 8px" }}>
+                <p style={{ color: THEME.warn, fontSize: 11, whiteSpace: "pre-wrap", margin: "0 0 8px" }}>
                   {(importPreview.warnings || []).map((x) => "⚠ " + x).join("\n")}
                 </p>
               )}
@@ -895,7 +895,7 @@ function CompanyBackupsSection() {
                 <div><span style={{ color: THEME.text3 }}>{t("backupImportFiles")}:</span> {importPreview.computed?.fileEntries ?? 0}</div>
                 <div><span style={{ color: THEME.text3 }}>{t("backupImportSize")}:</span> {formatBytes(importPreview.manifest?.totalFileBytes || 0)}</div>
               </div>
-              <p style={{ fontSize: 11.5, margin: "10px 0 0", color: importPreview.willReplace ? "#b45309" : THEME.text2 }}>
+              <p style={{ fontSize: 11.5, margin: "10px 0 0", color: importPreview.willReplace ? THEME.warn : THEME.text2 }}>
                 {importPreview.target?.companyExists
                   ? (importPreview.willReplace ? t("backupImportWillReplace") : t("backupImportCompanyExistsEmpty"))
                   : t("backupImportCompanyAbsent")}
@@ -920,7 +920,7 @@ function CompanyBackupsSection() {
                 <button
                   type="button" disabled={!importPreview.valid || !!importPhase}
                   onClick={handleImportRestore}
-                  style={{ ...btnStyle(importPreview.willReplace ? "#b45309" : THEME.teal), fontSize: 12, display: "flex", alignItems: "center", gap: 5 }}
+                  style={{ ...btnStyle(importPreview.willReplace ? THEME.warn : THEME.teal), fontSize: 12, display: "flex", alignItems: "center", gap: 5 }}
                 >
                   <RotateCcw size={12} /> {importPreview.willReplace ? t("backupImportBtnReplace") : t("backupImportBtnRestore")}
                 </button>
@@ -978,7 +978,7 @@ function CompanyBackupsSection() {
                         <button
                           type="button" onClick={() => handleRowRestore(cid)} disabled={!!busyId}
                           title={rowRestoreSame ? t("backupRowRestoreSameHint") : t("backupRowRestoreCrossHint", { name: importPreview.manifest?.companyName || "" })}
-                          style={{ ...btnStyle("#b45309"), fontSize: 11, marginInlineEnd: 4, display: "inline-flex", alignItems: "center", gap: 4 }}
+                          style={{ ...btnStyle(THEME.warn), fontSize: 11, marginInlineEnd: 4, display: "inline-flex", alignItems: "center", gap: 4 }}
                         >
                           <RotateCcw size={11} /> {busyId === "res-" + cid ? t("backupImportRestoring") : (rowRestoreSame ? t("backupRowRestoreSame") : t("backupRowRestoreCross"))}
                         </button>
@@ -1004,7 +1004,7 @@ function CompanyBackupsSection() {
                         </td>
                         <td style={{ padding: "6px 8px", textAlign: "end", whiteSpace: "nowrap" }}>
                           <button type="button" title={t("backupBtnDownload")} onClick={() => handleDownload(b.id)} disabled={!!busyId || b.status !== "completed"} style={{ ...btnStyle(THEME.navyMid), fontSize: 10, marginInlineEnd: 4 }}><Download size={10} /></button>
-                          <button type="button" title={t("backupBtnRestore")} onClick={() => handleRestore(b)} disabled={!!busyId || b.status !== "completed"} style={{ ...btnStyle("#b45309"), fontSize: 10, marginInlineEnd: 4 }}><RotateCcw size={10} /></button>
+                          <button type="button" title={t("backupBtnRestore")} onClick={() => handleRestore(b)} disabled={!!busyId || b.status !== "completed"} style={{ ...btnStyle(THEME.warn), fontSize: 10, marginInlineEnd: 4 }}><RotateCcw size={10} /></button>
                           <button type="button" title={t("backupBtnDelete")} onClick={() => handleDelete(b.id)} disabled={!!busyId} style={{ ...btnStyle(THEME.danger), fontSize: 10 }}><Trash2 size={10} /></button>
                         </td>
                       </tr>
@@ -1139,7 +1139,7 @@ function CompaniesPage({
                       <td style={{ padding: "8px", fontWeight: 600 }}>{c.name}</td>
                       <td style={{ padding: "8px", textAlign: "center" }}>{toJalaliSafe(c.registeredAt) || "—"}</td>
                       <td style={{ padding: "8px", textAlign: "center" }}>
-                        <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: access.isLocked ? "#fee2e2" : "#dcfce7", color: access.isLocked ? "#991b1b" : "#166534", fontWeight: 600 }}>
+                        <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: access.isLocked ? THEME.dangerBg : THEME.okBg, color: access.isLocked ? "#991b1b" : THEME.ok, fontWeight: 600 }}>
                           {planName} — {access.label}
                         </span>
                       </td>
@@ -1375,7 +1375,7 @@ function AppUpdateManagementTab({ currentAdmin }) {
           {t("arPublishImmediately")}
         </label>
 
-        {message && <p style={{ fontSize: 11.5, color: msgErr ? THEME.danger : "#166534", margin: "10px 0 0" }}>{message}</p>}
+        {message && <p style={{ fontSize: 11.5, color: msgErr ? THEME.danger : THEME.ok, margin: "10px 0 0" }}>{message}</p>}
 
         <button type="button" style={{ ...btnStyle(), marginTop: 12, display: "flex", alignItems: "center", gap: 6 }} onClick={handleSubmit} disabled={saving}>
           <UploadCloud size={14} /> {saving ? t("arSavingEllipsis") : t("arSubmitRelease")}
@@ -1406,7 +1406,7 @@ function AppUpdateManagementTab({ currentAdmin }) {
                   </td>
                   <td style={td}>{r.versionCode}</td>
                   <td style={td}>
-                    <span style={{ fontSize: 10.5, padding: "2px 9px", borderRadius: 999, fontWeight: 700, background: r.isPublished ? "#dcfce7" : THEME.surface2, color: r.isPublished ? "#166534" : THEME.text3 }}>
+                    <span style={{ fontSize: 10.5, padding: "2px 9px", borderRadius: 999, fontWeight: 700, background: r.isPublished ? THEME.okBg : THEME.surface2, color: r.isPublished ? THEME.ok : THEME.text3 }}>
                       {r.isPublished ? t("arStatusPublished") : t("arStatusUnpublished")}
                     </span>
                   </td>
@@ -1419,7 +1419,7 @@ function AppUpdateManagementTab({ currentAdmin }) {
                   <td style={td}>
                     <div style={{ display: "flex", gap: 5, justifyContent: "center", flexWrap: "wrap" }}>
                       <button type="button" onClick={() => handleTogglePublish(r)} disabled={busyId === r.id}
-                        style={{ ...btnStyle(r.isPublished ? THEME.text3 : "#166534"), fontSize: 10.5, padding: "5px 10px" }}>
+                        style={{ ...btnStyle(r.isPublished ? THEME.text3 : THEME.ok), fontSize: 10.5, padding: "5px 10px" }}>
                         {r.isPublished ? t("arUnpublishAction") : t("arPublishAction")}
                       </button>
                       <button type="button" onClick={() => handleDelete(r)} disabled={busyId === r.id}
@@ -1564,7 +1564,7 @@ function ModuleManagementTab({ currentAdmin }) {
         </div>
         );
       })}
-      {message && <p style={{ fontSize: 11.5, color: msgErr ? THEME.danger : "#166534", marginTop: 10 }}>{message}</p>}
+      {message && <p style={{ fontSize: 11.5, color: msgErr ? THEME.danger : THEME.ok, marginTop: 10 }}>{message}</p>}
       <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
         <button type="button" style={btnStyle()} onClick={handleSave} disabled={saving}>{saving ? t("saSavingEllipsis") : t("saSaveChangesPlain")}</button>
         <button type="button" style={{ ...btnStyle(THEME.text3), display: "flex", alignItems: "center", gap: 6 }} onClick={handleReset}>
@@ -1663,7 +1663,7 @@ function DashboardWidgetsSection({ currentAdmin }) {
         </button>
       </div>
 
-      {message && <p style={{ fontSize: 11.5, color: msgErr ? THEME.danger : "#166534", marginBottom: 10 }}>{message}</p>}
+      {message && <p style={{ fontSize: 11.5, color: msgErr ? THEME.danger : THEME.ok, marginBottom: 10 }}>{message}</p>}
 
       {DASHBOARD_WIDGET_GROUPS.map((group) => {
         const rows = draft.filter((w) => w.group === group.key);
@@ -1683,7 +1683,7 @@ function DashboardWidgetsSection({ currentAdmin }) {
                 </span>
                 <button
                   type="button" onClick={() => toggle(w.key)}
-                  style={{ display: "flex", alignItems: "center", gap: 5, background: w.isVisible ? "#dcfce7" : THEME.surface2, color: w.isVisible ? "#166534" : THEME.text3, border: "none", borderRadius: 999, padding: "5px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font }}
+                  style={{ display: "flex", alignItems: "center", gap: 5, background: w.isVisible ? THEME.okBg : THEME.surface2, color: w.isVisible ? THEME.ok : THEME.text3, border: "none", borderRadius: 999, padding: "5px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font }}
                 >
                   {w.isVisible ? <Eye size={13} /> : <EyeOff size={13} />} {w.isVisible ? t("saVisibleShown") : t("saHidden")}
                 </button>
@@ -1706,8 +1706,8 @@ function DashboardWidgetsSection({ currentAdmin }) {
 const ROLE_LABELS = { all: "saRoleAll", employer: "saRoleEmployerOnly", contractor: "saRoleContractorOnly" };
 const PRIORITY_META = {
   low: { labelKey: "saPrioLow", color: "#5b6b7d", bg: THEME.surface2 },
-  medium: { labelKey: "saPrioMedium", color: "#92400e", bg: "#fef3c7" },
-  high: { labelKey: "saPrioHigh", color: "#b91c1c", bg: "#fee2e2" },
+  medium: { labelKey: "saPrioMedium", color: THEME.warn, bg: THEME.warnBg },
+  high: { labelKey: "saPrioHigh", color: THEME.danger, bg: THEME.dangerBg },
 };
 
 function NotificationManagementTab({ currentAdmin }) {
@@ -1759,7 +1759,7 @@ function NotificationManagementTab({ currentAdmin }) {
       <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 14, lineHeight: 1.8 }}>
         {t("saNmNote")}
       </p>
-      {message && <p style={{ fontSize: 11.5, color: msgErr ? THEME.danger : "#166534", marginBottom: 10 }}>{message}</p>}
+      {message && <p style={{ fontSize: 11.5, color: msgErr ? THEME.danger : THEME.ok, marginBottom: 10 }}>{message}</p>}
       {draftList.map((nt) => (
         <div key={nt.typeKey} style={{ padding: "12px 8px", borderBottom: `1px solid ${THEME.border}` }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
@@ -1769,7 +1769,7 @@ function NotificationManagementTab({ currentAdmin }) {
                 <span style={{ fontSize: 10, padding: "2px 9px", borderRadius: 999, background: PRIORITY_META[nt.priority].bg, color: PRIORITY_META[nt.priority].color, fontWeight: 600 }}>
                   {t("saPriorityBadge", { label: t(PRIORITY_META[nt.priority].labelKey) })}
                 </span>
-                <span style={{ fontSize: 10, padding: "2px 9px", borderRadius: 999, background: nt.isEnabled ? "#dcfce7" : THEME.surface2, color: nt.isEnabled ? "#166534" : THEME.text3, fontWeight: 600 }}>
+                <span style={{ fontSize: 10, padding: "2px 9px", borderRadius: 999, background: nt.isEnabled ? THEME.okBg : THEME.surface2, color: nt.isEnabled ? THEME.ok : THEME.text3, fontWeight: 600 }}>
                   {nt.isEnabled ? t("commonActive") : t("commonInactive")}
                 </span>
               </div>
@@ -1777,7 +1777,7 @@ function NotificationManagementTab({ currentAdmin }) {
             </div>
             <button
               type="button" onClick={() => updateDraft(nt.typeKey, { isEnabled: !nt.isEnabled })}
-              style={{ display: "flex", alignItems: "center", gap: 5, background: nt.isEnabled ? "#fee2e2" : "#dcfce7", color: nt.isEnabled ? "#b91c1c" : "#166534", border: "none", borderRadius: 999, padding: "6px 14px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font, flexShrink: 0 }}
+              style={{ display: "flex", alignItems: "center", gap: 5, background: nt.isEnabled ? THEME.dangerBg : THEME.okBg, color: nt.isEnabled ? THEME.danger : THEME.ok, border: "none", borderRadius: 999, padding: "6px 14px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font, flexShrink: 0 }}
             >
               {nt.isEnabled ? <EyeOff size={13} /> : <Eye size={13} />} {nt.isEnabled ? t("saDisableAction") : t("saEnableAction")}
             </button>
@@ -2258,7 +2258,7 @@ function AppearanceManagementTab({ currentAdmin }) {
         )}
       </div>
 
-      {message && <p style={{ fontSize: 11.5, color: msgErr ? THEME.danger : "#166534", marginBottom: 10, lineHeight: 1.8 }}>{message}</p>}
+      {message && <p style={{ fontSize: 11.5, color: msgErr ? THEME.danger : THEME.ok, marginBottom: 10, lineHeight: 1.8 }}>{message}</p>}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <button type="button" style={btnStyle()} onClick={handleSave} disabled={saving}>{saving ? t("saSavingEllipsis") : t("saApSaveBtn")}</button>
         <button type="button" style={btnStyle(THEME.text3)} onClick={resetAll} disabled={saving}>{t("saApResetAll")}</button>
@@ -2564,7 +2564,7 @@ function AnnouncementManagementTab({ currentAdmin, companies }) {
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                   <span style={{ fontSize: 13, fontWeight: 700, color: THEME.heading }}>{a.title || t("saAnNoTitle")}</span>
-                  <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: a.isActive ? "#dcfce7" : THEME.surface2, color: a.isActive ? "#166534" : THEME.text3, fontWeight: 600 }}>{a.isActive ? t("commonActive") : t("commonInactive")}</span>
+                  <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: a.isActive ? THEME.okBg : THEME.surface2, color: a.isActive ? THEME.ok : THEME.text3, fontWeight: 600 }}>{a.isActive ? t("commonActive") : t("commonInactive")}</span>
                   <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: THEME.surface2, color: THEME.text3, fontWeight: 600 }}>{t("saPriorityBadge", { label: a.priority })}</span>
                   <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: THEME.surface2, color: THEME.text3, fontWeight: 600 }}>{t("saSecondsN", { n: a.displaySeconds || 10 })}</span>
                   <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#dbeafe", color: "#1d4ed8", fontWeight: 600 }}>
@@ -2582,7 +2582,7 @@ function AnnouncementManagementTab({ currentAdmin, companies }) {
             </div>
             <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
               <button type="button" style={{ ...btnStyle(THEME.navyMid), fontSize: 11 }} onClick={() => openEdit(a)}>{t("saEdit")}</button>
-              <button type="button" style={{ ...btnStyle(a.isActive ? "#92400e" : "#166534"), fontSize: 11 }} onClick={() => handleToggleActive(a)}>{a.isActive ? t("saDisableAction") : t("saEnableAction")}</button>
+              <button type="button" style={{ ...btnStyle(a.isActive ? THEME.warn : THEME.ok), fontSize: 11 }} onClick={() => handleToggleActive(a)}>{a.isActive ? t("saDisableAction") : t("saEnableAction")}</button>
               <button type="button" style={{ ...btnStyle(THEME.danger), fontSize: 11 }} onClick={() => handleDelete(a)}>{t("saDelete")}</button>
             </div>
           </div>
@@ -2682,9 +2682,9 @@ function AuditLogPage({ companies }) {
 // اینجا SuperAdmin همه‌ی گزارش‌های همه‌ی شرکت‌ها را می‌بیند و پیگیری
 // (تغییر وضعیت + یادداشت داخلی) می‌کند.
 const ERROR_REPORT_STATUS_META = {
-  open: { labelKey: "saErStatusOpen", color: "#b45309", bg: "#fef3c7" },
+  open: { labelKey: "saErStatusOpen", color: THEME.warn, bg: THEME.warnBg },
   reviewed: { labelKey: "saErStatusReviewed", color: "#1d4ed8", bg: "#dbeafe" },
-  resolved: { labelKey: "saErStatusResolved", color: "#166534", bg: "#dcfce7" },
+  resolved: { labelKey: "saErStatusResolved", color: THEME.ok, bg: THEME.okBg },
 };
 const ERROR_REPORT_ROLE_LABELS = { ADMIN: "saRoleAdmin", EMPLOYER: "saRoleEmployer", HSE_SUPERVISOR: "saRoleHseSupervisor", CONTRACTOR: "saRoleContractor" };
 
@@ -2720,7 +2720,7 @@ function ErrorReportsPage({ currentAdmin }) {
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
         <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
-          <AlertTriangle size={14} color="#b45309" /> {t("saErTitle")}
+          <AlertTriangle size={14} color={THEME.warn} /> {t("saErTitle")}
           {openCount > 0 && (
             <span style={{ background: THEME.danger, color: "#fff", fontSize: 10.5, fontWeight: 700, borderRadius: 999, minWidth: 19, height: 19, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>
               {openCount}
@@ -2774,7 +2774,7 @@ function ErrorReportsPage({ currentAdmin }) {
                         <td colSpan={6} style={{ padding: "10px 12px", background: THEME.bg }}>
                           <p style={{ fontSize: 12.5, color: THEME.text2, margin: "0 0 8px", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>{r.description}</p>
                           {(r.technicalMessage || r.technicalStack) && (
-                            <pre style={{ whiteSpace: "pre-wrap", fontSize: 10.5, color: "#991b1b", background: "#fee2e2", padding: 10, borderRadius: 8, marginBottom: 8, maxHeight: 160, overflow: "auto", direction: "ltr", textAlign: "left" }}>
+                            <pre style={{ whiteSpace: "pre-wrap", fontSize: 10.5, color: "#991b1b", background: THEME.dangerBg, padding: 10, borderRadius: 8, marginBottom: 8, maxHeight: 160, overflow: "auto", direction: "ltr", textAlign: "left" }}>
                               {r.technicalMessage}{r.technicalStack ? `\n${r.technicalStack}` : ""}
                             </pre>
                           )}
@@ -2786,7 +2786,7 @@ function ErrorReportsPage({ currentAdmin }) {
                           )}
                           <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                             <button type="button" style={btnStyle("#1d4ed8")} disabled={saving} onClick={() => handleSetStatus(r, "reviewed")}>{t("saErMarkReviewed")}</button>
-                            <button type="button" style={btnStyle("#166534")} disabled={saving} onClick={() => handleSetStatus(r, "resolved")}>{t("saErMarkResolved")}</button>
+                            <button type="button" style={btnStyle(THEME.ok)} disabled={saving} onClick={() => handleSetStatus(r, "resolved")}>{t("saErMarkResolved")}</button>
                             {r.status !== "open" && <button type="button" style={btnStyle(THEME.text3)} disabled={saving} onClick={() => handleSetStatus(r, "open")}>{t("saErReopen")}</button>}
                           </div>
                         </td>
@@ -2808,9 +2808,9 @@ function ErrorReportsPage({ currentAdmin }) {
 // زرین‌پال جای دیگری (loadOnlinePaymentsForCompany، داخل جزئیات هر
 // شرکت) نمایش داده می‌شود و اینجا کاملاً دست‌نخورده می‌ماند.
 const CARD_PAYMENT_STATUS_META = {
-  awaiting_review: { labelKey: "saCtStatusAwaiting", color: "#b45309", bg: "#fef3c7" },
-  paid: { labelKey: "saCtStatusPaid", color: "#166534", bg: "#dcfce7" },
-  rejected: { labelKey: "saCtStatusRejected", color: "#b91c1c", bg: "#fee2e2" },
+  awaiting_review: { labelKey: "saCtStatusAwaiting", color: THEME.warn, bg: THEME.warnBg },
+  paid: { labelKey: "saCtStatusPaid", color: THEME.ok, bg: THEME.okBg },
+  rejected: { labelKey: "saCtStatusRejected", color: THEME.danger, bg: THEME.dangerBg },
 };
 
 function CardTransferSettingsForm({ currentAdmin }) {
@@ -2951,13 +2951,13 @@ function CardTransferPaymentsPage({ currentAdmin }) {
                                 <button type="button" style={btnStyle(THEME.navyMid)} onClick={() => setViewerSrc(r.receiptImage)}>{t("saCtViewReceipt")}</button>
                               )}
                             </div>
-                            {r.adminNote && <p style={{ fontSize: 11.5, color: "#b91c1c", margin: "0 0 8px" }}>{t("saCtRejectReason", { note: r.adminNote })}</p>}
+                            {r.adminNote && <p style={{ fontSize: 11.5, color: THEME.danger, margin: "0 0 8px" }}>{t("saCtRejectReason", { note: r.adminNote })}</p>}
                             {r.reviewedAt && <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 8px" }}>{t("saCtReviewedBy", { by: r.reviewedBy || "—", at: toJalaliDateTime(r.reviewedAt) })}</p>}
 
                             {r.status === "awaiting_review" && (
                               <div>
                                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                                  <button type="button" style={btnStyle("#166534")} disabled={saving} onClick={() => handleApprove(r)}>{t("saCtApproveActivate")}</button>
+                                  <button type="button" style={btnStyle(THEME.ok)} disabled={saving} onClick={() => handleApprove(r)}>{t("saCtApproveActivate")}</button>
                                   <button type="button" style={btnStyle(THEME.danger)} disabled={saving} onClick={() => setShowRejectFor(showRejectFor === r.id ? null : r.id)}>{t("saCtRejectReceipt")}</button>
                                 </div>
                                 {showRejectFor === r.id && (
@@ -2991,9 +2991,9 @@ function CardTransferPaymentsPage({ currentAdmin }) {
 // مسیر موجود «شرکت‌ها» به‌صورت دستی انجام می‌شود (طبق طراحی صریح — نگاه
 // کنید به کامنت بالای این توابع در superAdminApi.js).
 const TRIAL_REQUEST_STATUS_META = {
-  pending: { labelKey: "saTrStatusPending", color: "#b45309", bg: "#fef3c7" },
-  approved: { labelKey: "saTrStatusApproved", color: "#166534", bg: "#dcfce7" },
-  rejected: { labelKey: "saTrStatusRejected", color: "#b91c1c", bg: "#fee2e2" },
+  pending: { labelKey: "saTrStatusPending", color: THEME.warn, bg: THEME.warnBg },
+  approved: { labelKey: "saTrStatusApproved", color: THEME.ok, bg: THEME.okBg },
+  rejected: { labelKey: "saTrStatusRejected", color: THEME.danger, bg: THEME.dangerBg },
 };
 
 function TrialRequestsPage({ currentAdmin }) {
@@ -3105,7 +3105,7 @@ function TrialRequestsPage({ currentAdmin }) {
                           </div>
                           {r.description && <p style={{ fontSize: 12, color: THEME.text2, lineHeight: 1.8, margin: "0 0 10px", whiteSpace: "pre-wrap" }}>{t("saTrDescriptionLabel", { desc: r.description })}</p>}
                           {r.adminNote && <p style={{ fontSize: 11.5, color: THEME.text3, margin: "0 0 8px" }}>{t("saTrReviewNote", { note: r.adminNote })}</p>}
-                          {r.status === "approved" && <p style={{ fontSize: 11.5, color: "#166534", margin: "0 0 8px", fontWeight: 700 }}>{t("saTrApprovedDays", { days: r.approvedTrialDays })}</p>}
+                          {r.status === "approved" && <p style={{ fontSize: 11.5, color: THEME.ok, margin: "0 0 8px", fontWeight: 700 }}>{t("saTrApprovedDays", { days: r.approvedTrialDays })}</p>}
                           {r.reviewedAt && <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 8px" }}>{t("saTrReviewedBy", { by: r.reviewedBy || "—", at: toJalaliDateTime(r.reviewedAt) })}</p>}
 
                           {r.status === "pending" && (
@@ -3116,7 +3116,7 @@ function TrialRequestsPage({ currentAdmin }) {
                               </div>
                               <textarea style={{ ...inputStyle, minHeight: 45, marginBottom: 8 }} placeholder={t("saTrNotePlaceholder")} value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} dir={dir} />
                               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                                <button type="button" style={btnStyle("#166534")} disabled={saving || !trialDaysDraft} onClick={() => handleApprove(r)}>{t("saTrApprove")}</button>
+                                <button type="button" style={btnStyle(THEME.ok)} disabled={saving || !trialDaysDraft} onClick={() => handleApprove(r)}>{t("saTrApprove")}</button>
                                 <button type="button" style={btnStyle(THEME.danger)} disabled={saving || !noteDraft.trim()} onClick={() => handleReject(r)}>{t("saTrReject")}</button>
                               </div>
                             </div>
@@ -3163,7 +3163,7 @@ function SuperAdminChangePassword({ onClose }) {
       <div style={{ maxWidth: 420, margin: "0 auto" }}>
         <h4 style={{ fontSize: 13, color: THEME.heading, fontWeight: 700, margin: "0 0 10px" }}>{t("saChangeMyPasswordTitle")}</h4>
         {done ? (
-          <p style={{ color: "#166534", fontSize: 12.5 }}>{t("saPasswordChanged")}</p>
+          <p style={{ color: THEME.ok, fontSize: 12.5 }}>{t("saPasswordChanged")}</p>
         ) : (
           <>
             <input type="password" style={{ ...inputStyle, marginBottom: 8 }} placeholder={t("saCurrentPassword")} value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} dir="ltr" />
@@ -3300,7 +3300,7 @@ function PlansManager({ plans, companies, currentAdmin, onChanged }) {
                   <td style={{ padding: "8px", textAlign: "center" }}>{p.maxPersonnel ?? t("saUnlimited")}</td>
                   <td style={{ padding: "8px", textAlign: "center" }}>{p.maxStorageMb ?? t("saUnlimited")}</td>
                   <td style={{ padding: "8px", textAlign: "center" }}>
-                    <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: p.isActive ? "#dcfce7" : THEME.surface2, color: p.isActive ? "#166534" : "#5b6b7d", fontWeight: 600 }}>
+                    <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: p.isActive ? THEME.okBg : THEME.surface2, color: p.isActive ? THEME.ok : "#5b6b7d", fontWeight: 600 }}>
                       {p.isActive ? t("commonActive") : t("commonInactive")}
                     </span>
                   </td>
@@ -3309,11 +3309,11 @@ function PlansManager({ plans, companies, currentAdmin, onChanged }) {
                       {expandedId === p.id ? t("saClose") : t("saEdit")}
                     </button>
                     {p.isActive ? (
-                      <button type="button" onClick={() => { if (confirm(t("saDeactivateConfirm", { name: p.name }))) { deactivatePlan(p.id).then(onChanged); } }} style={{ ...btnStyle("#92400e"), fontSize: 11, marginInlineEnd: 6 }}>
+                      <button type="button" onClick={() => { if (confirm(t("saDeactivateConfirm", { name: p.name }))) { deactivatePlan(p.id).then(onChanged); } }} style={{ ...btnStyle(THEME.warn), fontSize: 11, marginInlineEnd: 6 }}>
                         {t("saDeactivate")}
                       </button>
                     ) : (
-                      <button type="button" onClick={() => { activatePlan(p.id).then(onChanged); }} style={{ ...btnStyle("#166534"), fontSize: 11, marginInlineEnd: 6 }}>
+                      <button type="button" onClick={() => { activatePlan(p.id).then(onChanged); }} style={{ ...btnStyle(THEME.ok), fontSize: 11, marginInlineEnd: 6 }}>
                         {t("saActivatePlan")}
                       </button>
                     )}
@@ -3385,7 +3385,7 @@ function PlanCompanyUsage({ plan, companies }) {
               <span style={{ color: THEME.text3 }}>{t("saPcuNoEndDate")}</span>
             )}
             {relevantEnd && (
-              <span style={{ fontSize: 10, padding: "1px 8px", borderRadius: 999, background: isExpired ? "#fee2e2" : "#dcfce7", color: isExpired ? "#991b1b" : "#166534", fontWeight: 600 }}>
+              <span style={{ fontSize: 10, padding: "1px 8px", borderRadius: 999, background: isExpired ? THEME.dangerBg : THEME.okBg, color: isExpired ? "#991b1b" : THEME.ok, fontWeight: 600 }}>
                 {isExpired ? t("saExpiredStatus") : t("commonActive")}
               </span>
             )}
@@ -3547,7 +3547,7 @@ function SystemInsights({ companies }) {
         </h3>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
           <div>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#92400e", marginBottom: 6 }}>{t("saSubscriptionAlertTitle")}</p>
+            <p style={{ fontSize: 12, fontWeight: 700, color: THEME.warn, marginBottom: 6 }}>{t("saSubscriptionAlertTitle")}</p>
             {subscriptionAlerts.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saNoneFound")}</p>}
             {subscriptionAlerts.map(({ company: c, tier }) => (
               <div key={c.id} style={{ fontSize: 12, padding: "5px 0", borderBottom: `1px solid ${THEME.border}`, display: "flex", justifyContent: "space-between" }}>
@@ -3557,7 +3557,7 @@ function SystemInsights({ companies }) {
             ))}
           </div>
           <div>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#b91c1c", marginBottom: 6 }}>{t("saLowActivityCompanies")}</p>
+            <p style={{ fontSize: 12, fontWeight: 700, color: THEME.danger, marginBottom: 6 }}>{t("saLowActivityCompanies")}</p>
             {loading && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saChecking")}</p>}
             {!loading && inactiveCompanies.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saNoneFound")}</p>}
             {!loading && inactiveCompanies.map((c) => (
@@ -3578,7 +3578,7 @@ function SystemInsights({ companies }) {
             <span>{c.name}{t("saRemainingLabelToman", { amount: status.remaining.toLocaleString(numLocale()) })}</span>
             <span style={{ display: "flex", gap: 6 }}>
               <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: status.bg, color: status.color, fontWeight: 600 }}>{status.labelKey ? t(status.labelKey) : status.label}</span>
-              {overdue && <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#fee2e2", color: "#b91c1c", fontWeight: 600 }}>{t("saOverdue")}</span>}
+              {overdue && <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: THEME.dangerBg, color: THEME.danger, fontWeight: 600 }}>{t("saOverdue")}</span>}
             </span>
           </div>
         ))}
@@ -3619,7 +3619,7 @@ function SystemInsights({ companies }) {
             ))}
           </div>
           <div>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#b91c1c", marginBottom: 6, display: "flex", alignItems: "center", gap: 5 }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: THEME.danger, marginBottom: 6, display: "flex", alignItems: "center", gap: 5 }}>
               <ShieldX size={12} /> {t("saRecentFailedLogins")}
             </p>
             {loading && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("commonLoading")}</p>}
@@ -3748,11 +3748,11 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
         {/* غیرفعال‌سازی: برای شرکتی که مثلاً پولشو نداده — کاملاً برگشت‌پذیر,
             هیچ داده‌ای پاک نمی‌شود، فقط ورود مسدود می‌شود */}
         {status !== "disabled" ? (
-          <button type="button" style={btnStyle("#92400e")} onClick={() => { onSetActive(false); setStatus("disabled"); }}>
+          <button type="button" style={btnStyle(THEME.warn)} onClick={() => { onSetActive(false); setStatus("disabled"); }}>
             {t("saDeactivateCompany")}
           </button>
         ) : (
-          <button type="button" style={btnStyle("#166534")} onClick={() => { onSetActive(true); setStatus("active"); }}>
+          <button type="button" style={btnStyle(THEME.ok)} onClick={() => { onSetActive(true); setStatus("active"); }}>
             {t("saReactivateCompany")}
           </button>
         )}
@@ -3764,7 +3764,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
       </div>
 
       {showDeleteConfirm && (
-        <div style={{ background: "#fee2e2", border: "1px solid #fca5a5", borderRadius: 8, padding: 12, marginBottom: 16 }}>
+        <div style={{ background: THEME.dangerBg, border: "1px solid #fca5a5", borderRadius: 8, padding: 12, marginBottom: 16 }}>
           <p style={{ fontSize: 12, color: "#991b1b", fontWeight: 600, marginBottom: 6 }}>
             {t("saDeleteWarning")}
           </p>
@@ -3792,7 +3792,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
           {t("saCurrentPlanLabel")} <b style={{ color: THEME.heading }}>{currentPlan ? currentPlan.name : t("saNoPlanAssigned")}</b>
           <span style={{
             marginInlineStart: 8, fontSize: 10.5, padding: "2px 9px", borderRadius: 999, fontWeight: 600,
-            background: liveAccess.isLocked ? "#fee2e2" : "#dcfce7", color: liveAccess.isLocked ? "#991b1b" : "#166534",
+            background: liveAccess.isLocked ? THEME.dangerBg : THEME.okBg, color: liveAccess.isLocked ? "#991b1b" : THEME.ok,
           }}>
             {t("saStatusLabel", { label: liveAccess.labelKey ? t(liveAccess.labelKey) : liveAccess.label })}
           </span>
@@ -3836,7 +3836,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
         {selectedPlanForAssign && (
           <div style={{ background: THEME.bg, borderRadius: 8, padding: "8px 12px", marginBottom: 8, fontSize: 11.5, color: THEME.text2, lineHeight: 1.9 }}>
             <div>{t("saPlanMonthlyYearlyPrice", { monthly: (selectedPlanForAssign.priceMonthly || 0).toLocaleString(numLocale()), yearly: (selectedPlanForAssign.priceYearly || 0).toLocaleString(numLocale()) })}</div>
-            {previewBackupAdd > 0 && <div style={{ color: "#b45309" }}>{t("backupBuyAddLine", { period: t("backupTier" + assignBackupPeriod.charAt(0).toUpperCase() + assignBackupPeriod.slice(1)), amount: previewBackupAdd.toLocaleString(numLocale()) })}</div>}
+            {previewBackupAdd > 0 && <div style={{ color: THEME.warn }}>{t("backupBuyAddLine", { period: t("backupTier" + assignBackupPeriod.charAt(0).toUpperCase() + assignBackupPeriod.slice(1)), amount: previewBackupAdd.toLocaleString(numLocale()) })}</div>}
             {(assignType === "monthly" || assignType === "yearly" || assignType === "daily" || assignType === "monthly_and_yearly") && (
               <div>
                 {t("saPreviewBasedOnSelection")}
@@ -3883,15 +3883,15 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
           <MiniStat label={t("saDiscount")} value={t("saTShort", { amount: company.discountAmount.toLocaleString(numLocale()) })} />
           <MiniStat label={t("saFinalOneTimeAmount")} value={t("saTShort", { amount: company.finalAmount.toLocaleString(numLocale()) })} />
           {company.monthlyRecurringAmount > 0 && <MiniStat label={t("saMonthlyRecurring")} value={t("saTShort", { amount: company.monthlyRecurringAmount.toLocaleString(numLocale()) })} color="#1d4ed8" />}
-          <MiniStat label={t("saTotalPaid")} value={t("saTShort", { amount: paymentStatus.totalPaid.toLocaleString(numLocale()) })} color="#166534" />
-          <MiniStat label={t("saRemainingBalance")} value={t("saTShort", { amount: paymentStatus.remaining.toLocaleString(numLocale()) })} color={paymentStatus.remaining > 0 ? "#b91c1c" : "#166534"} />
+          <MiniStat label={t("saTotalPaid")} value={t("saTShort", { amount: paymentStatus.totalPaid.toLocaleString(numLocale()) })} color={THEME.ok} />
+          <MiniStat label={t("saRemainingBalance")} value={t("saTShort", { amount: paymentStatus.remaining.toLocaleString(numLocale()) })} color={paymentStatus.remaining > 0 ? THEME.danger : THEME.ok} />
         </div>
         <div style={{ display: "flex", gap: 8, marginTop: 8, alignItems: "center", flexWrap: "wrap" }}>
           <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 999, background: paymentStatus.bg, color: paymentStatus.color, fontWeight: 600 }}>
             {t("saPaymentStatusLabel", { label: paymentStatus.labelKey ? t(paymentStatus.labelKey) : paymentStatus.label })}
           </span>
           {overdue && (
-            <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 999, background: "#fee2e2", color: "#b91c1c", fontWeight: 600 }}>
+            <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 999, background: THEME.dangerBg, color: THEME.danger, fontWeight: 600 }}>
               {t("saOverdue")}
             </span>
           )}
@@ -3934,7 +3934,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
             {copyingKnowledge ? t("saCopyingEllipsis") : t("saCopyKnowledgeBank")}
           </button>
         </div>
-        {copyResult && <p style={{ fontSize: 11.5, color: copyErr ? THEME.danger : "#166534", marginTop: 8 }}>{copyResult}</p>}
+        {copyResult && <p style={{ fontSize: 11.5, color: copyErr ? THEME.danger : THEME.ok, marginTop: 8 }}>{copyResult}</p>}
       </div>
 
       {/* شاخص‌های Proactive HSE دیگر اینجا کنترل نمی‌شوند — طبق خواسته‌ی
@@ -3953,7 +3953,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
           <div key={`${a.type}-${a.id}`} style={{ fontSize: 11.5, color: THEME.text2, padding: "4px 0", borderBottom: `1px solid ${THEME.border}`, display: "flex", gap: 8 }}>
             <span style={{ fontWeight: 600 }}>{a.name}</span>
             <span style={{ direction: "ltr" }}>({a.username})</span>
-            <span style={{ marginInlineStart: "auto", fontSize: 10, padding: "2px 8px", borderRadius: 999, background: a.type === "contractor" ? "#e0e7ff" : "#dcfce7", color: a.type === "contractor" ? "#3730a3" : "#166534" }}>
+            <span style={{ marginInlineStart: "auto", fontSize: 10, padding: "2px 8px", borderRadius: 999, background: a.type === "contractor" ? "#e0e7ff" : THEME.okBg, color: a.type === "contractor" ? "#3730a3" : THEME.ok }}>
               {a.type === "contractor" ? t("saRoleContractor") : a.role === "admin" ? t("saRoleAdmin") : a.role === "hse_supervisor" ? t("saRoleHseSupervisorFull") : t("saRoleEmployer")}
             </span>
           </div>
@@ -3978,10 +3978,10 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
           <div style={{ marginTop: 14, paddingTop: 10, borderTop: `1px dashed ${THEME.border}` }}>
             <h5 style={{ fontSize: 11.5, color: THEME.heading, fontWeight: 700, margin: "0 0 6px" }}>{t("saOnlinePaymentsZarinpal")}</h5>
             {onlinePayments.map((p) => {
-              const st = p.status === "paid" ? { labelKey: "saPaySuccess", bg: "#dcfce7", color: "#166534" }
-                : p.status === "failed" ? { labelKey: "saPayFailed", bg: "#fee2e2", color: "#991b1b" }
+              const st = p.status === "paid" ? { labelKey: "saPaySuccess", bg: THEME.okBg, color: THEME.ok }
+                : p.status === "failed" ? { labelKey: "saPayFailed", bg: THEME.dangerBg, color: "#991b1b" }
                 : p.status === "cancelled" ? { labelKey: "saPayCancelled", bg: THEME.surface2, color: THEME.text3 }
-                : { labelKey: "saPayPending", bg: "#fef3c7", color: "#92400e" };
+                : { labelKey: "saPayPending", bg: THEME.warnBg, color: THEME.warn };
               return (
                 <div key={p.id} style={{ fontSize: 11.5, color: THEME.text2, padding: "5px 0", borderBottom: `1px solid ${THEME.border}`, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                   <span>{toJalaliSafe(p.createdAt)}</span>

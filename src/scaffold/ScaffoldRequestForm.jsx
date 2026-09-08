@@ -59,7 +59,7 @@ export default function ScaffoldRequestForm({ currentUser, contractorCode, onCre
     return (
       <div style={{ maxWidth: 520, margin: "0 auto", padding: 24, direction: dir }}>
         <div style={{ ...styles.card, width: "auto", textAlign: "center" }}>
-          <CheckCircle2 size={36} color="#166534" style={{ margin: "0 auto 10px" }} />
+          <CheckCircle2 size={36} color={THEME.ok} style={{ margin: "0 auto 10px" }} />
           <h3 style={{ margin: "0 0 6px", color: THEME.heading }}>{t("scaffRequestSubmitted")}</h3>
           <p style={{ fontSize: 13, color: THEME.text2 }}>{t("scaffAssignedTagNumber")}</p>
           <p style={{ fontSize: 20, fontWeight: 700, color: THEME.teal, direction: "ltr" }}>{created.tagNumber}</p>

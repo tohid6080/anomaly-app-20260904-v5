@@ -230,16 +230,16 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
         </button>
       )}
       {!isContractor && !readOnly && t.status === "pending_initial_approval" && (
-        <button type="button" style={{ ...styles.smallButton, background: "#166534" }} onClick={() => handleApproveInitial(t)} disabled={saving}>{t2("scaffInitialApprove")}</button>
+        <button type="button" style={{ ...styles.smallButton, background: THEME.ok }} onClick={() => handleApproveInitial(t)} disabled={saving}>{t2("scaffInitialApprove")}</button>
       )}
       {!isContractor && !readOnly && t.status === "pending_installation" && (
         <>
-          <button type="button" style={{ ...styles.smallButton, background: "#166534" }} onClick={() => handleIssueTag(t)} disabled={saving}>{t2("scaffSafe")}</button>
+          <button type="button" style={{ ...styles.smallButton, background: THEME.ok }} onClick={() => handleIssueTag(t)} disabled={saving}>{t2("scaffSafe")}</button>
           <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => startCorrection(t)}>{t2("scaffNonconformance")}</button>
         </>
       )}
       {!isContractor && !readOnly && t.status === "removal_requested" && (
-        <button type="button" style={{ ...styles.smallButton, background: "#166534" }} onClick={() => handleConfirmRemoved(t)} disabled={saving}>{t2("scaffConfirmRemoval")}</button>
+        <button type="button" style={{ ...styles.smallButton, background: THEME.ok }} onClick={() => handleConfirmRemoved(t)} disabled={saving}>{t2("scaffConfirmRemoval")}</button>
       )}
     </>
   );
@@ -301,9 +301,9 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
 
       {isContractor && myStats && (
         <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
-          <StatBox label={t("scaffStatIssued")} value={myStats.issued} color="#166534" bg="#dcfce7" />
+          <StatBox label={t("scaffStatIssued")} value={myStats.issued} color={THEME.ok} bg={THEME.okBg} />
           <StatBox label={t("scaffStatNotRemoved")} value={myStats.notRemoved} color="#1d4ed8" bg="#dbeafe" />
-          <StatBox label={t("scaffStatNotIssued")} value={myStats.notIssued} color="#b45309" bg="#fef3c7" />
+          <StatBox label={t("scaffStatNotIssued")} value={myStats.notIssued} color={THEME.warn} bg={THEME.warnBg} />
         </div>
       )}
 
@@ -313,9 +313,9 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
           {perContractorStats.map((c) => (
             <div key={c.name} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${THEME.border}`, flexWrap: "wrap" }}>
               <span style={{ flex: 1, minWidth: 100, fontSize: 12.5, fontWeight: 600, color: THEME.text }}>{c.name}</span>
-              <span style={{ fontSize: 11, color: "#166534" }}>{t("scaffIssuedColon")} <b>{c.issued}</b></span>
+              <span style={{ fontSize: 11, color: THEME.ok }}>{t("scaffIssuedColon")} <b>{c.issued}</b></span>
               <span style={{ fontSize: 11, color: "#1d4ed8" }}>{t("scaffNotRemovedColon")} <b>{c.notRemoved}</b></span>
-              <span style={{ fontSize: 11, color: "#b45309" }}>{t("scaffNotIssuedColon")} <b>{c.notIssued}</b></span>
+              <span style={{ fontSize: 11, color: THEME.warn }}>{t("scaffNotIssuedColon")} <b>{c.notIssued}</b></span>
             </div>
           ))}
         </div>
@@ -392,7 +392,7 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
                   {card.correctionDeadline && <p style={{ margin: "2px 0" }}><b>{t2("scaffCorrectionDeadlineLabel")}</b> {toJalaliDateTime(card.correctionDeadline)}</p>}
                 </div>
               )}
-              {card.issueDate && <p style={{ fontSize: 11.5, color: "#166534", marginTop: 6 }}>{t2("scaffTagIssueDateLabel")} {toJalaliSafe(card.issueDate)}</p>}
+              {card.issueDate && <p style={{ fontSize: 11.5, color: THEME.ok, marginTop: 6 }}>{t2("scaffTagIssueDateLabel")} {toJalaliSafe(card.issueDate)}</p>}
               {card.removalDate && <p style={{ fontSize: 11.5, color: THEME.text3, marginTop: 4 }}>{t2("scaffRemovalDateLabel")} {toJalaliSafe(card.removalDate)}</p>}
 
               <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>{rowActions(card)}</div>

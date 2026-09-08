@@ -292,7 +292,7 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser }) {
         <div style={{ display: "flex", gap: 8 }}>
           <button type="button" style={styles.button} onClick={handleSave} disabled={saving}>{saving ? t("saSavingEllipsis") : t("commonSave")}</button>
           {!isContractor && editingId && form.status !== "closed" && (
-            <button type="button" style={{ ...styles.button, background: "#166534", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }} onClick={handleApprove} disabled={saving}>
+            <button type="button" style={{ ...styles.button, background: THEME.ok, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }} onClick={handleApprove} disabled={saving}>
               <CheckCircle2 size={15} /> {t("cadApproveAndClose")}
             </button>
           )}
@@ -317,7 +317,7 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser }) {
         <KpiCard label={t("cadKpiTotal")} value={kpis.total} active={kpiFilter === ""} onClick={() => setKpiFilter("")} color={THEME.navy} />
         <KpiCard label={t("statusOpen")} value={kpis.open} active={kpiFilter === "open"} onClick={() => setKpiFilter("open")} color={STATUS_META.open.bg} />
         <KpiCard label={t("caStatusInProgress")} value={kpis.in_progress} active={kpiFilter === "in_progress"} onClick={() => setKpiFilter("in_progress")} color={STATUS_META.in_progress.bg} />
-        <KpiCard label={t("cadKpiPendingApproval")} value={kpis.done_pending_approval} active={kpiFilter === "done_pending_approval"} onClick={() => setKpiFilter("done_pending_approval")} color="#b45309" />
+        <KpiCard label={t("cadKpiPendingApproval")} value={kpis.done_pending_approval} active={kpiFilter === "done_pending_approval"} onClick={() => setKpiFilter("done_pending_approval")} color={THEME.warn} />
         <KpiCard label={t("statusClosed")} value={kpis.closed} active={kpiFilter === "closed"} onClick={() => setKpiFilter("closed")} color={STATUS_META.closed.bg} />
         <KpiCard label={t("caStatusExpired")} value={kpis.expired} active={kpiFilter === "expired"} onClick={() => setKpiFilter("expired")} color={STATUS_META.expired.bg} />
         <KpiCard label={t("cadKpiOverdue")} value={kpis.overdue} active={kpiFilter === "overdue"} onClick={() => setKpiFilter("overdue")} color="#7c2d12" />
@@ -405,7 +405,7 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser }) {
                   {a.completedAt && <>{t("cadExecutionDateInline", { date: toJalaliSafe(a.completedAt) })}</>}
                   {a.approvedAt
                     ? <>{t("cadEmployerApprovalInline", { date: toJalaliSafe(a.approvedAt) })}{a.approvedBy && ` (${a.approvedBy})`}</>
-                    : <span style={{ color: "#b45309" }}>{t("cadNotApprovedByEmployerYet")}</span>}
+                    : <span style={{ color: THEME.warn }}>{t("cadNotApprovedByEmployerYet")}</span>}
                 </div>
               )}
             </div>

@@ -197,7 +197,7 @@ export default function SbsSampleSizeCalculator({ currentUser, onClose, onSent }
           <label style={styles.label}>{t("sbsNoteForContractor")}</label>
           <input style={styles.input} value={note} onChange={(e) => setNote(e.target.value)} dir={dir} placeholder={t("sbsNoteForContractorPlaceholder")} />
           {error && <p style={styles.error}>{error}</p>}
-          {sentMessage && <p style={{ fontSize: 12.5, color: "#166534", marginTop: 10, fontWeight: 600 }}>{sentMessage}</p>}
+          {sentMessage && <p style={{ fontSize: 12.5, color: THEME.ok, marginTop: 10, fontWeight: 600 }}>{sentMessage}</p>}
           <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6, marginTop: 12 }} onClick={handleSend} disabled={sending}>
             <Send size={13} /> {sending ? t("sbsSending") : t("sbsSendToContractor")}
           </button>

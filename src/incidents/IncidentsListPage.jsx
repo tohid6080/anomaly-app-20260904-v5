@@ -151,7 +151,7 @@ export default function IncidentsListPage({ currentUser, role, readOnly }) {
                   <td style={{ padding: "10px", textAlign: "center" }}>{toJalaliSafe(inc.occurredAt)}</td>
                   <td style={{ padding: "10px", textAlign: "center" }}>{(() => { const it = INCIDENT_TYPES.find((x) => x.value === inc.incidentType); return it ? t(it.labelKey) : inc.incidentType; })()}</td>
                   <td style={{ padding: "10px", textAlign: "center" }}>
-                    {inc.isDisabling && <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: "#fee2e2", color: "#b91c1c", fontWeight: 600 }}>{t("commonYes")}</span>}
+                    {inc.isDisabling && <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: THEME.dangerBg, color: THEME.danger, fontWeight: 600 }}>{t("commonYes")}</span>}
                   </td>
                   <td style={{ padding: "10px", textAlign: "center" }}>{inc.location || "—"}</td>
                   <td style={{ padding: "10px", textAlign: "left" }}>

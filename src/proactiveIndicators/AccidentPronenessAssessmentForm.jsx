@@ -54,7 +54,7 @@ export default function AccidentPronenessAssessmentForm({ personnelId, jobTitle,
   if (done !== null) {
     return (
       <div style={{ maxWidth: 500, margin: "60px auto", padding: 24, textAlign: "center" }}>
-        <CheckCircle2 size={48} color="#166534" style={{ marginBottom: 12 }} />
+        <CheckCircle2 size={48} color={THEME.ok} style={{ marginBottom: 12 }} />
         <h3 style={{ color: THEME.heading, marginBottom: 8 }}>{t("apAssessmentSubmitted")}</h3>
         <p style={{ color: THEME.text3, fontSize: 13, marginBottom: 16 }}>{t("apFinalScoreNote")}</p>
         <div style={{ fontSize: 40, fontWeight: 800, color: THEME.teal, marginBottom: 20 }}>{done}</div>
@@ -102,9 +102,9 @@ export default function AccidentPronenessAssessmentForm({ personnelId, jobTitle,
       ))}
 
       {error && (
-        <div style={{ display: "flex", gap: 8, alignItems: "flex-start", background: "#fef3c7", border: "1px solid #fde68a", borderRadius: 8, padding: 12, marginBottom: 12 }}>
-          <AlertTriangle size={16} color="#92400e" style={{ flexShrink: 0, marginTop: 1 }} />
-          <p style={{ fontSize: 12.5, color: "#92400e", margin: 0 }}>{error}</p>
+        <div style={{ display: "flex", gap: 8, alignItems: "flex-start", background: THEME.warnBg, border: "1px solid #fde68a", borderRadius: 8, padding: 12, marginBottom: 12 }}>
+          <AlertTriangle size={16} color={THEME.warn} style={{ flexShrink: 0, marginTop: 1 }} />
+          <p style={{ fontSize: 12.5, color: THEME.warn, margin: 0 }}>{error}</p>
         </div>
       )}
 

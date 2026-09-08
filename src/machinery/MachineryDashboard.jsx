@@ -441,8 +441,8 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
           <label style={styles.label}>{t("mdReviewNoteLabel")}</label>
           <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={reviewNoteDraft} onChange={(e) => setReviewNoteDraft(e.target.value)} dir={dir} />
           <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
-            <button type="button" style={{ ...styles.smallButton, background: "#166534" }} onClick={() => submitReview(expandedItem, "approved")} disabled={savingReview}>{t("mdApproved")}</button>
-            <button type="button" style={{ ...styles.smallButton, background: "#b45309" }} onClick={() => submitReview(expandedItem, "needs_correction")} disabled={savingReview}>{t("mdNeedsCorrectionBtn")}</button>
+            <button type="button" style={{ ...styles.smallButton, background: THEME.ok }} onClick={() => submitReview(expandedItem, "approved")} disabled={savingReview}>{t("mdApproved")}</button>
+            <button type="button" style={{ ...styles.smallButton, background: THEME.warn }} onClick={() => submitReview(expandedItem, "needs_correction")} disabled={savingReview}>{t("mdNeedsCorrectionBtn")}</button>
             <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => submitReview(expandedItem, "rejected")} disabled={savingReview}>{t("mdRejectedBtn")}</button>
             <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => { setExpandedId(null); setDocsExpandedId(null); }} disabled={savingReview}>{t("commonClose")}</button>
           </div>
@@ -517,7 +517,7 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
             render: (m) => {
               const { anyWarn } = expiryWarning(m);
               if (!anyWarn) return <span style={{ color: THEME.text3 }}>—</span>;
-              return <span style={{ color: "#b45309", fontSize: 11 }}>{t("mdDocsNearExpiry")}</span>;
+              return <span style={{ color: THEME.warn, fontSize: 11 }}>{t("mdDocsNearExpiry")}</span>;
             },
           },
           {
@@ -574,7 +574,7 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
               </div>
 
               {anyWarn && (
-                <div style={{ marginTop: 8, fontSize: 11.5, color: "#b45309" }}>
+                <div style={{ marginTop: 8, fontSize: 11.5, color: THEME.warn }}>
                   {insuranceWarn && <div>{t("mdWarnInsurance", { status: insuranceDays < 0 ? t("mdWarnExpired") : t("mdWarnDaysLeft", { days: insuranceDays }), date: toJalaliSafe(m.insuranceExpiry) })}</div>}
                   {inspectionWarn && <div>{t("mdWarnInspection", { status: inspectionDays < 0 ? t("mdWarnExpired") : t("mdWarnDaysLeft", { days: inspectionDays }), date: toJalaliSafe(m.inspectionExpiry) })}</div>}
                   {healthCertWarn && <div>{t("mdWarnHealthCert", { status: healthCertDays < 0 ? t("mdWarnExpired") : t("mdWarnDaysLeft", { days: healthCertDays }), date: toJalaliSafe(m.healthCertExpiry) })}</div>}

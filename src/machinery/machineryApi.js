@@ -21,14 +21,14 @@ export const LICENSE_TYPES = [
   { value: "grade_three", labelKey: "licenseGradeThree" },
 ];
 export const TRAFFIC_STATUSES = [
-  { value: "active", labelKey: "trafficActive", color: "#166534", bg: "#dcfce7" },
+  { value: "active", labelKey: "trafficActive", color: THEME.ok, bg: THEME.okBg },
   { value: "inactive", labelKey: "trafficInactive", color: "#5b6b7d", bg: THEME.surface2 },
 ];
 export const APPROVAL_STATUSES = [
   { value: "draft", labelKey: "approvalDraft", color: "#5b6b7d", bg: THEME.surface2 },
-  { value: "pending", labelKey: "approvalPending", color: "#b45309", bg: "#fef3c7" },
-  { value: "approved", labelKey: "approvalApproved", color: "#166534", bg: "#dcfce7" },
-  { value: "needs_correction", labelKey: "approvalNeedsCorrection", color: "#b45309", bg: "#fef3c7" },
+  { value: "pending", labelKey: "approvalPending", color: THEME.warn, bg: THEME.warnBg },
+  { value: "approved", labelKey: "approvalApproved", color: THEME.ok, bg: THEME.okBg },
+  { value: "needs_correction", labelKey: "approvalNeedsCorrection", color: THEME.warn, bg: THEME.warnBg },
   { value: "rejected", labelKey: "approvalRejected", color: "#c92a2a", bg: "#fdecec" },
 ];
 export function approvalStatusMeta(v) {

@@ -126,9 +126,9 @@ function KpiGrid({ kpi }) {
   const { t } = useLanguage();
   const cards = [
     { label: t("dbeeKpiTotal"), value: kpi.total, color: THEME.heading, bg: THEME.bg },
-    { label: t("dbeeKpiEffective"), value: kpi.effective, color: "#166534", bg: "#dcfce7" },
-    { label: t("dbeeKpiWeak"), value: kpi.weak, color: "#b45309", bg: "#fef3c7" },
-    { label: t("dbeeKpiCritical"), value: kpi.critical, color: "#b91c1c", bg: "#fee2e2" },
+    { label: t("dbeeKpiEffective"), value: kpi.effective, color: THEME.ok, bg: THEME.okBg },
+    { label: t("dbeeKpiWeak"), value: kpi.weak, color: THEME.warn, bg: THEME.warnBg },
+    { label: t("dbeeKpiCritical"), value: kpi.critical, color: THEME.danger, bg: THEME.dangerBg },
     { label: t("dbeeKpiNotAssessed"), value: kpi.notAssessed, color: THEME.text3, bg: THEME.bg },
   ];
   return (
@@ -180,8 +180,8 @@ function CriticalBarriersBySite({ barriers, bowties }) {
   });
   const sorted = Object.entries(bySite).sort((a, b) => b[1] - a[1]);
   return (
-    <div style={{ background: "#fee2e2", border: "1px solid #fca5a5", borderRadius: 12, padding: 18, marginTop: 16 }}>
-      <h3 style={{ fontSize: 14, color: "#b91c1c", fontWeight: 700, margin: "0 0 10px", display: "flex", alignItems: "center", gap: 6 }}>
+    <div style={{ background: THEME.dangerBg, border: "1px solid #fca5a5", borderRadius: 12, padding: 18, marginTop: 16 }}>
+      <h3 style={{ fontSize: 14, color: THEME.danger, fontWeight: 700, margin: "0 0 10px", display: "flex", alignItems: "center", gap: 6 }}>
         <AlertTriangle size={15} /> {t("dbeeCriticalBySite")}
       </h3>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -207,7 +207,7 @@ function BarrierRow({ barrier, bowtieTitle, onClick }) {
       onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-        {isCriticalFlag && <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#b91c1c", color: "#fff", fontWeight: 700, flexShrink: 0 }}>{t("dbeeCriticalFlag")}</span>}
+        {isCriticalFlag && <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: THEME.danger, color: "#fff", fontWeight: 700, flexShrink: 0 }}>{t("dbeeCriticalFlag")}</span>}
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: THEME.heading, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{barrier.label}</div>
           <div style={{ fontSize: 11, color: THEME.text3 }}>{bowtieTitle}</div>
@@ -290,8 +290,8 @@ function BarrierDetailView({ barrier, bowtieTitle, currentUser, isEmployerSide, 
           {trend && (
             <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: THEME.text2 }}>
               <span>{t("dbeePct", { n: previous.score })}</span>
-              {trend === "up" && <TrendingUp size={16} color="#166534" />}
-              {trend === "down" && <TrendingDown size={16} color="#b91c1c" />}
+              {trend === "up" && <TrendingUp size={16} color={THEME.ok} />}
+              {trend === "down" && <TrendingDown size={16} color={THEME.danger} />}
               {trend === "flat" && <Minus size={16} color={THEME.text3} />}
               <span style={{ fontWeight: 700 }}>{t("dbeePct", { n: current.score })}</span>
             </div>

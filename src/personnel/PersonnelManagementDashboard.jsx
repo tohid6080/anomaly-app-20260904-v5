@@ -123,13 +123,13 @@ export default function PersonnelManagementDashboard({ personnelList, contractor
 
       <div style={styles.statsRow}>
         <KpiCard label={t("pmdKpiTotal")} value={kpis.total} bg={THEME.surface2} color={THEME.heading} />
-        <KpiCard label={t("commonActive")} value={kpis.active} bg="#dcfce7" color="#166534" />
+        <KpiCard label={t("commonActive")} value={kpis.active} bg={THEME.okBg} color={THEME.ok} />
         <KpiCard label={t("statusPendingReview")} value={kpis.pending} bg="#dbeafe" color="#1d4ed8" />
         <KpiCard label={t("pmdKpiRejected")} value={kpis.rejected} bg="#fdecec" color={THEME.danger} />
-        <KpiCard label={t("pmdKpiNeedsCorrection")} value={kpis.needsCorrection} bg="#fef3c7" color="#b45309" />
+        <KpiCard label={t("pmdKpiNeedsCorrection")} value={kpis.needsCorrection} bg={THEME.warnBg} color={THEME.warn} />
         <KpiCard label={t("pmdKpiHealthExpired")} value={kpis.healthExpired} bg="#fdecec" color={THEME.danger} />
-        <KpiCard label={t("pmdKpiHealthExpiringSoon")} value={kpis.healthExpiringSoon} bg="#fef3c7" color="#b45309" />
-        <KpiCard label={t("pmdKpiPendingQualification")} value={kpis.pendingQualification} bg="#fef3c7" color="#b45309" />
+        <KpiCard label={t("pmdKpiHealthExpiringSoon")} value={kpis.healthExpiringSoon} bg={THEME.warnBg} color={THEME.warn} />
+        <KpiCard label={t("pmdKpiPendingQualification")} value={kpis.pendingQualification} bg={THEME.warnBg} color={THEME.warn} />
       </div>
 
       <ChartBlock title={t("pmdByContractor")} rows={byContractor.map(([label, count]) => ({ label, count, color: THEME.teal }))} />

@@ -8,8 +8,8 @@ import { numLocale, pctSign } from "../i18n/translations.js";
 
 const STATUS_META = {
   sent: { labelKey: "sbsAsgStatusSent", color: "#1d4ed8", bg: "#dbeafe" },
-  in_progress: { labelKey: "sbsAsgStatusInProgress", color: "#b45309", bg: "#fef3c7" },
-  completed: { labelKey: "sbsAsgStatusCompleted", color: "#166534", bg: "#dcfce7" },
+  in_progress: { labelKey: "sbsAsgStatusInProgress", color: THEME.warn, bg: THEME.warnBg },
+  completed: { labelKey: "sbsAsgStatusCompleted", color: THEME.ok, bg: THEME.okBg },
 };
 
 /**
@@ -91,7 +91,7 @@ export default function SbsAssignmentsList({ role, currentUser, observations }) 
                 {a.status === "sent" && (
                   <button type="button" style={{ ...styles.smallButton, fontSize: 11 }} onClick={() => handleStatusChange(a.id, "in_progress")}>{t("sbsAsgStartSampling")}</button>
                 )}
-                <button type="button" style={{ ...styles.smallButton, fontSize: 11, display: "flex", alignItems: "center", gap: 4, background: "#166534" }} onClick={() => handleStatusChange(a.id, "completed")}>
+                <button type="button" style={{ ...styles.smallButton, fontSize: 11, display: "flex", alignItems: "center", gap: 4, background: THEME.ok }} onClick={() => handleStatusChange(a.id, "completed")}>
                   <CheckCircle2 size={12} /> {t("sbsAsgMarkComplete")}
                 </button>
               </div>

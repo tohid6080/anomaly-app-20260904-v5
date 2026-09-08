@@ -57,7 +57,7 @@ export default function EffectivenessThresholdsManager({ onBack, currentUser }) 
         <p style={{ fontSize: 11, color: THEME.text3, margin: "6px 0 14px" }}>{t("effThresholdFailedNote")}</p>
 
         {error && <p style={styles.error}>{error}</p>}
-        {saved && <p style={{ color: "#166534", fontSize: 12.5, marginBottom: 8 }}>{t("commonSavedDone")}</p>}
+        {saved && <p style={{ color: THEME.ok, fontSize: 12.5, marginBottom: 8 }}>{t("commonSavedDone")}</p>}
         <button type="button" style={styles.button} onClick={handleSave} disabled={saving}>{saving ? t("saSavingEllipsis") : t("saSaveChanges")}</button>
       </div>
     </div>

@@ -126,7 +126,7 @@ export default function HseGateInbox({ currentUser, onBack }) {
           {tab === "employer_to_contractor" && (
             <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
               <button type="button" onClick={() => handleApprove(it.id)} disabled={busy === it.id}
-                style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 5, background: "#166534" }}>
+                style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 5, background: THEME.ok }}>
                 <CheckCircle2 size={13} /> {t("gateInboxApproveSend")}
               </button>
               <button type="button" onClick={() => openReject(it.id)} disabled={busy === it.id}

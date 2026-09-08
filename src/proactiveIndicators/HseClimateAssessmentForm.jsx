@@ -38,7 +38,7 @@ export default function HseClimateAssessmentForm({ currentUser, onBack, onSaved 
     return (
       <div style={{ maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
         <div style={{ textAlign: "center", marginBottom: 20 }}>
-          <CheckCircle2 size={40} color="#166534" style={{ marginBottom: 8 }} />
+          <CheckCircle2 size={40} color={THEME.ok} style={{ marginBottom: 8 }} />
           <h3 style={{ color: THEME.heading, marginBottom: 4 }}>{t("hseAssessmentSubmitted")}</h3>
         </div>
         <DimensionResultView result={result} />
@@ -85,9 +85,9 @@ export default function HseClimateAssessmentForm({ currentUser, onBack, onSaved 
       ))}
 
       {error && (
-        <div style={{ display: "flex", gap: 8, alignItems: "flex-start", background: "#fef3c7", border: "1px solid #fde68a", borderRadius: 8, padding: 12, marginBottom: 12 }}>
-          <AlertTriangle size={16} color="#92400e" style={{ flexShrink: 0, marginTop: 1 }} />
-          <p style={{ fontSize: 12.5, color: "#92400e", margin: 0 }}>{error}</p>
+        <div style={{ display: "flex", gap: 8, alignItems: "flex-start", background: THEME.warnBg, border: "1px solid #fde68a", borderRadius: 8, padding: 12, marginBottom: 12 }}>
+          <AlertTriangle size={16} color={THEME.warn} style={{ flexShrink: 0, marginTop: 1 }} />
+          <p style={{ fontSize: 12.5, color: THEME.warn, margin: 0 }}>{error}</p>
         </div>
       )}
 

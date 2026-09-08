@@ -27,19 +27,19 @@ export const DOC_TYPES = [
 ];
 
 export const DOC_STATUS = [
-  { value: "pending", labelKey: "docStatusPending", color: "#b45309", bg: "#fef3c7" },
-  { value: "approved", labelKey: "docStatusApproved", color: "#166534", bg: "#dcfce7" },
+  { value: "pending", labelKey: "docStatusPending", color: THEME.warn, bg: THEME.warnBg },
+  { value: "approved", labelKey: "docStatusApproved", color: THEME.ok, bg: THEME.okBg },
   { value: "rejected", labelKey: "docStatusRejected", color: "#c92a2a", bg: "#fdecec" },
-  { value: "needs_correction", labelKey: "docStatusNeedsCorrection", color: "#b45309", bg: "#fef3c7" },
+  { value: "needs_correction", labelKey: "docStatusNeedsCorrection", color: THEME.warn, bg: THEME.warnBg },
 ];
 
 export const PERSONNEL_STATUS = [
-  { value: "pending_documents", labelKey: "psPendingDocuments", color: "#b45309", bg: "#fef3c7" },
+  { value: "pending_documents", labelKey: "psPendingDocuments", color: THEME.warn, bg: THEME.warnBg },
   { value: "pending_employer_review", labelKey: "psPendingEmployerReview", color: "#1d4ed8", bg: "#dbeafe" },
-  { value: "pending_qualification", labelKey: "psPendingQualification", color: "#b45309", bg: "#fef3c7" },
-  { value: "pending_health_visit", labelKey: "psPendingHealthVisit", color: "#b45309", bg: "#fef3c7" },
-  { value: "pending_health_result", labelKey: "psPendingHealthResult", color: "#b45309", bg: "#fef3c7" },
-  { value: "active", labelKey: "psActive", color: "#166534", bg: "#dcfce7" },
+  { value: "pending_qualification", labelKey: "psPendingQualification", color: THEME.warn, bg: THEME.warnBg },
+  { value: "pending_health_visit", labelKey: "psPendingHealthVisit", color: THEME.warn, bg: THEME.warnBg },
+  { value: "pending_health_result", labelKey: "psPendingHealthResult", color: THEME.warn, bg: THEME.warnBg },
+  { value: "active", labelKey: "psActive", color: THEME.ok, bg: THEME.okBg },
   { value: "needs_correction", labelKey: "psNeedsCorrection", color: "#c92a2a", bg: "#fdecec" },
   { value: "rejected", labelKey: "psRejected", color: "#c92a2a", bg: "#fdecec" },
   { value: "health_expired", labelKey: "psHealthExpired", color: "#c92a2a", bg: "#fdecec" },
@@ -54,7 +54,7 @@ export function personnelStatusMeta(status) {
 // آیا فرد الان همکاری می‌کند یا ترک‌کار/تسویه‌حساب شده — با ثبت هیچ‌کدام از
 // سوابق/مدارک/معاینات قبلی‌اش حذف نمی‌شود.
 export const EMPLOYMENT_STATUS = [
-  { value: "active", labelKey: "esActive", color: "#166534", bg: "#dcfce7" },
+  { value: "active", labelKey: "esActive", color: THEME.ok, bg: THEME.okBg },
   { value: "terminated", labelKey: "esTerminated", color: "#5b6b7d", bg: THEME.surface2 },
 ];
 export function employmentStatusMeta(value) {

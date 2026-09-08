@@ -123,7 +123,7 @@ export default function AccidentPronenessSection({ personnel, role, currentUser,
           <p style={{ fontSize: 12, color: THEME.text2, margin: 0 }}>{correctiveAction.actionDescription}</p>
           {correctiveAction.dueDate && <p style={{ fontSize: 11, color: THEME.text3, margin: "4px 0 0" }}>{t("apDueDateLabel", { date: toJalaliSafe(correctiveAction.dueDate) })}</p>}
           {role === "CONTRACTOR" && (
-            <p style={{ fontSize: 11, color: "#92400e", margin: "6px 0 0" }}>{t("apContractorFollowUpNote")}</p>
+            <p style={{ fontSize: 11, color: THEME.warn, margin: "6px 0 0" }}>{t("apContractorFollowUpNote")}</p>
           )}
         </div>
       )}

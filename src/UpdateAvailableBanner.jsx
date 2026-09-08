@@ -49,7 +49,7 @@ export default function UpdateAvailableBanner() {
   return (
     <div style={{
       display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
-      background: "#fef3c7", borderBottom: "1px solid #fde68a", color: "#92400e",
+      background: THEME.warnBg, borderBottom: "1px solid #fde68a", color: THEME.warn,
       padding: "10px 14px", fontSize: 12.5, fontWeight: 600,
     }}>
       <ArrowUpCircle size={16} style={{ flexShrink: 0 }} />
@@ -64,7 +64,7 @@ export default function UpdateAvailableBanner() {
       )}
       <button
         type="button" onClick={dismiss} title={t("updateBannerDismiss")}
-        style={{ background: "none", border: "none", cursor: "pointer", color: "#92400e", display: "flex", flexShrink: 0 }}
+        style={{ background: "none", border: "none", cursor: "pointer", color: THEME.warn, display: "flex", flexShrink: 0 }}
       >
         <X size={15} />
       </button>

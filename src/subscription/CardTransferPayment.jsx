@@ -72,7 +72,7 @@ export default function PaymentMethodsSection({ currentUser, selectedPlan, billi
   if (done) {
     return (
       <div style={{ textAlign: "center", padding: "24px 10px" }}>
-        <Clock size={40} color="#b45309" style={{ marginBottom: 12 }} />
+        <Clock size={40} color={THEME.warn} style={{ marginBottom: 12 }} />
         <h4 style={{ fontSize: 15, fontWeight: 800, color: THEME.heading, margin: "0 0 8px" }}>{t("ctpReceiptSubmitted")}</h4>
         <p style={{ fontSize: 12.5, color: THEME.text2, lineHeight: 1.9, maxWidth: 320, margin: "0 auto" }}>
           {t("ctpReceiptSubmittedBody")}
@@ -127,7 +127,7 @@ export default function PaymentMethodsSection({ currentUser, selectedPlan, billi
                   {settings.cardNumber && (
                     <button
                       type="button" onClick={handleCopy}
-                      style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 7, border: "none", cursor: "pointer", fontFamily: THEME.font, fontSize: 11, fontWeight: 700, background: copied ? "#166534" : THEME.teal, color: "#fff" }}
+                      style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 7, border: "none", cursor: "pointer", fontFamily: THEME.font, fontSize: 11, fontWeight: 700, background: copied ? THEME.ok : THEME.teal, color: "#fff" }}
                     >
                       {copied ? <Check size={12} /> : <Copy size={12} />} {copied ? t("ctpCopied") : t("ctpCopyCardNumber")}
                     </button>

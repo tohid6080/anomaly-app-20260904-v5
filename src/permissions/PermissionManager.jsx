@@ -150,8 +150,8 @@ export default function PermissionManager({ onBack }) {
                 </div>
               ))}
               {isDirty && (
-                <div style={{ position: "sticky", bottom: 10, display: "flex", gap: 8, background: "#fef3c7", border: "1px solid #f59e0b", borderRadius: 10, padding: "10px 14px", marginTop: 4 }}>
-                  <span style={{ fontSize: 11.5, color: "#92400e", fontWeight: 600, flex: 1, alignSelf: "center" }}>{t("draftUnsavedChangesBar")}</span>
+                <div style={{ position: "sticky", bottom: 10, display: "flex", gap: 8, background: THEME.warnBg, border: "1px solid #f59e0b", borderRadius: 10, padding: "10px 14px", marginTop: 4 }}>
+                  <span style={{ fontSize: 11.5, color: THEME.warn, fontWeight: 600, flex: 1, alignSelf: "center" }}>{t("draftUnsavedChangesBar")}</span>
                   <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setDraftAccess(Object.fromEntries(PERMISSION_MODULES.map((m) => [m.key, getModuleAccess(permMap, m.key)])))} disabled={saving}>{t("commonCancel")}</button>
                   <button type="button" style={styles.smallButton} onClick={handleSaveAll} disabled={saving}>{saving ? t("saSavingEllipsis") : t("draftCommitChanges")}</button>
                 </div>

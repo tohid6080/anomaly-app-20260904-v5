@@ -16,8 +16,8 @@ import { translate, getCurrentLang } from "../i18n/translations.js";
 
 export const BOWTIE_STATUSES = [
   { value: "draft", labelKey: "bowtieStatusDraft", color: "#5b6b7d", bg: THEME.surface2 },
-  { value: "in_review", labelKey: "bowtieStatusInReview", color: "#b45309", bg: "#fef3c7" },
-  { value: "approved", labelKey: "bowtieStatusApproved", color: "#166534", bg: "#dcfce7" },
+  { value: "in_review", labelKey: "bowtieStatusInReview", color: THEME.warn, bg: THEME.warnBg },
+  { value: "approved", labelKey: "bowtieStatusApproved", color: THEME.ok, bg: THEME.okBg },
   { value: "archived", labelKey: "bowtieStatusArchived", color: "#475569", bg: THEME.surface2 },
 ];
 
@@ -116,8 +116,8 @@ export async function deleteBowtieDB(id) {
 // ==========================================================
 
 export const CRITICALITY_LEVELS = [
-  { value: "low", labelKey: "criticalityLow", color: "#166534" },
-  { value: "medium", labelKey: "criticalityMedium", color: "#b45309" },
+  { value: "low", labelKey: "criticalityLow", color: THEME.ok },
+  { value: "medium", labelKey: "criticalityMedium", color: THEME.warn },
   { value: "high", labelKey: "criticalityHigh", color: "#c92a2a" },
 ];
 

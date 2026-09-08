@@ -62,7 +62,7 @@ export default function PublicHseClimateSurvey({ publicToken }) {
   if (done) {
     return (
       <div style={{ maxWidth: 480, margin: "80px auto", padding: 24, textAlign: "center", fontFamily: THEME.font }}>
-        <CheckCircle2 size={48} color="#166534" style={{ marginBottom: 12 }} />
+        <CheckCircle2 size={48} color={THEME.ok} style={{ marginBottom: 12 }} />
         <h2 style={{ color: THEME.heading, fontSize: 18 }}>{t("hseSurveySubmittedSuccess")}</h2>
       </div>
     );
@@ -106,9 +106,9 @@ export default function PublicHseClimateSurvey({ publicToken }) {
 
       <div style={{ position: "sticky", bottom: 0, background: THEME.bg, padding: "14px 0" }}>
         {error && (
-          <div style={{ display: "flex", gap: 8, alignItems: "flex-start", background: "#fef3c7", border: "1px solid #fde68a", borderRadius: 8, padding: 12, marginBottom: 10 }}>
-            <AlertTriangle size={16} color="#92400e" style={{ flexShrink: 0, marginTop: 1 }} />
-            <p style={{ fontSize: 12.5, color: "#92400e", margin: 0 }}>{error}</p>
+          <div style={{ display: "flex", gap: 8, alignItems: "flex-start", background: THEME.warnBg, border: "1px solid #fde68a", borderRadius: 8, padding: 12, marginBottom: 10 }}>
+            <AlertTriangle size={16} color={THEME.warn} style={{ flexShrink: 0, marginTop: 1 }} />
+            <p style={{ fontSize: 12.5, color: THEME.warn, margin: 0 }}>{error}</p>
           </div>
         )}
         <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 8, textAlign: "center" }}>

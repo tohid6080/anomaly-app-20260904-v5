@@ -198,8 +198,8 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId }) {
           </p>
         )}
         {form.status === "pending_review" && (
-          <div style={{ background: "#fef3c7", border: "1px solid #fde68a", borderRadius: 8, padding: "10px 14px", marginBottom: 14 }}>
-            <p style={{ fontSize: 12, color: "#92400e", margin: 0, lineHeight: 1.8 }}>
+          <div style={{ background: THEME.warnBg, border: "1px solid #fde68a", borderRadius: 8, padding: "10px 14px", marginBottom: 14 }}>
+            <p style={{ fontSize: 12, color: THEME.warn, margin: 0, lineHeight: 1.8 }}>
               {isContractor
                 ? <>{t("hcmsPendingContractorNote", { approval: "" })}<b>{t("hcmsEmployerApproval")}</b></>
                 : <>{t("hcmsPendingReviewerNote", { notFinal: "" })}<b>{t("hcmsNotFinalYet")}</b></>}
@@ -308,7 +308,7 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId }) {
             {saving ? t("saSavingEllipsis") : (isContractor && form.status === "pending_review" ? t("hcmsSendForEmployerApproval") : t("hcmsSaveAssessment"))}
           </button>
           {!isContractor && form.status === "pending_review" && (
-            <button type="button" style={{ ...styles.button, background: "#166534" }} onClick={handleApprove} disabled={saving}>{t("hcmsFinalApproval")}</button>
+            <button type="button" style={{ ...styles.button, background: THEME.ok }} onClick={handleApprove} disabled={saving}>{t("hcmsFinalApproval")}</button>
           )}
         </div>
       </div>
@@ -364,7 +364,7 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId }) {
                   {rec.activity}
                   {rec.linkedAnomalyId && <LinkIcon size={12} color={THEME.teal} style={{ marginRight: 6, display: "inline" }} />}
                   {rec.status === "pending_review" && (
-                    <span style={{ fontSize: 10, background: "#fef3c7", color: "#92400e", padding: "2px 8px", borderRadius: 999, fontWeight: 600, marginRight: 6 }}>{t("hcmsPendingEmployerReview")}</span>
+                    <span style={{ fontSize: 10, background: THEME.warnBg, color: THEME.warn, padding: "2px 8px", borderRadius: 999, fontWeight: 600, marginRight: 6 }}>{t("hcmsPendingEmployerReview")}</span>
                   )}
                 </div>
                 <div style={{ fontSize: 11.5, color: THEME.text3, marginTop: 4 }}>{rec.hazard || rec.environmentalAspect || "—"}</div>

@@ -172,11 +172,11 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
       <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 18 }}>{t("pdModuleSubtitle")}</p>
 
       <div style={styles.statsRow}>
-        <div style={{ ...styles.statBox, background: "#dcfce7" }}><div style={{ ...styles.statNum, color: "#166534" }}>{counts.active}</div><div style={styles.statLabel}>{t("commonActive")}</div></div>
+        <div style={{ ...styles.statBox, background: THEME.okBg }}><div style={{ ...styles.statNum, color: THEME.ok }}>{counts.active}</div><div style={styles.statLabel}>{t("commonActive")}</div></div>
         <div style={{ ...styles.statBox, background: "#dbeafe" }}><div style={{ ...styles.statNum, color: "#1d4ed8" }}>{counts.pendingReview}</div><div style={styles.statLabel}>{t("statusPendingReview")}</div></div>
-        <div style={{ ...styles.statBox, background: "#fef3c7" }}><div style={{ ...styles.statNum, color: "#b45309" }}>{counts.pendingQualification}</div><div style={styles.statLabel}>{t("pdStatPendingQualification")}</div></div>
-        <div style={{ ...styles.statBox, background: "#fef3c7" }}><div style={{ ...styles.statNum, color: "#b45309" }}>{counts.pendingHealthVisit}</div><div style={styles.statLabel}>{t("pdStatPendingHealthVisit")}</div></div>
-        <div style={{ ...styles.statBox, background: "#fef3c7" }}><div style={{ ...styles.statNum, color: "#b45309" }}>{counts.pendingHealthResult}</div><div style={styles.statLabel}>{t("pdStatPendingHealthResult")}</div></div>
+        <div style={{ ...styles.statBox, background: THEME.warnBg }}><div style={{ ...styles.statNum, color: THEME.warn }}>{counts.pendingQualification}</div><div style={styles.statLabel}>{t("pdStatPendingQualification")}</div></div>
+        <div style={{ ...styles.statBox, background: THEME.warnBg }}><div style={{ ...styles.statNum, color: THEME.warn }}>{counts.pendingHealthVisit}</div><div style={styles.statLabel}>{t("pdStatPendingHealthVisit")}</div></div>
+        <div style={{ ...styles.statBox, background: THEME.warnBg }}><div style={{ ...styles.statNum, color: THEME.warn }}>{counts.pendingHealthResult}</div><div style={styles.statLabel}>{t("pdStatPendingHealthResult")}</div></div>
         <div style={{ ...styles.statBox, background: "#fdecec" }}><div style={{ ...styles.statNum, color: THEME.danger }}>{counts.healthExpired}</div><div style={styles.statLabel}>{t("pdStatHealthExpired")}</div></div>
       </div>
 

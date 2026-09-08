@@ -169,13 +169,13 @@ export default function HseClimateCampaignManager({ currentUser, role, onBack })
               <div style={{ fontSize: 11, color: THEME.text3, marginTop: 3 }}>{t("hccmCreatedMinResponse", { date: toJalaliSafe(c.createdAt), count: c.minValidResponses })}</div>
             </div>
             <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-              <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: c.status === "active" ? "#dcfce7" : THEME.surface2, color: c.status === "active" ? "#166534" : "#5b6b7d", fontWeight: 600 }}>
+              <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: c.status === "active" ? THEME.okBg : THEME.surface2, color: c.status === "active" ? THEME.ok : "#5b6b7d", fontWeight: 600 }}>
                 {c.status === "active" ? t("hccmStatusActive") : t("hccmStatusClosed")}
               </span>
               <button type="button" style={{ ...styles.smallButton, fontSize: 11, background: THEME.navyMid, display: "flex", alignItems: "center", gap: 4 }} onClick={() => copyLink(c.publicToken)}>
                 <QrCode size={11} /> {t("hccmLinkBtn")}
               </button>
-              <button type="button" style={{ ...styles.smallButton, fontSize: 11, background: c.status === "active" ? THEME.danger : "#166534", display: "flex", alignItems: "center", gap: 4 }} onClick={() => handleToggleStatus(c)}>
+              <button type="button" style={{ ...styles.smallButton, fontSize: 11, background: c.status === "active" ? THEME.danger : THEME.ok, display: "flex", alignItems: "center", gap: 4 }} onClick={() => handleToggleStatus(c)}>
                 {c.status === "active" ? <Lock size={11} /> : <Unlock size={11} />} {c.status === "active" ? t("hccmCloseBtn") : t("hccmActivateBtn")}
               </button>
             </div>

@@ -76,7 +76,7 @@ export default function AnomalyCategoryManager({ onBack }) {
           ) : (
             <button type="button" style={{ ...styles.smallButton, background: THEME.navyMid }} onClick={() => startEdit(c)}>{t("commonEdit")}</button>
           )}
-          <button type="button" style={{ ...styles.smallButton, background: c.isActive ? THEME.text3 : "#166534" }} onClick={() => handleToggleActive(c)}>
+          <button type="button" style={{ ...styles.smallButton, background: c.isActive ? THEME.text3 : THEME.ok }} onClick={() => handleToggleActive(c)}>
             {c.isActive ? t("commonInactive") : t("commonActive")}
           </button>
         </div>

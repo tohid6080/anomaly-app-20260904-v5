@@ -66,7 +66,7 @@ export default function TrialRequestModal({ onClose }) {
       >
         {done ? (
           <div style={{ textAlign: "center", padding: "20px 6px" }}>
-            <CheckCircle2 size={46} color="#166534" style={{ marginBottom: 12 }} />
+            <CheckCircle2 size={46} color={THEME.ok} style={{ marginBottom: 12 }} />
             <h3 style={{ color: THEME.heading, fontSize: 16, marginBottom: 8 }}>{t("trmDoneTitle")}</h3>
             <p style={{ fontSize: 12.5, color: THEME.text3, lineHeight: 1.9, marginBottom: 18 }}>
               {t("trmDoneBody")}

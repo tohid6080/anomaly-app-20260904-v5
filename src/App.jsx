@@ -104,9 +104,9 @@ const SEED_USERS = [
 ];
 
 const RISK_LEVELS = [
-  { value: "High", labelKey: "riskLevelHigh", color: "#c92a2a", bg: "#fee2e2" },
-  { value: "Med", labelKey: "riskLevelMed", color: "#d97706", bg: "#fef3c7" },
-  { value: "Low", labelKey: "riskLevelLow", color: "#16a34a", bg: "#dcfce7" },
+  { value: "High", labelKey: "riskLevelHigh", color: "#c92a2a", bg: THEME.dangerBg },
+  { value: "Med", labelKey: "riskLevelMed", color: "#d97706", bg: THEME.warnBg },
+  { value: "Low", labelKey: "riskLevelLow", color: "#16a34a", bg: THEME.okBg },
 ];
 
 const ANOMALY_FORMATS = [
@@ -1215,7 +1215,7 @@ function LoginScreen({ onLogin }) {
             />
 
             {error && <p style={styles.error}>{error}</p>}
-            {!error && warning && <p style={{ fontSize: 11, color: "#b45309", marginTop: -6, marginBottom: 10, lineHeight: 1.7 }}>{warning}</p>}
+            {!error && warning && <p style={{ fontSize: 11, color: THEME.warn, marginTop: -6, marginBottom: 10, lineHeight: 1.7 }}>{warning}</p>}
 
             <button type="button" style={{ ...styles.button, opacity: loading ? 0.75 : 1 }} onClick={handleSubmit} disabled={loading}>
               {loading ? t("loggingIn") : t("loginButton")}
@@ -1486,7 +1486,7 @@ function ChangePasswordSection() {
           {showForm ? t("saClose") : t("appChangePasswordBtn")}
         </button>
       </div>
-      {done && <p style={{ color: "#166534", fontSize: 12.5, marginTop: 8 }}>{t("saPasswordChanged")}</p>}
+      {done && <p style={{ color: THEME.ok, fontSize: 12.5, marginTop: 8 }}>{t("saPasswordChanged")}</p>}
       {showForm && (
         <div style={{ marginTop: 10 }}>
           <label style={styles.label}>{t("saCurrentPassword")}</label>
@@ -1674,7 +1674,7 @@ function ProfileView({ onBack, currentUser, roleLabel }) {
           <input style={styles.input} value={email} onChange={(e) => setEmail(e.target.value)} dir="ltr" placeholder="name@company.com" type="email" />
 
           {error && <p style={styles.error}>{error}</p>}
-          {saved && <p style={{ color: "#166534", fontSize: 12.5, marginTop: 6 }}>{t("savedConfirm")}</p>}
+          {saved && <p style={{ color: THEME.ok, fontSize: 12.5, marginTop: 6 }}>{t("savedConfirm")}</p>}
           <button type="button" style={{ ...styles.button, marginTop: 10 }} onClick={handleSave} disabled={saving}>
             {saving ? t("saving") : t("saveChanges")}
           </button>
@@ -1984,7 +1984,7 @@ function EmployerAccountManager({ onBack }) {
                 {a.companyName && <div style={{ fontSize: 13, color: "#555", marginTop: 2 }}>{t("eamCompanyLabel", { name: a.companyName })}</div>}
                 {a.jobPositionTitle && <div style={{ fontSize: 12.5, color: "#0d8f8a", marginTop: 3, fontWeight: 600 }}>{a.jobPositionTitle}</div>}
                 <div style={{ fontSize: 13, color: "#0d8f8a", marginTop: 4, direction: "ltr", textAlign: "start" }}>{t("cmUserLabel", { username: a.username })}</div>
-                <span style={{ ...styles.badge, marginTop: 6, display: "inline-block", color: a.canEdit ? "#166534" : "#92400e", background: a.canEdit ? "#dcfce7" : "#fef3c7" }}>
+                <span style={{ ...styles.badge, marginTop: 6, display: "inline-block", color: a.canEdit ? THEME.ok : THEME.warn, background: a.canEdit ? THEME.okBg : THEME.warnBg }}>
                   {a.canEdit ? t("eamFullAccessShort") : t("eamViewOnly")}
                 </span>
               </div>
@@ -2698,9 +2698,9 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
 
   const riskMeta = (level) => RISK_LEVELS.find((r) => r.value === level) || RISK_LEVELS[1];
   const statusMeta = (status) => {
-    if (status === "Closed") return { label: t("anomStatusClosed"), color: "#166534", bg: "#dcfce7", Icon: CheckCircle2 };
+    if (status === "Closed") return { label: t("anomStatusClosed"), color: THEME.ok, bg: THEME.okBg, Icon: CheckCircle2 };
     if (status === "pending_review") return { label: t("anomStatusPendingReview"), color: "#1d4ed8", bg: "#dbeafe", Icon: Clock };
-    return { label: t("anomStatusOpen"), color: "#92400e", bg: "#fef3c7", Icon: Clock };
+    return { label: t("anomStatusOpen"), color: THEME.warn, bg: THEME.warnBg, Icon: Clock };
   };
 
   // ---------- گیت تأیید سرپرست/مدیر HSE (گردش‌کار سه‌مرحله‌ای) ----------
@@ -2817,19 +2817,19 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
           <div style={styles.statNum}>{counts.total}</div>
           <div style={styles.statLabel}>{t("statTotalItems")}</div>
         </div>
-        <div style={{ ...styles.statBox, background: "#fef3c7" }}>
-          <div style={{ ...styles.statNum, color: "#92400e" }}>{counts.open}</div>
+        <div style={{ ...styles.statBox, background: THEME.warnBg }}>
+          <div style={{ ...styles.statNum, color: THEME.warn }}>{counts.open}</div>
           <div style={styles.statLabel}>{t("anomStatusOpen")}</div>
         </div>
         <div style={{ ...styles.statBox, background: "#dbeafe" }}>
           <div style={{ ...styles.statNum, color: "#1d4ed8" }}>{counts.review}</div>
           <div style={styles.statLabel}>{t("anomStatusPendingReview")}</div>
         </div>
-        <div style={{ ...styles.statBox, background: "#dcfce7" }}>
-          <div style={{ ...styles.statNum, color: "#166534" }}>{counts.closed}</div>
+        <div style={{ ...styles.statBox, background: THEME.okBg }}>
+          <div style={{ ...styles.statNum, color: THEME.ok }}>{counts.closed}</div>
           <div style={styles.statLabel}>{t("anomStatusClosed")}</div>
         </div>
-        <div style={{ ...styles.statBox, background: "#fee2e2" }}>
+        <div style={{ ...styles.statBox, background: THEME.dangerBg }}>
           <div style={{ ...styles.statNum, color: "#991b1b" }}>{counts.high}</div>
           <div style={styles.statLabel}>{t("statHighRiskOpen")}</div>
         </div>
@@ -3001,7 +3001,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
             </div>
 
             {a.reviewNote && a.status === "open" && (
-              <div style={{ background: "#fee2e2", color: "#991b1b", padding: 10, borderRadius: 8, fontSize: 13, marginBottom: 14 }}>
+              <div style={{ background: THEME.dangerBg, color: "#991b1b", padding: 10, borderRadius: 8, fontSize: 13, marginBottom: 14 }}>
                 <b>{t("returnedByEmployer")}</b> {a.reviewNote}
               </div>
             )}
@@ -3157,7 +3157,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
                 {isReviewer && (gateMap[a.id].status === "pending_approval" || gateMap[a.id].status === "reviewed") && (
                   <div>
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
-                      <button type="button" style={{ ...styles.smallButton, background: "#166534" }} onClick={() => handleApproveGate(a)} disabled={gateBusy === a.id}>
+                      <button type="button" style={{ ...styles.smallButton, background: THEME.ok }} onClick={() => handleApproveGate(a)} disabled={gateBusy === a.id}>
                         {gateMap[a.id].direction === "contractor_to_employer" ? t("alGateApproveCloseAnomaly") : t("alGateApproveSendContractor")}
                       </button>
                       {gateMap[a.id].status === "pending_approval" && (
@@ -3994,8 +3994,8 @@ function TasksCard({ tasks, onTaskClick }) {
                   </span>
                   <span style={{
                     fontSize: 9.5, padding: "1px 7px", borderRadius: 999, flexShrink: 0, fontWeight: 700,
-                    background: it.kind === "pending_approval" ? "#fef3c7" : THEME.tealSoft,
-                    color: it.kind === "pending_approval" ? "#b45309" : THEME.tealDeep,
+                    background: it.kind === "pending_approval" ? THEME.warnBg : THEME.tealSoft,
+                    color: it.kind === "pending_approval" ? THEME.warn : THEME.tealDeep,
                   }}>
                     {it.kind === "pending_approval" ? t("anomStatusPendingReview") : t("taskBadgeAssigned")}
                   </span>
@@ -4944,7 +4944,7 @@ class ErrorBoundary extends React.Component {
         <div style={{ padding: 24, fontFamily: "Tahoma, Arial, sans-serif", direction: getCurrentLang() === "fa" ? "rtl" : "ltr", maxWidth: 560, margin: "40px auto" }}>
           <h3 style={{ color: "#c92a2a" }}>{tr("errBoundaryTitle")}</h3>
           <p style={{ fontSize: 13, color: "#555" }}>{tr("errBoundaryDesc")}</p>
-          <pre style={{ whiteSpace: "pre-wrap", fontSize: 12, color: "#991b1b", background: "#fee2e2", padding: 12, borderRadius: 8 }}>
+          <pre style={{ whiteSpace: "pre-wrap", fontSize: 12, color: "#991b1b", background: THEME.dangerBg, padding: 12, borderRadius: 8 }}>
             {String((this.state.error && this.state.error.message) || this.state.error)}
           </pre>
           {currentUser && (

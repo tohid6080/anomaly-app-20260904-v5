@@ -83,7 +83,7 @@ export default function TripodAnalysisWorkspace({ analysisId, incident, currentU
 
       {error && <p style={styles.error}>{error}</p>}
       {analysis.rejectionReason && (
-        <div style={{ background: "#fee2e2", border: "1px solid #fca5a5", borderRadius: 8, padding: 12, marginBottom: 14 }}>
+        <div style={{ background: THEME.dangerBg, border: "1px solid #fca5a5", borderRadius: 8, padding: 12, marginBottom: 14 }}>
           <p style={{ fontSize: 12.5, color: "#991b1b", margin: 0 }}>{t("twLastRejectionReason", { reason: analysis.rejectionReason })}</p>
         </div>
       )}
@@ -236,7 +236,7 @@ function PathCard({ path, refGroups, editable, onRefresh }) {
     <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 16, marginBottom: 14 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
         <span style={{ fontSize: 13.5, fontWeight: 700, color: THEME.heading }}>{t("twPathN", { n: path.pathNo })}</span>
-        <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: filled ? "#dcfce7" : THEME.surface2, color: filled ? "#166534" : THEME.text3, fontWeight: 600 }}>{filled ? t("twPathFilled") : t("twPathEmpty")}</span>
+        <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: filled ? THEME.okBg : THEME.surface2, color: filled ? THEME.ok : THEME.text3, fontWeight: 600 }}>{filled ? t("twPathFilled") : t("twPathEmpty")}</span>
       </div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <select style={{ ...styles.input, marginTop: 0, width: 140 }} value={type} onChange={(e) => setType(e.target.value)} disabled={!editable} dir={dir}>
@@ -423,7 +423,7 @@ function RootCauseTab({ analysisId, incident, rootCause, correctiveActions, curr
 function IssuedBadge() {
   const { t } = useLanguage();
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10.5, fontWeight: 700, color: "#166534", background: "#dcfce7", padding: "4px 9px", borderRadius: 999 }}>
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10.5, fontWeight: 700, color: THEME.ok, background: THEME.okBg, padding: "4px 9px", borderRadius: 999 }}>
       <CheckCircle2 size={12} /> {t("twCorrectiveActionIssued")}
     </span>
   );

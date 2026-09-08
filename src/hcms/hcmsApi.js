@@ -1,4 +1,4 @@
-import { sb, sbOk, getCurrentCompanyId } from "../shared.js";
+import { sb, sbOk, getCurrentCompanyId, THEME } from "../shared.js";
 import { translate, getCurrentLang } from "../i18n/translations.js";
 
 /**
@@ -41,7 +41,7 @@ function formulaLevel(severity, letter) {
 }
 
 export const RISK_LEVEL_META = {
-  Low: { labelKey: "hcmsLevelLow", color: "#92400e", bg: "#fef9c3" },        // زرد
+  Low: { labelKey: "hcmsLevelLow", color: THEME.warn, bg: "#fef9c3" },        // زرد
   Medium: { labelKey: "hcmsLevelMedium", color: "#9a3412", bg: "#fed7aa" }, // نارنجی
   High: { labelKey: "hcmsLevelHigh", color: "#991b1b", bg: "#fecaca" },      // قرمز
 };

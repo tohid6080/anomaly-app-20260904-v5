@@ -185,12 +185,12 @@ export default function BowTieDashboard({ onBack, currentUser, readOnly, role })
           <div style={{ ...styles.statNum, color: THEME.text2 }}>{counts.draft}</div>
           <div style={styles.statLabel}>{t("bowtieStatusDraft")}</div>
         </div>
-        <div style={{ ...styles.statBox, background: "#fef3c7" }}>
-          <div style={{ ...styles.statNum, color: "#b45309" }}>{counts.in_review}</div>
+        <div style={{ ...styles.statBox, background: THEME.warnBg }}>
+          <div style={{ ...styles.statNum, color: THEME.warn }}>{counts.in_review}</div>
           <div style={styles.statLabel}>{t("bowtieStatusInReview")}</div>
         </div>
-        <div style={{ ...styles.statBox, background: "#dcfce7" }}>
-          <div style={{ ...styles.statNum, color: "#166534" }}>{counts.approved}</div>
+        <div style={{ ...styles.statBox, background: THEME.okBg }}>
+          <div style={{ ...styles.statNum, color: THEME.ok }}>{counts.approved}</div>
           <div style={styles.statLabel}>{t("bowtieStatusApproved")}</div>
         </div>
       </div>

@@ -155,8 +155,8 @@ export function AboutIhmsModal({ onClose, latestRelease, online }) {
         {/* وضعیت به‌روزرسانی */}
         <div style={{
           borderRadius: 10, padding: "10px 14px", marginBottom: 14, fontSize: 12.5, fontWeight: 700,
-          background: updateAvailable ? "#fef3c7" : "#dcfce7",
-          color: updateAvailable ? "#92400e" : "#166534",
+          background: updateAvailable ? THEME.warnBg : THEME.okBg,
+          color: updateAvailable ? THEME.warn : THEME.ok,
         }}>
           {checking ? t("commonLoading") : updateAvailable
             ? t("aboutNewVersionAvailable")
