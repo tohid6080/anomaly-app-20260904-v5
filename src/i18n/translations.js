@@ -264,6 +264,7 @@ export const translations = {
   "opDashSaveLayout": { "fa": "ذخیرهٔ چیدمان", "en": "Save layout" },
   "opDashResetDefault": { "fa": "بازنشانی به پیش‌فرض", "en": "Reset to default" },
   "opDashDragHint": { "fa": "ردیف‌ها را برای جابه‌جایی بکشید", "en": "Drag rows to reorder" },
+  "opDashGridEditHint": { "fa": "کارت‌ها را از دستهٔ بالا بکشید تا جابه‌جا شوند؛ دستهٔ گوشهٔ پایین را بکشید تا عرض بین ۱ و ۲ ستون تغییر کند.", "en": "Drag a card by its top handle to reorder; drag the bottom-corner handle to switch its width between 1 and 2 columns." },
   "opDashResize": { "fa": "تغییر عرض ویجت", "en": "Change widget width" },
   "opDashCol1": { "fa": "۱ ستون", "en": "1 col" },
   "opDashCol2": { "fa": "۲ ستون", "en": "2 cols" },

@@ -104,6 +104,7 @@ export const de = {
   "opDashSaveLayout": "Layout speichern",
   "opDashResetDefault": "Auf Standard zurücksetzen",
   "opDashDragHint": "Zeilen zum Umsortieren ziehen",
+  "opDashGridEditHint": "Karte am oberen Griff ziehen zum Umsortieren; am Eckgriff unten ziehen, um die Breite zwischen 1 und 2 Spalten zu wechseln.",
   "opDashResize": "Widget-Breite ändern",
   "opDashCol1": "1 Sp.",
   "opDashCol2": "2 Sp.",

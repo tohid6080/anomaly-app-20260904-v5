@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { AlertTriangle, ClipboardCheck, FileWarning, Pencil, Eye, EyeOff, ArrowUp, ArrowDown, RotateCcw, GripVertical, RectangleHorizontal, Square } from "lucide-react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import { AlertTriangle, ClipboardCheck, FileWarning, Pencil, Eye, EyeOff, RotateCcw, GripVertical, ChevronLeft, ChevronRight } from "lucide-react";
 import { THEME, styles, usePersistedState } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { loadHomeKpiSummary } from "./homeKpiApi.js";
@@ -15,11 +15,13 @@ import { mergeOpLayout, defaultOpLayout, opWidgetLabelKey } from "./widgets/opRe
  * داشبورد کاری (Operational) — شبکهٔ ویجت برای کارِ روزمرهٔ سرپرست/کارشناس/
  * پیمانکار، جدا از داشبورد مدیریتی (HomeDashboard).
  *
- * فاز ۳: نمایش/ترتیب/عرضِ ویجت‌ها per-user قابل‌تنظیم است — با دکمهٔ «چیدمانِ
- * من» وارد حالتِ ویرایش می‌شوی، ردیف‌ها را با کشیدن جابه‌جا می‌کنی و عرضِ هر
- * ویجت را بین ۱ و ۲ ستون تغییر می‌دهی. تغییرات فقط در draft می‌ماند و با
- * «ذخیرهٔ چیدمان» در localStorage (کلیدِ هر کاربر) ثبت می‌شود — مطابقِ قانونِ
- * «پیش‌نویسِ محلی، ثبتِ صریح» در CLAUDE.md.
+ * فاز ۳: با دکمهٔ «چیدمانِ من» وارد حالتِ ویرایش می‌شوی و مستقیم روی خودِ
+ * شبکه: کارت‌ها را از دستهٔ بالا با ماوس می‌کشی و جابه‌جا می‌کنی، و از
+ * دستهٔ گوشهٔ پایین با ماوس عرضِ هر کارت را بین ۱ و ۲ ستون تغییر می‌دهی.
+ * همه‌چیز فقط در draft می‌ماند و با «ذخیرهٔ چیدمان» در localStorage (کلیدِ
+ * هر کاربر) ثبت می‌شود — مطابقِ قانونِ «پیش‌نویسِ محلی، ثبتِ صریح» در CLAUDE.md.
+ * بدون کتابخانهٔ grid/DnD — HTML5 drag برای جابه‌جایی و Pointer Events برای
+ * تغییرِ اندازه (رعایتِ قیدِ کارایی).
  */
 export default function OperationalDashboard({ role, currentUser, onNavigate, onBack }) {
   const { t, dir } = useLanguage();
@@ -30,6 +32,7 @@ export default function OperationalDashboard({ role, currentUser, onNavigate, on
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(null);
   const [dragIdx, setDragIdx] = useState(null);
+  const resizeRef = useRef(null); // { key, startX, startSpan }
 
   useEffect(() => {
     loadHomeKpiSummary().then(setKpi).catch(() => setKpi({}));
@@ -87,19 +90,16 @@ export default function OperationalDashboard({ role, currentUser, onNavigate, on
   const resetDraft = () => setDraft(defaultOpLayout());
   const toggle = (key) => setDraft((p) => p.map((r) => (r.key === key ? { ...r, visible: !r.visible } : r)));
   const setSpan = (key, span) => setDraft((p) => p.map((r) => (r.key === key ? { ...r, span } : r)));
-  const move = (key, delta) => setDraft((p) => {
-    const arr = p.map((r) => ({ ...r }));
-    const i = arr.findIndex((r) => r.key === key);
-    const j = i + delta;
-    if (i < 0 || j < 0 || j >= arr.length) return p;
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-    return arr;
-  });
 
-  // جابه‌جایی با کشیدن (HTML5 DnD خام — بدون کتابخانه، مطابق قید کارایی).
-  // «جابه‌جا کن هنگام ورود» که برای فهرستِ عمودی روان‌ترین حالت است.
-  const onRowDragStart = (i) => (e) => { setDragIdx(i); e.dataTransfer.effectAllowed = "move"; };
-  const onRowDragEnter = (i) => () => {
+  // جابه‌جایی: HTML5 drag روی دستهٔ بالای کارت (نه کلِ کارت، تا دستهٔ resize
+  // یک درگ اشتباهی شروع نکند). «جابه‌جا کن هنگام ورود» روی شبکه.
+  const onDragStart = (i) => (e) => {
+    setDragIdx(i);
+    e.dataTransfer.effectAllowed = "move";
+    try { e.dataTransfer.setData("text/plain", draft[i].key); } catch { /* Firefox */ }
+  };
+  const onDragEnterCard = (i) => (e) => {
+    e.preventDefault();
     if (dragIdx === null || dragIdx === i) return;
     setDraft((p) => {
       const arr = p.map((r) => ({ ...r }));
@@ -109,7 +109,29 @@ export default function OperationalDashboard({ role, currentUser, onNavigate, on
     });
     setDragIdx(i);
   };
-  const onRowDragEnd = () => setDragIdx(null);
+  const onDragEndCard = () => setDragIdx(null);
+
+  // تغییرِ اندازه: کشیدنِ دستهٔ گوشه با ماوس. جهتِ «بیرون» با RTL/LTR فرق
+  // می‌کند؛ عبور از ~۵۵px بیرون → ۲ ستون، ~۵۵px داخل → ۱ ستون (اسنپ).
+  const onResizeDown = (r) => (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* بی‌اهمیت */ }
+    resizeRef.current = { key: r.key, startX: e.clientX, startSpan: r.span || 1 };
+  };
+  const onResizeMove = (e) => {
+    const s = resizeRef.current;
+    if (!s) return;
+    const outward = dir === "rtl" ? s.startX - e.clientX : e.clientX - s.startX;
+    const span = outward > 55 ? 2 : outward < -55 ? 1 : s.startSpan;
+    setSpan(s.key, span);
+  };
+  const onResizeUp = (e) => {
+    try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* بی‌اهمیت */ }
+    resizeRef.current = null;
+  };
+
+  const gridStyle = { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: THEME.gap, alignItems: "start" };
 
   return (
     <div style={{ direction: dir }}>
@@ -142,52 +164,68 @@ export default function OperationalDashboard({ role, currentUser, onNavigate, on
 
       {editing ? (
         <>
-          <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 5 }}>
-            <GripVertical size={12} /> {t("opDashDragHint")}
+          <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 10px", display: "flex", alignItems: "center", gap: 5 }}>
+            <GripVertical size={12} /> {t("opDashGridEditHint")}
           </p>
-          <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 11, padding: "6px 12px" }}>
+          <div style={gridStyle}>
             {draft.map((r, i) => (
               <div
                 key={r.key}
-                draggable
-                onDragStart={onRowDragStart(i)}
-                onDragEnter={onRowDragEnter(i)}
+                onDragEnter={onDragEnterCard(i)}
                 onDragOver={(e) => e.preventDefault()}
-                onDragEnd={onRowDragEnd}
                 style={{
-                  display: "flex", alignItems: "center", gap: 8, padding: "8px 4px",
-                  borderBottom: i < draft.length - 1 ? `1px solid ${THEME.border}` : "none",
+                  gridColumn: `span ${r.span || 1}`, minWidth: 0, position: "relative",
+                  border: `1px dashed ${dragIdx === i ? THEME.teal : THEME.border}`,
+                  borderRadius: THEME.radiusCard, padding: 4,
                   background: dragIdx === i ? THEME.tealSoft : "transparent",
-                  opacity: dragIdx !== null && dragIdx !== i ? 0.55 : 1,
-                  borderRadius: 8, cursor: "grab",
+                  opacity: !r.visible ? 0.45 : dragIdx !== null && dragIdx !== i ? 0.6 : 1,
                 }}
               >
-                <GripVertical size={14} color={THEME.text3} style={{ flexShrink: 0 }} />
-                <div style={{ display: "flex", flexDirection: "column", gap: 2, flexShrink: 0 }}>
-                  <button type="button" onClick={() => move(r.key, -1)} disabled={i === 0} style={{ background: "none", border: "none", cursor: i === 0 ? "default" : "pointer", opacity: i === 0 ? 0.3 : 1, padding: 1 }}><ArrowUp size={12} color={THEME.text2} /></button>
-                  <button type="button" onClick={() => move(r.key, 1)} disabled={i === draft.length - 1} style={{ background: "none", border: "none", cursor: i === draft.length - 1 ? "default" : "pointer", opacity: i === draft.length - 1 ? 0.3 : 1, padding: 1 }}><ArrowDown size={12} color={THEME.text2} /></button>
+                <div
+                  draggable
+                  onDragStart={onDragStart(i)}
+                  onDragEnd={onDragEndCard}
+                  style={{ display: "flex", alignItems: "center", gap: 6, padding: "2px 4px 5px", cursor: "grab", userSelect: "none" }}
+                >
+                  <GripVertical size={13} color={THEME.text3} style={{ flexShrink: 0 }} />
+                  <span style={{ flex: 1, fontSize: 10.5, fontWeight: 700, color: THEME.text2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {t(opWidgetLabelKey(r.key))}
+                  </span>
+                  <button
+                    type="button" onClick={() => toggle(r.key)}
+                    title={r.visible ? t("saHidden") : t("saVisibleShown")}
+                    aria-label={r.visible ? t("saHidden") : t("saVisibleShown")}
+                    style={{ background: "none", border: "none", cursor: "pointer", padding: 2, color: r.visible ? THEME.ok : THEME.text3, display: "flex" }}
+                  >
+                    {r.visible ? <Eye size={13} /> : <EyeOff size={13} />}
+                  </button>
                 </div>
-                <span style={{ flex: 1, fontSize: 12.5, color: THEME.text, fontWeight: 600 }}>{t(opWidgetLabelKey(r.key))}</span>
-                <button
-                  type="button" onClick={() => setSpan(r.key, r.span === 2 ? 1 : 2)}
+
+                <div style={{ pointerEvents: "none", filter: r.visible ? "none" : "grayscale(0.7)" }}>
+                  {renderWidget(r.key)}
+                </div>
+
+                <div
+                  onPointerDown={onResizeDown(r)}
+                  onPointerMove={onResizeMove}
+                  onPointerUp={onResizeUp}
                   title={t("opDashResize")}
-                  style={{ display: "flex", alignItems: "center", gap: 5, background: THEME.surface2, color: THEME.text2, border: `1px solid ${THEME.border}`, borderRadius: 999, padding: "5px 10px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font }}
+                  aria-label={t("opDashResize")}
+                  style={{
+                    position: "absolute", bottom: 3, insetInlineEnd: 3, width: 22, height: 22, borderRadius: 6,
+                    background: THEME.surface2, border: `1px solid ${THEME.border}`, cursor: "ew-resize",
+                    display: "flex", alignItems: "center", justifyContent: "center", color: THEME.text3,
+                    touchAction: "none",
+                  }}
                 >
-                  {r.span === 2 ? <RectangleHorizontal size={13} /> : <Square size={13} />}
-                  {r.span === 2 ? t("opDashCol2") : t("opDashCol1")}
-                </button>
-                <button
-                  type="button" onClick={() => toggle(r.key)}
-                  style={{ display: "flex", alignItems: "center", gap: 5, background: r.visible ? THEME.okBg : THEME.borderSoft, color: r.visible ? THEME.ok : THEME.text3, border: "none", borderRadius: 999, padding: "5px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font }}
-                >
-                  {r.visible ? <Eye size={13} /> : <EyeOff size={13} />} {r.visible ? t("saVisibleShown") : t("saHidden")}
-                </button>
+                  {r.span === 2 ? <ChevronLeft size={12} /> : <ChevronRight size={12} />}
+                </div>
               </div>
             ))}
           </div>
         </>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: THEME.gap, alignItems: "start" }}>
+        <div style={gridStyle}>
           {layout.filter((r) => r.visible).map((r) => (
             <div key={r.key} style={{ gridColumn: `span ${r.span || 1}`, minWidth: 0 }}>
               {renderWidget(r.key)}
