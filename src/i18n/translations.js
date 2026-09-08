@@ -289,6 +289,7 @@ export const translations = {
   "dashDescProactiveIndicators": { "fa": "شاخص‌های پیشرو: جوّ ایمنی، حادثه‌پذیری و رفتار ایمن", "en": "Leading indicators: safety climate, accident proneness and safe behaviour" },
   "webAnomalyPageTitle": { "fa": "گزارش شرایط ناایمن / اعمال ناایمن (آنومالی)", "en": "Unsafe conditions / unsafe acts report (anomaly)" },
   "webAnomalyPageNote": { "fa": "این قسمت توسط کارفرما تکمیل می‌شود", "en": "This section is completed by the employer" },
+  "webAnomalyPageNoteContractor": { "fa": "آنومالی‌های مربوط به شرکت شما و پیگیری اقدامات اصلاحی", "en": "Anomalies for your company and corrective-action follow-up" },
   "webPersonnelPageNote": { "fa": "ثبت، بررسی و مدیریت ورود و تردد و صلاحیت پرسنل پیمانکار", "en": "Register, review and manage contractor personnel access and qualification" },
   "webMachineryPageNote": { "fa": "ثبت، بررسی و تأیید ماشین‌آلات و مدارک آن‌ها", "en": "Register, review and approve machinery and its documents" },
   "mobTabHome": { "fa": "خانه", "en": "Home" },

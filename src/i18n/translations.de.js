@@ -129,6 +129,7 @@ export const de = {
   "dashDescProactiveIndicators": "Frühindikatoren: Sicherheitsklima, Unfallneigung und sicheres Verhalten",
   "webAnomalyPageTitle": "Meldung unsicherer Zustände / Handlungen (Anomalie)",
   "webAnomalyPageNote": "Dieser Abschnitt wird vom Auftraggeber ausgefüllt",
+  "webAnomalyPageNoteContractor": "Anomalien Ihres Unternehmens und Verfolgung der Korrekturmaßnahmen",
   "webPersonnelPageNote": "Zutritt, Verkehr und Qualifikation des Auftragnehmer-Personals erfassen und verwalten",
   "webMachineryPageNote": "Maschinen und zugehörige Dokumente erfassen, prüfen und freigeben",
   "mobTabHome": "Start",

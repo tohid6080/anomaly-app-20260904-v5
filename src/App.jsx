@@ -4963,6 +4963,68 @@ function ContractorDashboard({ onLogout, currentUser }) {
   const scaffoldMod = HSE_MODULES.find((m) => m.key === "scaffoldManagement");
   const incidentMod = HSE_MODULES.find((m) => m.key === "incidentManagement");
 
+  // ---- صفحاتِ ترکیبیِ وب برای پنلِ پیمانکار (مثلِ پنلِ کارفرما) ----
+  const [webListRefresh, setWebListRefresh] = useState(0);
+  const anomalyReadOnly = getAccessLevel(permMap, "anomalyReport") === "view";
+  const personnelReadOnly = getAccessLevel(permMap, "personnelAccess") === "view";
+  const machineryReadOnly = getAccessLevel(permMap, "machineryManagement") === "view";
+
+  // آنومالی: پیمانکار فرمِ ثبت ندارد — فقط «لیستِ آنومالی‌ها».
+  const anomalyWebCombined = (
+    <div style={{ direction: dir }}>
+      <ModuleSubHeader icon={AlertTriangle} title={t("webAnomalyPageTitle")} note={t("webAnomalyPageNoteContractor")} onBack={() => setView("menu")} backLabel={t("commonBackPlain")} />
+      <div style={styles.cardWide}>
+        <AnomalyList
+          key={`anomaly-web-${webListRefresh}`}
+          embedded
+          role="CONTRACTOR"
+          currentUser={currentUser}
+          readOnly={anomalyReadOnly}
+          initialStatusFilter={navFilter?.module === "anomaly" ? navFilter.statusFilter : undefined}
+          initialRiskFilter={navFilter?.module === "anomaly" ? navFilter.riskFilter : undefined}
+        />
+      </div>
+    </div>
+  );
+
+  const machineryWebCombined = (
+    <div style={{ direction: dir }}>
+      <ModuleSubHeader icon={Truck} title={mt(machineryMod)} note={t("webMachineryPageNote")} onBack={() => setView("menu")} backLabel={t("commonBackPlain")} />
+      {!machineryReadOnly && (
+        <MachineryForm key={`machinery-form-${webListRefresh}`} embedded currentUser={currentUser} onSaved={() => setWebListRefresh((n) => n + 1)} />
+      )}
+      <MachineryDashboard
+        key={`machinery-list-${webListRefresh}`}
+        wide
+        hideCreate
+        currentUser={currentUser}
+        role="CONTRACTOR"
+        readOnly={machineryReadOnly}
+        initialApprovalFilter={navFilter?.module === "machinery" ? navFilter.approvalFilter : undefined}
+      />
+    </div>
+  );
+
+  const personnelWebCombined = (
+    <div style={{ direction: dir }}>
+      <ModuleSubHeader icon={Users} title={mt(personnelMod)} note={t("webPersonnelPageNote")} onBack={() => setView("menu")} backLabel={t("commonBackPlain")} />
+      {!personnelReadOnly && (
+        <PersonnelForm key={`personnel-form-${webListRefresh}`} embedded currentUser={currentUser} onSaved={() => setWebListRefresh((n) => n + 1)} />
+      )}
+      <PersonnelDashboard
+        key={`personnel-list-${webListRefresh}`}
+        wide
+        hideCreate
+        currentUser={currentUser}
+        role="CONTRACTOR"
+        readOnly={personnelReadOnly}
+        initialStatusFilter={navFilter?.module === "personnel" ? navFilter.statusFilter : undefined}
+        onNavigateToAssessment={(ctx) => { setAssessmentContext(ctx); setView("proactiveIndicators"); }}
+        initialSelectedPersonnelId={assessmentContext?.personnelId}
+      />
+    </div>
+  );
+
   const sidebarModules = applyModuleConfig(HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key)).map((mod) => ({
     key: mod.key,
     icon: MODULE_ICON[mod.key] || LayoutGrid,
@@ -5002,7 +5064,8 @@ function ContractorDashboard({ onLogout, currentUser }) {
       )}
       {view === "notifications" && <MobileNotifications smartItems={smartItems} onNavigate={handleHomeNavigate} />}
 
-      {view === "anomalyReport" && (
+      {isDesktop && (view === "anomalyReport" || view === "anomalyList") && anomalyWebCombined}
+      {!isDesktop && view === "anomalyReport" && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(anomalyMod)}</h3>
@@ -5014,7 +5077,8 @@ function ContractorDashboard({ onLogout, currentUser }) {
         </div>
       )}
 
-      {view === "personnelAccess" && (
+      {isDesktop && (view === "personnelAccess" || view === "personnelDashboard" || view === "personnelForm") && personnelWebCombined}
+      {!isDesktop && view === "personnelAccess" && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(personnelMod)}</h3>
@@ -5026,7 +5090,8 @@ function ContractorDashboard({ onLogout, currentUser }) {
         </div>
       )}
 
-      {view === "machineryManagement" && (
+      {isDesktop && (view === "machineryManagement" || view === "machineryDashboard") && machineryWebCombined}
+      {!isDesktop && view === "machineryManagement" && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(machineryMod)}</h3>
@@ -5079,10 +5144,10 @@ function ContractorDashboard({ onLogout, currentUser }) {
       {view === "hcmsDashboard" && <HcmsDashboard wide={isDesktop} onBack={() => setView("riskAssessment")} currentUser={currentUser} />}
       {view === "bowtieDashboard" && <BowTieDashboard wide={isDesktop} role="CONTRACTOR" onBack={() => setView("riskAssessment")} currentUser={currentUser} readOnly={getAccessLevel(permMap, "riskAssessment") === "view"} />}
       {view === "archiveManagement" && <LazyPanel><ArchiveManager wide={isDesktop} onBack={() => setView("menu")} currentUser={currentUser} /></LazyPanel>}
-      {view === "anomalyList" && <AnomalyList onBack={() => setView("anomalyReport")} role="CONTRACTOR" currentUser={currentUser} readOnly={getAccessLevel(permMap, "anomalyReport") === "view"} initialStatusFilter={navFilter?.module === "anomaly" ? navFilter.statusFilter : undefined} initialRiskFilter={navFilter?.module === "anomaly" ? navFilter.riskFilter : undefined} />}
+      {!isDesktop && view === "anomalyList" && <AnomalyList onBack={() => setView("anomalyReport")} role="CONTRACTOR" currentUser={currentUser} readOnly={getAccessLevel(permMap, "anomalyReport") === "view"} initialStatusFilter={navFilter?.module === "anomaly" ? navFilter.statusFilter : undefined} initialRiskFilter={navFilter?.module === "anomaly" ? navFilter.riskFilter : undefined} />}
       {view === "correctiveActionsList" && <CorrectiveActionsDashboard wide={isDesktop} onBack={() => setView("anomalyReport")} currentUser={currentUser} />}
-      {view === "personnelForm" && getAccessLevel(permMap, "personnelAccess") !== "view" && <PersonnelForm onBack={() => setView("personnelAccess")} currentUser={currentUser} onSaved={() => setView("personnelAccess")} />}
-      {view === "personnelDashboard" && <PersonnelDashboard onBack={() => setView("personnelAccess")} currentUser={currentUser} role="CONTRACTOR" readOnly={getAccessLevel(permMap, "personnelAccess") === "view"} initialStatusFilter={navFilter?.module === "personnel" ? navFilter.statusFilter : undefined} onNavigateToAssessment={(ctx) => { setAssessmentContext(ctx); setView("proactiveIndicators"); }} initialSelectedPersonnelId={assessmentContext?.personnelId} />}
+      {!isDesktop && view === "personnelForm" && getAccessLevel(permMap, "personnelAccess") !== "view" && <PersonnelForm onBack={() => setView("personnelAccess")} currentUser={currentUser} onSaved={() => setView("personnelAccess")} />}
+      {!isDesktop && view === "personnelDashboard" && <PersonnelDashboard onBack={() => setView("personnelAccess")} currentUser={currentUser} role="CONTRACTOR" readOnly={getAccessLevel(permMap, "personnelAccess") === "view"} initialStatusFilter={navFilter?.module === "personnel" ? navFilter.statusFilter : undefined} onNavigateToAssessment={(ctx) => { setAssessmentContext(ctx); setView("proactiveIndicators"); }} initialSelectedPersonnelId={assessmentContext?.personnelId} />}
       {view === "proactiveIndicators" && (
         <ProactiveIndicatorsDashboard
           wide={isDesktop}
@@ -5095,7 +5160,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
         />
       )}
       {view === "incidentsList" && <IncidentsListPage wide={isDesktop} currentUser={currentUser} role="CONTRACTOR" readOnly={false} />}
-      {view === "machineryDashboard" && <MachineryDashboard onBack={() => setView("machineryManagement")} currentUser={currentUser} role="CONTRACTOR" readOnly={getAccessLevel(permMap, "machineryManagement") === "view"} initialApprovalFilter={navFilter?.module === "machinery" ? navFilter.approvalFilter : undefined} />}
+      {!isDesktop && view === "machineryDashboard" && <MachineryDashboard onBack={() => setView("machineryManagement")} currentUser={currentUser} role="CONTRACTOR" readOnly={getAccessLevel(permMap, "machineryManagement") === "view"} initialApprovalFilter={navFilter?.module === "machinery" ? navFilter.approvalFilter : undefined} />}
       {view === "scaffoldDashboard" && <ScaffoldDashboard wide={isDesktop} onBack={() => setView("scaffoldManagement")} currentUser={currentUser} role="CONTRACTOR" readOnly={getAccessLevel(permMap, "scaffoldManagement") === "view"} initialStatusFilter={navFilter?.module === "scaffold" ? navFilter.statusFilter : undefined} />}
       {view === "managementDashboard" && <HomeDashboard role="CONTRACTOR" currentUser={currentUser} onNavigate={handleHomeNavigate} onBack={() => setView("menu")} />}
       {view === "operationalDashboard" && <OperationalDashboard role="CONTRACTOR" currentUser={currentUser} onNavigate={handleHomeNavigate} onBack={() => setView("menu")} />}
