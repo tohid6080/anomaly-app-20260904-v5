@@ -18,10 +18,10 @@ import { translate, getCurrentLang } from "../i18n/translations.js";
 export const SCAFFOLD_STATUSES = [
   { value: "pending_initial_approval", labelKey: "scaffStatusPendingInitial", color: THEME.warn, bg: THEME.warnBg },
   { value: "pending_installation", labelKey: "scaffStatusPendingInstall", color: "#1d4ed8", bg: "#dbeafe" },
-  { value: "needs_correction", labelKey: "scaffStatusNeedsCorrection", color: "#c92a2a", bg: "#fdecec" },
+  { value: "needs_correction", labelKey: "scaffStatusNeedsCorrection", color: THEME.danger, bg: THEME.dangerBg },
   { value: "tag_issued", labelKey: "scaffStatusTagIssued", color: THEME.ok, bg: THEME.okBg },
   { value: "removal_requested", labelKey: "scaffStatusRemovalRequested", color: "#7c3aed", bg: "#f3e8ff" },
-  { value: "removed", labelKey: "scaffStatusRemoved", color: "#5b6b7d", bg: THEME.surface2 },
+  { value: "removed", labelKey: "scaffStatusRemoved", color: THEME.text3, bg: THEME.surface2 },
 ];
 export function scaffoldStatusMeta(v) {
   return SCAFFOLD_STATUSES.find((s) => s.value === v) || SCAFFOLD_STATUSES[0];

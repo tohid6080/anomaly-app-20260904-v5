@@ -22,14 +22,14 @@ export const LICENSE_TYPES = [
 ];
 export const TRAFFIC_STATUSES = [
   { value: "active", labelKey: "trafficActive", color: THEME.ok, bg: THEME.okBg },
-  { value: "inactive", labelKey: "trafficInactive", color: "#5b6b7d", bg: THEME.surface2 },
+  { value: "inactive", labelKey: "trafficInactive", color: THEME.text3, bg: THEME.surface2 },
 ];
 export const APPROVAL_STATUSES = [
-  { value: "draft", labelKey: "approvalDraft", color: "#5b6b7d", bg: THEME.surface2 },
+  { value: "draft", labelKey: "approvalDraft", color: THEME.text3, bg: THEME.surface2 },
   { value: "pending", labelKey: "approvalPending", color: THEME.warn, bg: THEME.warnBg },
   { value: "approved", labelKey: "approvalApproved", color: THEME.ok, bg: THEME.okBg },
   { value: "needs_correction", labelKey: "approvalNeedsCorrection", color: THEME.warn, bg: THEME.warnBg },
-  { value: "rejected", labelKey: "approvalRejected", color: "#c92a2a", bg: "#fdecec" },
+  { value: "rejected", labelKey: "approvalRejected", color: THEME.danger, bg: THEME.dangerBg },
 ];
 export function approvalStatusMeta(v) {
   return APPROVAL_STATUSES.find((s) => s.value === v) || APPROVAL_STATUSES[0];

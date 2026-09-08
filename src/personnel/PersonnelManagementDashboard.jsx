@@ -125,9 +125,9 @@ export default function PersonnelManagementDashboard({ personnelList, contractor
         <KpiCard label={t("pmdKpiTotal")} value={kpis.total} bg={THEME.surface2} color={THEME.heading} />
         <KpiCard label={t("commonActive")} value={kpis.active} bg={THEME.okBg} color={THEME.ok} />
         <KpiCard label={t("statusPendingReview")} value={kpis.pending} bg="#dbeafe" color="#1d4ed8" />
-        <KpiCard label={t("pmdKpiRejected")} value={kpis.rejected} bg="#fdecec" color={THEME.danger} />
+        <KpiCard label={t("pmdKpiRejected")} value={kpis.rejected} bg={THEME.dangerBg} color={THEME.danger} />
         <KpiCard label={t("pmdKpiNeedsCorrection")} value={kpis.needsCorrection} bg={THEME.warnBg} color={THEME.warn} />
-        <KpiCard label={t("pmdKpiHealthExpired")} value={kpis.healthExpired} bg="#fdecec" color={THEME.danger} />
+        <KpiCard label={t("pmdKpiHealthExpired")} value={kpis.healthExpired} bg={THEME.dangerBg} color={THEME.danger} />
         <KpiCard label={t("pmdKpiHealthExpiringSoon")} value={kpis.healthExpiringSoon} bg={THEME.warnBg} color={THEME.warn} />
         <KpiCard label={t("pmdKpiPendingQualification")} value={kpis.pendingQualification} bg={THEME.warnBg} color={THEME.warn} />
       </div>

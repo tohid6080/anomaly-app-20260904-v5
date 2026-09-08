@@ -130,7 +130,7 @@ export default function DataView({
             <ArrowUpDown size={13} color={THEME.text3} style={{ position: "absolute", insetInlineStart: 8, top: 10, pointerEvents: "none" }} />
           </div>
         )}
-        <div style={{ display: "flex", background: "#fff", border: `1.5px solid ${THEME.border}`, borderRadius: 9, overflow: "hidden" }}>
+        <div style={{ display: "flex", background: THEME.surface, border: `1.5px solid ${THEME.border}`, borderRadius: 9, overflow: "hidden" }}>
           <ViewToggleButton active={viewMode === "list"} onClick={() => setViewMode("list")} icon={List} title={t("dvListView")} />
           <ViewToggleButton active={viewMode === "grid"} onClick={() => setViewMode("grid")} icon={LayoutGrid} title={t("dvGridView")} />
         </div>
@@ -224,7 +224,7 @@ function ListTable({ items, getId, columns, renderRowActions, expandedId, render
   // تعداد ستون‌های واقعی جدول — برای colSpan ردیفِ جزئیاتِ تمام‌عرض
   const totalCols = (hasBulk ? 1 : 0) + 1 /* # */ + columns.length + (renderRowActions ? 1 : 0);
   return (
-    <div style={{ background: "#fff", border: `1px solid ${THEME.border}`, borderRadius: 10, overflow: "hidden" }}>
+    <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 10, overflow: "hidden" }}>
       {/* دسکتاپ: جدول واقعی. موبایل: همون ساختار با اسکرول افقی برای اطلاعات کم‌اهمیت */}
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5, minWidth: 480 }}>

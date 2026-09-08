@@ -21,7 +21,7 @@ function HseGuideOverlay({ onClose }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 3000, background: "#fff", display: "flex", flexDirection: "column" }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 3000, background: THEME.surface, display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderBottom: `1px solid ${THEME.border}`, background: THEME.surface, flexShrink: 0 }}>
         <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 700, color: THEME.heading }}>
           <BookOpen size={15} color={THEME.teal} /> {t("pidGuideTitle")}

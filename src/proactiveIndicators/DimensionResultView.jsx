@@ -3,7 +3,7 @@ import { THEME } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 const LEVEL_META = {
-  "پایین": { color: "#c92a2a", bg: "#fdecec", labelKey: "hseLevelLow" },
+  "پایین": { color: THEME.danger, bg: THEME.dangerBg, labelKey: "hseLevelLow" },
   "متوسط": { color: THEME.warn, bg: THEME.warnBg, labelKey: "hseLevelMedium" },
   "بالا": { color: THEME.ok, bg: THEME.okBg, labelKey: "hseLevelHigh" },
 };

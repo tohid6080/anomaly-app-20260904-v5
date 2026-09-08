@@ -104,8 +104,8 @@ const SEED_USERS = [
 ];
 
 const RISK_LEVELS = [
-  { value: "High", labelKey: "riskLevelHigh", color: "#c92a2a", bg: THEME.dangerBg },
-  { value: "Med", labelKey: "riskLevelMed", color: "#d97706", bg: THEME.warnBg },
+  { value: "High", labelKey: "riskLevelHigh", color: THEME.danger, bg: THEME.dangerBg },
+  { value: "Med", labelKey: "riskLevelMed", color: THEME.warn, bg: THEME.warnBg },
   { value: "Low", labelKey: "riskLevelLow", color: "#16a34a", bg: THEME.okBg },
 ];
 
@@ -1640,7 +1640,7 @@ function ProfileView({ onBack, currentUser, roleLabel }) {
             >
               <span style={{
                 position: "absolute", top: 3, insetInlineStart: bioEnabled ? 23 : 3, width: 20, height: 20, borderRadius: "50%",
-                background: "#fff", transition: "inset-inline-start 0.15s", boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
+                background: THEME.surface, transition: "inset-inline-start 0.15s", boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
               }} />
             </button>
           </div>
@@ -1820,7 +1820,7 @@ function ContractorManager({ onBack }) {
             <p style={{ fontSize: 10.5, color: THEME.text3, margin: "-8px 0 8px" }}>{t("appMinCharsHint", { n: MIN_PASSWORD_LENGTH })}</p>
             <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
               <button type="button" style={styles.button} onClick={() => saveEdit(c.id)}>{t("commonSave")}</button>
-              <button type="button" style={{ ...styles.button, background: "#5b6b7d" }} onClick={cancelEdit}>{t("commonCancel")}</button>
+              <button type="button" style={{ ...styles.button, background: THEME.text3 }} onClick={cancelEdit}>{t("commonCancel")}</button>
             </div>
           </div>
         ) : (
@@ -1836,7 +1836,7 @@ function ContractorManager({ onBack }) {
               </div>
               <div style={{ display: "flex", gap: 8 }}>
                 <button type="button" style={styles.smallButton} onClick={() => startEdit(c)}>{t("cmEdit")}</button>
-                <button type="button" style={{ ...styles.smallButton, background: "#c92a2a" }} onClick={() => handleDelete(c.id, c.name)}>{t("cmDelete")}</button>
+                <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => handleDelete(c.id, c.name)}>{t("cmDelete")}</button>
               </div>
             </div>
           </div>
@@ -1973,7 +1973,7 @@ function EmployerAccountManager({ onBack }) {
             </div>
             <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
               <button type="button" style={styles.button} onClick={() => saveEdit(a.id)}>{t("commonSave")}</button>
-              <button type="button" style={{ ...styles.button, background: "#5b6b7d" }} onClick={cancelEdit}>{t("commonCancel")}</button>
+              <button type="button" style={{ ...styles.button, background: THEME.text3 }} onClick={cancelEdit}>{t("commonCancel")}</button>
             </div>
           </div>
         ) : (
@@ -1990,7 +1990,7 @@ function EmployerAccountManager({ onBack }) {
               </div>
               <div style={{ display: "flex", gap: 8 }}>
                 <button type="button" style={styles.smallButton} onClick={() => startEdit(a)}>{t("cmEdit")}</button>
-                <button type="button" style={{ ...styles.smallButton, background: "#c92a2a" }} onClick={() => handleDelete(a.id, a.name)}>{t("cmDelete")}</button>
+                <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => handleDelete(a.id, a.name)}>{t("cmDelete")}</button>
               </div>
             </div>
           </div>
@@ -2191,7 +2191,7 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
 
       <div style={{ ...styles.card, width: "auto" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-          <AlertTriangle size={20} color="#c92a2a" />
+          <AlertTriangle size={20} color={THEME.danger} />
           <h3 style={{ margin: 0 }}>{t("afFormTitle")}</h3>
         </div>
         <p style={{ color: "#93a1b0", fontSize: 13, marginTop: 4 }}>{t("afFilledByEmployer")}</p>
@@ -2830,7 +2830,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
           <div style={styles.statLabel}>{t("anomStatusClosed")}</div>
         </div>
         <div style={{ ...styles.statBox, background: THEME.dangerBg }}>
-          <div style={{ ...styles.statNum, color: "#991b1b" }}>{counts.high}</div>
+          <div style={{ ...styles.statNum, color: THEME.danger }}>{counts.high}</div>
           <div style={styles.statLabel}>{t("statHighRiskOpen")}</div>
         </div>
       </div>
@@ -3001,7 +3001,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
             </div>
 
             {a.reviewNote && a.status === "open" && (
-              <div style={{ background: THEME.dangerBg, color: "#991b1b", padding: 10, borderRadius: 8, fontSize: 13, marginBottom: 14 }}>
+              <div style={{ background: THEME.dangerBg, color: THEME.danger, padding: 10, borderRadius: 8, fontSize: 13, marginBottom: 14 }}>
                 <b>{t("returnedByEmployer")}</b> {a.reviewNote}
               </div>
             )}
@@ -3110,7 +3110,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
                       <button type="button" style={styles.button} onClick={() => approveAnomaly(a)} disabled={reviewSaving}>
                         {reviewSaving ? t("savingEllipsisShort") : t("approveAndClose")}
                       </button>
-                      <button type="button" style={{ ...styles.smallButton, background: "#c92a2a" }} onClick={() => setShowRejectBox(true)}>
+                      <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => setShowRejectBox(true)}>
                         {t("rejectAndReturn")}
                       </button>
                     </div>
@@ -3119,10 +3119,10 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
                       <label style={styles.label}>{t("rejectReasonLabel")}</label>
                       <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} dir={dir} />
                       <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-                        <button type="button" style={{ ...styles.button, background: "#c92a2a" }} onClick={() => rejectAnomaly(a)} disabled={reviewSaving}>
+                        <button type="button" style={{ ...styles.button, background: THEME.danger }} onClick={() => rejectAnomaly(a)} disabled={reviewSaving}>
                           {reviewSaving ? t("savingEllipsisShort") : t("confirmReturn")}
                         </button>
-                        <button type="button" style={{ ...styles.smallButton, background: "#5b6b7d" }} onClick={() => setShowRejectBox(false)}>{t("commonCancel")}</button>
+                        <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setShowRejectBox(false)}>{t("commonCancel")}</button>
                       </div>
                     </>
                   )
@@ -3264,7 +3264,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
             )}
             {isReviewer && a.status !== "pending_review" && (
               <div style={{ marginTop: 16 }}>
-                <button type="button" style={{ ...styles.smallButton, background: "#c92a2a" }} onClick={() => handleDelete(a.id, a.trackingNumber)}>{t("deleteAnomalyBtn")}</button>
+                <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => handleDelete(a.id, a.trackingNumber)}>{t("deleteAnomalyBtn")}</button>
               </div>
             )}
             {isReadOnlyReviewer && (
@@ -3353,7 +3353,7 @@ function HeaderMoreMenu({ onSettings, onReportError, onLogout }) {
       {open && (
         <div role="menu" style={{
           position: "absolute", top: "calc(100% + 6px)", ...(dir === "rtl" ? { left: 0 } : { right: 0 }),
-          zIndex: 60, minWidth: 208, background: "#fff", borderRadius: 10, border: `1px solid ${THEME.border}`,
+          zIndex: 60, minWidth: 208, background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`,
           boxShadow: "0 6px 24px -6px rgba(15,42,63,0.22), 0 2px 6px rgba(15,42,63,0.08)", padding: 5, direction: dir,
         }}>
           {items.map((it, i) => (
@@ -3365,7 +3365,7 @@ function HeaderMoreMenu({ onSettings, onReportError, onLogout }) {
                 color: it.danger ? THEME.danger : THEME.text2, fontSize: 13, fontWeight: 600,
                 fontFamily: THEME.font, textAlign: dir === "rtl" ? "right" : "left",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = it.danger ? "#fdecec" : THEME.surface2)}
+              onMouseEnter={(e) => (e.currentTarget.style.background = it.danger ? THEME.dangerBg : THEME.surface2)}
               onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
             >
               <it.icon size={15} style={{ flexShrink: 0 }} />
@@ -4942,16 +4942,16 @@ class ErrorBoundary extends React.Component {
       const currentUser = this.getCurrentUserForReport();
       return (
         <div style={{ padding: 24, fontFamily: "Tahoma, Arial, sans-serif", direction: getCurrentLang() === "fa" ? "rtl" : "ltr", maxWidth: 560, margin: "40px auto" }}>
-          <h3 style={{ color: "#c92a2a" }}>{tr("errBoundaryTitle")}</h3>
+          <h3 style={{ color: THEME.danger }}>{tr("errBoundaryTitle")}</h3>
           <p style={{ fontSize: 13, color: "#555" }}>{tr("errBoundaryDesc")}</p>
-          <pre style={{ whiteSpace: "pre-wrap", fontSize: 12, color: "#991b1b", background: THEME.dangerBg, padding: 12, borderRadius: 8 }}>
+          <pre style={{ whiteSpace: "pre-wrap", fontSize: 12, color: THEME.danger, background: THEME.dangerBg, padding: 12, borderRadius: 8 }}>
             {String((this.state.error && this.state.error.message) || this.state.error)}
           </pre>
           {currentUser && (
             <button
               type="button"
               onClick={() => this.setState({ showReport: true })}
-              style={{ marginTop: 8, padding: "9px 16px", borderRadius: 8, border: "none", background: "#c92a2a", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Tahoma, Arial, sans-serif" }}
+              style={{ marginTop: 8, padding: "9px 16px", borderRadius: 8, border: "none", background: THEME.danger, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Tahoma, Arial, sans-serif" }}
             >
               {tr("errBoundaryReportBtn")}
             </button>

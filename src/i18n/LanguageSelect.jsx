@@ -68,7 +68,7 @@ export default function LanguageSelect({ variant = "light", compact = false, ali
           role="listbox"
           style={{
             position: "absolute", top: "calc(100% + 6px)", ...edge, zIndex: 60,
-            minWidth: 168, background: "#fff", borderRadius: 10,
+            minWidth: 168, background: THEME.surface, borderRadius: 10,
             border: `1px solid ${THEME.border}`,
             boxShadow: "0 6px 24px -6px rgba(15,42,63,0.22), 0 2px 6px rgba(15,42,63,0.08)",
             padding: 5, direction: dir,

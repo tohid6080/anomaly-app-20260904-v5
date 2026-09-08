@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
 import { X, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import { THEME } from "../shared.js";
 import { isPdfDataUrl } from "./fileHelpers.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
@@ -51,7 +52,7 @@ export default function DocumentViewerModal({ src, onClose }) {
         <iframe
           src={src}
           title={t("docViewerPdfPreview")}
-          style={{ width: "94vw", height: "88vh", border: "none", borderRadius: 8, background: "#fff" }}
+          style={{ width: "94vw", height: "88vh", border: "none", borderRadius: 8, background: THEME.surface }}
           onClick={(e) => e.stopPropagation()}
         />
       ) : (

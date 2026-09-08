@@ -1214,7 +1214,7 @@ export default function ArchiveManager({ onBack, currentUser }) {
               onClick={() => runReportExport(rx)}
               disabled={!!reportBusy}
               style={{
-                ...styles.button, background: "#fff", color: THEME.text2,
+                ...styles.button, background: THEME.surface, color: THEME.text2,
                 border: `1.5px solid ${THEME.border}`, display: "flex", alignItems: "center",
                 justifyContent: "center", gap: 8, opacity: reportBusy && reportBusy !== rx.key ? 0.55 : 1,
               }}

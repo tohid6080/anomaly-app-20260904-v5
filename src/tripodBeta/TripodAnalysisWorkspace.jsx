@@ -84,7 +84,7 @@ export default function TripodAnalysisWorkspace({ analysisId, incident, currentU
       {error && <p style={styles.error}>{error}</p>}
       {analysis.rejectionReason && (
         <div style={{ background: THEME.dangerBg, border: "1px solid #fca5a5", borderRadius: 8, padding: 12, marginBottom: 14 }}>
-          <p style={{ fontSize: 12.5, color: "#991b1b", margin: 0 }}>{t("twLastRejectionReason", { reason: analysis.rejectionReason })}</p>
+          <p style={{ fontSize: 12.5, color: THEME.danger, margin: 0 }}>{t("twLastRejectionReason", { reason: analysis.rejectionReason })}</p>
         </div>
       )}
 

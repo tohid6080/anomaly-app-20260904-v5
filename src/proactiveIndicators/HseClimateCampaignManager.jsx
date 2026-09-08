@@ -144,10 +144,10 @@ export default function HseClimateCampaignManager({ currentUser, role, onBack })
           <img
             src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(buildHseClimateSurveyLink(revealedLink.publicToken))}`}
             alt="QR Code"
-            style={{ marginBottom: 10, borderRadius: 8, background: "#fff", padding: 8 }}
+            style={{ marginBottom: 10, borderRadius: 8, background: THEME.surface, padding: 8 }}
           />
           <div style={{ display: "flex", gap: 8, justifyContent: "center", alignItems: "center", flexWrap: "wrap" }}>
-            <code style={{ fontSize: 11, background: "#fff", padding: "6px 10px", borderRadius: 6, wordBreak: "break-all" }}>{buildHseClimateSurveyLink(revealedLink.publicToken)}</code>
+            <code style={{ fontSize: 11, background: THEME.surface, padding: "6px 10px", borderRadius: 6, wordBreak: "break-all" }}>{buildHseClimateSurveyLink(revealedLink.publicToken)}</code>
             <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 5 }} onClick={() => copyLink(revealedLink.publicToken)}>
               <Copy size={12} /> {t("hccmCopyLink")}
             </button>
@@ -169,7 +169,7 @@ export default function HseClimateCampaignManager({ currentUser, role, onBack })
               <div style={{ fontSize: 11, color: THEME.text3, marginTop: 3 }}>{t("hccmCreatedMinResponse", { date: toJalaliSafe(c.createdAt), count: c.minValidResponses })}</div>
             </div>
             <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-              <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: c.status === "active" ? THEME.okBg : THEME.surface2, color: c.status === "active" ? THEME.ok : "#5b6b7d", fontWeight: 600 }}>
+              <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: c.status === "active" ? THEME.okBg : THEME.surface2, color: c.status === "active" ? THEME.ok : THEME.text3, fontWeight: 600 }}>
                 {c.status === "active" ? t("hccmStatusActive") : t("hccmStatusClosed")}
               </span>
               <button type="button" style={{ ...styles.smallButton, fontSize: 11, background: THEME.navyMid, display: "flex", alignItems: "center", gap: 4 }} onClick={() => copyLink(c.publicToken)}>
@@ -208,7 +208,7 @@ function CampaignResult({ campaign }) {
       </p>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
         {agg.dimensionAverages.map((d) => (
-          <span key={d.id} style={{ fontSize: 10.5, background: "#fff", border: `1px solid ${THEME.border}`, borderRadius: 6, padding: "3px 8px" }}>{dimTitle(d.title)}: {d.score}</span>
+          <span key={d.id} style={{ fontSize: 10.5, background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 6, padding: "3px 8px" }}>{dimTitle(d.title)}: {d.score}</span>
         ))}
       </div>
     </div>

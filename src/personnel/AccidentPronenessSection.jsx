@@ -96,7 +96,7 @@ export default function AccidentPronenessSection({ personnel, role, currentUser,
       </h3>
       <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center", fontSize: 12, color: "#1f2937", marginBottom: 10 }}>
         <span>{t("apFinalScore")} <b style={{ fontSize: 17 }}>{assessment.finalScore}</b></span>
-        <span style={{ fontSize: 11, padding: "3px 12px", borderRadius: 999, background: "#fff", color: levelInfo.color, fontWeight: 700, border: `1px solid ${levelInfo.color}` }}>
+        <span style={{ fontSize: 11, padding: "3px 12px", borderRadius: 999, background: THEME.surface, color: levelInfo.color, fontWeight: 700, border: `1px solid ${levelInfo.color}` }}>
           {t("apLevelLabel", { level: levelLabel })}
         </span>
         <span>{t("apDateLabel", { date: toJalaliSafe(assessment.assessmentDate) })}</span>
@@ -104,7 +104,7 @@ export default function AccidentPronenessSection({ personnel, role, currentUser,
       </div>
 
       {suggestsCorrectiveAction && canIssueCorrectiveAction && !showCaForm && (
-        <div style={{ display: "flex", gap: 8, alignItems: "flex-start", background: "#fff", border: `1px solid ${levelInfo.color}`, borderRadius: 8, padding: 10, marginBottom: 10 }}>
+        <div style={{ display: "flex", gap: 8, alignItems: "flex-start", background: THEME.surface, border: `1px solid ${levelInfo.color}`, borderRadius: 8, padding: 10, marginBottom: 10 }}>
           <AlertTriangle size={16} color={levelInfo.color} style={{ flexShrink: 0, marginTop: 1 }} />
           <p style={{ fontSize: 12, color: "#1f2937", margin: 0 }}>
             {t("apRecommendCorrectiveAction", { level: levelLabel })}
@@ -113,7 +113,7 @@ export default function AccidentPronenessSection({ personnel, role, currentUser,
       )}
 
       {correctiveAction && (
-        <div style={{ background: "#fff", borderRadius: 8, padding: 10, marginBottom: canIssueCorrectiveAction ? 0 : undefined }}>
+        <div style={{ background: THEME.surface, borderRadius: 8, padding: 10, marginBottom: canIssueCorrectiveAction ? 0 : undefined }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
             <span style={{ fontSize: 12, fontWeight: 700, color: THEME.heading }}>{correctiveAction.actionNumber}</span>
             <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: STATUS_META[correctiveAction.status]?.bg || THEME.surface2, color: STATUS_META[correctiveAction.status]?.color || THEME.text3, fontWeight: 600 }}>
@@ -135,7 +135,7 @@ export default function AccidentPronenessSection({ personnel, role, currentUser,
       )}
 
       {canIssueCorrectiveAction && showCaForm && (
-        <div style={{ background: "#fff", borderRadius: 8, padding: 10 }}>
+        <div style={{ background: THEME.surface, borderRadius: 8, padding: 10 }}>
           <label style={styles.label}>{t("apActionDescriptionLabel")}</label>
           <textarea style={{ ...styles.input, minHeight: 60 }} value={caDescription} onChange={(e) => setCaDescription(e.target.value)} dir={dir} />
           <div style={{ display: "flex", gap: 8, marginTop: 8 }}>

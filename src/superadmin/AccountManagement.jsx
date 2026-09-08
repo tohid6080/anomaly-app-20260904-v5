@@ -198,7 +198,7 @@ export default function AccountManagement({ currentAdmin }) {
                     <td style={{ padding: "8px", textAlign: "center", direction: "ltr" }}>{a.username}</td>
                     {tab !== "contractor" && <td style={{ padding: "8px", textAlign: "center" }}>{companyName(a.company_id)}</td>}
                     <td style={{ padding: "8px", textAlign: "center" }}>
-                      <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: a.is_active === false ? THEME.surface2 : THEME.okBg, color: a.is_active === false ? "#5b6b7d" : THEME.ok, fontWeight: 600 }}>
+                      <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: a.is_active === false ? THEME.surface2 : THEME.okBg, color: a.is_active === false ? THEME.text3 : THEME.ok, fontWeight: 600 }}>
                         {a.is_active === false ? t("commonInactive") : t("commonActive")}
                       </span>
                     </td>

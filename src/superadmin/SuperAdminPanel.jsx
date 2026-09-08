@@ -281,8 +281,8 @@ function DashboardOverview({ companies, summary, usageStats, onNavigate }) {
       <div style={{ display: "flex", flexWrap: "wrap", gap: 1, background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, overflow: "hidden", marginBottom: 16 }}>
         <StatBox label={t("saStatTotalCompanies")} value={summary.total} />
         <StatBox label={t("saStatActiveSub")} value={summary.active} color={THEME.ok} />
-        <StatBox label={t("saStatExpired")} value={summary.expired} color="#c92a2a" />
-        <StatBox label={t("saStatDisabled")} value={summary.disabled} color="#5b6b7d" />
+        <StatBox label={t("saStatExpired")} value={summary.expired} color={THEME.danger} />
+        <StatBox label={t("saStatDisabled")} value={summary.disabled} color={THEME.text3} />
         <StatBox label={t("saStatTotalPersonnel")} value={totalPersonnel} />
         <StatBox label={t("saStatTotalAnomalies")} value={totalAnomalies} />
       </div>
@@ -1139,7 +1139,7 @@ function CompaniesPage({
                       <td style={{ padding: "8px", fontWeight: 600 }}>{c.name}</td>
                       <td style={{ padding: "8px", textAlign: "center" }}>{toJalaliSafe(c.registeredAt) || "—"}</td>
                       <td style={{ padding: "8px", textAlign: "center" }}>
-                        <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: access.isLocked ? THEME.dangerBg : THEME.okBg, color: access.isLocked ? "#991b1b" : THEME.ok, fontWeight: 600 }}>
+                        <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: access.isLocked ? THEME.dangerBg : THEME.okBg, color: access.isLocked ? THEME.danger : THEME.ok, fontWeight: 600 }}>
                           {planName} — {access.label}
                         </span>
                       </td>
@@ -1705,7 +1705,7 @@ function DashboardWidgetsSection({ currentAdmin }) {
 
 const ROLE_LABELS = { all: "saRoleAll", employer: "saRoleEmployerOnly", contractor: "saRoleContractorOnly" };
 const PRIORITY_META = {
-  low: { labelKey: "saPrioLow", color: "#5b6b7d", bg: THEME.surface2 },
+  low: { labelKey: "saPrioLow", color: THEME.text3, bg: THEME.surface2 },
   medium: { labelKey: "saPrioMedium", color: THEME.warn, bg: THEME.warnBg },
   high: { labelKey: "saPrioHigh", color: THEME.danger, bg: THEME.dangerBg },
 };
@@ -2774,7 +2774,7 @@ function ErrorReportsPage({ currentAdmin }) {
                         <td colSpan={6} style={{ padding: "10px 12px", background: THEME.bg }}>
                           <p style={{ fontSize: 12.5, color: THEME.text2, margin: "0 0 8px", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>{r.description}</p>
                           {(r.technicalMessage || r.technicalStack) && (
-                            <pre style={{ whiteSpace: "pre-wrap", fontSize: 10.5, color: "#991b1b", background: THEME.dangerBg, padding: 10, borderRadius: 8, marginBottom: 8, maxHeight: 160, overflow: "auto", direction: "ltr", textAlign: "left" }}>
+                            <pre style={{ whiteSpace: "pre-wrap", fontSize: 10.5, color: THEME.danger, background: THEME.dangerBg, padding: 10, borderRadius: 8, marginBottom: 8, maxHeight: 160, overflow: "auto", direction: "ltr", textAlign: "left" }}>
                               {r.technicalMessage}{r.technicalStack ? `\n${r.technicalStack}` : ""}
                             </pre>
                           )}
@@ -3300,7 +3300,7 @@ function PlansManager({ plans, companies, currentAdmin, onChanged }) {
                   <td style={{ padding: "8px", textAlign: "center" }}>{p.maxPersonnel ?? t("saUnlimited")}</td>
                   <td style={{ padding: "8px", textAlign: "center" }}>{p.maxStorageMb ?? t("saUnlimited")}</td>
                   <td style={{ padding: "8px", textAlign: "center" }}>
-                    <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: p.isActive ? THEME.okBg : THEME.surface2, color: p.isActive ? THEME.ok : "#5b6b7d", fontWeight: 600 }}>
+                    <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: p.isActive ? THEME.okBg : THEME.surface2, color: p.isActive ? THEME.ok : THEME.text3, fontWeight: 600 }}>
                       {p.isActive ? t("commonActive") : t("commonInactive")}
                     </span>
                   </td>
@@ -3385,7 +3385,7 @@ function PlanCompanyUsage({ plan, companies }) {
               <span style={{ color: THEME.text3 }}>{t("saPcuNoEndDate")}</span>
             )}
             {relevantEnd && (
-              <span style={{ fontSize: 10, padding: "1px 8px", borderRadius: 999, background: isExpired ? THEME.dangerBg : THEME.okBg, color: isExpired ? "#991b1b" : THEME.ok, fontWeight: 600 }}>
+              <span style={{ fontSize: 10, padding: "1px 8px", borderRadius: 999, background: isExpired ? THEME.dangerBg : THEME.okBg, color: isExpired ? THEME.danger : THEME.ok, fontWeight: 600 }}>
                 {isExpired ? t("saExpiredStatus") : t("commonActive")}
               </span>
             )}
@@ -3765,7 +3765,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
 
       {showDeleteConfirm && (
         <div style={{ background: THEME.dangerBg, border: "1px solid #fca5a5", borderRadius: 8, padding: 12, marginBottom: 16 }}>
-          <p style={{ fontSize: 12, color: "#991b1b", fontWeight: 600, marginBottom: 6 }}>
+          <p style={{ fontSize: 12, color: THEME.danger, fontWeight: 600, marginBottom: 6 }}>
             {t("saDeleteWarning")}
           </p>
           <p style={{ fontSize: 11.5, color: "#7f1d1d", marginBottom: 8 }}>
@@ -3792,7 +3792,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
           {t("saCurrentPlanLabel")} <b style={{ color: THEME.heading }}>{currentPlan ? currentPlan.name : t("saNoPlanAssigned")}</b>
           <span style={{
             marginInlineStart: 8, fontSize: 10.5, padding: "2px 9px", borderRadius: 999, fontWeight: 600,
-            background: liveAccess.isLocked ? THEME.dangerBg : THEME.okBg, color: liveAccess.isLocked ? "#991b1b" : THEME.ok,
+            background: liveAccess.isLocked ? THEME.dangerBg : THEME.okBg, color: liveAccess.isLocked ? THEME.danger : THEME.ok,
           }}>
             {t("saStatusLabel", { label: liveAccess.labelKey ? t(liveAccess.labelKey) : liveAccess.label })}
           </span>
@@ -3979,7 +3979,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
             <h5 style={{ fontSize: 11.5, color: THEME.heading, fontWeight: 700, margin: "0 0 6px" }}>{t("saOnlinePaymentsZarinpal")}</h5>
             {onlinePayments.map((p) => {
               const st = p.status === "paid" ? { labelKey: "saPaySuccess", bg: THEME.okBg, color: THEME.ok }
-                : p.status === "failed" ? { labelKey: "saPayFailed", bg: THEME.dangerBg, color: "#991b1b" }
+                : p.status === "failed" ? { labelKey: "saPayFailed", bg: THEME.dangerBg, color: THEME.danger }
                 : p.status === "cancelled" ? { labelKey: "saPayCancelled", bg: THEME.surface2, color: THEME.text3 }
                 : { labelKey: "saPayPending", bg: THEME.warnBg, color: THEME.warn };
               return (

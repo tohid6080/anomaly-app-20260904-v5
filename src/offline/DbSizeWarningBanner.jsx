@@ -19,8 +19,8 @@ export default function DbSizeWarningBanner() {
   return (
     <div
       style={{
-        display: "flex", alignItems: "center", gap: 10, background: critical ? "#fdecec" : THEME.warnBg,
-        border: `1.5px solid ${critical ? THEME.danger : "#d97706"}`, borderRadius: 10, padding: "12px 14px", marginBottom: 14,
+        display: "flex", alignItems: "center", gap: 10, background: critical ? THEME.dangerBg : THEME.warnBg,
+        border: `1.5px solid ${critical ? THEME.danger : THEME.warn}`, borderRadius: 10, padding: "12px 14px", marginBottom: 14,
       }}
     >
       <AlertTriangle size={18} color={critical ? THEME.danger : THEME.warn} style={{ flexShrink: 0 }} />

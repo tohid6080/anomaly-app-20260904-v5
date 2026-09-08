@@ -186,7 +186,7 @@ function CriticalBarriersBySite({ barriers, bowties }) {
       </h3>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
         {sorted.map(([site, count]) => (
-          <span key={site} style={{ fontSize: 12, background: "#fff", border: "1px solid #fca5a5", borderRadius: 999, padding: "5px 14px", color: "#7f1d1d", fontWeight: 600 }}>
+          <span key={site} style={{ fontSize: 12, background: THEME.surface, border: "1px solid #fca5a5", borderRadius: 999, padding: "5px 14px", color: "#7f1d1d", fontWeight: 600 }}>
             {site}: {count}
           </span>
         ))}

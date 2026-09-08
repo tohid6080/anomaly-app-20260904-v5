@@ -7,8 +7,8 @@ const META = {
   pending: { labelKey: "syncBadgePending", color: THEME.warn, bg: THEME.warnBg, Icon: Clock, spin: false },
   syncing: { labelKey: "syncBadgeSyncing", color: "#1d4ed8", bg: "#dbeafe", Icon: RefreshCw, spin: true },
   synced: { labelKey: "syncBadgeSynced", color: THEME.ok, bg: THEME.okBg, Icon: Check, spin: false },
-  failed: { labelKey: "syncBadgeFailed", color: "#c92a2a", bg: "#fdecec", Icon: AlertTriangle, spin: false },
-  conflict: { labelKey: "syncBadgeConflict", color: "#c92a2a", bg: "#fdecec", Icon: AlertTriangle, spin: false },
+  failed: { labelKey: "syncBadgeFailed", color: THEME.danger, bg: THEME.dangerBg, Icon: AlertTriangle, spin: false },
+  conflict: { labelKey: "syncBadgeConflict", color: THEME.danger, bg: THEME.dangerBg, Icon: AlertTriangle, spin: false },
 };
 
 export default function SyncStatusBadge({ status = "synced", onRetry }) {

@@ -15,7 +15,7 @@ import { translate, getCurrentLang } from "../i18n/translations.js";
  */
 
 export const BOWTIE_STATUSES = [
-  { value: "draft", labelKey: "bowtieStatusDraft", color: "#5b6b7d", bg: THEME.surface2 },
+  { value: "draft", labelKey: "bowtieStatusDraft", color: THEME.text3, bg: THEME.surface2 },
   { value: "in_review", labelKey: "bowtieStatusInReview", color: THEME.warn, bg: THEME.warnBg },
   { value: "approved", labelKey: "bowtieStatusApproved", color: THEME.ok, bg: THEME.okBg },
   { value: "archived", labelKey: "bowtieStatusArchived", color: "#475569", bg: THEME.surface2 },
@@ -118,12 +118,12 @@ export async function deleteBowtieDB(id) {
 export const CRITICALITY_LEVELS = [
   { value: "low", labelKey: "criticalityLow", color: THEME.ok },
   { value: "medium", labelKey: "criticalityMedium", color: THEME.warn },
-  { value: "high", labelKey: "criticalityHigh", color: "#c92a2a" },
+  { value: "high", labelKey: "criticalityHigh", color: THEME.danger },
 ];
 
 export const BARRIER_STATUS = [
   { value: "green", labelKey: "barrierStatusGreen", color: "#16a34a" },
-  { value: "yellow", labelKey: "barrierStatusYellow", color: "#d97706" },
+  { value: "yellow", labelKey: "barrierStatusYellow", color: THEME.warn },
   { value: "red", labelKey: "barrierStatusRed", color: "#dc2626" },
 ];
 

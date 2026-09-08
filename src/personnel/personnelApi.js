@@ -29,7 +29,7 @@ export const DOC_TYPES = [
 export const DOC_STATUS = [
   { value: "pending", labelKey: "docStatusPending", color: THEME.warn, bg: THEME.warnBg },
   { value: "approved", labelKey: "docStatusApproved", color: THEME.ok, bg: THEME.okBg },
-  { value: "rejected", labelKey: "docStatusRejected", color: "#c92a2a", bg: "#fdecec" },
+  { value: "rejected", labelKey: "docStatusRejected", color: THEME.danger, bg: THEME.dangerBg },
   { value: "needs_correction", labelKey: "docStatusNeedsCorrection", color: THEME.warn, bg: THEME.warnBg },
 ];
 
@@ -40,9 +40,9 @@ export const PERSONNEL_STATUS = [
   { value: "pending_health_visit", labelKey: "psPendingHealthVisit", color: THEME.warn, bg: THEME.warnBg },
   { value: "pending_health_result", labelKey: "psPendingHealthResult", color: THEME.warn, bg: THEME.warnBg },
   { value: "active", labelKey: "psActive", color: THEME.ok, bg: THEME.okBg },
-  { value: "needs_correction", labelKey: "psNeedsCorrection", color: "#c92a2a", bg: "#fdecec" },
-  { value: "rejected", labelKey: "psRejected", color: "#c92a2a", bg: "#fdecec" },
-  { value: "health_expired", labelKey: "psHealthExpired", color: "#c92a2a", bg: "#fdecec" },
+  { value: "needs_correction", labelKey: "psNeedsCorrection", color: THEME.danger, bg: THEME.dangerBg },
+  { value: "rejected", labelKey: "psRejected", color: THEME.danger, bg: THEME.dangerBg },
+  { value: "health_expired", labelKey: "psHealthExpired", color: THEME.danger, bg: THEME.dangerBg },
 ];
 
 export function personnelStatusMeta(status) {
@@ -55,7 +55,7 @@ export function personnelStatusMeta(status) {
 // سوابق/مدارک/معاینات قبلی‌اش حذف نمی‌شود.
 export const EMPLOYMENT_STATUS = [
   { value: "active", labelKey: "esActive", color: THEME.ok, bg: THEME.okBg },
-  { value: "terminated", labelKey: "esTerminated", color: "#5b6b7d", bg: THEME.surface2 },
+  { value: "terminated", labelKey: "esTerminated", color: THEME.text3, bg: THEME.surface2 },
 ];
 export function employmentStatusMeta(value) {
   return EMPLOYMENT_STATUS.find((s) => s.value === value) || EMPLOYMENT_STATUS[0];

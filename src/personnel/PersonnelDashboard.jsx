@@ -177,7 +177,7 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
         <div style={{ ...styles.statBox, background: THEME.warnBg }}><div style={{ ...styles.statNum, color: THEME.warn }}>{counts.pendingQualification}</div><div style={styles.statLabel}>{t("pdStatPendingQualification")}</div></div>
         <div style={{ ...styles.statBox, background: THEME.warnBg }}><div style={{ ...styles.statNum, color: THEME.warn }}>{counts.pendingHealthVisit}</div><div style={styles.statLabel}>{t("pdStatPendingHealthVisit")}</div></div>
         <div style={{ ...styles.statBox, background: THEME.warnBg }}><div style={{ ...styles.statNum, color: THEME.warn }}>{counts.pendingHealthResult}</div><div style={styles.statLabel}>{t("pdStatPendingHealthResult")}</div></div>
-        <div style={{ ...styles.statBox, background: "#fdecec" }}><div style={{ ...styles.statNum, color: THEME.danger }}>{counts.healthExpired}</div><div style={styles.statLabel}>{t("pdStatHealthExpired")}</div></div>
+        <div style={{ ...styles.statBox, background: THEME.dangerBg }}><div style={{ ...styles.statNum, color: THEME.danger }}>{counts.healthExpired}</div><div style={styles.statLabel}>{t("pdStatHealthExpired")}</div></div>
       </div>
 
       {!isContractor && Object.keys(byContractor).length > 0 && (

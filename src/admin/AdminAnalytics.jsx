@@ -193,7 +193,7 @@ export default function AdminAnalytics({ onBack, currentUser, companies }) {
                   <td style={{ padding: "8px 10px", textAlign: "center" }}>{a.lastLogoutAt ? formatTime(a.lastLogoutAt) : "—"}</td>
                   <td style={{ padding: "8px 10px", textAlign: "center" }}>{formatDuration(a.durationMs)}</td>
                   <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 700 }}>{a.loginCount}</td>
-                  <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 700, color: a.failedCount >= 3 ? THEME.danger : a.failedCount > 0 ? "#d97706" : THEME.text3 }}>{a.failedCount}</td>
+                  <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 700, color: a.failedCount >= 3 ? THEME.danger : a.failedCount > 0 ? THEME.warn : THEME.text3 }}>{a.failedCount}</td>
                 </tr>
               ))}
               {filtered.length === 0 && (

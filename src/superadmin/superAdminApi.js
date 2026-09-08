@@ -35,8 +35,8 @@ export const SUBSCRIPTION_TYPES = [
 ];
 export const SUBSCRIPTION_STATUSES = [
   { value: "active", labelKey: "commonActive", color: THEME.ok, bg: THEME.okBg },
-  { value: "expired", labelKey: "subStatusExpired", color: "#c92a2a", bg: "#fdecec" },
-  { value: "disabled", labelKey: "commonInactive", color: "#5b6b7d", bg: THEME.surface2 },
+  { value: "expired", labelKey: "subStatusExpired", color: THEME.danger, bg: THEME.dangerBg },
+  { value: "disabled", labelKey: "commonInactive", color: THEME.text3, bg: THEME.surface2 },
 ];
 export function subscriptionStatusMeta(v) {
   return SUBSCRIPTION_STATUSES.find((s) => s.value === v) || SUBSCRIPTION_STATUSES[0];
@@ -175,7 +175,7 @@ export function computePaymentStatus(finalAmount, payments) {
   const yearlyPayments = payments.filter((p) => p.payment_type === "yearly");
   const totalPaid = yearlyPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
   const remaining = Math.max(0, (Number(finalAmount) || 0) - totalPaid);
-  if (totalPaid === 0) return { status: "unpaid", labelKey: "payStatusUnpaid", color: "#5b6b7d", bg: THEME.surface2, remaining, totalPaid };
+  if (totalPaid === 0) return { status: "unpaid", labelKey: "payStatusUnpaid", color: THEME.text3, bg: THEME.surface2, remaining, totalPaid };
   if (remaining <= 0) return { status: "settled", labelKey: "payStatusSettled", color: THEME.ok, bg: THEME.okBg, remaining: 0, totalPaid };
   return { status: "partial", labelKey: "payStatusPartial", color: THEME.warn, bg: THEME.warnBg, remaining, totalPaid };
 }

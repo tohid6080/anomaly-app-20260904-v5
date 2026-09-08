@@ -19,7 +19,7 @@ export const SOURCE_OPTIONS = [
 export const PRIORITY_OPTIONS = [
   { value: "low", labelKey: "caPriorityLow", color: THEME.ok, bg: THEME.okBg },
   { value: "medium", labelKey: "caPriorityMedium", color: THEME.warn, bg: THEME.warnBg },
-  { value: "high", labelKey: "caPriorityHigh", color: "#c92a2a", bg: THEME.dangerBg },
+  { value: "high", labelKey: "caPriorityHigh", color: THEME.danger, bg: THEME.dangerBg },
   { value: "critical", labelKey: "caPriorityCritical", color: "#fff", bg: "#7c2d12" },
 ];
 
