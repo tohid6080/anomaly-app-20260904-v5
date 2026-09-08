@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Responsive, WidthProvider } from "react-grid-layout";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { Responsive as Grid } from "react-grid-layout";
 import { Pencil, RotateCcw, GripVertical, Plus, Trash2, Copy, RefreshCw, X, Eye, EyeOff } from "lucide-react";
 import { THEME, styles, usePersistedState } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
@@ -10,7 +10,34 @@ import {
   addWidgetInstance, removeWidgetInstance,
 } from "./widgets/opRegistry.jsx";
 
-const Grid = WidthProvider(Responsive);
+// عرضِ گرید را خودمان با ResizeObserver می‌سنجیم، نه با WidthProvider‌ی که
+// react-grid-layout می‌دهد. WidthProvider فقط به window.resize گوش می‌دهد؛
+// وقتی سایدبار باز/بسته می‌شود یا هر چیزی عرضِ ظرف را بدونِ resizeِ پنجره
+// عوض می‌کند، عرض را به‌روز نمی‌کند و ویجت‌ها از سمتِ راست زیرِ سایدبار
+// می‌روند. ResizeObserver هر تغییرِ عرضِ ظرف را می‌گیرد.
+function useElementWidth() {
+  const ref = useRef(null);
+  const [w, setW] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => setW(el.clientWidth);
+    measure();
+    let ro;
+    if (typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(measure);
+      ro.observe(el);
+    }
+    window.addEventListener("resize", measure);
+    window.addEventListener("orientationchange", measure);
+    return () => {
+      if (ro) ro.disconnect();
+      window.removeEventListener("resize", measure);
+      window.removeEventListener("orientationchange", measure);
+    };
+  }, []);
+  return [ref, w];
+}
 
 /**
  * داشبورد کاری (Operational) — یک Dashboard Builder واقعی: در حالتِ ویرایش،
@@ -61,6 +88,7 @@ export default function OperationalDashboard({ role, currentUser, onNavigate, on
   const { t, dir } = useLanguage();
   const canEdit = ["EMPLOYER", "HSE_SUPERVISOR"].includes(currentUser?.role);
 
+  const [gridRef, gridWidth] = useElementWidth();
   const [kpi, setKpi] = useState(null);
   const [saved, setSaved] = usePersistedState("ihms_opdash_layout_" + (currentUser?.username || "anon"), null);
   const [editing, setEditing] = useState(false);
@@ -158,11 +186,7 @@ export default function OperationalDashboard({ role, currentUser, onNavigate, on
     isResizable: isEditing,
     draggableHandle: ".dash-drag",
     resizeHandles: ["se", "sw", "s", "e"],
-    // بدون این، WidthProvider ابتدا با عرضِ ۰ رندر می‌کند → گرید کوچک‌ترین
-    // breakpoint را می‌گیرد و همه‌ی ویجت‌ها یک‌ستونه روی هم می‌افتند، بعد
-    // که عرضِ واقعی اندازه‌گیری شد ناگهان به چیدمانِ درست می‌پرند. این
-    // «پرشِ» موقعِ تغییرِ بزرگ‌نمایی/تغییرِ اندازه را حذف می‌کند.
-    measureBeforeMount: true,
+    width: gridWidth,
     useCSSTransforms: true,
   };
 
@@ -213,7 +237,8 @@ export default function OperationalDashboard({ role, currentUser, onNavigate, on
         </p>
       )}
 
-      <div dir="ltr">
+      <div dir="ltr" ref={gridRef} style={{ maxWidth: "100%", overflow: "hidden" }}>
+        {gridWidth > 0 && (
         <Grid {...gridProps}>
           {visibleItems.map((it) => (
             <div key={it.i} style={{ height: "100%" }}>
@@ -243,6 +268,7 @@ export default function OperationalDashboard({ role, currentUser, onNavigate, on
             </div>
           ))}
         </Grid>
+        )}
       </div>
 
       {addOpen && (
