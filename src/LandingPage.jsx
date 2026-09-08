@@ -220,7 +220,7 @@ const L = {
     modCats: ["همه", "ایمنی", "بهداشت", "محیط زیست", "مدیریت", "گزارش‌گیری"],
     modMore: "مشاهده جزئیات", soon: "به‌زودی",
     mods: [
-      ["حوادث و شبه‌حوادث", "ثبت، بررسی و تحلیل حوادث و رویدادهای نزدیک به حادثه."],
+      ["حوادث (شبه‌حوادث به‌زودی)", "ثبت، بررسی و تحلیل حوادث به روش Tripod Beta."],
       ["سیستم به‌روزرسانی ارزیابی ریسک", "تأثیرگذاری بر روی بریرهای BowTie طبق موتور اثربخشی."],
       ["سیستم ثبت و گزارش آنومالی", "بازرسی و اعلام عدم‌انطباق‌ها به پیمانکار و پایش آن‌ها."],
       ["اقدامات اصلاحی", "تعریف، تخصیص و پیگیری اقدامات اصلاحی و پیشگیرانهٔ منتج از حوادث، استعداد حادثه‌پذیری و HSE Climate؛ و اثرگذاری بر بریرهای تعریف‌شده در مدل‌های BowTie."],
@@ -315,7 +315,7 @@ const L = {
     modCats: ["All", "Safety", "Health", "Environment", "Management", "Reporting"],
     modMore: "Details", soon: "Coming soon",
     mods: [
-      ["Incidents & near-misses", "Record, review and analyse incidents and near-miss events."],
+      ["Incidents (near-misses coming soon)", "Log, review and analyse incidents using the Tripod Beta method."],
       ["Living risk-assessment system", "Feeds BowTie barrier effectiveness through the effectiveness engine."],
       ["Anomaly logging & reporting", "Inspect, report non-conformities to the contractor and monitor them to closure."],
       ["Corrective actions", "Define, assign and track corrective and preventive actions arising from incidents, accident proneness and HSE climate — feeding the barriers defined in the BowTie models."],
@@ -410,7 +410,7 @@ const L = {
     modCats: ["Alle", "Sicherheit", "Gesundheit", "Umwelt", "Management", "Berichte"],
     modMore: "Details", soon: "Demnächst",
     mods: [
-      ["Vorfälle & Beinaheunfälle", "Vorfälle und Beinaheunfälle erfassen, prüfen und analysieren."],
+      ["Vorfälle (Beinaheunfälle demnächst)", "Vorfälle erfassen, prüfen und mit der Tripod-Beta-Methode analysieren."],
       ["Fortlaufende Risikobewertung", "Speist die Wirksamkeit der BowTie-Barrieren über die Wirksamkeits-Engine."],
       ["Anomalie-Erfassung & -Meldung", "Nichtkonformitäten prüfen, an den Auftragnehmer melden und bis zum Abschluss überwachen."],
       ["Korrekturmaßnahmen", "Korrektur- und Vorbeugemaßnahmen aus Vorfällen, Unfallneigung und HSE-Klima definieren, zuweisen und verfolgen – mit Wirkung auf die in den BowTie-Modellen definierten Barrieren."],
