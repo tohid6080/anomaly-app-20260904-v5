@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, Suspense, lazy } from "react";
-import { AlertTriangle, Plus, X, ChevronRight, ChevronLeft, ChevronDown, ChevronsRight, ChevronsLeft, LogOut, CheckCircle2, Clock, Camera, ImagePlus, Trash2, FileSpreadsheet, FileText, User, Users, ShieldCheck, LayoutGrid, BarChart3, Briefcase, Settings, Archive, Truck, Tag, MessageCircle, GraduationCap, ShieldOff, ShieldAlert, Database, Fingerprint, Info, Sliders, TrendingUp, Search, Home, Megaphone, Sparkles, Gift, Bell, ArrowUpRight, ClipboardList, MoreVertical, RefreshCw } from "lucide-react";
+import { AlertTriangle, Plus, X, ChevronRight, ChevronLeft, ChevronDown, ChevronsRight, ChevronsLeft, LogOut, CheckCircle2, Clock, Camera, ImagePlus, Trash2, FileSpreadsheet, FileText, User, Users, ShieldCheck, LayoutGrid, BarChart3, Briefcase, Settings, Archive, Truck, Tag, MessageCircle, GraduationCap, ShieldOff, ShieldAlert, Database, Fingerprint, Info, Sliders, TrendingUp, Search, Home, Megaphone, Sparkles, Gift, Bell, ArrowUpRight, ClipboardList, MoreVertical, RefreshCw, GripVertical } from "lucide-react";
 // بارگذاری تنبلِ صفحه‌های ماژول — هرکدام چانکِ جدای خودش، فقط با باز شدنِ
 // آن ماژول بارگذاری می‌شود؛ از باندلِ اولیه‌ی سنگینِ App.jsx بیرون می‌مانند.
 const BowTieDashboard = lazy(() => import("./bowtie/BowTieDashboard.jsx"));
@@ -1442,7 +1442,31 @@ function getInitials(name) {
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[1][0]).toUpperCase();
 }
-function Avatar({ name, size = 40, bg }) {
+// عکسِ پروفایل فقط روی همین دستگاه ذخیره می‌شود (localStorage) — نه API/DB،
+// پس Business Logic و بک‌اند دست‌نخورده می‌مانند. بعد از خروج/ورودِ دوباره
+// روی همان دستگاه باقی می‌ماند. رویدادِ سفارشی برای به‌روزرسانیِ زندهٔ هدر.
+const profilePhotoKey = (u) => `ihms_profile_photo_${u || "anon"}`;
+function readProfilePhoto(username) {
+  try { return localStorage.getItem(profilePhotoKey(username)) || ""; } catch { return ""; }
+}
+function writeProfilePhoto(username, dataUrl) {
+  try {
+    if (dataUrl) localStorage.setItem(profilePhotoKey(username), dataUrl);
+    else localStorage.removeItem(profilePhotoKey(username));
+  } catch { /* بی‌اهمیت */ }
+  try { window.dispatchEvent(new Event("ihms-profile-photo")); } catch { /* noop */ }
+}
+
+function Avatar({ name, size = 40, bg, src }) {
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={name || ""}
+        style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flexShrink: 0, background: bg || THEME.teal, display: "block" }}
+      />
+    );
+  }
   return (
     <div
       style={{
@@ -1508,8 +1532,24 @@ function ChangePasswordSection() {
   );
 }
 
-function ProfileView({ onBack, currentUser, roleLabel }) {
+function ProfileView({ onBack, currentUser, roleLabel, mobileTabsProps }) {
   const { t, dir } = useLanguage();
+  const isDesktop = useIsDesktop();
+  const [profilePhoto, setProfilePhoto] = useState(() => readProfilePhoto(currentUser?.username));
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const handlePickPhoto = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    setPhotoBusy(true);
+    try {
+      const dataUrl = await resizeImageFile(file);
+      writeProfilePhoto(currentUser?.username, dataUrl);
+      setProfilePhoto(dataUrl);
+    } catch { /* بی‌اهمیت */ }
+    setPhotoBusy(false);
+  };
+  const handleRemovePhoto = () => { writeProfilePhoto(currentUser?.username, ""); setProfilePhoto(""); };
   const [companyName, setCompanyName] = useState("");
   const [lastLogin, setLastLogin] = useState(null);
   const [phone, setPhone] = useState(currentUser?.phone || "");
@@ -1610,11 +1650,26 @@ function ProfileView({ onBack, currentUser, roleLabel }) {
     <div style={{ maxWidth: 460, margin: "0 auto", padding: 24, direction: dir }}>
       {onBack && <div style={styles.backLink} onClick={onBack}>{t("backToMenu")}</div>}
       <div style={{ ...styles.card, width: "auto" }}>
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
-          <Avatar name={currentUser?.name} size={64} />
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: (!isDesktop ? 8 : 14) }}>
+          <Avatar name={currentUser?.name} size={64} src={(!isDesktop && profilePhoto) || undefined} />
         </div>
+        {!isDesktop && (
+          <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 14, flexWrap: "wrap" }}>
+            <label style={{ ...styles.smallButton, cursor: photoBusy ? "default" : "pointer", display: "inline-flex", alignItems: "center", gap: 6, position: "relative", overflow: "hidden", opacity: photoBusy ? 0.6 : 1 }}>
+              <ImagePlus size={13} /> {photoBusy ? t("afProcessingPhoto") : (profilePhoto ? t("pfPhotoChange") : t("pfPhotoUpload"))}
+              <input type="file" accept="image/*" style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }} onChange={handlePickPhoto} />
+            </label>
+            {profilePhoto && (
+              <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={handleRemovePhoto}>{t("pfPhotoRemove")}</button>
+            )}
+          </div>
+        )}
         <h3 style={{ textAlign: "center", marginBottom: 2 }}>{currentUser?.name || "—"}</h3>
         <p style={{ textAlign: "center", color: THEME.text3, fontSize: 12.5, marginTop: 0, marginBottom: 20 }}>{roleLabel}</p>
+
+        {!isDesktop && mobileTabsProps && currentUser?.role === "HSE_SUPERVISOR" && (
+          <MobileTabsEditor {...mobileTabsProps} />
+        )}
 
         <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 14, marginBottom: 6 }}>
           <p style={{ fontSize: 11, color: THEME.text3, fontWeight: 700, marginBottom: 10 }}>{t("orgInfoTitle")}</p>
@@ -3425,10 +3480,22 @@ function HeaderMoreMenu({ onSettings, onReportError, onLogout }) {
 function DashboardHeader({ panelLabelKey, currentUser, onLogout, onOpenSettings, smartItems, onNavigate, currentModuleKey }) {
   const { t, dir } = useLanguage();
   const appearance = useAppearance();
+  const isDesktop = useIsDesktop();
   // قابلیت عمومی «گزارش خطا» — طبق خواسته‌ی صریح، از هر جای سامانه (نه
   // فقط وقتی اپ کرش می‌کند) هر کاربر باید بتواند مشکلی که می‌بیند را
   // مستقیم به مدیر سامانه گزارش کند.
   const [showReportError, setShowReportError] = useState(false);
+  // عکسِ پروفایل فقط روی موبایل نمایش داده می‌شود (طبق خواسته). با رویدادِ
+  // سفارشی/‏storage بلافاصله بعد از آپلود در «تنظیمات» به‌روز می‌شود.
+  const [profilePhoto, setProfilePhoto] = useState(() => (typeof window !== "undefined" && !window.matchMedia("(min-width: 1024px)").matches ? readProfilePhoto(currentUser?.username) : ""));
+  useEffect(() => {
+    if (isDesktop) { setProfilePhoto(""); return undefined; }
+    const sync = () => setProfilePhoto(readProfilePhoto(currentUser?.username));
+    sync();
+    window.addEventListener("ihms-profile-photo", sync);
+    window.addEventListener("storage", sync);
+    return () => { window.removeEventListener("ihms-profile-photo", sync); window.removeEventListener("storage", sync); };
+  }, [isDesktop, currentUser?.username, currentModuleKey]);
 
   // هویت هدر (طبق خواستهٔ صریح):
   //   خط اول → «[عنوان پنل]: [نام شرکت]»
@@ -3467,7 +3534,7 @@ function DashboardHeader({ panelLabelKey, currentUser, onLogout, onOpenSettings,
   return (
     <div style={{ ...styles.topBar, background: `linear-gradient(120deg, ${THEME.headerBg}, ${THEME.navyDeep})`, direction: dir }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: "1 1 auto" }}>
-        <Avatar name={personName || currentUser?.name} size={38} bg="rgba(255,255,255,0.18)" />
+        <Avatar name={personName || currentUser?.name} size={38} bg="rgba(255,255,255,0.18)" src={profilePhoto || undefined} />
         <div style={{ minWidth: 0, lineHeight: 1.35 }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 6, minWidth: 0 }}>
             <span style={{ fontSize: 14.5, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "60vw" }}>
@@ -3568,14 +3635,40 @@ const MOBILE_GROUP_ORDER = [
   ["system", "mobModGroupSystem"],
 ];
 
-function MobileTabBar({ view, setView, notifCount }) {
+// نوارِ پایینِ موبایل — پیش‌فرض همان چهار آیتمِ قبلی. سرپرستِ کارفرما
+// می‌تواند در «تنظیمات» آیتم‌ها و ترتیبشان را عوض کند (حداکثر ۵ برای
+// خوانایی). کلیدها همان view keys اند؛ setView(key) کافی است.
+const MOBILE_TAB_DEFAULT = ["menu", "operationalDashboard", "modules", "notifications"];
+const MOBILE_TAB_MAX = 5;
+const MOBILE_TAB_MIN = 2;
+function mobileTabMeta(t) {
+  return {
+    menu: { icon: Home, label: t("mobTabHome") },
+    operationalDashboard: { icon: ClipboardList, label: t("mobTabOpsDash") },
+    modules: { icon: LayoutGrid, label: t("mobTabModules") },
+    notifications: { icon: Bell, label: t("mobTabAlerts") },
+    profile: { icon: Settings, label: t("mobTabSettings") },
+    managementDashboard: { icon: BarChart3, label: t("mobTabMgmtDash") },
+    chat: { icon: MessageCircle, label: t("moduleChat") },
+    archiveManagement: { icon: Archive, label: t("moduleArchive") },
+    systemManagement: { icon: Settings, label: t("moduleSystemManagement") },
+    anomalyReport: { icon: AlertTriangle, label: t("moduleAnomalyReport") },
+    personnelAccess: { icon: Users, label: t("modulePersonnelAccess") },
+    machineryManagement: { icon: Truck, label: t("moduleMachinery") },
+    scaffoldManagement: { icon: Tag, label: t("moduleScaffold") },
+    riskAssessment: { icon: ShieldCheck, label: t("moduleRiskAssessment") },
+    proactiveIndicators: { icon: TrendingUp, label: t("moduleProactiveIndicators") },
+    incidentManagement: { icon: ShieldAlert, label: t("moduleIncidentManagement") },
+  };
+}
+
+function MobileTabBar({ view, setView, notifCount, tabKeys }) {
   const { t } = useLanguage();
-  const tabs = [
-    { key: "menu", icon: Home, label: t("mobTabHome") },
-    { key: "operationalDashboard", icon: ClipboardList, label: t("mobTabOpsDash") },
-    { key: "modules", icon: LayoutGrid, label: t("mobTabModules") },
-    { key: "notifications", icon: Bell, label: t("mobTabAlerts"), badge: notifCount },
-  ];
+  const META = mobileTabMeta(t);
+  let keys = (Array.isArray(tabKeys) ? tabKeys : []).filter((k) => META[k]);
+  if (keys.length < MOBILE_TAB_MIN) keys = MOBILE_TAB_DEFAULT;
+  keys = keys.slice(0, MOBILE_TAB_MAX);
+  const tabs = keys.map((k) => ({ key: k, icon: META[k].icon, label: META[k].label, badge: k === "notifications" ? notifCount : undefined }));
   return (
     <nav style={{
       position: "fixed", insetInline: 0, bottom: 0, zIndex: 30, display: "flex",
@@ -3606,6 +3699,80 @@ function MobileTabBar({ view, setView, notifCount }) {
   );
 }
 
+// ویرایشگرِ نوارِ پایینِ موبایل — فقط برای «سرپرست کارفرما»، داخلِ «تنظیمات».
+// draft محلی + دکمهٔ «ذخیره» صریح (مطابقِ CLAUDE.md؛ هیچ نوشتنی روی هر کلیک).
+function MobileTabsEditor({ candidates, value, onSave }) {
+  const { t } = useLanguage();
+  const known = candidates.filter((c) => c && mobileTabMeta(t)[c.key]);
+  const defaultSel = MOBILE_TAB_DEFAULT.filter((k) => known.some((c) => c.key === k));
+  const baseSel = (Array.isArray(value) ? value.filter((k) => known.some((c) => c.key === k)) : []);
+  const initial = baseSel.length >= MOBILE_TAB_MIN ? baseSel : defaultSel;
+  const [draft, setDraft] = useState(initial);
+  const [flash, setFlash] = useState(false);
+  const labelOf = (k) => (known.find((c) => c.key === k) || {}).label || k;
+  const available = known.filter((c) => !draft.includes(c.key));
+  const move = (i, d) => {
+    const j = i + d;
+    if (j < 0 || j >= draft.length) return;
+    const next = draft.slice();
+    [next[i], next[j]] = [next[j], next[i]];
+    setDraft(next);
+  };
+  const remove = (k) => { if (draft.length > MOBILE_TAB_MIN) setDraft(draft.filter((x) => x !== k)); };
+  const add = (k) => { if (draft.length < MOBILE_TAB_MAX) setDraft([...draft, k]); };
+  const savedNow = Array.isArray(value) && value.length >= MOBILE_TAB_MIN ? value : defaultSel;
+  const dirty = JSON.stringify(draft) !== JSON.stringify(savedNow);
+  const iconBtn = (disabled, color) => ({
+    width: 26, height: 26, borderRadius: 7, flexShrink: 0, display: "inline-flex", alignItems: "center", justifyContent: "center",
+    border: `1px solid ${THEME.border}`, background: THEME.surface, color: color || THEME.text2,
+    cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.4 : 1, padding: 0,
+  });
+  return (
+    <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 14, marginTop: 14, marginBottom: 6, textAlign: "start" }}>
+      <p style={{ fontSize: 11, color: THEME.text3, fontWeight: 700, marginBottom: 4 }}>{t("mtEditorTitle")}</p>
+      <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 10px", lineHeight: 1.7 }}>{t("mtEditorHint", { max: MOBILE_TAB_MAX })}</p>
+
+      <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.05em", color: THEME.text3, margin: "0 0 6px" }}>{t("mtInBar")}</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
+        {draft.map((k, i) => (
+          <div key={k} style={{ display: "flex", alignItems: "center", gap: 6, background: THEME.surface2, border: `1px solid ${THEME.border}`, borderRadius: 9, padding: "7px 9px" }}>
+            <GripVertical size={13} color={THEME.text3} style={{ flexShrink: 0 }} />
+            <span style={{ flex: 1, fontSize: 12.5, color: THEME.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{labelOf(k)}</span>
+            <button type="button" title={t("mtMoveUp")} onClick={() => move(i, -1)} disabled={i === 0} style={iconBtn(i === 0)}><ChevronRight size={13} style={{ transform: "rotate(-90deg)" }} /></button>
+            <button type="button" title={t("mtMoveDown")} onClick={() => move(i, 1)} disabled={i === draft.length - 1} style={iconBtn(i === draft.length - 1)}><ChevronRight size={13} style={{ transform: "rotate(90deg)" }} /></button>
+            <button type="button" title={t("mtRemove")} onClick={() => remove(k)} disabled={draft.length <= MOBILE_TAB_MIN} style={iconBtn(draft.length <= MOBILE_TAB_MIN, THEME.danger)}><X size={13} /></button>
+          </div>
+        ))}
+      </div>
+
+      {available.length > 0 && (
+        <>
+          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.05em", color: THEME.text3, margin: "0 0 6px" }}>{t("mtAvailable")}</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+            {available.map((c) => {
+              const full = draft.length >= MOBILE_TAB_MAX;
+              return (
+                <button key={c.key} type="button" onClick={() => add(c.key)} disabled={full}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, color: full ? THEME.text3 : THEME.teal, border: `1px solid ${full ? THEME.border : THEME.teal}`, borderRadius: 999, padding: "6px 11px", background: "transparent", cursor: full ? "default" : "pointer", fontFamily: THEME.font, opacity: full ? 0.5 : 1 }}>
+                  <Plus size={12} /> {c.label}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      <div style={{ display: "flex", gap: 8 }}>
+        <button type="button" style={{ ...styles.smallButton, opacity: dirty ? 1 : 0.5 }} onClick={() => { onSave(draft.slice()); setFlash(true); setTimeout(() => setFlash(false), 2500); }} disabled={!dirty}>
+          {t("commonSave")}
+        </button>
+        <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setDraft(defaultSel)}>{t("mtResetDefault")}</button>
+      </div>
+      {flash && <p style={{ fontSize: 12, color: THEME.ok, marginTop: 8 }}>{t("mtSaved")}</p>}
+    </div>
+  );
+}
+
 // items: [{ key, icon, label, onClick, accent, muted, sub, badge }]
 function MobileModuleList({ items, setView }) {
   const { t } = useLanguage();
@@ -3617,7 +3784,8 @@ function MobileModuleList({ items, setView }) {
     // دسکتاپ)، پس مثلِ هر صفحهٔ دیگرِ موبایل از «رنگِ پس‌زمینهٔ اصلی»
     // (--ihms-bg) استفاده می‌کند — همان کنترلی که در scopeِ موبایل تنظیمش می‌کنی.
     <div style={{ ...styles.menuList, gap: 0, background: THEME.bg, minHeight: "100%" }}>
-      <MobileAnnouncementBanner setView={setView} />
+      {/* کادرِ اطلاعیه‌ها اینجا حذف شد — اطلاعیه‌ها در صفحهٔ «خانه» هستند و
+          نمایشِ دوباره‌شان بالای فهرستِ ماژول‌ها تکراری بود. */}
       <div style={{ position: "sticky", top: 52, zIndex: 2, background: THEME.bg, padding: "6px 0 10px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, background: THEME.surface2, border: `1px solid ${THEME.border}`, borderRadius: THEME.radiusBtn, padding: "9px 12px" }}>
           <Search size={15} color={THEME.text3} style={{ flexShrink: 0 }} />
@@ -3848,7 +4016,7 @@ function Sidebar({ modules, view, setView, collapsed, onToggleCollapse }) {
 // Shell ریسپانسیو: در موبایل دقیقاً همان چیدمان امروزی (بدون هیچ تغییری)؛
 // در دسکتاپ، Sidebar سمت راست (چون RTL، اولین فرزند flex باید Sidebar
 // باشد تا در سمت راست بنشیند) + فضای اصلی محتوا سمت چپ با بیشترین عرض.
-function ResponsiveDashboardShell({ panelLabelKey, currentUser, onLogout, onOpenSettings, smartItems, onNavigate, view, setView, sidebarModules, children }) {
+function ResponsiveDashboardShell({ panelLabelKey, currentUser, onLogout, onOpenSettings, smartItems, onNavigate, view, setView, sidebarModules, mobileTabs, children }) {
   const { t, dir } = useLanguage();
   const isDesktop = useIsDesktop();
   const appearance = useAppearance();
@@ -3869,7 +4037,7 @@ function ResponsiveDashboardShell({ panelLabelKey, currentUser, onLogout, onOpen
     // جست‌وجوشوندهٔ ماژول‌هاست که هر داشبورد به‌عنوان children می‌فرستد.
     const notifCount = Array.isArray(smartItems) ? smartItems.length : 0;
     const mobileMain = view === "menu"
-      ? <div style={{ padding: "14px 14px 0" }}><WelcomeScreen currentUser={currentUser} setView={setView} onNavigate={onNavigate} sidebarModules={sidebarModules} /></div>
+      ? <div style={{ padding: "6px 14px 0" }}><WelcomeScreen currentUser={currentUser} setView={setView} onNavigate={onNavigate} sidebarModules={sidebarModules} /></div>
       : children;
     return (
       <div style={{ ...styles.dashboardWrapper, direction: dir }}>
@@ -3878,7 +4046,7 @@ function ResponsiveDashboardShell({ panelLabelKey, currentUser, onLogout, onOpen
         <div style={{ paddingBottom: "calc(62px + env(safe-area-inset-bottom))" }}>
           <LazyPanel>{mobileMain}</LazyPanel>
         </div>
-        <MobileTabBar view={view} setView={setView} notifCount={notifCount} />
+        <MobileTabBar view={view} setView={setView} notifCount={notifCount} tabKeys={mobileTabs} />
       </div>
     );
   }
@@ -4038,17 +4206,23 @@ function WelcomeScreen({ currentUser, setView, onNavigate, sidebarModules }) {
 // پویا؛ صرفاً معرفی IHMS مثل نمونه‌ی مرجع). ارتفاع با کارت خوش‌آمدگویی هم‌تراز است.
 function WelcomeCard({ currentUser }) {
   const { t } = useLanguage();
+  const isDesktop = useIsDesktop();
   const now = new Date();
+  // روی موبایل کارت جمع‌وجورتر می‌شود (ارتفاع و فاصله‌های کمتر) تا فضای
+  // خالیِ بالای صفحهٔ «خانه» کم شود؛ متن‌ها همگی سرِ جایشان می‌مانند.
+  const compact = !isDesktop;
   return (
     <div style={{
-      background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 16, padding: "20px 24px",
-      display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", width: "100%", minHeight: 200,
+      background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 16,
+      padding: compact ? "12px 16px" : "20px 24px",
+      display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", width: "100%",
+      minHeight: compact ? 0 : 200,
     }}>
-      <span style={{ fontSize: 30, marginBottom: 10 }}>👋</span>
-      <h2 style={{ fontSize: 18, fontWeight: 800, color: THEME.heading, margin: "0 0 8px" }}>
+      <span style={{ fontSize: compact ? 22 : 30, marginBottom: compact ? 4 : 10 }}>👋</span>
+      <h2 style={{ fontSize: compact ? 15.5 : 18, fontWeight: 800, color: THEME.heading, margin: compact ? "0 0 4px" : "0 0 8px" }}>
         {t("welcomeGreetingLine", { name: currentUser?.name || "" })}
       </h2>
-      <p style={{ fontSize: 12.5, color: THEME.text2, lineHeight: 1.9, margin: "0 0 16px", maxWidth: 220 }}>
+      <p style={{ fontSize: compact ? 11.5 : 12.5, color: THEME.text2, lineHeight: compact ? 1.7 : 1.9, margin: compact ? "0 0 8px" : "0 0 16px", maxWidth: compact ? 260 : 220 }}>
         {t("welcomeIntroText")}
       </p>
       <div style={{ fontSize: 11, color: THEME.text3, display: "flex", alignItems: "center", gap: 5 }}>
@@ -4467,6 +4641,9 @@ function EmployerDashboard({ onLogout, currentUser }) {
   // شمارنده‌ی نوسازی: بعد از ثبتِ فرم در صفحاتِ ترکیبیِ وب، لیستِ زیرِ آن با
   // تغییرِ key دوباره mount و داده‌ی تازه بارگذاری می‌کند.
   const [webListRefresh, setWebListRefresh] = useState(0);
+  // شخصی‌سازیِ نوارِ پایینِ موبایل (فقط سرپرست کارفرما، در «تنظیمات»). null =
+  // پیش‌فرض. per-user در localStorage، پس بعد از ورودِ دوباره باقی می‌ماند.
+  const [mobileTabs, setMobileTabs] = usePersistedState("ihms_mobile_tabs_" + (currentUser?.username || "anon"), null);
   useEffect(() => { trackPageView(currentUser, view); }, [view]);
   // دکمهٔ برگشت گوشی مثل برگشت داخلی سامانه (بدون خروج از نرم‌افزار).
   useAndroidBackButton(() => { if (view !== "menu") { setView("menu"); return true; } return false; });
@@ -4672,6 +4849,22 @@ function EmployerDashboard({ onLogout, currentUser }) {
     systemManagementEntry,
   ].filter(Boolean), moduleConfig);
 
+  // نامزدهای نوارِ پایین: مقصدهای ثابتِ ناوبری + همان ماژول‌های مجازِ Sidebar
+  // (فیلترِ مجوز/پلن از قبل روی sidebarModules اعمال شده). فقط کلیدهایی که در
+  // mobileTabMeta تعریف شده‌اند نمایش داده می‌شوند.
+  const bottomNavCandidates = (() => {
+    const meta = mobileTabMeta(t);
+    const nav = [
+      { key: "menu", label: t("mobTabHome") },
+      { key: "modules", label: t("mobTabModules") },
+      { key: "notifications", label: t("mobTabAlerts") },
+      { key: "profile", label: t("mobTabSettings") },
+    ];
+    const seen = new Set();
+    return [...nav, ...sidebarModules.map((m) => ({ key: m.key, label: m.label }))]
+      .filter((c) => meta[c.key] && !seen.has(c.key) && (seen.add(c.key), true));
+  })();
+
   return (
     <ResponsiveDashboardShell
       panelLabelKey={canEdit ? "panelEmployer" : "panelEmployerViewOnly"}
@@ -4683,6 +4876,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       view={view}
       setView={setView}
       sidebarModules={sidebarModules}
+      mobileTabs={mobileTabs}
     >
       {/* موبایل: تبِ «ماژول‌ها» — همان ترتیبِ «مدیریت ماژول‌ها» (applyModuleConfig)،
           یکسان با Sidebarِ دسکتاپ، ولی جست‌وجوشونده و گروه‌بندی‌شده بر اساسِ حوزه. */}
@@ -4814,7 +5008,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
         </div>
       )}
 
-      {view === "profile" && <ProfileView onBack={() => setView("menu")} currentUser={currentUser} roleLabel={canEdit ? t("roleLabelEmployer") : t("roleLabelEmployerViewOnly")} />}
+      {view === "profile" && <ProfileView onBack={() => setView("menu")} currentUser={currentUser} roleLabel={canEdit ? t("roleLabelEmployer") : t("roleLabelEmployerViewOnly")} mobileTabsProps={{ candidates: bottomNavCandidates, value: mobileTabs, onSave: setMobileTabs }} />}
       {view === "chat" && <ChatDashboard onBack={() => setView("menu")} currentUser={currentUser} />}
       {view === "riskKnowledgeManagement" && <LazyPanel><RiskKnowledgeManager wide={isDesktop} onBack={() => setView("riskAssessment")} currentUser={currentUser} /></LazyPanel>}
       {!isDesktop && view === "anomalyForm" && anomalyCanEdit && <AnomalyForm onBack={() => setView("anomalyReport")} currentUser={currentUser} onSaved={() => setView("anomalyList")} />}
