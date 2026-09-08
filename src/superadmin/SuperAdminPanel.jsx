@@ -2036,6 +2036,57 @@ const APPEARANCE_SCOPES = [
   { key: "mobile", labelKey: "saApScopeMobile" },
   { key: "superadmin", labelKey: "saApScopeSuperadmin" },
 ];
+
+// راهنمای درون‌ساخت: هر کنترل → چه چیزی را تغییر می‌دهد. ستونِ «کنترل» از
+// همان کلیدهای ترجمه‌شده‌ی خودِ کنترل‌ها می‌آید؛ فقط ستونِ «توضیح» کلیدِ جدید دارد.
+const APPEARANCE_GUIDE = [
+  { titleKey: "saApBasePreset", rows: [["saApTheme", "saApGuideTheme"], ["saApVisualMode", "saApGuideVisualMode"], ["saApUiScale", "saApGuideUiScale"]] },
+  { titleKey: "saApColors", rows: [["saApColorPrimary", "saApGuidePrimary"], ["saApColorAccent", "saApGuideAccent"]] },
+  { titleKey: "saApGroupSurface", rows: [["saApTokBg", "saApGuideBg"], ["saApTokSurface", "saApGuideSurface"], ["saApTokSurface2", "saApGuideSurface2"], ["saApTokBorder", "saApGuideBorder"]] },
+  { titleKey: "saApGroupText", rows: [["saApTokText", "saApGuideText"], ["saApTokText2", "saApGuideText2"], ["saApTokText3", "saApGuideText3"]] },
+  { titleKey: "saApGroupStatus", rows: [["saApTokOk", "saApGuideOk"], ["saApTokWarn", "saApGuideWarn"], ["saApTokDanger", "saApGuideDanger"]] },
+  { titleKey: "saApRegionColors", rows: [["saApRegionHeader", "saApGuideRegionHeader"], ["saApRegionSidebar", "saApGuideRegionSidebar"], ["saApRegionCard", "saApGuideRegionCard"], ["saApRegionWidget", "saApGuideRegionWidget"]] },
+  { titleKey: "saApThemeFont", rows: [
+    ["saApFontFamily", "saApGuideFontFamily"], ["saApFontWeightBase", "saApGuideFontWeightBase"],
+    ["saApRoleHeader", "saApGuideRoleHeader"], ["saApRoleMenu", "saApGuideRoleMenu"], ["saApRoleTitle", "saApGuideRoleTitle"],
+    ["saApRoleBody", "saApGuideRoleBody"], ["saApRoleCard", "saApGuideRoleCard"], ["saApRoleKpi", "saApGuideRoleKpi"], ["saApRoleTable", "saApGuideRoleTable"],
+  ] },
+  { titleKey: "saApGeometry", rows: [
+    ["saApGeoRadiusCard", "saApGuideRadiusCard"], ["saApGeoRadiusBtn", "saApGuideRadiusBtn"],
+    ["saApGeoPad", "saApGuidePad"], ["saApGeoGap", "saApGuideGap"],
+    ["saApGeoIconSize", "saApGuideIconSize"], ["saApGeoIconStroke", "saApGuideIconStroke"],
+  ] },
+];
+
+function AppearanceGuide() {
+  const { t, dir } = useLanguage();
+  return (
+    <details style={{ border: `1px solid ${THEME.border}`, borderRadius: 9, background: THEME.surface2, marginBottom: 16 }}>
+      <summary style={{ cursor: "pointer", padding: "10px 14px", fontSize: 12.5, fontWeight: 700, color: THEME.navy, listStyle: "none" }}>
+        ⓘ {t("saApGuideShow")}
+      </summary>
+      <div style={{ padding: "4px 14px 14px" }}>
+        <p style={{ fontSize: 11, color: THEME.text2, lineHeight: 1.9, margin: "0 0 8px" }}>{t("saApGuideIntro")}</p>
+        <p style={{ fontSize: 11, color: THEME.text3, lineHeight: 1.9, margin: "0 0 12px", borderInlineStart: `2px solid ${THEME.border}`, paddingInlineStart: 10 }}>{t("saApGuideScopeNote")}</p>
+        {APPEARANCE_GUIDE.map((sec) => (
+          <div key={sec.titleKey} style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 11.5, fontWeight: 800, color: THEME.navy, margin: "0 0 5px" }}>{t(sec.titleKey)}</div>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }} dir={dir}>
+              <tbody>
+                {sec.rows.map(([ctrlKey, whereKey]) => (
+                  <tr key={ctrlKey} style={{ borderBottom: `1px solid ${THEME.borderSoft}` }}>
+                    <td style={{ padding: "6px 8px 6px 0", fontWeight: 700, color: THEME.text, whiteSpace: "nowrap", verticalAlign: "top", width: 130 }}>{t(ctrlKey)}</td>
+                    <td style={{ padding: "6px 0", color: THEME.text2, lineHeight: 1.8 }}>{t(whereKey)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))}
+      </div>
+    </details>
+  );
+}
 const nonEmptyOverride = (o) => {
   const r = {};
   if (o) Object.keys(o).forEach((k) => {
@@ -2101,6 +2152,8 @@ function AppearanceManagementTab({ currentAdmin }) {
       <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 12, lineHeight: 1.8 }}>
         {t("saApNote")}
       </p>
+
+      <AppearanceGuide />
 
       {/* انتخابِ scope: وب / موبایل / سوپرادمین */}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
