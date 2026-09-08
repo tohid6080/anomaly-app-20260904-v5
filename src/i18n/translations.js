@@ -263,6 +263,10 @@ export const translations = {
   "opDashEditLayout": { "fa": "چیدمانِ من", "en": "My layout" },
   "opDashSaveLayout": { "fa": "ذخیرهٔ چیدمان", "en": "Save layout" },
   "opDashResetDefault": { "fa": "بازنشانی به پیش‌فرض", "en": "Reset to default" },
+  "opDashDragHint": { "fa": "ردیف‌ها را برای جابه‌جایی بکشید", "en": "Drag rows to reorder" },
+  "opDashResize": { "fa": "تغییر عرض ویجت", "en": "Change widget width" },
+  "opDashCol1": { "fa": "۱ ستون", "en": "1 col" },
+  "opDashCol2": { "fa": "۲ ستون", "en": "2 cols" },
   "moduleAdminAnalytics": {
     "fa": "داشبورد فعالیت کاربران",
     "en": "User Activity Dashboard"

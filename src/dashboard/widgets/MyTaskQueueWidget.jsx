@@ -47,7 +47,7 @@ export default function MyTaskQueueWidget({ role, currentUser, onNavigate }) {
     : null;
 
   return (
-    <WidgetCard title={t("wtqTitle")} icon={ClipboardCheck} tools={tools} style={{ gridColumn: "span 2" }}>
+    <WidgetCard title={t("wtqTitle")} icon={ClipboardCheck} tools={tools}>
       {state.status === "loading" && <WidgetSkeleton rows={4} />}
       {state.status === "error" && <WidgetError onRetry={load} />}
       {state.status === "ok" && state.data.total === 0 && (

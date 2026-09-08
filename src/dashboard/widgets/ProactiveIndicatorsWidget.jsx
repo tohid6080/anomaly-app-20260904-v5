@@ -38,7 +38,7 @@ export default function ProactiveIndicatorsWidget({ onNavigate }) {
   const go = () => onNavigate && onNavigate({ module: "proactiveIndicators" });
 
   return (
-    <WidgetCard title={t("piwTitle")} icon={Radar} style={{ gridColumn: "span 2" }}>
+    <WidgetCard title={t("piwTitle")} icon={Radar}>
       {state.status === "loading" && <WidgetSkeleton rows={3} />}
       {state.status === "error" && <WidgetError onRetry={load} />}
       {state.status === "ok" && d.anyEnabled && (

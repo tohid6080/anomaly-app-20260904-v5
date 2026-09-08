@@ -36,7 +36,6 @@ export default function BowtieBarrierHealthWidget({ role, currentUser, onNavigat
     <WidgetCard
       title={t("bbhTitle")} icon={Activity}
       tools={d ? <span style={{ fontFamily: THEME.font, fontSize: 9, color: THEME.text3 }}>{t("bbhSubcount", { models: d.modelCount, barriers: d.barrierTotal })}</span> : null}
-      style={{ gridColumn: "span 2" }}
     >
       {state.status === "loading" && <WidgetSkeleton rows={4} />}
       {state.status === "error" && <WidgetError onRetry={load} />}

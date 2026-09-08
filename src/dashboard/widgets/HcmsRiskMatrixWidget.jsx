@@ -26,7 +26,7 @@ export default function HcmsRiskMatrixWidget({ onNavigate }) {
   const d = state.data;
 
   return (
-    <WidgetCard title={t("hrmTitle")} icon={Grid3x3} style={{ gridColumn: "span 2" }}>
+    <WidgetCard title={t("hrmTitle")} icon={Grid3x3}>
       {state.status === "loading" && <WidgetSkeleton rows={5} />}
       {state.status === "error" && <WidgetError onRetry={load} />}
       {state.status === "ok" && (
