@@ -1800,6 +1800,175 @@ const APPEARANCE_TOKEN_GROUPS = [
   ] },
 ];
 
+// حالتِ بصری (Flat / Modern 2.5D ⭐ / Premium 3D) و مقیاسِ کلیِ UI.
+// مقدارِ "" = انتخاب‌نشده = پیش‌فرضِ فعلیِ سامانه.
+const APPEARANCE_VISUAL_MODES = [
+  { value: "", labelKey: "saApVmDefault" },
+  { value: "flat", labelKey: "saApVmFlat" },
+  { value: "soft2_5d", labelKey: "saApVmSoft" },
+  { value: "premium3d", labelKey: "saApVmPremium" },
+];
+const APPEARANCE_UI_SCALES = [
+  { value: "", labelKey: "saApScaleDefault" },
+  { value: "compact", labelKey: "saApScaleCompact" },
+  { value: "comfortable", labelKey: "saApScaleComfortable" },
+  { value: "large", labelKey: "saApScaleLarge" },
+];
+const APPEARANCE_FONT_WEIGHTS = [300, 400, 500, 600, 700, 800];
+// نقش → [فیلدِ سایز، فیلدِ وزن، متغیرِ CSSِ سایز، کلیدِ ترجمه]
+const APPEARANCE_FONT_ROLES = [
+  ["fsHeader", "fwHeader", "--ihms-fs-header", "saApRoleHeader"],
+  ["fsMenu", "fwMenu", "--ihms-fs-menu", "saApRoleMenu"],
+  ["fsTitle", "fwTitle", "--ihms-fs-title", "saApRoleTitle"],
+  ["fsBody", "fwBody", "--ihms-fs-body", "saApRoleBody"],
+  ["fsCard", "fwCard", "--ihms-fs-card", "saApRoleCard"],
+  ["fsKpi", "fwKpi", "--ihms-fs-kpi", "saApRoleKpi"],
+  ["fsTable", "fwTable", "--ihms-fs-table", "saApRoleTable"],
+];
+const APPEARANCE_GEOMETRY_FIELDS = [
+  ["radiusCard", "--ihms-radius-card", "saApGeoRadiusCard"],
+  ["radiusBtn", "--ihms-radius-btn", "saApGeoRadiusBtn"],
+  ["pad", "--ihms-pad", "saApGeoPad"],
+  ["gap", "--ihms-gap", "saApGeoGap"],
+  ["iconSize", "--ihms-icon-size", "saApGeoIconSize"],
+  ["iconStroke", "--ihms-icon-stroke", "saApGeoIconStroke"],
+];
+const APPEARANCE_REGION_GROUPS = [
+  { bg: "regionHeaderBg", border: "regionHeaderBorder", varBg: "--ihms-header-bg", varBorder: "--ihms-header-border", labelKey: "saApRegionHeader" },
+  { bg: "regionSidebarBg", border: "regionSidebarBorder", varBg: "--ihms-sidebar-bg", varBorder: "--ihms-sidebar-border", labelKey: "saApRegionSidebar" },
+  { bg: "regionCardBg", border: "regionCardBorder", varBg: "--ihms-card-bg", varBorder: "--ihms-card-border", labelKey: "saApRegionCard" },
+  { bg: "regionWidgetBg", border: "regionWidgetBorder", varBg: "--ihms-widget-bg", varBorder: "--ihms-widget-border", labelKey: "saApRegionWidget" },
+];
+const APPEARANCE_COLOR_FIELDS = [
+  "colorBg", "colorSurface", "colorSurface2", "colorBorder", "colorText", "colorText2", "colorText3", "colorOk", "colorWarn", "colorDanger",
+  "regionHeaderBg", "regionHeaderBorder", "regionSidebarBg", "regionSidebarBorder", "regionCardBg", "regionCardBorder", "regionWidgetBg", "regionWidgetBorder",
+];
+const APPEARANCE_TYPO_FIELDS = ["fontWeightBase", "fsHeader", "fsMenu", "fsTitle", "fsBody", "fsCard", "fsKpi", "fsTable", "fwHeader", "fwMenu", "fwTitle", "fwBody", "fwCard", "fwKpi", "fwTable"];
+const APPEARANCE_GEO_FIELDS = ["radiusCard", "radiusBtn", "pad", "gap", "iconSize", "iconStroke"];
+const APPEARANCE_DEFAULT_FONT = "'Vazirmatn', 'Inter', Tahoma, Arial, sans-serif";
+
+// بازگردانیِ هر بخش به پیش‌فرض = تهی‌کردنِ فیلدهای همان بخش. update تابعِ
+// همان کامپوننت است که هر فیلد را در state محلی می‌نشاند (ثبت فقط با «ذخیره»).
+const APPEARANCE_SECTION_RESETS = {
+  base: (u) => { u("visualMode", ""); u("uiScale", ""); },
+  colors: (u) => APPEARANCE_COLOR_FIELDS.forEach((f) => u(f, "")),
+  typography: (u) => APPEARANCE_TYPO_FIELDS.forEach((f) => u(f, null)),
+  geometry: (u) => APPEARANCE_GEO_FIELDS.forEach((f) => u(f, null)),
+};
+
+function NumField({ label, value, placeholder, onChange, min, max, step }) {
+  const has = value != null && value !== "";
+  return (
+    <div style={{ minWidth: 110 }}>
+      <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{label}</label>
+      <input
+        type="number" min={min} max={max} step={step || 1} dir="ltr"
+        style={{ ...inputStyle, width: 96 }} value={has ? value : ""} placeholder={placeholder == null ? "" : String(placeholder)}
+        onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))}
+      />
+    </div>
+  );
+}
+
+function WeightSelect({ value, placeholder, onChange }) {
+  return (
+    <select
+      style={{ ...inputStyle, width: 96 }} value={value ?? ""} dir="ltr"
+      onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))}
+    >
+      <option value="">{placeholder}</option>
+      {APPEARANCE_FONT_WEIGHTS.map((w) => <option key={w} value={w}>{w}</option>)}
+    </select>
+  );
+}
+
+function ChoiceRow({ options, value, onChange, t }) {
+  return (
+    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+      {options.map((o) => {
+        const active = (value || "") === o.value;
+        return (
+          <button
+            key={o.value || "def"} type="button" onClick={() => onChange(o.value)}
+            style={{ padding: "7px 12px", borderRadius: 8, border: `1px solid ${active ? THEME.teal : THEME.border}`, background: active ? THEME.tealSoft : THEME.surface2, color: active ? THEME.text : THEME.text2, fontFamily: THEME.font, fontSize: 11.5, fontWeight: 600, cursor: "pointer" }}
+          >
+            {t(o.labelKey)}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function SectionHead({ children, onReset, resetLabel }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "0 0 10px", paddingBottom: 6, borderBottom: `1px solid ${THEME.border}` }}>
+      <h4 style={{ fontSize: 12.5, color: THEME.navy, fontWeight: 700, margin: 0, flex: 1 }}>{children}</h4>
+      {onReset && (
+        <button type="button" onClick={onReset} style={{ fontSize: 10, color: THEME.warn, background: "none", border: "none", cursor: "pointer", fontFamily: THEME.font, whiteSpace: "nowrap" }}>
+          ↺ {resetLabel}
+        </button>
+      )}
+    </div>
+  );
+}
+
+// پیش‌نمایشِ زنده — یک صفحه‌ی کوچکِ نمونه که همه‌ی توکن‌ها را تمرین
+// می‌دهد. previewTokens از resolveAppearanceTokens(draft) می‌آید و روی
+// همین wrapper نشانده می‌شود، پس بدونِ دست‌زدن به DOM سراسری زنده است.
+function AppearancePreview({ config, previewTokens }) {
+  const { t } = useLanguage();
+  const wrap = { ...previewTokens, "--ihms-font": config.fontFamily || APPEARANCE_DEFAULT_FONT, fontFamily: config.fontFamily || APPEARANCE_DEFAULT_FONT };
+  return (
+    <div style={{ ...wrap, display: "flex", border: "1px solid var(--ihms-border)", borderRadius: "var(--ihms-radius-card)", overflow: "hidden", marginBottom: 18, boxShadow: "var(--ihms-elev-2)" }}>
+      {/* Sidebar rail */}
+      <div style={{ width: 46, background: "var(--ihms-sidebar-bg)", borderInlineEnd: "1px solid var(--ihms-sidebar-border)", padding: "10px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+        {[0, 1, 2, 3].map((i) => <span key={i} style={{ width: 24, height: 24, borderRadius: 7, background: i === 0 ? "var(--ihms-teal)" : "var(--ihms-surface-2)" }} />)}
+      </div>
+      <div style={{ flex: 1, minWidth: 0, background: "var(--ihms-bg)" }}>
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 12px", background: "var(--ihms-header-bg)", borderBottom: "1px solid var(--ihms-header-border)" }}>
+          <span style={{ width: 20, height: 20, borderRadius: 6, background: "var(--ihms-teal)", flexShrink: 0 }} />
+          <span style={{ fontSize: "var(--ihms-fs-header)", fontWeight: "var(--ihms-fw-header)", color: "#fff" }}>{config.systemName || "IHMS"}</span>
+        </div>
+        <div style={{ padding: "var(--ihms-pad)" }}>
+          <div style={{ fontSize: "var(--ihms-fs-title)", fontWeight: "var(--ihms-fw-title)", color: "var(--ihms-text)", marginBottom: "var(--ihms-gap)" }}>{t("saApPvTitle")}</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--ihms-gap)" }}>
+            {/* KPI card */}
+            <div style={{ background: "var(--ihms-card-bg)", border: "1px solid var(--ihms-card-border)", borderRadius: "var(--ihms-radius-card)", padding: "var(--ihms-pad)", boxShadow: "var(--ihms-elev-1)" }}>
+              <div style={{ fontSize: "var(--ihms-fs-card)", fontWeight: "var(--ihms-fw-card)", color: "var(--ihms-text3)", marginBottom: 4 }}>{t("saApPvCardTitle")}</div>
+              <div style={{ fontSize: "var(--ihms-fs-kpi)", fontWeight: "var(--ihms-fw-kpi)", color: "var(--ihms-danger)", lineHeight: 1 }}>۲۴</div>
+            </div>
+            {/* Widget card */}
+            <div style={{ background: "var(--ihms-widget-bg)", border: "1px solid var(--ihms-widget-border)", borderRadius: "var(--ihms-radius-card)", padding: "var(--ihms-pad)", boxShadow: "var(--ihms-elev-1)", display: "flex", flexDirection: "column", gap: 6 }}>
+              <div style={{ fontSize: "var(--ihms-fs-body)", fontWeight: "var(--ihms-fw-body)", color: "var(--ihms-text2)" }}>{t("saApPvBody")}</div>
+              <div style={{ display: "flex", gap: 5 }}>
+                <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 10, color: "var(--ihms-ok)", background: "var(--ihms-ok-bg)" }}>OK</span>
+                <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 10, color: "var(--ihms-warn)", background: "var(--ihms-warn-bg)" }}>!</span>
+                <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 10, color: "var(--ihms-danger)", background: "var(--ihms-danger-bg)" }}>×</span>
+              </div>
+            </div>
+          </div>
+          {/* mini table */}
+          <div style={{ marginTop: "var(--ihms-gap)", border: "1px solid var(--ihms-card-border)", borderRadius: "var(--ihms-radius-card)", overflow: "hidden" }}>
+            {[[t("saApPvRow1"), "۱۴۰۳/۰۶/۱۸"], [t("saApPvRow2"), "۱۴۰۳/۰۶/۲۰"]].map((r, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "7px 10px", fontSize: "var(--ihms-fs-table)", fontWeight: "var(--ihms-fw-table)", color: "var(--ihms-text2)", background: i ? "var(--ihms-surface-2)" : "var(--ihms-surface)" }}>
+                <span>{r[0]}</span><span style={{ direction: "ltr" }}>{r[1]}</span>
+              </div>
+            ))}
+          </div>
+          {/* buttons + menu sample */}
+          <div style={{ display: "flex", gap: 8, marginTop: "var(--ihms-gap)", alignItems: "center", flexWrap: "wrap" }}>
+            <span style={{ fontSize: "var(--ihms-fs-body)", fontWeight: 700, padding: "6px 14px", borderRadius: "var(--ihms-radius-btn)", background: "var(--ihms-teal)", color: "#fff" }}>{t("saApPvBtn")}</span>
+            <span style={{ fontSize: "var(--ihms-fs-body)", padding: "6px 14px", borderRadius: "var(--ihms-radius-btn)", border: "1px solid var(--ihms-border)", color: "var(--ihms-text2)" }}>{t("commonCancel")}</span>
+            <span style={{ fontSize: "var(--ihms-fs-menu)", fontWeight: "var(--ihms-fw-menu)", color: "var(--ihms-text3)" }}>{t("saApPvMenu")}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AppearanceManagementTab({ currentAdmin }) {
   const { t, dir } = useLanguage();
   const [config, setConfig] = useState(null);
@@ -1827,6 +1996,19 @@ function AppearanceManagementTab({ currentAdmin }) {
     setMsgErr(!!result?.__error);
     setMessage(result?.__error ? result.message : t("saApSaved"));
     if (!result?.__error) await load();
+  };
+
+  // بازگردانیِ همه‌ی شخصی‌سازی‌ها به پیش‌فرضِ سامانه (هویت — نام/لوگو/عنوان —
+  // دست‌نخورده می‌ماند). فقط state محلی؛ تا «ذخیره» نزنی چیزی ثبت نمی‌شود.
+  const resetAll = () => {
+    APPEARANCE_SECTION_RESETS.base(update);
+    APPEARANCE_SECTION_RESETS.colors(update);
+    APPEARANCE_SECTION_RESETS.typography(update);
+    APPEARANCE_SECTION_RESETS.geometry(update);
+    update("colorPrimary", "#0a1620");
+    update("colorAccent", "#14b8a6");
+    update("themeMode", "dark");
+    update("fontFamily", APPEARANCE_DEFAULT_FONT);
   };
 
   return (
@@ -1861,8 +2043,9 @@ function AppearanceManagementTab({ currentAdmin }) {
         </div>
       )}
 
-      <SectionLabel>{t("saApBasePreset")}</SectionLabel>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+      {/* ===== ۱. پایه: پریست، تم، حالتِ بصری، مقیاسِ UI ===== */}
+      <SectionHead onReset={() => APPEARANCE_SECTION_RESETS.base(update)} resetLabel={t("saApResetSection")}>{t("saApBasePreset")}</SectionHead>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
         {[["darkNeon", "saApPresetDarkNeon"], ["light", "saApPresetLight"], ["midnight", "saApPresetMidnight"]].map(([key, lk]) => (
           <button
             key={key} type="button"
@@ -1873,24 +2056,34 @@ function AppearanceManagementTab({ currentAdmin }) {
           </button>
         ))}
       </div>
-      <div style={{ maxWidth: 240, marginBottom: 18 }}>
-        <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApTheme")}</label>
-        <select style={inputStyle} value={config.themeMode} onChange={(e) => update("themeMode", e.target.value)} dir={dir}>
-          <option value="light">{t("saApThemeLight")}</option>
-          <option value="dark">{t("saApThemeDark")}</option>
-        </select>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14, marginBottom: 18 }}>
+        <div>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 6 }}>{t("saApTheme")}</label>
+          <select style={{ ...inputStyle, maxWidth: 180 }} value={config.themeMode} onChange={(e) => update("themeMode", e.target.value)} dir={dir}>
+            <option value="light">{t("saApThemeLight")}</option>
+            <option value="dark">{t("saApThemeDark")}</option>
+          </select>
+        </div>
+        <div>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 6 }}>{t("saApVisualMode")}</label>
+          <ChoiceRow options={APPEARANCE_VISUAL_MODES} value={config.visualMode} onChange={(v) => update("visualMode", v)} t={t} />
+        </div>
+        <div>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 6 }}>{t("saApUiScale")}</label>
+          <ChoiceRow options={APPEARANCE_UI_SCALES} value={config.uiScale} onChange={(v) => update("uiScale", v)} t={t} />
+        </div>
       </div>
 
-      <SectionLabel>{t("saApBrandColor")}</SectionLabel>
-      <div style={{ display: "flex", gap: 18, flexWrap: "wrap", marginBottom: 18 }}>
+      {/* ===== ۲. رنگ‌ها: برند، سطوح، متن، وضعیت، ناحیه‌ها ===== */}
+      <SectionHead onReset={() => APPEARANCE_SECTION_RESETS.colors(update)} resetLabel={t("saApResetSection")}>{t("saApColors")}</SectionHead>
+      <div style={{ display: "flex", gap: 18, flexWrap: "wrap", marginBottom: 14 }}>
         <ColorField label={t("saApColorPrimary")} value={config.colorPrimary} onChange={(v) => update("colorPrimary", v)} />
         <ColorField label={t("saApColorAccent")} value={config.colorAccent} onChange={(v) => update("colorAccent", v)} />
       </div>
-
       {APPEARANCE_TOKEN_GROUPS.map((g) => (
-        <React.Fragment key={g.key}>
-          <SectionLabel>{t(g.labelKey)}</SectionLabel>
-          <div style={{ display: "flex", gap: 18, flexWrap: "wrap", marginBottom: 18 }}>
+        <div key={g.key} style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: THEME.text2, marginBottom: 8 }}>{t(g.labelKey)}</div>
+          <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
             {g.fields.map(([field, cssVar, lk]) => (
               <TokenColorField
                 key={field} label={t(lk)} cssVar={cssVar}
@@ -1900,10 +2093,29 @@ function AppearanceManagementTab({ currentAdmin }) {
               />
             ))}
           </div>
-        </React.Fragment>
+        </div>
       ))}
+      <div style={{ fontSize: 11, fontWeight: 700, color: THEME.text2, margin: "4px 0 8px" }}>{t("saApRegionColors")}</div>
+      <div style={{ display: "flex", gap: 20, flexWrap: "wrap", marginBottom: 18 }}>
+        {APPEARANCE_REGION_GROUPS.map((r) => (
+          <div key={r.labelKey}>
+            <div style={{ fontSize: 10.5, fontWeight: 700, color: THEME.text3, marginBottom: 6 }}>{t(r.labelKey)}</div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <TokenColorField
+                label={t("saApRegionBg")} cssVar={r.varBg} value={config[r.bg]} fallback={tokenDefaults[r.varBg]}
+                clearLabel={t("saApUseThemeDefault")} onChange={(v) => update(r.bg, v)} onClear={() => update(r.bg, "")}
+              />
+              <TokenColorField
+                label={t("saApRegionBorder")} cssVar={r.varBorder} value={config[r.border]} fallback={tokenDefaults[r.varBorder]}
+                clearLabel={t("saApUseThemeDefault")} onChange={(v) => update(r.border, v)} onClear={() => update(r.border, "")}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
 
-      <SectionLabel>{t("saApThemeFont")}</SectionLabel>
+      {/* ===== ۳. تایپوگرافی: فونت، وزنِ پایه، سایز/وزن به تفکیکِ نقش ===== */}
+      <SectionHead onReset={() => APPEARANCE_SECTION_RESETS.typography(update)} resetLabel={t("saApResetSection")}>{t("saApThemeFont")}</SectionHead>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginBottom: 8 }}>
         <div>
           <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApFontFamily")}</label>
@@ -1913,37 +2125,42 @@ function AppearanceManagementTab({ currentAdmin }) {
           </select>
         </div>
         <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApFontSizeBase")}</label>
-          <input type="number" style={inputStyle} value={config.fontSizeBase ?? ""} onChange={(e) => update("fontSizeBase", e.target.value ? Number(e.target.value) : null)} dir="ltr" />
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApFontWeightBase")}</label>
+          <WeightSelect value={config.fontWeightBase} placeholder={t("saApFontDefault")} onChange={(v) => update("fontWeightBase", v)} />
         </div>
       </div>
-      <p style={{ fontSize: 10.5, color: THEME.text3, lineHeight: 1.9, margin: "0 0 18px" }}>{t("saApFontHostNote")}</p>
+      <p style={{ fontSize: 10.5, color: THEME.text3, lineHeight: 1.9, margin: "0 0 12px" }}>{t("saApFontHostNote")}</p>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 18, maxWidth: 420 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 96px 96px", gap: 10, fontSize: 10, color: THEME.text3, fontWeight: 700 }}>
+          <span>{t("saApRoleCol")}</span><span>{t("saApSizeCol")}</span><span>{t("saApWeightCol")}</span>
+        </div>
+        {APPEARANCE_FONT_ROLES.map(([sf, wf, cssVar, lk]) => (
+          <div key={sf} style={{ display: "grid", gridTemplateColumns: "1fr 96px 96px", gap: 10, alignItems: "center" }}>
+            <span style={{ fontSize: 12, color: THEME.text }}>{t(lk)}</span>
+            <input
+              type="number" min={8} max={60} step={0.5} dir="ltr"
+              style={{ ...inputStyle, width: 96 }} value={config[sf] ?? ""} placeholder={String(parseFloat(tokenDefaults[cssVar]))}
+              onChange={(e) => update(sf, e.target.value === "" ? null : Number(e.target.value))}
+            />
+            <WeightSelect value={config[wf]} placeholder={t("saApFontDefault")} onChange={(v) => update(wf, v)} />
+          </div>
+        ))}
+      </div>
 
-      <SectionLabel>{t("saApLivePreview")}</SectionLabel>
-      <div style={{ ...previewTokens, fontFamily: config.fontFamily, background: "var(--ihms-bg)", border: "1px solid var(--ihms-border)", borderRadius: 12, padding: 14, marginBottom: 18 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: "var(--ihms-navy)", borderRadius: 8, marginBottom: 10 }}>
-          <span style={{ width: 22, height: 22, borderRadius: 6, background: "var(--ihms-teal)", display: "inline-block", flexShrink: 0 }} />
-          <span style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ihms-text)" }}>{config.systemName || "IHMS"}</span>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          <div style={{ background: "var(--ihms-surface)", border: "1px solid var(--ihms-border)", borderRadius: 10, padding: 10 }}>
-            <div style={{ fontSize: 9, color: "var(--ihms-text3)", fontWeight: 700, marginBottom: 4 }}>{t("saApPvCardTitle")}</div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: "var(--ihms-text)" }}>۲۴</div>
-          </div>
-          <div style={{ background: "var(--ihms-surface)", border: "1px solid var(--ihms-border)", borderRadius: 10, padding: 10, display: "flex", flexDirection: "column", gap: 7 }}>
-            <div style={{ fontSize: 10, color: "var(--ihms-text2)" }}>{t("saApPvBody")}</div>
-            <div style={{ display: "flex", gap: 5 }}>
-              <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 10, color: "var(--ihms-ok)", background: "var(--ihms-ok-bg)" }}>OK</span>
-              <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 10, color: "var(--ihms-warn)", background: "var(--ihms-warn-bg)" }}>!</span>
-              <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 10, color: "var(--ihms-danger)", background: "var(--ihms-danger-bg)" }}>×</span>
-            </div>
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: 8, marginTop: 10, alignItems: "center" }}>
-          <span style={{ fontSize: 11, fontWeight: 700, padding: "6px 14px", borderRadius: 8, background: "var(--ihms-teal)", color: "#fff" }}>{t("saApPvBtn")}</span>
-          <span style={{ fontSize: 11, padding: "6px 14px", borderRadius: 8, border: "1px solid var(--ihms-border)", color: "var(--ihms-text2)" }}>{t("commonCancel")}</span>
-        </div>
+      {/* ===== ۴. هندسه و فاصله ===== */}
+      <SectionHead onReset={() => APPEARANCE_SECTION_RESETS.geometry(update)} resetLabel={t("saApResetSection")}>{t("saApGeometry")}</SectionHead>
+      <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 18 }}>
+        {APPEARANCE_GEOMETRY_FIELDS.map(([f, cssVar, lk]) => (
+          <NumField
+            key={f} label={t(lk)} value={config[f]} placeholder={parseFloat(tokenDefaults[cssVar])}
+            onChange={(v) => update(f, v)} min={0} max={f === "iconStroke" ? 4 : 60} step={f === "iconStroke" ? 0.25 : 1}
+          />
+        ))}
       </div>
+
+      {/* ===== ۵. پیش‌نمایشِ زنده ===== */}
+      <SectionLabel>{t("saApLivePreview")}</SectionLabel>
+      <AppearancePreview config={config} previewTokens={previewTokens} />
 
       <SectionLabel>{t("saApHeaderSidebar")}</SectionLabel>
       <div style={{ display: "flex", gap: 18, flexWrap: "wrap", marginBottom: 18 }}>
@@ -1980,7 +2197,10 @@ function AppearanceManagementTab({ currentAdmin }) {
       </div>
 
       {message && <p style={{ fontSize: 11.5, color: msgErr ? THEME.danger : "#166534", marginBottom: 10, lineHeight: 1.8 }}>{message}</p>}
-      <button type="button" style={btnStyle()} onClick={handleSave} disabled={saving}>{saving ? t("saSavingEllipsis") : t("saApSaveBtn")}</button>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <button type="button" style={btnStyle()} onClick={handleSave} disabled={saving}>{saving ? t("saSavingEllipsis") : t("saApSaveBtn")}</button>
+        <button type="button" style={btnStyle(THEME.text3)} onClick={resetAll} disabled={saving}>{t("saApResetAll")}</button>
+      </div>
     </div>
   );
 }

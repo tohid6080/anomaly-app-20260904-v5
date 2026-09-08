@@ -3421,7 +3421,7 @@ function DashboardHeader({ panelLabelKey, currentUser, onLogout, onOpenSettings,
   const showCompany = companyName && appearance?.headerShowCompanyName !== false;
 
   return (
-    <div style={{ ...styles.topBar, direction: dir }}>
+    <div style={{ ...styles.topBar, background: `linear-gradient(120deg, ${THEME.headerBg}, ${THEME.navyDeep})`, direction: dir }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: "1 1 auto" }}>
         <Avatar name={personName || currentUser?.name} size={38} bg="rgba(255,255,255,0.18)" />
         <div style={{ minWidth: 0, lineHeight: 1.35 }}>
@@ -3621,7 +3621,7 @@ function Sidebar({ modules, view, setView, collapsed, onToggleCollapse }) {
   return (
     <aside
       style={{
-        width: collapsed ? 68 : 254, flexShrink: 0, background: `linear-gradient(180deg, ${THEME.navy}, ${THEME.navyDeep})`,
+        width: collapsed ? 68 : 254, flexShrink: 0, background: `linear-gradient(180deg, ${THEME.sidebarBg}, ${THEME.navyDeep})`,
         display: "flex", flexDirection: "column", transition: "width .18s ease", overflow: "hidden",
         borderInlineStart: `1px solid rgba(255,255,255,0.08)`,
       }}

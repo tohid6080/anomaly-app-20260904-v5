@@ -98,7 +98,7 @@ export default function OperationalDashboard({ role, currentUser, onNavigate, on
       {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackPlain")}</div>}
 
       <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "0 0 14px", flexWrap: "wrap" }}>
-        <h2 style={{ fontSize: 17, color: THEME.navy, fontWeight: 800, margin: 0 }}>{t("opDashTitle")}</h2>
+        <h2 style={{ fontSize: THEME.fsTitle, color: THEME.navy, fontWeight: THEME.fwTitle, margin: 0 }}>{t("opDashTitle")}</h2>
         <span style={{ flex: 1 }} />
         {!editing ? (
           <button
@@ -141,7 +141,7 @@ export default function OperationalDashboard({ role, currentUser, onNavigate, on
           ))}
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14, alignItems: "start" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: THEME.gap, alignItems: "start" }}>
           {layout.filter((r) => r.visible).map((r) => renderWidget(r.key))}
         </div>
       )}

@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import { hideSplashWhenReady } from "./splashScreenControl.js";
+import { applyAppearanceToDom, APPEARANCE_CACHE_KEY } from "./systemConfigApi.js";
 
 // این استایل قبلاً یک <style> درون‌خطی در index.html بود. تزریقش از طریق
 // جاوااسکریپت (به‌جای HTML) باگ شناخته‌شده‌ی Vite روی ویندوز را دور می‌زند:
@@ -42,10 +43,40 @@ baseStyle.textContent = `
     --ihms-ok: #22c55e;
     --ihms-ok-bg: #173021;
     --ihms-font: 'Vazirmatn', 'Inter', Tahoma, Arial, sans-serif;
+
+    /* سیستمِ توکنِ حرفه‌ای — مقادیرِ پیش‌فرض دقیقاً برابرِ اعدادِ hardcodeِ
+       امروزِ کد؛ applyAppearanceToDom در صورتِ تنظیمِ سفارشی override می‌کند. */
+    --ihms-header-bg: #0a1620; --ihms-header-border: #07121a;
+    --ihms-sidebar-bg: #0a1620; --ihms-sidebar-border: #1e3d4d;
+    --ihms-card-bg: #0f2a3a; --ihms-card-border: #1e3d4d;
+    --ihms-widget-bg: #0f2a3a; --ihms-widget-border: #1e3d4d;
+    --ihms-fw: 400; --ihms-fw-heading: 700;
+    --ihms-fs-header: 13px; --ihms-fw-header: 700;
+    --ihms-fs-menu: 14.5px; --ihms-fw-menu: 600;
+    --ihms-fs-title: 17px; --ihms-fw-title: 800;
+    --ihms-fs-body: 13px; --ihms-fw-body: 400;
+    --ihms-fs-card: 12px; --ihms-fw-card: 700;
+    --ihms-fs-kpi: 26px; --ihms-fw-kpi: 800;
+    --ihms-fs-table: 12.5px; --ihms-fw-table: 600;
+    --ihms-radius-card: 12px; --ihms-radius-btn: 9px;
+    --ihms-pad: 14px; --ihms-gap: 10px;
+    --ihms-icon-size: 16px; --ihms-icon-stroke: 2;
+    --ihms-elev-1: 0 1px 2px rgba(15,42,63,0.04), 0 4px 14px -8px rgba(15,42,63,0.12);
+    --ihms-elev-2: 0 1px 2px rgba(15,42,63,0.04), 0 12px 32px -12px rgba(15,42,63,0.14);
+    --ihms-elev-3: 0 2px 6px rgba(15,42,63,0.06), 0 20px 44px -16px rgba(15,42,63,0.22);
   }
   body { background: #0b1a24; }
 `;
 document.head.appendChild(baseStyle);
+
+// استارتِ سرد بدونِ فلش: اگر تنظیماتِ ظاهریِ کش‌شده‌ای هست، همین حالا و
+// هم‌زمان (قبل از رندرِ React و قبل از رفت‌وبرگشتِ شبکه) اعمالش کن. اگر
+// نبود، همان مقادیرِ :root بالا ظاهرِ پیش‌فرض را حفظ می‌کنند.
+try {
+  const onIsolatedRoute = /^#(super-admin|hse-climate-survey)/.test(location.hash || "");
+  const cached = onIsolatedRoute ? null : localStorage.getItem(APPEARANCE_CACHE_KEY);
+  if (cached) applyAppearanceToDom(JSON.parse(cached));
+} catch { /* بی‌اهمیت — پیش‌فرض‌های :root کافی‌اند */ }
 
 // طبق یک باگ واقعی که گزارش شد: Service Worker قبلاً بدون قید و شرط
 // حتی در npm run dev هم ثبت می‌شد — که باعث می‌شد کاربر با وجود

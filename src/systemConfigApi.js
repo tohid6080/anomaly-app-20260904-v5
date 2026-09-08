@@ -167,7 +167,50 @@ const APPEARANCE_KEYS = [
   "appearance_color_bg", "appearance_color_surface", "appearance_color_surface_2", "appearance_color_border",
   "appearance_color_text", "appearance_color_text2", "appearance_color_text3",
   "appearance_color_ok", "appearance_color_warn", "appearance_color_danger",
+  // سیستمِ توکنِ حرفه‌ای (فاز ۲): حالتِ بصری، مقیاسِ کلیِ UI، وزنِ پایه‌ی
+  // فونت، سایز/وزنِ فونت به تفکیکِ نقش، هندسه/فاصله/آیکون و رنگِ ناحیه‌ها.
+  // همه اختیاری‌اند — خالی/تهی = پیش‌فرضِ تمِ پایه، بدونِ رگرسیون.
+  "appearance_visual_mode", "appearance_ui_scale", "appearance_font_weight_base",
+  "appearance_fs_header", "appearance_fs_menu", "appearance_fs_title", "appearance_fs_body",
+  "appearance_fs_card", "appearance_fs_kpi", "appearance_fs_table",
+  "appearance_fw_header", "appearance_fw_menu", "appearance_fw_title", "appearance_fw_body",
+  "appearance_fw_card", "appearance_fw_kpi", "appearance_fw_table",
+  "appearance_radius_card", "appearance_radius_btn", "appearance_pad", "appearance_gap",
+  "appearance_icon_size", "appearance_icon_stroke",
+  "appearance_region_header_bg", "appearance_region_header_border",
+  "appearance_region_sidebar_bg", "appearance_region_sidebar_border",
+  "appearance_region_card_bg", "appearance_region_card_border",
+  "appearance_region_widget_bg", "appearance_region_widget_border",
 ];
+
+// پیش‌فرضِ توکن‌های تایپوگرافی/هندسه — دقیقاً همان اعدادی که امروز در
+// کد hardcode شده‌اند، تا وقتی چیزی تنظیم نشده، ظاهر بی‌تغییر بماند.
+const TOKEN_DEFAULTS = {
+  fsHeader: 13, fsMenu: 14.5, fsTitle: 17, fsBody: 13, fsCard: 12, fsKpi: 26, fsTable: 12.5,
+  fwHeader: 700, fwMenu: 600, fwTitle: 800, fwBody: 400, fwCard: 700, fwKpi: 800, fwTable: 600,
+  radiusCard: 12, radiusBtn: 9, pad: 14, gap: 10, iconSize: 16, iconStroke: 2,
+};
+const UI_SCALES = { compact: 0.92, comfortable: 1, large: 1.12 };
+// سایه‌ها فقط CSS box-shadow نرم‌اند — بدون WebGL، بدون افتِ کارایی.
+// «تهی» = حالت انتخاب‌نشده = همان سایه‌های ملایمِ امروزِ سامانه.
+const VISUAL_MODE_ELEV = {
+  "": [
+    "0 1px 2px rgba(15,42,63,0.04), 0 4px 14px -8px rgba(15,42,63,0.12)",
+    "0 1px 2px rgba(15,42,63,0.04), 0 12px 32px -12px rgba(15,42,63,0.14)",
+    "0 2px 6px rgba(15,42,63,0.06), 0 20px 44px -16px rgba(15,42,63,0.22)",
+  ],
+  flat: ["none", "none", "none"],
+  soft2_5d: [
+    "0 1px 2px rgba(0,0,0,0.05), 0 6px 18px -10px rgba(0,0,0,0.30)",
+    "0 2px 4px rgba(0,0,0,0.06), 0 14px 34px -14px rgba(0,0,0,0.38)",
+    "0 3px 8px rgba(0,0,0,0.08), 0 26px 56px -18px rgba(0,0,0,0.48)",
+  ],
+  premium3d: [
+    "0 1px 2px rgba(0,0,0,0.06), 0 10px 24px -10px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.04)",
+    "0 3px 8px rgba(0,0,0,0.10), 0 22px 48px -16px rgba(0,0,0,0.50), inset 0 1px 0 rgba(255,255,255,0.05)",
+    "0 6px 16px rgba(0,0,0,0.14), 0 40px 80px -22px rgba(0,0,0,0.60), inset 0 1px 0 rgba(255,255,255,0.06)",
+  ],
+};
 
 export async function loadAppearanceConfig() {
   const rows = await sb(`system_settings?key=in.(${APPEARANCE_KEYS.map((k) => `"${k}"`).join(",")})&select=key,value_text,value_numeric`);
@@ -196,8 +239,24 @@ export async function loadAppearanceConfig() {
     fontSizeBase: map.appearance_font_size_base != null ? Number(map.appearance_font_size_base) : null,
     sidebarDefaultCollapsed: map.appearance_sidebar_default_collapsed === "true" || map.appearance_sidebar_default_collapsed === true,
     headerShowCompanyName: map.appearance_header_show_company_name !== "false" && map.appearance_header_show_company_name !== false,
+    // --- سیستمِ توکنِ حرفه‌ای ---
+    visualMode: map.appearance_visual_mode || "",       // "" | flat | soft2_5d | premium3d
+    uiScale: map.appearance_ui_scale || "",             // "" | compact | comfortable | large
+    fontWeightBase: num(map.appearance_font_weight_base),
+    fsHeader: num(map.appearance_fs_header), fsMenu: num(map.appearance_fs_menu), fsTitle: num(map.appearance_fs_title),
+    fsBody: num(map.appearance_fs_body), fsCard: num(map.appearance_fs_card), fsKpi: num(map.appearance_fs_kpi), fsTable: num(map.appearance_fs_table),
+    fwHeader: num(map.appearance_fw_header), fwMenu: num(map.appearance_fw_menu), fwTitle: num(map.appearance_fw_title),
+    fwBody: num(map.appearance_fw_body), fwCard: num(map.appearance_fw_card), fwKpi: num(map.appearance_fw_kpi), fwTable: num(map.appearance_fw_table),
+    radiusCard: num(map.appearance_radius_card), radiusBtn: num(map.appearance_radius_btn),
+    pad: num(map.appearance_pad), gap: num(map.appearance_gap),
+    iconSize: num(map.appearance_icon_size), iconStroke: num(map.appearance_icon_stroke),
+    regionHeaderBg: map.appearance_region_header_bg || "", regionHeaderBorder: map.appearance_region_header_border || "",
+    regionSidebarBg: map.appearance_region_sidebar_bg || "", regionSidebarBorder: map.appearance_region_sidebar_border || "",
+    regionCardBg: map.appearance_region_card_bg || "", regionCardBorder: map.appearance_region_card_border || "",
+    regionWidgetBg: map.appearance_region_widget_bg || "", regionWidgetBorder: map.appearance_region_widget_border || "",
   };
 }
+function num(v) { return v != null && v !== "" && !Number.isNaN(Number(v)) ? Number(v) : null; }
 
 export async function saveAppearanceConfig(config, updatedBy) {
   const entries = [
@@ -223,6 +282,24 @@ export async function saveAppearanceConfig(config, updatedBy) {
     ["appearance_font_size_base", config.fontSizeBase, "numeric"],
     ["appearance_sidebar_default_collapsed", String(!!config.sidebarDefaultCollapsed), "text"],
     ["appearance_header_show_company_name", String(config.headerShowCompanyName !== false), "text"],
+    ["appearance_visual_mode", config.visualMode, "text"],
+    ["appearance_ui_scale", config.uiScale, "text"],
+    ["appearance_font_weight_base", config.fontWeightBase, "numeric"],
+    ["appearance_fs_header", config.fsHeader, "numeric"], ["appearance_fs_menu", config.fsMenu, "numeric"],
+    ["appearance_fs_title", config.fsTitle, "numeric"], ["appearance_fs_body", config.fsBody, "numeric"],
+    ["appearance_fs_card", config.fsCard, "numeric"], ["appearance_fs_kpi", config.fsKpi, "numeric"],
+    ["appearance_fs_table", config.fsTable, "numeric"],
+    ["appearance_fw_header", config.fwHeader, "numeric"], ["appearance_fw_menu", config.fwMenu, "numeric"],
+    ["appearance_fw_title", config.fwTitle, "numeric"], ["appearance_fw_body", config.fwBody, "numeric"],
+    ["appearance_fw_card", config.fwCard, "numeric"], ["appearance_fw_kpi", config.fwKpi, "numeric"],
+    ["appearance_fw_table", config.fwTable, "numeric"],
+    ["appearance_radius_card", config.radiusCard, "numeric"], ["appearance_radius_btn", config.radiusBtn, "numeric"],
+    ["appearance_pad", config.pad, "numeric"], ["appearance_gap", config.gap, "numeric"],
+    ["appearance_icon_size", config.iconSize, "numeric"], ["appearance_icon_stroke", config.iconStroke, "numeric"],
+    ["appearance_region_header_bg", config.regionHeaderBg, "text"], ["appearance_region_header_border", config.regionHeaderBorder, "text"],
+    ["appearance_region_sidebar_bg", config.regionSidebarBg, "text"], ["appearance_region_sidebar_border", config.regionSidebarBorder, "text"],
+    ["appearance_region_card_bg", config.regionCardBg, "text"], ["appearance_region_card_border", config.regionCardBorder, "text"],
+    ["appearance_region_widget_bg", config.regionWidgetBg, "text"], ["appearance_region_widget_border", config.regionWidgetBorder, "text"],
   ];
   const payload = entries.map(([key, value, kind]) => ({
     key,
@@ -266,17 +343,30 @@ export function resolveAppearanceTokens(config) {
   const light = config.themeMode === "light";
   const palette = light ? LIGHT_PALETTE : DARK_PALETTE;
   const pick = (custom, fallback) => (custom && String(custom).trim() ? custom : fallback);
+
+  // مقیاسِ کلیِ UI — ضریبی که روی همه‌ی سایزهای فونت/فاصله/آیکون اعمال
+  // می‌شود. تنظیم‌نشده = ۱ (بدون تغییر).
+  const scale = UI_SCALES[config.uiScale] || 1;
+  const D = TOKEN_DEFAULTS;
+  const px = (custom, dflt) => `${Math.round((num(custom) ?? dflt) * scale * 100) / 100}px`;
+  const w = (custom, dflt) => String(num(custom) ?? num(config.fontWeightBase) ?? dflt);
+  const elev = VISUAL_MODE_ELEV[config.visualMode] || VISUAL_MODE_ELEV[""];
+  const surface = pick(config.colorSurface, palette.surface);
+  const border = pick(config.colorBorder, palette.border);
+  const navy = pick(config.colorPrimary, palette.navy);
+
   return {
-    "--ihms-navy": pick(config.colorPrimary, palette.navy),
+    // ---- رنگ‌های پایه ----
+    "--ihms-navy": navy,
     "--ihms-teal": pick(config.colorAccent, light ? "#127c72" : "#14b8a6"),
     "--ihms-navy-deep": palette.navyDeep,
     "--ihms-navy-mid": palette.navyMid,
     "--ihms-teal-deep": palette.tealDeep,
     "--ihms-teal-soft": palette.tealSoft,
     "--ihms-bg": pick(config.colorBg, palette.bg),
-    "--ihms-surface": pick(config.colorSurface, palette.surface),
+    "--ihms-surface": surface,
     "--ihms-surface-2": pick(config.colorSurface2, palette.surface2),
-    "--ihms-border": pick(config.colorBorder, palette.border),
+    "--ihms-border": border,
     "--ihms-border-soft": palette.borderSoft,
     "--ihms-border-strong": palette.borderStrong,
     "--ihms-text": pick(config.colorText, palette.text),
@@ -288,6 +378,40 @@ export function resolveAppearanceTokens(config) {
     "--ihms-warn-bg": palette.warnBg,
     "--ihms-ok": pick(config.colorOk, palette.ok),
     "--ihms-ok-bg": palette.okBg,
+
+    // ---- رنگِ ناحیه‌ها (تنظیم‌نشده = رنگِ پایه‌ی متناظر) ----
+    "--ihms-header-bg": pick(config.regionHeaderBg, navy),
+    "--ihms-header-border": pick(config.regionHeaderBorder, palette.navyDeep),
+    "--ihms-sidebar-bg": pick(config.regionSidebarBg, navy),
+    "--ihms-sidebar-border": pick(config.regionSidebarBorder, border),
+    "--ihms-card-bg": pick(config.regionCardBg, surface),
+    "--ihms-card-border": pick(config.regionCardBorder, border),
+    "--ihms-widget-bg": pick(config.regionWidgetBg, surface),
+    "--ihms-widget-border": pick(config.regionWidgetBorder, border),
+
+    // ---- تایپوگرافی به تفکیکِ نقش ----
+    "--ihms-fw": String(num(config.fontWeightBase) ?? 400),
+    "--ihms-fw-heading": String(num(config.fontWeightBase) ? Math.min(900, num(config.fontWeightBase) + 300) : 700),
+    "--ihms-fs-header": px(config.fsHeader, D.fsHeader), "--ihms-fw-header": w(config.fwHeader, D.fwHeader),
+    "--ihms-fs-menu": px(config.fsMenu, D.fsMenu), "--ihms-fw-menu": w(config.fwMenu, D.fwMenu),
+    "--ihms-fs-title": px(config.fsTitle, D.fsTitle), "--ihms-fw-title": w(config.fwTitle, D.fwTitle),
+    "--ihms-fs-body": px(config.fsBody, D.fsBody), "--ihms-fw-body": w(config.fwBody, D.fwBody),
+    "--ihms-fs-card": px(config.fsCard, D.fsCard), "--ihms-fw-card": w(config.fwCard, D.fwCard),
+    "--ihms-fs-kpi": px(config.fsKpi, D.fsKpi), "--ihms-fw-kpi": w(config.fwKpi, D.fwKpi),
+    "--ihms-fs-table": px(config.fsTable, D.fsTable), "--ihms-fw-table": w(config.fwTable, D.fwTable),
+
+    // ---- هندسه و فاصله ----
+    "--ihms-radius-card": px(config.radiusCard, D.radiusCard),
+    "--ihms-radius-btn": px(config.radiusBtn, D.radiusBtn),
+    "--ihms-pad": px(config.pad, D.pad),
+    "--ihms-gap": px(config.gap, D.gap),
+    "--ihms-icon-size": px(config.iconSize, D.iconSize),
+    "--ihms-icon-stroke": String(num(config.iconStroke) ?? D.iconStroke),
+
+    // ---- ارتفاع/سایه (حالتِ بصری) ----
+    "--ihms-elev-1": elev[0],
+    "--ihms-elev-2": elev[1],
+    "--ihms-elev-3": elev[2],
   };
 }
 
@@ -298,6 +422,8 @@ export function resolveAppearanceTokens(config) {
 // برمی‌گرداند؛ این تابع فقط مقدار واقعی آن متغیرهای CSS را ست می‌کند.
 // اگر تنظیمی هنوز بارگذاری نشده/در دسترس نباشد، مقدار fallback داخل خودِ
 // var() همان ظاهر فعلی و آشنای سامانه را حفظ می‌کند — بدون رگرسیون بصری.
+export const APPEARANCE_CACHE_KEY = "ihms_appearance_cache";
+
 export function applyAppearanceToDom(config) {
   if (typeof document === "undefined" || !config) return;
   const root = document.documentElement.style;
@@ -315,6 +441,11 @@ export function applyAppearanceToDom(config) {
     if (!link) { link = document.createElement("link"); link.rel = "icon"; document.head.appendChild(link); }
     link.href = config.faviconUrl;
   }
+
+  // آخرین تنظیماتِ ظاهری را کش می‌کنیم تا در استارتِ سردِ بعدی (به‌ویژه
+  // روی موبایل/Capacitor) main.jsx بتواند هم‌زمان و قبل از اولین رنگ‌آمیزی
+  // اعمالش کند و «فلشِ تمِ پیش‌فرض» دیده نشود.
+  try { localStorage.setItem(APPEARANCE_CACHE_KEY, JSON.stringify(config)); } catch { /* بی‌اهمیت */ }
 }
 
 // ---------- اطلاعیه‌های سامانه ----------

@@ -1,5 +1,6 @@
 import React from "react";
 import { THEME } from "../../shared.js";
+import { TIcon } from "../../shared/Icon.jsx";
 import { useLanguage } from "../../i18n/LanguageContext.jsx";
 
 /**
@@ -11,9 +12,9 @@ import { useLanguage } from "../../i18n/LanguageContext.jsx";
  */
 
 const cardStyle = {
-  background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 11,
+  background: THEME.widgetBg, border: `1px solid ${THEME.widgetBorder}`, borderRadius: THEME.radiusCard,
   padding: "12px 13px", display: "flex", flexDirection: "column", gap: 9,
-  height: "100%", boxSizing: "border-box",
+  height: "100%", boxSizing: "border-box", boxShadow: THEME.elev1,
 };
 
 export function WidgetCard({ title, icon: Icon, tone, tools, children, style }) {
@@ -22,8 +23,8 @@ export function WidgetCard({ title, icon: Icon, tone, tools, children, style }) 
     <div style={{ ...cardStyle, ...style, position: "relative", overflow: "hidden" }}>
       {barColor && <span style={{ position: "absolute", insetInlineStart: 0, top: 0, bottom: 0, width: 3, background: barColor }} />}
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-        {Icon && <Icon size={13} color={THEME.teal} style={{ flexShrink: 0 }} />}
-        <h3 style={{ fontSize: 12, color: THEME.navy, fontWeight: 700, margin: 0 }}>{title}</h3>
+        {Icon && <TIcon icon={Icon} color={THEME.teal} />}
+        <h3 style={{ fontSize: THEME.fsCard, color: THEME.navy, fontWeight: THEME.fwCard, margin: 0 }}>{title}</h3>
         {tools && <span style={{ marginInlineStart: "auto", display: "flex", alignItems: "center", gap: 6 }}>{tools}</span>}
       </div>
       {children}

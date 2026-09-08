@@ -5,6 +5,7 @@ import {
   Activity, Download,
 } from "lucide-react";
 import { THEME } from "../shared.js";
+import { TIcon } from "../shared/Icon.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { loadPersonnelList, loadNotifications } from "../personnel/personnelApi.js";
 import {
@@ -628,10 +629,10 @@ function MiniStat({ icon: Icon, label, value, color, onClick }) {
 
 function Panel({ title, icon: Icon, children, compact }) {
   return (
-    <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: compact ? "10px 12px" : "12px 14px", height: "100%", boxSizing: "border-box" }}>
+    <div style={{ background: THEME.cardBg, borderRadius: THEME.radiusCard, border: `1px solid ${THEME.cardBorder}`, boxShadow: THEME.elev1, padding: compact ? "10px 12px" : "12px 14px", height: "100%", boxSizing: "border-box" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-        <Icon size={13} color={THEME.teal} />
-        <h3 style={{ fontSize: 12.5, color: THEME.navy, fontWeight: 700, margin: 0 }}>{title}</h3>
+        <TIcon icon={Icon} color={THEME.teal} />
+        <h3 style={{ fontSize: THEME.fsCard, color: THEME.navy, fontWeight: THEME.fwCard, margin: 0 }}>{title}</h3>
       </div>
       {children}
     </div>
