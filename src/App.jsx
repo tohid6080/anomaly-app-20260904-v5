@@ -3874,8 +3874,8 @@ function ResponsiveDashboardShell({ panelLabelKey, currentUser, onLogout, onOpen
       <UpdateAvailableBanner />
       <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
         <Sidebar modules={sidebarModules} view={view} setView={setView} collapsed={collapsed} onToggleCollapse={() => setCollapsed((v) => !v)} />
-        <main style={{ flex: 1, minWidth: 0, overflowY: "auto", padding: "28px clamp(20px, 3vw, 40px)" }}>
-          <div style={{ maxWidth: 1400, margin: "0 auto" }}><LazyPanel>{mainContent}</LazyPanel></div>
+        <main style={{ flex: 1, minWidth: 0, overflowY: "auto", padding: view === "operationalDashboard" ? "20px clamp(12px, 2vw, 24px)" : "28px clamp(20px, 3vw, 40px)" }}>
+          <div style={{ maxWidth: view === "operationalDashboard" ? 1760 : 1400, margin: "0 auto" }}><LazyPanel>{mainContent}</LazyPanel></div>
         </main>
       </div>
     </div>
