@@ -1,4 +1,4 @@
-import { sb, sbOk, uid, todayISO, getCurrentCompanyId } from "../shared.js";
+import { sb, sbOk, uid, todayISO, getCurrentCompanyId, THEME } from "../shared.js";
 import { offlineWrite, offlineWriteFile } from "../offline/offlineWrite.js";
 import { isOnline } from "../offline/networkStatus.js";
 import { getRecordsByModule, putRecord } from "../offline/offlineDb.js";
@@ -22,10 +22,10 @@ export const LICENSE_TYPES = [
 ];
 export const TRAFFIC_STATUSES = [
   { value: "active", labelKey: "trafficActive", color: "#166534", bg: "#dcfce7" },
-  { value: "inactive", labelKey: "trafficInactive", color: "#5b6b7d", bg: "#eef1f5" },
+  { value: "inactive", labelKey: "trafficInactive", color: "#5b6b7d", bg: THEME.surface2 },
 ];
 export const APPROVAL_STATUSES = [
-  { value: "draft", labelKey: "approvalDraft", color: "#5b6b7d", bg: "#eef1f5" },
+  { value: "draft", labelKey: "approvalDraft", color: "#5b6b7d", bg: THEME.surface2 },
   { value: "pending", labelKey: "approvalPending", color: "#b45309", bg: "#fef3c7" },
   { value: "approved", labelKey: "approvalApproved", color: "#166534", bg: "#dcfce7" },
   { value: "needs_correction", labelKey: "approvalNeedsCorrection", color: "#b45309", bg: "#fef3c7" },

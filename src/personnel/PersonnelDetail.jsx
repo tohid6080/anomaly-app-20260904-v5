@@ -254,7 +254,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
       </div>
 
       {!isContractor && gateItem && (gateItem.status === "pending_approval" || gateItem.status === "assigned_review" || gateItem.status === "reviewed") && (
-        <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 9, padding: 14, marginBottom: 14 }}>
+        <div style={{ background: THEME.surface2, border: "1px solid #bfdbfe", borderRadius: 9, padding: 14, marginBottom: 14 }}>
           <p style={{ fontSize: 12, fontWeight: 700, color: "#1d4ed8", margin: "0 0 8px" }}>
             {t("gateReviewGateHeading", { status: gateStatusLabel(gateItem.status) })}
           </p>

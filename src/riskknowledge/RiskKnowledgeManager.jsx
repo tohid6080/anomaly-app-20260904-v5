@@ -244,7 +244,7 @@ export default function RiskKnowledgeManager({ onBack, currentUser }) {
               <div style={{ flex: 1, cursor: "pointer" }} onClick={() => openEdit(rec)}>
                 <div style={{ fontWeight: 700, color: THEME.heading, fontSize: 13.5 }}>
                   {rec.hazard}
-                  {!rec.approved && <span style={{ fontSize: 10, background: "#f1f5f9", color: THEME.text3, padding: "2px 7px", borderRadius: 999, marginRight: 6 }}>{t("commonInactive")}</span>}
+                  {!rec.approved && <span style={{ fontSize: 10, background: THEME.surface2, color: THEME.text3, padding: "2px 7px", borderRadius: 999, marginRight: 6 }}>{t("commonInactive")}</span>}
                   {rec.source === "user_approved" && <span style={{ fontSize: 10, background: "#e3f5f4", color: THEME.tealDeep, padding: "2px 7px", borderRadius: 999, marginRight: 6 }}>{t("rkAutoLearned")}</span>}
                 </div>
                 {rec.activity && <div style={{ fontSize: 11, color: THEME.text3, marginTop: 3 }}>{t("rkActivityInline", { value: rec.activity })}</div>}

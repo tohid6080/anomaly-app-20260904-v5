@@ -150,7 +150,7 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
               type="button" onClick={() => setForm({ ...form, status: "safe", categoryCode: "", subitemId: "", note: "" })}
               style={{
                 flex: 1, padding: 12, borderRadius: 9, border: `2px solid ${form.status === "safe" ? "#166534" : THEME.border}`,
-                background: form.status === "safe" ? "#dcfce7" : "#fbfcfd", color: form.status === "safe" ? "#166534" : THEME.text2,
+                background: form.status === "safe" ? "#dcfce7" : THEME.surface, color: form.status === "safe" ? "#166534" : THEME.text2,
                 fontWeight: 700, fontSize: 13.5, cursor: "pointer", fontFamily: THEME.font,
               }}
             >
@@ -160,7 +160,7 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
               type="button" onClick={() => setForm({ ...form, status: "unsafe" })}
               style={{
                 flex: 1, padding: 12, borderRadius: 9, border: `2px solid ${form.status === "unsafe" ? THEME.danger : THEME.border}`,
-                background: form.status === "unsafe" ? THEME.dangerBg : "#fbfcfd", color: form.status === "unsafe" ? THEME.danger : THEME.text2,
+                background: form.status === "unsafe" ? THEME.dangerBg : THEME.surface, color: form.status === "unsafe" ? THEME.danger : THEME.text2,
                 fontWeight: 700, fontSize: 13.5, cursor: "pointer", fontFamily: THEME.font,
               }}
             >
@@ -209,7 +209,7 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
               key={s} type="button" onClick={() => setSeasonFilter(s)}
               style={{
                 padding: "7px 16px", borderRadius: 999, fontSize: 12.5, fontWeight: 700, border: `1px solid ${THEME.border}`, cursor: "pointer", fontFamily: THEME.font,
-                background: seasonFilter === s ? THEME.navy : "#fbfcfd", color: seasonFilter === s ? "#fff" : THEME.text2, borderColor: seasonFilter === s ? THEME.navy : THEME.border,
+                background: seasonFilter === s ? THEME.navy : THEME.surface, color: seasonFilter === s ? "#fff" : THEME.text2, borderColor: seasonFilter === s ? THEME.navy : THEME.border,
               }}
             >
               {s === "all" ? t("sbsAllSeasons") : seasonLabel(s)}

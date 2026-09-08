@@ -215,7 +215,7 @@ export default function ChatAccessManager({ onBack }) {
                         <div
                           onClick={() => toggleCell(rowId, colId)}
                           title={blocked ? t("camBlockedClickToUnblock") : t("camClickToBlock")}
-                          style={{ width: 26, height: 26, margin: "0 auto", borderRadius: 5, cursor: "pointer", background: blocked ? THEME.danger : "#eef1f5", border: pending ? "2px solid #f59e0b" : `1px solid ${THEME.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}
+                          style={{ width: 26, height: 26, margin: "0 auto", borderRadius: 5, cursor: "pointer", background: blocked ? THEME.danger : THEME.surface2, border: pending ? "2px solid #f59e0b" : `1px solid ${THEME.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}
                         >
                           {blocked && <X size={13} color="#fff" />}
                         </div>

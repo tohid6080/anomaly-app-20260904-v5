@@ -216,7 +216,7 @@ function ResultsList({ indicatorKey, indicatorName, currentUser, onBack }) {
                   </td>
                   <td style={{ padding: "8px", textAlign: "center" }}>
                     {caByAssessment[r.id] ? (
-                      <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: STATUS_META[caByAssessment[r.id].status]?.bg || "#eef1f5", color: STATUS_META[caByAssessment[r.id].status]?.color || THEME.text3, fontWeight: 600 }}>
+                      <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: STATUS_META[caByAssessment[r.id].status]?.bg || THEME.surface2, color: STATUS_META[caByAssessment[r.id].status]?.color || THEME.text3, fontWeight: 600 }}>
                         {caByAssessment[r.id].actionNumber} — {STATUS_META[caByAssessment[r.id].status]?.label || caByAssessment[r.id].status}
                       </span>
                     ) : (

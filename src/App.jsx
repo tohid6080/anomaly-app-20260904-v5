@@ -1939,7 +1939,7 @@ function EmployerAccountManager({ onBack }) {
           <label style={styles.label}>{t("eamAccessLevel")}</label>
           <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
             <button type="button" onClick={() => setCanEdit(true)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: canEdit ? "2px solid #0d8f8a" : "1px solid #e3e8ee", background: canEdit ? "#e3f5f4" : "#fff", color: "#0d8f8a", fontSize: 13, cursor: "pointer", fontWeight: canEdit ? "bold" : "normal" }}>{t("eamFullAccess")}</button>
-            <button type="button" onClick={() => setCanEdit(false)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: !canEdit ? "2px solid #123a54" : "1px solid #e3e8ee", background: !canEdit ? "#f1f5f9" : "#fff", color: "#334155", fontSize: 13, cursor: "pointer", fontWeight: !canEdit ? "bold" : "normal" }}>{t("eamViewOnly")}</button>
+            <button type="button" onClick={() => setCanEdit(false)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: !canEdit ? "2px solid #123a54" : "1px solid #e3e8ee", background: !canEdit ? THEME.surface2 : "#fff", color: "#334155", fontSize: 13, cursor: "pointer", fontWeight: !canEdit ? "bold" : "normal" }}>{t("eamViewOnly")}</button>
           </div>
           {formError && <p style={styles.error}>{formError}</p>}
           <button type="button" style={styles.button} onClick={handleAdd}>{t("eamAddAccountBtn")}</button>
@@ -1969,7 +1969,7 @@ function EmployerAccountManager({ onBack }) {
             <label style={styles.label}>{t("eamAccessLevel")}</label>
             <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
               <button type="button" onClick={() => setEditData({ ...editData, canEdit: true })} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: editData.canEdit ? "2px solid #0d8f8a" : "1px solid #e3e8ee", background: editData.canEdit ? "#e3f5f4" : "#fff", color: "#0d8f8a", fontSize: 13, cursor: "pointer" }}>{t("eamFullAccessShort")}</button>
-              <button type="button" onClick={() => setEditData({ ...editData, canEdit: false })} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: !editData.canEdit ? "2px solid #123a54" : "1px solid #e3e8ee", background: !editData.canEdit ? "#f1f5f9" : "#fff", color: "#334155", fontSize: 13, cursor: "pointer" }}>{t("eamViewOnly")}</button>
+              <button type="button" onClick={() => setEditData({ ...editData, canEdit: false })} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: !editData.canEdit ? "2px solid #123a54" : "1px solid #e3e8ee", background: !editData.canEdit ? THEME.surface2 : "#fff", color: "#334155", fontSize: 13, cursor: "pointer" }}>{t("eamViewOnly")}</button>
             </div>
             <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
               <button type="button" style={styles.button} onClick={() => saveEdit(a.id)}>{t("commonSave")}</button>
@@ -2281,7 +2281,7 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
         <label style={styles.label}>{t("afNeedsRiskAssessment")}</label>
         <div style={{ display: "flex", gap: 8, marginBottom: needsRiskAssessment ? 10 : 0 }}>
           <button type="button" onClick={() => setNeedsRiskAssessment(true)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: needsRiskAssessment ? "2px solid #0d8f8a" : "1px solid #e3e8ee", background: needsRiskAssessment ? "#e3f5f4" : "#fff", color: "#0d8f8a", fontSize: 13, cursor: "pointer" }}>{t("commonYes")}</button>
-          <button type="button" onClick={() => setNeedsRiskAssessment(false)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: !needsRiskAssessment ? "2px solid #123a54" : "1px solid #e3e8ee", background: !needsRiskAssessment ? "#f1f5f9" : "#fff", color: "#334155", fontSize: 13, cursor: "pointer" }}>{t("commonNo")}</button>
+          <button type="button" onClick={() => setNeedsRiskAssessment(false)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: !needsRiskAssessment ? "2px solid #123a54" : "1px solid #e3e8ee", background: !needsRiskAssessment ? THEME.surface2 : "#fff", color: "#334155", fontSize: 13, cursor: "pointer" }}>{t("commonNo")}</button>
         </div>
         {needsRiskAssessment && (
           <>
@@ -2293,7 +2293,7 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
         <label style={styles.label}>{t("afAffectsBarrier")}</label>
         <div style={{ display: "flex", gap: 8, marginBottom: affectsBarrier ? 10 : 0 }}>
           <button type="button" onClick={() => setAffectsBarrier(true)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: affectsBarrier ? "2px solid #0d8f8a" : "1px solid #e3e8ee", background: affectsBarrier ? "#e3f5f4" : "#fff", color: "#0d8f8a", fontSize: 13, cursor: "pointer" }}>{t("commonYes")}</button>
-          <button type="button" onClick={() => { setAffectsBarrier(false); setSelectedBowtieId(""); setSelectedBarrierIds([]); }} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: !affectsBarrier ? "2px solid #123a54" : "1px solid #e3e8ee", background: !affectsBarrier ? "#f1f5f9" : "#fff", color: "#334155", fontSize: 13, cursor: "pointer" }}>{t("commonNo")}</button>
+          <button type="button" onClick={() => { setAffectsBarrier(false); setSelectedBowtieId(""); setSelectedBarrierIds([]); }} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: !affectsBarrier ? "2px solid #123a54" : "1px solid #e3e8ee", background: !affectsBarrier ? THEME.surface2 : "#fff", color: "#334155", fontSize: 13, cursor: "pointer" }}>{t("commonNo")}</button>
         </div>
         {affectsBarrier && (
           <div style={{ background: "#f7f9fa", border: "1px solid #e3e8ee", borderRadius: 8, padding: 12, marginBottom: 10 }}>
@@ -2314,7 +2314,7 @@ function AnomalyForm({ onBack, currentUser, onSaved }) {
                 {!loadingBarriers && barrierOptions.map((b) => {
                   const checked = selectedBarrierIds.includes(b.id);
                   return (
-                    <label key={b.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 4px", fontSize: 12.5, color: "#152535", cursor: "pointer", borderBottom: "1px solid #eef1f5" }}>
+                    <label key={b.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 4px", fontSize: 12.5, color: THEME.text, cursor: "pointer", borderBottom: `1px solid ${THEME.borderSoft}` }}>
                       <input
                         type="checkbox"
                         checked={checked}
@@ -3100,7 +3100,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
             {isReviewer && a.status === "pending_review" && (
               <div>
                 {a.contractorAction && (
-                  <div style={{ fontSize: 13, background: "#f8fafc", padding: 10, borderRadius: 8, marginBottom: 12 }}>
+                  <div style={{ fontSize: 13, background: THEME.surface2, padding: 10, borderRadius: 8, marginBottom: 12 }}>
                     <b>{t("contractorActionDescLabel")}</b> {a.contractorAction}
                   </div>
                 )}
@@ -3137,7 +3137,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
               </div>
             )}
             {gateMap[a.id] && (
-              <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 9, padding: 12, marginTop: 10, marginBottom: 10 }}>
+              <div style={{ background: THEME.surface2, border: "1px solid #bfdbfe", borderRadius: 9, padding: 12, marginTop: 10, marginBottom: 10 }}>
                 <p style={{ fontSize: 11.5, fontWeight: 700, color: "#1d4ed8", margin: "0 0 8px" }}>
                   {t("gateAppGateHeading", { status: gateStatusLabel(gateMap[a.id].status) })}
                 </p>
@@ -3269,7 +3269,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
             )}
             {isReadOnlyReviewer && (
               <div style={{ fontSize: 13, color: "#555", lineHeight: 1.9 }}>
-                <div style={{ background: "#f1f5f9", color: "#334155", padding: "4px 10px", borderRadius: 999, display: "inline-block", fontSize: 11, marginBottom: 8 }}>{t("viewOnlyAccess")}</div>
+                <div style={{ background: THEME.surface2, color: "#334155", padding: "4px 10px", borderRadius: 999, display: "inline-block", fontSize: 11, marginBottom: 8 }}>{t("viewOnlyAccess")}</div>
                 {a.correctiveAction && <div><b>{t("correctiveActionLabel")}</b> {a.correctiveAction}</div>}
                 {a.contractorAction && <div><b>{t("contractorActionLabel")}</b> {a.contractorAction}</div>}
                 {a.obstacles && <div><b>{t("obstaclesLabel")}</b> {a.obstacles}</div>}
@@ -3365,7 +3365,7 @@ function HeaderMoreMenu({ onSettings, onReportError, onLogout }) {
                 color: it.danger ? THEME.danger : THEME.text2, fontSize: 13, fontWeight: 600,
                 fontFamily: THEME.font, textAlign: dir === "rtl" ? "right" : "left",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = it.danger ? "#fdecec" : "#f4f6f9")}
+              onMouseEnter={(e) => (e.currentTarget.style.background = it.danger ? "#fdecec" : THEME.surface2)}
               onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
             >
               <it.icon size={15} style={{ flexShrink: 0 }} />
@@ -4076,7 +4076,7 @@ function AnnouncementDetailModal({ announcement, setView, onClose }) {
         </button>
 
         {announcement.imageUrl ? (
-          <div style={{ background: "#e9eef3", display: "flex", justifyContent: "center", maxHeight: "44vh", overflow: "hidden", flexShrink: 0 }}>
+          <div style={{ background: THEME.surface2, display: "flex", justifyContent: "center", maxHeight: "44vh", overflow: "hidden", flexShrink: 0 }}>
             <img src={announcement.imageUrl} alt="" style={{ width: "100%", maxHeight: "44vh", objectFit: "contain", display: "block" }} />
           </div>
         ) : (
@@ -4146,7 +4146,7 @@ function AnnouncementSlider({ announcements, setView }) {
         style={{ display: "flex", flexWrap: "wrap", cursor: "pointer" }}
       >
         {/* ناحیه‌ی تصویر — عرض واکنش‌گرا، ارتفاع کاملاً ثابت به پیکسل */}
-        <div style={{ flex: "1 1 340px", minWidth: 260, height: 340, background: current.imageUrl ? "#e9eef3" : THEME.tealSoft, position: "relative", overflow: "hidden" }}>
+        <div style={{ flex: "1 1 340px", minWidth: 260, height: 340, background: current.imageUrl ? THEME.surface2 : THEME.tealSoft, position: "relative", overflow: "hidden" }}>
           {current.imageUrl ? (
             <img src={current.imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
           ) : (
@@ -4303,7 +4303,7 @@ function MobileAnnouncementBanner({ setView }) {
         title={t("commonView")}
         style={{ display: "flex", alignItems: "center", gap: 10, paddingInlineEnd: 26, cursor: "pointer" }}
       >
-        <div style={{ width: 44, height: 44, borderRadius: 10, background: current.imageUrl ? "#e9eef3" : THEME.tealSoft, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
+        <div style={{ width: 44, height: 44, borderRadius: 10, background: current.imageUrl ? THEME.surface2 : THEME.tealSoft, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
           {current.imageUrl ? <img src={current.imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Icon size={20} color={THEME.tealDeep} />}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>

@@ -181,7 +181,7 @@ export default function BowTieDashboard({ onBack, currentUser, readOnly, role })
           <div style={styles.statNum}>{counts.total}</div>
           <div style={styles.statLabel}>{t("statTotalItems")}</div>
         </div>
-        <div style={{ ...styles.statBox, background: "#eef1f5" }}>
+        <div style={{ ...styles.statBox, background: THEME.surface2 }}>
           <div style={{ ...styles.statNum, color: THEME.text2 }}>{counts.draft}</div>
           <div style={styles.statLabel}>{t("bowtieStatusDraft")}</div>
         </div>

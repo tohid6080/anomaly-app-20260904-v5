@@ -1,4 +1,4 @@
-import { sb, sbOk, sbErrMsg, uid, todayISO, getCurrentCompanyId } from "../shared.js";
+import { sb, sbOk, sbErrMsg, uid, todayISO, getCurrentCompanyId, THEME } from "../shared.js";
 import { offlineWrite, offlineWriteFile } from "../offline/offlineWrite.js";
 import { isOnline } from "../offline/networkStatus.js";
 import { checkUploadAllowed } from "../offline/dbSizeMonitor.js";
@@ -55,7 +55,7 @@ export function personnelStatusMeta(status) {
 // سوابق/مدارک/معاینات قبلی‌اش حذف نمی‌شود.
 export const EMPLOYMENT_STATUS = [
   { value: "active", labelKey: "esActive", color: "#166534", bg: "#dcfce7" },
-  { value: "terminated", labelKey: "esTerminated", color: "#5b6b7d", bg: "#eef1f5" },
+  { value: "terminated", labelKey: "esTerminated", color: "#5b6b7d", bg: THEME.surface2 },
 ];
 export function employmentStatusMeta(value) {
   return EMPLOYMENT_STATUS.find((s) => s.value === value) || EMPLOYMENT_STATUS[0];

@@ -415,7 +415,7 @@ function StorageOverviewCard({ onNavigate }) {
             <MiniStat label={t("saCapacityPercent")} value={percent != null ? `${percent.toLocaleString(numLocale(), { maximumFractionDigits: 1 })}${pctSign()}` : "—"} color={status?.color} />
           </div>
           {percent != null && (
-            <div style={{ height: 8, background: "#eef1f5", borderRadius: 4, overflow: "hidden", marginBottom: 8 }}>
+            <div style={{ height: 8, background: THEME.surface2, borderRadius: 4, overflow: "hidden", marginBottom: 8 }}>
               <div style={{ height: "100%", width: `${percent}%`, background: status.color, transition: "width 0.3s" }} />
             </div>
           )}
@@ -506,7 +506,7 @@ function StorageUsagePage() {
               <MiniStat label={t("saTotalObjectCount")} value={data.totalObjects?.toLocaleString(numLocale()) ?? "—"} />
             </div>
             {percent != null && (
-              <div style={{ height: 10, background: "#eef1f5", borderRadius: 5, overflow: "hidden", marginBottom: 8 }}>
+              <div style={{ height: 10, background: THEME.surface2, borderRadius: 5, overflow: "hidden", marginBottom: 8 }}>
                 <div style={{ height: "100%", width: `${percent}%`, background: status.color, transition: "width 0.3s" }} />
               </div>
             )}
@@ -1406,7 +1406,7 @@ function AppUpdateManagementTab({ currentAdmin }) {
                   </td>
                   <td style={td}>{r.versionCode}</td>
                   <td style={td}>
-                    <span style={{ fontSize: 10.5, padding: "2px 9px", borderRadius: 999, fontWeight: 700, background: r.isPublished ? "#dcfce7" : "#eef1f5", color: r.isPublished ? "#166534" : THEME.text3 }}>
+                    <span style={{ fontSize: 10.5, padding: "2px 9px", borderRadius: 999, fontWeight: 700, background: r.isPublished ? "#dcfce7" : THEME.surface2, color: r.isPublished ? "#166534" : THEME.text3 }}>
                       {r.isPublished ? t("arStatusPublished") : t("arStatusUnpublished")}
                     </span>
                   </td>
@@ -1683,7 +1683,7 @@ function DashboardWidgetsSection({ currentAdmin }) {
                 </span>
                 <button
                   type="button" onClick={() => toggle(w.key)}
-                  style={{ display: "flex", alignItems: "center", gap: 5, background: w.isVisible ? "#dcfce7" : "#eef1f5", color: w.isVisible ? "#166534" : THEME.text3, border: "none", borderRadius: 999, padding: "5px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font }}
+                  style={{ display: "flex", alignItems: "center", gap: 5, background: w.isVisible ? "#dcfce7" : THEME.surface2, color: w.isVisible ? "#166534" : THEME.text3, border: "none", borderRadius: 999, padding: "5px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font }}
                 >
                   {w.isVisible ? <Eye size={13} /> : <EyeOff size={13} />} {w.isVisible ? t("saVisibleShown") : t("saHidden")}
                 </button>
@@ -1705,7 +1705,7 @@ function DashboardWidgetsSection({ currentAdmin }) {
 
 const ROLE_LABELS = { all: "saRoleAll", employer: "saRoleEmployerOnly", contractor: "saRoleContractorOnly" };
 const PRIORITY_META = {
-  low: { labelKey: "saPrioLow", color: "#5b6b7d", bg: "#eef1f5" },
+  low: { labelKey: "saPrioLow", color: "#5b6b7d", bg: THEME.surface2 },
   medium: { labelKey: "saPrioMedium", color: "#92400e", bg: "#fef3c7" },
   high: { labelKey: "saPrioHigh", color: "#b91c1c", bg: "#fee2e2" },
 };
@@ -1769,7 +1769,7 @@ function NotificationManagementTab({ currentAdmin }) {
                 <span style={{ fontSize: 10, padding: "2px 9px", borderRadius: 999, background: PRIORITY_META[nt.priority].bg, color: PRIORITY_META[nt.priority].color, fontWeight: 600 }}>
                   {t("saPriorityBadge", { label: t(PRIORITY_META[nt.priority].labelKey) })}
                 </span>
-                <span style={{ fontSize: 10, padding: "2px 9px", borderRadius: 999, background: nt.isEnabled ? "#dcfce7" : "#eef1f5", color: nt.isEnabled ? "#166534" : THEME.text3, fontWeight: 600 }}>
+                <span style={{ fontSize: 10, padding: "2px 9px", borderRadius: 999, background: nt.isEnabled ? "#dcfce7" : THEME.surface2, color: nt.isEnabled ? "#166534" : THEME.text3, fontWeight: 600 }}>
                   {nt.isEnabled ? t("commonActive") : t("commonInactive")}
                 </span>
               </div>
@@ -2322,7 +2322,7 @@ function AnnouncementImageUploader({ value, aspectRatio, width, uploading, onUpl
   const clearBeforePick = (e) => { e.target.value = ""; };
   return value ? (
     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-      <div style={{ width, aspectRatio, borderRadius: 8, overflow: "hidden", border: `1px solid ${THEME.border}`, flexShrink: 0, background: "#e9eef3" }}>
+      <div style={{ width, aspectRatio, borderRadius: 8, overflow: "hidden", border: `1px solid ${THEME.border}`, flexShrink: 0, background: THEME.surface2 }}>
         <img src={value} alt={t("saPreviewAlt")} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -2564,9 +2564,9 @@ function AnnouncementManagementTab({ currentAdmin, companies }) {
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                   <span style={{ fontSize: 13, fontWeight: 700, color: THEME.heading }}>{a.title || t("saAnNoTitle")}</span>
-                  <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: a.isActive ? "#dcfce7" : "#eef1f5", color: a.isActive ? "#166534" : THEME.text3, fontWeight: 600 }}>{a.isActive ? t("commonActive") : t("commonInactive")}</span>
-                  <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#eef1f5", color: THEME.text3, fontWeight: 600 }}>{t("saPriorityBadge", { label: a.priority })}</span>
-                  <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#eef1f5", color: THEME.text3, fontWeight: 600 }}>{t("saSecondsN", { n: a.displaySeconds || 10 })}</span>
+                  <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: a.isActive ? "#dcfce7" : THEME.surface2, color: a.isActive ? "#166534" : THEME.text3, fontWeight: 600 }}>{a.isActive ? t("commonActive") : t("commonInactive")}</span>
+                  <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: THEME.surface2, color: THEME.text3, fontWeight: 600 }}>{t("saPriorityBadge", { label: a.priority })}</span>
+                  <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: THEME.surface2, color: THEME.text3, fontWeight: 600 }}>{t("saSecondsN", { n: a.displaySeconds || 10 })}</span>
                   <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#dbeafe", color: "#1d4ed8", fontWeight: 600 }}>
                     {{ login: t("saAnLocLoginShort"), home: t("saAnLocHomeShort"), both: t("saAnLocBothShort") }[a.displayLocation || "both"]}
                   </span>
@@ -3300,7 +3300,7 @@ function PlansManager({ plans, companies, currentAdmin, onChanged }) {
                   <td style={{ padding: "8px", textAlign: "center" }}>{p.maxPersonnel ?? t("saUnlimited")}</td>
                   <td style={{ padding: "8px", textAlign: "center" }}>{p.maxStorageMb ?? t("saUnlimited")}</td>
                   <td style={{ padding: "8px", textAlign: "center" }}>
-                    <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: p.isActive ? "#dcfce7" : "#eef1f5", color: p.isActive ? "#166534" : "#5b6b7d", fontWeight: 600 }}>
+                    <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: p.isActive ? "#dcfce7" : THEME.surface2, color: p.isActive ? "#166534" : "#5b6b7d", fontWeight: 600 }}>
                       {p.isActive ? t("commonActive") : t("commonInactive")}
                     </span>
                   </td>
@@ -3980,7 +3980,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
             {onlinePayments.map((p) => {
               const st = p.status === "paid" ? { labelKey: "saPaySuccess", bg: "#dcfce7", color: "#166534" }
                 : p.status === "failed" ? { labelKey: "saPayFailed", bg: "#fee2e2", color: "#991b1b" }
-                : p.status === "cancelled" ? { labelKey: "saPayCancelled", bg: "#eef1f5", color: THEME.text3 }
+                : p.status === "cancelled" ? { labelKey: "saPayCancelled", bg: THEME.surface2, color: THEME.text3 }
                 : { labelKey: "saPayPending", bg: "#fef3c7", color: "#92400e" };
               return (
                 <div key={p.id} style={{ fontSize: 11.5, color: THEME.text2, padding: "5px 0", borderBottom: `1px solid ${THEME.border}`, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>

@@ -1,4 +1,4 @@
-import { sb, sbOk, sbErrMsg, uid, getCurrentCompanyId } from "../shared.js";
+import { sb, sbOk, sbErrMsg, uid, getCurrentCompanyId, THEME } from "../shared.js";
 import { offlineWrite } from "../offline/offlineWrite.js";
 import { isOnline } from "../offline/networkStatus.js";
 import { getRecordsByModule, putRecord } from "../offline/offlineDb.js";
@@ -15,10 +15,10 @@ import { translate, getCurrentLang } from "../i18n/translations.js";
  */
 
 export const BOWTIE_STATUSES = [
-  { value: "draft", labelKey: "bowtieStatusDraft", color: "#5b6b7d", bg: "#eef1f5" },
+  { value: "draft", labelKey: "bowtieStatusDraft", color: "#5b6b7d", bg: THEME.surface2 },
   { value: "in_review", labelKey: "bowtieStatusInReview", color: "#b45309", bg: "#fef3c7" },
   { value: "approved", labelKey: "bowtieStatusApproved", color: "#166534", bg: "#dcfce7" },
-  { value: "archived", labelKey: "bowtieStatusArchived", color: "#475569", bg: "#f1f5f9" },
+  { value: "archived", labelKey: "bowtieStatusArchived", color: "#475569", bg: THEME.surface2 },
 ];
 
 export function bowtieStatusMeta(status) {

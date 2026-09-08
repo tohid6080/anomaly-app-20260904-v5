@@ -122,7 +122,7 @@ export default function PersonnelManagementDashboard({ personnelList, contractor
       </div>
 
       <div style={styles.statsRow}>
-        <KpiCard label={t("pmdKpiTotal")} value={kpis.total} bg="#eef1f5" color={THEME.navy} />
+        <KpiCard label={t("pmdKpiTotal")} value={kpis.total} bg={THEME.surface2} color={THEME.heading} />
         <KpiCard label={t("commonActive")} value={kpis.active} bg="#dcfce7" color="#166534" />
         <KpiCard label={t("statusPendingReview")} value={kpis.pending} bg="#dbeafe" color="#1d4ed8" />
         <KpiCard label={t("pmdKpiRejected")} value={kpis.rejected} bg="#fdecec" color={THEME.danger} />
@@ -161,7 +161,7 @@ function ChartBlock({ title, rows }) {
             <span>{r.label}</span>
             <span style={{ fontWeight: 700 }}>{r.count}</span>
           </div>
-          <div style={{ background: "#eef1f5", borderRadius: 6, height: 10, overflow: "hidden" }}>
+          <div style={{ background: THEME.surface2, borderRadius: 6, height: 10, overflow: "hidden" }}>
             <div style={{ width: `${(r.count / max) * 100}%`, height: "100%", background: r.color, borderRadius: 6 }} />
           </div>
         </div>

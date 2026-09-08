@@ -163,7 +163,7 @@ export default function TrainingManager({ onBack }) {
                         <td key={p.id} style={{ padding: 2, textAlign: "center" }}>
                           <div
                             onClick={() => toggleCell(c.id, p.id)}
-                            style={{ width: 26, height: 26, margin: "0 auto", borderRadius: 5, cursor: "pointer", background: req ? THEME.teal : "#eef1f5", border: pending ? "2px solid #f59e0b" : `1px solid ${THEME.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}
+                            style={{ width: 26, height: 26, margin: "0 auto", borderRadius: 5, cursor: "pointer", background: req ? THEME.teal : THEME.surface2, border: pending ? "2px solid #f59e0b" : `1px solid ${THEME.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}
                           >
                             {req && <X size={13} color="#fff" style={{ transform: "rotate(45deg)" }} />}
                           </div>

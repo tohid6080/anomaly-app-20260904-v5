@@ -354,7 +354,7 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
       )}
 
       {gateMap[expandedItem.id] && (gateMap[expandedItem.id].status === "pending_approval" || gateMap[expandedItem.id].status === "assigned_review" || gateMap[expandedItem.id].status === "reviewed") && (
-        <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 9, padding: 12, marginBottom: 10 }}>
+        <div style={{ background: THEME.surface2, border: "1px solid #bfdbfe", borderRadius: 9, padding: 12, marginBottom: 10 }}>
           <p style={{ fontSize: 12, fontWeight: 700, color: "#1d4ed8", margin: "0 0 8px" }}>
             {t("gateReviewGateHeading", { status: gateStatusLabel(gateMap[expandedItem.id].status) })}
           </p>

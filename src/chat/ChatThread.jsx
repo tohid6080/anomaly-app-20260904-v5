@@ -100,7 +100,7 @@ export default function ChatThread({ conversationId, currentUser, onBack }) {
           if (m.isSystem) {
             return (
               <div key={m.id} style={{ textAlign: "center", margin: "10px 0" }}>
-                <span style={{ fontSize: 11, color: THEME.text3, background: "#eef1f5", padding: "4px 10px", borderRadius: 999 }}>{m.body}</span>
+                <span style={{ fontSize: 11, color: THEME.text3, background: THEME.surface2, padding: "4px 10px", borderRadius: 999 }}>{m.body}</span>
               </div>
             );
           }

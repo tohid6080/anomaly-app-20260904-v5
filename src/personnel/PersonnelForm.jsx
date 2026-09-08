@@ -204,7 +204,7 @@ export default function PersonnelForm({ onBack, onSaved, currentUser }) {
             style={{
               flex: 1, padding: "12px 8px", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font,
               border: occHealthPath === "no_certificate" ? `2px solid ${THEME.navyMid}` : `1.5px solid ${THEME.border}`,
-              background: occHealthPath === "no_certificate" ? "#eef1f5" : "#fff", color: occHealthPath === "no_certificate" ? THEME.navy : THEME.text2,
+              background: occHealthPath === "no_certificate" ? THEME.surface2 : "#fff", color: occHealthPath === "no_certificate" ? THEME.navy : THEME.text2,
             }}
           >
             {t("pfNoCertificate")}

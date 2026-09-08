@@ -1,4 +1,4 @@
-import { sb, sbOk, uid, todayISO, getCurrentCompanyId } from "../shared.js";
+import { sb, sbOk, uid, todayISO, getCurrentCompanyId, THEME } from "../shared.js";
 import { offlineWrite, offlineWriteFile } from "../offline/offlineWrite.js";
 import { isOnline } from "../offline/networkStatus.js";
 import { getRecordsByModule, putRecord } from "../offline/offlineDb.js";
@@ -21,7 +21,7 @@ export const SCAFFOLD_STATUSES = [
   { value: "needs_correction", labelKey: "scaffStatusNeedsCorrection", color: "#c92a2a", bg: "#fdecec" },
   { value: "tag_issued", labelKey: "scaffStatusTagIssued", color: "#166534", bg: "#dcfce7" },
   { value: "removal_requested", labelKey: "scaffStatusRemovalRequested", color: "#7c3aed", bg: "#f3e8ff" },
-  { value: "removed", labelKey: "scaffStatusRemoved", color: "#5b6b7d", bg: "#eef1f5" },
+  { value: "removed", labelKey: "scaffStatusRemoved", color: "#5b6b7d", bg: THEME.surface2 },
 ];
 export function scaffoldStatusMeta(v) {
   return SCAFFOLD_STATUSES.find((s) => s.value === v) || SCAFFOLD_STATUSES[0];

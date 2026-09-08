@@ -236,7 +236,7 @@ function PathCard({ path, refGroups, editable, onRefresh }) {
     <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 16, marginBottom: 14 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
         <span style={{ fontSize: 13.5, fontWeight: 700, color: THEME.heading }}>{t("twPathN", { n: path.pathNo })}</span>
-        <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: filled ? "#dcfce7" : "#eef1f5", color: filled ? "#166534" : THEME.text3, fontWeight: 600 }}>{filled ? t("twPathFilled") : t("twPathEmpty")}</span>
+        <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: filled ? "#dcfce7" : THEME.surface2, color: filled ? "#166534" : THEME.text3, fontWeight: 600 }}>{filled ? t("twPathFilled") : t("twPathEmpty")}</span>
       </div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <select style={{ ...styles.input, marginTop: 0, width: 140 }} value={type} onChange={(e) => setType(e.target.value)} disabled={!editable} dir={dir}>

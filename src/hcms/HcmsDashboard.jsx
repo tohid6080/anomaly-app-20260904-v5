@@ -397,7 +397,7 @@ function SuggestionChips({ items, onPick }) {
           onClick={() => onPick(item)}
           title={item}
           style={{
-            fontSize: 10.5, padding: "3px 9px", borderRadius: 999, background: "#eef1f5", color: THEME.navyMid,
+            fontSize: 10.5, padding: "3px 9px", borderRadius: 999, background: THEME.surface2, color: THEME.navyMid,
             border: `1px solid ${THEME.border}`, cursor: "pointer", maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
           }}
         >

@@ -91,7 +91,7 @@ export default function LanguageSelect({ variant = "light", compact = false, ali
                   fontSize: 13, fontWeight: active ? 700 : 500, fontFamily: THEME.font,
                   textAlign: dir === "rtl" ? "right" : "left",
                 }}
-                onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "#f4f6f9"; }}
+                onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = THEME.surface2; }}
                 onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}
               >
                 <span style={{ fontSize: 16 }} aria-hidden="true">{l.flag}</span>

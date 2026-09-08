@@ -73,7 +73,7 @@ function ThresholdRow({ label, value, onChange, color }) {
           type="number" min={0} max={100} style={{ ...styles.input, marginBottom: 0, width: 90 }}
           value={value} onChange={(e) => onChange(Number(e.target.value))} dir="ltr"
         />
-        <div style={{ flex: 1, height: 8, background: "#eef1f5", borderRadius: 4, position: "relative" }}>
+        <div style={{ flex: 1, height: 8, background: THEME.surface2, borderRadius: 4, position: "relative" }}>
           <div style={{ position: "absolute", insetInlineStart: 0, top: 0, bottom: 0, width: `${value}%`, background: color, borderRadius: 4 }} />
         </div>
         <span style={{ fontSize: 11, color: THEME.text3, width: 24 }}>٪</span>

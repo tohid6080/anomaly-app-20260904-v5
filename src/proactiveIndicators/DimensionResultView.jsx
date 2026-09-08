@@ -39,7 +39,7 @@ export default function DimensionResultView({ result }) {
               <span style={{ fontSize: 12, color: THEME.text2 }}>{dimTitle(d.title)}</span>
               <span style={{ fontSize: 12, fontWeight: 700, color: meta.color }}>{d.score} — {t(meta.labelKey)}</span>
             </div>
-            <div style={{ height: 8, background: "#eef1f5", borderRadius: 4, overflow: "hidden" }}>
+            <div style={{ height: 8, background: THEME.surface2, borderRadius: 4, overflow: "hidden" }}>
               <div style={{ height: "100%", width: `${pct}%`, background: meta.color, transition: "width 0.3s" }} />
             </div>
           </div>
