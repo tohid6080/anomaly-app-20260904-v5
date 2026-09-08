@@ -123,18 +123,27 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
 
   if (loading) return <div style={{ padding: 40, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</div>;
 
-  const NAV_ITEMS = [
-    { key: "overview", labelKey: "saNavOverview", icon: LayoutDashboard },
-    { key: "companies", labelKey: "saNavCompanies", icon: Building2 },
-    { key: "accounts", labelKey: "saNavAccounts", icon: Users },
-    { key: "plans", labelKey: "saNavPlans", icon: Layers },
-    { key: "storage", labelKey: "saStorageUsageTitle", icon: HardDrive },
-    { key: "monitoring", labelKey: "saNavMonitoring", icon: Activity },
-    { key: "systemConfig", labelKey: "saNavSystemConfig", icon: Settings2 },
-    { key: "auditLog", labelKey: "saNavAuditLog", icon: FileClock },
-    { key: "errorReports", labelKey: "saNavErrorReports", icon: AlertTriangle },
-    { key: "cardTransferPayments", labelKey: "saNavCardPayments", icon: CreditCard },
-    { key: "trialRequests", labelKey: "saNavTrialRequests", icon: ClipboardList },
+  // ناوبری گروه‌بندی‌شده (D-012): همان ۱۱ مقصد، در ۴ دسته‌ی حوزه‌ای.
+  const NAV_GROUPS = [
+    { labelKey: "saNavGroupCustomers", items: [
+      { key: "overview", labelKey: "saNavOverview", icon: LayoutDashboard },
+      { key: "companies", labelKey: "saNavCompanies", icon: Building2 },
+      { key: "accounts", labelKey: "saNavAccounts", icon: Users },
+      { key: "plans", labelKey: "saNavPlans", icon: Layers },
+    ] },
+    { labelKey: "saNavGroupMonitoring", items: [
+      { key: "monitoring", labelKey: "saNavMonitoring", icon: Activity },
+      { key: "storage", labelKey: "saStorageUsageTitle", icon: HardDrive },
+      { key: "auditLog", labelKey: "saNavAuditLog", icon: FileClock },
+      { key: "errorReports", labelKey: "saNavErrorReports", icon: AlertTriangle },
+    ] },
+    { labelKey: "saNavGroupConfig", items: [
+      { key: "systemConfig", labelKey: "saNavSystemConfig", icon: Settings2 },
+    ] },
+    { labelKey: "saNavGroupBilling", items: [
+      { key: "cardTransferPayments", labelKey: "saNavCardPayments", icon: CreditCard },
+      { key: "trialRequests", labelKey: "saNavTrialRequests", icon: ClipboardList },
+    ] },
   ];
 
   return (
@@ -158,24 +167,31 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
       {showChangePassword && <SuperAdminChangePassword onClose={() => setShowChangePassword(false)} />}
 
       <div style={{ display: "flex", alignItems: "flex-start", maxWidth: 1400, margin: "0 auto" }}>
-        <nav style={{ width: 200, flexShrink: 0, background: THEME.surface, borderInlineStart: `1px solid ${THEME.border}`, minHeight: "calc(100vh - 53px)", padding: "16px 10px" }}>
-          {NAV_ITEMS.map((item) => {
-            const Icon = item.icon;
-            const active = page === item.key;
-            return (
-              <button
-                key={item.key} type="button" onClick={() => setPage(item.key)}
-                style={{
-                  display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "start",
-                  padding: "10px 12px", borderRadius: 8, border: "none", marginBottom: 4, cursor: "pointer",
-                  background: active ? THEME.teal : "transparent", color: active ? "#fff" : THEME.text2,
-                  fontSize: 12.5, fontWeight: active ? 700 : 500, fontFamily: THEME.font,
-                }}
-              >
-                <Icon size={14} /> {t(item.labelKey)}
-              </button>
-            );
-          })}
+        <nav style={{ width: 200, flexShrink: 0, background: THEME.surface, borderInlineStart: `1px solid ${THEME.border}`, minHeight: "calc(100vh - 53px)", padding: "12px 10px" }}>
+          {NAV_GROUPS.map((grp) => (
+            <div key={grp.labelKey} style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: THEME.text3, margin: "6px 10px 5px" }}>
+                {t(grp.labelKey)}
+              </div>
+              {grp.items.map((item) => {
+                const Icon = item.icon;
+                const active = page === item.key;
+                return (
+                  <button
+                    key={item.key} type="button" onClick={() => setPage(item.key)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "start",
+                      padding: "9px 12px", borderRadius: 8, border: "none", marginBottom: 3, cursor: "pointer",
+                      background: active ? THEME.teal : "transparent", color: active ? "#fff" : THEME.text2,
+                      fontSize: 12.5, fontWeight: active ? 700 : 500, fontFamily: THEME.font,
+                    }}
+                  >
+                    <Icon size={14} /> {t(item.labelKey)}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
         <div style={{ flex: 1, padding: 18, minWidth: 0 }}>
@@ -217,6 +233,16 @@ function DashboardOverview({ companies, summary, usageStats, onNavigate }) {
   const [failedLoginCount, setFailedLoginCount] = useState(null);
   const [inactiveCount, setInactiveCount] = useState(null);
   const [paymentAlertCount, setPaymentAlertCount] = useState(null);
+  const [openErrorCount, setOpenErrorCount] = useState(null);
+  const [pendingTrialCount, setPendingTrialCount] = useState(null);
+  const [recentActivity, setRecentActivity] = useState(null);
+
+  useEffect(() => {
+    // این‌ها به companies وابسته نیستند — یک بار در mount.
+    loadErrorReports("open").then((r) => setOpenErrorCount(Array.isArray(r) ? r.length : 0)).catch(() => setOpenErrorCount(0));
+    loadTrialRequests("pending").then((r) => setPendingTrialCount(Array.isArray(r) ? r.length : 0)).catch(() => setPendingTrialCount(0));
+    loadAuditLog(6).then((r) => setRecentActivity(Array.isArray(r) ? r : [])).catch(() => setRecentActivity([]));
+  }, []);
 
   useEffect(() => {
     if (companies.length === 0) return;
@@ -229,6 +255,17 @@ function DashboardOverview({ companies, summary, usageStats, onNavigate }) {
       (flags) => setPaymentAlertCount(flags.filter(Boolean).length)
     );
   }, [companies]);
+
+  const ACTION_PRETTY = {
+    create_account: t("saActionCreateAccount"), update_account: t("saActionUpdateAccount"),
+    deactivate_account: t("saActionDeactivateAccount"), reactivate_account: t("saActionReactivateAccount"),
+    reset_password: t("saActionResetPassword"), change_own_password: t("saActionChangeOwnPassword"),
+  };
+  const activityLine = (r) => {
+    const label = ACTION_PRETTY[r.action] || (r.action || "").replace(/_/g, " ");
+    const who = r.target_username || r.target_type || "";
+    return `${r.performed_by || "—"} · ${label}${who ? " — " + who : ""}`;
+  };
 
   // هشدار پایان اشتراک — پلکان دقیق (۳۰/۱۵/۷/۳/امروز/منقضی)، نه فقط یک بازه‌ی ساده
   const subscriptionAlertCount = companies.filter((c) => computeSubscriptionAlertTier(c.subscriptionEndDate)).length;
@@ -272,6 +309,31 @@ function DashboardOverview({ companies, summary, usageStats, onNavigate }) {
           label={t("saFailedLoginLabel")} value={failedLoginCount}
           onClick={() => onNavigate("monitoring")}
         />
+        <AttentionCard
+          icon={AlertTriangle} color="#b91c1c" bg="#fee2e2"
+          label={t("saOpenErrorsLabel")} value={openErrorCount}
+          onClick={() => onNavigate("errorReports")}
+        />
+        <AttentionCard
+          icon={ClipboardList} color="#92400e" bg="#fef3c7"
+          label={t("saPendingTrialsLabel")} value={pendingTrialCount}
+          onClick={() => onNavigate("trialRequests")}
+        />
+      </div>
+
+      <h3 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>{t("saRecentActivity")}</h3>
+      <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: "6px 14px", marginBottom: 16 }}>
+        {recentActivity === null && <p style={{ fontSize: 11.5, color: THEME.text3, textAlign: "center", padding: 14 }}>{t("commonLoading")}</p>}
+        {recentActivity !== null && recentActivity.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3, textAlign: "center", padding: 14 }}>{t("saNoEventsYet")}</p>}
+        {recentActivity && recentActivity.map((r, i) => (
+          <div
+            key={r.id || i} onClick={() => onNavigate("auditLog")}
+            style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: i < recentActivity.length - 1 ? `1px solid ${THEME.borderSoft}` : "none", cursor: "pointer", fontSize: 12 }}
+          >
+            <span style={{ flex: 1, color: THEME.text2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activityLine(r)}</span>
+            <span style={{ fontSize: 10.5, color: THEME.text3, flexShrink: 0, direction: "ltr" }}>{toJalaliSafe(r.created_at)}</span>
+          </div>
+        ))}
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10 }}>

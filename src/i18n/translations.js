@@ -1456,6 +1456,22 @@ export const translations = {
     "fa": "تلاش ناموفق ورود (۲۴ ساعت اخیر)",
     "en": "Failed Login Attempts (last 24h)"
   },
+  "saOpenErrorsLabel": {
+    "fa": "گزارش خطای رسیدگی‌نشده",
+    "en": "Unresolved error reports"
+  },
+  "saPendingTrialsLabel": {
+    "fa": "درخواست آزمایشیِ در انتظار",
+    "en": "Pending trial requests"
+  },
+  "saRecentActivity": {
+    "fa": "فعالیت اخیر",
+    "en": "Recent Activity"
+  },
+  "saNavGroupCustomers": { "fa": "مشتریان", "en": "Customers" },
+  "saNavGroupMonitoring": { "fa": "پایش", "en": "Monitoring" },
+  "saNavGroupConfig": { "fa": "پیکربندی", "en": "Configuration" },
+  "saNavGroupBilling": { "fa": "مالی و فروش", "en": "Billing & Sales" },
   "saQuickCompanies": {
     "fa": "مدیریت شرکت‌ها",
     "en": "Manage Companies"
