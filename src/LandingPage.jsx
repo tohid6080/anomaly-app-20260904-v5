@@ -219,8 +219,8 @@ const L = {
     modMore: "مشاهده جزئیات",
     mods: [
       ["حوادث و شبه‌حوادث", "ثبت، بررسی و تحلیل حوادث و رویدادهای نزدیک به حادثه."],
-      ["ارزیابی ریسک", "شناسایی خطر، ارزیابی و کنترل ریسک‌های فرآیندی و عملیاتی."],
-      ["بازرسی و چک‌لیست", "بازرسی‌های دوره‌ای و برنامه‌ای با چک‌لیست‌های استاندارد."],
+      ["سیستم به‌روزرسانی ارزیابی ریسک", "تأثیرگذاری بر روی بریرهای BowTie طبق موتور اثربخشی."],
+      ["سیستم ثبت و گزارش آنومالی", "بازرسی و اعلام عدم‌انطباق‌ها به پیمانکار و پایش آن‌ها."],
       ["اقدامات اصلاحی", "تعریف، تخصیص و پیگیری اقدامات اصلاحی و پیشگیرانه."],
       ["آموزش HSE", "برنامه‌ریزی دوره‌ها، سوابق آموزشی و صلاحیت افراد."],
       ["مدیریت پیمانکاران", "ارزیابی، مدارک و نظارت بر عملکرد HSE پیمانکاران."],
@@ -314,8 +314,8 @@ const L = {
     modMore: "Details",
     mods: [
       ["Incidents & near-misses", "Record, review and analyse incidents and near-miss events."],
-      ["Risk assessment", "Hazard identification, assessment and control of process & operational risk."],
-      ["Inspections & checklists", "Periodic and planned inspections with standard checklists."],
+      ["Living risk-assessment system", "Feeds BowTie barrier effectiveness through the effectiveness engine."],
+      ["Anomaly logging & reporting", "Inspect, report non-conformities to the contractor and monitor them to closure."],
       ["Corrective actions", "Define, assign and track corrective and preventive actions."],
       ["HSE training", "Plan courses, training records and personnel competency."],
       ["Contractor management", "Assessment, documents and oversight of contractor HSE performance."],
@@ -409,8 +409,8 @@ const L = {
     modMore: "Details",
     mods: [
       ["Vorfälle & Beinaheunfälle", "Vorfälle und Beinaheunfälle erfassen, prüfen und analysieren."],
-      ["Risikobewertung", "Gefährdungsermittlung, Bewertung und Kontrolle von Prozess- und Betriebsrisiken."],
-      ["Inspektionen & Checklisten", "Regelmäßige und geplante Inspektionen mit Standard-Checklisten."],
+      ["Fortlaufende Risikobewertung", "Speist die Wirksamkeit der BowTie-Barrieren über die Wirksamkeits-Engine."],
+      ["Anomalie-Erfassung & -Meldung", "Nichtkonformitäten prüfen, an den Auftragnehmer melden und bis zum Abschluss überwachen."],
       ["Korrekturmaßnahmen", "Korrektur- und Vorbeugemaßnahmen definieren, zuweisen und verfolgen."],
       ["HSE-Schulung", "Kurse planen, Schulungsnachweise und Personalkompetenz."],
       ["Auftragnehmer-Management", "Bewertung, Dokumente und Überwachung der HSE-Leistung von Auftragnehmern."],
@@ -730,7 +730,10 @@ export default function LandingPage({ onStartFree, onUserLogin, announcements, l
           </div>
           <div className="g4">
             {shownIdx.map((i) => (
-              <div key={i} className="card hoverable mcard" data-rv>
+              /* بدونِ data-rv: با تغییرِ فیلتر، کارت‌های جدید mount می‌شوند و
+                 چون IntersectionObserver دیگر اجرا نمی‌شود، روی opacity:0
+                 گیر می‌کردند («محو می‌شد»). این کارت‌ها همیشه دیده می‌شوند. */
+              <div key={i} className="card hoverable mcard">
                 <IcoBox icon={MOD_ICONS[i]} size={42} />
                 <div className="mT">{x.mods[i][0]}</div>
                 <div className="mD">{x.mods[i][1]}</div>
