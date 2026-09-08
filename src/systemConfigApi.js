@@ -183,6 +183,57 @@ const APPEARANCE_KEYS = [
   "appearance_region_widget_bg", "appearance_region_widget_border",
 ];
 
+// تفکیکِ ظاهرِ وب / موبایل / سوپرادمین (فاز ۳): همان کلیدهای بالا «لایهٔ
+// وب (پایه)» هستند؛ برای هر فیلدِ «ظاهری» (نه هویت) دو کلیدِ override هم
+// داریم — appearance_mob_<x> و appearance_sa_<x>. خالی = ارث‌بری از وب،
+// پس نبودشان = رفتارِ امروز، بدونِ رگرسیون و بدونِ ردیفِ اضافه.
+// هر ردیف: [فیلدِ config، پسوندِ کلید، نوع].
+const APPEARANCE_SCOPED_FIELDS = [
+  ["themeMode", "theme_mode", "text"], ["visualMode", "visual_mode", "text"], ["uiScale", "ui_scale", "text"],
+  ["fontFamily", "font_family", "text"], ["fontWeightBase", "font_weight_base", "numeric"],
+  ["colorPrimary", "color_primary", "text"], ["colorAccent", "color_accent", "text"],
+  ["colorBg", "color_bg", "text"], ["colorSurface", "color_surface", "text"], ["colorSurface2", "color_surface_2", "text"],
+  ["colorBorder", "color_border", "text"], ["colorText", "color_text", "text"], ["colorText2", "color_text2", "text"],
+  ["colorText3", "color_text3", "text"], ["colorOk", "color_ok", "text"], ["colorWarn", "color_warn", "text"], ["colorDanger", "color_danger", "text"],
+  ["fsHeader", "fs_header", "numeric"], ["fsMenu", "fs_menu", "numeric"], ["fsTitle", "fs_title", "numeric"],
+  ["fsBody", "fs_body", "numeric"], ["fsCard", "fs_card", "numeric"], ["fsKpi", "fs_kpi", "numeric"], ["fsTable", "fs_table", "numeric"],
+  ["fwHeader", "fw_header", "numeric"], ["fwMenu", "fw_menu", "numeric"], ["fwTitle", "fw_title", "numeric"],
+  ["fwBody", "fw_body", "numeric"], ["fwCard", "fw_card", "numeric"], ["fwKpi", "fw_kpi", "numeric"], ["fwTable", "fw_table", "numeric"],
+  ["radiusCard", "radius_card", "numeric"], ["radiusBtn", "radius_btn", "numeric"],
+  ["pad", "pad", "numeric"], ["gap", "gap", "numeric"], ["iconSize", "icon_size", "numeric"], ["iconStroke", "icon_stroke", "numeric"],
+  ["regionHeaderBg", "region_header_bg", "text"], ["regionHeaderBorder", "region_header_border", "text"],
+  ["regionSidebarBg", "region_sidebar_bg", "text"], ["regionSidebarBorder", "region_sidebar_border", "text"],
+  ["regionCardBg", "region_card_bg", "text"], ["regionCardBorder", "region_card_border", "text"],
+  ["regionWidgetBg", "region_widget_bg", "text"], ["regionWidgetBorder", "region_widget_border", "text"],
+];
+APPEARANCE_SCOPED_FIELDS.forEach(([, suffix]) => {
+  APPEARANCE_KEYS.push(`appearance_mob_${suffix}`, `appearance_sa_${suffix}`);
+});
+
+function readScopeOverrides(map, prefix) {
+  const o = {};
+  APPEARANCE_SCOPED_FIELDS.forEach(([field, suffix, kind]) => {
+    const raw = map[`appearance_${prefix}_${suffix}`];
+    o[field] = kind === "numeric" ? num(raw) : (raw || "");
+  });
+  return o;
+}
+
+const scopeFieldHasValue = (v) => (typeof v === "number" ? !Number.isNaN(v) : !!(v && String(v).trim()));
+
+// config مؤثرِ یک scope: web = خودِ config؛ mobile/superadmin = config با
+// روی‌هم‌گذاریِ فقط فیلدهای override که واقعاً مقدار دارند.
+export function effectiveAppearance(config, scope) {
+  if (!config || (scope !== "mobile" && scope !== "superadmin")) return config;
+  const ov = scope === "mobile" ? config.mobileOverrides : config.superadminOverrides;
+  if (!ov) return config;
+  const merged = { ...config };
+  APPEARANCE_SCOPED_FIELDS.forEach(([field]) => {
+    if (scopeFieldHasValue(ov[field])) merged[field] = ov[field];
+  });
+  return merged;
+}
+
 // پیش‌فرضِ توکن‌های تایپوگرافی/هندسه — دقیقاً همان اعدادی که امروز در
 // کد hardcode شده‌اند، تا وقتی چیزی تنظیم نشده، ظاهر بی‌تغییر بماند.
 const TOKEN_DEFAULTS = {
@@ -254,6 +305,9 @@ export async function loadAppearanceConfig() {
     regionSidebarBg: map.appearance_region_sidebar_bg || "", regionSidebarBorder: map.appearance_region_sidebar_border || "",
     regionCardBg: map.appearance_region_card_bg || "", regionCardBorder: map.appearance_region_card_border || "",
     regionWidgetBg: map.appearance_region_widget_bg || "", regionWidgetBorder: map.appearance_region_widget_border || "",
+    // لایه‌های override برای موبایل و سوپرادمین (فقط مقادیرِ خام؛ خالی = ارث از وب)
+    mobileOverrides: readScopeOverrides(map, "mob"),
+    superadminOverrides: readScopeOverrides(map, "sa"),
   };
 }
 function num(v) { return v != null && v !== "" && !Number.isNaN(Number(v)) ? Number(v) : null; }
@@ -301,6 +355,13 @@ export async function saveAppearanceConfig(config, updatedBy) {
     ["appearance_region_card_bg", config.regionCardBg, "text"], ["appearance_region_card_border", config.regionCardBorder, "text"],
     ["appearance_region_widget_bg", config.regionWidgetBg, "text"], ["appearance_region_widget_border", config.regionWidgetBorder, "text"],
   ];
+  // لایه‌های override — هر فیلدِ خالی به NULL می‌رود (مثلِ فیلدهای پایه)
+  [["mob", config.mobileOverrides], ["sa", config.superadminOverrides]].forEach(([prefix, ov]) => {
+    if (!ov) return;
+    APPEARANCE_SCOPED_FIELDS.forEach(([field, suffix, kind]) => {
+      entries.push([`appearance_${prefix}_${suffix}`, ov[field], kind]);
+    });
+  });
   const payload = entries.map(([key, value, kind]) => ({
     key,
     value_text: kind === "text" ? (value || null) : null,
@@ -442,11 +503,20 @@ export function applyAppearanceToDom(config) {
     if (!link) { link = document.createElement("link"); link.rel = "icon"; document.head.appendChild(link); }
     link.href = config.faviconUrl;
   }
+}
 
-  // آخرین تنظیماتِ ظاهری را کش می‌کنیم تا در استارتِ سردِ بعدی (به‌ویژه
-  // روی موبایل/Capacitor) main.jsx بتواند هم‌زمان و قبل از اولین رنگ‌آمیزی
-  // اعمالش کند و «فلشِ تمِ پیش‌فرض» دیده نشود.
-  try { localStorage.setItem(APPEARANCE_CACHE_KEY, JSON.stringify(config)); } catch { /* بی‌اهمیت */ }
+// کشِ استارتِ سردِ بدونِ‌فلش. کلِ configِ خام (وب + هر دو لایهٔ override)
+// ذخیره می‌شود؛ main.jsx خودش effectiveAppearance را برای scopeِ درست
+// (سوپرادمین / موبایل / وب) محاسبه و اعمال می‌کند. نسخه‌دار است تا کشِ
+// شکلِ قدیمی نادیده گرفته شود، نه بد اعمال شود.
+export function cacheAppearanceConfig(config) {
+  try { localStorage.setItem(APPEARANCE_CACHE_KEY, JSON.stringify({ v: 3, config })); } catch { /* بی‌اهمیت */ }
+}
+export function readCachedAppearanceConfig() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(APPEARANCE_CACHE_KEY) || "null");
+    return parsed && parsed.v === 3 && parsed.config ? parsed.config : null;
+  } catch { return null; }
 }
 
 // ---------- اطلاعیه‌های سامانه ----------

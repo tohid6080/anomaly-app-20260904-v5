@@ -2031,38 +2031,61 @@ function AppearancePreview({ config, previewTokens }) {
   );
 }
 
+const APPEARANCE_SCOPES = [
+  { key: "web", labelKey: "saApScopeWeb" },
+  { key: "mobile", labelKey: "saApScopeMobile" },
+  { key: "superadmin", labelKey: "saApScopeSuperadmin" },
+];
+const nonEmptyOverride = (o) => {
+  const r = {};
+  if (o) Object.keys(o).forEach((k) => {
+    const v = o[k];
+    if (typeof v === "number" ? !Number.isNaN(v) : !!(v && String(v).trim())) r[k] = v;
+  });
+  return r;
+};
+
 function AppearanceManagementTab({ currentAdmin }) {
   const { t, dir } = useLanguage();
-  const [config, setConfig] = useState(null);
+  const [raw, setRaw] = useState(null);       // configِ کاملِ خام (وب + دو لایهٔ override)
+  const [scope, setScope] = useState("web");  // web | mobile | superadmin
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [msgErr, setMsgErr] = useState(false);
 
-  const load = () => loadAppearanceConfig().then(setConfig);
+  const load = () => loadAppearanceConfig().then(setRaw);
   useEffect(() => { load(); }, []);
 
-  if (!config) return <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 30 }}>{t("commonLoading")}</p>;
+  if (!raw) return <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 30 }}>{t("commonLoading")}</p>;
 
-  const update = (field, value) => setConfig((prev) => ({ ...prev, [field]: value }));
+  const isBase = scope === "web";
+  const ovKey = scope === "mobile" ? "mobileOverrides" : "superadminOverrides";
+  // آنچه فرم نشان می‌دهد: وب = خودِ raw؛ موبایل/سوپرادمین = وب با روی‌هم‌گذاریِ
+  // فیلدهای override که واقعاً مقدار دارند (بقیه از وب ارث می‌برند).
+  const config = isBase ? raw : { ...raw, ...nonEmptyOverride(raw[ovKey]) };
+  // scope-aware: در وب مستقیم روی raw، در بقیه روی همان لایهٔ override.
+  const update = (field, value) => {
+    if (isBase) setRaw((p) => ({ ...p, [field]: value }));
+    else setRaw((p) => ({ ...p, [ovKey]: { ...(p[ovKey] || {}), [field]: value } }));
+  };
 
-  // پیش‌فرضِ هر توکن برای تمِ انتخابی (بدون رنگ‌های سفارشی) — برای
-  // نمایشِ swatch و placeholder وقتی سوپرادمین هنوز رنگی ست نکرده.
   const tokenDefaults = resolveAppearanceTokens({ themeMode: config.themeMode });
   const previewTokens = resolveAppearanceTokens(config);
   const fontInList = APPEARANCE_FONT_PRESETS.some((f) => f.value === config.fontFamily);
 
   const handleSave = async () => {
     setSaving(true); setMessage("");
-    const result = await saveAppearanceConfig(config, currentAdmin?.fullName);
+    const result = await saveAppearanceConfig(raw, currentAdmin?.fullName);
     setSaving(false);
     setMsgErr(!!result?.__error);
     setMessage(result?.__error ? result.message : t("saApSaved"));
     if (!result?.__error) await load();
   };
 
-  // بازگردانیِ همه‌ی شخصی‌سازی‌ها به پیش‌فرضِ سامانه (هویت — نام/لوگو/عنوان —
-  // دست‌نخورده می‌ماند). فقط state محلی؛ تا «ذخیره» نزنی چیزی ثبت نمی‌شود.
+  // بازگردانی به پیش‌فرض. در وب: همه‌ی توکن‌ها پاک + برند/تم/فونت به پیش‌فرض.
+  // در موبایل/سوپرادمین: کلِ لایهٔ override خالی می‌شود (یعنی ارث‌بریِ کاملِ وب).
   const resetAll = () => {
+    if (!isBase) { setRaw((p) => ({ ...p, [ovKey]: {} })); return; }
     APPEARANCE_SECTION_RESETS.base(update);
     APPEARANCE_SECTION_RESETS.colors(update);
     APPEARANCE_SECTION_RESETS.typography(update);
@@ -2075,35 +2098,55 @@ function AppearanceManagementTab({ currentAdmin }) {
 
   return (
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
-      <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 16, lineHeight: 1.8 }}>
+      <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 12, lineHeight: 1.8 }}>
         {t("saApNote")}
       </p>
 
-      <SectionLabel>{t("saApIdentity")}</SectionLabel>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginBottom: 18 }}>
-        <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApSystemName")}</label>
-          <input style={inputStyle} value={config.systemName} onChange={(e) => update("systemName", e.target.value)} dir="ltr" />
-        </div>
-        <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApSystemTitle")}</label>
-          <input style={inputStyle} value={config.systemTitle} onChange={(e) => update("systemTitle", e.target.value)} dir={dir} />
-        </div>
-        <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApLogoUrl")}</label>
-          <input style={inputStyle} value={config.logoUrl} onChange={(e) => update("logoUrl", e.target.value)} dir="ltr" placeholder={t("saApLogoUrlPlaceholder")} />
-        </div>
-        <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApFaviconUrl")}</label>
-          <input style={inputStyle} value={config.faviconUrl} onChange={(e) => update("faviconUrl", e.target.value)} dir="ltr" placeholder={t("saApFaviconPlaceholder")} />
-        </div>
+      {/* انتخابِ scope: وب / موبایل / سوپرادمین */}
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+        {APPEARANCE_SCOPES.map((s) => {
+          const active = scope === s.key;
+          return (
+            <button
+              key={s.key} type="button" onClick={() => setScope(s.key)}
+              style={{ padding: "8px 16px", borderRadius: 9, border: `1px solid ${active ? THEME.teal : THEME.border}`, background: active ? THEME.tealSoft : THEME.surface2, color: active ? THEME.text : THEME.text2, fontFamily: THEME.font, fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}
+            >
+              {t(s.labelKey)}
+            </button>
+          );
+        })}
       </div>
-      {config.logoUrl && (
-        <div style={{ marginBottom: 18, display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 11, color: THEME.text3 }}>{t("saApLogoPreview")}</span>
-          <img src={config.logoUrl} alt={t("saApLogoPreviewAlt")} style={{ width: 48, height: 48, objectFit: "contain", border: `1px solid ${THEME.border}`, borderRadius: 8, padding: 4 }} onError={(e) => { e.target.style.display = "none"; }} />
+      <p style={{ fontSize: 10.5, color: THEME.text3, lineHeight: 1.8, margin: "0 0 16px" }}>
+        {isBase ? t("saApScopeHintWeb") : t("saApScopeHintOverride")}
+      </p>
+
+      {isBase && (<>
+        <SectionLabel>{t("saApIdentity")}</SectionLabel>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginBottom: 18 }}>
+          <div>
+            <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApSystemName")}</label>
+            <input style={inputStyle} value={config.systemName} onChange={(e) => update("systemName", e.target.value)} dir="ltr" />
+          </div>
+          <div>
+            <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApSystemTitle")}</label>
+            <input style={inputStyle} value={config.systemTitle} onChange={(e) => update("systemTitle", e.target.value)} dir={dir} />
+          </div>
+          <div>
+            <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApLogoUrl")}</label>
+            <input style={inputStyle} value={config.logoUrl} onChange={(e) => update("logoUrl", e.target.value)} dir="ltr" placeholder={t("saApLogoUrlPlaceholder")} />
+          </div>
+          <div>
+            <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saApFaviconUrl")}</label>
+            <input style={inputStyle} value={config.faviconUrl} onChange={(e) => update("faviconUrl", e.target.value)} dir="ltr" placeholder={t("saApFaviconPlaceholder")} />
+          </div>
         </div>
-      )}
+        {config.logoUrl && (
+          <div style={{ marginBottom: 18, display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 11, color: THEME.text3 }}>{t("saApLogoPreview")}</span>
+            <img src={config.logoUrl} alt={t("saApLogoPreviewAlt")} style={{ width: 48, height: 48, objectFit: "contain", border: `1px solid ${THEME.border}`, borderRadius: 8, padding: 4 }} onError={(e) => { e.target.style.display = "none"; }} />
+          </div>
+        )}
+      </>)}
 
       {/* ===== ۱. پایه: پریست، تم، حالتِ بصری، مقیاسِ UI ===== */}
       <SectionHead onReset={() => APPEARANCE_SECTION_RESETS.base(update)} resetLabel={t("saApResetSection")}>{t("saApBasePreset")}</SectionHead>
@@ -2111,7 +2154,7 @@ function AppearanceManagementTab({ currentAdmin }) {
         {[["darkNeon", "saApPresetDarkNeon"], ["light", "saApPresetLight"], ["midnight", "saApPresetMidnight"]].map(([key, lk]) => (
           <button
             key={key} type="button"
-            onClick={() => setConfig((prev) => ({ ...prev, ...APPEARANCE_PRESETS[key] }))}
+            onClick={() => Object.entries(APPEARANCE_PRESETS[key]).forEach(([f, v]) => update(f, v))}
             style={{ flex: "1 1 130px", padding: "9px 10px", borderRadius: 9, border: `1px solid ${THEME.border}`, background: THEME.surface2, color: THEME.text2, fontFamily: THEME.font, fontSize: 12, fontWeight: 600, cursor: "pointer" }}
           >
             {t(lk)}

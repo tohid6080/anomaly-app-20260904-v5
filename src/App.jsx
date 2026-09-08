@@ -19,7 +19,7 @@ const PersonnelDashboard = lazy(() => import("./personnel/PersonnelDashboard.jsx
 const ProactiveIndicatorsDashboard = lazy(() => import("./proactiveIndicators/ProactiveIndicatorsDashboard.jsx"));
 const IncidentsListPage = lazy(() => import("./incidents/IncidentsListPage.jsx"));
 import { loadHomeKpiSummary } from "./dashboard/homeKpiApi.js";
-import { loadModuleConfig, loadDashboardConfig, loadNotificationTypes, loadAppearanceConfig, applyAppearanceToDom, loadActiveAnnouncements, loadDashboardWidgetConfig } from "./systemConfigApi.js";
+import { loadModuleConfig, loadDashboardConfig, loadNotificationTypes, loadAppearanceConfig, applyAppearanceToDom, effectiveAppearance, cacheAppearanceConfig, loadActiveAnnouncements, loadDashboardWidgetConfig } from "./systemConfigApi.js";
 import { mergeWidgetConfig, defaultWidgetConfig } from "./dashboard/dashboardWidgets.js";
 import { submitToGate, loadPendingGateItems, loadAssignedGateItems, loadAssignedReviewItemsForModule, deleteGateItemsForRecord, loadCompanyStaffOptions, assignForReview, submitReview, approveGateItem, rejectGateItem, GATE_STATUS_LABELS, gateStatusLabel } from "./hseGateApi.js";
 import SubscriptionGate from "./subscription/SubscriptionGate.jsx";
@@ -3569,9 +3569,12 @@ function MobileModuleList({ items, setView }) {
   const query = q.trim().toLowerCase();
   const filtered = query ? items.filter((it) => it.label.toLowerCase().includes(query)) : items;
   return (
-    <div style={{ ...styles.menuList, gap: 0 }}>
+    // پس‌زمینه از توکنِ سایدبار — همان توکنی که سایدبارِ دسکتاپ استفاده می‌کند،
+    // تا «لیستِ ماژول‌ها» در وب و موبایل یک ظاهر داشته باشد (و scopeِ موبایل
+    // بتواند در صورت تمایل جداگانه تغییرش دهد).
+    <div style={{ ...styles.menuList, gap: 0, background: THEME.sidebarBg, minHeight: "100%" }}>
       <MobileAnnouncementBanner setView={setView} />
-      <div style={{ position: "sticky", top: 52, zIndex: 2, background: THEME.bg, padding: "6px 0 10px" }}>
+      <div style={{ position: "sticky", top: 52, zIndex: 2, background: THEME.sidebarBg, padding: "6px 0 10px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, background: THEME.surface2, border: `1px solid ${THEME.border}`, borderRadius: THEME.radiusBtn, padding: "9px 12px" }}>
           <Search size={15} color={THEME.text3} style={{ flexShrink: 0 }} />
           <input
@@ -5119,6 +5122,12 @@ function AppInner() {
 // نشست‌ش هم جدا از ihms_current_user است.
 function SuperAdminRoot() {
   const [admin, setAdmin] = usePersistedState("ihms_super_admin", null);
+  // پنلِ سوپرادمین در scopeِ ظاهریِ خودش رندر می‌شود (نه پیش‌فرضِ :root).
+  useEffect(() => {
+    loadAppearanceConfig()
+      .then((cfg) => { applyAppearanceToDom(effectiveAppearance(cfg, "superadmin")); cacheAppearanceConfig(cfg); })
+      .catch(() => {});
+  }, []);
   return (
     <LazyPanel>
       {!admin
@@ -5133,10 +5142,27 @@ function SuperAdminRoot() {
 // این تنظیمات سراسری سامانه‌اند نه مخصوص یک کاربر. با این‌جا‌بودن (نه
 // داخل خودِ AppInner)، همه‌ی نقاط return آن تابع (صفحه‌ی ورود، گیت
 // بیومتریک، هر سه داشبورد) بدون تکرار کد پوشش داده می‌شوند.
+const APPEARANCE_DESKTOP_MQ = "(min-width: 1024px)";
 function AppInnerWithAppearance() {
   const [appearance, setAppearance] = useState(null);
   useEffect(() => {
-    loadAppearanceConfig().then((cfg) => { setAppearance(cfg); applyAppearanceToDom(cfg); });
+    let raw = null;
+    const applyForViewport = () => {
+      if (!raw) return;
+      const scope = window.matchMedia(APPEARANCE_DESKTOP_MQ).matches ? "web" : "mobile";
+      applyAppearanceToDom(effectiveAppearance(raw, scope));
+    };
+    loadAppearanceConfig().then((cfg) => {
+      raw = cfg;
+      setAppearance(cfg);
+      cacheAppearanceConfig(cfg);
+      applyForViewport();
+    });
+    // عبور از مرزِ ۱۰۲۴px (چرخش/تغییرِ اندازه) → تمِ وب↔موبایل بدونِ رفرش سوییچ می‌شود
+    const mq = window.matchMedia(APPEARANCE_DESKTOP_MQ);
+    const onChange = () => applyForViewport();
+    mq.addEventListener ? mq.addEventListener("change", onChange) : mq.addListener(onChange);
+    return () => { mq.removeEventListener ? mq.removeEventListener("change", onChange) : mq.removeListener(onChange); };
   }, []);
   return (
     <AppearanceProvider config={appearance}>

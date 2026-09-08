@@ -7847,6 +7847,11 @@ export const translations = {
   "saApGeoIconStroke": { "fa": "ضخامت آیکون", "en": "Icon stroke" },
   "saApResetSection": { "fa": "بازگردانی این بخش", "en": "Reset this section" },
   "saApResetAll": { "fa": "بازگردانی همه به پیش‌فرض", "en": "Reset all to default" },
+  "saApScopeWeb": { "fa": "وب (دسکتاپ)", "en": "Web (desktop)" },
+  "saApScopeMobile": { "fa": "موبایل", "en": "Mobile" },
+  "saApScopeSuperadmin": { "fa": "سوپرادمین", "en": "SuperAdmin" },
+  "saApScopeHintWeb": { "fa": "تنظیماتِ پایه. موبایل و سوپرادمین از همین‌جا ارث می‌برند مگر اینکه در تبِ خودشان چیزی تنظیم شود.", "en": "The base config. Mobile and SuperAdmin inherit from here unless overridden in their own tab." },
+  "saApScopeHintOverride": { "fa": "فقط تفاوت‌ها با وب را اینجا تنظیم کنید. فیلدِ خالی = ارث‌بری از وب؛ «بازنشانی» یعنی برگشت به ارث‌بری.", "en": "Set only the differences from Web here. An empty field inherits from Web; “reset” means back to inheriting." },
 
   // SuperAdmin › Announcement Management
   "saReplaceImage": { "fa": "جایگزینی عکس", "en": "Replace image" },

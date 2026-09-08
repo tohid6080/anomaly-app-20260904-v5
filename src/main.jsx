@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import { hideSplashWhenReady } from "./splashScreenControl.js";
-import { applyAppearanceToDom, APPEARANCE_CACHE_KEY } from "./systemConfigApi.js";
+import { applyAppearanceToDom, effectiveAppearance, readCachedAppearanceConfig } from "./systemConfigApi.js";
 
 // این استایل قبلاً یک <style> درون‌خطی در index.html بود. تزریقش از طریق
 // جاوااسکریپت (به‌جای HTML) باگ شناخته‌شده‌ی Vite روی ویندوز را دور می‌زند:
@@ -74,9 +74,14 @@ document.head.appendChild(baseStyle);
 // هم‌زمان (قبل از رندرِ React و قبل از رفت‌وبرگشتِ شبکه) اعمالش کن. اگر
 // نبود، همان مقادیرِ :root بالا ظاهرِ پیش‌فرض را حفظ می‌کنند.
 try {
-  const onIsolatedRoute = /^#(super-admin|hse-climate-survey)/.test(location.hash || "");
-  const cached = onIsolatedRoute ? null : localStorage.getItem(APPEARANCE_CACHE_KEY);
-  if (cached) applyAppearanceToDom(JSON.parse(cached));
+  const hash = location.hash || "";
+  if (!/^#hse-climate-survey/.test(hash)) {
+    const cfg = readCachedAppearanceConfig();
+    if (cfg) {
+      const scope = /^#super-admin/.test(hash) ? "superadmin" : (window.innerWidth < 1024 ? "mobile" : "web");
+      applyAppearanceToDom(effectiveAppearance(cfg, scope));
+    }
+  }
 } catch { /* بی‌اهمیت — پیش‌فرض‌های :root کافی‌اند */ }
 
 // طبق یک باگ واقعی که گزارش شد: Service Worker قبلاً بدون قید و شرط
