@@ -3,7 +3,7 @@ import {
   AlertTriangle, ClipboardCheck, ListChecks, Wrench, GraduationCap, Users,
   FileCheck, HardHat, Boxes, MessagesSquare, FolderOpen, UserCog, LayoutDashboard,
   ArrowLeft, ArrowRight, Check, Menu, X, BarChart3, LineChart, Gauge, Smartphone,
-  Zap, Database, FileBarChart, Recycle, Layers, TrendingUp, Bell, Globe,
+  Zap, Database, FileBarChart, Recycle, Layers, TrendingUp, Bell, Globe, Tag,
 } from "lucide-react";
 import { useLanguage } from "./i18n/LanguageContext.jsx";
 
@@ -172,7 +172,7 @@ const LP_CSS = `
 /* ------------------------------ i18n ------------------------------ */
 const MOD_ICONS = [
   AlertTriangle, Layers, ClipboardCheck, Wrench, GraduationCap, Users, FileCheck,
-  HardHat, Boxes, MessagesSquare, Recycle, FolderOpen, UserCog, LayoutDashboard,
+  Gauge, Boxes, Tag, Recycle, FolderOpen, UserCog, LayoutDashboard,
 ];
 const MOD_CATS_KEYS = ["safety", "safety", "safety", "management", "health", "management", "safety", "safety", "management", "safety", "env", "management", "health", "report"];
 const MODULES_IDX = MOD_ICONS.map((_, i) => i);
@@ -227,9 +227,9 @@ const L = {
       ["آموزش HSE", "ایجاد ماتریس آموزشی، برگزاری آموزش‌ها طبق ماتریس و ارسالِ مستندِ سوابق به کارفرما."],
       ["مدیریت پیمانکاران", "ارزیابی، مدارک و نظارت بر عملکرد HSE پیمانکاران."],
       ["مجوز کار", "صدور و کنترل مجوزهای کار گرم، ارتفاع و فضای بسته."],
-      ["PPE", "مدیریت تجهیزات حفاظت فردی و تخصیص به افراد."],
+      ["اندازه‌گیری شاخص‌های پراکتیو و بینابینی", "اندازه‌گیری جوّ ایمنی، استعداد حادثه‌پذیری مشاغل بحرانی و نمونه‌برداری از رفتارهای ناایمن."],
       ["تجهیزات و ماشین‌آلات", "شناسنامه، بازرسی و نگهداری تجهیزات و ماشین‌آلات."],
-      ["جلسات و Toolbox", "ثبت جلسات ایمنی و آموزش‌های پیش از کار."],
+      ["مدیریت تگ داربست", "اخذ و صدور تگ سبز و پیگیری تگ‌های مربوط به داربستِ کلیهٔ پیمانکاران."],
       ["محیط زیست", "پایش پسماند، پساب و شاخص‌های زیست‌محیطی."],
       ["مستندات HSE", "مدیریت رویه‌ها، دستورالعمل‌ها و مدارک سامانه."],
       ["مدیریت کارکنان", "ورود و تردد، صلاحیت و پرونده سلامت شغلی افراد."],
@@ -322,9 +322,9 @@ const L = {
       ["HSE training", "Build a training matrix, run courses to that matrix and send the documented records to the employer."],
       ["Contractor management", "Assessment, documents and oversight of contractor HSE performance."],
       ["Work permits", "Issue and control hot-work, height and confined-space permits."],
-      ["PPE", "Manage personal protective equipment and assignment to people."],
+      ["Proactive & leading-indicator measurement", "Measure safety climate, accident proneness of critical roles and sampling of unsafe behaviours."],
       ["Equipment & machinery", "Records, inspection and maintenance of equipment and machinery."],
-      ["Meetings & Toolbox", "Log safety meetings and pre-task briefings."],
+      ["Scaffold tag management", "Obtain and issue green tags and track every contractor's scaffold tags."],
       ["Environment", "Monitor waste, effluent and environmental indicators."],
       ["HSE documents", "Manage procedures, instructions and system records."],
       ["Personnel management", "Access & attendance, competency and occupational-health files."],
@@ -417,9 +417,9 @@ const L = {
       ["HSE-Schulung", "Eine Schulungsmatrix erstellen, Schulungen gemäß dieser Matrix durchführen und die Nachweise dokumentiert an den Auftraggeber senden."],
       ["Auftragnehmer-Management", "Bewertung, Dokumente und Überwachung der HSE-Leistung von Auftragnehmern."],
       ["Arbeitserlaubnis", "Heißarbeits-, Höhen- und Behältererlaubnisse ausstellen und kontrollieren."],
-      ["PSA", "Persönliche Schutzausrüstung verwalten und Personen zuweisen."],
+      ["Messung proaktiver & vorlaufender Kennzahlen", "Sicherheitsklima messen, Unfallneigung kritischer Tätigkeiten und Stichproben unsicherer Verhaltensweisen."],
       ["Geräte & Maschinen", "Stammdaten, Inspektion und Wartung von Geräten und Maschinen."],
-      ["Besprechungen & Toolbox", "Sicherheitsbesprechungen und Unterweisungen vor der Arbeit dokumentieren."],
+      ["Gerüst-Tag-Verwaltung", "Grüne Tags einholen und ausstellen und die Gerüst-Tags aller Auftragnehmer verfolgen."],
       ["Umwelt", "Abfall, Abwasser und Umweltkennzahlen überwachen."],
       ["HSE-Dokumente", "Verfahren, Anweisungen und Systemunterlagen verwalten."],
       ["Personalverwaltung", "Zutritt & Anwesenheit, Kompetenz und arbeitsmedizinische Akten."],
