@@ -267,6 +267,15 @@ export const translations = {
   "opDashResize": { "fa": "تغییر عرض ویجت", "en": "Change widget width" },
   "opDashCol1": { "fa": "۱ ستون", "en": "1 col" },
   "opDashCol2": { "fa": "۲ ستون", "en": "2 cols" },
+  "mobTabHome": { "fa": "خانه", "en": "Home" },
+  "mobTabOpsDash": { "fa": "داشبورد کاری", "en": "Work board" },
+  "mobTabModules": { "fa": "ماژول‌ها", "en": "Modules" },
+  "mobTabAlerts": { "fa": "اعلان‌ها", "en": "Alerts" },
+  "mobModSearch": { "fa": "جست‌وجوی ماژول…", "en": "Search modules…" },
+  "mobModGroupSafety": { "fa": "ایمنی و ریسک", "en": "Safety & risk" },
+  "mobModGroupOperations": { "fa": "عملیات", "en": "Operations" },
+  "mobModGroupManagement": { "fa": "مدیریت و داشبورد", "en": "Management & dashboards" },
+  "mobModGroupSystem": { "fa": "سامانه", "en": "System" },
   "moduleAdminAnalytics": {
     "fa": "داشبورد فعالیت کاربران",
     "en": "User Activity Dashboard"

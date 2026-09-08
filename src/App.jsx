@@ -3506,6 +3506,130 @@ function MenuRow({ icon: IconEl, label, onClick, accent, muted, sub, badge }) {
 }
 
 // ============================================================
+// ناوبریِ موبایل (D-013) — نوارِ تبِ پایین + صفحهٔ ماژول‌های
+// جست‌وجوشونده + خوراکِ اعلان‌ها. فقط در شاخهٔ موبایلِ
+// ResponsiveDashboardShell رندر می‌شوند؛ دسکتاپ کاملاً دست‌نخورده است.
+// بدون کتابخانهٔ ناوبری — طبقِ قیدِ کارایی.
+// ============================================================
+const MOBILE_MODULE_GROUP = {
+  anomalyReport: "safety", riskAssessment: "safety", proactiveIndicators: "safety", incidentManagement: "safety",
+  personnelAccess: "operations", machineryManagement: "operations", scaffoldManagement: "operations", chat: "operations",
+  managementDashboard: "management", operationalDashboard: "management", archiveManagement: "management",
+  systemManagement: "system",
+};
+const MOBILE_GROUP_ORDER = [
+  ["safety", "mobModGroupSafety"],
+  ["operations", "mobModGroupOperations"],
+  ["management", "mobModGroupManagement"],
+  ["system", "mobModGroupSystem"],
+];
+
+function MobileTabBar({ view, setView, notifCount }) {
+  const { t } = useLanguage();
+  const tabs = [
+    { key: "menu", icon: Home, label: t("mobTabHome") },
+    { key: "operationalDashboard", icon: ClipboardList, label: t("mobTabOpsDash") },
+    { key: "modules", icon: LayoutGrid, label: t("mobTabModules") },
+    { key: "notifications", icon: Bell, label: t("mobTabAlerts"), badge: notifCount },
+  ];
+  return (
+    <nav style={{
+      position: "fixed", insetInline: 0, bottom: 0, zIndex: 30, display: "flex",
+      background: THEME.sidebarBg, borderTop: `1px solid ${THEME.border}`, paddingBottom: "env(safe-area-inset-bottom)",
+    }}>
+      {tabs.map((tb) => {
+        const on = view === tb.key;
+        return (
+          <button
+            key={tb.key} type="button" onClick={() => setView(tb.key)}
+            style={{
+              flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
+              padding: "8px 2px 10px", border: "none", background: "transparent", cursor: "pointer", position: "relative",
+              color: on ? THEME.teal : "rgba(255,255,255,0.55)", fontFamily: THEME.font, fontSize: 10, fontWeight: on ? 700 : 500,
+            }}
+          >
+            <tb.icon size={21} strokeWidth={on ? 2.4 : 2} />
+            {tb.label}
+            {tb.badge > 0 && (
+              <span style={{ position: "absolute", top: 4, insetInlineEnd: "calc(50% - 20px)", background: THEME.danger, color: "#fff", fontSize: 8.5, fontWeight: 700, borderRadius: 999, minWidth: 15, height: 15, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 3px" }}>
+                {tb.badge > 99 ? "99+" : tb.badge}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+// items: [{ key, icon, label, onClick, accent, muted, sub, badge }]
+function MobileModuleList({ items, setView }) {
+  const { t } = useLanguage();
+  const [q, setQ] = useState("");
+  const query = q.trim().toLowerCase();
+  const filtered = query ? items.filter((it) => it.label.toLowerCase().includes(query)) : items;
+  return (
+    <div style={{ ...styles.menuList, gap: 0 }}>
+      <MobileAnnouncementBanner setView={setView} />
+      <div style={{ position: "sticky", top: 52, zIndex: 2, background: THEME.bg, padding: "6px 0 10px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, background: THEME.surface2, border: `1px solid ${THEME.border}`, borderRadius: THEME.radiusBtn, padding: "9px 12px" }}>
+          <Search size={15} color={THEME.text3} style={{ flexShrink: 0 }} />
+          <input
+            value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("mobModSearch")}
+            style={{ flex: 1, minWidth: 0, background: "transparent", border: "none", outline: "none", color: THEME.text, fontSize: 13, fontFamily: THEME.font }}
+          />
+          {q && <X size={15} color={THEME.text3} style={{ cursor: "pointer", flexShrink: 0 }} onClick={() => setQ("")} />}
+        </div>
+      </div>
+      {MOBILE_GROUP_ORDER.map(([g, lk]) => {
+        const rows = filtered.filter((it) => (MOBILE_MODULE_GROUP[it.key] || "operations") === g);
+        if (rows.length === 0) return null;
+        return (
+          <div key={g} style={{ marginBottom: 6 }}>
+            <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", color: THEME.text3, margin: "12px 4px 6px" }}>{t(lk)}</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {rows.map((it) => (
+                <MenuRow key={it.key} icon={it.icon} label={it.label} onClick={it.onClick} accent={it.accent} muted={it.muted} sub={it.sub} badge={it.badge} />
+              ))}
+            </div>
+          </div>
+        );
+      })}
+      {filtered.length === 0 && (
+        <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: "24px 6px" }}>{t("sidebarNoResults")}</p>
+      )}
+    </div>
+  );
+}
+
+function MobileNotifications({ smartItems, onNavigate }) {
+  const { t } = useLanguage();
+  const items = Array.isArray(smartItems) ? smartItems : [];
+  return (
+    <div style={styles.menuList}>
+      <h3 style={{ fontSize: THEME.fsTitle, fontWeight: THEME.fwTitle, color: THEME.navy, margin: "4px 4px 12px" }}>{t("notifPanelTitle")}</h3>
+      {items.length === 0 ? (
+        <p style={{ fontSize: 12.5, color: THEME.text3, textAlign: "center", padding: "30px 10px" }}>{t("notifPanelEmpty")}</p>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {items.map((it) => (
+            <div
+              key={it.key}
+              onClick={() => it.target && onNavigate && onNavigate(it.target)}
+              style={{ background: THEME.cardBg, border: `1px solid ${THEME.cardBorder}`, borderRadius: THEME.radiusCard, boxShadow: THEME.elev1, padding: "11px 13px", cursor: it.target ? "pointer" : "default", display: "flex", alignItems: "center", gap: 10 }}
+            >
+              <Bell size={15} color={THEME.teal} style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: 12.5, color: THEME.text, lineHeight: 1.6, flex: 1 }}>{it.label}</span>
+              {it.target && <ChevronRight size={14} color={THEME.text3} style={{ transform: "rotate(180deg)", flexShrink: 0 }} />}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
 // Navigation دسکتاپ — Sidebar سمت راست به سبک Enterprise Dashboard
 // ============================================================
 // این بخش کاملاً مستقل و افزوده است: هیچ state/منطق/مسیر موجودی را عوض
@@ -3688,12 +3812,22 @@ function ResponsiveDashboardShell({ panelLabelKey, currentUser, onLogout, onOpen
   const [collapsed, setCollapsed] = usePersistedState("ihms_sidebar_collapsed", appearance?.sidebarDefaultCollapsed || false);
 
   if (!isDesktop) {
-    // موبایل — عیناً همان ساختار قبلی، بدون کوچک‌ترین تغییر
+    // موبایل (D-013) — نوارِ تبِ پایین + خانه/ماژول‌ها/اعلان‌ها.
+    // «menu» ریشهٔ واحد می‌ماند (همهٔ setView("menu")/back دست‌نخورده) و
+    // روی موبایل صفحهٔ خانه (WelcomeScreen) را نشان می‌دهد؛ «modules» فهرستِ
+    // جست‌وجوشوندهٔ ماژول‌هاست که هر داشبورد به‌عنوان children می‌فرستد.
+    const notifCount = Array.isArray(smartItems) ? smartItems.length : 0;
+    const mobileMain = view === "menu"
+      ? <div style={{ padding: "14px 14px 0" }}><WelcomeScreen currentUser={currentUser} setView={setView} onNavigate={onNavigate} sidebarModules={sidebarModules} /></div>
+      : children;
     return (
       <div style={{ ...styles.dashboardWrapper, direction: dir }}>
         <DashboardHeader panelLabelKey={panelLabelKey} currentUser={currentUser} onLogout={onLogout} onOpenSettings={onOpenSettings} smartItems={smartItems} onNavigate={onNavigate} currentModuleKey={view} />
         <UpdateAvailableBanner />
-        <LazyPanel>{children}</LazyPanel>
+        <div style={{ paddingBottom: "calc(62px + env(safe-area-inset-bottom))" }}>
+          <LazyPanel>{mobileMain}</LazyPanel>
+        </div>
+        <MobileTabBar view={view} setView={setView} notifCount={notifCount} />
       </div>
     );
   }
@@ -4370,28 +4504,30 @@ function EmployerDashboard({ onLogout, currentUser }) {
       setView={setView}
       sidebarModules={sidebarModules}
     >
-      {view === "menu" && (
-        <div style={styles.menuList}>
-          <MobileAnnouncementBanner setView={setView} />
-          {/* همان ترتیبی که «پیکربندی سامانه → مدیریت ماژول‌ها» تعیین می‌کند —
-              دقیقاً مثل Sidebarِ دسکتاپ (applyModuleConfig)، تا وب و موبایل یکی باشند. */}
-          {applyModuleConfig(HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key)), moduleConfig).map((mod) => (
-            <MenuRow
-              key={mod.key}
-              icon={MODULE_ICON[mod.key] || LayoutGrid}
-              label={mt(mod)}
-              onClick={() => openModule(mod)}
-              accent={!!mod.icon}
-              muted={mod.employerOnly && !canEdit}
-              sub={!!mod.sub}
-              badge={mod.key === "chat" ? chatUnread : undefined}
-            />
-          ))}
-          {systemManagementEntry && (
-            <MenuRow icon={Settings} label={systemManagementEntry.label} onClick={() => setView("systemManagement")} accent sub />
-          )}
-        </div>
+      {/* موبایل: تبِ «ماژول‌ها» — همان ترتیبِ «مدیریت ماژول‌ها» (applyModuleConfig)،
+          یکسان با Sidebarِ دسکتاپ، ولی جست‌وجوشونده و گروه‌بندی‌شده بر اساسِ حوزه. */}
+      {view === "modules" && (
+        <MobileModuleList
+          items={[
+            ...applyModuleConfig(HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key)), moduleConfig).map((mod) => ({
+              key: mod.key,
+              icon: MODULE_ICON[mod.key] || LayoutGrid,
+              label: mt(mod),
+              onClick: () => openModule(mod),
+              accent: !!mod.icon,
+              muted: mod.employerOnly && !canEdit,
+              sub: !!mod.sub,
+              badge: mod.key === "chat" ? chatUnread : undefined,
+            })),
+            ...(systemManagementEntry ? [{
+              key: "systemManagement", icon: Settings, label: systemManagementEntry.label,
+              onClick: () => setView("systemManagement"), accent: true, sub: true,
+            }] : []),
+          ]}
+          setView={setView}
+        />
       )}
+      {view === "notifications" && <MobileNotifications smartItems={smartItems} onNavigate={handleHomeNavigate} />}
 
       {view === "systemManagement" && systemManagementEntry && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
@@ -4658,24 +4794,23 @@ function ContractorDashboard({ onLogout, currentUser }) {
       setView={setView}
       sidebarModules={sidebarModules}
     >
-      {view === "menu" && (
-        <div style={styles.menuList}>
-          <MobileAnnouncementBanner setView={setView} />
-          {/* همان ترتیبِ «مدیریت ماژول‌ها» — یکسان با Sidebarِ دسکتاپ (وب/موبایل یکی). */}
-          {applyModuleConfig(HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key)), moduleConfig).map((mod) => (
-            <MenuRow
-              key={mod.key}
-              icon={MODULE_ICON[mod.key] || LayoutGrid}
-              label={mt(mod)}
-              onClick={() => openModule(mod)}
-              accent={!!mod.icon}
-              muted={!!mod.employerOnly}
-              sub={!!mod.sub}
-              badge={mod.key === "chat" ? chatUnread : undefined}
-            />
-          ))}
-        </div>
+      {/* موبایل: تبِ «ماژول‌ها» — جست‌وجوشونده و گروه‌بندی‌شده، همان ترتیبِ Sidebarِ دسکتاپ. */}
+      {view === "modules" && (
+        <MobileModuleList
+          items={applyModuleConfig(HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key)), moduleConfig).map((mod) => ({
+            key: mod.key,
+            icon: MODULE_ICON[mod.key] || LayoutGrid,
+            label: mt(mod),
+            onClick: () => openModule(mod),
+            accent: !!mod.icon,
+            muted: !!mod.employerOnly,
+            sub: !!mod.sub,
+            badge: mod.key === "chat" ? chatUnread : undefined,
+          }))}
+          setView={setView}
+        />
       )}
+      {view === "notifications" && <MobileNotifications smartItems={smartItems} onNavigate={handleHomeNavigate} />}
 
       {view === "anomalyReport" && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
