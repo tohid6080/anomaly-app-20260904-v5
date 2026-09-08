@@ -97,6 +97,43 @@ if (import.meta.env.PROD && "serviceWorker" in navigator) {
   });
 }
 
+// خودترمیمیِ «chunk قدیمی بعد از دیپلوی جدید»: وقتی نسخهٔ تازه‌ای روی
+// سرور می‌نشیند، Vite همهٔ فایل‌های hash‌دار را با نام جدید جایگزین و
+// نسخهٔ قبلی را حذف می‌کند. تبی که هنوز index.html قدیمی را در حافظه
+// دارد، هنگام lazy-loadِ یک صفحه دنبال فایلی می‌گردد که دیگر نیست و
+// «Failed to fetch dynamically imported module» می‌گیرد. در آن حالت یک
+// بار (با محافظِ sessionStorage تا حلقه نشود) صفحه را نو می‌کنیم تا
+// index.html و chunkهای جدید بیایند — به‌جای نمایشِ صفحهٔ خطا.
+const CHUNK_RELOAD_FLAG = "ihms_chunk_reloaded_at";
+function looksLikeStaleChunk(err) {
+  const msg = String((err && (err.message || err)) || "");
+  return (
+    /Failed to fetch dynamically imported module/i.test(msg) ||
+    /error loading dynamically imported module/i.test(msg) ||
+    /Importing a module script failed/i.test(msg) ||
+    /'?text\/html'? is not a valid JavaScript MIME type/i.test(msg)
+  );
+}
+function recoverFromStaleChunk(err) {
+  if (!looksLikeStaleChunk(err)) return;
+  try {
+    const last = Number(sessionStorage.getItem(CHUNK_RELOAD_FLAG) || 0);
+    // فقط اگر در ۲۰ ثانیهٔ گذشته یک بار رفرش نکرده‌ایم (جلوگیری از حلقه)
+    if (Date.now() - last < 20000) return;
+    sessionStorage.setItem(CHUNK_RELOAD_FLAG, String(Date.now()));
+  } catch { /* sessionStorage در دسترس نیست — باز هم یک بار رفرش می‌کنیم */ }
+  window.location.reload();
+}
+// رویدادِ اختصاصیِ Vite برای شکستِ preloadِ chunk
+window.addEventListener("vite:preloadError", (e) => {
+  e.preventDefault();
+  recoverFromStaleChunk(e && e.payload);
+});
+// خطاهای import()ِ که به preloadError نمی‌رسند (rejection رسیده به window)
+window.addEventListener("unhandledrejection", (e) => {
+  recoverFromStaleChunk(e && e.reason);
+});
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <App />

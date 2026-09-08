@@ -4954,6 +4954,30 @@ class ErrorBoundary extends React.Component {
   }
   componentDidCatch(error, info) {
     console.error("App error:", error, info);
+    // «chunk قدیمی بعد از دیپلوی جدید» — وقتی lazy()ِ یک صفحه به فایلی
+    // اشاره می‌کند که نسخهٔ تازهٔ سرور حذفش کرده. یک بار (با محافظِ
+    // sessionStorage) صفحه را نو می‌کنیم تا index.html و chunkهای جدید
+    // بیایند، به‌جای ماندن روی این صفحهٔ خطا.
+    const msg = String((error && (error.message || error)) || "");
+    const staleChunk =
+      /Failed to fetch dynamically imported module/i.test(msg) ||
+      /error loading dynamically imported module/i.test(msg) ||
+      /Importing a module script failed/i.test(msg) ||
+      /is not a valid JavaScript MIME type/i.test(msg);
+    if (staleChunk) {
+      try {
+        const KEY = "ihms_chunk_reloaded_at";
+        const last = Number(sessionStorage.getItem(KEY) || 0);
+        if (Date.now() - last >= 20000) {
+          sessionStorage.setItem(KEY, String(Date.now()));
+          window.location.reload();
+          return;
+        }
+      } catch {
+        window.location.reload();
+        return;
+      }
+    }
     this.setState({ info });
   }
   // ErrorBoundary یک کامپوننت کلاسی بیرون از درخت AppInner است، پس به
