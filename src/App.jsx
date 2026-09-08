@@ -5152,17 +5152,28 @@ function AppInnerWithAppearance() {
       const scope = window.matchMedia(APPEARANCE_DESKTOP_MQ).matches ? "web" : "mobile";
       applyAppearanceToDom(effectiveAppearance(raw, scope));
     };
-    loadAppearanceConfig().then((cfg) => {
+    const refresh = () => loadAppearanceConfig().then((cfg) => {
       raw = cfg;
       setAppearance(cfg);
       cacheAppearanceConfig(cfg);
       applyForViewport();
-    });
+    }).catch(() => {});
+    refresh();
     // عبور از مرزِ ۱۰۲۴px (چرخش/تغییرِ اندازه) → تمِ وب↔موبایل بدونِ رفرش سوییچ می‌شود
     const mq = window.matchMedia(APPEARANCE_DESKTOP_MQ);
     const onChange = () => applyForViewport();
     mq.addEventListener ? mq.addEventListener("change", onChange) : mq.addListener(onChange);
-    return () => { mq.removeEventListener ? mq.removeEventListener("change", onChange) : mq.removeListener(onChange); };
+    // بازگشت به اپ (بستن پنلِ سوپرادمین، سوییچ تب، برگشت از پس‌زمینه روی
+    // موبایل) → تنظیماتِ ظاهریِ تازه دوباره خوانده و اعمال می‌شود، بدون
+    // نیاز به رفرش/ری‌استارت دستی.
+    const onVisible = () => { if (document.visibilityState === "visible") refresh(); };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      mq.removeEventListener ? mq.removeEventListener("change", onChange) : mq.removeListener(onChange);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
   }, []);
   return (
     <AppearanceProvider config={appearance}>
