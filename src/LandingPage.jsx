@@ -177,6 +177,8 @@ const MOD_ICONS = [
 const MOD_CATS_KEYS = ["safety", "safety", "safety", "management", "health", "management", "safety", "safety", "management", "safety", "env", "management", "health", "report"];
 const MODULES_IDX = MOD_ICONS.map((_, i) => i);
 const CAT_INDEX = { safety: 1, health: 2, env: 3, management: 4, report: 5 };
+// ماژول‌هایی که هنوز روی صفحهٔ فرود «مشاهده جزئیات» ندارند و «به‌زودی» می‌خورند.
+const SOON = new Set([6]); // مجوز کار
 const WHY_ICONS = [Database, FileCheck, AlertTriangle, ClipboardCheck, FileBarChart, TrendingUp];
 const FLOW_ICONS = [FileCheck, LineChart, AlertTriangle, Wrench, ListChecks, FileBarChart];
 const TRUST_ICONS = [Zap, Layers, Database, FileBarChart, AlertTriangle, TrendingUp];
@@ -216,7 +218,7 @@ const L = {
     modEyebrow: "ماژول‌ها", modH2: "همه ابزارهای موردنیاز HSE در یک سامانه",
     modSub: "تمامی ماژول‌های مورد نیاز مدیریت HSE در یک بستر یکپارچه.",
     modCats: ["همه", "ایمنی", "بهداشت", "محیط زیست", "مدیریت", "گزارش‌گیری"],
-    modMore: "مشاهده جزئیات",
+    modMore: "مشاهده جزئیات", soon: "به‌زودی",
     mods: [
       ["حوادث و شبه‌حوادث", "ثبت، بررسی و تحلیل حوادث و رویدادهای نزدیک به حادثه."],
       ["سیستم به‌روزرسانی ارزیابی ریسک", "تأثیرگذاری بر روی بریرهای BowTie طبق موتور اثربخشی."],
@@ -311,7 +313,7 @@ const L = {
     modEyebrow: "Modules", modH2: "Every HSE tool you need in one system",
     modSub: "All the modules HSE management needs, on one integrated platform.",
     modCats: ["All", "Safety", "Health", "Environment", "Management", "Reporting"],
-    modMore: "Details",
+    modMore: "Details", soon: "Coming soon",
     mods: [
       ["Incidents & near-misses", "Record, review and analyse incidents and near-miss events."],
       ["Living risk-assessment system", "Feeds BowTie barrier effectiveness through the effectiveness engine."],
@@ -406,7 +408,7 @@ const L = {
     modEyebrow: "Module", modH2: "Alle benötigten HSE-Werkzeuge in einem System",
     modSub: "Alle Module, die das HSE-Management braucht, auf einer integrierten Plattform.",
     modCats: ["Alle", "Sicherheit", "Gesundheit", "Umwelt", "Management", "Berichte"],
-    modMore: "Details",
+    modMore: "Details", soon: "Demnächst",
     mods: [
       ["Vorfälle & Beinaheunfälle", "Vorfälle und Beinaheunfälle erfassen, prüfen und analysieren."],
       ["Fortlaufende Risikobewertung", "Speist die Wirksamkeit der BowTie-Barrieren über die Wirksamkeits-Engine."],
@@ -737,7 +739,9 @@ export default function LandingPage({ onStartFree, onUserLogin, announcements, l
                 <IcoBox icon={MOD_ICONS[i]} size={42} />
                 <div className="mT">{x.mods[i][0]}</div>
                 <div className="mD">{x.mods[i][1]}</div>
-                <span className="more">{x.modMore} <Arrow size={13} /></span>
+                {SOON.has(i)
+                  ? <span className="more" style={{ color: C.ink3, fontWeight: 700 }}>{x.soon}</span>
+                  : <span className="more">{x.modMore} <Arrow size={13} /></span>}
               </div>
             ))}
           </div>
