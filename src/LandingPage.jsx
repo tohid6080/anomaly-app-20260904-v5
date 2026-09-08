@@ -74,12 +74,17 @@ const LP_CSS = `
 .ihms-lp .hdr .spacer{flex:1}
 .ihms-lp .link-login{font-size:13px;font-weight:800;color:${C.navy};padding:9px 14px;border-radius:10px;border:1px solid ${C.line};background:#fff;cursor:pointer;transition:border-color .15s ease}
 .ihms-lp .link-login:hover{border-color:${C.teal}}
+.ihms-lp .langsw{display:inline-flex;gap:3px;background:${C.bgSoft};border:1px solid ${C.line};border-radius:999px;padding:3px}
+.ihms-lp .langsw button{border:none;background:none;font-size:11.5px;font-weight:800;color:${C.ink3};padding:6px 11px;border-radius:999px;cursor:pointer;transition:all .15s ease;font-family:inherit}
+.ihms-lp .langsw button:hover{color:${C.tealDeep}}
+.ihms-lp .langsw button.on{background:#fff;color:${C.navy};box-shadow:0 2px 6px -3px rgba(12,34,51,.3)}
 .ihms-lp .hamb{display:none;background:none;border:1px solid ${C.line};border-radius:10px;padding:8px;cursor:pointer;color:${C.navy}}
 .ihms-lp .mnav{display:none}
 
 @media (max-width:960px){
   .ihms-lp .nav{display:none}
-  .ihms-lp .hdr .link-login{display:none}
+  .ihms-lp .hdr .row .link-login{display:none}
+  .ihms-lp .hdr .row .langsw{display:none}
   .ihms-lp .hamb{display:flex}
   .ihms-lp .mnav.open{display:block;border-top:1px solid ${C.line};background:#fff}
   .ihms-lp .mnav .wrap{padding-top:12px;padding-bottom:16px;display:flex;flex-direction:column;gap:4px}
@@ -349,8 +354,14 @@ function useReveal() {
   return ref;
 }
 
+const LANGS = [
+  { code: "fa", label: "فا" },
+  { code: "en", label: "EN" },
+  { code: "de", label: "DE" },
+];
+
 export default function LandingPage({ onStartFree, onUserLogin, announcements, logoUrl, systemName, heroImageUrl }) {
-  const { dir } = useLanguage();
+  const { lang, setLang } = useLanguage();
   const [scrolled, setScrolled] = useState(false);
   const [mNav, setMNav] = useState(false);
   const [yearly, setYearly] = useState(false);
@@ -375,8 +386,20 @@ export default function LandingPage({ onStartFree, onUserLogin, announcements, l
   const shownModules = modCat === "all" ? MODULES : MODULES.filter((m) => m.cat === modCat);
   const brandName = systemName || "IHMS";
 
+  // این صفحه محتوایش فارسی است، پس همیشه RTL می‌ماند؛ کلیدِ زبان فقط
+  // زبانِ سامانه را (برای پس از ورود و مودالِ ورود) تنظیم می‌کند.
+  const langSwitch = (
+    <div className="langsw" role="group" aria-label="زبان">
+      {LANGS.map((l) => (
+        <button key={l.code} type="button" className={lang === l.code ? "on" : ""} onClick={() => setLang(l.code)}>
+          {l.label}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
-    <div className="ihms-lp" dir={dir || "rtl"} ref={rootRef}>
+    <div className="ihms-lp" dir="rtl" ref={rootRef}>
       <style>{LP_CSS}</style>
 
       {/* ---------------- HEADER ---------------- */}
@@ -393,6 +416,7 @@ export default function LandingPage({ onStartFree, onUserLogin, announcements, l
               ))}
             </nav>
             <span className="spacer" />
+            {langSwitch}
             <button type="button" className="link-login" onClick={onUserLogin}>ورود کاربران</button>
             <button type="button" className="btn btn-primary" style={{ padding: "11px 18px", fontSize: 13.5 }} onClick={onStartFree}>
               همین الان رایگان شروع کنید
@@ -407,6 +431,7 @@ export default function LandingPage({ onStartFree, onUserLogin, announcements, l
             {NAV.map((n) => (
               <a key={n.id} href={"#lp-" + n.id} onClick={(e) => { e.preventDefault(); go(n.id); }}>{n.label}</a>
             ))}
+            <div style={{ marginTop: 10 }}>{langSwitch}</div>
             <button type="button" className="btn btn-ghost" style={{ marginTop: 8 }} onClick={() => { setMNav(false); onUserLogin(); }}>ورود کاربران</button>
             <button type="button" className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => { setMNav(false); onStartFree(); }}>همین الان رایگان شروع کنید</button>
           </div>
