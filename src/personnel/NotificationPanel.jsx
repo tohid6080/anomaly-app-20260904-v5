@@ -43,11 +43,11 @@ export default function NotificationPanel({ smartItems = [], onNavigate }) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         style={{
-          position: "relative", background: "#fff", border: `1.5px solid ${THEME.border}`, borderRadius: 9,
+          position: "relative", background: THEME.surface, border: `1.5px solid ${THEME.border}`, borderRadius: 9,
           width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
         }}
       >
-        <Bell size={17} color={THEME.navy} />
+        <Bell size={17} color={THEME.text2} />
         {smartItems.length > 0 && (
           <span
             style={{

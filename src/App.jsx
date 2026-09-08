@@ -3480,14 +3480,14 @@ function MenuRow({ icon: IconEl, label, onClick, accent, muted, sub, badge }) {
             width: 34,
             height: 34,
             borderRadius: 9,
-            background: accent ? "rgba(13,143,138,0.14)" : "#eef1f5",
+            background: accent ? "rgba(13,143,138,0.14)" : THEME.surface2,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             flexShrink: 0,
           }}
         >
-          <IconEl size={17} color={accent ? THEME.tealDeep : THEME.navyMid} />
+          <IconEl size={17} color={accent ? THEME.tealDeep : THEME.text2} />
         </div>
         <span>{label}</span>
         {badge > 0 && (
