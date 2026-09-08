@@ -82,7 +82,7 @@ export default function MyTaskQueueWidget({ role, currentUser, onNavigate }) {
                   }}
                 >
                   <span style={{ fontFamily: THEME.font, fontSize: 9, color: THEME.text3, minWidth: 78, flexShrink: 0 }}>{row.code}</span>
-                  <span style={{ fontSize: 11, color: THEME.navy, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.title}</span>
+                  <span style={{ fontSize: 11, color: THEME.heading, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.title}</span>
                   <Chip chip={row.chip} />
                   <span style={{ fontSize: 9.5, fontWeight: 700, color: THEME.tealDeep, flexShrink: 0 }}>{t(actVerb[row.kind])} ›</span>
                 </button>

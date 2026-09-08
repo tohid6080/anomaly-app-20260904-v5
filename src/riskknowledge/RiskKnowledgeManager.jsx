@@ -149,7 +149,7 @@ export default function RiskKnowledgeManager({ onBack, currentUser }) {
     return (
       <div style={{ maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
         <div style={styles.backLink} onClick={() => setShowForm(false)}>{t("rkCancel")}</div>
-        <h2 style={{ fontSize: 17, color: THEME.navy, fontWeight: 700, marginBottom: 14 }}>{editingId ? t("rkEditRecord") : t("rkNewRecord")}</h2>
+        <h2 style={{ fontSize: 17, color: THEME.heading, fontWeight: 700, marginBottom: 14 }}>{editingId ? t("rkEditRecord") : t("rkNewRecord")}</h2>
         <label style={styles.label}>{t("rkFieldActivity")}</label>
         <input style={styles.input} value={form.activity} onChange={(e) => setForm({ ...form, activity: e.target.value })} dir={dir} />
         <label style={styles.label}>{t("rkFieldHazardRequired")}</label>
@@ -176,7 +176,7 @@ export default function RiskKnowledgeManager({ onBack, currentUser }) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 6, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <Database size={20} color={THEME.teal} />
-          <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("rkManagementTitle")}</h2>
+          <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("rkManagementTitle")}</h2>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6 }} onClick={openNew}>
@@ -242,7 +242,7 @@ export default function RiskKnowledgeManager({ onBack, currentUser }) {
                 style={{ marginTop: 4, flexShrink: 0 }}
               />
               <div style={{ flex: 1, cursor: "pointer" }} onClick={() => openEdit(rec)}>
-                <div style={{ fontWeight: 700, color: THEME.navy, fontSize: 13.5 }}>
+                <div style={{ fontWeight: 700, color: THEME.heading, fontSize: 13.5 }}>
                   {rec.hazard}
                   {!rec.approved && <span style={{ fontSize: 10, background: "#f1f5f9", color: THEME.text3, padding: "2px 7px", borderRadius: 999, marginRight: 6 }}>{t("commonInactive")}</span>}
                   {rec.source === "user_approved" && <span style={{ fontSize: 10, background: "#e3f5f4", color: THEME.tealDeep, padding: "2px 7px", borderRadius: 999, marginRight: 6 }}>{t("rkAutoLearned")}</span>}

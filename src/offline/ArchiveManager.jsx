@@ -1104,7 +1104,7 @@ export default function ArchiveManager({ onBack, currentUser }) {
       {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
         <Archive size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("amPageTitle")}</h2>
+        <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("amPageTitle")}</h2>
       </div>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 14, lineHeight: 1.8 }}>
         {t("amPageDescApproved")}
@@ -1201,7 +1201,7 @@ export default function ArchiveManager({ onBack, currentUser }) {
       <div style={{ ...styles.card, width: "auto", marginTop: 18 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
           <FileSpreadsheet size={16} color={THEME.teal} />
-          <h3 style={{ margin: 0, fontSize: 15, color: THEME.navy, fontWeight: 700 }}>{t("amReportExportsTitle")}</h3>
+          <h3 style={{ margin: 0, fontSize: 15, color: THEME.heading, fontWeight: 700 }}>{t("amReportExportsTitle")}</h3>
         </div>
         <p style={{ color: THEME.text3, fontSize: 12, marginTop: 4, marginBottom: 12, lineHeight: 1.9 }}>
           {t("amReportExportsDesc")}

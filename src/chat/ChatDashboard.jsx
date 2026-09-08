@@ -106,7 +106,7 @@ export default function ChatDashboard({ onBack, currentUser }) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <MessageCircle size={20} color={THEME.teal} />
-          <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("chatTitle")}</h2>
+          <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("chatTitle")}</h2>
         </div>
         <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6 }} onClick={openNew}>
           <Plus size={14} /> {t("chatNewConversation")}
@@ -172,7 +172,7 @@ export default function ChatDashboard({ onBack, currentUser }) {
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontWeight: 700, fontSize: 13.5, color: THEME.navy }}>{displayTitle}</span>
+                <span style={{ fontWeight: 700, fontSize: 13.5, color: THEME.heading }}>{displayTitle}</span>
                 {c.lastMessage && <span style={{ fontSize: 10, color: THEME.text3 }}>{toJalaliDateTime(c.lastMessage.createdAt)}</span>}
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>

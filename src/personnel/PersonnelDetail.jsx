@@ -231,7 +231,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
       <div style={{ ...styles.card, width: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
           <div>
-            <h2 style={{ margin: 0, fontSize: 17, color: THEME.navy, fontWeight: 700 }}>{personnel.fullName}</h2>
+            <h2 style={{ margin: 0, fontSize: 17, color: THEME.heading, fontWeight: 700 }}>{personnel.fullName}</h2>
             <p style={{ fontSize: 12, color: THEME.text3, margin: "4px 0 0" }}>{personnel.jobTitle} · {personnel.contractorName}</p>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
@@ -332,7 +332,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
       )}
 
       <div style={{ ...styles.card, width: "auto" }}>
-        <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 8px", fontWeight: 700 }}>{t("pdetRequiredTrainings")}</h3>
+        <h3 style={{ fontSize: 14, color: THEME.heading, margin: "0 0 8px", fontWeight: 700 }}>{t("pdetRequiredTrainings")}</h3>
         {trainingsLoading && <p style={{ fontSize: 12, color: THEME.text3 }}>{t("pdetCheckingEllipsis")}</p>}
         {!trainingsLoading && requiredTrainings.length === 0 && (
           <p style={{ fontSize: 12, color: THEME.text3 }}>{t("pdetNoTrainingRequired", { job: personnel.jobTitle })}</p>
@@ -399,7 +399,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
 
       {isEmployer && (
         <div style={{ ...styles.card, width: "auto" }}>
-          <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 8px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+          <h3 style={{ fontSize: 14, color: THEME.heading, margin: "0 0 8px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
             <UserX size={16} color={THEME.text2} /> {t("pdetEmploymentStatus")}
           </h3>
 
@@ -435,7 +435,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
 
       {personnel.qualificationRequired && (
         <div style={{ ...styles.card, width: "auto" }}>
-          <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 8px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+          <h3 style={{ fontSize: 14, color: THEME.heading, margin: "0 0 8px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
             <ShieldCheck size={16} color="#c2410c" /> {t("pdetEmployerQualificationApproval")}
           </h3>
           <span style={{ ...styles.badge, color: docStatusMeta(personnel.qualificationStatus || "pending").color, background: docStatusMeta(personnel.qualificationStatus || "pending").bg }}>
@@ -467,7 +467,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
       <AccidentPronenessSection personnel={personnel} role={role} currentUser={currentUser} onNavigateToAssessment={onNavigateToAssessment} />
 
       <div style={{ ...styles.card, width: "auto" }}>
-        <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 4px", fontWeight: 700 }}>{t("pdetDocuments")}</h3>
+        <h3 style={{ fontSize: 14, color: THEME.heading, margin: "0 0 4px", fontWeight: 700 }}>{t("pdetDocuments")}</h3>
         {visibleDocTypes.map((dt) => {
           const doc = docByType(dt.value);
           const dsm = doc ? docStatusMeta(doc.status) : null;
@@ -532,7 +532,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
 
       {isContractor && (
         <div style={{ ...styles.card, width: "auto" }}>
-          <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 8px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+          <h3 style={{ fontSize: 14, color: THEME.heading, margin: "0 0 8px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
             <ShieldCheck size={16} color={THEME.teal} /> {t("pdetSendToEmployerSupervisor")}
           </h3>
           {gateItem && (gateItem.status === "pending_approval" || gateItem.status === "assigned_review" || gateItem.status === "reviewed") ? (
@@ -561,7 +561,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
 
       {personnel.occHealthPath === "no_certificate" && (
         <div style={{ ...styles.card, width: "auto" }}>
-          <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 8px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+          <h3 style={{ fontSize: 14, color: THEME.heading, margin: "0 0 8px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
             <Clock size={16} /> {t("pdetHealthWorkflow")}
           </h3>
           <p style={{ fontSize: 12, color: THEME.text2, margin: "0 0 8px" }}>

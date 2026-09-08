@@ -252,7 +252,7 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
   // پنلی که قبلاً انتهای کل لیست بود — حالا دقیقاً زیر همان ردیف
   const renderExpandedPanel = (t) => (
     <div style={{ ...styles.card, width: "auto", margin: 0 }}>
-      <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 10px", fontWeight: 700, direction: "ltr", textAlign: "start" }}>{t.tagNumber}</h3>
+      <h3 style={{ fontSize: 14, color: THEME.heading, margin: "0 0 10px", fontWeight: 700, direction: "ltr", textAlign: "start" }}>{t.tagNumber}</h3>
 
       {expandedId === t.id && !isContractor && (
         <div>
@@ -293,7 +293,7 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
       {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
         <Tag size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("scaffModuleTitle")}</h2>
+        <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("scaffModuleTitle")}</h2>
       </div>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 14 }}>
         {isContractor ? t("scaffContractorSubtitle") : t("scaffEmployerSubtitle")}
@@ -309,7 +309,7 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
 
       {!isContractor && perContractorStats.length > 0 && (
         <div style={{ ...styles.card, width: "auto", marginBottom: 14 }}>
-          <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>{t("scaffPerContractorStats")}</h3>
+          <h3 style={{ fontSize: 13, color: THEME.heading, margin: "0 0 10px", fontWeight: 700 }}>{t("scaffPerContractorStats")}</h3>
           {perContractorStats.map((c) => (
             <div key={c.name} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${THEME.border}`, flexWrap: "wrap" }}>
               <span style={{ flex: 1, minWidth: 100, fontSize: 12.5, fontWeight: 600, color: THEME.text }}>{c.name}</span>
@@ -373,7 +373,7 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
             <div style={{ ...styles.card, width: "auto", margin: 0, borderInlineStart: `4px solid ${sm.color}`, height: "100%" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 6 }}>
                 <div>
-                  <div style={{ fontWeight: 700, color: THEME.navy, fontSize: 14, direction: "ltr", textAlign: "start" }}>{card.tagNumber}</div>
+                  <div style={{ fontWeight: 700, color: THEME.heading, fontSize: 14, direction: "ltr", textAlign: "start" }}>{card.tagNumber}</div>
                   <div style={{ fontSize: 11.5, color: THEME.text3, marginTop: 4 }}>
                     {!isContractor && <>{card.contractorName} · </>}{card.location} · {toJalaliSafe(card.erectionDate)}
                   </div>

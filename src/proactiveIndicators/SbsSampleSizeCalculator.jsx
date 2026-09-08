@@ -85,7 +85,7 @@ export default function SbsSampleSizeCalculator({ currentUser, onClose, onSent }
   return (
     <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18, marginBottom: 20 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-        <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+        <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
           <Calculator size={16} /> {t("sbsCalcTitle")}
         </h3>
         {onClose && <button type="button" onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: THEME.text3 }}>{t("sbsCalcClose")}</button>}
@@ -117,7 +117,7 @@ export default function SbsSampleSizeCalculator({ currentUser, onClose, onSent }
       {result && (
         <div style={{ background: THEME.bg, borderRadius: 9, padding: 14, marginTop: 14 }}>
           <p style={{ fontSize: 12.5, color: THEME.text2, margin: "0 0 4px" }}>
-            {t("sbsPilotUnsafeRatio")}<b style={{ color: THEME.navy }}>{(result.p * 100).toFixed(1)}{pctSign(lang)}</b>
+            {t("sbsPilotUnsafeRatio")}<b style={{ color: THEME.heading }}>{(result.p * 100).toFixed(1)}{pctSign(lang)}</b>
           </p>
           <p style={{ fontSize: 16, fontWeight: 800, color: THEME.teal, margin: "6px 0" }}>
             {t("sbsTotalSampleNeeded", { n: result.n.toLocaleString(numLocale(lang)) })}
@@ -141,7 +141,7 @@ export default function SbsSampleSizeCalculator({ currentUser, onClose, onSent }
 
       {result && mode === "workshop" && (
         <div style={{ marginTop: 14 }}>
-          <p style={{ fontSize: 12, fontWeight: 700, color: THEME.navy, marginBottom: 8 }}>{t("sbsWorkshopDistribution")}</p>
+          <p style={{ fontSize: 12, fontWeight: 700, color: THEME.heading, marginBottom: 8 }}>{t("sbsWorkshopDistribution")}</p>
           {workshops.map((w) => (
             <div key={w.id} style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "center" }}>
               <input style={{ ...styles.input, marginTop: 0, flex: 2 }} value={w.name} onChange={(e) => updateWorkshop(w.id, "name", e.target.value)} dir={dir} />
@@ -174,7 +174,7 @@ export default function SbsSampleSizeCalculator({ currentUser, onClose, onSent }
                       <td style={{ padding: "6px 8px" }}>{w.name}</td>
                       <td style={{ padding: "6px 8px", textAlign: "center" }}>{w.workers.toLocaleString(numLocale(lang))}</td>
                       <td style={{ padding: "6px 8px", textAlign: "center" }}>{w.share.toLocaleString(numLocale(lang))}</td>
-                      <td style={{ padding: "6px 8px", textAlign: "center", fontWeight: 700, color: THEME.navy }}>
+                      <td style={{ padding: "6px 8px", textAlign: "center", fontWeight: 700, color: THEME.heading }}>
                         {w.finalTotal.toLocaleString(numLocale(lang))} <span style={{ color: THEME.text3, fontWeight: 400 }}>{t("sbsPerPersonSuffix", { per: w.perPerson })}</span>
                       </td>
                     </tr>
@@ -188,7 +188,7 @@ export default function SbsSampleSizeCalculator({ currentUser, onClose, onSent }
 
       {result && (
         <div style={{ background: THEME.dangerBg, border: `1px solid ${THEME.danger}`, borderRadius: 9, padding: 14, marginTop: 16 }}>
-          <h4 style={{ fontSize: 12.5, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>{t("sbsSendTargetTitle")}</h4>
+          <h4 style={{ fontSize: 12.5, color: THEME.heading, fontWeight: 700, margin: "0 0 10px" }}>{t("sbsSendTargetTitle")}</h4>
           <label style={styles.label}>{t("sbsTargetContractor")}</label>
           <select style={styles.input} value={targetContractorId} onChange={(e) => setTargetContractorId(e.target.value)} dir={dir}>
             <option value="all">{t("sbsAllContractors")}</option>

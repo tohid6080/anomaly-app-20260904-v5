@@ -54,7 +54,7 @@ export default function BowtieBarrierHealthWidget({ role, currentUser, onNavigat
               <span key={e.k} style={{ display: "flex", alignItems: "center", gap: 4 }}>
                 <i style={{ width: 8, height: 8, borderRadius: 2, background: e.c, display: "inline-block", flexShrink: 0 }} />
                 {t(e.key)}
-                <b style={{ marginInlineStart: "auto", fontFamily: THEME.font, color: THEME.navy }}>{d.dist[e.k]}</b>
+                <b style={{ marginInlineStart: "auto", fontFamily: THEME.font, color: THEME.heading }}>{d.dist[e.k]}</b>
               </span>
             ))}
           </div>
@@ -75,7 +75,7 @@ export default function BowtieBarrierHealthWidget({ role, currentUser, onNavigat
                 <button
                   key={a.key} type="button"
                   onClick={() => onNavigate && onNavigate(a.target || { module: "bowtie" })}
-                  style={{ display: "block", width: "100%", textAlign: "start", fontSize: 9.5, color: THEME.navy, background: THEME.surface2, border: `1px solid ${THEME.borderSoft}`, borderRadius: 7, padding: "6px 8px", cursor: "pointer", fontFamily: THEME.font, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                  style={{ display: "block", width: "100%", textAlign: "start", fontSize: 9.5, color: THEME.heading, background: THEME.surface2, border: `1px solid ${THEME.borderSoft}`, borderRadius: 7, padding: "6px 8px", cursor: "pointer", fontFamily: THEME.font, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
                 >
                   {a.label}
                 </button>

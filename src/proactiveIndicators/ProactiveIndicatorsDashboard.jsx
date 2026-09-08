@@ -23,7 +23,7 @@ function HseGuideOverlay({ onClose }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 3000, background: "#fff", display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderBottom: `1px solid ${THEME.border}`, background: THEME.surface, flexShrink: 0 }}>
-        <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 700, color: THEME.navy }}>
+        <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 700, color: THEME.heading }}>
           <BookOpen size={15} color={THEME.teal} /> {t("pidGuideTitle")}
         </span>
         <button
@@ -120,7 +120,7 @@ export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role
         </button>
       </div>
       {showGuide && <HseGuideOverlay onClose={() => setShowGuide(false)} />}
-      <h3 style={{ marginBottom: 4, color: THEME.navy }}>{moduleTitle || t("pidModuleTitle")}</h3>
+      <h3 style={{ marginBottom: 4, color: THEME.heading }}>{moduleTitle || t("pidModuleTitle")}</h3>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 0, marginBottom: 16 }}>
         {t("pidModuleDesc")}
       </p>
@@ -141,7 +141,7 @@ export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <TrendingUp size={20} color={THEME.teal} />
             <div>
-              <div style={{ fontWeight: 700, color: THEME.navy, fontSize: 14 }}>{indicatorLabel(ind)}</div>
+              <div style={{ fontWeight: 700, color: THEME.heading, fontSize: 14 }}>{indicatorLabel(ind)}</div>
               {indicatorDescriptionLabel(ind) && <div style={{ fontSize: 11.5, color: THEME.text3, marginTop: 3 }}>{indicatorDescriptionLabel(ind)}</div>}
             </div>
           </div>
@@ -168,7 +168,7 @@ function ResultsList({ indicatorKey, indicatorName, currentUser, onBack }) {
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
       <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>
-      <h3 style={{ marginBottom: 4, color: THEME.navy, display: "flex", alignItems: "center", gap: 8 }}>
+      <h3 style={{ marginBottom: 4, color: THEME.heading, display: "flex", alignItems: "center", gap: 8 }}>
         <ClipboardList size={18} /> {t("pidResultsOf", { name: indicatorName })}
       </h3>
       <p style={{ color: THEME.text3, fontSize: 12, marginTop: 0, marginBottom: 16 }}>
@@ -202,7 +202,7 @@ function ResultsList({ indicatorKey, indicatorName, currentUser, onBack }) {
                   <td style={{ padding: "8px", textAlign: "center" }}>{r.jobTitle}</td>
                   <td style={{ padding: "8px", textAlign: "center" }}>{toJalaliSafe(r.assessmentDate)}</td>
                   <td style={{ padding: "8px", textAlign: "center" }}>{r.assessorName}</td>
-                  <td style={{ padding: "8px", textAlign: "center", fontWeight: 700, color: THEME.navy }}>{r.finalScore}</td>
+                  <td style={{ padding: "8px", textAlign: "center", fontWeight: 700, color: THEME.heading }}>{r.finalScore}</td>
                   <td style={{ padding: "8px", textAlign: "center" }}>
                     {indicatorKey === "accident_proneness" && r.finalScore != null ? (() => {
                       const lv = accidentPronenessLevel(r.finalScore);

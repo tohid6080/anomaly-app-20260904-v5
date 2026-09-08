@@ -31,7 +31,7 @@ export default function SuperAdminLogin({ onLogin }) {
         <div style={{ width: 56, height: 56, borderRadius: "50%", background: THEME.navyDeep, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
           <ShieldAlert size={26} color="#fff" />
         </div>
-        <h2 style={{ fontSize: 17, color: THEME.navy, fontWeight: 700, margin: "0 0 4px" }}>Super Admin</h2>
+        <h2 style={{ fontSize: 17, color: THEME.heading, fontWeight: 700, margin: "0 0 4px" }}>Super Admin</h2>
         <p style={{ fontSize: 12, color: THEME.text3, margin: "0 0 24px" }}>{t("superAdminLoginTagline")}</p>
 
         <div style={{ textAlign: dir === "rtl" ? "right" : "left", marginBottom: 12 }}>

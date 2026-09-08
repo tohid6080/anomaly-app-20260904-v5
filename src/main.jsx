@@ -36,6 +36,7 @@ baseStyle.textContent = `
     --ihms-text: #e8eef2;
     --ihms-text2: #9fb4c0;
     --ihms-text3: #6a8290;
+    --ihms-heading: #eef4f7;
     --ihms-danger: #ef4444;
     --ihms-danger-bg: #3a1e1e;
     --ihms-warn: #f59e0b;

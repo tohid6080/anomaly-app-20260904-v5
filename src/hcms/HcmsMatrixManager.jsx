@@ -46,7 +46,7 @@ export default function HcmsMatrixManager({ onBack }) {
       {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
         <Grid3x3 size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("hcmsMatrixTitle")}</h2>
+        <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("hcmsMatrixTitle")}</h2>
       </div>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 16 }}>
         {t("hcmsMatrixDesc")}
@@ -59,7 +59,7 @@ export default function HcmsMatrixManager({ onBack }) {
             <tr>
               <th style={{ padding: "8px 10px", textAlign: dir === "rtl" ? "right" : "left", fontSize: 12, color: THEME.text3 }}>{t("hcmsSeverityProbabilityHeader")}</th>
               {PROBABILITY_LETTERS.map((l) => (
-                <th key={l} style={{ padding: "8px 10px", fontSize: 13, fontWeight: 700, color: THEME.navy }}>{l}</th>
+                <th key={l} style={{ padding: "8px 10px", fontSize: 13, fontWeight: 700, color: THEME.heading }}>{l}</th>
               ))}
             </tr>
           </thead>

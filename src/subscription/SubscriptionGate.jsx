@@ -100,14 +100,14 @@ function PaymentResultScreen({ result, onContinue, onLogout }) {
         {success ? (
           <>
             <CheckCircle2 size={48} color="#166534" style={{ margin: "0 auto 14px" }} />
-            <h2 style={{ fontSize: 17, color: THEME.navy, fontWeight: 800, margin: "0 0 8px" }}>{t("sgPaymentSuccess")}</h2>
+            <h2 style={{ fontSize: 17, color: THEME.heading, fontWeight: 800, margin: "0 0 8px" }}>{t("sgPaymentSuccess")}</h2>
             <p style={{ fontSize: 12.5, color: THEME.text2, lineHeight: 1.9, marginBottom: 6 }}>{t("sgPaymentSuccessBody")}</p>
             {result.refId && <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 18 }}>{t("sgRefCode", { ref: result.refId })}</p>}
           </>
         ) : (
           <>
             <XCircle size={48} color={THEME.danger} style={{ margin: "0 auto 14px" }} />
-            <h2 style={{ fontSize: 17, color: THEME.navy, fontWeight: 800, margin: "0 0 8px" }}>{t("sgPaymentFailed")}</h2>
+            <h2 style={{ fontSize: 17, color: THEME.heading, fontWeight: 800, margin: "0 0 8px" }}>{t("sgPaymentFailed")}</h2>
             <p style={{ fontSize: 12.5, color: THEME.text2, lineHeight: 1.9, marginBottom: 18 }}>{result.error || t("sgPaymentFailedBody")}</p>
           </>
         )}
@@ -141,7 +141,7 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
           <div>
-            <h1 style={{ fontSize: 20, fontWeight: 800, color: THEME.navy, margin: "0 0 6px" }}>{access.label}</h1>
+            <h1 style={{ fontSize: 20, fontWeight: 800, color: THEME.heading, margin: "0 0 6px" }}>{access.label}</h1>
             {access.trialStart && access.trialEnd && (
               <p style={{ fontSize: 12, color: THEME.text3, margin: "0 0 6px" }}>
                 {t("saFromTo", { start: toJalaliDateTime(access.trialStart), end: toJalaliDateTime(access.trialEnd) })}
@@ -173,7 +173,7 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
                 }}
               >
                 {isThisPlanSelected && <CheckCircle2 size={18} color={THEME.teal} style={{ position: "absolute", top: 14, insetInlineStart: 14 }} />}
-                <h3 style={{ fontSize: 15, fontWeight: 800, color: THEME.navy, margin: "0 0 8px" }}>{p.name}</h3>
+                <h3 style={{ fontSize: 15, fontWeight: 800, color: THEME.heading, margin: "0 0 8px" }}>{p.name}</h3>
                 {p.description && (
                   <p style={{ fontSize: 11.5, color: THEME.text2, lineHeight: 1.9, margin: "0 0 12px", whiteSpace: "pre-wrap", overflowWrap: "anywhere", wordBreak: "break-word" }}>{p.description}</p>
                 )}
@@ -191,7 +191,7 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
                       }}
                     >
                       <span style={{ fontSize: 11.5, color: THEME.text2, fontWeight: 600 }}>{t("subTypeMonthly")}</span>
-                      <span style={{ fontSize: 14, fontWeight: 800, color: THEME.navy }}>{t("saTomanAmount", { amount: p.priceMonthly.toLocaleString(numLocale(lang)) })}</span>
+                      <span style={{ fontSize: 14, fontWeight: 800, color: THEME.heading }}>{t("saTomanAmount", { amount: p.priceMonthly.toLocaleString(numLocale(lang)) })}</span>
                     </button>
                   )}
                   {hasYearly && (
@@ -205,13 +205,13 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
                       }}
                     >
                       <span style={{ fontSize: 11.5, color: THEME.text2, fontWeight: 600 }}>{t("subTypeYearly")}</span>
-                      <span style={{ fontSize: 14, fontWeight: 800, color: THEME.navy }}>{t("saTomanAmount", { amount: p.priceYearly.toLocaleString(numLocale(lang)) })}</span>
+                      <span style={{ fontSize: 14, fontWeight: 800, color: THEME.heading }}>{t("saTomanAmount", { amount: p.priceYearly.toLocaleString(numLocale(lang)) })}</span>
                     </button>
                   )}
                   {p.priceTotal > 0 && (
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", padding: "8px 12px", borderRadius: 9, border: `1.5px dashed ${THEME.border}`, background: "transparent" }}>
                       <span style={{ fontSize: 11.5, color: THEME.text2, fontWeight: 600 }}>{t("sgTotalPriceOneOff")}</span>
-                      <span style={{ fontSize: 14, fontWeight: 800, color: THEME.navy }}>{t("saTomanAmount", { amount: p.priceTotal.toLocaleString(numLocale(lang)) })}</span>
+                      <span style={{ fontSize: 14, fontWeight: 800, color: THEME.heading }}>{t("saTomanAmount", { amount: p.priceTotal.toLocaleString(numLocale(lang)) })}</span>
                     </div>
                   )}
                   {!hasMonthly && !hasYearly && p.priceTotal <= 0 && <span style={{ fontSize: 12, color: THEME.text3 }}>{t("sgNoPriceDefined")}</span>}
@@ -227,7 +227,7 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
 
         {selectedPlan && (
           <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 14, padding: 20, maxWidth: 460, margin: "0 auto" }}>
-            <h4 style={{ fontSize: 13, fontWeight: 700, color: THEME.navy, margin: "0 0 10px" }}>{t("sgPurchaseSummary")}</h4>
+            <h4 style={{ fontSize: 13, fontWeight: 700, color: THEME.heading, margin: "0 0 10px" }}>{t("sgPurchaseSummary")}</h4>
             <p style={{ fontSize: 12.5, color: THEME.text2, margin: "0 0 4px" }}>{t("sgPlanLabel")}<b>{selectedPlan.name}</b></p>
             <p style={{ fontSize: 12.5, color: THEME.text2, margin: "0 0 8px" }}>{t("sgCycleLabel")}<b>{billingCycle === "monthly" ? t("subTypeMonthly") : t("subTypeYearly")}</b></p>
 

@@ -87,7 +87,7 @@ export default function ChatThread({ conversationId, currentUser, onBack }) {
         <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginRight: "auto" }}>
           {isGroup && <UsersIcon size={15} color={THEME.text3} />}
-          <span style={{ fontWeight: 700, color: THEME.navy, fontSize: 14.5 }}>{title}</span>
+          <span style={{ fontWeight: 700, color: THEME.heading, fontSize: 14.5 }}>{title}</span>
         </div>
         <button type="button" onClick={handleLeave} disabled={leaving} title={t("chatLeaveConversationTitle")} style={{ background: "none", border: "none", cursor: "pointer", padding: 6, display: "flex", alignItems: "center" }}>
           <LogOut size={16} color={THEME.danger} />

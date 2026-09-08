@@ -126,7 +126,7 @@ export default function AccountManagement({ currentAdmin }) {
 
   return (
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16, marginBottom: 16 }}>
-      <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
+      <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
         <Users size={14} color={THEME.teal} /> Account Management
       </h3>
 

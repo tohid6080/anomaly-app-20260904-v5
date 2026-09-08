@@ -191,7 +191,7 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId }) {
     return (
       <div style={{ maxWidth: 720, margin: "0 auto", padding: 24, direction: dir }}>
         <div style={styles.backLink} onClick={() => setShowForm(false)}>{t("hcmsCancel")}</div>
-        <h2 style={{ fontSize: 17, color: THEME.navy, fontWeight: 700, marginBottom: 4 }}>{editingId ? t("hcmsEditAssessment") : t("hcmsNewAssessment")}</h2>
+        <h2 style={{ fontSize: 17, color: THEME.heading, fontWeight: 700, marginBottom: 4 }}>{editingId ? t("hcmsEditAssessment") : t("hcmsNewAssessment")}</h2>
         {form.linkedAnomalyId && (
           <p style={{ fontSize: 11.5, color: THEME.teal, display: "flex", alignItems: "center", gap: 4, marginBottom: 8 }}>
             <LinkIcon size={12} /> {t("hcmsLinkedToAnomaly")}
@@ -208,7 +208,7 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId }) {
         )}
 
         <div style={{ ...styles.card, width: "auto", marginBottom: 14 }}>
-          <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>{t("hcmsActivityInfo")}</h3>
+          <h3 style={{ fontSize: 13, color: THEME.heading, margin: "0 0 10px", fontWeight: 700 }}>{t("hcmsActivityInfo")}</h3>
           <div style={styles.formGrid}>
             <div><label style={styles.label}>{t("hcmsProcess")}</label><input style={styles.input} value={form.process} onChange={(e) => setForm({ ...form, process: e.target.value })} dir={dir} /></div>
             <div><label style={styles.label}>{t("hcmsActivityRequired")}</label><input style={styles.input} value={form.activity} onChange={(e) => setForm({ ...form, activity: e.target.value })} dir={dir} /></div>
@@ -220,7 +220,7 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId }) {
         </div>
 
         <div style={{ ...styles.card, width: "auto", marginBottom: 14 }}>
-          <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>{t("hcmsHazardIdentification")}</h3>
+          <h3 style={{ fontSize: 13, color: THEME.heading, margin: "0 0 10px", fontWeight: 700 }}>{t("hcmsHazardIdentification")}</h3>
           <label style={styles.label}>{t("hcmsHazardSafetyHealth")}</label>
           <textarea style={{ ...styles.input, minHeight: 60, fontFamily: "inherit" }} value={form.hazard} onChange={(e) => setForm({ ...form, hazard: e.target.value })} dir={dir} />
           <label style={styles.label}>{t("hcmsEnvironmentalAspects")}</label>
@@ -238,7 +238,7 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId }) {
         </div>
 
         <div style={{ ...styles.card, width: "auto", marginBottom: 14 }}>
-          <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 4px", fontWeight: 700 }}>{t("hcmsInitialRisk")}</h3>
+          <h3 style={{ fontSize: 13, color: THEME.heading, margin: "0 0 4px", fontWeight: 700 }}>{t("hcmsInitialRisk")}</h3>
           <p style={{ fontSize: 11, color: THEME.text3, margin: "0 0 10px" }}>{t("hcmsRpnHint")}</p>
           <RiskMatrixPreview />
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
@@ -254,7 +254,7 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId }) {
         </div>
 
         <div style={{ ...styles.card, width: "auto", marginBottom: 14 }}>
-          <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>{t("hcmsControlActions")}</h3>
+          <h3 style={{ fontSize: 13, color: THEME.heading, margin: "0 0 10px", fontWeight: 700 }}>{t("hcmsControlActions")}</h3>
           <div style={styles.formGrid}>
             <div>
               <label style={styles.label}>Permit to Work?</label>
@@ -272,7 +272,7 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId }) {
         </div>
 
         <div style={{ ...styles.card, width: "auto", marginBottom: 14 }}>
-          <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 4px", fontWeight: 700 }}>{t("hcmsResidualRisk")}</h3>
+          <h3 style={{ fontSize: 13, color: THEME.heading, margin: "0 0 4px", fontWeight: 700 }}>{t("hcmsResidualRisk")}</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginTop: 10 }}>
             {Object.keys(CATEGORY_LABELS).map((k) => (
               <div key={k}>
@@ -321,7 +321,7 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId }) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <ShieldAlert size={20} color={THEME.teal} />
-          <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("hcmsDashboardTitle")}</h2>
+          <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("hcmsDashboardTitle")}</h2>
         </div>
         <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6 }} onClick={openNew}>
           <Plus size={14} /> {t("hcmsNewAssessmentBtn")}
@@ -360,7 +360,7 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId }) {
                 style={{ marginTop: 4, flexShrink: 0 }}
               />
               <div style={{ flex: 1, cursor: "pointer" }} onClick={() => openEdit(rec)}>
-                <div style={{ fontWeight: 700, color: THEME.navy, fontSize: 14 }}>
+                <div style={{ fontWeight: 700, color: THEME.heading, fontSize: 14 }}>
                   {rec.activity}
                   {rec.linkedAnomalyId && <LinkIcon size={12} color={THEME.teal} style={{ marginRight: 6, display: "inline" }} />}
                   {rec.status === "pending_review" && (

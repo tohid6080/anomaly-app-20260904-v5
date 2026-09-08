@@ -115,7 +115,7 @@ export default function AccidentPronenessSection({ personnel, role, currentUser,
       {correctiveAction && (
         <div style={{ background: "#fff", borderRadius: 8, padding: 10, marginBottom: canIssueCorrectiveAction ? 0 : undefined }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: THEME.navy }}>{correctiveAction.actionNumber}</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: THEME.heading }}>{correctiveAction.actionNumber}</span>
             <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: STATUS_META[correctiveAction.status]?.bg || "#eef1f5", color: STATUS_META[correctiveAction.status]?.color || THEME.text3, fontWeight: 600 }}>
               {STATUS_META[correctiveAction.status] ? t(STATUS_META[correctiveAction.status].labelKey) : correctiveAction.status}
             </span>

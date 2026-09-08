@@ -55,7 +55,7 @@ export default function BarrierMappingPicker({ sourceType, sourceId, currentUser
 
   return (
     <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18, marginTop: 16 }}>
-      <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 6 }}>
+      <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 6 }}>
         <GitBranch size={15} /> {t("dbeeBmpTitle")}
       </h3>
       <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 12, lineHeight: 1.8 }}>
@@ -66,7 +66,7 @@ export default function BarrierMappingPicker({ sourceType, sourceId, currentUser
       {mappings.map((m) => (
         <div key={m.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: `1px solid ${THEME.border}` }}>
           <div>
-            <span style={{ fontSize: 12.5, fontWeight: 700, color: THEME.navy }}>{m.barrierLabel || m.barrierId}</span>
+            <span style={{ fontSize: 12.5, fontWeight: 700, color: THEME.heading }}>{m.barrierLabel || m.barrierId}</span>
             <span style={{ fontSize: 11, color: THEME.text3, marginRight: 8 }}>{t("dbeeTmRelevanceSuffix", { bowtie: m.bowtieTitle || "BowTie", relevance: relevanceLabel(m.relevance) })}</span>
           </div>
           {!readOnly && (

@@ -148,7 +148,7 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
       {onBack && <div style={styles.backLink} onClick={onBack}>{t("mfBack")}</div>}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
         <Truck size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>
+        <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>
           {machinery ? t("mfEditTitle") : t("mfNewTitle")}
         </h2>
       </div>
@@ -302,7 +302,7 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
 
       {machinery && (
         <div style={{ ...styles.card, width: "auto", marginTop: 14 }}>
-          <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 4px", fontWeight: 700 }}>{t("mfDocuments")}</h3>
+          <h3 style={{ fontSize: 14, color: THEME.heading, margin: "0 0 4px", fontWeight: 700 }}>{t("mfDocuments")}</h3>
           <p style={{ fontSize: 11.5, color: THEME.text3, margin: "0 0 12px" }}>{t("mfStarredRequiredNote")}</p>
           {MACHINERY_DOC_TYPES.map((dt) => (
             <div key={dt.value} style={{ marginBottom: 14 }}>

@@ -65,7 +65,7 @@ export default function BarrierEffectivenessDashboard({ currentUser, role, onBac
       {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackPlain")}</div>}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10, marginBottom: 4 }}>
         <div>
-          <h2 style={{ fontSize: 18, color: THEME.navy, fontWeight: 800, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+          <h2 style={{ fontSize: 18, color: THEME.heading, fontWeight: 800, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
             <ShieldCheck size={20} color={THEME.teal} /> {t("dbeeDashTitle")}
           </h2>
           <p style={{ color: THEME.text3, fontSize: 12, marginTop: 4 }}>{t("dbeeDashSubtitle")}</p>
@@ -103,7 +103,7 @@ export default function BarrierEffectivenessDashboard({ currentUser, role, onBac
       <CriticalBarriersBySite barriers={visibleBarriers} bowties={data.bowties} />
 
       <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18, marginTop: 16 }}>
-        <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 12px" }}>{t("dbeeAllBarriers")}</h3>
+        <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: "0 0 12px" }}>{t("dbeeAllBarriers")}</h3>
         {visibleBarriers.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("dbeeNoBarriersInFilter")}</p>}
         {visibleBarriers.map((b) => (
           <BarrierRow key={b.id} barrier={b} bowtieTitle={data.bowties.find((bt) => bt.id === b.bowtieId)?.title} onClick={() => setSelectedBarrier(b)} />
@@ -125,7 +125,7 @@ function computeKpis(barriers, bowties) {
 function KpiGrid({ kpi }) {
   const { t } = useLanguage();
   const cards = [
-    { label: t("dbeeKpiTotal"), value: kpi.total, color: THEME.navy, bg: THEME.bg },
+    { label: t("dbeeKpiTotal"), value: kpi.total, color: THEME.heading, bg: THEME.bg },
     { label: t("dbeeKpiEffective"), value: kpi.effective, color: "#166534", bg: "#dcfce7" },
     { label: t("dbeeKpiWeak"), value: kpi.weak, color: "#b45309", bg: "#fef3c7" },
     { label: t("dbeeKpiCritical"), value: kpi.critical, color: "#b91c1c", bg: "#fee2e2" },
@@ -150,7 +150,7 @@ function TopFailuresSection({ barriers, bowties }) {
   if (worst.length === 0) return null;
   return (
     <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18, marginTop: 16 }}>
-      <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
+      <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
         <TrendingDown size={15} color={THEME.danger} /> {t("dbeeTopFailures")}
       </h3>
       {worst.map((b) => {
@@ -158,7 +158,7 @@ function TopFailuresSection({ barriers, bowties }) {
         return (
           <div key={b.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: `1px solid ${THEME.border}` }}>
             <div>
-              <span style={{ fontSize: 12.5, fontWeight: 700, color: THEME.navy }}>{b.label}</span>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: THEME.heading }}>{b.label}</span>
               <span style={{ fontSize: 11, color: THEME.text3, marginRight: 8 }}>({bowties.find((bt) => bt.id === b.bowtieId)?.title})</span>
             </div>
             <span style={{ fontSize: 12, fontWeight: 700, color: meta.color }}>{meta.emoji} {t("dbeePct", { n: b.score })}</span>
@@ -209,7 +209,7 @@ function BarrierRow({ barrier, bowtieTitle, onClick }) {
       <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
         {isCriticalFlag && <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#b91c1c", color: "#fff", fontWeight: 700, flexShrink: 0 }}>{t("dbeeCriticalFlag")}</span>}
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: THEME.navy, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{barrier.label}</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: THEME.heading, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{barrier.label}</div>
           <div style={{ fontSize: 11, color: THEME.text3 }}>{bowtieTitle}</div>
         </div>
       </div>
@@ -278,7 +278,7 @@ function BarrierDetailView({ barrier, bowtieTitle, currentUser, isEmployerSide, 
   return (
     <div style={{ maxWidth: 800, margin: "0 auto", padding: 24 }}>
       <div style={styles.backLink} onClick={onBack}>{t("commonBackPlain")}</div>
-      <h2 style={{ fontSize: 18, color: THEME.navy, fontWeight: 800, margin: "0 0 4px" }}>{barrier.label}</h2>
+      <h2 style={{ fontSize: 18, color: THEME.heading, fontWeight: 800, margin: "0 0 4px" }}>{barrier.label}</h2>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 18 }}>{bowtieTitle} — {barrier.side === "preventive" ? t("dbeeSidePreventive") : t("dbeeSideRecovery")}</p>
 
       <div style={{ background: `${meta.color}14`, border: `1px solid ${meta.color}`, borderRadius: 12, padding: 18, marginBottom: 16 }}>
@@ -307,7 +307,7 @@ function BarrierDetailView({ barrier, bowtieTitle, currentUser, isEmployerSide, 
 
       {current?.breakdown && (
         <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18, marginBottom: 16 }}>
-          <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>{t("dbeeReasonForStatus")}</h4>
+          <h4 style={{ fontSize: 13, color: THEME.heading, fontWeight: 700, margin: "0 0 10px" }}>{t("dbeeReasonForStatus")}</h4>
           {Object.entries(current.breakdown).filter(([, v]) => v.evidenceCount > 0).map(([key, v]) => (
             <div key={key} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "5px 0", borderBottom: `1px solid ${THEME.border}` }}>
               <span style={{ color: THEME.text2 }}>{t("dbeeEvidenceCount", { name: SOURCE_LABEL_KEYS[key] ? t(SOURCE_LABEL_KEYS[key]) : key, count: v.evidenceCount })}</span>
@@ -320,7 +320,7 @@ function BarrierDetailView({ barrier, bowtieTitle, currentUser, isEmployerSide, 
 
       {evidence && (
         <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18, marginBottom: 16 }}>
-          <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>{t("dbeeRelatedEvidence")}</h4>
+          <h4 style={{ fontSize: 13, color: THEME.heading, fontWeight: 700, margin: "0 0 10px" }}>{t("dbeeRelatedEvidence")}</h4>
           <EvidenceGroup title={t("dbeeEvRelatedAnomalies")} items={evidence.anomalies.map((a) => `${a.id} — ${toJalaliSafe(a.createdAt)}`)} />
           <EvidenceGroup title={t("dbeeEvCapa")} items={evidence.capa.map((c) => `${c.actionNumber || c.id} — ${c.status}`)} />
           <EvidenceGroup title={t("dbeeEvRelatedIncidents")} items={evidence.incidents.map((i) => `${i.incidentNo} — ${toJalaliSafe(i.occurredAt)}${i.isDisabling ? t("dbeeIncDisablingSuffix") : ""}`)} />
@@ -330,11 +330,11 @@ function BarrierDetailView({ barrier, bowtieTitle, currentUser, isEmployerSide, 
 
       {history && history.length > 0 && (
         <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18, marginBottom: 16 }}>
-          <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>{t("dbeeEffectivenessTrend")}</h4>
+          <h4 style={{ fontSize: 13, color: THEME.heading, fontWeight: 700, margin: "0 0 10px" }}>{t("dbeeEffectivenessTrend")}</h4>
           {history.map((h) => (
             <div key={h.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "5px 0", borderBottom: `1px solid ${THEME.border}` }}>
               <span style={{ color: THEME.text3 }}>{toJalaliSafe(h.calculatedAt)}</span>
-              <span style={{ fontWeight: 700, color: THEME.navy }}>{h.score != null ? t("dbeePct", { n: h.score }) : t("dbeeNotEnoughData")}</span>
+              <span style={{ fontWeight: 700, color: THEME.heading }}>{h.score != null ? t("dbeePct", { n: h.score }) : t("dbeeNotEnoughData")}</span>
             </div>
           ))}
         </div>

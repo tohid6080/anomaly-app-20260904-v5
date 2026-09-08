@@ -170,7 +170,7 @@ export default function BowTieDashboard({ onBack, currentUser, readOnly, role })
 
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
         <ShieldCheck size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>BowTie Risk Analysis</h2>
+        <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>BowTie Risk Analysis</h2>
       </div>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 18 }}>
         {t("bowtieDashboardDesc")}
@@ -259,7 +259,7 @@ export default function BowTieDashboard({ onBack, currentUser, readOnly, role })
         </select>
       </div>
 
-      <h3 style={{ marginTop: 20, fontSize: 15.5, color: THEME.navy, fontWeight: 700 }}>{t("registeredItemsCount", { count: filtered.length })}</h3>
+      <h3 style={{ marginTop: 20, fontSize: 15.5, color: THEME.heading, fontWeight: 700 }}>{t("registeredItemsCount", { count: filtered.length })}</h3>
       {filtered.length === 0 && <p style={{ color: THEME.text3 }}>{t("noItemsFound")}</p>}
 
       {filtered.map((b) => {
@@ -270,7 +270,7 @@ export default function BowTieDashboard({ onBack, currentUser, readOnly, role })
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", cursor: "pointer" }} onClick={() => startExpand(b)}>
               <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                  <span style={{ fontWeight: 700, color: THEME.navy, fontSize: 14.5 }}>{b.title}</span>
+                  <span style={{ fontWeight: 700, color: THEME.heading, fontSize: 14.5 }}>{b.title}</span>
                   <span style={{ ...styles.badge, color: sm.color, background: sm.bg }}>{t(sm.labelKey)}</span>
                   {b.syncStatus && b.syncStatus !== "synced" && <SyncStatusBadge status={b.syncStatus} onRetry={() => load()} />}
                 </div>

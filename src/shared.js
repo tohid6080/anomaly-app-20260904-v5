@@ -236,6 +236,9 @@ export const THEME = {
   text: "var(--ihms-text, #e8eef2)",
   text2: "var(--ihms-text2, #9fb4c0)",
   text3: "var(--ihms-text3, #6a8290)",
+  // رنگِ عنوان‌ها — روی تمِ تیره روشن، روی تمِ روشن سرمه‌ای. جدا از
+  // THEME.navy که فقط برای پس‌زمینهٔ هدر/سایدبار است.
+  heading: "var(--ihms-heading, #0e2c3f)",
   danger: "var(--ihms-danger, #ef4444)",
   dangerBg: "var(--ihms-danger-bg, #3a1e1e)",
   warn: "var(--ihms-warn, #f59e0b)",

@@ -55,7 +55,7 @@ export default function ProactiveIndicatorsWidget({ onNavigate }) {
               <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 10, fontWeight: 700, color: THEME.text2 }}>
                 {t("piwClimate")}
                 <Chip text={d.climate.level} bg={(climateChip[d.climate.level] || climateChip["متوسط"])[0]} fg={(climateChip[d.climate.level] || climateChip["متوسط"])[1]} />
-                <span style={{ marginInlineStart: "auto", fontFamily: THEME.font, fontSize: 14, fontWeight: 800, color: THEME.navy }}>
+                <span style={{ marginInlineStart: "auto", fontFamily: THEME.font, fontSize: 14, fontWeight: 800, color: THEME.heading }}>
                   {d.climate.total == null ? "—" : d.climate.total} <span style={{ fontSize: 9, color: THEME.text3 }}>/ ۹۰</span>
                 </span>
               </div>
@@ -83,7 +83,7 @@ export default function ProactiveIndicatorsWidget({ onNavigate }) {
               <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 10, fontWeight: 700, color: THEME.text2 }}>
                 {t("piwAccidentProneness")}
                 {d.accidentProneness.atRisk > 0 && <Chip text={t("piwApAtRisk", { n: d.accidentProneness.atRisk })} bg={THEME.dangerBg} fg={THEME.danger} />}
-                <span style={{ marginInlineStart: "auto", fontFamily: THEME.font, fontSize: 12, fontWeight: 800, color: THEME.navy }}>
+                <span style={{ marginInlineStart: "auto", fontFamily: THEME.font, fontSize: 12, fontWeight: 800, color: THEME.heading }}>
                   {t("piwApCount", { n: d.accidentProneness.total })}
                 </span>
               </div>

@@ -63,7 +63,7 @@ export default function PublicHseClimateSurvey({ publicToken }) {
     return (
       <div style={{ maxWidth: 480, margin: "80px auto", padding: 24, textAlign: "center", fontFamily: THEME.font }}>
         <CheckCircle2 size={48} color="#166534" style={{ marginBottom: 12 }} />
-        <h2 style={{ color: THEME.navy, fontSize: 18 }}>{t("hseSurveySubmittedSuccess")}</h2>
+        <h2 style={{ color: THEME.heading, fontSize: 18 }}>{t("hseSurveySubmittedSuccess")}</h2>
       </div>
     );
   }
@@ -71,7 +71,7 @@ export default function PublicHseClimateSurvey({ publicToken }) {
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: 24, fontFamily: THEME.font, direction: dir }}>
       <div style={{ textAlign: "center", marginBottom: 20 }}>
-        <h2 style={{ color: THEME.navy, fontSize: 17, marginBottom: 4 }}>{t("hsePublicSurveyTitle")}</h2>
+        <h2 style={{ color: THEME.heading, fontSize: 17, marginBottom: 4 }}>{t("hsePublicSurveyTitle")}</h2>
         <p style={{ color: THEME.text3, fontSize: 12.5 }}>
           {campaignInfo.companyName}{campaignInfo.projectName && ` — ${campaignInfo.projectName}`}
         </p>
@@ -82,7 +82,7 @@ export default function PublicHseClimateSurvey({ publicToken }) {
 
       {HSE_CLIMATE_QUESTIONS.map((q) => (
         <div key={q.id} id={`hse-climate-q-${q.id}`} style={{ background: THEME.surface, border: `1.5px solid ${answers[q.id] ? THEME.teal : THEME.border}`, borderRadius: 10, padding: 14, marginBottom: 10 }}>
-          <p style={{ fontSize: 13, color: THEME.navy, fontWeight: 600, marginBottom: 10, lineHeight: 1.8 }}>
+          <p style={{ fontSize: 13, color: THEME.heading, fontWeight: 600, marginBottom: 10, lineHeight: 1.8 }}>
             {q.id}. {q.text[lang] || q.text.fa}
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>

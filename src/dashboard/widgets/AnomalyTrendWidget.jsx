@@ -50,7 +50,7 @@ export default function AnomalyTrendWidget({ role, currentUser, onNavigate, wind
                     <span style={{ fontWeight: 700, fontFamily: THEME.font }}>{fmt(b.registered)}</span>
                   </div>
                   <div style={{ background: THEME.borderSoft, borderRadius: 4, height: 5, overflow: "hidden" }}>
-                    <div style={{ width: `${(b.registered / max) * 100}%`, height: "100%", background: THEME.navy, borderRadius: 4 }} />
+                    <div style={{ width: `${(b.registered / max) * 100}%`, height: "100%", background: THEME.teal, borderRadius: 4 }} />
                   </div>
                 </div>
               ));

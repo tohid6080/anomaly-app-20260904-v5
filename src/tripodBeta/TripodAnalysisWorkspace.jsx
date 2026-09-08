@@ -70,11 +70,11 @@ export default function TripodAnalysisWorkspace({ analysisId, incident, currentU
       <div style={styles.backLink} onClick={onBack}>{t("commonBackPlain")}</div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
         <div>
-          <h2 style={{ fontSize: 17, color: THEME.navy, fontWeight: 800, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+          <h2 style={{ fontSize: 17, color: THEME.heading, fontWeight: 800, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
             <GitBranch size={19} color={THEME.teal} /> {t("twHeading", { no: incident?.incidentNo })}
           </h2>
           <p style={{ color: THEME.text3, fontSize: 12, margin: "4px 0 0" }}>
-            {t("twCurrentStatusLabel")}<b style={{ color: THEME.navy }}>{t(TRIPOD_STATUS_LABELS[analysis.status] || analysis.status)}</b>
+            {t("twCurrentStatusLabel")}<b style={{ color: THEME.heading }}>{t(TRIPOD_STATUS_LABELS[analysis.status] || analysis.status)}</b>
             {analysis.isLocked && t("twLocked")}
           </p>
         </div>
@@ -185,7 +185,7 @@ function SummaryTab({ analysis, editable, targets, targetCats, onUpdateFields, o
       </div>
 
       <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18 }}>
-        <h4 style={{ fontSize: 13.5, color: THEME.navy, fontWeight: 700, margin: "0 0 10px", display: "flex", alignItems: "center", gap: 6 }}>
+        <h4 style={{ fontSize: 13.5, color: THEME.heading, fontWeight: 700, margin: "0 0 10px", display: "flex", alignItems: "center", gap: 6 }}>
           <TargetIcon size={15} /> {t("twAffectedTargets")}
         </h4>
         {targets.map((tg) => (
@@ -235,7 +235,7 @@ function PathCard({ path, refGroups, editable, onRefresh }) {
   return (
     <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 16, marginBottom: 14 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-        <span style={{ fontSize: 13.5, fontWeight: 700, color: THEME.navy }}>{t("twPathN", { n: path.pathNo })}</span>
+        <span style={{ fontSize: 13.5, fontWeight: 700, color: THEME.heading }}>{t("twPathN", { n: path.pathNo })}</span>
         <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: filled ? "#dcfce7" : "#eef1f5", color: filled ? "#166534" : THEME.text3, fontWeight: 600 }}>{filled ? t("twPathFilled") : t("twPathEmpty")}</span>
       </div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -335,7 +335,7 @@ function RootCauseTab({ analysisId, incident, rootCause, correctiveActions, curr
   return (
     <div>
       <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 16, marginBottom: 16 }}>
-        <h4 style={{ fontSize: 13.5, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>{t("twOutput1Title")}</h4>
+        <h4 style={{ fontSize: 13.5, color: THEME.heading, fontWeight: 700, margin: "0 0 10px" }}>{t("twOutput1Title")}</h4>
         <SimpleTable
           headers={[t("twColCode"), t("twColCategoryName"), t("twColOccurrences"), ""]}
           rows={rootCause.byBrfCategory.map((item) => {
@@ -352,13 +352,13 @@ function RootCauseTab({ analysisId, incident, rootCause, correctiveActions, curr
       </div>
 
       <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 16, marginBottom: 16 }}>
-        <h4 style={{ fontSize: 13.5, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>{t("twOutput2Title")}</h4>
+        <h4 style={{ fontSize: 13.5, color: THEME.heading, fontWeight: 700, margin: "0 0 10px" }}>{t("twOutput2Title")}</h4>
         {tiers.map((tier) => {
           const items = rootCause.byHiddenFailureCode.filter((it) => it.classification === tier.key);
           if (items.length === 0) return null;
           return (
             <div key={tier.key} style={{ marginBottom: 14 }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: THEME.navy, marginBottom: 6 }}>{t("twTierCountLine", { count: items.length, label: tier.label })}</p>
+              <p style={{ fontSize: 12, fontWeight: 700, color: THEME.heading, marginBottom: 6 }}>{t("twTierCountLine", { count: items.length, label: tier.label })}</p>
               <SimpleTable
                 headers={[t("twColCode"), t("twColDesc"), t("twColCount"), ""]}
                 rows={items.map((it) => {
@@ -378,7 +378,7 @@ function RootCauseTab({ analysisId, incident, rootCause, correctiveActions, curr
       </div>
 
       <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 16 }}>
-        <h4 style={{ fontSize: 13.5, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>{t("twRegisteredCorrectiveActions")}</h4>
+        <h4 style={{ fontSize: 13.5, color: THEME.heading, fontWeight: 700, margin: "0 0 10px" }}>{t("twRegisteredCorrectiveActions")}</h4>
         {correctiveActions.length === 0 && <p style={{ fontSize: 12, color: THEME.text3 }}>{t("twNoCorrectiveActionYet")}</p>}
         {correctiveActions.map((ca) => (
           <div key={ca.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "10px 0", borderBottom: `1px solid ${THEME.border}`, gap: 10, flexWrap: "wrap" }}>
@@ -476,7 +476,7 @@ function CorrectiveActionModal({ src, incident, analysisId, currentUser, onClose
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(15,42,63,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16 }} onClick={onClose}>
       <div style={{ background: THEME.surface, borderRadius: 14, padding: 22, maxWidth: 440, width: "100%", maxHeight: "85vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
-        <h3 style={{ fontSize: 15, color: THEME.navy, fontWeight: 800, margin: "0 0 12px" }}>{t("twCaModalTitle")}</h3>
+        <h3 style={{ fontSize: 15, color: THEME.heading, fontWeight: 800, margin: "0 0 12px" }}>{t("twCaModalTitle")}</h3>
         <div style={{ background: THEME.bg, borderRadius: 8, padding: 10, marginBottom: 12, fontSize: 11.5, color: THEME.text2, lineHeight: 1.9 }}>
           <div><b>{t("twCaIncidentLabel")}</b> {incident?.incidentNo}</div>
           <div><b>{t("twCaSourceLabel")}</b> {src.sourceType === "brf_category" ? t("twCaSourceBrf") : t("twCaSourceHidden")}</div>
@@ -512,7 +512,7 @@ function HistoryTab({ history }) {
           <div>
             <p style={{ fontSize: 12.5, margin: 0 }}>
               {h.fromStatus ? `${t(TRIPOD_STATUS_LABELS[h.fromStatus] || h.fromStatus)} ← ` : ""}
-              <b style={{ color: THEME.navy }}>{t(TRIPOD_STATUS_LABELS[h.toStatus] || h.toStatus)}</b>
+              <b style={{ color: THEME.heading }}>{t(TRIPOD_STATUS_LABELS[h.toStatus] || h.toStatus)}</b>
               {h.changedBy && <span style={{ color: THEME.text3 }}>{t("twHistBySuffix", { name: h.changedBy })}</span>}
             </p>
             <p style={{ fontSize: 11, color: THEME.text3, margin: "2px 0 0" }}>{toJalaliSafe(h.changedAt)}{h.note && ` — ${h.note}`}</p>

@@ -67,7 +67,7 @@ export default function TrialRequestModal({ onClose }) {
         {done ? (
           <div style={{ textAlign: "center", padding: "20px 6px" }}>
             <CheckCircle2 size={46} color="#166534" style={{ marginBottom: 12 }} />
-            <h3 style={{ color: THEME.navy, fontSize: 16, marginBottom: 8 }}>{t("trmDoneTitle")}</h3>
+            <h3 style={{ color: THEME.heading, fontSize: 16, marginBottom: 8 }}>{t("trmDoneTitle")}</h3>
             <p style={{ fontSize: 12.5, color: THEME.text3, lineHeight: 1.9, marginBottom: 18 }}>
               {t("trmDoneBody")}
             </p>
@@ -76,7 +76,7 @@ export default function TrialRequestModal({ onClose }) {
         ) : (
           <>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-              <h3 style={{ fontSize: 15, color: THEME.navy, margin: 0, display: "flex", alignItems: "center", gap: 7 }}>
+              <h3 style={{ fontSize: 15, color: THEME.heading, margin: 0, display: "flex", alignItems: "center", gap: 7 }}>
                 <ClipboardList size={17} color={THEME.teal} /> {t("trmTitle")}
               </h3>
               <button type="button" onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>

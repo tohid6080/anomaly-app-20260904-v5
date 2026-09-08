@@ -92,7 +92,7 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
     <div>
       <div style={styles.backLink} onClick={onBack}>{t("commonBackPlain")}</div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4, flexWrap: "wrap", gap: 10 }}>
-        <h2 style={{ fontSize: 18, color: THEME.navy, fontWeight: 800, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+        <h2 style={{ fontSize: 18, color: THEME.heading, fontWeight: 800, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
           <ClipboardCheck size={20} color={THEME.teal} /> {t("sbsTitle")}
         </h2>
       </div>
@@ -202,7 +202,7 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
       )}
 
       <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18, marginBottom: 20 }}>
-        <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>{t("sbsSeasonFilter")}</h3>
+        <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: "0 0 10px" }}>{t("sbsSeasonFilter")}</h3>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
           {["all", ...SEASONS].map((s) => (
             <button
@@ -224,7 +224,7 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
           <StatCard label={t("sbsStatUnsafePct")} value={`${analysis.unsafePct.toFixed(1)}${pctSign(lang)}`} color="#b45309" bg="#fef3c7" />
         </div>
 
-        <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>{t("sbsUnsafeByCategory")}</h4>
+        <h4 style={{ fontSize: 13, color: THEME.heading, fontWeight: 700, margin: "0 0 10px" }}>{t("sbsUnsafeByCategory")}</h4>
         {analysis.categoryBars.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, marginBottom: 18 }}>{t("sbsNoUnsafeThisSeason")}</p>}
         {analysis.categoryBars.map(([code, count]) => (
           <div key={code} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
@@ -232,15 +232,15 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
             <div style={{ flex: 1, height: 8, background: THEME.bg, borderRadius: 999, overflow: "hidden" }}>
               <div style={{ width: `${(count / maxBar) * 100}%`, height: "100%", background: THEME.danger, borderRadius: 999 }} />
             </div>
-            <span style={{ fontSize: 12, fontWeight: 700, color: THEME.navy, width: 24, textAlign: "left", flexShrink: 0 }}>{count}</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: THEME.heading, width: 24, textAlign: "left", flexShrink: 0 }}>{count}</span>
           </div>
         ))}
 
-        <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "22px 0 10px" }}>{t("sbsStatusBySeason")}</h4>
+        <h4 style={{ fontSize: 13, color: THEME.heading, fontWeight: 700, margin: "22px 0 10px" }}>{t("sbsStatusBySeason")}</h4>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10 }}>
           {analysis.seasonSummary.map((s) => (
             <div key={s.season} style={{ background: THEME.bg, borderRadius: 9, padding: 12 }}>
-              <div style={{ fontSize: 12.5, fontWeight: 700, color: THEME.navy, marginBottom: 6 }}>{seasonLabel(s.season)}</div>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: THEME.heading, marginBottom: 6 }}>{seasonLabel(s.season)}</div>
               <Row label={t("sbsStatTotal")} value={s.total} />
               <Row label={t("sbsRowUnsafe")} value={s.unsafe} />
               <Row label={t("sbsRowUnsafePct")} value={s.total ? `${s.unsafePct.toFixed(1)}${pctSign(lang)}` : "—"} />
@@ -254,7 +254,7 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack }) {
       </div>
 
       <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18 }}>
-        <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 12px" }}>{t("sbsObservationsTable")}</h3>
+        <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: "0 0 12px" }}>{t("sbsObservationsTable")}</h3>
         {analysis.filtered.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("sbsNoObsThisSeason")}</p>}
         {analysis.filtered.length > 0 && (
           <div style={{ overflowX: "auto" }}>
@@ -315,7 +315,7 @@ function StatCard({ label, value, color, bg }) {
   return (
     <div style={{ background: bg || THEME.bg, borderRadius: 9, padding: "12px 14px", textAlign: "center" }}>
       <div style={{ fontSize: 11, color: THEME.text3, marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 20, fontWeight: 800, color: color || THEME.navy }}>{value}</div>
+      <div style={{ fontSize: 20, fontWeight: 800, color: color || THEME.heading }}>{value}</div>
     </div>
   );
 }
@@ -324,7 +324,7 @@ function Row({ label, value }) {
   return (
     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11.5, color: THEME.text2, padding: "2px 0" }}>
       <span>{label}</span>
-      <b style={{ color: THEME.navy }}>{value}</b>
+      <b style={{ color: THEME.heading }}>{value}</b>
     </div>
   );
 }

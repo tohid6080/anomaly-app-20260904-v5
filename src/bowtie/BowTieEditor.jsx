@@ -24,7 +24,7 @@ export default function BowTieEditor({ bowtie, onBack, readOnly }) {
       <div style={styles.backLink} onClick={onBack}>{t("bowtieBackToList")}</div>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 4 }}>
         <div>
-          <h3 style={{ margin: "0 0 4px", color: THEME.navy, fontSize: 17, fontWeight: 700 }}>{bowtie.title}</h3>
+          <h3 style={{ margin: "0 0 4px", color: THEME.heading, fontSize: 17, fontWeight: 700 }}>{bowtie.title}</h3>
           <p style={{ color: THEME.text3, fontSize: 12, margin: 0 }}>
             {bowtie.hazard} · {bowtie.topEvent}
           </p>

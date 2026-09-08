@@ -312,7 +312,7 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
   // renderExpanded دقیقاً زیر همان ردیف انتخاب‌شده رندر می‌شود.
   const renderExpandedPanel = (expandedItem) => (
     <div style={{ ...styles.card, width: "auto", margin: 0 }}>
-      <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 8px", fontWeight: 700 }}>
+      <h3 style={{ fontSize: 14, color: THEME.heading, margin: "0 0 8px", fontWeight: 700 }}>
         {expandedItem.machineName} — {expandedItem.plateNumber}
       </h3>
 
@@ -459,7 +459,7 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
       {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
         <Truck size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("mdModuleTitle")}</h2>
+        <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("mdModuleTitle")}</h2>
       </div>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 14 }}>
         {isContractor ? t("mdContractorSubtitle") : t("mdEmployerSubtitle")}
@@ -556,7 +556,7 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
             <div style={{ ...styles.card, width: "auto", margin: 0, borderInlineStart: `4px solid ${sm.color}`, height: "100%" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 6 }}>
                 <div>
-                  <div style={{ fontWeight: 700, color: THEME.navy, fontSize: 14 }}>{m.machineName} — {m.plateNumber}</div>
+                  <div style={{ fontWeight: 700, color: THEME.heading, fontSize: 14 }}>{m.machineName} — {m.plateNumber}</div>
                   <div style={{ fontSize: 11.5, color: THEME.text3, marginTop: 4 }}>
                     {!isContractor && <>{m.contractorName} · </>}
                     {(() => { const mtm = MACHINE_TYPES.find((x) => x.value === m.machineType); return mtm ? t(mtm.labelKey) : ""; })()} {m.project && `· ${m.project}`}

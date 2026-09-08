@@ -249,27 +249,27 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
   }, [scopedAnomalies]);
 
   const healthStatusData = [
-    { label: t("chartActive"), value: scopedPersonnel.filter((p) => p.status === "active").length, color: "#16a34a" },
-    { label: t("chartNeedsVisit"), value: scopedPersonnel.filter((p) => p.status === "pending_health_visit" || p.status === "pending_health_result").length, color: "#d97706" },
-    { label: t("chartExpired"), value: scopedPersonnel.filter((p) => p.status === "health_expired").length, color: "#c92a2a" },
+    { label: t("chartActive"), value: scopedPersonnel.filter((p) => p.status === "active").length, color: "#22c55e" },
+    { label: t("chartNeedsVisit"), value: scopedPersonnel.filter((p) => p.status === "pending_health_visit" || p.status === "pending_health_result").length, color: "#f59e0b" },
+    { label: t("chartExpired"), value: scopedPersonnel.filter((p) => p.status === "health_expired").length, color: "#ef4444" },
   ];
   const machineryStatusData = [
-    { label: t("chartApproved"), value: scopedMachinery.filter((m) => m.approval_status === "approved").length, color: "#16a34a" },
-    { label: t("chartPending"), value: scopedMachinery.filter((m) => m.approval_status === "pending").length, color: "#d97706" },
-    { label: t("chartNeedsCorrection"), value: scopedMachinery.filter((m) => m.approval_status === "needs_correction" || m.approval_status === "rejected").length, color: "#c92a2a" },
+    { label: t("chartApproved"), value: scopedMachinery.filter((m) => m.approval_status === "approved").length, color: "#22c55e" },
+    { label: t("chartPending"), value: scopedMachinery.filter((m) => m.approval_status === "pending").length, color: "#f59e0b" },
+    { label: t("chartNeedsCorrection"), value: scopedMachinery.filter((m) => m.approval_status === "needs_correction" || m.approval_status === "rejected").length, color: "#ef4444" },
   ];
-  const perfChartData = contractorRows.slice(0, 6).map((c) => ({ label: c.name, value: c.score, color: c.level === "green" ? "#16a34a" : c.level === "yellow" ? "#d97706" : "#c92a2a" }));
+  const perfChartData = contractorRows.slice(0, 6).map((c) => ({ label: c.name, value: c.score, color: c.level === "green" ? "#22c55e" : c.level === "yellow" ? "#f59e0b" : "#ef4444" }));
   const anomalyRiskData = [
-    { label: t("chartHigh"), value: scopedAnomalies.filter((a) => a.riskLevel === "High").length, color: "#c92a2a" },
-    { label: t("chartMed"), value: scopedAnomalies.filter((a) => a.riskLevel === "Med").length, color: "#d97706" },
-    { label: t("chartLow"), value: scopedAnomalies.filter((a) => a.riskLevel === "Low").length, color: "#16a34a" },
+    { label: t("chartHigh"), value: scopedAnomalies.filter((a) => a.riskLevel === "High").length, color: "#ef4444" },
+    { label: t("chartMed"), value: scopedAnomalies.filter((a) => a.riskLevel === "Med").length, color: "#f59e0b" },
+    { label: t("chartLow"), value: scopedAnomalies.filter((a) => a.riskLevel === "Low").length, color: "#22c55e" },
   ];
 
   // --- آمار ایمنی حوادث ---
   const incidentPyramid = INCIDENT_TYPES.map((it) => ({
     label: t(it.labelKey),
     value: scopedIncidents.filter((i) => i.incident_type === it.value).length,
-    color: THEME.navy,
+    color: THEME.heading,
   }));
   const incidentTrend = useMemo(() => {
     const map = {};
@@ -384,8 +384,8 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
                       <td style={tdC}>{c.machineryFaulty}</td>
                       <td style={tdC}>{c.scaffoldNeedsVisit}</td>
                       <td style={tdC}>{c.openCA}</td>
-                      <td style={{ ...tdC, color: c.overdueCA > 0 ? "#c92a2a" : "inherit", fontWeight: c.overdueCA > 0 ? 700 : 400 }}>{c.overdueCA}</td>
-                      <td style={{ ...tdC, color: c.incidents > 0 ? "#c92a2a" : "inherit", fontWeight: c.incidents > 0 ? 700 : 400 }}>{c.incidents}</td>
+                      <td style={{ ...tdC, color: c.overdueCA > 0 ? "#ef4444" : "inherit", fontWeight: c.overdueCA > 0 ? 700 : 400 }}>{c.overdueCA}</td>
+                      <td style={{ ...tdC, color: c.incidents > 0 ? "#ef4444" : "inherit", fontWeight: c.incidents > 0 ? 700 : 400 }}>{c.incidents}</td>
                       <td style={tdC}><Dot level={c.level} /></td>
                     </tr>
                   ))}
@@ -413,7 +413,7 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
                 <span style={{ display: "flex", gap: 8, flexShrink: 0 }}>
                   <span style={{ fontWeight: 700 }}>{r.closeRate}%</span>
                   <span style={{ color: THEME.text3 }}>{t("hdOpenCount", { count: r.open })}</span>
-                  <span style={{ color: r.overdue > 0 ? "#c92a2a" : THEME.text3, fontWeight: r.overdue > 0 ? 700 : 400 }}>{t("hdOverdueCount", { count: r.overdue })}</span>
+                  <span style={{ color: r.overdue > 0 ? "#ef4444" : THEME.text3, fontWeight: r.overdue > 0 ? 700 : 400 }}>{t("hdOverdueCount", { count: r.overdue })}</span>
                 </span>
               </div>
             ))}
@@ -425,7 +425,7 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
             {urgentAlerts.length === 0 && <p style={emptyTextStyle}>{t("noUrgentAlerts")}</p>}
             {urgentAlerts.map((a, i) => (
               <div key={i} onClick={a.onClick} style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 0", borderBottom: i < urgentAlerts.length - 1 ? `1px solid ${THEME.border}` : "none", cursor: a.onClick ? "pointer" : "default" }}>
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: a.severity === 3 ? "#c92a2a" : "#d97706", flexShrink: 0 }} />
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: a.severity === 3 ? "#ef4444" : "#f59e0b", flexShrink: 0 }} />
                 <span style={{ fontSize: 11, color: THEME.text2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.text}</span>
               </div>
             ))}
@@ -437,7 +437,7 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
             {insights.length === 0 && <p style={emptyTextStyle}>{t("noSmartInsights")}</p>}
             {insights.map((ins, i) => (
               <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 6, padding: "4px 0", fontSize: 11, color: THEME.text2, lineHeight: 1.7 }}>
-                <span style={{ color: ins.type === "danger" ? "#c92a2a" : ins.type === "good" ? "#16a34a" : "#d97706", flexShrink: 0 }}>●</span>
+                <span style={{ color: ins.type === "danger" ? "#ef4444" : ins.type === "good" ? "#22c55e" : "#f59e0b", flexShrink: 0 }}>●</span>
                 {ins.text}
               </div>
             ))}
@@ -455,7 +455,7 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
                   <span>{t("dashLostDays")}</span>
                   <span style={{ fontWeight: 700 }}>{totalLostDays.toLocaleString(numLocale(lang))}</span>
                 </div>
-                <MiniBarChart data={incidentTrend.map(([m, c]) => ({ label: m.slice(5), value: c, color: "#c92a2a" }))} />
+                <MiniBarChart data={incidentTrend.map(([m, c]) => ({ label: m.slice(5), value: c, color: "#ef4444" }))} />
               </>
             )}
           </Panel>
@@ -508,7 +508,7 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
       case "anomalyTrend":
         return (
           <Panel key={key} title={t("panelAnomalyTrend")} icon={TrendingUp} compact>
-            <MiniBarChart data={monthlyAnomalyTrend.map(([m, c]) => ({ label: m.slice(5), value: c, color: THEME.navy }))} />
+            <MiniBarChart data={monthlyAnomalyTrend.map(([m, c]) => ({ label: m.slice(5), value: c, color: THEME.heading }))} />
           </Panel>
         );
       case "healthStatus":
@@ -567,14 +567,14 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
             <MiniStat icon={Building2} label={t("kpiContractors")} value={summary.contractors} />
             <MiniStat icon={Users} label={t("kpiActivePersonnel")} value={summary.activePersonnel} onClick={() => onNavigate({ module: "personnel", statusFilter: "active" })} />
             <MiniStat icon={AlertTriangle} label={t("kpiOpenAnomalies")} value={summary.openAnomalies} onClick={() => onNavigate({ module: "anomaly", statusFilter: "not_closed" })} />
-            <MiniStat icon={AlertTriangle} label={t("kpiCritical")} value={summary.criticalAnomalies} color="#c92a2a" onClick={() => onNavigate({ module: "anomaly", riskFilter: "High" })} />
-            <MiniStat icon={FileWarning} label={t("kpiIncidents12m")} value={summary.incidents12m} color={summary.incidents12m > 0 ? "#c92a2a" : undefined} />
+            <MiniStat icon={AlertTriangle} label={t("kpiCritical")} value={summary.criticalAnomalies} color="#ef4444" onClick={() => onNavigate({ module: "anomaly", riskFilter: "High" })} />
+            <MiniStat icon={FileWarning} label={t("kpiIncidents12m")} value={summary.incidents12m} color={summary.incidents12m > 0 ? "#ef4444" : undefined} />
             <MiniStat icon={ClipboardCheck} label={t("kpiOpenCorrectiveActions")} value={summary.openCA} />
-            <MiniStat icon={ClipboardCheck} label={t("kpiOverdueCorrectiveActions")} value={summary.overdueCA} color={summary.overdueCA > 0 ? "#c92a2a" : undefined} />
+            <MiniStat icon={ClipboardCheck} label={t("kpiOverdueCorrectiveActions")} value={summary.overdueCA} color={summary.overdueCA > 0 ? "#ef4444" : undefined} />
             <MiniStat icon={Truck} label={t("kpiActiveMachinery")} value={summary.activeMachinery} onClick={() => onNavigate({ module: "machinery", approvalFilter: "approved" })} />
             <MiniStat icon={Tag} label={t("kpiActiveScaffold")} value={summary.activeScaffold} onClick={() => onNavigate({ module: "scaffold", statusFilter: "tag_issued" })} />
             <MiniStat icon={GitBranch} label={t("kpiBowtie")} value={summary.bowties} />
-            <MiniStat icon={FileClock} label={t("kpiPendingApproval")} value={summary.pendingDocs} color="#d97706" />
+            <MiniStat icon={FileClock} label={t("kpiPendingApproval")} value={summary.pendingDocs} color="#f59e0b" />
             <MiniStat icon={Bell} label={t("kpiImportantNotifications")} value={summary.notifications} color="#1d4ed8" />
           </div>
         )}
@@ -622,7 +622,7 @@ function MiniStat({ icon: Icon, label, value, color, onClick }) {
         <Icon size={12} />
         <span style={{ fontSize: 10, fontWeight: 600 }}>{label}</span>
       </div>
-      <div style={{ fontSize: 21, fontWeight: 800, color: color || THEME.navy, lineHeight: 1 }}>{value}</div>
+      <div style={{ fontSize: 21, fontWeight: 800, color: color || THEME.heading, lineHeight: 1 }}>{value}</div>
     </div>
   );
 }
@@ -632,7 +632,7 @@ function Panel({ title, icon: Icon, children, compact }) {
     <div style={{ background: THEME.cardBg, borderRadius: THEME.radiusCard, border: `1px solid ${THEME.cardBorder}`, boxShadow: THEME.elev1, padding: compact ? "10px 12px" : "12px 14px", height: "100%", boxSizing: "border-box" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
         <TIcon icon={Icon} color={THEME.teal} />
-        <h3 style={{ fontSize: THEME.fsCard, color: THEME.navy, fontWeight: THEME.fwCard, margin: 0 }}>{title}</h3>
+        <h3 style={{ fontSize: THEME.fsCard, color: THEME.heading, fontWeight: THEME.fwCard, margin: 0 }}>{title}</h3>
       </div>
       {children}
     </div>
@@ -640,7 +640,7 @@ function Panel({ title, icon: Icon, children, compact }) {
 }
 
 function Dot({ level }) {
-  const color = level === "green" ? "#16a34a" : level === "yellow" ? "#d97706" : "#c92a2a";
+  const color = level === "green" ? "#22c55e" : level === "yellow" ? "#f59e0b" : "#ef4444";
   return <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: color }} />;
 }
 
@@ -656,7 +656,7 @@ function MiniBarChart({ data, suffix = "" }) {
             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 130 }}>{d.label}</span>
             <span style={{ fontWeight: 700 }}>{d.value}{suffix}</span>
           </div>
-          <div style={{ background: "#eef1f5", borderRadius: 4, height: 6, overflow: "hidden" }}>
+          <div style={{ background: THEME.borderSoft, borderRadius: 4, height: 6, overflow: "hidden" }}>
             <div style={{ width: `${(d.value / max) * 100}%`, height: "100%", background: d.color }} />
           </div>
         </div>

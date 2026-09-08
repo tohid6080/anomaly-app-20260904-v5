@@ -29,7 +29,7 @@ export default function DimensionResultView({ result }) {
         </span>
       </div>
 
-      <p style={{ fontSize: 12, fontWeight: 700, color: THEME.navy, marginBottom: 10 }}>{t("hseDimensionScoreOf10")}</p>
+      <p style={{ fontSize: 12, fontWeight: 700, color: THEME.heading, marginBottom: 10 }}>{t("hseDimensionScoreOf10")}</p>
       {result.dimensions.map((d) => {
         const meta = LEVEL_META[d.level] || LEVEL_META["متوسط"];
         const pct = Math.min(100, (d.score / 10) * 100);

@@ -321,7 +321,7 @@ const DARK_PALETTE = {
   tealDeep: "#0f9488", tealSoft: "#0f2e2b",
   bg: "#0b1a24", surface: "#0f2a3a", surface2: "#123240",
   border: "#1e3d4d", borderSoft: "#17303c", borderStrong: "#274a5c",
-  text: "#e8eef2", text2: "#9fb4c0", text3: "#6a8290",
+  text: "#e8eef2", text2: "#9fb4c0", text3: "#6a8290", heading: "#eef4f7",
   danger: "#ef4444", dangerBg: "#3a1e1e", warn: "#f59e0b", warnBg: "#3a2c14", ok: "#22c55e", okBg: "#173021",
 };
 const LIGHT_PALETTE = {
@@ -329,7 +329,7 @@ const LIGHT_PALETTE = {
   tealDeep: "#0c5b54", tealSoft: "#e0f0ee",
   bg: "#eef1f4", surface: "#ffffff", surface2: "#f6f8fa",
   border: "#d9e0e6", borderSoft: "#e7ecf0", borderStrong: "#cbd5e1",
-  text: "#15222e", text2: "#556571", text3: "#8695a1",
+  text: "#15222e", text2: "#556571", text3: "#8695a1", heading: "#0e2c3f",
   danger: "#cf4a3f", dangerBg: "#fbe7e4", warn: "#c47f28", warnBg: "#f8eddb", ok: "#2f8f57", okBg: "#e2f1e8",
 };
 
@@ -372,6 +372,7 @@ export function resolveAppearanceTokens(config) {
     "--ihms-text": pick(config.colorText, palette.text),
     "--ihms-text2": pick(config.colorText2, palette.text2),
     "--ihms-text3": pick(config.colorText3, palette.text3),
+    "--ihms-heading": palette.heading,
     "--ihms-danger": pick(config.colorDanger, palette.danger),
     "--ihms-danger-bg": palette.dangerBg,
     "--ihms-warn": pick(config.colorWarn, palette.warn),

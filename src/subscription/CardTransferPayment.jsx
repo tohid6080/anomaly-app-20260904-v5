@@ -73,7 +73,7 @@ export default function PaymentMethodsSection({ currentUser, selectedPlan, billi
     return (
       <div style={{ textAlign: "center", padding: "24px 10px" }}>
         <Clock size={40} color="#b45309" style={{ marginBottom: 12 }} />
-        <h4 style={{ fontSize: 15, fontWeight: 800, color: THEME.navy, margin: "0 0 8px" }}>{t("ctpReceiptSubmitted")}</h4>
+        <h4 style={{ fontSize: 15, fontWeight: 800, color: THEME.heading, margin: "0 0 8px" }}>{t("ctpReceiptSubmitted")}</h4>
         <p style={{ fontSize: 12.5, color: THEME.text2, lineHeight: 1.9, maxWidth: 320, margin: "0 auto" }}>
           {t("ctpReceiptSubmittedBody")}
         </p>
@@ -83,7 +83,7 @@ export default function PaymentMethodsSection({ currentUser, selectedPlan, billi
 
   return (
     <div>
-      <h4 style={{ fontSize: 13, fontWeight: 700, color: THEME.navy, margin: "18px 0 10px" }}>{t("ctpPaymentMethods")}</h4>
+      <h4 style={{ fontSize: 13, fontWeight: 700, color: THEME.heading, margin: "18px 0 10px" }}>{t("ctpPaymentMethods")}</h4>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
         <button
@@ -121,7 +121,7 @@ export default function PaymentMethodsSection({ currentUser, selectedPlan, billi
               <div style={{ marginBottom: 10 }}>
                 <div style={{ fontSize: 11, color: THEME.text2, marginBottom: 4 }}>{t("ctpCardNumber")}</div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                  <span style={{ fontSize: 16, fontWeight: 800, color: THEME.navy, letterSpacing: 1, direction: "ltr" }}>
+                  <span style={{ fontSize: 16, fontWeight: 800, color: THEME.heading, letterSpacing: 1, direction: "ltr" }}>
                     {settings.cardNumber || "—"}
                   </span>
                   {settings.cardNumber && (
@@ -137,7 +137,7 @@ export default function PaymentMethodsSection({ currentUser, selectedPlan, billi
               {settings.holderName && (
                 <div style={{ marginBottom: 10 }}>
                   <div style={{ fontSize: 11, color: THEME.text2, marginBottom: 2 }}>{t("ctpToTheNameOf")}</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: THEME.navy }}>{settings.holderName}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: THEME.heading }}>{settings.holderName}</div>
                 </div>
               )}
               <div style={{ marginBottom: settings.description ? 10 : 0 }}>
@@ -150,7 +150,7 @@ export default function PaymentMethodsSection({ currentUser, selectedPlan, billi
             </div>
           )}
 
-          <p style={{ fontSize: 12, fontWeight: 700, color: THEME.navy, margin: "0 0 10px" }}>{t("ctpEnterReceiptAfterTransfer")}</p>
+          <p style={{ fontSize: 12, fontWeight: 700, color: THEME.heading, margin: "0 0 10px" }}>{t("ctpEnterReceiptAfterTransfer")}</p>
 
           <label style={styles.label}>{t("ctpFullName")}</label>
           <input style={styles.input} value={payerName} onChange={(e) => setPayerName(e.target.value)} dir={dir} />

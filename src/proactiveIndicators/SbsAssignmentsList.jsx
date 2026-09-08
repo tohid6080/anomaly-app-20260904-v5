@@ -51,7 +51,7 @@ export default function SbsAssignmentsList({ role, currentUser, observations }) 
 
   return (
     <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18, marginBottom: 20 }}>
-      <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
+      <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
         <Target size={15} /> {isContractor ? t("sbsAsgTitleContractor") : t("sbsAsgTitleEmployer")}
       </h3>
       {assignments.map((a) => {
@@ -61,7 +61,7 @@ export default function SbsAssignmentsList({ role, currentUser, observations }) 
           <div key={a.id} style={{ padding: "12px 0", borderBottom: `1px solid ${THEME.border}` }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
               <div>
-                <span style={{ fontSize: 13, fontWeight: 700, color: THEME.navy }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: THEME.heading }}>
                   {a.mode === "factory" ? t("sbsAsgFactory") : t("sbsAsgWorkshop")} — {t("sbsAsgObsCount", { n: a.totalSampleSize.toLocaleString(numLocale(lang)) })}
                 </span>
                 <span style={{ fontSize: 10.5, padding: "2px 9px", borderRadius: 999, background: meta.bg, color: meta.color, fontWeight: 600, marginRight: 8 }}>{t(meta.labelKey)}</span>
@@ -79,7 +79,7 @@ export default function SbsAssignmentsList({ role, currentUser, observations }) 
             <div style={{ marginTop: 10 }}>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11.5, color: THEME.text2, marginBottom: 4 }}>
                 <span>{t("sbsAsgActualProgress", { done: progress.done.toLocaleString(numLocale(lang)), target: progress.target.toLocaleString(numLocale(lang)) })}</span>
-                <span style={{ fontWeight: 700, color: THEME.navy }}>{progress.pct}{pctSign(lang)}</span>
+                <span style={{ fontWeight: 700, color: THEME.heading }}>{progress.pct}{pctSign(lang)}</span>
               </div>
               <div style={{ height: 8, background: THEME.bg, borderRadius: 999, overflow: "hidden" }}>
                 <div style={{ width: `${progress.pct}%`, height: "100%", background: progress.pct >= 100 ? "#16a34a" : THEME.teal, borderRadius: 999 }} />

@@ -74,7 +74,7 @@ export default function PersonnelManagementDashboard({ personnelList, contractor
       <div style={styles.backLink} onClick={onClose}>{t("pmdBackToPersonnelList")}</div>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
         <BarChart3 size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("pmdTitle")}</h2>
+        <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("pmdTitle")}</h2>
       </div>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 18 }}>{t("pmdSubtitle")}</p>
 
@@ -153,7 +153,7 @@ function ChartBlock({ title, rows }) {
   const max = Math.max(1, ...rows.map((r) => r.count));
   return (
     <div style={{ ...styles.card, width: "auto", marginTop: 14 }}>
-      <h4 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 12px", fontWeight: 700 }}>{title}</h4>
+      <h4 style={{ fontSize: 13, color: THEME.heading, margin: "0 0 12px", fontWeight: 700 }}>{title}</h4>
       {rows.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, margin: 0 }}>{t("pmdNoDataAvailable")}</p>}
       {rows.map((r) => (
         <div key={r.label} style={{ marginBottom: 10 }}>

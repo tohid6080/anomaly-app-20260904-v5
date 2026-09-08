@@ -43,7 +43,7 @@ export default function RiskMatrixPreview() {
       >
         <MiniGrid grid={grid} loading={loading} />
         <div>
-          <div style={{ fontSize: 11.5, fontWeight: 700, color: THEME.navy }}>{t("hcmsOrgMatrixTitle")}</div>
+          <div style={{ fontSize: 11.5, fontWeight: 700, color: THEME.heading }}>{t("hcmsOrgMatrixTitle")}</div>
           <div style={{ fontSize: 9.5, color: THEME.text3 }}>{loading ? t("commonLoading") : t("hcmsClickToEnlarge")}</div>
         </div>
       </div>
@@ -66,7 +66,7 @@ export default function RiskMatrixPreview() {
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <Grid3x3 size={18} color={THEME.teal} />
-              <h3 style={{ margin: 0, fontSize: 16, color: THEME.navy, fontWeight: 700 }}>{t("hcmsOrgMatrixTitle")}</h3>
+              <h3 style={{ margin: 0, fontSize: 16, color: THEME.heading, fontWeight: 700 }}>{t("hcmsOrgMatrixTitle")}</h3>
             </div>
             <p style={{ color: THEME.text3, fontSize: 11.5, marginBottom: 14 }}>
               {t("hcmsModalDesc")}
@@ -77,7 +77,7 @@ export default function RiskMatrixPreview() {
                   <tr>
                     <th style={{ padding: "8px 10px", textAlign: dir === "rtl" ? "right" : "left", fontSize: 12, color: THEME.text3 }}>{t("hcmsSeverityProbabilityHeader")}</th>
                     {PROBABILITY_LETTERS.map((l) => (
-                      <th key={l} style={{ padding: "8px 10px", fontSize: 13, fontWeight: 700, color: THEME.navy }}>{l}</th>
+                      <th key={l} style={{ padding: "8px 10px", fontSize: 13, fontWeight: 700, color: THEME.heading }}>{l}</th>
                     ))}
                   </tr>
                 </thead>

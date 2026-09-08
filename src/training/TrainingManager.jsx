@@ -99,14 +99,14 @@ export default function TrainingManager({ onBack }) {
       {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToSystemManagement")}</div>}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
         <GraduationCap size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("trainingTitle")}</h2>
+        <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("trainingTitle")}</h2>
       </div>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 18 }}>
         {t("trainingDesc")}
       </p>
 
       <div style={{ ...styles.card, width: "auto", marginBottom: 18 }}>
-        <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>{t("trainingNewCourse")}</h3>
+        <h3 style={{ fontSize: 14, color: THEME.heading, margin: "0 0 10px", fontWeight: 700 }}>{t("trainingNewCourse")}</h3>
         <div style={styles.formGrid}>
           <input style={styles.input} placeholder={t("trainingCourseTitlePlaceholder")} value={newTitle} onChange={(e) => setNewTitle(e.target.value)} dir={dir} />
           <input style={styles.input} placeholder={t("trainingCourseDescPlaceholder")} value={newDesc} onChange={(e) => setNewDesc(e.target.value)} dir={dir} />
@@ -118,7 +118,7 @@ export default function TrainingManager({ onBack }) {
       </div>
 
       <div style={{ ...styles.card, width: "auto", marginBottom: 18 }}>
-        <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>{t("trainingDefinedCourses", { count: courses.length })}</h3>
+        <h3 style={{ fontSize: 14, color: THEME.heading, margin: "0 0 10px", fontWeight: 700 }}>{t("trainingDefinedCourses", { count: courses.length })}</h3>
         {courses.length === 0 && <p style={{ color: THEME.text3, fontSize: 12.5 }}>{t("trainingNoCoursesYet")}</p>}
         {courses.map((c) => (
           <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${THEME.border}` }}>
@@ -134,7 +134,7 @@ export default function TrainingManager({ onBack }) {
       </div>
 
       <div style={{ ...styles.card, width: "auto" }}>
-        <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 4px", fontWeight: 700 }}>{t("trainingMatrixTitle")}</h3>
+        <h3 style={{ fontSize: 14, color: THEME.heading, margin: "0 0 4px", fontWeight: 700 }}>{t("trainingMatrixTitle")}</h3>
         <p style={{ fontSize: 11.5, color: THEME.text3, margin: "0 0 12px" }}>{t("trainingMatrixHint")}</p>
         {(courses.length === 0 || positions.length === 0) && (
           <p style={{ color: THEME.text3, fontSize: 12.5 }}>{t("trainingMatrixNeedsData")}</p>

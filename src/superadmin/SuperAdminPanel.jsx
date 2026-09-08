@@ -274,7 +274,7 @@ function DashboardOverview({ companies, summary, usageStats, onNavigate }) {
 
   return (
     <div>
-      <h2 style={{ fontSize: 16, color: THEME.navy, fontWeight: 700, margin: "0 0 14px" }}>{t("saOverviewTitle")}</h2>
+      <h2 style={{ fontSize: 16, color: THEME.heading, fontWeight: 700, margin: "0 0 14px" }}>{t("saOverviewTitle")}</h2>
 
       <StorageOverviewCard onNavigate={onNavigate} />
 
@@ -287,7 +287,7 @@ function DashboardOverview({ companies, summary, usageStats, onNavigate }) {
         <StatBox label={t("saStatTotalAnomalies")} value={totalAnomalies} />
       </div>
 
-      <h3 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>{t("saNeedsAttention")}</h3>
+      <h3 style={{ fontSize: 13, color: THEME.heading, fontWeight: 700, margin: "0 0 10px" }}>{t("saNeedsAttention")}</h3>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, marginBottom: 16 }}>
         <AttentionCard
           icon={AlertTriangle} color="#92400e" bg="#fef3c7"
@@ -321,7 +321,7 @@ function DashboardOverview({ companies, summary, usageStats, onNavigate }) {
         />
       </div>
 
-      <h3 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>{t("saRecentActivity")}</h3>
+      <h3 style={{ fontSize: 13, color: THEME.heading, fontWeight: 700, margin: "0 0 10px" }}>{t("saRecentActivity")}</h3>
       <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: "6px 14px", marginBottom: 16 }}>
         {recentActivity === null && <p style={{ fontSize: 11.5, color: THEME.text3, textAlign: "center", padding: 14 }}>{t("commonLoading")}</p>}
         {recentActivity !== null && recentActivity.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3, textAlign: "center", padding: 14 }}>{t("saNoEventsYet")}</p>}
@@ -391,7 +391,7 @@ function StorageOverviewCard({ onNavigate }) {
   return (
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16, marginBottom: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-        <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+        <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
           <HardDrive size={14} color={THEME.teal} /> Storage
         </h3>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -437,7 +437,7 @@ function StorageOverviewCard({ onNavigate }) {
 function MiniStat({ label, value, color }) {
   return (
     <div>
-      <div style={{ fontSize: 16, fontWeight: 800, color: color || THEME.navy }}>{value}</div>
+      <div style={{ fontSize: 16, fontWeight: 800, color: color || THEME.heading }}>{value}</div>
       <div style={{ fontSize: 10.5, color: THEME.text3, marginTop: 2 }}>{label}</div>
     </div>
   );
@@ -469,7 +469,7 @@ function StorageUsagePage() {
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-        <h2 style={{ fontSize: 16, color: THEME.navy, fontWeight: 700, margin: 0 }}>{t("saStorageUsageTitle")}</h2>
+        <h2 style={{ fontSize: 16, color: THEME.heading, fontWeight: 700, margin: 0 }}>{t("saStorageUsageTitle")}</h2>
         <button type="button" onClick={refresh} disabled={loading} style={{ ...btnStyle(THEME.navyMid), display: "flex", alignItems: "center", gap: 6 }}>
           <RefreshCw size={13} /> {loading ? t("saRefreshing") : t("saRefresh")}
         </button>
@@ -485,7 +485,7 @@ function StorageUsagePage() {
         <>
           <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16, marginBottom: 16 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <h3 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: 0 }}>{t("saOverallSummary")}</h3>
+              <h3 style={{ fontSize: 13, color: THEME.heading, fontWeight: 700, margin: 0 }}>{t("saOverallSummary")}</h3>
               <button type="button" onClick={() => { setEditingCapacity((v) => !v); setCapacityInput(String(data.capacityMb || "")); }} style={{ ...btnStyle(THEME.navyMid), fontSize: 11, display: "flex", alignItems: "center", gap: 5 }}>
                 <Settings2 size={11} /> {t("saSetTotalCapacity")}
               </button>
@@ -516,7 +516,7 @@ function StorageUsagePage() {
           </div>
 
           <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16, marginBottom: 16 }}>
-            <h3 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 12px" }}>{t("saUsagePerCompany")}</h3>
+            <h3 style={{ fontSize: 13, color: THEME.heading, fontWeight: 700, margin: "0 0 12px" }}>{t("saUsagePerCompany")}</h3>
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                 <thead>
@@ -556,7 +556,7 @@ function StorageUsagePage() {
           </div>
 
           <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
-            <h3 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 12px" }}>{t("saBreakdownByBucket")}</h3>
+            <h3 style={{ fontSize: 13, color: THEME.heading, fontWeight: 700, margin: "0 0 12px" }}>{t("saBreakdownByBucket")}</h3>
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                 <thead>
@@ -815,7 +815,7 @@ function CompanyBackupsSection() {
   return (
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16, marginTop: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6, flexWrap: "wrap", gap: 8 }}>
-        <h3 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+        <h3 style={{ fontSize: 13, color: THEME.heading, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
           <HardDrive size={13} color={THEME.teal} /> {t("backupSectionTitle")}
         </h3>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -834,7 +834,7 @@ function CompanyBackupsSection() {
       {showModPicker && (
         <div style={{ background: THEME.bg, border: `1px solid ${THEME.border}`, borderRadius: 8, padding: 12, marginBottom: 14 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-            <span style={{ fontSize: 11.5, fontWeight: 700, color: THEME.navy }}>{t("backupModPickerTitle")}</span>
+            <span style={{ fontSize: 11.5, fontWeight: 700, color: THEME.heading }}>{t("backupModPickerTitle")}</span>
             <span style={{ display: "flex", gap: 6 }}>
               <button type="button" onClick={() => setBackupMods(new Set(BACKUP_MODULE_KEYS))} style={{ ...btnStyle(THEME.navyMid), fontSize: 10 }}>{t("backupModSelectAll")}</button>
               <button type="button" onClick={() => setBackupMods(new Set())} style={{ ...btnStyle(THEME.navyMid), fontSize: 10 }}>{t("backupModSelectNone")}</button>
@@ -854,7 +854,7 @@ function CompanyBackupsSection() {
 
       {importOpen && (
         <div style={{ background: THEME.bg, border: `1px solid ${THEME.border}`, borderRadius: 8, padding: 14, marginBottom: 14 }}>
-          <p style={{ fontSize: 11.5, fontWeight: 700, color: THEME.navy, margin: "0 0 8px" }}>{t("backupImportTitle")}</p>
+          <p style={{ fontSize: 11.5, fontWeight: 700, color: THEME.heading, margin: "0 0 8px" }}>{t("backupImportTitle")}</p>
           <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 10px", lineHeight: 1.8 }}>{t("backupImportHint")}</p>
 
           <input
@@ -874,7 +874,7 @@ function CompanyBackupsSection() {
 
           {importPreview && (
             <div style={{ border: `1px solid ${THEME.border}`, borderRadius: 8, padding: 12, background: THEME.surface, marginTop: 8 }}>
-              <p style={{ fontSize: 11.5, fontWeight: 700, color: THEME.navy, margin: "0 0 8px" }}>{t("backupImportPreviewTitle")}</p>
+              <p style={{ fontSize: 11.5, fontWeight: 700, color: THEME.heading, margin: "0 0 8px" }}>{t("backupImportPreviewTitle")}</p>
               {!importPreview.valid && (
                 <p style={{ color: THEME.danger, fontSize: 11.5, whiteSpace: "pre-wrap", margin: "0 0 8px" }}>
                   {t("backupImportInvalid")}{"\n"}{(importPreview.errors || []).map((x) => "• " + x).join("\n")}
@@ -903,7 +903,7 @@ function CompanyBackupsSection() {
 
               {importPreview.valid && (
                 <div style={{ marginTop: 10, borderTop: `1px dashed ${THEME.border}`, paddingTop: 10 }}>
-                  <p style={{ fontSize: 11, fontWeight: 700, color: THEME.navy, margin: "0 0 6px" }}>{t("backupImportSharedTitle")}</p>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: THEME.heading, margin: "0 0 6px" }}>{t("backupImportSharedTitle")}</p>
                   <p style={{ fontSize: 10, color: THEME.text3, margin: "0 0 8px", lineHeight: 1.8 }}>{t("backupImportSharedHint")}</p>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
                     {SHAREABLE_MODULES.map((m) => (
@@ -1049,7 +1049,7 @@ function QuickLinkCard({ icon: Icon, label, onClick }) {
       type="button" onClick={onClick}
       style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 10, padding: "12px 14px", cursor: "pointer", fontFamily: THEME.font }}
     >
-      <span style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, color: THEME.navy, fontWeight: 600 }}>
+      <span style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, color: THEME.heading, fontWeight: 600 }}>
         <Icon size={14} color={THEME.teal} /> {label}
       </span>
       <ChevronLeft size={14} color={THEME.text3} />
@@ -1068,7 +1068,7 @@ function CompaniesPage({
     <div>
       <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: 0 }}>{t("saCustomerCompanies")}</h3>
+          <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: 0 }}>{t("saCustomerCompanies")}</h3>
           <button type="button" onClick={() => setShowCreate((v) => !v)} style={{ ...btnStyle(), display: "flex", alignItems: "center", gap: 6 }}>
             <Plus size={13} /> {t("saNewCompany")}
           </button>
@@ -1107,7 +1107,7 @@ function CompaniesPage({
               </div>
             </div>
             {newStartDate && newEndDate && (
-              <p style={{ fontSize: 11.5, color: THEME.navy, fontWeight: 600, margin: "0 0 8px" }}>
+              <p style={{ fontSize: 11.5, color: THEME.heading, fontWeight: 600, margin: "0 0 8px" }}>
                 {t("saFromTo", {
                   start: toJalaliDateTime(new Date(`${newStartDate}T${newStartTime || "00:00"}:00`).toISOString()),
                   end: toJalaliDateTime(new Date(`${newEndDate}T${newEndTime || "00:00"}:00`).toISOString()),
@@ -1319,7 +1319,7 @@ function AppUpdateManagementTab({ currentAdmin }) {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10, marginBottom: 18 }}>
         <div style={{ background: THEME.bg, border: `1px solid ${THEME.border}`, borderRadius: 8, padding: "12px 14px" }}>
           <div style={{ fontSize: 11, color: THEME.text3, fontWeight: 700, marginBottom: 4 }}>{t("arCurrentBuildVersion")}</div>
-          <div style={{ fontSize: 15, fontWeight: 800, color: THEME.navy, direction: "ltr" }}>{APP_VERSION} <span style={{ fontSize: 11, color: THEME.text3 }}>(build {APP_VERSION_CODE})</span></div>
+          <div style={{ fontSize: 15, fontWeight: 800, color: THEME.heading, direction: "ltr" }}>{APP_VERSION} <span style={{ fontSize: 11, color: THEME.text3 }}>(build {APP_VERSION_CODE})</span></div>
         </div>
         <div style={{ background: THEME.bg, border: `1px solid ${THEME.border}`, borderRadius: 8, padding: "12px 14px" }}>
           <div style={{ fontSize: 11, color: THEME.text3, fontWeight: 700, marginBottom: 4 }}>{t("arLatestPublishedVersion")}</div>
@@ -1351,7 +1351,7 @@ function AppUpdateManagementTab({ currentAdmin }) {
 
       {/* فرم ثبت نسخه‌ی جدید — آپلود دستی APK یا لینک بیرونی */}
       <div style={{ border: `1px solid ${THEME.border}`, borderRadius: 8, padding: 14, marginBottom: 18 }}>
-        <div style={{ fontSize: 12.5, fontWeight: 700, color: THEME.navy, marginBottom: 10 }}>{t("arNewReleaseTitle")}</div>
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: THEME.heading, marginBottom: 10 }}>{t("arNewReleaseTitle")}</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
           <div>
             <label style={smallLabelStyle}>{t("arVersionLabel")}</label>
@@ -1383,7 +1383,7 @@ function AppUpdateManagementTab({ currentAdmin }) {
       </div>
 
       {/* تاریخچه‌ی نسخه‌ها */}
-      <div style={{ fontSize: 12.5, fontWeight: 700, color: THEME.navy, marginBottom: 8 }}>{t("arHistoryTitle")}</div>
+      <div style={{ fontSize: 12.5, fontWeight: 700, color: THEME.heading, marginBottom: 8 }}>{t("arHistoryTitle")}</div>
       {releases.length === 0 ? (
         <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 16 }}>{t("arNoReleasesYet")}</p>
       ) : (
@@ -1400,7 +1400,7 @@ function AppUpdateManagementTab({ currentAdmin }) {
             <tbody>
               {releases.map((r) => (
                 <tr key={r.id} style={{ borderBottom: `1px solid ${THEME.border}` }}>
-                  <td style={{ ...td, fontWeight: 700, color: THEME.navy, direction: "ltr" }}>
+                  <td style={{ ...td, fontWeight: 700, color: THEME.heading, direction: "ltr" }}>
                     {r.version}
                     {r.releaseNotes && <div style={{ fontSize: 10, color: THEME.text3, fontWeight: 400, direction: dir, maxWidth: 260, margin: "3px auto 0", whiteSpace: "pre-wrap" }}>{r.releaseNotes}</div>}
                   </td>
@@ -1650,7 +1650,7 @@ function DashboardWidgetsSection({ currentAdmin }) {
 
   return (
     <div>
-      <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 6px" }}>{t("saDwTitle")}</h4>
+      <h4 style={{ fontSize: 13, color: THEME.heading, fontWeight: 700, margin: "0 0 6px" }}>{t("saDwTitle")}</h4>
       <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 10, lineHeight: 1.8 }}>
         {t("saDwNote")}
       </p>
@@ -1765,7 +1765,7 @@ function NotificationManagementTab({ currentAdmin }) {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
             <div style={{ flex: 1, minWidth: 200 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: THEME.navy }}>{notificationTypeLabel(nt)}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: THEME.heading }}>{notificationTypeLabel(nt)}</span>
                 <span style={{ fontSize: 10, padding: "2px 9px", borderRadius: 999, background: PRIORITY_META[nt.priority].bg, color: PRIORITY_META[nt.priority].color, fontWeight: 600 }}>
                   {t("saPriorityBadge", { label: t(PRIORITY_META[nt.priority].labelKey) })}
                 </span>
@@ -1965,7 +1965,7 @@ function ChoiceRow({ options, value, onChange, t }) {
 function SectionHead({ children, onReset, resetLabel }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "0 0 10px", paddingBottom: 6, borderBottom: `1px solid ${THEME.border}` }}>
-      <h4 style={{ fontSize: 12.5, color: THEME.navy, fontWeight: 700, margin: 0, flex: 1 }}>{children}</h4>
+      <h4 style={{ fontSize: 12.5, color: THEME.heading, fontWeight: 700, margin: 0, flex: 1 }}>{children}</h4>
       {onReset && (
         <button type="button" onClick={onReset} style={{ fontSize: 10, color: THEME.warn, background: "none", border: "none", cursor: "pointer", fontFamily: THEME.font, whiteSpace: "nowrap" }}>
           ↺ {resetLabel}
@@ -2268,7 +2268,7 @@ function AppearanceManagementTab({ currentAdmin }) {
 }
 
 function SectionLabel({ children }) {
-  return <h4 style={{ fontSize: 12.5, color: THEME.navy, fontWeight: 700, margin: "0 0 10px", paddingBottom: 6, borderBottom: `1px solid ${THEME.border}` }}>{children}</h4>;
+  return <h4 style={{ fontSize: 12.5, color: THEME.heading, fontWeight: 700, margin: "0 0 10px", paddingBottom: 6, borderBottom: `1px solid ${THEME.border}` }}>{children}</h4>;
 }
 
 function ColorField({ label, value, onChange }) {
@@ -2563,7 +2563,7 @@ function AnnouncementManagementTab({ currentAdmin, companies }) {
               )}
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: THEME.navy }}>{a.title || t("saAnNoTitle")}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: THEME.heading }}>{a.title || t("saAnNoTitle")}</span>
                   <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: a.isActive ? "#dcfce7" : "#eef1f5", color: a.isActive ? "#166534" : THEME.text3, fontWeight: 600 }}>{a.isActive ? t("commonActive") : t("commonInactive")}</span>
                   <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#eef1f5", color: THEME.text3, fontWeight: 600 }}>{t("saPriorityBadge", { label: a.priority })}</span>
                   <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#eef1f5", color: THEME.text3, fontWeight: 600 }}>{t("saSecondsN", { n: a.displaySeconds || 10 })}</span>
@@ -2638,7 +2638,7 @@ function AuditLogPage({ companies }) {
 
   return (
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
-      <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
+      <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
         <FileClock size={14} color={THEME.teal} /> {t("saAuditLogTitle")}
       </h3>
       <p style={{ fontSize: 11, color: THEME.text3, marginBottom: 12 }}>
@@ -2719,7 +2719,7 @@ function ErrorReportsPage({ currentAdmin }) {
   return (
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
-        <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+        <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
           <AlertTriangle size={14} color="#b45309" /> {t("saErTitle")}
           {openCount > 0 && (
             <span style={{ background: THEME.danger, color: "#fff", fontSize: 10.5, fontWeight: 700, borderRadius: 999, minWidth: 19, height: 19, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>
@@ -2833,7 +2833,7 @@ function CardTransferSettingsForm({ currentAdmin }) {
 
   return (
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16, marginBottom: 16 }}>
-      <h3 style={{ fontSize: 13.5, fontWeight: 700, color: THEME.navy, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
+      <h3 style={{ fontSize: 13.5, fontWeight: 700, color: THEME.heading, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
         <CreditCard size={14} color={THEME.teal} /> {t("saCtSettingsTitle")}
       </h3>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
@@ -2895,7 +2895,7 @@ function CardTransferPaymentsPage({ currentAdmin }) {
       <CardTransferSettingsForm currentAdmin={currentAdmin} />
       <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
-          <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+          <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
             <CreditCard size={14} color={THEME.teal} /> {t("saCtTitle")}
             {awaitingCount > 0 && (
               <span style={{ background: THEME.danger, color: "#fff", fontSize: 10.5, fontWeight: 700, borderRadius: 999, minWidth: 19, height: 19, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>
@@ -2935,7 +2935,7 @@ function CardTransferPaymentsPage({ currentAdmin }) {
                       <tr style={{ borderBottom: `1px solid ${THEME.border}`, cursor: "pointer" }} onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}>
                         <td style={{ padding: "8px", fontWeight: 600 }}>{r.companyName || "—"}</td>
                         <td style={{ padding: "8px" }}>{r.planName || "—"} — {r.billingCycle === "monthly" ? t("saBillingMonthly") : t("saBillingYearly")}</td>
-                        <td style={{ padding: "8px", textAlign: "center", fontWeight: 700, color: THEME.navy }}>{r.amount.toLocaleString(numLocale())}</td>
+                        <td style={{ padding: "8px", textAlign: "center", fontWeight: 700, color: THEME.heading }}>{r.amount.toLocaleString(numLocale())}</td>
                         <td style={{ padding: "8px" }}>{r.payerName} <span style={{ color: THEME.text3, fontSize: 10.5, direction: "ltr", display: "inline-block" }}>({r.payerPhone})</span></td>
                         <td style={{ padding: "8px", textAlign: "center", color: THEME.text3, whiteSpace: "nowrap" }}>{toJalaliDateTime(r.createdAt)}</td>
                         <td style={{ padding: "8px", textAlign: "center" }}>
@@ -3040,7 +3040,7 @@ function TrialRequestsPage({ currentAdmin }) {
   return (
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
-        <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+        <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
           <ClipboardList size={14} color={THEME.teal} /> {t("saNavTrialRequests")}
           {pendingCount > 0 && (
             <span style={{ background: THEME.danger, color: "#fff", fontSize: 10.5, fontWeight: 700, borderRadius: 999, minWidth: 19, height: 19, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>
@@ -3161,7 +3161,7 @@ function SuperAdminChangePassword({ onClose }) {
   return (
     <div style={{ background: THEME.surface, borderBottom: `1px solid ${THEME.border}`, padding: 16 }}>
       <div style={{ maxWidth: 420, margin: "0 auto" }}>
-        <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 10px" }}>{t("saChangeMyPasswordTitle")}</h4>
+        <h4 style={{ fontSize: 13, color: THEME.heading, fontWeight: 700, margin: "0 0 10px" }}>{t("saChangeMyPasswordTitle")}</h4>
         {done ? (
           <p style={{ color: "#166534", fontSize: 12.5 }}>{t("saPasswordChanged")}</p>
         ) : (
@@ -3258,7 +3258,7 @@ function PlansManager({ plans, companies, currentAdmin, onChanged }) {
   return (
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16, marginBottom: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-        <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+        <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
           <Layers size={14} color={THEME.teal} /> {t("saSubscriptionPlans")}
         </h3>
         <button type="button" onClick={() => { setShowCreate((v) => !v); setForm(emptyPlanForm()); }} style={{ ...btnStyle(), display: "flex", alignItems: "center", gap: 6 }}>
@@ -3373,7 +3373,7 @@ function PlanCompanyUsage({ plan, companies }) {
         const isExpired = relevantEnd ? new Date(relevantEnd).getTime() <= now.getTime() : false;
         return (
           <div key={c.id} style={{ fontSize: 11, color: THEME.text2, padding: "4px 0", borderBottom: `1px solid ${THEME.border}`, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-            <span style={{ fontWeight: 700, color: THEME.navy }}>{c.name}</span>
+            <span style={{ fontWeight: 700, color: THEME.heading }}>{c.name}</span>
             <span style={{ fontSize: 10, padding: "1px 8px", borderRadius: 999, background: isTrial ? "#ede9fe" : "#dbeafe", color: isTrial ? "#5b21b6" : "#1d4ed8", fontWeight: 600 }}>
               {isTrial ? t("saPcuTrial") : t("saPcuPaid")}
             </span>
@@ -3459,7 +3459,7 @@ function PlanForm({ form, setForm, toggleModule, toggleSub, onSave, saving, save
       <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 12, background: THEME.surface, borderRadius: 8, padding: 10 }}>
         {PLAN_FEATURES.map((mod) => (
           <div key={mod.key} style={{ borderBottom: `1px solid ${THEME.border}`, paddingBottom: 6, marginBottom: 2 }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: THEME.navy, fontWeight: 700, cursor: "pointer" }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: THEME.heading, fontWeight: 700, cursor: "pointer" }}>
               <input type="checkbox" checked={form.features.includes(mod.key)} onChange={() => toggleModule(mod)} />
               {mod.labelKey ? t(mod.labelKey) : mod.label}
             </label>
@@ -3485,7 +3485,7 @@ function UsageChip({ label, value }) {
   return (
     <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 8, padding: "6px 12px", fontSize: 12 }}>
       <span style={{ color: THEME.text3 }}>{label}: </span>
-      <b style={{ color: THEME.navy }}>{value.toLocaleString(numLocale())}</b>
+      <b style={{ color: THEME.heading }}>{value.toLocaleString(numLocale())}</b>
     </div>
   );
 }
@@ -3542,7 +3542,7 @@ function SystemInsights({ companies }) {
   return (
     <>
       <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16, marginBottom: 16 }}>
-        <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
+        <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
           <TrendingDown size={14} color={THEME.teal} /> {t("saSmartAnalysis")}
         </h3>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
@@ -3568,7 +3568,7 @@ function SystemInsights({ companies }) {
       </div>
 
       <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16, marginBottom: 16 }}>
-        <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
+        <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
           <CreditCard size={14} color={THEME.teal} /> {t("saPaymentAlertTitle")}
         </h3>
         {paymentsLoading && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saChecking")}</p>}
@@ -3585,7 +3585,7 @@ function SystemInsights({ companies }) {
       </div>
 
       <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16, marginBottom: 16 }}>
-        <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
+        <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
           <CreditCard size={14} color={THEME.teal} /> {t("saMonthlyAlarmTitle")}
         </h3>
         <p style={{ fontSize: 11, color: THEME.text3, marginBottom: 10, lineHeight: 1.8 }}>
@@ -3602,7 +3602,7 @@ function SystemInsights({ companies }) {
       </div>
 
       <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16, marginBottom: 16 }}>
-        <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
+        <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
           <Activity size={14} color={THEME.teal} /> {t("saSystemMonitoring")}
         </h3>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
@@ -3639,7 +3639,7 @@ function SystemInsights({ companies }) {
 function StatBox({ label, value, color }) {
   return (
     <div style={{ flex: "1 1 140px", padding: "12px 16px", borderInlineEnd: `1px solid ${THEME.border}` }}>
-      <div style={{ fontSize: 22, fontWeight: 800, color: color || THEME.navy }}>{value}</div>
+      <div style={{ fontSize: 22, fontWeight: 800, color: color || THEME.heading }}>{value}</div>
       <div style={{ fontSize: 11, color: THEME.text3, marginTop: 4, fontWeight: 600 }}>{label}</div>
     </div>
   );
@@ -3785,11 +3785,11 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
       )}
 
       <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 12, marginBottom: 16 }}>
-        <h4 style={{ fontSize: 12.5, color: THEME.navy, fontWeight: 700, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 6 }}>
+        <h4 style={{ fontSize: 12.5, color: THEME.heading, fontWeight: 700, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 6 }}>
           <Layers size={13} /> {t("saCompanyPlanSub")}
         </h4>
         <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 8 }}>
-          {t("saCurrentPlanLabel")} <b style={{ color: THEME.navy }}>{currentPlan ? currentPlan.name : t("saNoPlanAssigned")}</b>
+          {t("saCurrentPlanLabel")} <b style={{ color: THEME.heading }}>{currentPlan ? currentPlan.name : t("saNoPlanAssigned")}</b>
           <span style={{
             marginInlineStart: 8, fontSize: 10.5, padding: "2px 9px", borderRadius: 999, fontWeight: 600,
             background: liveAccess.isLocked ? "#fee2e2" : "#dcfce7", color: liveAccess.isLocked ? "#991b1b" : "#166534",
@@ -3798,7 +3798,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
           </span>
         </p>
         {(liveAccess.trialStart || liveAccess.subscriptionStartDate) && (
-          <p style={{ fontSize: 12, color: THEME.navy, fontWeight: 600, marginBottom: 8, background: THEME.bg, borderRadius: 8, padding: "8px 12px" }}>
+          <p style={{ fontSize: 12, color: THEME.heading, fontWeight: 600, marginBottom: 8, background: THEME.bg, borderRadius: 8, padding: "8px 12px" }}>
             {liveAccess.trialStart ? (
               <>{t("saTrialStartLabel")}<b>{toJalaliDateTime(liveAccess.trialStart)}</b>{t("saEndLabelSep")}<b>{liveAccess.trialEnd ? toJalaliDateTime(liveAccess.trialEnd) : "—"}</b></>
             ) : (
@@ -3916,7 +3916,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
       </div>
 
       <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 12, marginBottom: 16 }}>
-        <h4 style={{ fontSize: 12.5, color: THEME.navy, fontWeight: 700, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 6 }}>
+        <h4 style={{ fontSize: 12.5, color: THEME.heading, fontWeight: 700, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 6 }}>
           <Copy size={13} /> {t("saCopyReadyContent")}
         </h4>
         <p style={{ fontSize: 11, color: THEME.text3, marginBottom: 8, lineHeight: 1.8 }}>
@@ -3942,7 +3942,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
           کنترل می‌شوند (نگاه کنید به loadActiveIndicators در proactiveIndicatorsApi.js) */}
 
       <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 12, marginBottom: 16 }}>
-        <h4 style={{ fontSize: 12.5, color: THEME.navy, fontWeight: 700, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 6 }}>
+        <h4 style={{ fontSize: 12.5, color: THEME.heading, fontWeight: 700, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 6 }}>
           <UserPlus size={13} /> {t("saCompanyAccountsTitle")}
         </h4>
         <p style={{ fontSize: 10.5, color: THEME.text3, marginBottom: 8 }}>
@@ -3961,7 +3961,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
       </div>
 
       <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 12 }}>
-        <h4 style={{ fontSize: 12.5, color: THEME.navy, fontWeight: 700, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 6 }}>
+        <h4 style={{ fontSize: 12.5, color: THEME.heading, fontWeight: 700, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 6 }}>
           <CreditCard size={13} /> {t("saPaymentHistoryTitle")}
         </h4>
         {paymentsList.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saNoPaymentsYet")}</p>}
@@ -3976,7 +3976,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
 
         {onlinePayments.length > 0 && (
           <div style={{ marginTop: 14, paddingTop: 10, borderTop: `1px dashed ${THEME.border}` }}>
-            <h5 style={{ fontSize: 11.5, color: THEME.navy, fontWeight: 700, margin: "0 0 6px" }}>{t("saOnlinePaymentsZarinpal")}</h5>
+            <h5 style={{ fontSize: 11.5, color: THEME.heading, fontWeight: 700, margin: "0 0 6px" }}>{t("saOnlinePaymentsZarinpal")}</h5>
             {onlinePayments.map((p) => {
               const st = p.status === "paid" ? { labelKey: "saPaySuccess", bg: "#dcfce7", color: "#166534" }
                 : p.status === "failed" ? { labelKey: "saPayFailed", bg: "#fee2e2", color: "#991b1b" }

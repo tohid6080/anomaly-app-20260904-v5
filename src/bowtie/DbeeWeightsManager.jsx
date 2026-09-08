@@ -49,7 +49,7 @@ export default function DbeeWeightsManager({ currentUser, onBack }) {
   return (
     <div style={{ maxWidth: 640, margin: "0 auto", padding: 24 }}>
       {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackPlain")}</div>}
-      <h2 style={{ fontSize: 18, color: THEME.navy, fontWeight: 800, margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}>
+      <h2 style={{ fontSize: 18, color: THEME.heading, fontWeight: 800, margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}>
         <Sliders size={20} color={THEME.teal} /> {t("dbeeWmTitle")}
       </h2>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 18, lineHeight: 1.9 }}>
@@ -60,7 +60,7 @@ export default function DbeeWeightsManager({ currentUser, onBack }) {
 
       {FACTOR_GROUPS.map((group) => (
         <div key={group.title} style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18, marginBottom: 16 }}>
-          <h4 style={{ fontSize: 13, color: THEME.navy, fontWeight: 700, margin: "0 0 12px" }}>{t(group.titleKey)}</h4>
+          <h4 style={{ fontSize: 13, color: THEME.heading, fontWeight: 700, margin: "0 0 12px" }}>{t(group.titleKey)}</h4>
           {group.keys.map((key) => {
             const w = weights.find((x) => x.factorKey === key);
             if (!w) return null;
@@ -77,7 +77,7 @@ export default function DbeeWeightsManager({ currentUser, onBack }) {
                       <HelpCircle size={13} color={openGuide === key ? THEME.teal : THEME.text3} />
                     </button>
                   </span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: THEME.navy }}>{w.weight.toFixed(1)}×</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: THEME.heading }}>{w.weight.toFixed(1)}×</span>
                 </div>
                 {openGuide === key && (
                   <p style={{ fontSize: 11.5, color: THEME.text2, background: THEME.bg, borderRadius: 8, padding: "8px 10px", margin: "0 0 8px", lineHeight: 1.9 }}>

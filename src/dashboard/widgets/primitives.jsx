@@ -24,7 +24,7 @@ export function WidgetCard({ title, icon: Icon, tone, tools, children, style }) 
       {barColor && <span style={{ position: "absolute", insetInlineStart: 0, top: 0, bottom: 0, width: 3, background: barColor }} />}
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
         {Icon && <TIcon icon={Icon} color={THEME.teal} />}
-        <h3 style={{ fontSize: THEME.fsCard, color: THEME.navy, fontWeight: THEME.fwCard, margin: 0 }}>{title}</h3>
+        <h3 style={{ fontSize: THEME.fsCard, color: THEME.heading, fontWeight: THEME.fwCard, margin: 0 }}>{title}</h3>
         {tools && <span style={{ marginInlineStart: "auto", display: "flex", alignItems: "center", gap: 6 }}>{tools}</span>}
       </div>
       {children}
@@ -80,7 +80,7 @@ export function CounterWidget({ title, icon, value, sub, tone, onClick }) {
       >
         <div style={{
           fontSize: 26, fontWeight: 800, lineHeight: 1, fontVariantNumeric: "tabular-nums",
-          color: tone === "bad" ? THEME.danger : tone === "warn" ? THEME.warn : tone === "ok" ? THEME.ok : THEME.navy,
+          color: tone === "bad" ? THEME.danger : tone === "warn" ? THEME.warn : tone === "ok" ? THEME.ok : THEME.heading,
         }}>
           {value}
         </div>
@@ -152,7 +152,7 @@ export function MiniBarWidget({ title, icon, data, suffix = "" }) {
                 <span style={{ fontWeight: 700, fontFamily: THEME.font }}>{d.value}{suffix}</span>
               </div>
               <div style={{ background: THEME.borderSoft, borderRadius: 4, height: 5, overflow: "hidden" }}>
-                <div style={{ width: `${(d.value / max) * 100}%`, height: "100%", background: d.color || THEME.navy, borderRadius: 4 }} />
+                <div style={{ width: `${(d.value / max) * 100}%`, height: "100%", background: d.color || THEME.teal, borderRadius: 4 }} />
               </div>
             </div>
           ))}

@@ -76,7 +76,7 @@ export default function HseGateInbox({ currentUser, onBack }) {
   return (
     <div style={{ maxWidth: 760, margin: "0 auto", padding: 24 }}>
       {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackPlain")}</div>}
-      <h2 style={{ fontSize: 18, color: THEME.navy, fontWeight: 800, margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}>
+      <h2 style={{ fontSize: 18, color: THEME.heading, fontWeight: 800, margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}>
         <Inbox size={20} color={THEME.teal} /> {t("gateInboxTitle")}
       </h2>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 18, lineHeight: 1.9 }}>
@@ -116,7 +116,7 @@ export default function HseGateInbox({ currentUser, onBack }) {
               <span style={{ fontSize: 11, padding: "2px 9px", borderRadius: 999, background: THEME.tealSoft, color: THEME.tealDeep, fontWeight: 700 }}>
                 {MODULE_LABEL_KEYS[it.moduleKey] ? t(MODULE_LABEL_KEYS[it.moduleKey]) : it.moduleKey}
               </span>
-              <p style={{ fontSize: 13.5, fontWeight: 700, color: THEME.navy, margin: "8px 0 3px" }}>{it.recordLabel || it.recordId}</p>
+              <p style={{ fontSize: 13.5, fontWeight: 700, color: THEME.heading, margin: "8px 0 3px" }}>{it.recordLabel || it.recordId}</p>
               <p style={{ fontSize: 11.5, color: THEME.text3, margin: 0, display: "flex", alignItems: "center", gap: 4 }}>
                 <Clock size={11} /> {t("gateInboxSentBy", { by: it.submittedBy, date: toJalaliSafe(it.createdAt) })}
               </p>

@@ -81,7 +81,7 @@ export default function DbeeTypeMappingManager({ currentUser, onBack }) {
   return (
     <div style={{ maxWidth: 800, margin: "0 auto", padding: 24 }}>
       {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackPlain")}</div>}
-      <h2 style={{ fontSize: 18, color: THEME.navy, fontWeight: 800, margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}>
+      <h2 style={{ fontSize: 18, color: THEME.heading, fontWeight: 800, margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}>
         <Link2 size={20} color={THEME.teal} /> {t("dbeeTmTitle")}
       </h2>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 18, lineHeight: 1.9 }}>
@@ -111,7 +111,7 @@ export default function DbeeTypeMappingManager({ currentUser, onBack }) {
           {mappings.map((m) => (
             <div key={m.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: `1px solid ${THEME.border}` }}>
               <div>
-                <span style={{ fontSize: 12.5, fontWeight: 700, color: THEME.navy }}>{optionLabel(m.sourceId)}</span>
+                <span style={{ fontSize: 12.5, fontWeight: 700, color: THEME.heading }}>{optionLabel(m.sourceId)}</span>
                 <span style={{ fontSize: 11, color: THEME.text3 }}> ← </span>
                 <span style={{ fontSize: 12.5, color: THEME.text }}>{m.barrierLabel || m.barrierId}</span>
                 <span style={{ fontSize: 11, color: THEME.text3, marginRight: 8 }}>{t("dbeeTmRelevanceSuffix", { bowtie: m.bowtieTitle || "BowTie", relevance: relevanceLabel(m.relevance) })}</span>

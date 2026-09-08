@@ -39,7 +39,7 @@ export default function HseClimateAssessmentForm({ currentUser, onBack, onSaved 
       <div style={{ maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
         <div style={{ textAlign: "center", marginBottom: 20 }}>
           <CheckCircle2 size={40} color="#166534" style={{ marginBottom: 8 }} />
-          <h3 style={{ color: THEME.navy, marginBottom: 4 }}>{t("hseAssessmentSubmitted")}</h3>
+          <h3 style={{ color: THEME.heading, marginBottom: 4 }}>{t("hseAssessmentSubmitted")}</h3>
         </div>
         <DimensionResultView result={result} />
         <button type="button" style={{ ...styles.button, marginTop: 16 }} onClick={onSaved}>{t("commonBack")}</button>
@@ -50,7 +50,7 @@ export default function HseClimateAssessmentForm({ currentUser, onBack, onSaved 
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: 24, direction: dir }}>
       <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>
-      <h3 style={{ marginBottom: 4, color: THEME.navy }}>{t("hseSurveyTitle")}</h3>
+      <h3 style={{ marginBottom: 4, color: THEME.heading }}>{t("hseSurveyTitle")}</h3>
       <p style={{ color: THEME.text3, fontSize: 12, marginTop: 0, marginBottom: 16 }}>
         {t("hseFormDesc", { count: HSE_CLIMATE_QUESTIONS.length })}
       </p>
@@ -62,7 +62,7 @@ export default function HseClimateAssessmentForm({ currentUser, onBack, onSaved 
 
       {HSE_CLIMATE_QUESTIONS.map((q) => (
         <div key={q.id} style={{ ...styles.card, width: "auto", marginBottom: 10, border: !answers[q.id] ? `1.5px solid ${THEME.border}` : `1.5px solid ${THEME.teal}` }}>
-          <p style={{ fontSize: 13, color: THEME.navy, fontWeight: 600, marginBottom: 10, lineHeight: 1.8 }}>
+          <p style={{ fontSize: 13, color: THEME.heading, fontWeight: 600, marginBottom: 10, lineHeight: 1.8 }}>
             {q.id}. {q.text[lang] || q.text.fa}
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>

@@ -55,7 +55,7 @@ export default function AccidentPronenessAssessmentForm({ personnelId, jobTitle,
     return (
       <div style={{ maxWidth: 500, margin: "60px auto", padding: 24, textAlign: "center" }}>
         <CheckCircle2 size={48} color="#166534" style={{ marginBottom: 12 }} />
-        <h3 style={{ color: THEME.navy, marginBottom: 8 }}>{t("apAssessmentSubmitted")}</h3>
+        <h3 style={{ color: THEME.heading, marginBottom: 8 }}>{t("apAssessmentSubmitted")}</h3>
         <p style={{ color: THEME.text3, fontSize: 13, marginBottom: 16 }}>{t("apFinalScoreNote")}</p>
         <div style={{ fontSize: 40, fontWeight: 800, color: THEME.teal, marginBottom: 20 }}>{done}</div>
         <button type="button" style={styles.button} onClick={onSaved}>{t("commonBack")}</button>
@@ -66,7 +66,7 @@ export default function AccidentPronenessAssessmentForm({ personnelId, jobTitle,
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: 24, direction: dir }}>
       <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>
-      <h3 style={{ marginBottom: 4, color: THEME.navy }}>{t("apAssessmentTitle")}</h3>
+      <h3 style={{ marginBottom: 4, color: THEME.heading }}>{t("apAssessmentTitle")}</h3>
       {personnelName && <p style={{ color: THEME.text3, fontSize: 13, marginTop: 0, marginBottom: 4 }}>{t("apPersonnelInline")} <b>{personnelName}</b>{jobTitle && ` — ${jobTitle}`}</p>}
       <p style={{ color: THEME.text3, fontSize: 12, marginTop: 0, marginBottom: 16 }}>
         {t("apFormDesc", { count: questions.length })}
@@ -79,7 +79,7 @@ export default function AccidentPronenessAssessmentForm({ personnelId, jobTitle,
 
       {questions.map((q) => (
         <div key={q.id} style={{ ...styles.card, width: "auto", marginBottom: 10, border: !answers[q.id] ? `1.5px solid ${THEME.border}` : `1.5px solid ${THEME.teal}` }}>
-          <p style={{ fontSize: 13, color: THEME.navy, fontWeight: 600, marginBottom: 10, lineHeight: 1.8 }}>
+          <p style={{ fontSize: 13, color: THEME.heading, fontWeight: 600, marginBottom: 10, lineHeight: 1.8 }}>
             {q.number}. {q.text}
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>

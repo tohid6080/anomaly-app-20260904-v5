@@ -60,14 +60,14 @@ export default function ScaffoldRequestForm({ currentUser, contractorCode, onCre
       <div style={{ maxWidth: 520, margin: "0 auto", padding: 24, direction: dir }}>
         <div style={{ ...styles.card, width: "auto", textAlign: "center" }}>
           <CheckCircle2 size={36} color="#166534" style={{ margin: "0 auto 10px" }} />
-          <h3 style={{ margin: "0 0 6px", color: THEME.navy }}>{t("scaffRequestSubmitted")}</h3>
+          <h3 style={{ margin: "0 0 6px", color: THEME.heading }}>{t("scaffRequestSubmitted")}</h3>
           <p style={{ fontSize: 13, color: THEME.text2 }}>{t("scaffAssignedTagNumber")}</p>
           <p style={{ fontSize: 20, fontWeight: 700, color: THEME.teal, direction: "ltr" }}>{created.tagNumber}</p>
           <p style={{ fontSize: 12, color: THEME.text3 }}>{t("scaffSentForInitialApproval")}</p>
         </div>
 
         <div style={{ ...styles.card, width: "auto", marginTop: 14 }}>
-          <h3 style={{ fontSize: 14, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>{t("scaffSitePhotosOptional")}</h3>
+          <h3 style={{ fontSize: 14, color: THEME.heading, margin: "0 0 10px", fontWeight: 700 }}>{t("scaffSitePhotosOptional")}</h3>
           {photos.map((p) => (
             <div key={p.id} style={{ marginBottom: 10 }}>
               <DocUploadField existingDoc={p} onConfirm={() => {}} onDelete={() => handleDeletePhoto(p)} onView={setViewerSrc} />
@@ -87,7 +87,7 @@ export default function ScaffoldRequestForm({ currentUser, contractorCode, onCre
       {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
         <Tag size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("scaffNewTagTitle")}</h2>
+        <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("scaffNewTagTitle")}</h2>
       </div>
 
       <div style={{ ...styles.card, width: "auto" }}>

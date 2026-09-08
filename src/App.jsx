@@ -1196,7 +1196,7 @@ function LoginScreen({ onLogin }) {
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
               <IhmsLogo size={200} src={appearance?.logoUrl} />
             </div>
-            <h2 style={{ textAlign: "center", marginBottom: 2, fontSize: 18, direction: "ltr", color: THEME.navy, fontWeight: 700, letterSpacing: "-0.01em" }}>{appearance?.systemName || APP_NAME}</h2>
+            <h2 style={{ textAlign: "center", marginBottom: 2, fontSize: 18, direction: "ltr", color: THEME.heading, fontWeight: 700, letterSpacing: "-0.01em" }}>{appearance?.systemName || APP_NAME}</h2>
             <p style={{ textAlign: "center", color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 22, fontWeight: 500 }}>
               {t("loginTagline")}
             </p>
@@ -1391,7 +1391,7 @@ function BiometricGateScreen({ currentUser, onUnlocked, onFallbackToPassword }) 
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
           <IhmsLogo size={80} />
         </div>
-        <h3 style={{ marginBottom: 4, color: THEME.navy }}>{currentUser?.name || "—"}</h3>
+        <h3 style={{ marginBottom: 4, color: THEME.heading }}>{currentUser?.name || "—"}</h3>
         <p style={{ color: errorMsg ? THEME.danger : THEME.text3, fontSize: 12.5, marginBottom: 20, minHeight: 32 }}>
           {checking ? t("biometricGateChecking") : errorMsg || t("biometricGateWaiting")}
         </p>
@@ -1421,7 +1421,7 @@ function AccountDeactivatedScreen({ onExit }) {
             <ShieldOff size={30} color={THEME.danger} />
           </div>
         </div>
-        <h3 style={{ margin: "0 0 8px", color: THEME.navy, fontSize: 16 }}>{t("appDeactivatedTitle")}</h3>
+        <h3 style={{ margin: "0 0 8px", color: THEME.heading, fontSize: 16 }}>{t("appDeactivatedTitle")}</h3>
         <p style={{ color: THEME.text2, fontSize: 13.5, lineHeight: 1.9, marginBottom: 20 }}>
           {t("appDeactivatedBody")}
         </p>
@@ -2854,7 +2854,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
         </button>
       </div>
 
-      <h3 style={{ marginTop: 22, fontSize: 15.5, color: THEME.navy, fontWeight: 700 }}>{t("registeredItemsCount", { count: sorted.length })}</h3>
+      <h3 style={{ marginTop: 22, fontSize: 15.5, color: THEME.heading, fontWeight: 700 }}>{t("registeredItemsCount", { count: sorted.length })}</h3>
 
       <DataView
         items={sorted}
@@ -2893,7 +2893,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
             key: "tracking", label: t("colTrackingRisk"),
             render: (a) => (
               <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                <span style={{ fontWeight: 700, color: THEME.navy }}>{a.trackingNumber}</span>
+                <span style={{ fontWeight: 700, color: THEME.heading }}>{a.trackingNumber}</span>
                 <StatusPill label={a.riskLevel} color={riskMeta(a.riskLevel).color} bg={riskMeta(a.riskLevel).bg} />
                 {a.syncStatus && a.syncStatus !== "synced" && (
                   <SyncStatusBadge
@@ -2948,7 +2948,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", cursor: "pointer" }} onClick={() => startExpand(a)}>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                    <span style={{ fontWeight: 700, color: THEME.navy, fontSize: 14.5 }}>{a.trackingNumber}</span>
+                    <span style={{ fontWeight: 700, color: THEME.heading, fontSize: 14.5 }}>{a.trackingNumber}</span>
                     <StatusPill label={a.riskLevel} color={rm.color} bg={rm.bg} />
                     <span style={{ ...styles.badge, color: sm.color, background: sm.bg }}>
                       <sm.Icon size={12} style={{ display: "inline", marginLeft: 3 }} />{sm.label}
@@ -2989,7 +2989,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
           <div style={{ ...styles.card, width: "auto", margin: 0, padding: "20px 22px" }}>
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12, gap: 10, flexWrap: "wrap" }}>
               <div>
-                <h3 style={{ margin: "0 0 4px", fontSize: 14.5, color: THEME.navy, fontWeight: 700 }}>{a.trackingNumber}</h3>
+                <h3 style={{ margin: "0 0 4px", fontSize: 14.5, color: THEME.heading, fontWeight: 700 }}>{a.trackingNumber}</h3>
                 <p style={{ margin: 0, fontSize: 13, color: THEME.text, lineHeight: 1.8 }}>{a.description}</p>
               </div>
               <button type="button" style={{ ...styles.smallButton, background: THEME.teal, display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }} onClick={() => openLinkedChat(a)} disabled={linkedChatBusy}>
@@ -3607,7 +3607,7 @@ function MobileNotifications({ smartItems, onNavigate }) {
   const items = Array.isArray(smartItems) ? smartItems : [];
   return (
     <div style={styles.menuList}>
-      <h3 style={{ fontSize: THEME.fsTitle, fontWeight: THEME.fwTitle, color: THEME.navy, margin: "4px 4px 12px" }}>{t("notifPanelTitle")}</h3>
+      <h3 style={{ fontSize: THEME.fsTitle, fontWeight: THEME.fwTitle, color: THEME.heading, margin: "4px 4px 12px" }}>{t("notifPanelTitle")}</h3>
       {items.length === 0 ? (
         <p style={{ fontSize: 12.5, color: THEME.text3, textAlign: "center", padding: "30px 10px" }}>{t("notifPanelEmpty")}</p>
       ) : (
@@ -3944,7 +3944,7 @@ function WelcomeCard({ currentUser }) {
       display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", width: "100%", minHeight: 200,
     }}>
       <span style={{ fontSize: 30, marginBottom: 10 }}>👋</span>
-      <h2 style={{ fontSize: 18, fontWeight: 800, color: THEME.navy, margin: "0 0 8px" }}>
+      <h2 style={{ fontSize: 18, fontWeight: 800, color: THEME.heading, margin: "0 0 8px" }}>
         {t("welcomeGreetingLine", { name: currentUser?.name || "" })}
       </h2>
       <p style={{ fontSize: 12.5, color: THEME.text2, lineHeight: 1.9, margin: "0 0 16px", maxWidth: 220 }}>
@@ -3968,7 +3968,7 @@ function TasksCard({ tasks, onTaskClick }) {
   return (
     <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 14, padding: 16, height: 280, display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: tasks && tasks.length > 0 ? 12 : 0, flexShrink: 0 }}>
-        <h3 style={{ fontSize: 13.5, fontWeight: 700, color: THEME.navy, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+        <h3 style={{ fontSize: 13.5, fontWeight: 700, color: THEME.heading, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
           <ClipboardList size={15} color={THEME.teal} /> {t("tasksCardTitle")}
         </h3>
         {tasks && tasks.length > 0 && (
@@ -3989,7 +3989,7 @@ function TasksCard({ tasks, onTaskClick }) {
             >
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ fontSize: 12.5, fontWeight: 700, color: THEME.navy, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <span style={{ fontSize: 12.5, fontWeight: 700, color: THEME.heading, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {it.recordLabel || it.recordId}
                   </span>
                   <span style={{
@@ -4091,7 +4091,7 @@ function AnnouncementDetailModal({ announcement, setView, onClose }) {
             <span style={{ fontSize: 11, fontWeight: 700, color: THEME.teal }}>{t("announcementsLabel")}</span>
           </div>
           {announcement.title && (
-            <h3 style={{ fontSize: 20, fontWeight: 800, color: THEME.navy, margin: "0 0 12px", lineHeight: 1.5 }}>{announcement.title}</h3>
+            <h3 style={{ fontSize: 20, fontWeight: 800, color: THEME.heading, margin: "0 0 12px", lineHeight: 1.5 }}>{announcement.title}</h3>
           )}
           <p style={{ fontSize: 14, color: THEME.text2, lineHeight: 2, margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
             {announcement.message}
@@ -4173,7 +4173,7 @@ function AnnouncementSlider({ announcements, setView }) {
             <span style={{ fontSize: 11, fontWeight: 700, color: THEME.teal }}>{t("announcementsLabel")}</span>
           </div>
           <h3 style={{
-            fontSize: 19, fontWeight: 800, color: THEME.navy, margin: "0 0 10px", minHeight: 25,
+            fontSize: 19, fontWeight: 800, color: THEME.heading, margin: "0 0 10px", minHeight: 25,
             display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden",
           }}>
             {current.title || "\u00A0"}
@@ -4274,7 +4274,7 @@ function MobileAnnouncementBanner({ setView }) {
         <div style={{ width: 28, height: 28, borderRadius: 8, background: THEME.tealSoft, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
           <Icon size={15} color={THEME.tealDeep} />
         </div>
-        <span style={{ flex: 1, minWidth: 0, fontSize: 12, fontWeight: 700, color: THEME.navy, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <span style={{ flex: 1, minWidth: 0, fontSize: 12, fontWeight: 700, color: THEME.heading, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {current.title || current.message}
         </span>
         {visible.length > 1 && (
@@ -4308,7 +4308,7 @@ function MobileAnnouncementBanner({ setView }) {
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
-            fontSize: 13, fontWeight: 800, color: THEME.navy, minHeight: 17,
+            fontSize: 13, fontWeight: 800, color: THEME.heading, minHeight: 17,
             display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden",
           }}>
             {current.title || "\u00A0"}
@@ -4532,7 +4532,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       {view === "systemManagement" && systemManagementEntry && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
-          <h3 style={{ marginBottom: 12, color: THEME.navy }}>{t("moduleSystemManagement")}</h3>
+          <h3 style={{ marginBottom: 12, color: THEME.heading }}>{t("moduleSystemManagement")}</h3>
           <div style={styles.menuList2}>
             {isModuleInPlan(planFeatures, "permissionManagement") && <MenuRow icon={ShieldCheck} label={t("subPermissions")} onClick={() => setView("permissionManagement")} />}
             {isModuleInPlan(planFeatures, "jobPositionManagement") && <MenuRow icon={Briefcase} label={t("subJobPositions")} onClick={() => setView("jobPositionManagement")} />}
@@ -4559,7 +4559,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       {view === "anomalyReport" && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
-          <h3 style={{ marginBottom: 12, color: THEME.navy }}>{mt(anomalyMod)}</h3>
+          <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(anomalyMod)}</h3>
           <div style={styles.menuList2}>
             {anomalySub.map((s) => (
               <MenuRow key={s.key} icon={AlertTriangle} label={mt(s)} onClick={() => setView(s.key)} accent />
@@ -4571,7 +4571,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       {view === "riskAssessment" && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
-          <h3 style={{ marginBottom: 12, color: THEME.navy }}>{mt(riskMod)}</h3>
+          <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(riskMod)}</h3>
           <div style={styles.menuList2}>
             {riskMod.sub.map((s) => (
               <MenuRow key={s.key} icon={ShieldCheck} label={mt(s)} onClick={() => setView(s.key)} accent />
@@ -4583,7 +4583,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       {view === "personnelAccess" && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
-          <h3 style={{ marginBottom: 12, color: THEME.navy }}>{mt(personnelMod)}</h3>
+          <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(personnelMod)}</h3>
           <div style={styles.menuList2}>
             {personnelMod.sub.map((s) => (
               <MenuRow key={s.key} icon={Users} label={mt(s)} onClick={() => setView(s.key)} accent />
@@ -4595,7 +4595,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       {view === "machineryManagement" && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
-          <h3 style={{ marginBottom: 12, color: THEME.navy }}>{mt(machineryMod)}</h3>
+          <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(machineryMod)}</h3>
           <div style={styles.menuList2}>
             {machineryMod.sub.map((s) => (
               <MenuRow key={s.key} icon={Truck} label={mt(s)} onClick={() => setView(s.key)} accent />
@@ -4607,7 +4607,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       {view === "scaffoldManagement" && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
-          <h3 style={{ marginBottom: 12, color: THEME.navy }}>{mt(scaffoldMod)}</h3>
+          <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(scaffoldMod)}</h3>
           <div style={styles.menuList2}>
             {scaffoldMod.sub.map((s) => (
               <MenuRow key={s.key} icon={Tag} label={mt(s)} onClick={() => setView(s.key)} accent />
@@ -4619,7 +4619,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       {view === "incidentManagement" && incidentMod && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
-          <h3 style={{ marginBottom: 12, color: THEME.navy }}>{mt(incidentMod)}</h3>
+          <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(incidentMod)}</h3>
           <div style={styles.menuList2}>
             {incidentMod.sub.map((s) => (
               <MenuRow key={s.key} icon={ShieldAlert} label={mt(s)} onClick={() => setView(s.key)} accent />
@@ -4815,7 +4815,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
       {view === "anomalyReport" && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
-          <h3 style={{ marginBottom: 12, color: THEME.navy }}>{mt(anomalyMod)}</h3>
+          <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(anomalyMod)}</h3>
           <div style={styles.menuList2}>
             {anomalySub.map((s) => (
               <MenuRow key={s.key} icon={AlertTriangle} label={mt(s)} onClick={() => setView(s.key)} accent />
@@ -4827,7 +4827,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
       {view === "personnelAccess" && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
-          <h3 style={{ marginBottom: 12, color: THEME.navy }}>{mt(personnelMod)}</h3>
+          <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(personnelMod)}</h3>
           <div style={styles.menuList2}>
             {personnelMod.sub.map((s) => (
               <MenuRow key={s.key} icon={Users} label={mt(s)} onClick={() => setView(s.key)} accent />
@@ -4839,7 +4839,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
       {view === "machineryManagement" && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
-          <h3 style={{ marginBottom: 12, color: THEME.navy }}>{mt(machineryMod)}</h3>
+          <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(machineryMod)}</h3>
           <div style={styles.menuList2}>
             {machineryMod.sub.map((s) => (
               <MenuRow key={s.key} icon={Truck} label={mt(s)} onClick={() => setView(s.key)} accent />
@@ -4851,7 +4851,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
       {view === "scaffoldManagement" && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
-          <h3 style={{ marginBottom: 12, color: THEME.navy }}>{mt(scaffoldMod)}</h3>
+          <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(scaffoldMod)}</h3>
           <div style={styles.menuList2}>
             {scaffoldMod.sub.map((s) => (
               <MenuRow key={s.key} icon={Tag} label={mt(s)} onClick={() => setView(s.key)} accent />
@@ -4863,7 +4863,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
       {view === "incidentManagement" && incidentMod && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
-          <h3 style={{ marginBottom: 12, color: THEME.navy }}>{mt(incidentMod)}</h3>
+          <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(incidentMod)}</h3>
           <div style={styles.menuList2}>
             {incidentMod.sub.map((s) => (
               <MenuRow key={s.key} icon={ShieldAlert} label={mt(s)} onClick={() => setView(s.key)} accent />
@@ -4875,7 +4875,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
       {view === "riskAssessment" && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
-          <h3 style={{ marginBottom: 12, color: THEME.navy }}>{mt(riskMod)}</h3>
+          <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(riskMod)}</h3>
           <div style={styles.menuList2}>
             {riskMod.sub.filter((s) => !s.employerOnly).map((s) => (
               <MenuRow key={s.key} icon={ShieldCheck} label={mt(s)} onClick={() => setView(s.key)} accent />

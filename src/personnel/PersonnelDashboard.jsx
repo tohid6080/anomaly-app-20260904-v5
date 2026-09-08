@@ -166,7 +166,7 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 4 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <Users size={20} color={THEME.teal} />
-          <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("pdModuleTitle")}</h2>
+          <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("pdModuleTitle")}</h2>
         </div>
       </div>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 18 }}>{t("pdModuleSubtitle")}</p>
@@ -297,7 +297,7 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
             <div style={{ ...styles.card, width: "auto", margin: 0, borderInlineStart: `4px solid ${sm.color}`, cursor: "pointer", height: "100%" }} onClick={() => setSelected(p)}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 6 }}>
                 <div>
-                  <div style={{ fontWeight: 700, color: THEME.navy, fontSize: 14 }}>{p.fullName}</div>
+                  <div style={{ fontWeight: 700, color: THEME.heading, fontSize: 14 }}>{p.fullName}</div>
                   <div style={{ fontSize: 11.5, color: THEME.text3, marginTop: 4 }}>{p.jobTitle} · {p.contractorName}</div>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>

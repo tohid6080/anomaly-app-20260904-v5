@@ -149,7 +149,7 @@ export function AboutIhmsModal({ onClose, latestRelease, online }) {
             ? <img src={appearance.logoUrl} alt="" style={{ width: 76, height: 76, objectFit: "contain", borderRadius: 14 }} />
             : <div style={{ width: 76, height: 76, borderRadius: 16, background: THEME.navy, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 800, fontSize: 22 }}>IHMS</div>}
         </div>
-        <h2 style={{ margin: 0, fontSize: 19, direction: "ltr", color: THEME.navy, fontWeight: 700 }}>{appearance?.systemName || APP_NAME}</h2>
+        <h2 style={{ margin: 0, fontSize: 19, direction: "ltr", color: THEME.heading, fontWeight: 700 }}>{appearance?.systemName || APP_NAME}</h2>
         <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 18, fontWeight: 500 }}>{t("aboutFullTitleValue")}</p>
 
         {/* وضعیت به‌روزرسانی */}

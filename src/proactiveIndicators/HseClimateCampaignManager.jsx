@@ -87,7 +87,7 @@ export default function HseClimateCampaignManager({ currentUser, role, onBack })
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
       {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>}
-      <h3 style={{ marginBottom: 4, color: THEME.navy }}>{t("hccmCampaignsTitle")}</h3>
+      <h3 style={{ marginBottom: 4, color: THEME.heading }}>{t("hccmCampaignsTitle")}</h3>
       <p style={{ color: THEME.text3, fontSize: 12, marginTop: 0, marginBottom: 16 }}>
         {t("hccmAnonymousNote")}
       </p>
@@ -163,7 +163,7 @@ export default function HseClimateCampaignManager({ currentUser, role, onBack })
         <div key={c.id} style={{ ...styles.card, width: "auto", marginBottom: 10 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
             <div>
-              <div style={{ fontWeight: 700, color: THEME.navy, fontSize: 13 }}>
+              <div style={{ fontWeight: 700, color: THEME.heading, fontSize: 13 }}>
                 {c.projectName || t("hccmNoProjectName")} — {c.orgType === "contractor" ? t("hccmContractorInline", { name: c.contractorName }) : t("hccmEmployerPersonnel")}
               </div>
               <div style={{ fontSize: 11, color: THEME.text3, marginTop: 3 }}>{t("hccmCreatedMinResponse", { date: toJalaliSafe(c.createdAt), count: c.minValidResponses })}</div>
@@ -203,7 +203,7 @@ function CampaignResult({ campaign }) {
   const dimTitle = (title) => (typeof title === "object" && title !== null ? (title[lang] || title.fa) : title);
   return (
     <div style={{ marginTop: 10, background: THEME.bg, borderRadius: 8, padding: 10 }}>
-      <p style={{ fontSize: 12, color: THEME.navy, fontWeight: 700, marginBottom: 6 }}>
+      <p style={{ fontSize: 12, color: THEME.heading, fontWeight: 700, marginBottom: 6 }}>
         {t("hccmTotalScoreBasedOn", { score: agg.averageTotal?.toFixed(1), count: agg.responseCount })}
       </p>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
@@ -238,7 +238,7 @@ function TotalHseClimateScore({ currentUser }) {
   const Row = ({ icon: Icon, label, agg }) => (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${THEME.border}` }}>
       <span style={{ fontSize: 12, color: THEME.text2, display: "flex", alignItems: "center", gap: 6 }}><Icon size={13} /> {label}</span>
-      <span style={{ fontSize: 12, fontWeight: 700, color: THEME.navy }}>
+      <span style={{ fontSize: 12, fontWeight: 700, color: THEME.heading }}>
         {agg && agg.responseCount > 0 ? t("hccmScoreOfResponses", { score: agg.averageTotal?.toFixed(1), count: agg.responseCount }) : t("hccmNoData")}
       </span>
     </div>
@@ -246,7 +246,7 @@ function TotalHseClimateScore({ currentUser }) {
 
   return (
     <div style={{ ...styles.card, width: "auto", marginTop: 20 }}>
-      <h4 style={{ fontSize: 13.5, color: THEME.navy, fontWeight: 700, marginBottom: 10 }}>{t("hccmTotalClimateScoreTitle")}</h4>
+      <h4 style={{ fontSize: 13.5, color: THEME.heading, fontWeight: 700, marginBottom: 10 }}>{t("hccmTotalClimateScoreTitle")}</h4>
       <Row icon={Building2} label={t("hccmWholeCompany")} agg={companyAgg} />
       <Row icon={Users} label={t("hccmEmployerPersonnel")} agg={employerAgg} />
       <Row icon={Users} label={t("hccmAllContractors")} agg={contractorAgg} />

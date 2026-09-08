@@ -91,7 +91,7 @@ export default function PermissionManager({ onBack }) {
       {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
         <ShieldCheck size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("permissionsTitle")}</h2>
+        <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("permissionsTitle")}</h2>
       </div>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 18 }}>
         {t("permissionsDesc")}
@@ -121,7 +121,7 @@ export default function PermissionManager({ onBack }) {
       {selectedAccountId && (
         <>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 18, marginBottom: 10 }}>
-            <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: 0 }}>{t("permissionsAccessFor", { name: selectedAccountLabel })}</h3>
+            <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: 0 }}>{t("permissionsAccessFor", { name: selectedAccountLabel })}</h3>
             {hasAnyExplicitRow && (
               <button type="button" onClick={handleReset} style={{ ...styles.smallButton, background: THEME.text3, display: "flex", alignItems: "center", gap: 6 }}>
                 <RotateCcw size={13} /> {t("permissionsResetToFull")}

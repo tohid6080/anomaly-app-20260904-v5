@@ -130,7 +130,7 @@ export default function AdminAnalytics({ onBack, currentUser, companies }) {
       {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
         <Users size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("adminAnalyticsTitle")}</h2>
+        <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("adminAnalyticsTitle")}</h2>
       </div>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 16 }}>{t("adminAnalyticsDesc")}</p>
 
@@ -206,7 +206,7 @@ export default function AdminAnalytics({ onBack, currentUser, companies }) {
 
       {!loading && recentFailed.length > 0 && (
         <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, marginTop: 16, padding: 14 }}>
-          <p style={{ fontSize: 12.5, fontWeight: 700, color: THEME.navy, marginTop: 0, marginBottom: 10 }}>{t("adminAnalyticsRecentFailed")}</p>
+          <p style={{ fontSize: 12.5, fontWeight: 700, color: THEME.heading, marginTop: 0, marginBottom: 10 }}>{t("adminAnalyticsRecentFailed")}</p>
           {recentFailed.map((r, i) => (
             <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: i < recentFailed.length - 1 ? `1px solid ${THEME.border}` : "none", fontSize: 12 }}>
               <span style={{ color: THEME.text, fontWeight: 600 }}>{r.username}{showCompanyCol && r.company_id ? ` — ${companyName[r.company_id] || ""}` : ""}</span>

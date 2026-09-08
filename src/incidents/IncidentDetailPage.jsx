@@ -70,7 +70,7 @@ export default function IncidentDetailPage({ incidentId, currentUser, role, read
   return (
     <div>
       <div style={styles.backLink} onClick={onBack}>{t("commonBackPlain")}</div>
-      <h2 style={{ fontSize: 18, color: THEME.navy, fontWeight: 800, margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}>
+      <h2 style={{ fontSize: 18, color: THEME.heading, fontWeight: 800, margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}>
         <AlertTriangle size={20} color={THEME.teal} /> {t("incDetailHeading", { no: incident.incidentNo })}
       </h2>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 18 }}>{toJalaliSafe(incident.occurredAt)} — {typeLabel}</p>
@@ -94,7 +94,7 @@ export default function IncidentDetailPage({ incidentId, currentUser, role, read
       </div>
 
       <div style={{ background: isCandidate ? "#fff7ed" : THEME.surface, border: `1px solid ${isCandidate ? "#fdba74" : THEME.border}`, borderRadius: 12, padding: 18 }}>
-        <h3 style={{ fontSize: 14, color: THEME.navy, fontWeight: 700, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 6 }}>
+        <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 6 }}>
           <GitBranch size={15} /> {t("incTripodAnalysisTitle")}
         </h3>
         {isCandidate && !analysis && (
@@ -104,7 +104,7 @@ export default function IncidentDetailPage({ incidentId, currentUser, role, read
         )}
         {analysis && (
           <p style={{ fontSize: 13, color: THEME.text2, marginBottom: 10 }}>
-            {t("incCurrentStatusLabel")}<b style={{ color: THEME.navy }}>{t(TRIPOD_STATUS_LABELS[analysis.status] || analysis.status)}</b>
+            {t("incCurrentStatusLabel")}<b style={{ color: THEME.heading }}>{t(TRIPOD_STATUS_LABELS[analysis.status] || analysis.status)}</b>
           </p>
         )}
         {error && <p style={styles.error}>{error}</p>}

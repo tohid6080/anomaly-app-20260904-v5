@@ -70,7 +70,7 @@ export default function NotificationPanel({ smartItems = [], onNavigate }) {
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: THEME.navy }}>{t("notifPanelTitle")}</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: THEME.heading }}>{t("notifPanelTitle")}</span>
             <X size={15} color={THEME.text3} style={{ cursor: "pointer" }} onClick={() => setOpen(false)} />
           </div>
 

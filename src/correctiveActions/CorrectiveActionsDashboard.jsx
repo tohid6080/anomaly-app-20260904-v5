@@ -175,12 +175,12 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser }) {
       <div style={{ maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
         <div style={styles.backLink} onClick={() => setShowForm(false)}>{t("cadCancel")}</div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-          <h2 style={{ fontSize: 17, color: THEME.navy, fontWeight: 700, margin: 0 }}>{editingId ? t("cadEditTitle") : t("cadNewTitle")}</h2>
+          <h2 style={{ fontSize: 17, color: THEME.heading, fontWeight: 700, margin: 0 }}>{editingId ? t("cadEditTitle") : t("cadNewTitle")}</h2>
           {editingId && <StatusBadge status={form.status} />}
         </div>
 
         <div style={{ ...styles.card, width: "auto", marginBottom: 14 }}>
-          <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>{t("cadMainInfo")}</h3>
+          <h3 style={{ fontSize: 13, color: THEME.heading, margin: "0 0 10px", fontWeight: 700 }}>{t("cadMainInfo")}</h3>
           <div style={styles.formGrid}>
             <div>
               <label style={styles.label}>{t("cadActionNumber")}</label>
@@ -205,7 +205,7 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser }) {
         </div>
 
         <div style={{ ...styles.card, width: "auto", marginBottom: 14 }}>
-          <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>{t("cadResponsibilityTiming")}</h3>
+          <h3 style={{ fontSize: 13, color: THEME.heading, margin: "0 0 10px", fontWeight: 700 }}>{t("cadResponsibilityTiming")}</h3>
           <div style={styles.formGrid}>
             <div>
               <label style={styles.label}>{t("cadResponsibleContractor")}</label>
@@ -254,7 +254,7 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser }) {
         </div>
 
         <div style={{ ...styles.card, width: "auto", marginBottom: 14 }}>
-          <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>{t("cadExecutionDocumentation")}</h3>
+          <h3 style={{ fontSize: 13, color: THEME.heading, margin: "0 0 10px", fontWeight: 700 }}>{t("cadExecutionDocumentation")}</h3>
           <label style={styles.label}>{t("cadCompletionDate")}</label>
           <JalaliDateInput value={form.completedAt} onChange={(v) => setForm({ ...form, completedAt: v })} allowEmpty />
           <label style={styles.label}>{t("cadExecutorNotes")}</label>
@@ -279,7 +279,7 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser }) {
 
         {!isContractor && (
           <div style={{ ...styles.card, width: "auto", marginBottom: 14 }}>
-            <h3 style={{ fontSize: 13, color: THEME.navy, margin: "0 0 10px", fontWeight: 700 }}>{t("cadHseApproval")}</h3>
+            <h3 style={{ fontSize: 13, color: THEME.heading, margin: "0 0 10px", fontWeight: 700 }}>{t("cadHseApproval")}</h3>
             {form.approvedBy
               ? <p style={{ fontSize: 11.5, color: THEME.text2 }}>{t("cadApprovedByOn", { name: form.approvedBy, date: toJalaliSafe(form.approvedAt) })}</p>
               : <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("cadNotApprovedYet")}</p>}
@@ -306,7 +306,7 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser }) {
     <div style={{ maxWidth: 1000, margin: "0 auto", padding: 24, direction: dir }}>
       {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.navy, fontWeight: 700 }}>{t("cadListTitle")}</h2>
+        <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("cadListTitle")}</h2>
         <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6 }} onClick={openNew}>
           <Plus size={13} /> {t("cadNewAction")}
         </button>
@@ -383,7 +383,7 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser }) {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, flexWrap: "wrap" }}>
             <div style={{ flex: 1, minWidth: 200 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                <span style={{ fontWeight: 700, color: THEME.navy, fontSize: 13, direction: "ltr" }}>{a.actionNumber}</span>
+                <span style={{ fontWeight: 700, color: THEME.heading, fontSize: 13, direction: "ltr" }}>{a.actionNumber}</span>
                 <StatusBadge status={a.status} />
                 {isOverdue(a) && <span style={{ fontSize: 10, background: "#7c2d12", color: "#fff", padding: "2px 8px", borderRadius: 999 }}>{t("cadOverdueBadge")}</span>}
                 {a.autoGenerated && <span style={{ fontSize: 10, background: THEME.tealSoft, color: THEME.tealDeep, padding: "2px 8px", borderRadius: 999 }}>{t("cadAutoBadge")}</span>}
@@ -452,7 +452,7 @@ function TripodActionAssignModal({ action, contractors, onClose, onSaved }) {
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(15,42,63,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={onClose}>
       <div style={{ background: THEME.surface, borderRadius: 14, padding: 22, maxWidth: 440, width: "100%", maxHeight: "85vh", overflowY: "auto", direction: dir }} onClick={(e) => e.stopPropagation()}>
-        <h3 style={{ fontSize: 15, color: THEME.navy, fontWeight: 800, margin: "0 0 12px" }}>{t("cadTripodAssignTitle")}</h3>
+        <h3 style={{ fontSize: 15, color: THEME.heading, fontWeight: 800, margin: "0 0 12px" }}>{t("cadTripodAssignTitle")}</h3>
         <div style={{ background: THEME.bg, borderRadius: 8, padding: 10, marginBottom: 12, fontSize: 11.5, color: THEME.text2, lineHeight: 1.9 }}>
           {action.nonconformanceDescription}
         </div>

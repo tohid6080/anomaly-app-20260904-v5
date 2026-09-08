@@ -52,7 +52,7 @@ export default function NodeInspectorPanel({ type, node, readOnly, onClose, onSa
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-          <h3 style={{ margin: 0, fontSize: 15.5, color: THEME.navy, fontWeight: 700 }}>{titleFor}</h3>
+          <h3 style={{ margin: 0, fontSize: 15.5, color: THEME.heading, fontWeight: 700 }}>{titleFor}</h3>
           <button type="button" onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>
             <X size={18} color={THEME.text3} />
           </button>

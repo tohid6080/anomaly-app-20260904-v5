@@ -61,7 +61,7 @@ export default function IncidentsListPage({ currentUser, role, readOnly }) {
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
-        <h2 style={{ fontSize: 18, color: THEME.navy, fontWeight: 800, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+        <h2 style={{ fontSize: 18, color: THEME.heading, fontWeight: 800, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
           <AlertTriangle size={20} color={THEME.teal} /> {t("incTitle")}
         </h2>
         {!readOnly && (
@@ -147,7 +147,7 @@ export default function IncidentsListPage({ currentUser, role, readOnly }) {
             <tbody>
               {list.map((inc) => (
                 <tr key={inc.id} style={{ borderBottom: `1px solid ${THEME.border}`, cursor: "pointer" }} onClick={() => setSelectedId(inc.id)}>
-                  <td style={{ padding: "10px", fontWeight: 700, color: THEME.navy }}>{inc.incidentNo}</td>
+                  <td style={{ padding: "10px", fontWeight: 700, color: THEME.heading }}>{inc.incidentNo}</td>
                   <td style={{ padding: "10px", textAlign: "center" }}>{toJalaliSafe(inc.occurredAt)}</td>
                   <td style={{ padding: "10px", textAlign: "center" }}>{(() => { const it = INCIDENT_TYPES.find((x) => x.value === inc.incidentType); return it ? t(it.labelKey) : inc.incidentType; })()}</td>
                   <td style={{ padding: "10px", textAlign: "center" }}>

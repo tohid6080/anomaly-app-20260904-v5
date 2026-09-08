@@ -130,7 +130,7 @@ export default function PersonnelForm({ onBack, onSaved, currentUser }) {
   return (
     <div style={{ maxWidth: 560, margin: "0 auto", padding: 24, direction: dir }}>
       {onBack && <div style={styles.backLink} onClick={onBack}>{t("pfBack")}</div>}
-      <h2 style={{ margin: "0 0 4px", color: THEME.navy, fontSize: 18, fontWeight: 700 }}>{t("pfRegisterNewPersonnel")}</h2>
+      <h2 style={{ margin: "0 0 4px", color: THEME.heading, fontSize: 18, fontWeight: 700 }}>{t("pfRegisterNewPersonnel")}</h2>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 18 }}>
         {t("pfSubtitle")}
       </p>
@@ -183,7 +183,7 @@ export default function PersonnelForm({ onBack, onSaved, currentUser }) {
       </div>
 
       <div style={styles.card}>
-        <h3 style={{ fontSize: 14.5, color: THEME.navy, margin: "0 0 4px", fontWeight: 700 }}>{t("pfOccHealthStatus")}</h3>
+        <h3 style={{ fontSize: 14.5, color: THEME.heading, margin: "0 0 4px", fontWeight: 700 }}>{t("pfOccHealthStatus")}</h3>
         <p style={{ fontSize: 11.5, color: THEME.text3, marginTop: 0, marginBottom: 12 }}>{t("pfOccHealthQuestion")}</p>
 
         <div style={{ display: "flex", gap: 8 }}>
