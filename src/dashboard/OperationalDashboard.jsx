@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Responsive as Grid } from "react-grid-layout";
-import { Pencil, RotateCcw, GripVertical, Plus, Trash2, Copy, RefreshCw, X, Eye, EyeOff } from "lucide-react";
-import { THEME, styles, usePersistedState } from "../shared.js";
+import { Pencil, RotateCcw, GripVertical, Plus, Trash2, Copy, RefreshCw, X, Eye, EyeOff, ClipboardList } from "lucide-react";
+import { THEME, usePersistedState } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { usePageBar } from "../shared/PageBar.jsx";
 import { loadHomeKpiSummary } from "./homeKpiApi.js";
 import {
   DASHBOARD_WIDGETS, DASHBOARD_CATEGORIES, DASHBOARD_GRID,
@@ -153,14 +154,20 @@ export default function OperationalDashboard({ role, currentUser, onNavigate, on
     });
   }, [isEditing, saved]);
 
-  const startEdit = () => { setDraft(mergeLayout(saved)); setEditing(true); };
-  const cancelEdit = () => { setDraft(null); setEditing(false); setAddOpen(false); };
-  const saveEdit = () => {
-    setSaved(draft);
+  // draft در حالتِ ویرایش با هر درگ عوض می‌شود؛ برای اینکه هویتِ saveEdit
+  // (و در نتیجه اکشن‌های PageBar) پایدار بماند، draft را از ref می‌خوانیم.
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
+
+  const startEdit = useCallback(() => { setDraft(mergeLayout(saved)); setEditing(true); }, [saved]);
+  const cancelEdit = useCallback(() => { setDraft(null); setEditing(false); setAddOpen(false); }, []);
+  const openAdd = useCallback(() => setAddOpen(true), []);
+  const saveEdit = useCallback(() => {
+    if (draftRef.current) setSaved(draftRef.current);
     setDraft(null); setEditing(false); setAddOpen(false);
     setToast(t("dashLayoutSaved")); setTimeout(() => setToast(""), 2800);
-  };
-  const resetLayout = () => { setDraft(defaultDashboardLayout()); setToast(t("dashLayoutReset")); setTimeout(() => setToast(""), 2800); };
+  }, [setSaved, t]);
+  const resetLayout = useCallback(() => { setDraft(defaultDashboardLayout()); setToast(t("dashLayoutReset")); setTimeout(() => setToast(""), 2800); }, [t]);
 
   const mutate = (fn) => setDraft((d) => fn(d || mergeLayout(saved)));
   const toggleVisible = (i) => mutate((d) => ({ ...d, items: d.items.map((it) => (it.i === i ? { ...it, visible: !it.visible } : it)) }));
@@ -170,6 +177,38 @@ export default function OperationalDashboard({ role, currentUser, onNavigate, on
   });
   const removeOne = (i) => mutate((d) => removeWidgetInstance(d, i));
   const addWidget = (type) => { mutate((d) => addWidgetInstance(d, type)); setAddOpen(false); };
+
+  // دکمه‌های اقدامِ صفحه که در PageBar (نوارِ زیرِ هدر) نشان داده می‌شوند.
+  // با useMemo پایدارشان می‌کنیم تا usePageBar در حلقهٔ رندر نیفتد.
+  const pageBarActions = useMemo(() => {
+    if (!canEdit) return null;
+    const base = { fontSize: 11, fontWeight: 600, borderRadius: 8, padding: "6px 11px", background: "transparent", cursor: "pointer", fontFamily: THEME.font, display: "inline-flex", alignItems: "center", gap: 5 };
+    if (!editing) {
+      return (
+        <button type="button" onClick={startEdit} style={{ ...base, color: THEME.text2, border: `1px solid ${THEME.border}` }}>
+          <Pencil size={12} /> {t("dashEditMode")}
+        </button>
+      );
+    }
+    return (
+      <>
+        <button type="button" onClick={openAdd} style={{ ...base, color: THEME.teal, border: `1px solid ${THEME.teal}` }}>
+          <Plus size={12} /> {t("dashAddWidget")}
+        </button>
+        <button type="button" onClick={resetLayout} style={{ ...base, color: THEME.text3, border: `1px solid ${THEME.border}` }}>
+          <RotateCcw size={11} /> {t("dashResetLayout")}
+        </button>
+        <button type="button" onClick={cancelEdit} style={{ ...base, color: THEME.text3, border: `1px solid ${THEME.border}` }}>
+          {t("dashCancel")}
+        </button>
+        <button type="button" onClick={saveEdit} style={{ ...base, color: "#fff", fontWeight: 700, border: "none", background: THEME.teal }}>
+          {t("dashSave")}
+        </button>
+      </>
+    );
+  }, [canEdit, editing, t, startEdit, openAdd, resetLayout, cancelEdit, saveEdit]);
+
+  usePageBar({ title: t("opDashTitle"), icon: ClipboardList, onBack, actions: pageBarActions });
 
   const gridProps = {
     className: isEditing ? "dash-rgl dash-rgl--edit" : "dash-rgl",
@@ -195,38 +234,6 @@ export default function OperationalDashboard({ role, currentUser, onNavigate, on
   return (
     <div style={{ direction: dir }}>
       <style>{RGL_CSS}</style>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackPlain")}</div>}
-
-      <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "0 0 14px", flexWrap: "wrap" }}>
-        <h2 style={{ fontSize: THEME.fsTitle, color: THEME.heading, fontWeight: THEME.fwTitle, margin: 0 }}>{t("opDashTitle")}</h2>
-        <span style={{ flex: 1 }} />
-        {!editing && canEdit && (
-          <button type="button" onClick={startEdit}
-            style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600, color: THEME.text2, border: `1px solid ${THEME.border}`, borderRadius: 8, padding: "5px 11px", background: "transparent", cursor: "pointer", fontFamily: THEME.font }}>
-            <Pencil size={12} /> {t("dashEditMode")}
-          </button>
-        )}
-        {editing && (
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            <button type="button" onClick={() => setAddOpen(true)}
-              style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, color: THEME.teal, border: `1px solid ${THEME.teal}`, borderRadius: 8, padding: "5px 10px", background: "transparent", cursor: "pointer", fontFamily: THEME.font }}>
-              <Plus size={12} /> {t("dashAddWidget")}
-            </button>
-            <button type="button" onClick={resetLayout}
-              style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: THEME.text3, border: `1px solid ${THEME.border}`, borderRadius: 8, padding: "5px 10px", background: "transparent", cursor: "pointer", fontFamily: THEME.font }}>
-              <RotateCcw size={11} /> {t("dashResetLayout")}
-            </button>
-            <button type="button" onClick={cancelEdit}
-              style={{ fontSize: 11, color: THEME.text3, border: `1px solid ${THEME.border}`, borderRadius: 8, padding: "5px 10px", background: "transparent", cursor: "pointer", fontFamily: THEME.font }}>
-              {t("dashCancel")}
-            </button>
-            <button type="button" onClick={saveEdit}
-              style={{ fontSize: 11, fontWeight: 700, color: "#fff", border: "none", borderRadius: 8, padding: "5px 12px", background: THEME.teal, cursor: "pointer", fontFamily: THEME.font }}>
-              {t("dashSave")}
-            </button>
-          </div>
-        )}
-      </div>
 
       {editing && !wideEnough && (
         <p style={{ fontSize: 11, color: THEME.warn, margin: "0 0 10px" }}>{t("dashEditDesktopOnly")}</p>

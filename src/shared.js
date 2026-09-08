@@ -302,7 +302,7 @@ export const styles = {
   menuCard: { background: THEME.cardBg, padding: "17px 18px", borderRadius: THEME.radiusCard, boxShadow: THEME.elev1, border: `1px solid ${THEME.cardBorder}`, cursor: "pointer", fontSize: THEME.fsMenu, fontWeight: 600, color: THEME.text, display: "flex", alignItems: "center" },
   anomalyMenuCard: { borderInlineStart: `3px solid ${THEME.teal}`, background: THEME.tealSoft },
   userRow: { background: THEME.cardBg, padding: "14px 18px", borderRadius: THEME.radiusCard, border: `1px solid ${THEME.cardBorder}`, display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 14.5 },
-  backLink: { cursor: "pointer", color: THEME.teal, marginBottom: 18, fontSize: 13.5, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 },
+  backLink: { cursor: "pointer", color: THEME.text3, marginBottom: 12, fontSize: 12, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 },
   formGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))", gap: 12 },
   statsRow: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(78px, 1fr))", gap: 10, marginTop: 8 },
   statBox: { background: THEME.cardBg, border: `1px solid ${THEME.cardBorder}`, borderRadius: THEME.radiusCard, padding: "14px 8px", textAlign: "center", boxShadow: "0 1px 2px rgba(15,42,63,0.03)" },

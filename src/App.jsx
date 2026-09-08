@@ -68,6 +68,7 @@ const SuperAdminLogin = lazy(() => import("./superadmin/SuperAdminLogin.jsx"));
 const SuperAdminPanel = lazy(() => import("./superadmin/SuperAdminPanel.jsx"));
 import DataView, { StatusPill } from "./shared/DataView.jsx";
 import ReportErrorModal from "./shared/ReportErrorModal.jsx";
+import PageBar, { PageBarContext } from "./shared/PageBar.jsx";
 import TrialRequestModal from "./TrialRequestModal.jsx";
 const MachineryDashboard = lazy(() => import("./machinery/MachineryDashboard.jsx"));
 import { loadMachineryListOfflineFirst } from "./machinery/machineryApi.js";
@@ -3841,6 +3842,10 @@ function ResponsiveDashboardShell({ panelLabelKey, currentUser, onLogout, onOpen
   // تغییرش بدهد، همان انتخاب شخصی‌اش در localStorage ذخیره و همیشه در
   // اولویت است (این تنظیم فقط برای کاربرانی که هنوز هیچ انتخابی نکرده‌اند معنا دارد).
   const [collapsed, setCollapsed] = usePersistedState("ihms_sidebar_collapsed", appearance?.sidebarDefaultCollapsed || false);
+  // محتوای PageBar که ماژولِ جاری (از طریقِ usePageBar) تعیین می‌کند؛ null
+  // یعنی «پیش‌فرض» و Shell خودش نوار را از روی نامِ ماژول می‌سازد.
+  const [pageBar, setPageBar] = useState(null);
+  const pageBarCtx = useMemo(() => ({ set: setPageBar }), []);
 
   if (!isDesktop) {
     // موبایل (D-013) — نوارِ تبِ پایین + خانه/ماژول‌ها/اعلان‌ها.
@@ -3868,17 +3873,63 @@ function ResponsiveDashboardShell({ panelLabelKey, currentUser, onLogout, onOpen
   // پیام خوش‌آمدگویی با نام واقعی کاربر واردشده نشان داده می‌شود.
   const mainContent = view === "menu" ? <WelcomeScreen currentUser={currentUser} setView={setView} onNavigate={onNavigate} sidebarModules={sidebarModules} /> : children;
 
+  // نوارِ زیرِ هدر: اگر ماژول از طریقِ usePageBar عنوان/اکشن داده باشد همان
+  // را نشان می‌دهیم؛ وگرنه یک نوارِ پیش‌فرضِ «بازگشت + نامِ ماژول» از روی
+  // همان لیستِ Sidebar می‌سازیم تا همهٔ ماژول‌ها یک سرصفحهٔ یک‌دست داشته باشند.
+  // پیش‌فرض: نوارِ باریکِ «بازگشت + مسیرِ ماژول» (بدون عنوانِ درشت، تا با
+  // <h2>ِ خودِ ماژول تداخل نکند). ماژولی که usePageBar را صدا زده، عنوان و
+  // اکشن‌های خودش را می‌گذارد و آن نوار کامل‌تر می‌شود.
+  let fallbackBar = null;
+  let parentCrumb = null;
+  if (view !== "menu") {
+    let mod = null, parent = null;
+    for (const m of sidebarModules) {
+      if (!m) continue;
+      if (m.key === view) { mod = m; break; }
+      const sub = (m.sub || []).find((s) => s && s.key === view);
+      if (sub) { mod = sub; parent = m; break; }
+    }
+    // فقط برای ماژول‌هایی که در فهرستِ Sidebar شناخته می‌شوند نوارِ پیش‌فرض
+    // می‌سازیم؛ صفحاتِ جزئیات/فرم (که کلیدشان در Sidebar نیست) دقیقاً مثلِ
+    // قبل بدونِ نوار می‌مانند (بی‌regression).
+    if (mod) {
+      parentCrumb = parent ? `${t(panelLabelKey)} › ${parent.label}` : t(panelLabelKey);
+      fallbackBar = {
+        crumb: `${parentCrumb} › ${mod.label}`,
+        icon: mod.icon || (parent && parent.icon),
+      };
+    }
+  }
+  const barProps = pageBar
+    ? {
+        title: pageBar.title,
+        // وقتی ماژول عنوانِ خودش را می‌دهد، مسیر بدونِ نامِ ماژول است تا تکرار نشود.
+        crumb: pageBar.crumb || parentCrumb || (fallbackBar && fallbackBar.crumb),
+        icon: pageBar.icon || (fallbackBar && fallbackBar.icon),
+        actions: pageBar.actions,
+        onBack: pageBar.onBack || (() => setView("menu")),
+      }
+    : fallbackBar
+      ? { ...fallbackBar, onBack: () => setView("menu") }
+      : null;
+  const wide = view === "operationalDashboard";
+
   return (
+    <PageBarContext.Provider value={pageBarCtx}>
     <div style={{ direction: dir, fontFamily: THEME.font, minHeight: "100vh", background: THEME.bg, display: "flex", flexDirection: "column" }}>
       <DashboardHeader panelLabelKey={panelLabelKey} currentUser={currentUser} onLogout={onLogout} onOpenSettings={onOpenSettings} smartItems={smartItems} onNavigate={onNavigate} currentModuleKey={view} />
       <UpdateAvailableBanner />
       <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
         <Sidebar modules={sidebarModules} view={view} setView={setView} collapsed={collapsed} onToggleCollapse={() => setCollapsed((v) => !v)} />
-        <main style={{ flex: 1, minWidth: 0, overflowY: "auto", padding: view === "operationalDashboard" ? "20px clamp(12px, 2vw, 24px)" : "28px clamp(20px, 3vw, 40px)" }}>
-          <div style={{ maxWidth: view === "operationalDashboard" ? 1760 : 1400, margin: "0 auto" }}><LazyPanel>{mainContent}</LazyPanel></div>
+        <main style={{ flex: 1, minWidth: 0, overflowY: "auto", display: "flex", flexDirection: "column" }}>
+          {barProps && <PageBar {...barProps} backLabel={t("commonBackPlain")} />}
+          <div style={{ flex: 1, padding: wide ? "16px clamp(12px, 2vw, 24px)" : "22px clamp(20px, 3vw, 40px)" }}>
+            <div style={{ maxWidth: wide ? 1760 : 1400, margin: "0 auto" }}><LazyPanel>{mainContent}</LazyPanel></div>
+          </div>
         </main>
       </div>
     </div>
+    </PageBarContext.Provider>
   );
 }
 
