@@ -51,7 +51,7 @@ function HseGuideOverlay({ onClose }) {
  * اگر focusPersonnelId داده شده باشد (از پرونده‌ی پرسنل)، مستقیم فرم
  * ارزیابی استعداد حادثه‌پذیری را برای همان پرسنل باز می‌کند.
  */
-export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role, readOnly, focusPersonnelId, focusJobTitle, focusPersonnelName }) {
+export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role, readOnly, focusPersonnelId, focusJobTitle, focusPersonnelName, wide }) {
   const { t, dir, lang } = useLanguage();
   const [indicators, setIndicators] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -109,9 +109,9 @@ export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role
   }
 
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-        <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>
+    <div style={wide ? { direction: dir } : { maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
+      <div style={{ display: "flex", justifyContent: wide ? "flex-end" : "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+        {!wide && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
         <button
           type="button" onClick={() => setShowGuide(true)}
           style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600, color: THEME.teal, border: "none", cursor: "pointer", fontFamily: THEME.font, background: THEME.tealSoft, padding: "7px 14px", borderRadius: 8 }}
@@ -120,10 +120,14 @@ export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role
         </button>
       </div>
       {showGuide && <HseGuideOverlay onClose={() => setShowGuide(false)} />}
-      <h3 style={{ marginBottom: 4, color: THEME.heading }}>{moduleTitle || t("pidModuleTitle")}</h3>
-      <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 0, marginBottom: 16 }}>
-        {t("pidModuleDesc")}
-      </p>
+      {!wide && (
+        <>
+          <h3 style={{ marginBottom: 4, color: THEME.heading }}>{moduleTitle || t("pidModuleTitle")}</h3>
+          <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 0, marginBottom: 16 }}>
+            {t("pidModuleDesc")}
+          </p>
+        </>
+      )}
 
       {loading && <p style={{ color: THEME.text3, textAlign: "center", padding: 20 }}>{t("commonLoading")}</p>}
       {!loading && indicators.length === 0 && (

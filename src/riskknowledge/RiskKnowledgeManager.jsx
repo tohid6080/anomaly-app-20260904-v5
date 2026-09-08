@@ -11,7 +11,7 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 const EMPTY_FORM = { activity: "", hazard: "", environmentalAspect: "", cause: "", consequence: "", existingControls: "", recommendedControls: "" };
 
-export default function RiskKnowledgeManager({ onBack, currentUser }) {
+export default function RiskKnowledgeManager({ onBack, currentUser, wide }) {
   const { t, dir } = useLanguage();
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -171,13 +171,15 @@ export default function RiskKnowledgeManager({ onBack, currentUser }) {
   }
 
   return (
-    <div style={{ maxWidth: 1000, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("rkBackToSystemManagement")}</div>}
+    <div style={wide ? { direction: dir } : { maxWidth: 1000, margin: "0 auto", padding: 24, direction: dir }}>
+      {!wide && onBack && <div style={styles.backLink} onClick={onBack}>{t("rkBackToSystemManagement")}</div>}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 6, flexWrap: "wrap" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Database size={20} color={THEME.teal} />
-          <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("rkManagementTitle")}</h2>
-        </div>
+        {!wide && (
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <Database size={20} color={THEME.teal} />
+            <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("rkManagementTitle")}</h2>
+          </div>
+        )}
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6 }} onClick={openNew}>
             <Plus size={13} /> {t("rkNewRecordBtn")}

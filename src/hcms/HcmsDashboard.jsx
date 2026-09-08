@@ -22,7 +22,7 @@ const EMPTY_FORM = {
 
 const CATEGORY_LABEL_KEYS = { human: "hcmsCatHuman", equipment: "hcmsCatEquipment", environment: "hcmsCatEnvironment", reputation: "hcmsCatReputation" };
 
-export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId }) {
+export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId, wide }) {
   const { t, dir } = useLanguage();
   const CATEGORY_LABELS = Object.fromEntries(Object.entries(CATEGORY_LABEL_KEYS).map(([k, v]) => [k, t(v)]));
   const [list, setList] = useState([]);
@@ -316,13 +316,15 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId }) {
   }
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("hcmsBackToRiskManagement")}</div>}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 14 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <ShieldAlert size={20} color={THEME.teal} />
-          <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("hcmsDashboardTitle")}</h2>
-        </div>
+    <div style={wide ? { direction: dir } : { maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
+      {!wide && onBack && <div style={styles.backLink} onClick={onBack}>{t("hcmsBackToRiskManagement")}</div>}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: wide ? "flex-end" : "space-between", gap: 10, marginBottom: 14 }}>
+        {!wide && (
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <ShieldAlert size={20} color={THEME.teal} />
+            <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("hcmsDashboardTitle")}</h2>
+          </div>
+        )}
         <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6 }} onClick={openNew}>
           <Plus size={14} /> {t("hcmsNewAssessmentBtn")}
         </button>

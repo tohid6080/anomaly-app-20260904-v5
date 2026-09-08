@@ -3913,7 +3913,8 @@ function ResponsiveDashboardShell({ panelLabelKey, currentUser, onLogout, onOpen
     if (mod && !OWN_SUBHEADER) {
       parentCrumb = parent ? `${t(panelLabelKey)} › ${parent.label}` : t(panelLabelKey);
       fallbackBar = {
-        crumb: `${parentCrumb} › ${mod.label}`,
+        title: mod.label,
+        crumb: parentCrumb,
         icon: mod.icon || (parent && parent.icon),
       };
     }
@@ -3941,8 +3942,8 @@ function ResponsiveDashboardShell({ panelLabelKey, currentUser, onLogout, onOpen
         <Sidebar modules={sidebarModules} view={view} setView={setView} collapsed={collapsed} onToggleCollapse={() => setCollapsed((v) => !v)} />
         <main style={{ flex: 1, minWidth: 0, overflowY: "auto", display: "flex", flexDirection: "column" }}>
           {barProps && <PageBar {...barProps} backLabel={t("commonBackPlain")} />}
-          <div style={{ flex: 1, padding: wide ? "16px clamp(12px, 2vw, 24px)" : "22px clamp(20px, 3vw, 40px)" }}>
-            <div style={{ maxWidth: wide ? 1760 : 1400, margin: "0 auto" }}><LazyPanel>{mainContent}</LazyPanel></div>
+          <div style={{ flex: 1, padding: wide ? "16px clamp(12px, 2vw, 24px)" : "20px clamp(16px, 2.4vw, 32px)" }}>
+            <div style={{ maxWidth: wide ? 1760 : 1600, margin: "0 auto" }}><LazyPanel>{mainContent}</LazyPanel></div>
           </div>
         </main>
       </div>
@@ -4815,17 +4816,18 @@ function EmployerDashboard({ onLogout, currentUser }) {
 
       {view === "profile" && <ProfileView onBack={() => setView("menu")} currentUser={currentUser} roleLabel={canEdit ? t("roleLabelEmployer") : t("roleLabelEmployerViewOnly")} />}
       {view === "chat" && <ChatDashboard onBack={() => setView("menu")} currentUser={currentUser} />}
-      {view === "riskKnowledgeManagement" && <LazyPanel><RiskKnowledgeManager onBack={() => setView("riskAssessment")} currentUser={currentUser} /></LazyPanel>}
+      {view === "riskKnowledgeManagement" && <LazyPanel><RiskKnowledgeManager wide={isDesktop} onBack={() => setView("riskAssessment")} currentUser={currentUser} /></LazyPanel>}
       {!isDesktop && view === "anomalyForm" && anomalyCanEdit && <AnomalyForm onBack={() => setView("anomalyReport")} currentUser={currentUser} onSaved={() => setView("anomalyList")} />}
       {!isDesktop && view === "anomalyList" && <AnomalyList onBack={() => setView("anomalyReport")} role="EMPLOYER" currentUser={currentUser} readOnly={!canEdit || getAccessLevel(permMap, "anomalyReport") === "view"} initialStatusFilter={navFilter?.module === "anomaly" ? navFilter.statusFilter : undefined} initialRiskFilter={navFilter?.module === "anomaly" ? navFilter.riskFilter : undefined} initialContractorFilter={navFilter?.module === "anomaly" ? navFilter.contractorFilter : undefined} initialExpandedAnomalyId={navFilter?.module === "anomaly" ? navFilter.recordId : undefined} />}
-      {view === "correctiveActionsList" && <CorrectiveActionsDashboard onBack={() => setView("anomalyReport")} currentUser={currentUser} />}
-      {view === "bowtieDashboard" && <BowTieDashboard role="EMPLOYER" onBack={() => setView("riskAssessment")} currentUser={currentUser} readOnly={!canEdit || getAccessLevel(permMap, "riskAssessment") === "view"} />}
-      {view === "hcmsDashboard" && <HcmsDashboard onBack={() => setView("riskAssessment")} currentUser={currentUser} />}
-      {view === "archiveManagement" && <LazyPanel><ArchiveManager onBack={() => setView("menu")} currentUser={currentUser} /></LazyPanel>}
+      {view === "correctiveActionsList" && <CorrectiveActionsDashboard wide={isDesktop} onBack={() => setView("anomalyReport")} currentUser={currentUser} />}
+      {view === "bowtieDashboard" && <BowTieDashboard wide={isDesktop} role="EMPLOYER" onBack={() => setView("riskAssessment")} currentUser={currentUser} readOnly={!canEdit || getAccessLevel(permMap, "riskAssessment") === "view"} />}
+      {view === "hcmsDashboard" && <HcmsDashboard wide={isDesktop} onBack={() => setView("riskAssessment")} currentUser={currentUser} />}
+      {view === "archiveManagement" && <LazyPanel><ArchiveManager wide={isDesktop} onBack={() => setView("menu")} currentUser={currentUser} /></LazyPanel>}
       {!isDesktop && view === "personnelForm" && <PersonnelForm onBack={() => setView("personnelAccess")} currentUser={currentUser} onSaved={() => setView("personnelAccess")} />}
       {!isDesktop && view === "personnelDashboard" && <PersonnelDashboard onBack={() => setView("personnelAccess")} currentUser={currentUser} role="EMPLOYER" readOnly={!canEdit || getAccessLevel(permMap, "personnelAccess") === "view"} initialStatusFilter={navFilter?.module === "personnel" ? navFilter.statusFilter : undefined} initialContractorFilter={navFilter?.module === "personnel" ? navFilter.contractorFilter : undefined} onNavigateToAssessment={(ctx) => { setAssessmentContext(ctx); setView("proactiveIndicators"); }} initialSelectedPersonnelId={assessmentContext?.personnelId} />}
       {view === "proactiveIndicators" && (
         <ProactiveIndicatorsDashboard
+          wide={isDesktop}
           role="EMPLOYER"
           onBack={() => { setAssessmentContext(null); setView(assessmentContext ? "personnelDashboard" : "menu"); }}
           currentUser={currentUser}
@@ -4834,11 +4836,11 @@ function EmployerDashboard({ onLogout, currentUser }) {
           focusPersonnelName={assessmentContext?.personnelName}
         />
       )}
-      {view === "incidentsList" && <IncidentsListPage currentUser={currentUser} role="EMPLOYER" readOnly={!canEdit} />}
+      {view === "incidentsList" && <IncidentsListPage wide={isDesktop} currentUser={currentUser} role="EMPLOYER" readOnly={!canEdit} />}
       {!isDesktop && view === "machineryDashboard" && (
         <MachineryDashboard onBack={() => setView("machineryManagement")} currentUser={currentUser} role="EMPLOYER" readOnly={!canEdit || getAccessLevel(permMap, "machineryManagement") === "view"} initialApprovalFilter={navFilter?.module === "machinery" ? navFilter.approvalFilter : undefined} initialContractorFilter={navFilter?.module === "machinery" ? navFilter.contractorFilter : undefined} />
       )}
-      {view === "scaffoldDashboard" && <ScaffoldDashboard onBack={() => setView("scaffoldManagement")} currentUser={currentUser} role="EMPLOYER" readOnly={!canEdit || getAccessLevel(permMap, "scaffoldManagement") === "view"} initialStatusFilter={navFilter?.module === "scaffold" ? navFilter.statusFilter : undefined} initialContractorFilter={navFilter?.module === "scaffold" ? navFilter.contractorFilter : undefined} />}
+      {view === "scaffoldDashboard" && <ScaffoldDashboard wide={isDesktop} onBack={() => setView("scaffoldManagement")} currentUser={currentUser} role="EMPLOYER" readOnly={!canEdit || getAccessLevel(permMap, "scaffoldManagement") === "view"} initialStatusFilter={navFilter?.module === "scaffold" ? navFilter.statusFilter : undefined} initialContractorFilter={navFilter?.module === "scaffold" ? navFilter.contractorFilter : undefined} />}
       {view === "managementDashboard" && <HomeDashboard role="EMPLOYER" currentUser={currentUser} onNavigate={handleHomeNavigate} onBack={() => setView("menu")} />}
       {view === "operationalDashboard" && <OperationalDashboard role={currentUser?.role || "EMPLOYER"} currentUser={currentUser} onNavigate={handleHomeNavigate} onBack={() => setView("menu")} />}
     </ResponsiveDashboardShell>
@@ -4866,6 +4868,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
     }
     return m?.labelKey ? t(m.labelKey) : m?.label;
   };
+  const isDesktop = useIsDesktop();
   const [view, setView] = usePersistedState("ihms_view_contractor", "menu");
   useEffect(() => { trackPageView(currentUser, view); }, [view]);
   // دکمهٔ برگشت گوشی مثل برگشت داخلی سامانه (بدون خروج از نرم‌افزار).
@@ -5073,15 +5076,16 @@ function ContractorDashboard({ onLogout, currentUser }) {
 
       {view === "profile" && <ProfileView onBack={() => setView("menu")} currentUser={currentUser} roleLabel={t("roleLabelContractor")} />}
       {view === "chat" && <ChatDashboard onBack={() => setView("menu")} currentUser={currentUser} />}
-      {view === "hcmsDashboard" && <HcmsDashboard onBack={() => setView("riskAssessment")} currentUser={currentUser} />}
-      {view === "bowtieDashboard" && <BowTieDashboard role="CONTRACTOR" onBack={() => setView("riskAssessment")} currentUser={currentUser} readOnly={getAccessLevel(permMap, "riskAssessment") === "view"} />}
-      {view === "archiveManagement" && <LazyPanel><ArchiveManager onBack={() => setView("menu")} currentUser={currentUser} /></LazyPanel>}
+      {view === "hcmsDashboard" && <HcmsDashboard wide={isDesktop} onBack={() => setView("riskAssessment")} currentUser={currentUser} />}
+      {view === "bowtieDashboard" && <BowTieDashboard wide={isDesktop} role="CONTRACTOR" onBack={() => setView("riskAssessment")} currentUser={currentUser} readOnly={getAccessLevel(permMap, "riskAssessment") === "view"} />}
+      {view === "archiveManagement" && <LazyPanel><ArchiveManager wide={isDesktop} onBack={() => setView("menu")} currentUser={currentUser} /></LazyPanel>}
       {view === "anomalyList" && <AnomalyList onBack={() => setView("anomalyReport")} role="CONTRACTOR" currentUser={currentUser} readOnly={getAccessLevel(permMap, "anomalyReport") === "view"} initialStatusFilter={navFilter?.module === "anomaly" ? navFilter.statusFilter : undefined} initialRiskFilter={navFilter?.module === "anomaly" ? navFilter.riskFilter : undefined} />}
-      {view === "correctiveActionsList" && <CorrectiveActionsDashboard onBack={() => setView("anomalyReport")} currentUser={currentUser} />}
+      {view === "correctiveActionsList" && <CorrectiveActionsDashboard wide={isDesktop} onBack={() => setView("anomalyReport")} currentUser={currentUser} />}
       {view === "personnelForm" && getAccessLevel(permMap, "personnelAccess") !== "view" && <PersonnelForm onBack={() => setView("personnelAccess")} currentUser={currentUser} onSaved={() => setView("personnelAccess")} />}
       {view === "personnelDashboard" && <PersonnelDashboard onBack={() => setView("personnelAccess")} currentUser={currentUser} role="CONTRACTOR" readOnly={getAccessLevel(permMap, "personnelAccess") === "view"} initialStatusFilter={navFilter?.module === "personnel" ? navFilter.statusFilter : undefined} onNavigateToAssessment={(ctx) => { setAssessmentContext(ctx); setView("proactiveIndicators"); }} initialSelectedPersonnelId={assessmentContext?.personnelId} />}
       {view === "proactiveIndicators" && (
         <ProactiveIndicatorsDashboard
+          wide={isDesktop}
           role="CONTRACTOR"
           onBack={() => { setAssessmentContext(null); setView(assessmentContext ? "personnelDashboard" : "menu"); }}
           currentUser={currentUser}
@@ -5090,9 +5094,9 @@ function ContractorDashboard({ onLogout, currentUser }) {
           focusPersonnelName={assessmentContext?.personnelName}
         />
       )}
-      {view === "incidentsList" && <IncidentsListPage currentUser={currentUser} role="CONTRACTOR" readOnly={false} />}
+      {view === "incidentsList" && <IncidentsListPage wide={isDesktop} currentUser={currentUser} role="CONTRACTOR" readOnly={false} />}
       {view === "machineryDashboard" && <MachineryDashboard onBack={() => setView("machineryManagement")} currentUser={currentUser} role="CONTRACTOR" readOnly={getAccessLevel(permMap, "machineryManagement") === "view"} initialApprovalFilter={navFilter?.module === "machinery" ? navFilter.approvalFilter : undefined} />}
-      {view === "scaffoldDashboard" && <ScaffoldDashboard onBack={() => setView("scaffoldManagement")} currentUser={currentUser} role="CONTRACTOR" readOnly={getAccessLevel(permMap, "scaffoldManagement") === "view"} initialStatusFilter={navFilter?.module === "scaffold" ? navFilter.statusFilter : undefined} />}
+      {view === "scaffoldDashboard" && <ScaffoldDashboard wide={isDesktop} onBack={() => setView("scaffoldManagement")} currentUser={currentUser} role="CONTRACTOR" readOnly={getAccessLevel(permMap, "scaffoldManagement") === "view"} initialStatusFilter={navFilter?.module === "scaffold" ? navFilter.statusFilter : undefined} />}
       {view === "managementDashboard" && <HomeDashboard role="CONTRACTOR" currentUser={currentUser} onNavigate={handleHomeNavigate} onBack={() => setView("menu")} />}
       {view === "operationalDashboard" && <OperationalDashboard role="CONTRACTOR" currentUser={currentUser} onNavigate={handleHomeNavigate} onBack={() => setView("menu")} />}
     </ResponsiveDashboardShell>

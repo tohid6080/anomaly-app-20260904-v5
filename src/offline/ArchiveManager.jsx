@@ -990,7 +990,7 @@ const TABS = [
   { key: "hcms", label: "HCMS", icon: ShieldAlert },
 ];
 
-export default function ArchiveManager({ onBack, currentUser }) {
+export default function ArchiveManager({ onBack, currentUser, wide }) {
   const { t, dir } = useLanguage();
   const moduleLabelFor = (key) => {
     const lk = MODULE_LABEL_KEYS[key];
@@ -1100,13 +1100,15 @@ export default function ArchiveManager({ onBack, currentUser }) {
   const lastForTab = lastLogs.find((l) => l.module === tab);
 
   return (
-    <div style={{ maxWidth: 680, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-        <Archive size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("amPageTitle")}</h2>
-      </div>
-      <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 14, lineHeight: 1.8 }}>
+    <div style={wide ? { direction: dir } : { maxWidth: 680, margin: "0 auto", padding: 24, direction: dir }}>
+      {!wide && onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
+      {!wide && (
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+          <Archive size={20} color={THEME.teal} />
+          <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("amPageTitle")}</h2>
+        </div>
+      )}
+      <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: wide ? 0 : 4, marginBottom: 14, lineHeight: 1.8 }}>
         {t("amPageDescApproved")}
         {" "}{t("amPageDescClickDownload")} {isAdmin ? t("amAdminDeleteNote") : t("amNonAdminExportNote")}
         {storageMb !== null && <>{t("amCurrentStorageLabel")} <b style={{ color: THEME.text2 }}>{storageMb} {t("amMbUnit")}</b>.</>}

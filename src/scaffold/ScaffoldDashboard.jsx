@@ -20,7 +20,7 @@ const SORT_OPTIONS_KEYS = [
   { value: "tag", labelKey: "sortTagNumber" },
 ];
 
-export default function ScaffoldDashboard({ onBack, currentUser, role, initialStatusFilter, initialContractorFilter, readOnly }) {
+export default function ScaffoldDashboard({ onBack, currentUser, role, initialStatusFilter, initialContractorFilter, readOnly, wide }) {
   const { t, dir } = useLanguage();
   const SORT_OPTIONS = SORT_OPTIONS_KEYS.map((o) => ({ value: o.value, label: t(o.labelKey) }));
   const isContractor = role === "CONTRACTOR";
@@ -289,15 +289,19 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
   );
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-        <Tag size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("scaffModuleTitle")}</h2>
-      </div>
-      <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 14 }}>
-        {isContractor ? t("scaffContractorSubtitle") : t("scaffEmployerSubtitle")}
-      </p>
+    <div style={wide ? { direction: dir } : { maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
+      {!wide && onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
+      {!wide && (
+        <>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+            <Tag size={20} color={THEME.teal} />
+            <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("scaffModuleTitle")}</h2>
+          </div>
+          <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 14 }}>
+            {isContractor ? t("scaffContractorSubtitle") : t("scaffEmployerSubtitle")}
+          </p>
+        </>
+      )}
 
       {isContractor && myStats && (
         <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>

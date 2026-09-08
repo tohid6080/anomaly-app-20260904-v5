@@ -31,7 +31,7 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
  * leave it broken offline, we block entry to the Canvas with a clear
  * message when there's no connection.
  */
-export default function BowTieDashboard({ onBack, currentUser, readOnly, role }) {
+export default function BowTieDashboard({ onBack, currentUser, readOnly, role, wide }) {
   const { t, dir } = useLanguage();
   const [openBowtie, setOpenBowtie] = useState(null);
   const [showEffectivenessDashboard, setShowEffectivenessDashboard] = useState(false);
@@ -165,16 +165,20 @@ export default function BowTieDashboard({ onBack, currentUser, readOnly, role })
   }
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
+    <div style={wide ? { direction: dir } : { maxWidth: 720, margin: "0 auto", padding: 24, direction: dir }}>
+      {!wide && onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
 
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-        <ShieldCheck size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>BowTie Risk Analysis</h2>
-      </div>
-      <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 18 }}>
-        {t("bowtieDashboardDesc")}
-      </p>
+      {!wide && (
+        <>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+            <ShieldCheck size={20} color={THEME.teal} />
+            <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>BowTie Risk Analysis</h2>
+          </div>
+          <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 18 }}>
+            {t("bowtieDashboardDesc")}
+          </p>
+        </>
+      )}
 
       <div style={styles.statsRow}>
         <div style={styles.statBox}>

@@ -58,7 +58,7 @@ const EMPTY_FORM = {
 
 const EMPTY_FILTERS = { contractorId: "", projectName: "", responsiblePerson: "", status: "", priority: "", search: "" };
 
-export default function CorrectiveActionsDashboard({ onBack, currentUser }) {
+export default function CorrectiveActionsDashboard({ onBack, currentUser, wide }) {
   const { t, dir } = useLanguage();
   const [list, setList] = useState([]);
   const [contractors, setContractors] = useState([]);
@@ -303,10 +303,10 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser }) {
 
   // ---------- لیست + داشبورد ----------
   return (
-    <div style={{ maxWidth: 1000, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("cadListTitle")}</h2>
+    <div style={wide ? { direction: dir } : { maxWidth: 1000, margin: "0 auto", padding: 24, direction: dir }}>
+      {!wide && onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: wide ? "flex-end" : "space-between", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
+        {!wide && <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("cadListTitle")}</h2>}
         <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6 }} onClick={openNew}>
           <Plus size={13} /> {t("cadNewAction")}
         </button>

@@ -15,7 +15,7 @@ function emptyForm() {
   };
 }
 
-export default function IncidentsListPage({ currentUser, role, readOnly }) {
+export default function IncidentsListPage({ currentUser, role, readOnly, wide }) {
   const { t, dir } = useLanguage();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -60,10 +60,12 @@ export default function IncidentsListPage({ currentUser, role, readOnly }) {
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
-        <h2 style={{ fontSize: 18, color: THEME.heading, fontWeight: 800, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
-          <AlertTriangle size={20} color={THEME.teal} /> {t("incTitle")}
-        </h2>
+      <div style={{ display: "flex", justifyContent: wide ? "flex-end" : "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
+        {!wide && (
+          <h2 style={{ fontSize: 18, color: THEME.heading, fontWeight: 800, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+            <AlertTriangle size={20} color={THEME.teal} /> {t("incTitle")}
+          </h2>
+        )}
         {!readOnly && (
           <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6 }} onClick={() => { setShowForm((v) => !v); setError(""); }}>
             <Plus size={14} /> {t("incNewIncident")}
