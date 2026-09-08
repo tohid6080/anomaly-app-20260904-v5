@@ -404,6 +404,19 @@ const LIGHT_PALETTE = {
   danger: "#cf4a3f", dangerBg: "#fbe7e4", warn: "#c47f28", warnBg: "#f8eddb", ok: "#2f8f57", okBg: "#e2f1e8",
 };
 
+// روشن/تیره‌کردنِ یک هگزِ ۶رقمی. amt در [-1..1]: منفی → تیره‌تر (به‌سمتِ
+// مشکی)، مثبت → روشن‌تر (به‌سمتِ سفید). برای ساختنِ سایه‌های مشتقِ «رنگ تأکید».
+function shadeHex(hex, amt) {
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(hex || "");
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  const t = amt < 0 ? 0 : 255;
+  const p = Math.min(1, Math.abs(amt));
+  const ch = (c) => Math.round((t - c) * p + c);
+  const r = ch((n >> 16) & 255), g = ch((n >> 8) & 255), b = ch(n & 255);
+  return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+
 // حلِ نهاییِ توکن‌های ظاهری از روی config: برای هر توکنِ در معرضِ
 // شخصی‌سازی، مقدارِ سفارشیِ سوپرادمین (اگر ست شده) وگرنه مقدارِ همان تمِ
 // پایه (تیره/روشن). توکن‌های مشتق (border-soft، navy-deep، *-bg و…) فقط
@@ -425,15 +438,22 @@ export function resolveAppearanceTokens(config) {
   const surface = pick(config.colorSurface, palette.surface);
   const border = pick(config.colorBorder, palette.border);
   const navy = pick(config.colorPrimary, palette.navy);
+  // «رنگ تأکید» و دو سایهٔ مشتقِ آن. اگر ادمین رنگِ سفارشی داده، سایهٔ
+  // تیره‌تر و ته‌رنگِ ملایم هم از همان رنگ ساخته می‌شوند تا آیکون‌ها و
+  // ته‌رنگ‌ها هم با تأکید هماهنگ بمانند (نه اینکه سبزِ ثابت بمانند).
+  const accentCustom = config.colorAccent && /^#[0-9a-fA-F]{6}$/.test(config.colorAccent);
+  const teal = pick(config.colorAccent, light ? "#127c72" : "#14b8a6");
+  const tealDeep = accentCustom ? shadeHex(teal, -0.22) : palette.tealDeep;
+  const tealSoft = accentCustom ? shadeHex(teal, light ? 0.82 : -0.7) : palette.tealSoft;
 
   return {
     // ---- رنگ‌های پایه ----
     "--ihms-navy": navy,
-    "--ihms-teal": pick(config.colorAccent, light ? "#127c72" : "#14b8a6"),
+    "--ihms-teal": teal,
     "--ihms-navy-deep": palette.navyDeep,
     "--ihms-navy-mid": palette.navyMid,
-    "--ihms-teal-deep": palette.tealDeep,
-    "--ihms-teal-soft": palette.tealSoft,
+    "--ihms-teal-deep": tealDeep,
+    "--ihms-teal-soft": tealSoft,
     "--ihms-bg": pick(config.colorBg, palette.bg),
     "--ihms-surface": surface,
     "--ihms-surface-2": pick(config.colorSurface2, palette.surface2),

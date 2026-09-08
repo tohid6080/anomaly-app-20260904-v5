@@ -3508,7 +3508,7 @@ function MenuRow({ icon: IconEl, label, onClick, accent, muted, sub, badge }) {
             width: 34,
             height: 34,
             borderRadius: 9,
-            background: accent ? "rgba(13,143,138,0.14)" : THEME.surface2,
+            background: accent ? THEME.tealSoft : THEME.surface2,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
