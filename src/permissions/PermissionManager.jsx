@@ -18,7 +18,7 @@ const ACCESS_OPTIONS = [
   { value: "edit", labelKey: "permissionsAccessEdit" },
 ];
 
-export default function PermissionManager({ onBack }) {
+export default function PermissionManager({ onBack, wide }) {
   const { t, dir } = useLanguage();
   const [accountType, setAccountType] = useState("employer");
   const [employerAccounts, setEmployerAccounts] = useState([]);
@@ -87,15 +87,19 @@ export default function PermissionManager({ onBack }) {
   const hasAnyExplicitRow = Object.keys(permMap).length > 0;
 
   return (
-    <div style={{ maxWidth: 560, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-        <ShieldCheck size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("permissionsTitle")}</h2>
-      </div>
-      <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 18 }}>
-        {t("permissionsDesc")}
-      </p>
+    <div style={wide ? { direction: dir } : { maxWidth: 560, margin: "0 auto", padding: 24, direction: dir }}>
+      {!wide && onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
+      {!wide && (
+        <>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+            <ShieldCheck size={20} color={THEME.teal} />
+            <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("permissionsTitle")}</h2>
+          </div>
+          <p style={{ color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 18 }}>
+            {t("permissionsDesc")}
+          </p>
+        </>
+      )}
 
       <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
         <button type="button" onClick={() => setAccountType("employer")} style={tabBtnStyle(accountType === "employer")}>

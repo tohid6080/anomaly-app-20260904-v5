@@ -11,7 +11,7 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
  * یعنی این سه عدد، مرز پایینِ هر سطح هستند (effectiveMin/reducingMin/weakMin)
  * — هرچیز پایین‌تر از weakMin به‌طور خودکار «شکست‌خورده» حساب می‌شود.
  */
-export default function EffectivenessThresholdsManager({ onBack, currentUser }) {
+export default function EffectivenessThresholdsManager({ onBack, currentUser, wide }) {
   const { t, dir } = useLanguage();
   const [thresholds, setThresholds] = useState({ effectiveMin: 85, reducingMin: 65, weakMin: 40, id: null });
   const [loading, setLoading] = useState(true);
@@ -40,15 +40,19 @@ export default function EffectivenessThresholdsManager({ onBack, currentUser }) 
   if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</div>;
 
   return (
-    <div style={{ maxWidth: 480, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("rkBackToSystemManagement")}</div>}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-        <Sliders size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("effThresholdsTitle")}</h2>
-      </div>
-      <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 18, lineHeight: 1.8 }}>
-        {t("effThresholdsDesc")}
-      </p>
+    <div style={wide ? { direction: dir } : { maxWidth: 480, margin: "0 auto", padding: 24, direction: dir }}>
+      {!wide && onBack && <div style={styles.backLink} onClick={onBack}>{t("rkBackToSystemManagement")}</div>}
+      {!wide && (
+        <>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+            <Sliders size={20} color={THEME.teal} />
+            <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("effThresholdsTitle")}</h2>
+          </div>
+          <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 18, lineHeight: 1.8 }}>
+            {t("effThresholdsDesc")}
+          </p>
+        </>
+      )}
 
       <div style={styles.card}>
         <ThresholdRow label={t("effThresholdEffectiveMin")} value={thresholds.effectiveMin} onChange={(v) => setThresholds({ ...thresholds, effectiveMin: v })} color="#16a34a" />

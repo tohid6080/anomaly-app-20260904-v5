@@ -10,7 +10,7 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
  * assign the 2-letter code used in that contractor's tag numbers
  * (Md1-XX-SC-01). No separate contractor list to maintain.
  */
-export default function ScaffoldTagCodeManager({ onBack }) {
+export default function ScaffoldTagCodeManager({ onBack, wide }) {
   const { t, dir } = useLanguage();
   const [contractors, setContractors] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -43,15 +43,19 @@ export default function ScaffoldTagCodeManager({ onBack }) {
   if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</div>;
 
   return (
-    <div style={{ maxWidth: 520, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-        <Tag size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("scaffCodeManagerTitle")}</h2>
-      </div>
-      <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 16 }}>
-        {t("scaffCodeManagerDesc")}
-      </p>
+    <div style={wide ? { direction: dir } : { maxWidth: 520, margin: "0 auto", padding: 24, direction: dir }}>
+      {!wide && onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
+      {!wide && (
+        <>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+            <Tag size={20} color={THEME.teal} />
+            <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("scaffCodeManagerTitle")}</h2>
+          </div>
+          <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 16 }}>
+            {t("scaffCodeManagerDesc")}
+          </p>
+        </>
+      )}
 
       {contractors.length === 0 && <p style={{ color: THEME.text3 }}>{t("scaffNoContractorsYet")}</p>}
 

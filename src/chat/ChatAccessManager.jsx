@@ -30,7 +30,7 @@ const ADMIN_IDENTITY_TITLE_KEY = "camAdminIdentityLabel";
  * تلاقی «ادمین» با یک (نقش+عنوان شغلی) خاص بلاک شود، آن افراد در «گفتگوی
  * جدید» ادمین را نمی‌بینند و برعکس.
  */
-export default function ChatAccessManager({ onBack }) {
+export default function ChatAccessManager({ onBack, wide }) {
   const { t, dir } = useLanguage();
   const ADMIN_IDENTITY = { role: "ADMIN", jobPositionId: null, title: t(ADMIN_IDENTITY_TITLE_KEY) };
   const [positions, setPositions] = useState([]);
@@ -139,13 +139,15 @@ export default function ChatAccessManager({ onBack }) {
   if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</div>;
 
   return (
-    <div style={{ maxWidth: 1000, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("rkBackToSystemManagement")}</div>}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 6 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <ShieldOff size={20} color={THEME.teal} />
-          <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("camTitle")}</h2>
-        </div>
+    <div style={wide ? { direction: dir } : { maxWidth: 1000, margin: "0 auto", padding: 24, direction: dir }}>
+      {!wide && onBack && <div style={styles.backLink} onClick={onBack}>{t("rkBackToSystemManagement")}</div>}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: wide ? "flex-end" : "space-between", gap: 10, marginBottom: 6 }}>
+        {!wide && (
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <ShieldOff size={20} color={THEME.teal} />
+            <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("camTitle")}</h2>
+          </div>
+        )}
         <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6 }} onClick={() => setShowAdd((v) => !v)}>
           <Plus size={14} /> {t("camAddTitleToMatrix")}
         </button>

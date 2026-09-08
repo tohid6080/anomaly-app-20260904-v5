@@ -15,7 +15,7 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
  * Same shape as the paper matrix this replaced; PersonnelDetail reads this
  * matrix live to show each person's required trainings.
  */
-export default function TrainingManager({ onBack }) {
+export default function TrainingManager({ onBack, wide }) {
   const { t, dir } = useLanguage();
   const [courses, setCourses] = useState([]);
   const [positions, setPositions] = useState([]);
@@ -95,15 +95,19 @@ export default function TrainingManager({ onBack }) {
   if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</div>;
 
   return (
-    <div style={{ maxWidth: 1000, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToSystemManagement")}</div>}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-        <GraduationCap size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("trainingTitle")}</h2>
-      </div>
-      <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 18 }}>
-        {t("trainingDesc")}
-      </p>
+    <div style={wide ? { direction: dir } : { maxWidth: 1000, margin: "0 auto", padding: 24, direction: dir }}>
+      {!wide && onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToSystemManagement")}</div>}
+      {!wide && (
+        <>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+            <GraduationCap size={20} color={THEME.teal} />
+            <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("trainingTitle")}</h2>
+          </div>
+          <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 18 }}>
+            {t("trainingDesc")}
+          </p>
+        </>
+      )}
 
       <div style={{ ...styles.card, width: "auto", marginBottom: 18 }}>
         <h3 style={{ fontSize: 14, color: THEME.heading, margin: "0 0 10px", fontWeight: 700 }}>{t("trainingNewCourse")}</h3>

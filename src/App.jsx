@@ -4727,14 +4727,14 @@ function EmployerDashboard({ onLogout, currentUser }) {
           </div>
         </div>
       )}
-      {isSupervisor && view === "permissionManagement" && <PermissionManager onBack={() => setView("systemManagement")} />}
-      {isSupervisor && view === "jobPositionManagement" && <JobPositionManager onBack={() => setView("systemManagement")} />}
-      {isSupervisor && view === "scaffoldCodeManagement" && <ScaffoldTagCodeManager onBack={() => setView("systemManagement")} />}
-      {isSupervisor && view === "trainingManagement" && <TrainingManager onBack={() => setView("systemManagement")} />}
-      {isSupervisor && view === "chatAccessManagement" && <ChatAccessManager onBack={() => setView("systemManagement")} />}
-      {isSupervisor && view === "hcmsMatrixManagement" && <HcmsMatrixManager onBack={() => setView("systemManagement")} />}
-      {isSupervisor && view === "effectivenessThresholds" && <EffectivenessThresholdsManager onBack={() => setView("systemManagement")} currentUser={currentUser} />}
-      {isSupervisor && view === "anomalyCategoryManagement" && <AnomalyCategoryManager onBack={() => setView("systemManagement")} />}
+      {isSupervisor && view === "permissionManagement" && <PermissionManager wide={isDesktop} onBack={() => setView("systemManagement")} />}
+      {isSupervisor && view === "jobPositionManagement" && <JobPositionManager wide={isDesktop} onBack={() => setView("systemManagement")} />}
+      {isSupervisor && view === "scaffoldCodeManagement" && <ScaffoldTagCodeManager wide={isDesktop} onBack={() => setView("systemManagement")} />}
+      {isSupervisor && view === "trainingManagement" && <TrainingManager wide={isDesktop} onBack={() => setView("systemManagement")} />}
+      {isSupervisor && view === "chatAccessManagement" && <ChatAccessManager wide={isDesktop} onBack={() => setView("systemManagement")} />}
+      {isSupervisor && view === "hcmsMatrixManagement" && <HcmsMatrixManager wide={isDesktop} onBack={() => setView("systemManagement")} />}
+      {isSupervisor && view === "effectivenessThresholds" && <EffectivenessThresholdsManager wide={isDesktop} onBack={() => setView("systemManagement")} currentUser={currentUser} />}
+      {isSupervisor && view === "anomalyCategoryManagement" && <AnomalyCategoryManager wide={isDesktop} onBack={() => setView("systemManagement")} />}
 
       {isDesktop && (view === "anomalyReport" || view === "anomalyForm" || view === "anomalyList") && anomalyWebCombined}
 

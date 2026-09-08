@@ -4,7 +4,7 @@ import { styles, THEME } from "../shared.js";
 import { loadAllAnomalyCategories, createAnomalyCategory, updateAnomalyCategory, setAnomalyCategoryActive } from "./anomalyCategoriesApi.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
-export default function AnomalyCategoryManager({ onBack }) {
+export default function AnomalyCategoryManager({ onBack, wide }) {
   const { t, dir } = useLanguage();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -48,13 +48,17 @@ export default function AnomalyCategoryManager({ onBack }) {
   if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</div>;
 
   return (
-    <div style={{ maxWidth: 560, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToSystemManagement")}</div>}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-        <TagIcon size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("anomalyCategoriesTitle")}</h2>
-      </div>
-      <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 16 }}>{t("anomalyCategoriesDesc")}</p>
+    <div style={wide ? { direction: dir } : { maxWidth: 560, margin: "0 auto", padding: 24, direction: dir }}>
+      {!wide && onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToSystemManagement")}</div>}
+      {!wide && (
+        <>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+            <TagIcon size={20} color={THEME.teal} />
+            <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("anomalyCategoriesTitle")}</h2>
+          </div>
+          <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 16 }}>{t("anomalyCategoriesDesc")}</p>
+        </>
+      )}
 
       <div style={{ ...styles.card, width: "auto", marginBottom: 16, display: "flex", gap: 8 }}>
         <input style={{ ...styles.input, marginBottom: 0, flex: 1 }} placeholder={t("anomalyCategoryNewPlaceholder")} value={newName} onChange={(e) => setNewName(e.target.value)} dir={dir} onKeyDown={(e) => e.key === "Enter" && handleAdd()} />

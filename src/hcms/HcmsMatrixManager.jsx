@@ -16,7 +16,7 @@ const LEVEL_CYCLE = ["Low", "Medium", "High"];
  * hcms_risk_matrix ذخیره می‌شود و از این پس، دقیقاً همان مقدار (نه فرمول
  * پیش‌فرض) برای آن خانه استفاده می‌شود.
  */
-export default function HcmsMatrixManager({ onBack }) {
+export default function HcmsMatrixManager({ onBack, wide }) {
   const { t, dir } = useLanguage();
   const [grid, setGrid] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,15 +42,19 @@ export default function HcmsMatrixManager({ onBack }) {
   if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</div>;
 
   return (
-    <div style={{ maxWidth: 800, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-        <Grid3x3 size={20} color={THEME.teal} />
-        <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("hcmsMatrixTitle")}</h2>
-      </div>
-      <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 16 }}>
-        {t("hcmsMatrixDesc")}
-      </p>
+    <div style={wide ? { direction: dir } : { maxWidth: 800, margin: "0 auto", padding: 24, direction: dir }}>
+      {!wide && onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>}
+      {!wide && (
+        <>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+            <Grid3x3 size={20} color={THEME.teal} />
+            <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("hcmsMatrixTitle")}</h2>
+          </div>
+          <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 16 }}>
+            {t("hcmsMatrixDesc")}
+          </p>
+        </>
+      )}
       {error && <p style={styles.error}>{error}</p>}
 
       <div style={{ overflowX: "auto" }}>
