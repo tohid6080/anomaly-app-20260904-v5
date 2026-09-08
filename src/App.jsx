@@ -83,6 +83,7 @@ import { retryItemNow } from "./offline/syncEngine.js";
 import { exportWorkbookNativeAware, exportHtmlReportNativeAware } from "./offline/nativeFile.js";
 import { saveBlobNativeAware } from "./offline/archiveZip.js";
 import { toJalaliDateTime, toJalaliSafe } from "./personnel/jalaliDate.jsx";
+import LandingPage from "./LandingPage.jsx";
 import { APP_NAME, sb, sbOk, sbErrMsg, uid, todayISO, THEME, styles, usePersistedState, setCurrentCompanyId, getCurrentCompanyId, loadCurrentCompanyPlanFeatures, isModuleInPlan, resizeImageFile } from "./shared.js";
 
 /**
@@ -1073,6 +1074,7 @@ function LoginScreen({ onLogin }) {
   const [bioAvailable, setBioAvailable] = useState(false);
   const [bioChecking, setBioChecking] = useState(false);
   const [showTrialRequest, setShowTrialRequest] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
   const isDesktop = useIsDesktop();
   // اطلاعیه‌ی صفحه‌ی ورود همین‌جا (نه داخل خودِ پنل) بارگذاری می‌شود تا
   // بخش «ورود» و «اطلاعیه» یکجا و همزمان رندر شوند — نه اینکه اطلاعیه
@@ -1173,39 +1175,45 @@ function LoginScreen({ onLogin }) {
     setBioChecking(false);
   };
 
-  // در دسکتاپ تا وضعیت اطلاعیه مشخص نشده، صفحه به‌صورت دوتکه رندر نمی‌شود
-  // تا «ورود» و «اطلاعیه» با هم ظاهر شوند. در موبایل پنل اطلاعیه اصلاً
-  // رندر نمی‌شود، پس نیازی به این انتظار نیست و فرم فوراً می‌آید.
-  if (isDesktop && loginAnnouncements === undefined) {
-    return (
-      <div style={styles.centerScreen}>
-        <IhmsLogo size={140} src={appearance?.logoUrl} />
-      </div>
-    );
-  }
+  const ann0 = Array.isArray(loginAnnouncements) && loginAnnouncements.length > 0 ? loginAnnouncements[0] : null;
+  const landingAnnouncements = ann0
+    ? [{ title: ann0.title, body: ann0.message, dateLabel: toJalaliSafe(ann0.createdAt || "") }]
+    : [];
 
   return (
-    <div style={{ ...styles.centerScreen, alignItems: "stretch", padding: 0 }}>
-      <div style={{ display: "flex", width: "100%", minHeight: "100vh", flexWrap: "wrap" }}>
-        {/* پنل اطلاعیه — سمت چپ در دسکتاپ (طبق مرجع)؛ در موبایل کاملاً حذف می‌شود، نه فقط پنهان، تا هیچ فضایی از فرم ورود نگیرد */}
-        <LoginAnnouncementPanel announcements={loginAnnouncements || []} />
+    <>
+      <LandingPage
+        onStartFree={() => setShowTrialRequest(true)}
+        onUserLogin={() => setShowLogin(true)}
+        announcements={landingAnnouncements}
+        logoUrl={appearance?.logoUrl}
+        systemName={appearance?.systemName || APP_NAME}
+        heroImageUrl={ann0?.loginImageUrl || appearance?.loginImageUrl || ""}
+      />
 
-        {/* پنل ورود — سمت راست */}
-        <div style={{ flex: "1 1 380px", minWidth: 320, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 24px", background: THEME.surface }}>
-          <div style={{ width: 340, maxWidth: "100%", direction: dir }}>
-            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
-              <LanguageSelect align="end" />
+      {showLogin && (
+        <div
+          onClick={() => setShowLogin(false)}
+          style={{ position: "fixed", inset: 0, zIndex: 2000, background: "rgba(6,18,27,0.62)", display: "flex", alignItems: "center", justifyContent: "center", padding: 18, direction: dir }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ width: 360, maxWidth: "100%", background: THEME.surface, borderRadius: 18, border: `1px solid ${THEME.border}`, boxShadow: "0 40px 90px -40px rgba(0,0,0,0.55)", padding: "26px 26px 22px", maxHeight: "92vh", overflowY: "auto" }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+              <LanguageSelect align="start" />
+              <button type="button" onClick={() => setShowLogin(false)} aria-label={t("commonCancel")} style={{ background: "none", border: "none", cursor: "pointer", color: THEME.text3, padding: 2 }}>
+                <X size={18} />
+              </button>
             </div>
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
-              <IhmsLogo size={200} src={appearance?.logoUrl} />
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 6 }}>
+              <IhmsLogo size={132} src={appearance?.logoUrl} />
             </div>
-            <h2 style={{ textAlign: "center", marginBottom: 2, fontSize: 18, direction: "ltr", color: THEME.heading, fontWeight: 700, letterSpacing: "-0.01em" }}>{appearance?.systemName || APP_NAME}</h2>
-            <p style={{ textAlign: "center", color: THEME.text3, fontSize: 12.5, marginTop: 4, marginBottom: 22, fontWeight: 500 }}>
-              {t("loginTagline")}
-            </p>
+            <h2 style={{ textAlign: "center", marginBottom: 2, fontSize: 16.5, color: THEME.heading, fontWeight: 800 }}>{t("loginButton")}</h2>
+            <p style={{ textAlign: "center", color: THEME.text3, fontSize: 12, marginTop: 4, marginBottom: 18 }}>{t("loginTagline")}</p>
 
             <label style={{ ...styles.label, textAlign: dir === "rtl" ? "right" : "left" }}>{t("username")}</label>
-            <input style={styles.input} value={username} onChange={(e) => setUsername(e.target.value)} dir={dir} />
+            <input style={styles.input} value={username} onChange={(e) => setUsername(e.target.value)} dir={dir} autoFocus />
 
             <label style={{ ...styles.label, textAlign: dir === "rtl" ? "right" : "left" }}>{t("password")}</label>
             <input
@@ -1235,11 +1243,9 @@ function LoginScreen({ onLogin }) {
               </button>
             )}
 
-            {/* درخواست ارزیابی و پلن آزمایشی — طبق خواسته‌ی صریح، در همین
-                صفحه‌ی اصلی (ورود) قابل‌دسترسی، بدون نیاز به حساب کاربری */}
             <button
               type="button"
-              onClick={() => setShowTrialRequest(true)}
+              onClick={() => { setShowLogin(false); setShowTrialRequest(true); }}
               style={{
                 width: "100%", marginTop: 10, padding: "11px", borderRadius: 9, cursor: "pointer", fontFamily: THEME.font,
                 fontSize: 13, fontWeight: 600, background: "transparent", border: `1.5px solid ${THEME.teal}`, color: THEME.tealDeep,
@@ -1251,9 +1257,10 @@ function LoginScreen({ onLogin }) {
             <p style={styles.hint}>{t("designedBy")}</p>
           </div>
         </div>
-      </div>
+      )}
+
       {showTrialRequest && <TrialRequestModal onClose={() => setShowTrialRequest(false)} />}
-    </div>
+    </>
   );
 }
 
