@@ -10,15 +10,60 @@ import { JalaliDateInput, toJalaliSafe } from "../personnel/jalaliDate.jsx";
 import {
   loadLiftingPlans, createLiftingPlan, updateLiftingPlanMeta, setLiftingPlanStatus,
   duplicateLiftingPlan, archiveLiftingPlan, restoreLiftingPlan, deleteLiftingPlan,
-  freezeLiftingRevision, loadLiftingRevisions, loadLiftingAudit,
-  LIFTING_STATUS_META, LIFTING_STATUS_ORDER, liftingStatusMeta,
+  freezeLiftingRevision, loadLiftingRevisions, loadLiftingAudit, saveLiftingScene,
+  LIFTING_STATUS_META, LIFTING_STATUS_ORDER, liftingStatusMeta, EMPTY_SCENE,
 } from "./liftingPlanApi.js";
+import LiftingPlanCanvas, { makeObject, LIFTING_OBJECT_META } from "./LiftingPlanCanvas.jsx";
 
 /* ============================================================================ *
- * Lifting Plan Designer — Workspace (فاز ۱: فهرست + فرمِ متادیتا +
- * Versioning / Duplicate / Archive / Audit Trail). بومِ طراحی در فاز ۲.
+ * Lifting Plan Designer — Workspace: فهرست + فرمِ متادیتا + بومِ دوبعدیِ
+ * داده‌محور (فاز ۲) + Versioning / Duplicate / Archive / Audit Trail.
  * از Layout/Theme/RTL/توکن‌های مشترکِ IHMS استفاده می‌کند؛ هیچ CSS جدید.
  * ============================================================================ */
+
+// فیلدهای Inspector به تفکیکِ نوعِ شیء — فقط داده‌ی دامنه؛ هندسه با دستگیره‌های بوم.
+const OBJ_PROP_FIELDS = {
+  crane: [
+    { key: "model", labelKey: "lpPropModel" },
+    { key: "boomLengthM", labelKey: "lpPropBoomLen", num: true, unit: "m" },
+    { key: "boomAngleDeg", labelKey: "lpPropBoomAngle", num: true, unit: "°" },
+    { key: "chartRef", labelKey: "lpPropChartRef" },
+  ],
+  load: [
+    { key: "label", labelKey: "lpPropLabel" },
+    { key: "weightKg", labelKey: "lpPropWeight", num: true, unit: "kg" },
+  ],
+  hook: [
+    { key: "weightKg", labelKey: "lpPropWeight", num: true, unit: "kg" },
+    { key: "wllKg", labelKey: "lpPropWll", num: true, unit: "kg" },
+  ],
+  sling: [
+    { key: "wllKg", labelKey: "lpPropWll", num: true, unit: "kg" },
+    { key: "weightKg", labelKey: "lpPropWeight", num: true, unit: "kg" },
+    { key: "count", labelKey: "lpPropCount", num: true },
+    { key: "angleDeg", labelKey: "lpPropAngle", num: true, unit: "°" },
+  ],
+  shackle: [
+    { key: "wllKg", labelKey: "lpPropWll", num: true, unit: "kg" },
+    { key: "count", labelKey: "lpPropCount", num: true },
+  ],
+  spreader_beam: [
+    { key: "wllKg", labelKey: "lpPropWll", num: true, unit: "kg" },
+    { key: "lengthM", labelKey: "lpPropLength", num: true, unit: "m" },
+    { key: "weightKg", labelKey: "lpPropWeight", num: true, unit: "kg" },
+  ],
+  power_line: [
+    { key: "voltageKv", labelKey: "lpPropVoltage", num: true, unit: "kV" },
+    { key: "clearanceM", labelKey: "lpPropClearance", num: true, unit: "m" },
+  ],
+  worker: [{ key: "role", labelKey: "lpPropRole" }],
+  structure: [{ key: "label", labelKey: "lpPropLabel" }],
+  truck: [{ key: "label", labelKey: "lpPropLabel" }],
+  barrier: [{ key: "label", labelKey: "lpPropLabel" }],
+  exclusion_zone: [{ key: "label", labelKey: "lpPropLabel" }],
+};
+
+const clone = (v) => JSON.parse(JSON.stringify(v || null));
 
 const EMPTY_META = {
   planNumber: "", revision: "0", planDate: "", project: "", contractorId: "",
@@ -55,6 +100,20 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
   const [showRevs, setShowRevs] = useState(false);
   const [showAudit, setShowAudit] = useState(false);
 
+  // ---- بومِ دوبعدی (فاز ۲) ----
+  const [scene, setScene] = useState(() => clone(EMPTY_SCENE));
+  const [sceneBaseline, setSceneBaseline] = useState(() => clone(EMPTY_SCENE));
+  const [selObjId, setSelObjId] = useState(null);
+  const [sceneSaving, setSceneSaving] = useState(false);
+  const sceneDirty = useMemo(
+    () => JSON.stringify(scene) !== JSON.stringify(sceneBaseline),
+    [scene, sceneBaseline]
+  );
+  const selObj = useMemo(
+    () => (scene?.objects || []).find((o) => o.id === selObjId) || null,
+    [scene, selObjId]
+  );
+
   const refresh = useCallback(async () => {
     setLoading(true);
     const list = await loadLiftingPlans({ includeArchived: true });
@@ -80,6 +139,9 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
     setBaseline(EMPTY_META);
     setRevisions([]);
     setAudit([]);
+    setScene(clone(EMPTY_SCENE));
+    setSceneBaseline(clone(EMPTY_SCENE));
+    setSelObjId(null);
     setErr("");
     setMode("edit");
   };
@@ -95,12 +157,40 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
     setBaseline(m);
     setErr("");
     setMode("edit");
+    const sc = p.scene && Array.isArray(p.scene.objects) ? clone(p.scene) : clone(EMPTY_SCENE);
+    setScene(sc);
+    setSceneBaseline(clone(sc));
+    setSelObjId(null);
     const [revs, aud] = await Promise.all([loadLiftingRevisions(p.id), loadLiftingAudit(p.id)]);
     setRevisions(revs);
     setAudit(aud);
   };
 
   const set = (k, v) => setMeta((prev) => ({ ...prev, [k]: v }));
+
+  // ---- عملیاتِ بوم ----
+  const addObject = (type) => {
+    const obj = makeObject(type);
+    setScene((s) => ({ ...s, objects: [...(s.objects || []), obj] }));
+    setSelObjId(obj.id);
+  };
+  const patchObjProp = (id, key, val) => {
+    setScene((s) => ({
+      ...s,
+      objects: (s.objects || []).map((o) => (o.id === id ? { ...o, props: { ...o.props, [key]: val } } : o)),
+    }));
+  };
+  const saveScene = async () => {
+    if (editId == null) { setErr(t("lpSceneNeedSaveFirst")); return; }
+    setSceneSaving(true);
+    setErr("");
+    const res = await saveLiftingScene(editId, scene, undefined, actor);
+    setSceneSaving(false);
+    if (res?.__error) { setErr(res.message || t("commonErrorSave")); return; }
+    setSceneBaseline(clone(scene));
+    setAudit(await loadLiftingAudit(editId));
+    refresh();
+  };
 
   const save = async () => {
     if (!meta.planNumber.trim() && !meta.title.trim()) {
@@ -283,11 +373,72 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
           )}
         </div>
 
-        {/* بومِ طراحی — فاز ۲ */}
-        <div style={{ ...card, textAlign: "center", padding: "34px 18px" }}>
-          <Construction size={30} color={THEME.text3} />
-          <p style={{ margin: "10px 0 0", fontSize: 13, fontWeight: 700, color: THEME.text2 }}>{t("lpCanvasComingTitle")}</p>
-          <p style={{ margin: "4px 0 0", fontSize: 12, color: THEME.text3, lineHeight: 1.7 }}>{t("lpCanvasComingNote")}</p>
+        {/* بومِ دوبعدیِ داده‌محور */}
+        <div style={card}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 10 }}>
+            <h3 style={{ margin: 0, fontSize: 14.5, fontWeight: 800, color: THEME.heading }}>{t("lpCanvasSection")}</h3>
+            {isNew && <span style={{ fontSize: 11, color: THEME.text3 }}>{t("lpSceneNeedSaveFirst")}</span>}
+          </div>
+
+          {!readOnly && (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(118px, 1fr))", gap: 7, marginBottom: 12 }}>
+              {LIFTING_OBJECT_META.map((m) => (
+                <button key={m.type} type="button" onClick={() => addObject(m.type)} disabled={isNew}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 7, textAlign: "start", fontFamily: THEME.font,
+                    fontSize: 12, fontWeight: 600, padding: "7px 10px", borderRadius: 9, cursor: isNew ? "default" : "pointer",
+                    border: `1px solid ${THEME.borderSoft}`, background: THEME.surface2, color: THEME.text, opacity: isNew ? 0.5 : 1,
+                  }}>
+                  <span aria-hidden style={{ fontSize: 14 }}>{m.emoji}</span>{t("lpObj_" + m.type)}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <LiftingPlanCanvas
+            scene={scene}
+            onChange={setScene}
+            selectedId={selObjId}
+            onSelect={setSelObjId}
+            readOnly={readOnly || isNew}
+          />
+
+          {selObj && (
+            <div style={{ marginTop: 14, border: `1px solid ${THEME.borderSoft}`, borderRadius: 10, padding: "12px 14px", background: THEME.surface2 }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: THEME.heading, marginBottom: 8 }}>
+                {t("lpInspSection")} — {t("lpObj_" + selObj.type)}
+              </div>
+              <div style={styles.formGridWide}>
+                {(OBJ_PROP_FIELDS[selObj.type] || []).map((f) => (
+                  <Field key={f.key} label={t(f.labelKey) + (f.unit ? ` (${f.unit})` : "")}>
+                    <input
+                      style={styles.input}
+                      type={f.num ? "number" : "text"}
+                      inputMode={f.num ? "decimal" : undefined}
+                      value={selObj.props?.[f.key] ?? ""}
+                      disabled={readOnly}
+                      onChange={(e) => patchObjProp(selObj.id, f.key, f.num ? (e.target.value === "" ? "" : Number(e.target.value)) : e.target.value)}
+                    />
+                  </Field>
+                ))}
+                {(OBJ_PROP_FIELDS[selObj.type] || []).length === 0 && (
+                  <p style={{ fontSize: 11.5, color: THEME.text3, margin: 0 }}>{t("lpNoProps")}</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {!readOnly && !isNew && (
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 14 }}>
+              <button type="button" onClick={saveScene} disabled={sceneSaving || !sceneDirty}
+                style={{ ...styles.smallButton, background: THEME.teal, opacity: sceneSaving || !sceneDirty ? 0.6 : 1, display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <Save size={14} /> {sceneSaving ? t("commonSaving") : t("lpSaveScene")}
+              </button>
+              <span style={{ fontSize: 11.5, color: sceneDirty ? THEME.warn : THEME.text3 }}>
+                {sceneDirty ? t("lpSceneUnsaved") : t("lpSceneSavedHint")}
+              </span>
+            </div>
+          )}
         </div>
 
         {!isNew && (
