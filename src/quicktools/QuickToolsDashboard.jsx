@@ -123,7 +123,12 @@ export default function QuickToolsDashboard({ currentUser, onBack, wide }) {
 
       {/* دسته‌بندی */}
       <div className="qt-chips" style={{ marginBottom: 16 }}>
-        {[{ key: "all", label: tt("all"), icon: null }, { key: "fav", label: `★ ${tt("fav")}`, icon: null }, ...QT_CATEGORIES.map((c) => ({ key: c.key, label: tr(c.label), icon: c.icon }))].map((c) => {
+        {[
+          { key: "all", label: tt("all"), icon: null },
+          { key: "fav", label: `★ ${tt("fav")}`, icon: null },
+          // فقط دسته‌هایی که دستِ‌کم یک ابزار دارند نشان داده می‌شوند.
+          ...QT_CATEGORIES.filter((c) => QUICK_TOOLS.some((t) => t.cat === c.key)).map((c) => ({ key: c.key, label: tr(c.label), icon: c.icon })),
+        ].map((c) => {
           const on = cat === c.key;
           return (
             <button key={c.key} type="button" onClick={() => setCat(c.key)}
