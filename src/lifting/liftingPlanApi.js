@@ -42,7 +42,11 @@ export const LIFTING_OBJECT_TYPES = [
   "structure", "truck", "power_line", "worker", "barrier", "exclusion_zone",
 ];
 
-export const EMPTY_SCENE = { canvas: { scale_m_per_px: 0.1, grid: true }, objects: [] };
+export const EMPTY_SCENE = {
+  canvas: { scale_m_per_px: 0.1, grid: true },
+  env: { soilKpa: 250, sf: 2, travelHeight: 12 },
+  objects: [],
+};
 
 // ---------- نگاشتِ ردیف ----------
 

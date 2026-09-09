@@ -11,9 +11,13 @@ import {
   loadLiftingPlans, createLiftingPlan, updateLiftingPlanMeta, setLiftingPlanStatus,
   duplicateLiftingPlan, archiveLiftingPlan, restoreLiftingPlan, deleteLiftingPlan,
   freezeLiftingRevision, loadLiftingRevisions, loadLiftingAudit, saveLiftingScene,
+  loadCraneModels, loadAcceptanceCriteria,
   LIFTING_STATUS_META, LIFTING_STATUS_ORDER, liftingStatusMeta, EMPTY_SCENE,
 } from "./liftingPlanApi.js";
 import LiftingPlanCanvas, { makeObject, LIFTING_OBJECT_META } from "./LiftingPlanCanvas.jsx";
+import { computeLiftCalc, DEFAULT_CRITERIA } from "./liftingCalcEngine.js";
+import { validateLiftingPlan } from "./liftingSafetyEngine.js";
+import { sceneToEngineObjects } from "./liftingSceneAdapter.js";
 
 /* ============================================================================ *
  * Lifting Plan Designer — Workspace: فهرست + فرمِ متادیتا + بومِ دوبعدیِ
@@ -25,8 +29,11 @@ import LiftingPlanCanvas, { makeObject, LIFTING_OBJECT_META } from "./LiftingPla
 const OBJ_PROP_FIELDS = {
   crane: [
     { key: "model", labelKey: "lpPropModel" },
+    { key: "weightKg", labelKey: "lpPropCraneWeight", num: true, unit: "kg" },
     { key: "boomLengthM", labelKey: "lpPropBoomLen", num: true, unit: "m" },
     { key: "boomAngleDeg", labelKey: "lpPropBoomAngle", num: true, unit: "°" },
+    { key: "pads", labelKey: "lpPropPads", num: true },
+    { key: "padArea", labelKey: "lpPropPadArea", num: true, unit: "m²" },
     { key: "chartRef", labelKey: "lpPropChartRef" },
   ],
   load: [
@@ -36,12 +43,13 @@ const OBJ_PROP_FIELDS = {
   hook: [
     { key: "weightKg", labelKey: "lpPropWeight", num: true, unit: "kg" },
     { key: "wllKg", labelKey: "lpPropWll", num: true, unit: "kg" },
+    { key: "riggingH", labelKey: "lpPropRiggingH", num: true, unit: "m" },
   ],
   sling: [
     { key: "wllKg", labelKey: "lpPropWll", num: true, unit: "kg" },
     { key: "weightKg", labelKey: "lpPropWeight", num: true, unit: "kg" },
     { key: "count", labelKey: "lpPropCount", num: true },
-    { key: "angleDeg", labelKey: "lpPropAngle", num: true, unit: "°" },
+    { key: "lengthM", labelKey: "lpPropLength", num: true, unit: "m" },
   ],
   shackle: [
     { key: "wllKg", labelKey: "lpPropWll", num: true, unit: "kg" },
@@ -105,6 +113,8 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
   const [sceneBaseline, setSceneBaseline] = useState(() => clone(EMPTY_SCENE));
   const [selObjId, setSelObjId] = useState(null);
   const [sceneSaving, setSceneSaving] = useState(false);
+  const [craneModels, setCraneModels] = useState([]);
+  const [criteria, setCriteria] = useState(DEFAULT_CRITERIA);
   const sceneDirty = useMemo(
     () => JSON.stringify(scene) !== JSON.stringify(sceneBaseline),
     [scene, sceneBaseline]
@@ -113,6 +123,35 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
     () => (scene?.objects || []).find((o) => o.id === selObjId) || null,
     [scene, selObjId]
   );
+
+  // ---- موتورِ محاسبه + ایمنی (لحظه‌ای، مشتق‌شده از scene) ----
+  const engineObjs = useMemo(
+    () => sceneToEngineObjects(scene, { craneModels }),
+    [scene, craneModels]
+  );
+  const calc = useMemo(
+    () => computeLiftCalc(engineObjs, 0, 0, scene?.env || {}, criteria),
+    [engineObjs, scene, criteria]
+  );
+  const safety = useMemo(() => validateLiftingPlan(engineObjs, calc), [engineObjs, calc]);
+  const calcReady = useMemo(
+    () => engineObjs.some((o) => o.type === "crane") && engineObjs.some((o) => o.type === "load"),
+    [engineObjs]
+  );
+
+  useEffect(() => {
+    let alive = true;
+    Promise.all([loadCraneModels().catch(() => []), loadAcceptanceCriteria().catch(() => null)])
+      .then(([models, crit]) => {
+        if (!alive) return;
+        setCraneModels(Array.isArray(models) ? models : []);
+        if (crit && crit.criteria) setCriteria({ ...DEFAULT_CRITERIA, ...crit.criteria });
+      });
+    return () => { alive = false; };
+  }, []);
+
+  const setEnv = (k, v) =>
+    setScene((s) => ({ ...s, env: { ...(s.env || EMPTY_SCENE.env), [k]: v } }));
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -441,6 +480,73 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
           )}
         </div>
 
+        {/* محاسبات و ایمنیِ لحظه‌ای — مشتق‌شده از بوم؛ فقط خواندنی */}
+        <div style={card}>
+          <h3 style={{ margin: "0 0 10px", fontSize: 14.5, fontWeight: 800, color: THEME.heading }}>{t("lpCalcSafetySection")}</h3>
+
+          <div style={styles.formGridWide}>
+            <Field label={`${t("lpEnvSoil")} (kPa)`}>
+              <input style={styles.input} type="number" inputMode="decimal" disabled={readOnly}
+                value={scene?.env?.soilKpa ?? EMPTY_SCENE.env.soilKpa}
+                onChange={(e) => setEnv("soilKpa", e.target.value === "" ? "" : Number(e.target.value))} />
+            </Field>
+            <Field label={t("lpEnvSf")}>
+              <input style={styles.input} type="number" inputMode="decimal" disabled={readOnly}
+                value={scene?.env?.sf ?? EMPTY_SCENE.env.sf}
+                onChange={(e) => setEnv("sf", e.target.value === "" ? "" : Number(e.target.value))} />
+            </Field>
+            <Field label={`${t("lpEnvTravelH")} (m)`}>
+              <input style={styles.input} type="number" inputMode="decimal" disabled={readOnly}
+                value={scene?.env?.travelHeight ?? EMPTY_SCENE.env.travelHeight}
+                onChange={(e) => setEnv("travelHeight", e.target.value === "" ? "" : Number(e.target.value))} />
+            </Field>
+          </div>
+
+          {!calcReady ? (
+            <p style={{ fontSize: 12, color: THEME.text3, marginTop: 12 }}>{t("lpCalcNeedObjects")}</p>
+          ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14, marginTop: 14 }}>
+            <div>
+              <Verdict worst={safety.worst} pct={calc.utilizationPct} t={t} />
+              <Gauge pct={calc.utilizationPct} warn={criteria.warnUtilizationPct} max={criteria.maxUtilizationPct} />
+              <div style={{ marginTop: 8 }}>
+                <CalcRow k={t("lpCalcLoadW")} v={`${fmtKg(calc.loadW)} kg`} />
+                <CalcRow k={t("lpCalcRigW")} v={`${fmtKg(calc.rigW)} kg`} />
+                <CalcRow k={t("lpCalcTotal")} v={`${fmtKg(calc.total)} kg`} strong />
+                <CalcRow k={t("lpCalcRadius")} v={`${fmtN(calc.radius, 1)} m`} />
+                <CalcRow k={t("lpCalcCapacity")} v={calc.capacity == null ? t("lpCalcOffChart") : `${fmtKg(calc.capacity)} kg`}
+                  tone={calc.capacity == null ? "bad" : undefined} />
+                <CalcRow k={t("lpCalcUtil")} v={calc.utilizationPct == null ? "—" : `${fmtN(calc.utilizationPct, 1)}٪`}
+                  tone={calc.utilizationPct == null ? "bad" : calc.utilizationPct > criteria.maxUtilizationPct ? "bad" : calc.utilizationPct > criteria.warnUtilizationPct ? "warn" : "ok"} />
+                <CalcRow k={t("lpCalcSlingAngle")} v={calc.minSlingAngle == null ? "—" : `${fmtN(calc.minSlingAngle, 0)}°`}
+                  tone={calc.minSlingAngle > (criteria.slingAngleWarnFromVertical_deg ?? 60) ? "warn" : undefined} />
+                <CalcRow k={t("lpCalcSlingTension")} v={`${fmtKg(calc.maxTension)} kg`}
+                  tone={calc.slingWLL && calc.maxTension > calc.slingWLL ? "bad" : undefined} />
+                <CalcRow k={t("lpCalcSlingWll")} v={`${fmtKg(calc.slingWLL)} kg`} />
+                <CalcRow k={t("lpCalcGbp")} v={`${fmtN(calc.groundPressureKpa, 0)} kPa`}
+                  tone={calc.groundPressureKpa > calc.allowableGroundKpa ? "bad" : undefined} />
+                <CalcRow k={t("lpCalcAllow")} v={`${fmtN(calc.allowableGroundKpa, 0)} kPa`} />
+              </div>
+              <p style={{ fontSize: 10.5, color: THEME.text3, marginTop: 8, lineHeight: 1.7 }}>{t("lpCalcNote")}</p>
+            </div>
+
+            <div>
+              <div style={{ fontSize: 11.5, fontWeight: 800, color: THEME.text2, marginBottom: 6 }}>{t("lpSafetySection")}</div>
+              {safety.items.length === 0 ? (
+                <p style={{ fontSize: 12, color: THEME.text3 }}>{t("lpCalcNeedObjects")}</p>
+              ) : (
+                safety.items.map((it, i) => (
+                  <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", padding: "6px 0", borderBottom: `1px solid ${THEME.borderSoft}`, fontSize: 11.5 }}>
+                    <span style={{ width: 9, height: 9, borderRadius: "50%", marginTop: 3, flexShrink: 0, background: it.level === "fail" ? THEME.danger : it.level === "warn" ? THEME.warn : THEME.ok }} />
+                    <span style={{ color: THEME.text2 }}>{it.msg}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+          )}
+        </div>
+
         {!isNew && (
           <>
             <Collapsible open={showRevs} onToggle={() => setShowRevs((s) => !s)} icon={History}
@@ -547,6 +653,52 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
             </div>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function fmtN(n, d = 0) {
+  if (n == null || Number.isNaN(n)) return "—";
+  return Number(n).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+}
+const fmtKg = (n) => fmtN(n, 0);
+
+function CalcRow({ k, v, tone, strong }) {
+  const color = tone === "bad" ? THEME.danger : tone === "warn" ? THEME.warn : tone === "ok" ? THEME.ok : THEME.text;
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "4px 0", borderBottom: `1px solid ${THEME.borderSoft}`, fontSize: 11.5 }}>
+      <span style={{ color: THEME.text3 }}>{k}</span>
+      <span style={{ fontWeight: strong ? 800 : 700, color, fontVariantNumeric: "tabular-nums" }}>{v}</span>
+    </div>
+  );
+}
+
+function Verdict({ worst, pct, t }) {
+  const map = {
+    ok: { c: THEME.ok, bg: THEME.okBg, txt: t("lpVerdictOk") },
+    warn: { c: THEME.warn, bg: THEME.warnBg, txt: t("lpVerdictWarn") },
+    fail: { c: THEME.danger, bg: THEME.dangerBg, txt: t("lpVerdictFail") },
+  };
+  const m = map[worst] || map.ok;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 11px", borderRadius: 9, background: m.bg, color: m.c, fontWeight: 800, fontSize: 12.5, marginBottom: 8 }}>
+      <span>{m.txt}</span>
+      <span style={{ marginInlineStart: "auto", fontVariantNumeric: "tabular-nums" }}>{pct == null ? "—" : `${fmtN(pct, 1)}٪`}</span>
+    </div>
+  );
+}
+
+function Gauge({ pct, warn = 75, max = 85 }) {
+  const p = Math.max(0, Math.min(100, pct || 0));
+  return (
+    <div>
+      <div style={{ position: "relative", height: 10, borderRadius: 6, overflow: "hidden", background: `linear-gradient(90deg, ${THEME.ok} 0 ${warn}%, ${THEME.warn} ${warn}% ${max}%, ${THEME.danger} ${max}% 100%)` }}>
+        <div style={{ position: "absolute", inset: 0, background: THEME.surface, opacity: 0.55 }} />
+        <div style={{ position: "absolute", insetBlock: 0, insetInlineStart: 0, width: `${p}%`, borderInlineEnd: `2.5px solid ${THEME.text}` }} />
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: THEME.text3, marginTop: 2, fontVariantNumeric: "tabular-nums" }}>
+        <span>۰</span><span>{fmtN(warn)}</span><span>{fmtN(max)}</span><span>۱۰۰</span>
       </div>
     </div>
   );

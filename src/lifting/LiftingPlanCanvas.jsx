@@ -33,11 +33,11 @@ export const LIFTING_OBJECT_META = [
 ];
 
 const OBJ_DEFAULTS = {
-  crane:          { w: 92,  h: 92,  props: { model: "", boomLengthM: 30, boomAngleDeg: 60, craneModelId: "", chartRef: "" } },
+  crane:          { w: 92,  h: 92,  props: { model: "", boomLengthM: 30, boomAngleDeg: 60, craneModelId: "", chartRef: "", weightKg: 0, pads: 4, padArea: 0.5 } },
   load:           { w: 74,  h: 50,  props: { label: "", weightKg: 0 } },
-  hook:           { w: 26,  h: 26,  props: { weightKg: 0, wllKg: 0 } },
-  sling:          { w: 64,  h: 64,  props: { wllKg: 0, weightKg: 0, count: 4, angleDeg: 60 } },
-  shackle:        { w: 24,  h: 24,  props: { wllKg: 0, count: 4 } },
+  hook:           { w: 26,  h: 26,  props: { weightKg: 0, wllKg: 0, riggingH: 4 } },
+  sling:          { w: 64,  h: 64,  props: { wllKg: 0, weightKg: 0, count: 4, angleDeg: 60, lengthM: 6 } },
+  shackle:        { w: 24,  h: 24,  props: { wllKg: 0, weightKg: 0, count: 4 } },
   spreader_beam:  { w: 120, h: 16,  props: { wllKg: 0, lengthM: 4, weightKg: 0 } },
   structure:      { w: 130, h: 84,  props: { label: "" } },
   truck:          { w: 150, h: 48,  props: { label: "" } },
