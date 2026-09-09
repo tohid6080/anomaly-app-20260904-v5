@@ -215,6 +215,7 @@ export const translations = {
     "en": "Management Dashboard & Analytics"
   },
   "moduleOperationalDashboard": { "fa": "داشبورد کاری", "en": "Operational Dashboard" },
+  "moduleQuickTools": { "fa": "ابزارهای سریع HSE", "en": "HSE Quick Tools" },
   "opDashTitle": { "fa": "داشبورد کاری", "en": "Operational Dashboard" },
   "wgLoadFailed": { "fa": "بارگذاری ویجت ناموفق بود", "en": "Couldn’t load this widget" },
   "wgRetry": { "fa": "تلاش دوباره", "en": "Retry" },

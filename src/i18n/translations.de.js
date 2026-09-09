@@ -55,6 +55,7 @@ export const de = {
   "subScaffoldList": "Liste der Gerüst-Tags",
   "moduleManagementDashboard": "Management-Dashboard & Auswertungen",
   "moduleOperationalDashboard": "Arbeits-Dashboard",
+  "moduleQuickTools": "HSE-Schnellwerkzeuge",
   "opDashTitle": "Arbeits-Dashboard",
   "wgLoadFailed": "Widget konnte nicht geladen werden",
   "wgRetry": "Erneut versuchen",

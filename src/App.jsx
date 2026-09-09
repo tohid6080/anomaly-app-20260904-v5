@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, Suspense, lazy } from "react";
-import { AlertTriangle, Plus, X, ChevronRight, ChevronLeft, ChevronDown, ChevronsRight, ChevronsLeft, LogOut, CheckCircle2, Clock, Camera, ImagePlus, Trash2, FileSpreadsheet, FileText, User, Users, ShieldCheck, LayoutGrid, BarChart3, Briefcase, Settings, Archive, Truck, Tag, MessageCircle, GraduationCap, ShieldOff, ShieldAlert, Database, Fingerprint, Info, Sliders, TrendingUp, Search, Home, Megaphone, Sparkles, Gift, Bell, ArrowUpRight, ClipboardList, MoreVertical, RefreshCw, GripVertical } from "lucide-react";
+import { AlertTriangle, Plus, X, ChevronRight, ChevronLeft, ChevronDown, ChevronsRight, ChevronsLeft, LogOut, CheckCircle2, Clock, Camera, ImagePlus, Trash2, FileSpreadsheet, FileText, User, Users, ShieldCheck, LayoutGrid, BarChart3, Briefcase, Settings, Archive, Truck, Tag, MessageCircle, GraduationCap, ShieldOff, ShieldAlert, Database, Fingerprint, Info, Sliders, TrendingUp, Search, Home, Megaphone, Sparkles, Gift, Bell, ArrowUpRight, ClipboardList, MoreVertical, RefreshCw, GripVertical, Zap } from "lucide-react";
 // بارگذاری تنبلِ صفحه‌های ماژول — هرکدام چانکِ جدای خودش، فقط با باز شدنِ
 // آن ماژول بارگذاری می‌شود؛ از باندلِ اولیه‌ی سنگینِ App.jsx بیرون می‌مانند.
 const BowTieDashboard = lazy(() => import("./bowtie/BowTieDashboard.jsx"));
@@ -28,6 +28,7 @@ import { AppearanceProvider, useAppearance } from "./shared/AppearanceContext.js
 const PublicHseClimateSurvey = lazy(() => import("./proactiveIndicators/PublicHseClimateSurvey.jsx"));
 const HomeDashboard = lazy(() => import("./dashboard/HomeDashboard.jsx"));
 const OperationalDashboard = lazy(() => import("./dashboard/OperationalDashboard.jsx"));
+const QuickToolsDashboard = lazy(() => import("./quicktools/QuickToolsDashboard.jsx"));
 const PermissionManager = lazy(() => import("./permissions/PermissionManager.jsx"));
 import { loadPermissionsMap, isModuleVisible, getAccessLevel, initializeNoAccess } from "./permissions/permissionsApi.js";
 const JobPositionManager = lazy(() => import("./jobpositions/JobPositionManager.jsx"));
@@ -205,6 +206,12 @@ const HSE_MODULES = [
     key: "operationalDashboard",
     label: "داشبورد کاری",
     labelKey: "moduleOperationalDashboard",
+    icon: true,
+  },
+  {
+    key: "quickTools",
+    label: "ابزارهای سریع HSE",
+    labelKey: "moduleQuickTools",
     icon: true,
   },
 ];
@@ -3403,7 +3410,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
 }
 
 // ---------- پنل ادمین ----------
-const MODULE_ICON = { profile: User, chat: MessageCircle, anomalyReport: AlertTriangle, personnelAccess: Users, managementDashboard: BarChart3, operationalDashboard: ClipboardList, proactiveIndicators: TrendingUp, incidentManagement: ShieldAlert };
+const MODULE_ICON = { profile: User, chat: MessageCircle, anomalyReport: AlertTriangle, personnelAccess: Users, managementDashboard: BarChart3, operationalDashboard: ClipboardList, proactiveIndicators: TrendingUp, incidentManagement: ShieldAlert, quickTools: Zap };
 
 // اعمال «پیکربندی سامانه» (ترتیب + برچسب نمایشی، از پنل Super Admin) روی
 // لیست ماژول‌های از‌قبل فیلترشده‌ی هر داشبورد. آیکون/badge/muted/sub که از
@@ -5045,6 +5052,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       {view === "scaffoldDashboard" && <ScaffoldDashboard wide={isDesktop} onBack={() => setView("scaffoldManagement")} currentUser={currentUser} role="EMPLOYER" readOnly={!canEdit || getAccessLevel(permMap, "scaffoldManagement") === "view"} initialStatusFilter={navFilter?.module === "scaffold" ? navFilter.statusFilter : undefined} initialContractorFilter={navFilter?.module === "scaffold" ? navFilter.contractorFilter : undefined} />}
       {view === "managementDashboard" && <HomeDashboard role="EMPLOYER" currentUser={currentUser} onNavigate={handleHomeNavigate} onBack={() => setView("menu")} />}
       {view === "operationalDashboard" && <OperationalDashboard role={currentUser?.role || "EMPLOYER"} currentUser={currentUser} onNavigate={handleHomeNavigate} onBack={() => setView("menu")} />}
+      {view === "quickTools" && <QuickToolsDashboard wide={isDesktop} currentUser={currentUser} onBack={() => setView("menu")} />}
     </ResponsiveDashboardShell>
   );
 }
@@ -5382,6 +5390,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
       {view === "scaffoldDashboard" && <ScaffoldDashboard wide={isDesktop} onBack={() => setView("scaffoldManagement")} currentUser={currentUser} role="CONTRACTOR" readOnly={getAccessLevel(permMap, "scaffoldManagement") === "view"} initialStatusFilter={navFilter?.module === "scaffold" ? navFilter.statusFilter : undefined} />}
       {view === "managementDashboard" && <HomeDashboard role="CONTRACTOR" currentUser={currentUser} onNavigate={handleHomeNavigate} onBack={() => setView("menu")} />}
       {view === "operationalDashboard" && <OperationalDashboard role="CONTRACTOR" currentUser={currentUser} onNavigate={handleHomeNavigate} onBack={() => setView("menu")} />}
+      {view === "quickTools" && <QuickToolsDashboard wide={isDesktop} currentUser={currentUser} onBack={() => setView("menu")} />}
     </ResponsiveDashboardShell>
   );
 }
