@@ -1452,6 +1452,7 @@ const DEFAULT_MODULE_CONFIG = [
   { moduleKey: "incidentManagement", labelKey: "moduleIncidentManagement", descKey: "saDmcDescIncident" },
   { moduleKey: "machineryManagement", labelKey: "moduleMachinery", descKey: "saDmcDescMachinery" },
   { moduleKey: "scaffoldManagement", labelKey: "moduleScaffold", descKey: "saDmcDescScaffold" },
+  { moduleKey: "liftingPlan", labelKey: "moduleLiftingPlan", descKey: "saDmcDescLiftingPlan" },
   { moduleKey: "managementDashboard", labelKey: "moduleManagementDashboard", descKey: "saDmcDescMgmtDash" },
 ];
 

@@ -30,6 +30,12 @@ export const MODULE_TABLE_MAP = {
   machineryDocuments: { table: "machinery_documents", idField: "id" },
   scaffoldTags: { table: "scaffold_tags", idField: "id" },
   scaffoldPhotos: { table: "scaffold_tag_photos", idField: "id" },
+  liftingPlans: { table: "lifting_plans", idField: "id" },
+  liftingPlanRevisions: { table: "lifting_plan_revisions", idField: "id" },
+  liftingPlanAudit: { table: "lifting_plan_audit", idField: "id" },
+  liftingCraneModels: { table: "lifting_crane_models", idField: "id" },
+  liftingRiggingItems: { table: "lifting_rigging_items", idField: "id" },
+  liftingAcceptanceCriteria: { table: "lifting_acceptance_criteria", idField: "id" },
   // future modules register here once built
 };
 

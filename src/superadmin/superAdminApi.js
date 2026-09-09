@@ -358,6 +358,7 @@ export const PLAN_FEATURES = [
     key: "scaffoldManagement", labelKey: "pfScaffoldManagement",
     sub: [{ key: "scaffoldDashboard", labelKey: "pfScaffoldDashboard" }],
   },
+  { key: "liftingPlan", labelKey: "pfLiftingPlan" },
   { key: "managementDashboard", labelKey: "pfManagementDashboard" },
   { key: "operationalDashboard", labelKey: "pfOperationalDashboard" },
   {
