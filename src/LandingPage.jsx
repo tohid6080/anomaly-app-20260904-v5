@@ -178,7 +178,7 @@ const MOD_CATS_KEYS = ["safety", "safety", "safety", "management", "health", "ma
 const MODULES_IDX = MOD_ICONS.map((_, i) => i);
 const CAT_INDEX = { safety: 1, health: 2, env: 3, management: 4, report: 5 };
 // ماژول‌هایی که هنوز روی صفحهٔ فرود «مشاهده جزئیات» ندارند و «به‌زودی» می‌خورند.
-const SOON = new Set([6]); // مجوز کار
+const SOON = new Set([6, 10]); // مجوز کار، محیط زیست
 const WHY_ICONS = [Database, FileCheck, AlertTriangle, ClipboardCheck, FileBarChart, TrendingUp];
 const FLOW_ICONS = [FileCheck, LineChart, AlertTriangle, Wrench, ListChecks, FileBarChart];
 const TRUST_ICONS = [Zap, Layers, Database, FileBarChart, AlertTriangle, TrendingUp];
