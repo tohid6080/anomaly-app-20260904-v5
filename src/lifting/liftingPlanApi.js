@@ -75,7 +75,7 @@ export function normalizeScene(scene) {
     if (o.type === "sling") return { ...b, type: "slingset", count: +p.count || 4, wllKg: +p.wllKg || 10000, weightKg: +p.weightKg || 120, len: +p.lengthM || 6 };
     if (o.type === "shackle") return { ...b, count: +p.count || 4, wllKg: +p.wllKg || 9500, weightKg: +p.weightKg || 120 };
     if (o.type === "spreader_beam") return { ...b, type: "spreader", len: +p.lengthM || 4, wllKg: +p.wllKg || 16000, weightKg: +p.weightKg || 600, enabled: true };
-    if (o.type === "power_line") return { ...b, len: wm || 30, kv: +p.voltageKv || 132 };
+    if (o.type === "power_line") return { ...b, len: wm || 30, kv: +p.voltageKv || 132, heightM: +p.heightM || 11 };
     if (o.type === "worker") return { ...b, role: p.role || "", personnelId: p.personnelId || "" };
     return { ...b, w: wm || 4, h: hm || 3, label: p.label || "" };
   });

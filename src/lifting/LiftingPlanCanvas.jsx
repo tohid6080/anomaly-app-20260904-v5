@@ -6,6 +6,7 @@ import {
 import { THEME } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { EMPTY_SCENE } from "./liftingPlanApi.js";
+import { powerLineClearance, DEFAULT_CRITERIA } from "./liftingCalcEngine.js";
 
 /* ============================================================================ *
  * Lifting Plan Canvas — بومِ Mini-CAD، مختصات به «متر». مدلِ اشیا همان چیزی
@@ -53,7 +54,7 @@ export function makeObject(type, at = {}) {
     case "spreader":
       return { ...B, len: 4, wllKg: 16000, weightKg: 600, enabled: true };
     case "power_line":
-      return { ...B, len: 30, kv: 132 };
+      return { ...B, len: 30, kv: 132, heightM: 11 };
     case "worker":
       return { ...B, role: "", personnelId: "" };
     case "truck":
@@ -86,6 +87,16 @@ const worldPicks = (L) =>
 const worldCG = (L) => { const c = L?.cg || { x: 0, y: 0 }; const r = rot2(c.x, c.y, L?.rot || 0); return { x: L.x + r[0], y: L.y + r[1] }; };
 
 const CSS = `
+.lpc-viewtabs{display:flex;gap:4px;margin-bottom:8px}
+.lpc-vt{border:1px solid var(--ihms-border,#1e3d4d);background:var(--ihms-surface,#0f2a3a);color:var(--ihms-text2,#9fb4c0);
+  border-radius:8px;padding:5px 12px;font-family:var(--ihms-font);font-size:11.5px;font-weight:700;cursor:pointer}
+.lpc-vt.on{background:var(--ihms-teal,#14b8a6);border-color:var(--ihms-teal,#14b8a6);color:#fff}
+.lpc-wrap-half{height:clamp(300px,42vh,440px)}
+.lpc-wrap-el{margin-top:10px;position:relative}
+.lpc-elhdr{position:absolute;inset-inline-start:8px;top:6px;z-index:2;font-size:10px;font-weight:800;
+  letter-spacing:.04em;text-transform:uppercase;color:var(--ihms-text3,#6a8290);pointer-events:none}
+.lpc-elsvg{width:100%;height:100%;display:block;background:var(--ihms-bg,#0b1a24)}
+.lpc-elsvg text{font-family:var(--ihms-font)}
 .lpc-toolbar{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:8px}
 .lpc-tb{width:32px;height:32px;border-radius:8px;border:1px solid var(--ihms-border,#1e3d4d);background:var(--ihms-surface,#0f2a3a);
   color:var(--ihms-text2,#9fb4c0);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
@@ -102,7 +113,7 @@ function screenToWorld(svg, cx, cy, zoom, pan) {
   return { x: (cx - r.left - pan.x) / (zoom * PPM), y: (cy - r.top - pan.y) / (zoom * PPM) };
 }
 
-export default function LiftingPlanCanvas({ scene, onChange, selectedId, onSelect, readOnly = false, simActive = false, simState = null }) {
+export default function LiftingPlanCanvas({ scene, onChange, selectedId, onSelect, readOnly = false, simActive = false, simState = null, simPhase = 0 }) {
   const locked = readOnly || simActive;
   const { t } = useLanguage();
   const svgRef = useRef(null);
@@ -113,6 +124,7 @@ export default function LiftingPlanCanvas({ scene, onChange, selectedId, onSelec
   const [, force] = useState(0);
   const redraw = () => force((n) => n + 1);
 
+  const [view, setView] = useState("both"); // plan | elev | both
   const [tool, setTool] = useState("select");
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 60, y: 60 });
@@ -371,7 +383,15 @@ export default function LiftingPlanCanvas({ scene, onChange, selectedId, onSelec
     <div style={{ direction: "ltr" }}>
       <style>{CSS}</style>
 
-      {!locked && (
+      <div className="lpc-viewtabs">
+        {["plan", "elev", "both"].map((v) => (
+          <button key={v} type="button" className={"lpc-vt" + (view === v ? " on" : "")} onClick={() => setView(v)}>
+            {t(v === "plan" ? "lpViewPlan" : v === "elev" ? "lpViewElev" : "lpViewBoth")}
+          </button>
+        ))}
+      </div>
+
+      {!locked && view !== "elev" && (
         <div className="lpc-toolbar">
           <TB id="select" on={tool === "select"} title={t("lpToolSelect")}><MousePointer2 size={15} /></TB>
           <TB id="pan" on={tool === "pan"} title={t("lpToolPan")}><Hand size={15} /></TB>
@@ -401,7 +421,8 @@ export default function LiftingPlanCanvas({ scene, onChange, selectedId, onSelec
         </div>
       )}
 
-      <div className="lpc-wrap" ref={wrapRef}>
+      {view !== "elev" && (
+      <div className={"lpc-wrap" + (view === "both" ? " lpc-wrap-half" : "")} ref={wrapRef}>
         <svg ref={svgRef} className={"lpc-svg" + (tool === "pan" ? " pan" : tool === "select" ? " sel" : "")}
           onPointerDown={down} onPointerMove={move} onPointerUp={rubberEnd} onPointerCancel={up}
           onWheel={wheel} onDoubleClick={dbl}>
@@ -465,11 +486,20 @@ export default function LiftingPlanCanvas({ scene, onChange, selectedId, onSelec
           </g>
         </svg>
       </div>
+      )}
+
+      {view !== "plan" && (
+        <div className={"lpc-wrap lpc-wrap-el" + (view === "both" ? " lpc-wrap-half" : "")}>
+          <div className="lpc-elhdr">{t("lpElevTitle")}</div>
+          <ElevationView objs={objs} sim={simActive ? simState : null}
+            travelHeight={scene?.env?.travelHeight ?? 12} phase={simActive ? simPhase : 0} t={t} />
+        </div>
+      )}
 
       <p style={{ margin: "6px 2px 0", fontSize: 11, color: THEME.text3, fontFamily: THEME.font, direction: "ltr" }}>
-        {Math.round(zoom * 100)}% · {objs.length} {t("lpObjectsCount")}
-        {tool === "draw-poly" && ` · ${t("lpPolyHint")}`}
-        {sel && ` · ${t("lpObj_" + sel.type)} @ ${sel.x.toFixed(1)},${sel.y.toFixed(1)} m`}
+        {view !== "elev" && `${Math.round(zoom * 100)}% · `}{objs.length} {t("lpObjectsCount")}
+        {tool === "draw-poly" && view !== "elev" && ` · ${t("lpPolyHint")}`}
+        {sel && view !== "elev" && ` · ${t("lpObj_" + sel.type)} @ ${sel.x.toFixed(1)},${sel.y.toFixed(1)} m`}
       </p>
     </div>
   );
@@ -597,5 +627,130 @@ function Handles({ o, zoom, m }) {
         </>
       )}
     </g>
+  );
+}
+
+/* ---------------- Elevation (side) view — computed, read-only ---------------- */
+function ElevationView({ objs, sim, travelHeight, phase, t }) {
+  const crane = objs.find((o) => o.type === "crane");
+  const load = objs.find((o) => o.type === "load");
+  const hook = objs.find((o) => o.type === "hook");
+  const pline = objs.find((o) => o.type === "power_line");
+  const spreader = objs.find((o) => o.type === "spreader");
+
+  const VW = 900, VH = 300, padL = 48, padR = 22, padT = 24, padB = 34;
+
+  if (!crane || !load) {
+    return (
+      <svg className="lpc-elsvg" viewBox={`0 0 ${VW} ${VH}`} preserveAspectRatio="xMidYMid meet">
+        <text x={VW / 2} y={VH / 2} fill={THEME.text3} fontSize="13" textAnchor="middle">{t("lpElevNeedObjs")}</text>
+      </svg>
+    );
+  }
+
+  const radius = sim ? sim.radius : Math.hypot(load.x - crane.x, load.y - crane.y);
+  const loadW = Math.max(1, load.shape === "circle" ? (load.r || 1.5) * 2 : (load.w || 3));
+  const loadH = Math.max(1, load.shape === "circle" ? (load.r || 1.5) * 2 : (load.h || 2));
+  const riggingH = (hook && +hook.riggingH) || 4;
+
+  // ارتفاعِ کفِ بار از زمین (m) — طبقِ مرحله
+  let loadZ = 0;
+  if (sim) {
+    if (phase >= 2) loadZ = sim.z;               // Lift / Slew / Travel / Place
+  }
+  const hookExtra = sim && phase <= 1 ? sim.z : 0;   // ph0/1: قلاب بالای بار
+  const hookZ = loadZ + loadH + riggingH + hookExtra;
+  const tipZ = hookZ + 1.4;
+
+  const plH = pline ? (+pline.heightM || 11) : null;
+  const plClear = pline ? powerLineClearance(+pline.kv || 132, DEFAULT_CRITERIA) : null;
+
+  const xMin = -6;
+  const xMax = Math.max(radius + loadW / 2 + 4, 12);
+  const yMax = Math.max(hookZ + 4, plH ? plH + 4 : 0, tipZ + 3, 20);
+  const sx = (v) => padL + ((v - xMin) / (xMax - xMin)) * (VW - padL - padR);
+  const sy = (v) => (VH - padB) - (v / yMax) * (VH - padT - padB);
+  const L = (x1, y1, x2, y2, s, w, d) => <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={s} strokeWidth={w || 1} strokeDasharray={d || ""} strokeLinecap="round" />;
+  const T = (x, y, txt, fill, size, anchor) => <text x={x} y={y} fill={fill || THEME.text2} fontSize={size || 10} textAnchor={anchor || "middle"} fontWeight="600">{txt}</text>;
+
+  const gY = sy(0);
+  const hookX = sx(radius);
+  const plGap = plH != null ? plH - tipZ : null; // فاصله‌ی عمودی سرِ بوم تا هادی
+  const plBreach = plGap != null && plGap < plClear;
+
+  return (
+    <svg className="lpc-elsvg" viewBox={`0 0 ${VW} ${VH}`} preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <marker id="lpc-ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0L10 5L0 10z" fill={THEME.text3} />
+        </marker>
+      </defs>
+
+      {/* power line + clearance band */}
+      {plH != null && (
+        <g>
+          <rect x={sx(xMin)} y={sy(plH + plClear)} width={sx(xMax) - sx(xMin)} height={sy(plH - plClear) - sy(plH + plClear)} fill={THEME.warn} opacity="0.12" />
+          {L(sx(xMin), sy(plH), sx(xMax), sy(plH), THEME.warn, 2.5)}
+          {L(sx(xMin), sy(plH), sx(xMin), gY, THEME.text3, 2)}
+          {T(sx(xMin) + 66, sy(plH) - 6, `${(+pline.kv || 132)}kV · ${t("lpElevPowerH")} ${plH}m`, THEME.warn, 10, "start")}
+        </g>
+      )}
+
+      {/* ground */}
+      {L(sx(xMin), gY, sx(xMax), gY, THEME.text2, 2.5)}
+      {Array.from({ length: 26 }).map((_, i) => L(sx(xMin) + i * 34, gY, sx(xMin) + i * 34 - 7, gY + 8, THEME.text3, 1))}
+
+      {/* crane carrier + counterweight */}
+      <rect x={sx(-2)} y={sy(2.6)} width={sx(2) - sx(-2)} height={gY - sy(2.6)} rx="3" fill={THEME.surface2} stroke={THEME.text2} strokeWidth="1.5" />
+      <rect x={sx(-3.6)} y={sy(3.4)} width={sx(-1.6) - sx(-3.6)} height={sy(1.6) - sy(3.4)} fill={THEME.text3} opacity="0.5" />
+      {[-1.2, 0.2, 1.4].map((wx, i) => <circle key={i} cx={sx(wx)} cy={gY - 3} r="5" fill="none" stroke={THEME.text2} strokeWidth="1.6" />)}
+
+      {/* boom + hoist rope */}
+      {L(sx(-1.4), sy(3), hookX, sy(tipZ), THEME.text2, 4)}
+      {L(hookX, sy(tipZ), hookX, sy(hookZ), THEME.text3, 2)}
+      <rect x={hookX - 5} y={sy(hookZ) - 5} width="10" height="10" rx="2" fill={THEME.surface2} stroke={THEME.text3} strokeWidth="1.6" />
+      {T((sx(-1.4) + hookX) / 2 - 6, (sy(3) + sy(tipZ)) / 2 - 6, `${t("lpElevBoom")} ~${Math.hypot(radius + 1.4, tipZ - 3).toFixed(0)}m`, THEME.text3, 9.5, "middle")}
+
+      {/* rigging + load */}
+      {(() => {
+        const topZ = loadZ + loadH;
+        const lx0 = sx(radius - loadW / 2 * 0.8), lx1 = sx(radius + loadW / 2 * 0.8);
+        const anchorY = spreader && spreader.enabled ? sy(hookZ - 0.6) : sy(hookZ);
+        return (
+          <g>
+            {spreader && spreader.enabled && L(sx(radius - (spreader.len || 4) / 2), sy(hookZ - 0.6), sx(radius + (spreader.len || 4) / 2), sy(hookZ - 0.6), THEME.text2, 5)}
+            {L(hookX, sy(hookZ), lx0, sy(topZ), THEME.warn, 2.2)}
+            {L(hookX, sy(hookZ), lx1, sy(topZ), THEME.warn, 2.2)}
+            <rect x={sx(radius - loadW / 2)} y={sy(topZ)} width={sx(radius + loadW / 2) - sx(radius - loadW / 2)} height={sy(loadZ) - sy(topZ)}
+              rx="2" fill={THEME.teal} fillOpacity="0.85" stroke={THEME.tealDeep} strokeWidth="2" />
+            {T(hookX, sy(topZ) - 6, `${(load.label || t("lpObj_load"))} · ${(+load.weightKg || 0).toLocaleString("en-US")} kg`, THEME.text, 10)}
+          </g>
+        );
+      })()}
+
+      {/* vertical clearance dim to power line */}
+      {plH != null && (
+        <g>
+          {L(hookX + 26, sy(tipZ), hookX + 26, sy(plH), plBreach ? THEME.danger : THEME.ok, 1.3)}
+          <line x1={hookX + 22} y1={sy(tipZ)} x2={hookX + 30} y2={sy(tipZ)} stroke={plBreach ? THEME.danger : THEME.ok} strokeWidth="1.3" />
+          <line x1={hookX + 22} y1={sy(plH)} x2={hookX + 30} y2={sy(plH)} stroke={plBreach ? THEME.danger : THEME.ok} strokeWidth="1.3" />
+          {T(hookX + 34, (sy(tipZ) + sy(plH)) / 2 + 3, `${plGap.toFixed(1)} / ${plClear} m`, plBreach ? THEME.danger : THEME.ok, 9.5, "start")}
+        </g>
+      )}
+
+      {/* radius dimension */}
+      {L(sx(0), VH - 14, hookX, VH - 14, THEME.text3, 1.25)}
+      <line x1={sx(0)} y1={VH - 18} x2={sx(0)} y2={VH - 10} stroke={THEME.text3} strokeWidth="1.25" />
+      <line x1={hookX} y1={VH - 18} x2={hookX} y2={VH - 10} stroke={THEME.text3} strokeWidth="1.25" />
+      {T((sx(0) + hookX) / 2, VH - 4, `${t("lpElevRadius")} ${radius.toFixed(1)} m`, THEME.text2, 10)}
+
+      {/* lift-height dimension */}
+      {L(sx(xMin) + 14, gY, sx(xMin) + 14, sy(loadZ + loadH), THEME.text3, 1.25)}
+      <line x1={sx(xMin) + 10} y1={gY} x2={sx(xMin) + 18} y2={gY} stroke={THEME.text3} strokeWidth="1.25" />
+      <line x1={sx(xMin) + 10} y1={sy(loadZ + loadH)} x2={sx(xMin) + 18} y2={sy(loadZ + loadH)} stroke={THEME.text3} strokeWidth="1.25" />
+      <text x={sx(xMin) + 8} y={(gY + sy(loadZ + loadH)) / 2} fill={THEME.text2} fontSize="9.5" textAnchor="middle" transform={`rotate(-90 ${sx(xMin) + 8} ${(gY + sy(loadZ + loadH)) / 2})`}>
+        {`${t("lpElevLiftH")} ${(loadZ).toFixed(1)} m`}
+      </text>
+    </svg>
   );
 }

@@ -65,6 +65,7 @@ const OBJ_PROP_FIELDS = {
   power_line: [
     { key: "kv", labelKey: "lpPropVoltage", num: true, unit: "kV" },
     { key: "len", labelKey: "lpPropLength", num: true, unit: "m" },
+    { key: "heightM", labelKey: "lpPropHeightM", num: true, unit: "m" },
   ],
   worker: [{ key: "role", labelKey: "lpPropRole" }],
   structure: [{ key: "label", labelKey: "lpPropLabel" }],
@@ -474,6 +475,7 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
             readOnly={readOnly || isNew}
             simActive={simActive}
             simState={calcReady ? calc.sim : null}
+            simPhase={phase}
           />
 
           {/* تایم‌لاینِ شبیه‌سازیِ مراحلِ لیفت */}
