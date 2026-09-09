@@ -6,7 +6,7 @@ import {
 import { THEME } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { EMPTY_SCENE } from "./liftingPlanApi.js";
-import { powerLineClearance, DEFAULT_CRITERIA } from "./liftingCalcEngine.js";
+import { powerLineClearance, DEFAULT_CRITERIA, boomReach, syncCraneRig } from "./liftingCalcEngine.js";
 
 /* ============================================================================ *
  * Lifting Plan Canvas — بومِ Mini-CAD، مختصات به «متر». مدلِ اشیا همان چیزی
@@ -44,7 +44,7 @@ export function makeObject(type, at = {}) {
   const B = { id: nid(type), type, x, y, rot: 0 };
   switch (type) {
     case "crane":
-      return { ...B, model: "", weightKg: 50000, pads: 4, padArea: 0.5, craneModelId: "", machineryId: "", chart: [], chartRef: "" };
+      return { ...B, model: "", weightKg: 50000, pads: 4, padArea: 0.5, boomLengthM: 24, boomAngleDeg: 65, craneModelId: "", machineryId: "", chart: [], chartRef: "" };
     case "hook":
       return { ...B, weightKg: 200, wllKg: 20000, riggingH: 4 };
     case "slingset":
@@ -138,7 +138,7 @@ export default function LiftingPlanCanvas({ scene, onChange, selectedId, onSelec
 
   const commit = useCallback((nextObjs, pushHistory = true) => {
     if (pushHistory) { histRef.current.undo.push(clone(objs)); if (histRef.current.undo.length > 60) histRef.current.undo.shift(); histRef.current.redo = []; }
-    onChange({ ...(scene || EMPTY_SCENE), objects: nextObjs });
+    onChange({ ...(scene || EMPTY_SCENE), objects: syncCraneRig(nextObjs) });
   }, [objs, scene, onChange]);
 
   const patch = useCallback((id, next, push = false) => {
@@ -162,7 +162,13 @@ export default function LiftingPlanCanvas({ scene, onChange, selectedId, onSelec
     const o = makeObject(type === "target" ? "target" : type, at);
     let next = objs;
     if (type === "target") next = objs.filter((x) => x.type !== "target");
-    commit([...next, o]);
+    const extra = [];
+    // جرثقیل به‌صورت مجموعه می‌آید: اگر قلاب نداریم، همراهِ جرثقیل ساخته می‌شود
+    // و روی سرِ بوم قرار می‌گیرد (syncCraneRig در commit موقعیتش را تنظیم می‌کند).
+    if (type === "crane" && !objs.some((x) => x.type === "hook")) {
+      extra.push({ ...makeObject("hook", at), craneId: o.id });
+    }
+    commit([...next, o, ...extra]);
     onSelect(o.id);
     setTool("select");
   };
@@ -279,6 +285,8 @@ export default function LiftingPlanCanvas({ scene, onChange, selectedId, onSelec
     if (hId) {
       const o = objs.find((x) => x.id === hId);
       onSelect(hId);
+      // قلاب وقتی جرثقیلِ دارای بوم هست، جابه‌جاییِ آزاد ندارد — روی سرِ بوم قفل است.
+      if (o.type === "hook" && objs.some((c) => c.type === "crane" && +c.boomLengthM)) return;
       histRef.current.undo.push(clone(objs)); histRef.current.redo = [];
       dragRef.current = { mode: "move", o, dx: w.x - o.x, dy: w.y - o.y };
       return;
@@ -441,6 +449,17 @@ export default function LiftingPlanCanvas({ scene, onChange, selectedId, onSelec
               const hookPos = sim ? { x: sim.x, y: sim.y } : (objs.find((o) => o.type === "hook") || null);
               return (
                 <>
+                  {/* boom: crane → hook (کلیک روی بوم = انتخابِ جرثقیل) */}
+                  {(() => {
+                    const c = objs.find((o) => o.type === "crane");
+                    if (!c || !hookPos) return null;
+                    return (
+                      <line data-id={c.id} x1={m(c.x)} y1={m(c.y)} x2={m(hookPos.x)} y2={m(hookPos.y)}
+                        stroke={THEME.text2} strokeWidth={5 / zoom} strokeLinecap="round"
+                        style={{ cursor: locked ? "default" : "pointer" }} />
+                    );
+                  })()}
+
                   {objs.map((o) => {
                     const off = sim && o.type === "load" ? { ox: o.x + dx, oy: o.y + dy } : (sim && o.type === "hook" ? { ox: sim.x, oy: sim.y } : null);
                     return <ObjView key={o.id} o={o} sel={o.id === selectedId} zoom={zoom} m={m} readOnly={locked} off={off} />;
@@ -648,19 +667,21 @@ function ElevationView({ objs, sim, travelHeight, phase, t }) {
     );
   }
 
-  const radius = sim ? sim.radius : Math.hypot(load.x - crane.x, load.y - crane.y);
+  const boomLen = +crane.boomLengthM || 24;
+  const boomAngle = crane.boomAngleDeg == null ? 65 : +crane.boomAngleDeg;
+  const radius = sim ? sim.radius : boomLen * Math.cos((boomAngle * Math.PI) / 180);
   const loadW = Math.max(1, load.shape === "circle" ? (load.r || 1.5) * 2 : (load.w || 3));
   const loadH = Math.max(1, load.shape === "circle" ? (load.r || 1.5) * 2 : (load.h || 2));
   const riggingH = (hook && +hook.riggingH) || 4;
+  const footZ = 3;
+  const tipZ = footZ + boomLen * Math.sin((boomAngle * Math.PI) / 180);
 
   // ارتفاعِ کفِ بار از زمین (m) — طبقِ مرحله
   let loadZ = 0;
-  if (sim) {
-    if (phase >= 2) loadZ = sim.z;               // Lift / Slew / Travel / Place
-  }
-  const hookExtra = sim && phase <= 1 ? sim.z : 0;   // ph0/1: قلاب بالای بار
-  const hookZ = loadZ + loadH + riggingH + hookExtra;
-  const tipZ = hookZ + 1.4;
+  if (sim && phase >= 2) loadZ = sim.z;               // Lift / Slew / Travel / Place
+  const hookExtra = sim && phase <= 1 ? sim.z : 0;    // ph0/1: قلاب بالای بار
+  let hookZ = loadZ + loadH + riggingH + hookExtra;
+  hookZ = Math.min(hookZ, tipZ - 0.5);
 
   const plH = pline ? (+pline.heightM || 11) : null;
   const plClear = pline ? powerLineClearance(+pline.kv || 132, DEFAULT_CRITERIA) : null;
@@ -706,10 +727,10 @@ function ElevationView({ objs, sim, travelHeight, phase, t }) {
       {[-1.2, 0.2, 1.4].map((wx, i) => <circle key={i} cx={sx(wx)} cy={gY - 3} r="5" fill="none" stroke={THEME.text2} strokeWidth="1.6" />)}
 
       {/* boom + hoist rope */}
-      {L(sx(-1.4), sy(3), hookX, sy(tipZ), THEME.text2, 4)}
+      {L(sx(-1.4), sy(footZ), hookX, sy(tipZ), THEME.text2, 4)}
       {L(hookX, sy(tipZ), hookX, sy(hookZ), THEME.text3, 2)}
       <rect x={hookX - 5} y={sy(hookZ) - 5} width="10" height="10" rx="2" fill={THEME.surface2} stroke={THEME.text3} strokeWidth="1.6" />
-      {T((sx(-1.4) + hookX) / 2 - 6, (sy(3) + sy(tipZ)) / 2 - 6, `${t("lpElevBoom")} ~${Math.hypot(radius + 1.4, tipZ - 3).toFixed(0)}m`, THEME.text3, 9.5, "middle")}
+      {T((sx(-1.4) + hookX) / 2 - 6, (sy(footZ) + sy(tipZ)) / 2 - 8, `${t("lpElevBoom")} ${boomLen}m · ${boomAngle}°`, THEME.text3, 9.5, "middle")}
 
       {/* rigging + load */}
       {(() => {

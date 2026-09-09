@@ -67,6 +67,35 @@ export function loadWorldCG(L) {
   const r = rotate(cg.x, cg.y, L?.rot || 0);
   return { x: (L?.x || 0) + r[0], y: (L?.y || 0) + r[1] };
 }
+// نقطه‌ی سرِ بوم در نمای بالا (متر) از پیکربندیِ بوم: طول × cos(زاویه) در راستای
+// اسلوِ جرثقیل (crane.rot). hReach = مؤلفه‌ی قائمِ سرِ بوم (برای نمای جانبی).
+export function boomReach(crane) {
+  const len = +crane?.boomLengthM || 0;
+  const ang = (crane?.boomAngleDeg == null ? 65 : +crane.boomAngleDeg) * Math.PI / 180;
+  const slew = (crane?.rot || 0) * Math.PI / 180;
+  const r = len * Math.cos(ang);
+  return {
+    x: (crane?.x || 0) + r * Math.cos(slew),
+    y: (crane?.y || 0) + r * Math.sin(slew),
+    r,
+    hReach: len * Math.sin(ang),
+  };
+}
+
+// قلاب را (به‌عنوان یک شیءِ متصل) روی سرِ بومِ جرثقیل می‌نشاند. اگر جرثقیل یا
+// قلاب نباشد، آرایه بدون تغییر برمی‌گردد.
+export function syncCraneRig(objs) {
+  if (!Array.isArray(objs)) return objs;
+  const crane = objs.find((o) => o.type === "crane" && +o.boomLengthM);
+  if (!crane) return objs;
+  const hook = objs.find((o) => o.type === "hook");
+  if (!hook) return objs;
+  const br = boomReach(crane);
+  const nx = +br.x.toFixed(3), ny = +br.y.toFixed(3);
+  if (Math.abs((hook.x || 0) - nx) < 1e-3 && Math.abs((hook.y || 0) - ny) < 1e-3 && hook.craneId === crane.id) return objs;
+  return objs.map((o) => (o.id === hook.id ? { ...o, x: nx, y: ny, craneId: crane.id } : o));
+}
+
 export function loadFootprintRadius(L) {
   if (!L) return 1.5;
   if (L.shape === "circle") return L.r || 1.5;
@@ -122,7 +151,11 @@ export function computeHookState(objs, phaseIndex, frac, env = {}) {
   const ph = Math.max(0, Math.min(5, phaseIndex | 0));
   const f = Math.max(0, Math.min(1, frac || 0));
   let pos = { ...pick }, z = TH;
-  if (ph === 0) { pos = pick; z = TH; }
+  if (ph === 0) {
+    // استقرار: قلاب سرِ بوم طبقِ طول/زاویه/اسلوِ پیکربندی‌شده (اگر بوم تعریف شده باشد)
+    pos = (c && +c.boomLengthM) ? boomReach(c) : pick;
+    z = TH;
+  }
   else if (ph === 1) { pos = pick; z = TH * (1 - f); }
   else if (ph === 2) { pos = pick; z = TH * f; }
   else if (ph === 3) { const a = aP + dA * f; pos = { x: cx + rP * Math.cos(a), y: cy + rP * Math.sin(a) }; z = TH; }

@@ -365,6 +365,7 @@ export const translations = {
   "lpElevLiftH": { "fa": "ارتفاعِ بار", "en": "Load height" },
   "lpElevPowerH": { "fa": "ارتفاعِ هادی", "en": "Conductor height" },
   "lpPropHeightM": { "fa": "ارتفاعِ هادی از زمین", "en": "Conductor height above ground" },
+  "lpCraneRigHint": { "fa": "جرثقیل، بوم و قلاب یک مجموعه‌اند: قلاب روی سرِ بوم قفل است. با «چرخش» جهتِ بوم (اسلو) و با «طولِ بوم» و «زاویه‌ی بوم» شعاع و ارتفاع را تنظیم کن؛ قلاب و اسلینگ‌ها لحظه‌ای دنبال می‌کنند.", "en": "Crane, boom and hook are one assembly: the hook is locked to the boom tip. Use Rotation for the boom bearing (slew), and Boom length / Boom angle for reach and height; the hook and slings follow in real time." },
   "lpCraneNoChart": { "fa": "این جرثقیل Load Chart ندارد — محاسبه‌ی ظرفیت «خارج از چارت» می‌ماند. یک مدلِ جرثقیلِ دارای چارت انتخاب کنید.", "en": "This crane has no load chart — capacity stays \"off chart\". Pick a crane model that has a chart." },
   "lpPropWidthM": { "fa": "عرض", "en": "Width" },
   "lpPropRadiusM": { "fa": "شعاع", "en": "Radius" },

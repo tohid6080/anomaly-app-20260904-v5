@@ -3,6 +3,7 @@ import { offlineWrite } from "../offline/offlineWrite.js";
 import { isOnline } from "../offline/networkStatus.js";
 import { getRecordsByModule, putRecord } from "../offline/offlineDb.js";
 import { translate, getCurrentLang } from "../i18n/translations.js";
+import { syncCraneRig } from "./liftingCalcEngine.js";
 
 const terr = (key) => translate(getCurrentLang(), key);
 
@@ -57,7 +58,13 @@ export function normalizeScene(scene) {
   if (!scene || typeof scene !== "object") return { ...EMPTY_SCENE };
   const objs = Array.isArray(scene.objects) ? scene.objects : [];
   if (scene.v === SCENE_MODEL || !objs.some((o) => o && o.props)) {
-    return { ...EMPTY_SCENE, ...scene, v: SCENE_MODEL, env: { ...EMPTY_SCENE.env, ...(scene.env || {}) } };
+    // پلن‌های CADِ قدیمی‌تر بدونِ فیلدهای بوم را هم به مجموعه‌ی جرثقیل ارتقا بده
+    const upgraded = objs.map((o) =>
+      o && o.type === "crane" && o.boomLengthM == null
+        ? { ...o, boomLengthM: 24, boomAngleDeg: 65 }
+        : o
+    );
+    return { ...EMPTY_SCENE, ...scene, v: SCENE_MODEL, env: { ...EMPTY_SCENE.env, ...(scene.env || {}) }, objects: syncCraneRig(upgraded) };
   }
   const mPerPx = scene.canvas?.scale_m_per_px || 0.1;
   const conv = objs.map((o) => {
@@ -70,7 +77,7 @@ export function normalizeScene(scene) {
         picks: [{ x: -(wm || 4) / 2 * 0.8, y: -(hm || 2) / 2 * 0.8 }, { x: (wm || 4) / 2 * 0.8, y: -(hm || 2) / 2 * 0.8 },
           { x: (wm || 4) / 2 * 0.8, y: (hm || 2) / 2 * 0.8 }, { x: -(wm || 4) / 2 * 0.8, y: (hm || 2) / 2 * 0.8 }] };
     }
-    if (o.type === "crane") return { ...b, model: p.model || "", weightKg: +p.weightKg || 50000, pads: +p.pads || 4, padArea: +p.padArea || 0.5, craneModelId: p.craneModelId || "", machineryId: p.machineryId || "", chart: Array.isArray(p.chart) ? p.chart : [], chartRef: p.chartRef || "" };
+    if (o.type === "crane") return { ...b, model: p.model || "", weightKg: +p.weightKg || 50000, pads: +p.pads || 4, padArea: +p.padArea || 0.5, boomLengthM: +p.boomLengthM || 24, boomAngleDeg: p.boomAngleDeg == null ? 65 : +p.boomAngleDeg, craneModelId: p.craneModelId || "", machineryId: p.machineryId || "", chart: Array.isArray(p.chart) ? p.chart : [], chartRef: p.chartRef || "" };
     if (o.type === "hook") return { ...b, weightKg: +p.weightKg || 200, wllKg: +p.wllKg || 20000, riggingH: +p.riggingH || 4 };
     if (o.type === "sling") return { ...b, type: "slingset", count: +p.count || 4, wllKg: +p.wllKg || 10000, weightKg: +p.weightKg || 120, len: +p.lengthM || 6 };
     if (o.type === "shackle") return { ...b, count: +p.count || 4, wllKg: +p.wllKg || 9500, weightKg: +p.weightKg || 120 };
@@ -79,7 +86,7 @@ export function normalizeScene(scene) {
     if (o.type === "worker") return { ...b, role: p.role || "", personnelId: p.personnelId || "" };
     return { ...b, w: wm || 4, h: hm || 3, label: p.label || "" };
   });
-  return { ...EMPTY_SCENE, ...scene, v: SCENE_MODEL, env: { ...EMPTY_SCENE.env, ...(scene.env || {}) }, objects: conv };
+  return { ...EMPTY_SCENE, ...scene, v: SCENE_MODEL, env: { ...EMPTY_SCENE.env, ...(scene.env || {}) }, objects: syncCraneRig(conv) };
 }
 
 // ---------- نگاشتِ ردیف ----------

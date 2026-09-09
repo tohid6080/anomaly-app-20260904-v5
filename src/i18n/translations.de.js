@@ -205,6 +205,7 @@ export const de = {
   "lpElevLiftH": "Lasthöhe",
   "lpElevPowerH": "Leiterhöhe",
   "lpPropHeightM": "Leiterhöhe über Grund",
+  "lpCraneRigHint": "Kran, Ausleger und Haken sind eine Baugruppe: Der Haken ist an der Auslegerspitze fixiert. Mit „Drehung“ die Auslegerrichtung (Schwenk), mit „Auslegerlänge“ und „Auslegerwinkel“ Radius und Höhe einstellen; Haken und Anschlagmittel folgen in Echtzeit.",
   "lpCraneNoChart": "Dieser Kran hat keine Traglasttabelle — die Kapazität bleibt „außerhalb der Tabelle“. Wählen Sie ein Kranmodell mit Tabelle.",
   "lpPropWidthM": "Breite",
   "lpPropRadiusM": "Radius",

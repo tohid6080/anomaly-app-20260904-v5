@@ -15,7 +15,7 @@ import {
   LIFTING_STATUS_META, LIFTING_STATUS_ORDER, liftingStatusMeta, EMPTY_SCENE, normalizeScene,
 } from "./liftingPlanApi.js";
 import LiftingPlanCanvas from "./LiftingPlanCanvas.jsx";
-import { computeLiftCalc, DEFAULT_CRITERIA } from "./liftingCalcEngine.js";
+import { computeLiftCalc, DEFAULT_CRITERIA, syncCraneRig } from "./liftingCalcEngine.js";
 import { validateLiftingPlan } from "./liftingSafetyEngine.js";
 import { loadPersonnelList } from "../personnel/personnelApi.js";
 import { loadMachineryList } from "../machinery/machineryApi.js";
@@ -29,6 +29,8 @@ import { loadMachineryList } from "../machinery/machineryApi.js";
 const OBJ_PROP_FIELDS = {
   crane: [
     { key: "model", labelKey: "lpPropModel" },
+    { key: "boomLengthM", labelKey: "lpPropBoomLen", num: true, unit: "m" },
+    { key: "boomAngleDeg", labelKey: "lpPropBoomAngle", num: true, unit: "°" },
     { key: "weightKg", labelKey: "lpPropCraneWeight", num: true, unit: "kg" },
     { key: "pads", labelKey: "lpPropPads", num: true },
     { key: "padArea", labelKey: "lpPropPadArea", num: true, unit: "m²" },
@@ -264,7 +266,7 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
   const patchObj = (id, next) => {
     setScene((s) => ({
       ...s,
-      objects: (s.objects || []).map((o) => (o.id === id ? { ...o, ...next } : o)),
+      objects: syncCraneRig((s.objects || []).map((o) => (o.id === id ? { ...o, ...next } : o))),
     }));
   };
   const saveScene = async () => {
@@ -609,8 +611,11 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
                     </Field>
                   ))}
               </div>
+              {selObj.type === "crane" && (
+                <p style={{ fontSize: 10.5, color: THEME.text3, margin: "8px 0 0", lineHeight: 1.7 }}>{t("lpCraneRigHint")}</p>
+              )}
               {selObj.type === "crane" && (!Array.isArray(selObj.chart) || selObj.chart.length === 0) && (
-                <p style={{ fontSize: 11, color: THEME.warn, margin: "8px 0 0" }}>{t("lpCraneNoChart")}</p>
+                <p style={{ fontSize: 11, color: THEME.warn, margin: "6px 0 0" }}>{t("lpCraneNoChart")}</p>
               )}
             </div>
           )}
