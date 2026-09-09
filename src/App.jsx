@@ -30,6 +30,8 @@ const HomeDashboard = lazy(() => import("./dashboard/HomeDashboard.jsx"));
 const OperationalDashboard = lazy(() => import("./dashboard/OperationalDashboard.jsx"));
 const QuickToolsDashboard = lazy(() => import("./quicktools/QuickToolsDashboard.jsx"));
 const LiftingPlanWorkspace = lazy(() => import("./lifting/LiftingPlanWorkspace.jsx"));
+const CraneModelManager = lazy(() => import("./lifting/CraneModelManager.jsx"));
+const LiftingCriteriaManager = lazy(() => import("./lifting/LiftingCriteriaManager.jsx"));
 const PermissionManager = lazy(() => import("./permissions/PermissionManager.jsx"));
 import { loadPermissionsMap, isModuleVisible, getAccessLevel, initializeNoAccess } from "./permissions/permissionsApi.js";
 const JobPositionManager = lazy(() => import("./jobpositions/JobPositionManager.jsx"));
@@ -4854,6 +4856,8 @@ function EmployerDashboard({ onLogout, currentUser }) {
       isModuleInPlan(planFeatures, "effectivenessThresholds") && { key: "effectivenessThresholds", label: t("subEffectivenessThresholds") },
       isModuleInPlan(planFeatures, "riskKnowledgeManagement") && { key: "riskKnowledgeManagement", label: t("subRiskKnowledge") },
       isModuleInPlan(planFeatures, "anomalyCategoryManagement") && { key: "anomalyCategoryManagement", label: t("subAnomalyCategories") },
+      isModuleInPlan(planFeatures, "liftingPlan") && { key: "craneModelManagement", label: t("subCraneModels") },
+      isModuleInPlan(planFeatures, "liftingPlan") && { key: "liftingCriteriaManagement", label: t("subLiftingCriteria") },
     ].filter(Boolean),
   } : null;
 
@@ -4940,6 +4944,8 @@ function EmployerDashboard({ onLogout, currentUser }) {
             {isModuleInPlan(planFeatures, "effectivenessThresholds") && <MenuRow icon={Sliders} label={t("subEffectivenessThresholds")} onClick={() => setView("effectivenessThresholds")} />}
             {isModuleInPlan(planFeatures, "riskKnowledgeManagement") && <MenuRow icon={Database} label={t("subRiskKnowledge")} onClick={() => setView("riskKnowledgeManagement")} />}
             {isModuleInPlan(planFeatures, "anomalyCategoryManagement") && <MenuRow icon={Tag} label={t("subAnomalyCategories")} onClick={() => setView("anomalyCategoryManagement")} />}
+            {isModuleInPlan(planFeatures, "liftingPlan") && <MenuRow icon={Construction} label={t("subCraneModels")} onClick={() => setView("craneModelManagement")} />}
+            {isModuleInPlan(planFeatures, "liftingPlan") && <MenuRow icon={Sliders} label={t("subLiftingCriteria")} onClick={() => setView("liftingCriteriaManagement")} />}
           </div>
         </div>
       )}
@@ -4951,6 +4957,8 @@ function EmployerDashboard({ onLogout, currentUser }) {
       {isSupervisor && view === "hcmsMatrixManagement" && <HcmsMatrixManager wide={isDesktop} onBack={() => setView("systemManagement")} />}
       {isSupervisor && view === "effectivenessThresholds" && <EffectivenessThresholdsManager wide={isDesktop} onBack={() => setView("systemManagement")} currentUser={currentUser} />}
       {isSupervisor && view === "anomalyCategoryManagement" && <AnomalyCategoryManager wide={isDesktop} onBack={() => setView("systemManagement")} />}
+      {isSupervisor && view === "craneModelManagement" && <CraneModelManager wide={isDesktop} onBack={() => setView("systemManagement")} currentUser={currentUser} />}
+      {isSupervisor && view === "liftingCriteriaManagement" && <LiftingCriteriaManager wide={isDesktop} onBack={() => setView("systemManagement")} currentUser={currentUser} />}
 
       {isDesktop && (view === "anomalyReport" || view === "anomalyForm" || view === "anomalyList") && anomalyWebCombined}
 

@@ -353,21 +353,77 @@ export async function deleteLiftingPlan(id, actor) {
   return { ok: true };
 }
 
-// ---------- Master Data (فاز ۳ — لودرهای پایه) ----------
+// ---------- Master Data: مدلِ جرثقیل + Load Chart ----------
 
-export async function loadCraneModels({ activeOnly = true } = {}) {
+export const CRANE_MODEL_TYPES = ["mobile", "crawler", "tower", "telehandler", "overhead", "other"];
+
+function craneModelFromRow(r) {
+  const lc = Array.isArray(r.load_chart) ? r.load_chart : [];
+  // پشتیبانی از هر دو شکل: [[radius,cap]] و [{radius_m,capacity_kg}]
+  const loadChart = lc.map((x) =>
+    Array.isArray(x)
+      ? { radius_m: +x[0], capacity_kg: +x[1] }
+      : { radius_m: +x.radius_m, capacity_kg: +x.capacity_kg }
+  ).filter((p) => Number.isFinite(p.radius_m) && Number.isFinite(p.capacity_kg));
+  return {
+    id: r.id, machineryId: r.machinery_id || "", manufacturer: r.manufacturer || "", model: r.model || "",
+    craneType: r.crane_type || "mobile", configLabel: r.config_label || "",
+    loadChart, chartSource: r.chart_source || "",
+    maxCapacityKg: r.max_capacity_kg ?? null, isActive: r.is_active !== false,
+    createdBy: r.created_by || "", createdAt: r.created_at, updatedAt: r.updated_at,
+  };
+}
+function craneModelToDb(rec) {
+  const chart = (rec.loadChart || [])
+    .map((p) => ({ radius_m: +p.radius_m, capacity_kg: +p.capacity_kg }))
+    .filter((p) => Number.isFinite(p.radius_m) && Number.isFinite(p.capacity_kg))
+    .sort((a, b) => a.radius_m - b.radius_m);
+  return {
+    machinery_id: rec.machineryId || null,
+    manufacturer: rec.manufacturer || "",
+    model: rec.model || "",
+    crane_type: rec.craneType || "mobile",
+    config_label: rec.configLabel || "",
+    load_chart: chart,
+    chart_source: rec.chartSource || "",
+    max_capacity_kg: chart.length ? Math.max(...chart.map((p) => p.capacity_kg)) : (rec.maxCapacityKg ?? null),
+    is_active: rec.isActive !== false,
+  };
+}
+
+export async function loadCraneModels({ activeOnly = false } = {}) {
   const companyId = getCurrentCompanyId();
   const filter = companyId ? `&company_id=eq.${companyId}` : "";
   const act = activeOnly ? "&is_active=eq.true" : "";
   const rows = await sb(`lifting_crane_models?select=*&order=created_at.desc${filter}${act}`);
-  return (sbOk(rows) ? rows : []).map((r) => ({
-    id: r.id, machineryId: r.machinery_id || "", manufacturer: r.manufacturer || "", model: r.model || "",
-    craneType: r.crane_type || "mobile", configLabel: r.config_label || "",
-    loadChart: Array.isArray(r.load_chart) ? r.load_chart : [], chartSource: r.chart_source || "",
-    maxCapacityKg: r.max_capacity_kg ?? null, isActive: r.is_active !== false,
-    createdAt: r.created_at, updatedAt: r.updated_at,
-  }));
+  return (sbOk(rows) ? rows : []).map(craneModelFromRow);
 }
+
+export async function upsertCraneModel(rec, actor) {
+  const body = craneModelToDb(rec);
+  if (rec.id) {
+    const rows = await sb(`lifting_crane_models?id=eq.${rec.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ ...body, updated_at: new Date().toISOString() }),
+    });
+    if (!sbOk(rows)) return { __error: true, message: rows?.message || terr("commonErrorSave") };
+    return craneModelFromRow(rows[0]);
+  }
+  const rows = await sb("lifting_crane_models", {
+    method: "POST",
+    body: JSON.stringify([{ id: uid("lcm"), company_id: getCurrentCompanyId(), created_by: actor || "", ...body }]),
+  });
+  if (!sbOk(rows)) return { __error: true, message: rows?.message || terr("errCreate") };
+  return craneModelFromRow(rows[0]);
+}
+
+export async function deleteCraneModel(id) {
+  const res = await sb(`lifting_crane_models?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" });
+  if (res && res.__error) return { __error: true, message: res.message || terr("commonErrorDelete") };
+  return { ok: true };
+}
+
+// ---------- Acceptance Criteria — Configurable + Versioned ----------
 
 export async function loadAcceptanceCriteria() {
   const companyId = getCurrentCompanyId();
@@ -378,5 +434,41 @@ export async function loadAcceptanceCriteria() {
   const sys = list.find((r) => !r.company_id);
   const pick = own || sys;
   if (!pick) return null;
-  return { id: pick.id, companyId: pick.company_id || null, version: pick.version, criteria: pick.criteria || {}, note: pick.note || "" };
+  return {
+    id: pick.id, companyId: pick.company_id || null, version: pick.version,
+    criteria: pick.criteria || {}, note: pick.note || "", isSystemDefault: !pick.company_id,
+  };
+}
+
+export async function loadCriteriaHistory() {
+  const companyId = getCurrentCompanyId();
+  if (!companyId) return [];
+  const rows = await sb(`lifting_acceptance_criteria?company_id=eq.${companyId}&select=*&order=version.desc`);
+  return (sbOk(rows) ? rows : []).map((r) => ({
+    id: r.id, version: r.version, isActive: r.is_active !== false, criteria: r.criteria || {},
+    note: r.note || "", createdBy: r.created_by || "", createdAt: r.created_at,
+  }));
+}
+
+// نسخه‌ی جدیدِ معیارها را برای شرکت ثبت می‌کند: نسخه‌های قبلیِ همان شرکت
+// غیرفعال، نسخه‌ی جدید فعال. قالبِ سیستمی (company_id is null) دست‌نخورده می‌ماند.
+export async function saveAcceptanceCriteria(criteria, note, actor) {
+  const companyId = getCurrentCompanyId();
+  if (!companyId) return { __error: true, message: terr("sharedErrUnknown") };
+  const existing = await sb(`lifting_acceptance_criteria?company_id=eq.${companyId}&select=version&order=version.desc&limit=1`);
+  const nextVersion = sbOk(existing) && existing.length ? (existing[0].version || 0) + 1 : 1;
+  await sb(`lifting_acceptance_criteria?company_id=eq.${companyId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ is_active: false }),
+    prefer: "return=minimal",
+  });
+  const rows = await sb("lifting_acceptance_criteria", {
+    method: "POST",
+    body: JSON.stringify([{
+      id: uid("lac"), company_id: companyId, version: nextVersion, is_active: true,
+      criteria: criteria || {}, note: note || "", created_by: actor || "",
+    }]),
+  });
+  if (!sbOk(rows)) return { __error: true, message: rows?.message || terr("commonErrorSave") };
+  return { id: rows[0].id, version: rows[0].version, criteria: rows[0].criteria || {}, note: rows[0].note || "" };
 }

@@ -148,7 +148,7 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
 
   useEffect(() => {
     let alive = true;
-    Promise.all([loadCraneModels().catch(() => []), loadAcceptanceCriteria().catch(() => null)])
+    Promise.all([loadCraneModels({ activeOnly: true }).catch(() => []), loadAcceptanceCriteria().catch(() => null)])
       .then(([models, crit]) => {
         if (!alive) return;
         setCraneModels(Array.isArray(models) ? models : []);
