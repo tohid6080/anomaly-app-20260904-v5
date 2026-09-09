@@ -414,6 +414,86 @@ function GasConvTool({ lang }) {
   );
 }
 
+// 15) شعاعِ نواحیِ رادیوگرافی — بر پایهٔ قدرتِ چشمه (Ci)
+const RAD_ISOTOPES = [
+  { v: "ir192", l: "Ir-192", info: { fa: "≈ ۰٫۳۸ MeV · نیم‌عمر ≈ ۷۴ روز", en: "≈0.38 MeV · t½ ≈74 d", de: "≈0,38 MeV · t½ ≈74 d" } },
+  { v: "co60", l: "Co-60", info: { fa: "≈ ۱٫۲۵ MeV · نیم‌عمر ≈ ۵٫۲۷ سال", en: "≈1.25 MeV · t½ ≈5.27 y", de: "≈1,25 MeV · t½ ≈5,27 J" } },
+  { v: "se75", l: "Se-75", info: { fa: "≈ ۰٫۲۱ MeV · نیم‌عمر ≈ ۱۲۰ روز", en: "≈0.21 MeV · t½ ≈120 d", de: "≈0,21 MeV · t½ ≈120 d" } },
+  { v: "other", lk: { fa: "سایر منابع", en: "Other source", de: "Andere Quelle" }, info: null },
+];
+
+function RadZonesTool({ lang }) {
+  const [iso, setIso] = useState("ir192");
+  const [ci, setCi] = useState("");
+  const A = num(ci);
+  const ok = A !== null && A > 0;
+  const rProh = ok ? 1.6 * Math.sqrt(A) : null;
+  const rCtrl = ok ? 26 * Math.sqrt(A) : null;
+  const rSup = ok ? 45 * Math.sqrt(A) : null;
+  const isoObj = RAD_ISOTOPES.find((z) => z.v === iso);
+  const isoInfo = isoObj && isoObj.info ? (isoObj.info[lang] || isoObj.info.en) : "";
+  const L = (o) => (o && (o[lang] || o.fa || o.en)) || "";
+
+  const zoneMeta = [
+    { key: "sup", r: rSup, color: "#1e9e6a", dot: "🟢", name: { fa: "ناحیهٔ تحت نظارت", en: "Supervised area", de: "Überwachter Bereich" } },
+    { key: "ctrl", r: rCtrl, color: "#e8a13a", dot: "🟠", name: { fa: "ناحیهٔ کنترل‌شده", en: "Controlled area", de: "Kontrollbereich" } },
+    { key: "proh", r: rProh, color: "#e05c5c", dot: "🔴", name: { fa: "منطقهٔ ممنوعه", en: "Prohibited zone", de: "Sperrzone" } },
+  ];
+
+  // نمایشِ رادیال: بیرونی‌ترین دایره = تحت نظارت، مقیاس‌شده تا شعاعِ ۱۰۴ واحد
+  const S = ok && rSup ? 104 / rSup : 0;
+
+  return (
+    <div>
+      <Sel
+        label={lang === "fa" ? "نوع منبع / ایزوتوپ" : lang === "de" ? "Quelle / Isotop" : "Source / isotope"}
+        value={iso} onChange={setIso}
+        options={RAD_ISOTOPES.map((z) => ({ v: z.v, l: z.l || L(z.lk) }))}
+      />
+      {isoInfo && <div style={{ fontSize: 10.5, color: THEME.text3, marginTop: -6, marginBottom: 12, lineHeight: 1.7 }}>{isoInfo}</div>}
+      <Num label={lang === "fa" ? "قدرتِ چشمه (A)" : lang === "de" ? "Quellenaktivität (A)" : "Source activity (A)"} value={ci} onChange={setCi} unit="Ci" />
+
+      {ok && (
+        <>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+            {zoneMeta.map((z) => (
+              <div key={z.key} style={{ display: "flex", alignItems: "center", gap: 10, background: THEME.surface2, border: `1px solid ${z.color}40`, borderRadius: 11, padding: "10px 13px" }}>
+                <span style={{ width: 12, height: 12, borderRadius: "50%", background: z.color, flexShrink: 0, boxShadow: `0 0 0 3px ${z.color}22` }} />
+                <span style={{ flex: 1, fontSize: 12.5, fontWeight: 700, color: THEME.text }}>{L(z.name)}</span>
+                <span style={{ fontSize: 15, fontWeight: 900, color: z.color, fontVariantNumeric: "tabular-nums" }}>{fmt(z.r, 1)} m</span>
+              </div>
+            ))}
+          </div>
+
+          {/* نمایشِ گرافیکیِ دایره‌ایِ سه محدوده */}
+          <div style={{ marginTop: 14, background: THEME.surface2, border: `1px solid ${THEME.border}`, borderRadius: 14, padding: "14px 10px 10px" }}>
+            <svg viewBox="0 0 240 240" style={{ width: "100%", maxWidth: 300, display: "block", margin: "0 auto" }} role="img" aria-label={lang === "fa" ? "نمودارِ نواحیِ رادیوگرافی" : "Radiography zones diagram"}>
+              <circle cx="120" cy="120" r={rSup * S} fill="#1e9e6a" fillOpacity="0.12" stroke="#1e9e6a" strokeWidth="1.4" />
+              <circle cx="120" cy="120" r={rCtrl * S} fill="#e8a13a" fillOpacity="0.16" stroke="#e8a13a" strokeWidth="1.4" />
+              <circle cx="120" cy="120" r={Math.max(rProh * S, 3)} fill="#e05c5c" fillOpacity="0.24" stroke="#e05c5c" strokeWidth="1.6" />
+              <line x1="120" y1="120" x2="120" y2={120 - rSup * S} stroke={THEME.text3} strokeWidth="0.8" strokeDasharray="3 3" />
+              <circle cx="120" cy="120" r="4.5" fill={THEME.heading} />
+              <text x="120" y="120" dy="16" textAnchor="middle" fontSize="8" fill={THEME.text3} style={{ fontFamily: THEME.font }}>
+                {lang === "fa" ? "چشمه" : lang === "de" ? "Quelle" : "Source"}
+              </text>
+              <text x="120" y={120 - rProh * S - 4} textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#e05c5c" style={{ fontFamily: THEME.font }}>{fmt(rProh, 0)} m</text>
+              <text x="120" y={120 - rCtrl * S - 4} textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#e8a13a" style={{ fontFamily: THEME.font }}>{fmt(rCtrl, 0)} m</text>
+              <text x="120" y={120 - rSup * S - 4} textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#1e9e6a" style={{ fontFamily: THEME.font }}>{fmt(rSup, 0)} m</text>
+            </svg>
+            <div style={{ fontSize: 9.5, color: THEME.text3, textAlign: "center", marginTop: 2 }}>
+              {lang === "fa" ? "شعاع‌ها هم‌مرکز حولِ چشمه — مقیاسِ نسبی" : lang === "de" ? "Konzentrische Radien um die Quelle — relative Skala" : "Concentric radii around the source — relative scale"}
+            </div>
+          </div>
+        </>
+      )}
+
+      <div style={{ fontSize: 10.5, color: THEME.text3, marginTop: 10, lineHeight: 1.8 }}>
+        R (m): {lang === "fa" ? "ممنوعه" : "Prohibited"} = 1.6·√A · {lang === "fa" ? "کنترل‌شده" : "Controlled"} = 26·√A · {lang === "fa" ? "تحت نظارت" : "Supervised"} = 45·√A &nbsp;(A {lang === "fa" ? "بر حسبِ" : "in"} Ci)
+      </div>
+    </div>
+  );
+}
+
 /* --------------------------- registry ---------------------------- */
 export const QUICK_TOOLS = [
   { id: "unit-converter", cat: "general", icon: ArrowRightLeft, Tool: UnitConverter,
@@ -443,8 +523,11 @@ export const QUICK_TOOLS = [
   { id: "elec-distance", cat: "elec", icon: Zap, Tool: ElecDistanceTool,
     title: { fa: "فاصلهٔ ایمنِ خطوطِ برق", en: "Electrical approach distance", de: "Elektrischer Annäherungsabstand" },
     desc: { fa: "حداقل فاصله بر حسبِ ولتاژ", en: "Minimum distance by voltage", de: "Mindestabstand nach Spannung" } },
+  { id: "rad-zones", cat: "rad", icon: Atom, Tool: RadZonesTool,
+    title: { fa: "محاسبه شعاع نواحی رادیوگرافی", en: "Radiography zone radii", de: "Radiografie-Zonenradien" },
+    desc: { fa: "شعاعِ منطقهٔ ممنوعه، کنترل‌شده و تحت نظارت بر پایهٔ قدرتِ چشمه (Ci) + نمودارِ دایره‌ای", en: "Prohibited / controlled / supervised radii from source activity (Ci) + radial diagram", de: "Sperr-, Kontroll- und Überwachungsradien aus Quellenaktivität (Ci) + Radialdiagramm" } },
   { id: "rad-distance", cat: "rad", icon: Atom, Tool: RadDistanceTool,
-    title: { fa: "فاصلهٔ ایمنِ پرتونگاری", en: "Radiography safe distance", de: "Sicherer Abstand Radiografie" },
+    title: { fa: "فاصلهٔ ایمنِ پرتونگاری (بر پایهٔ آهنگِ دُز)", en: "Radiography safe distance (dose-rate)", de: "Sicherer Abstand Radiografie (Dosisleistung)" },
     desc: { fa: "قانونِ عکسِ مجذور برای مرزِ ناحیهٔ کنترل‌شده", en: "Inverse-square law for the controlled-area boundary", de: "Abstandsquadratgesetz für die Sperrgrenze" } },
   { id: "fire-class", cat: "fire", icon: Flame, Tool: FireClassTool,
     title: { fa: "طبقاتِ حریق و خاموش‌کننده", en: "Fire classes & agents", de: "Brandklassen & Löschmittel" },
