@@ -42,11 +42,45 @@ export const LIFTING_OBJECT_TYPES = [
   "structure", "truck", "power_line", "worker", "barrier", "exclusion_zone",
 ];
 
+// نسخه‌ی مدلِ صحنه: 2 = مدلِ CAD (مختصات به متر، فیلدها صاف).
+export const SCENE_MODEL = 2;
 export const EMPTY_SCENE = {
-  canvas: { scale_m_per_px: 0.1, grid: true },
+  v: SCENE_MODEL,
+  canvas: { grid: true },
   env: { soilKpa: 250, sf: 2, travelHeight: 12 },
   objects: [],
 };
+
+// صحنه‌های قدیمی‌ترِ فاز ۲ (مختصات به px، فیلدها زیرِ props) را به مدلِ CAD
+// تبدیل می‌کند. اگر صحنه از قبل CAD باشد، بدونِ تغییر برمی‌گردد.
+export function normalizeScene(scene) {
+  if (!scene || typeof scene !== "object") return { ...EMPTY_SCENE };
+  const objs = Array.isArray(scene.objects) ? scene.objects : [];
+  if (scene.v === SCENE_MODEL || !objs.some((o) => o && o.props)) {
+    return { ...EMPTY_SCENE, ...scene, v: SCENE_MODEL, env: { ...EMPTY_SCENE.env, ...(scene.env || {}) } };
+  }
+  const mPerPx = scene.canvas?.scale_m_per_px || 0.1;
+  const conv = objs.map((o) => {
+    const p = o.props || {};
+    const wm = (o.w || 0) * mPerPx, hm = (o.h || 0) * mPerPx;
+    const b = { id: o.id, type: o.type, rot: o.rot || 0, x: (o.x || 0) * mPerPx, y: (o.y || 0) * mPerPx };
+    if (o.type === "load") {
+      return { ...b, shape: "rect", w: wm || 4, h: hm || 2, weightKg: +p.weightKg || 0, label: p.label || "",
+        cg: { x: 0, y: 0 },
+        picks: [{ x: -(wm || 4) / 2 * 0.8, y: -(hm || 2) / 2 * 0.8 }, { x: (wm || 4) / 2 * 0.8, y: -(hm || 2) / 2 * 0.8 },
+          { x: (wm || 4) / 2 * 0.8, y: (hm || 2) / 2 * 0.8 }, { x: -(wm || 4) / 2 * 0.8, y: (hm || 2) / 2 * 0.8 }] };
+    }
+    if (o.type === "crane") return { ...b, model: p.model || "", weightKg: +p.weightKg || 50000, pads: +p.pads || 4, padArea: +p.padArea || 0.5, craneModelId: p.craneModelId || "", chart: Array.isArray(p.chart) ? p.chart : [], chartRef: p.chartRef || "" };
+    if (o.type === "hook") return { ...b, weightKg: +p.weightKg || 200, wllKg: +p.wllKg || 20000, riggingH: +p.riggingH || 4 };
+    if (o.type === "sling") return { ...b, type: "slingset", count: +p.count || 4, wllKg: +p.wllKg || 10000, weightKg: +p.weightKg || 120, len: +p.lengthM || 6 };
+    if (o.type === "shackle") return { ...b, count: +p.count || 4, wllKg: +p.wllKg || 9500, weightKg: +p.weightKg || 120 };
+    if (o.type === "spreader_beam") return { ...b, type: "spreader", len: +p.lengthM || 4, wllKg: +p.wllKg || 16000, weightKg: +p.weightKg || 600, enabled: true };
+    if (o.type === "power_line") return { ...b, len: wm || 30, kv: +p.voltageKv || 132 };
+    if (o.type === "worker") return { ...b, role: p.role || "", personnelId: p.personnelId || "" };
+    return { ...b, w: wm || 4, h: hm || 3, label: p.label || "" };
+  });
+  return { ...EMPTY_SCENE, ...scene, v: SCENE_MODEL, env: { ...EMPTY_SCENE.env, ...(scene.env || {}) }, objects: conv };
+}
 
 // ---------- نگاشتِ ردیف ----------
 

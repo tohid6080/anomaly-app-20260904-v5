@@ -12,26 +12,22 @@ import {
   duplicateLiftingPlan, archiveLiftingPlan, restoreLiftingPlan, deleteLiftingPlan,
   freezeLiftingRevision, loadLiftingRevisions, loadLiftingAudit, saveLiftingScene,
   loadCraneModels, loadAcceptanceCriteria,
-  LIFTING_STATUS_META, LIFTING_STATUS_ORDER, liftingStatusMeta, EMPTY_SCENE,
+  LIFTING_STATUS_META, LIFTING_STATUS_ORDER, liftingStatusMeta, EMPTY_SCENE, normalizeScene,
 } from "./liftingPlanApi.js";
-import LiftingPlanCanvas, { makeObject, LIFTING_OBJECT_META } from "./LiftingPlanCanvas.jsx";
+import LiftingPlanCanvas from "./LiftingPlanCanvas.jsx";
 import { computeLiftCalc, DEFAULT_CRITERIA } from "./liftingCalcEngine.js";
 import { validateLiftingPlan } from "./liftingSafetyEngine.js";
-import { sceneToEngineObjects } from "./liftingSceneAdapter.js";
 
 /* ============================================================================ *
- * Lifting Plan Designer — Workspace: فهرست + فرمِ متادیتا + بومِ دوبعدیِ
- * داده‌محور (فاز ۲) + Versioning / Duplicate / Archive / Audit Trail.
- * از Layout/Theme/RTL/توکن‌های مشترکِ IHMS استفاده می‌کند؛ هیچ CSS جدید.
+ * Lifting Plan Designer — Workspace: فهرست + فرمِ متادیتا + بومِ Mini-CAD +
+ * محاسبات/ایمنیِ لحظه‌ای + Versioning / Duplicate / Archive / Audit Trail.
  * ============================================================================ */
 
-// فیلدهای Inspector به تفکیکِ نوعِ شیء — فقط داده‌ی دامنه؛ هندسه با دستگیره‌های بوم.
+// فیلدهای Inspector به تفکیکِ نوعِ شیء (مدلِ صافِ متری). هندسه با دستگیره‌های بوم.
 const OBJ_PROP_FIELDS = {
   crane: [
     { key: "model", labelKey: "lpPropModel" },
     { key: "weightKg", labelKey: "lpPropCraneWeight", num: true, unit: "kg" },
-    { key: "boomLengthM", labelKey: "lpPropBoomLen", num: true, unit: "m" },
-    { key: "boomAngleDeg", labelKey: "lpPropBoomAngle", num: true, unit: "°" },
     { key: "pads", labelKey: "lpPropPads", num: true },
     { key: "padArea", labelKey: "lpPropPadArea", num: true, unit: "m²" },
     { key: "chartRef", labelKey: "lpPropChartRef" },
@@ -39,30 +35,34 @@ const OBJ_PROP_FIELDS = {
   load: [
     { key: "label", labelKey: "lpPropLabel" },
     { key: "weightKg", labelKey: "lpPropWeight", num: true, unit: "kg" },
+    { key: "w", labelKey: "lpPropLength", num: true, unit: "m" },
+    { key: "h", labelKey: "lpPropWidthM", num: true, unit: "m" },
+    { key: "r", labelKey: "lpPropRadiusM", num: true, unit: "m" },
   ],
   hook: [
     { key: "weightKg", labelKey: "lpPropWeight", num: true, unit: "kg" },
     { key: "wllKg", labelKey: "lpPropWll", num: true, unit: "kg" },
     { key: "riggingH", labelKey: "lpPropRiggingH", num: true, unit: "m" },
   ],
-  sling: [
+  slingset: [
     { key: "wllKg", labelKey: "lpPropWll", num: true, unit: "kg" },
     { key: "weightKg", labelKey: "lpPropWeight", num: true, unit: "kg" },
     { key: "count", labelKey: "lpPropCount", num: true },
-    { key: "lengthM", labelKey: "lpPropLength", num: true, unit: "m" },
+    { key: "len", labelKey: "lpPropLength", num: true, unit: "m" },
   ],
   shackle: [
     { key: "wllKg", labelKey: "lpPropWll", num: true, unit: "kg" },
+    { key: "weightKg", labelKey: "lpPropWeight", num: true, unit: "kg" },
     { key: "count", labelKey: "lpPropCount", num: true },
   ],
-  spreader_beam: [
+  spreader: [
     { key: "wllKg", labelKey: "lpPropWll", num: true, unit: "kg" },
-    { key: "lengthM", labelKey: "lpPropLength", num: true, unit: "m" },
+    { key: "len", labelKey: "lpPropLength", num: true, unit: "m" },
     { key: "weightKg", labelKey: "lpPropWeight", num: true, unit: "kg" },
   ],
   power_line: [
-    { key: "voltageKv", labelKey: "lpPropVoltage", num: true, unit: "kV" },
-    { key: "clearanceM", labelKey: "lpPropClearance", num: true, unit: "m" },
+    { key: "kv", labelKey: "lpPropVoltage", num: true, unit: "kV" },
+    { key: "len", labelKey: "lpPropLength", num: true, unit: "m" },
   ],
   worker: [{ key: "role", labelKey: "lpPropRole" }],
   structure: [{ key: "label", labelKey: "lpPropLabel" }],
@@ -124,11 +124,8 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
     [scene, selObjId]
   );
 
-  // ---- موتورِ محاسبه + ایمنی (لحظه‌ای، مشتق‌شده از scene) ----
-  const engineObjs = useMemo(
-    () => sceneToEngineObjects(scene, { craneModels }),
-    [scene, craneModels]
-  );
+  // ---- موتورِ محاسبه + ایمنی (لحظه‌ای، مستقیم از objectsِ متریِ صحنه) ----
+  const engineObjs = useMemo(() => scene?.objects || [], [scene]);
   const calc = useMemo(
     () => computeLiftCalc(engineObjs, 0, 0, scene?.env || {}, criteria),
     [engineObjs, scene, criteria]
@@ -196,7 +193,7 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
     setBaseline(m);
     setErr("");
     setMode("edit");
-    const sc = p.scene && Array.isArray(p.scene.objects) ? clone(p.scene) : clone(EMPTY_SCENE);
+    const sc = normalizeScene(p.scene);
     setScene(sc);
     setSceneBaseline(clone(sc));
     setSelObjId(null);
@@ -207,16 +204,11 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
 
   const set = (k, v) => setMeta((prev) => ({ ...prev, [k]: v }));
 
-  // ---- عملیاتِ بوم ----
-  const addObject = (type) => {
-    const obj = makeObject(type);
-    setScene((s) => ({ ...s, objects: [...(s.objects || []), obj] }));
-    setSelObjId(obj.id);
-  };
-  const patchObjProp = (id, key, val) => {
+  // ---- ویرایشِ مشخصاتِ شیءِ انتخاب‌شده (مدلِ صافِ متری) ----
+  const patchObj = (id, next) => {
     setScene((s) => ({
       ...s,
-      objects: (s.objects || []).map((o) => (o.id === id ? { ...o, props: { ...o.props, [key]: val } } : o)),
+      objects: (s.objects || []).map((o) => (o.id === id ? { ...o, ...next } : o)),
     }));
   };
   const saveScene = async () => {
@@ -412,27 +404,12 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
           )}
         </div>
 
-        {/* بومِ دوبعدیِ داده‌محور */}
+        {/* بومِ Mini-CAD */}
         <div style={card}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 10 }}>
             <h3 style={{ margin: 0, fontSize: 14.5, fontWeight: 800, color: THEME.heading }}>{t("lpCanvasSection")}</h3>
             {isNew && <span style={{ fontSize: 11, color: THEME.text3 }}>{t("lpSceneNeedSaveFirst")}</span>}
           </div>
-
-          {!readOnly && (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(118px, 1fr))", gap: 7, marginBottom: 12 }}>
-              {LIFTING_OBJECT_META.map((m) => (
-                <button key={m.type} type="button" onClick={() => addObject(m.type)} disabled={isNew}
-                  style={{
-                    display: "inline-flex", alignItems: "center", gap: 7, textAlign: "start", fontFamily: THEME.font,
-                    fontSize: 12, fontWeight: 600, padding: "7px 10px", borderRadius: 9, cursor: isNew ? "default" : "pointer",
-                    border: `1px solid ${THEME.borderSoft}`, background: THEME.surface2, color: THEME.text, opacity: isNew ? 0.5 : 1,
-                  }}>
-                  <span aria-hidden style={{ fontSize: 14 }}>{m.emoji}</span>{t("lpObj_" + m.type)}
-                </button>
-              ))}
-            </div>
-          )}
 
           <LiftingPlanCanvas
             scene={scene}
@@ -448,22 +425,56 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
                 {t("lpInspSection")} — {t("lpObj_" + selObj.type)}
               </div>
               <div style={styles.formGridWide}>
-                {(OBJ_PROP_FIELDS[selObj.type] || []).map((f) => (
-                  <Field key={f.key} label={t(f.labelKey) + (f.unit ? ` (${f.unit})` : "")}>
-                    <input
-                      style={styles.input}
-                      type={f.num ? "number" : "text"}
-                      inputMode={f.num ? "decimal" : undefined}
-                      value={selObj.props?.[f.key] ?? ""}
-                      disabled={readOnly}
-                      onChange={(e) => patchObjProp(selObj.id, f.key, f.num ? (e.target.value === "" ? "" : Number(e.target.value)) : e.target.value)}
-                    />
+                <Field label="X (m)">
+                  <input style={styles.input} type="number" inputMode="decimal" disabled={readOnly}
+                    value={round2(selObj.x)} onChange={(e) => patchObj(selObj.id, { x: Number(e.target.value) || 0 })} />
+                </Field>
+                <Field label="Y (m)">
+                  <input style={styles.input} type="number" inputMode="decimal" disabled={readOnly}
+                    value={round2(selObj.y)} onChange={(e) => patchObj(selObj.id, { y: Number(e.target.value) || 0 })} />
+                </Field>
+                {"rot" in selObj && (
+                  <Field label={t("lpRotate") + " (°)"}>
+                    <input style={styles.input} type="number" inputMode="decimal" disabled={readOnly}
+                      value={selObj.rot || 0} onChange={(e) => patchObj(selObj.id, { rot: Number(e.target.value) || 0 })} />
                   </Field>
-                ))}
-                {(OBJ_PROP_FIELDS[selObj.type] || []).length === 0 && (
-                  <p style={{ fontSize: 11.5, color: THEME.text3, margin: 0 }}>{t("lpNoProps")}</p>
                 )}
+
+                {selObj.type === "crane" && (
+                  <Field label={t("lpFieldCraneModel")} full>
+                    <select style={styles.input} disabled={readOnly} value={selObj.craneModelId || ""}
+                      onChange={(e) => {
+                        const cm = craneModels.find((x) => x.id === e.target.value);
+                        patchObj(selObj.id, cm
+                          ? { craneModelId: cm.id, chart: Array.isArray(cm.loadChart) ? cm.loadChart : [], chartRef: cm.chartSource || "", model: cm.model || selObj.model }
+                          : { craneModelId: "" });
+                      }}>
+                      <option value="">{t("lpCraneModelNone")}</option>
+                      {craneModels.map((cm) => (
+                        <option key={cm.id} value={cm.id}>{[cm.manufacturer, cm.model].filter(Boolean).join(" ")}</option>
+                      ))}
+                    </select>
+                  </Field>
+                )}
+
+                {(OBJ_PROP_FIELDS[selObj.type] || [])
+                  .filter((f) => (f.key !== "r" || selObj.shape === "circle") && (!(f.key === "w" || f.key === "h") || selObj.shape !== "circle"))
+                  .map((f) => (
+                    <Field key={f.key} label={t(f.labelKey) + (f.unit ? ` (${f.unit})` : "")}>
+                      <input
+                        style={styles.input}
+                        type={f.num ? "number" : "text"}
+                        inputMode={f.num ? "decimal" : undefined}
+                        value={selObj[f.key] ?? ""}
+                        disabled={readOnly}
+                        onChange={(e) => patchObj(selObj.id, { [f.key]: f.num ? (e.target.value === "" ? "" : Number(e.target.value)) : e.target.value })}
+                      />
+                    </Field>
+                  ))}
               </div>
+              {selObj.type === "crane" && (!Array.isArray(selObj.chart) || selObj.chart.length === 0) && (
+                <p style={{ fontSize: 11, color: THEME.warn, margin: "8px 0 0" }}>{t("lpCraneNoChart")}</p>
+              )}
             </div>
           )}
 
@@ -663,6 +674,7 @@ function fmtN(n, d = 0) {
   return Number(n).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
 }
 const fmtKg = (n) => fmtN(n, 0);
+const round2 = (n) => (n == null ? "" : Math.round(n * 100) / 100);
 
 function CalcRow({ k, v, tone, strong }) {
   const color = tone === "bad" ? THEME.danger : tone === "warn" ? THEME.warn : tone === "ok" ? THEME.ok : THEME.text;
