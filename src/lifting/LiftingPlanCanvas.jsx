@@ -102,7 +102,8 @@ function screenToWorld(svg, cx, cy, zoom, pan) {
   return { x: (cx - r.left - pan.x) / (zoom * PPM), y: (cy - r.top - pan.y) / (zoom * PPM) };
 }
 
-export default function LiftingPlanCanvas({ scene, onChange, selectedId, onSelect, readOnly = false }) {
+export default function LiftingPlanCanvas({ scene, onChange, selectedId, onSelect, readOnly = false, simActive = false, simState = null }) {
+  const locked = readOnly || simActive;
   const { t } = useLanguage();
   const svgRef = useRef(null);
   const wrapRef = useRef(null);
@@ -208,9 +209,16 @@ export default function LiftingPlanCanvas({ scene, onChange, selectedId, onSelec
 
   /* ---------------- pointer ---------------- */
   const down = (e) => {
-    if (readOnly) {
-      const id = e.target?.getAttribute?.("data-id") || e.target?.parentNode?.getAttribute?.("data-id");
-      if (id) onSelect(id);
+    if (locked) {
+      if (readOnly && !simActive) {
+        const id = e.target?.getAttribute?.("data-id") || e.target?.parentNode?.getAttribute?.("data-id");
+        if (id) onSelect(id);
+      }
+      // اجازه‌ی Pan حتی در حالتِ شبیه‌سازی
+      if (tool === "pan" || spaceRef.current || e.button === 1) {
+        dragRef.current = { mode: "pan", sx: e.clientX, sy: e.clientY, px: pan.x, py: pan.y };
+        svgRef.current.classList.add("panning");
+      }
       return;
     }
     svgRef.current.setPointerCapture?.(e.pointerId);
@@ -363,7 +371,7 @@ export default function LiftingPlanCanvas({ scene, onChange, selectedId, onSelec
     <div style={{ direction: "ltr" }}>
       <style>{CSS}</style>
 
-      {!readOnly && (
+      {!locked && (
         <div className="lpc-toolbar">
           <TB id="select" on={tool === "select"} title={t("lpToolSelect")}><MousePointer2 size={15} /></TB>
           <TB id="pan" on={tool === "pan"} title={t("lpToolPan")}><Hand size={15} /></TB>
@@ -403,24 +411,47 @@ export default function LiftingPlanCanvas({ scene, onChange, selectedId, onSelec
             <line x1={-10000} y1={0} x2={10000} y2={0} stroke={THEME.border} strokeWidth={1 / zoom} />
             <line x1={0} y1={-10000} x2={0} y2={10000} stroke={THEME.border} strokeWidth={1 / zoom} />
 
-            {objs.map((o) => <ObjView key={o.id} o={o} sel={o.id === selectedId} zoom={zoom} m={m} readOnly={readOnly} />)}
-
-            {/* rigging: hook → load pick points (real-time) */}
             {(() => {
-              const hk = objs.find((o) => o.type === "hook");
-              const L = objs.find((o) => o.type === "load");
-              if (!hk || !L) return null;
-              return worldPicks(L).map((p, i) => (
-                <line key={i} x1={m(hk.x)} y1={m(hk.y)} x2={m(p.x)} y2={m(p.y)} stroke={THEME.warn} strokeWidth={2 / zoom} />
-              ));
-            })()}
+              // در حالتِ شبیه‌سازی: بار و قلاب روی موقعیتِ محاسبه‌شده‌ی مرحله می‌نشینند.
+              const sim = simActive && simState ? simState : null;
+              const L0 = objs.find((o) => o.type === "load");
+              const dx = sim && L0 ? sim.x - sim.pick.x : 0;
+              const dy = sim && L0 ? sim.y - sim.pick.y : 0;
+              const hookPos = sim ? { x: sim.x, y: sim.y } : (objs.find((o) => o.type === "hook") || null);
+              return (
+                <>
+                  {objs.map((o) => {
+                    const off = sim && o.type === "load" ? { ox: o.x + dx, oy: o.y + dy } : (sim && o.type === "hook" ? { ox: sim.x, oy: sim.y } : null);
+                    return <ObjView key={o.id} o={o} sel={o.id === selectedId} zoom={zoom} m={m} readOnly={locked} off={off} />;
+                  })}
 
-            {/* load travel path pick → target */}
-            {(() => {
-              const L = objs.find((o) => o.type === "load");
-              const tg = objs.find((o) => o.type === "target");
-              if (!L || !tg) return null;
-              return <line x1={m(L.x)} y1={m(L.y)} x2={m(tg.x)} y2={m(tg.y)} stroke="#a78bfa" strokeWidth={2 / zoom} strokeDasharray={`${3 / zoom} ${5 / zoom}`} />;
+                  {/* rigging: hook → load pick points (real-time) */}
+                  {(() => {
+                    const L = L0;
+                    if (!hookPos || !L) return null;
+                    const Lm = sim ? { ...L, x: L.x + dx, y: L.y + dy } : L;
+                    return worldPicks(Lm).map((p, i) => (
+                      <line key={i} x1={m(hookPos.x)} y1={m(hookPos.y)} x2={m(p.x)} y2={m(p.y)} stroke={THEME.warn} strokeWidth={2 / zoom} />
+                    ));
+                  })()}
+
+                  {/* load travel path pick → target */}
+                  {(() => {
+                    const L = L0;
+                    const tg = objs.find((o) => o.type === "target");
+                    if (!L || !tg) return null;
+                    return <line x1={m(L.x)} y1={m(L.y)} x2={m(tg.x)} y2={m(tg.y)} stroke="#a78bfa" strokeWidth={2 / zoom} strokeDasharray={`${3 / zoom} ${5 / zoom}`} />;
+                  })()}
+
+                  {/* slew arc (شبیه‌سازی) */}
+                  {sim && (() => {
+                    const c = objs.find((o) => o.type === "crane");
+                    if (!c) return null;
+                    const r = Math.hypot(sim.x - c.x, sim.y - c.y);
+                    return <circle cx={m(c.x)} cy={m(c.y)} r={m(r)} fill="none" stroke="#a78bfa" strokeWidth={1.5 / zoom} strokeDasharray={`${4 / zoom} ${4 / zoom}`} opacity="0.7" />;
+                  })()}
+                </>
+              );
             })()}
 
             {/* polygon draft */}
@@ -430,7 +461,7 @@ export default function LiftingPlanCanvas({ scene, onChange, selectedId, onSelec
             )}
 
             {/* selection handles */}
-            {sel && !readOnly && <Handles o={sel} zoom={zoom} m={m} />}
+            {sel && !locked && <Handles o={sel} zoom={zoom} m={m} />}
           </g>
         </svg>
       </div>
@@ -456,7 +487,8 @@ function GridLayer({ pan, zoom, wrapRef }) {
   return <g>{lines}</g>;
 }
 
-function ObjView({ o, sel, zoom, m, readOnly }) {
+function ObjView({ o: o0, sel, zoom, m, readOnly, off }) {
+  const o = off ? { ...o0, x: off.ox, y: off.oy } : o0;
   const sw = (n) => n / zoom;
   const teal = THEME.teal, ink = THEME.text3, steel = THEME.text2;
   const wrap = (children) => (

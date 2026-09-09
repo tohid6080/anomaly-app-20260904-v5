@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Construction, Plus, Copy, Archive, ArchiveRestore, Trash2, GitBranch,
   History, ClipboardList, ChevronDown, ChevronRight, Save, X,
@@ -73,6 +73,8 @@ const OBJ_PROP_FIELDS = {
 
 const clone = (v) => JSON.parse(JSON.stringify(v || null));
 
+const LIFT_PHASE_KEYS = ["lpPhaseSetup", "lpPhasePick", "lpPhaseLift", "lpPhaseSlew", "lpPhaseTravel", "lpPhasePlace"];
+
 const EMPTY_META = {
   planNumber: "", revision: "0", planDate: "", project: "", contractorId: "",
   contractorName: "", title: "", preparedBy: "", reviewedBy: "", approvedBy: "", status: "draft",
@@ -115,6 +117,14 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
   const [sceneSaving, setSceneSaving] = useState(false);
   const [craneModels, setCraneModels] = useState([]);
   const [criteria, setCriteria] = useState(DEFAULT_CRITERIA);
+  // ---- تایم‌لاینِ شبیه‌سازی ----
+  const [phase, setPhase] = useState(0);
+  const [frac, setFrac] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const rafRef = useRef(0);
+  const lastRef = useRef(0);
+  const progRef = useRef(0);
+  const simActive = playing || phase > 0 || frac > 0;
   const sceneDirty = useMemo(
     () => JSON.stringify(scene) !== JSON.stringify(sceneBaseline),
     [scene, sceneBaseline]
@@ -124,11 +134,11 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
     [scene, selObjId]
   );
 
-  // ---- موتورِ محاسبه + ایمنی (لحظه‌ای، مستقیم از objectsِ متریِ صحنه) ----
+  // ---- موتورِ محاسبه + ایمنی (لحظه‌ای؛ در حالتِ شبیه‌سازی با مرحله/کسرِ جاری) ----
   const engineObjs = useMemo(() => scene?.objects || [], [scene]);
   const calc = useMemo(
-    () => computeLiftCalc(engineObjs, 0, 0, scene?.env || {}, criteria),
-    [engineObjs, scene, criteria]
+    () => computeLiftCalc(engineObjs, phase, frac, scene?.env || {}, criteria),
+    [engineObjs, scene, criteria, phase, frac]
   );
   const safety = useMemo(() => validateLiftingPlan(engineObjs, calc), [engineObjs, calc]);
   const calcReady = useMemo(
@@ -149,6 +159,41 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
 
   const setEnv = (k, v) =>
     setScene((s) => ({ ...s, env: { ...(s.env || EMPTY_SCENE.env), [k]: v } }));
+
+  // حلقه‌ی انیمیشنِ تایم‌لاین — پیشرفتِ پیوسته ۰..۶ در progRef؛ ~۲٫۸s هر مرحله.
+  const setProgress = useCallback((p) => {
+    const c = Math.max(0, Math.min(6, p));
+    progRef.current = c;
+    setPhase(Math.min(5, Math.floor(c)));
+    setFrac(c >= 6 ? 1 : c - Math.floor(c));
+  }, []);
+
+  useEffect(() => {
+    if (!playing) { cancelAnimationFrame(rafRef.current); lastRef.current = 0; return; }
+    const step = (ts) => {
+      if (!lastRef.current) lastRef.current = ts;
+      const dt = (ts - lastRef.current) / 1000;
+      lastRef.current = ts;
+      const p = progRef.current + dt * 0.36;
+      if (p >= 6) { setProgress(6); setPlaying(false); return; }
+      setProgress(p);
+      rafRef.current = requestAnimationFrame(step);
+    };
+    rafRef.current = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [playing, setProgress]);
+
+  useEffect(() => {
+    if (mode !== "edit") { setPlaying(false); progRef.current = 0; setPhase(0); setFrac(0); }
+  }, [mode, editId]);
+
+  const resetSim = () => { setPlaying(false); lastRef.current = 0; setProgress(0); };
+  const gotoPhase = (i) => { setPlaying(false); setProgress(i); };
+  const togglePlay = () => {
+    if (!playing && progRef.current >= 6) setProgress(0);
+    lastRef.current = 0;
+    setPlaying((v) => !v);
+  };
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -417,9 +462,51 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
             selectedId={selObjId}
             onSelect={setSelObjId}
             readOnly={readOnly || isNew}
+            simActive={simActive}
+            simState={calcReady ? calc.sim : null}
           />
 
-          {selObj && (
+          {/* تایم‌لاینِ شبیه‌سازیِ مراحلِ لیفت */}
+          {calcReady && (
+            <div style={{ marginTop: 12, border: `1px solid ${THEME.borderSoft}`, borderRadius: 10, padding: "10px 12px", background: THEME.surface2 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <button type="button" onClick={togglePlay}
+                  style={{ width: 34, height: 34, borderRadius: 9, border: "none", background: THEME.teal, color: "#fff", fontSize: 15, cursor: "pointer", flexShrink: 0 }}>
+                  {playing ? "❚❚" : "►"}
+                </button>
+                <div style={{ display: "flex", gap: 4, flex: 1, minWidth: 220 }}>
+                  {LIFT_PHASE_KEYS.map((pk, i) => {
+                    const on = i === phase;
+                    const fillPct = i < phase ? 100 : i === phase ? frac * 100 : 0;
+                    return (
+                      <button key={pk} type="button" onClick={() => gotoPhase(i)}
+                        style={{ flex: 1, position: "relative", overflow: "hidden", border: `1px solid ${on ? THEME.teal : THEME.border}`, background: on ? THEME.teal : THEME.surface, color: on ? "#fff" : THEME.text3, borderRadius: 7, padding: "6px 3px", fontSize: 10, fontWeight: 800, cursor: "pointer", fontFamily: THEME.font }}>
+                        <span style={{ position: "absolute", insetBlock: 0, insetInlineStart: 0, width: `${fillPct}%`, background: on ? "rgba(255,255,255,.25)" : `${THEME.teal}33` }} />
+                        <span style={{ position: "relative" }}>{t(pk)}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <input type="range" min="0" max="600" value={Math.round((phase + frac) * 100)}
+                  onChange={(e) => setProgress(Number(e.target.value) / 100)}
+                  style={{ width: 130, flexShrink: 0 }} />
+                <span style={{ fontSize: 11, fontFamily: THEME.font, color: THEME.text2, minWidth: 96, textAlign: "center" }}>
+                  {t(LIFT_PHASE_KEYS[phase])} · {Math.round(frac * 100)}٪
+                </span>
+                {simActive && (
+                  <button type="button" onClick={resetSim}
+                    style={{ ...styles.smallButton, background: THEME.surface, color: THEME.text2, border: `1px solid ${THEME.border}` }}>
+                    {t("lpSimExit")}
+                  </button>
+                )}
+              </div>
+              {simActive && (
+                <p style={{ margin: "8px 0 0", fontSize: 10.5, color: THEME.warn }}>{t("lpSimMode")}</p>
+              )}
+            </div>
+          )}
+
+          {selObj && !simActive && (
             <div style={{ marginTop: 14, border: `1px solid ${THEME.borderSoft}`, borderRadius: 10, padding: "12px 14px", background: THEME.surface2 }}>
               <div style={{ fontSize: 12, fontWeight: 800, color: THEME.heading, marginBottom: 8 }}>
                 {t("lpInspSection")} — {t("lpObj_" + selObj.type)}
