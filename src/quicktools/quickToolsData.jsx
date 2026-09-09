@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, lazy, Suspense } from "react";
 import {
   Sigma, Construction, Flame, FlaskConical, Zap, Wind, Atom, HardHat, Leaf,
   Wrench, ArrowRightLeft, Volume2,
@@ -336,6 +336,20 @@ function RadZonesTool({ lang }) {
 }
 
 /* --------------------------- registry ---------------------------- */
+/* --------------------- ابزارِ full-bleed: طراحی نقشه‌ی لیفتینگ --------------------- *
+ * برخلافِ بقیهٔ ابزارها که سبک و client-side‌اند، این یک میان‌بر به Workspaceِ
+ * کاملِ ماژولِ «طراحی نقشه‌ی لیفتینگ» است (همان دیتابیس، نسخه‌بندی و Audit
+ * Trail). با flagِ full:true رجیستر می‌شود تا پنلِ ابزار بدونِ سقفِ عرض و
+ * بدونِ کارتِ دورگیر نمایش دهد. lazy است تا در چانکِ خودِ ماژول بماند.       */
+const LiftingPlanWorkspace = lazy(() => import("../lifting/LiftingPlanWorkspace.jsx"));
+function LiftingPlanBridge({ currentUser, wide }) {
+  return (
+    <Suspense fallback={<div style={{ padding: 24, fontSize: 13, color: THEME.text3, fontFamily: THEME.font }}>…</div>}>
+      <LiftingPlanWorkspace currentUser={currentUser} role={currentUser?.role || "EMPLOYER"} wide={wide} />
+    </Suspense>
+  );
+}
+
 export const QUICK_TOOLS = [
   { id: "unit-converter", cat: "general", icon: ArrowRightLeft, Tool: UnitConverter,
     title: { fa: "مبدل واحدها", en: "Unit converter", de: "Einheitenrechner" },
@@ -361,4 +375,7 @@ export const QUICK_TOOLS = [
   { id: "rad-distance", cat: "rad", icon: Atom, Tool: RadDistanceTool,
     title: { fa: "فاصلهٔ ایمنِ پرتونگاری (بر پایهٔ آهنگِ دُز)", en: "Radiography safe distance (dose-rate)", de: "Sicherer Abstand Radiografie (Dosisleistung)" },
     desc: { fa: "قانونِ عکسِ مجذور برای مرزِ ناحیهٔ کنترل‌شده", en: "Inverse-square law for the controlled-area boundary", de: "Abstandsquadratgesetz für die Sperrgrenze" } },
+  { id: "lifting-plan", cat: "lifting", icon: Construction, Tool: LiftingPlanBridge, full: true,
+    title: { fa: "طراحی نقشه‌ی لیفتینگ", en: "Lifting Plan Designer", de: "Hebeplan-Designer" },
+    desc: { fa: "میان‌بر به Workspaceِ کامل: بومِ داده‌محور، محاسبه بر پایهٔ Load Chart، نسخه‌بندی و Audit Trail", en: "Shortcut to the full workspace: data-driven canvas, load-chart calculations, versioning and audit trail", de: "Verknüpfung zum vollständigen Arbeitsbereich: datengesteuerte Zeichenfläche, Traglasttabellen-Berechnung, Versionierung und Audit-Trail" } },
 ];

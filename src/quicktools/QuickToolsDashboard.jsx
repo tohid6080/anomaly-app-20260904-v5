@@ -66,13 +66,27 @@ export default function QuickToolsDashboard({ currentUser, onBack, wide }) {
     if (!tool) { setActive(null); return null; }
     const Tool = tool.Tool;
     const isFav = favList.includes(tool.id);
+    const backBtn = (
+      <button type="button" onClick={() => setActive(null)}
+        style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 700, color: THEME.text2, border: `1px solid ${THEME.border}`, background: "transparent", borderRadius: 9, padding: "7px 12px", cursor: "pointer", fontFamily: THEME.font, marginBottom: 14 }}>
+        <Back size={14} /> {tt("back")}
+      </button>
+    );
+    // ابزارهای full: یک میان‌بر به Workspaceِ کاملِ یک ماژول — بدونِ سقفِ عرض،
+    // بدونِ کارتِ دورگیر/هدرِ آیکون/disclaimer (خودِ Workspace هدر و کارت دارد).
+    if (tool.full) {
+      return (
+        <div style={{ direction: dir }}>
+          <style>{QT_CSS}</style>
+          {backBtn}
+          <Tool lang={lang} dir={dir} currentUser={currentUser} wide={wide} />
+        </div>
+      );
+    }
     return (
       <div style={{ direction: dir, maxWidth: 620, margin: wide ? undefined : "0 auto" }}>
         <style>{QT_CSS}</style>
-        <button type="button" onClick={() => setActive(null)}
-          style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 700, color: THEME.text2, border: `1px solid ${THEME.border}`, background: "transparent", borderRadius: 9, padding: "7px 12px", cursor: "pointer", fontFamily: THEME.font, marginBottom: 14 }}>
-          <Back size={14} /> {tt("back")}
-        </button>
+        {backBtn}
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
           <span style={{ width: 44, height: 44, borderRadius: 12, background: THEME.tealSoft, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <tool.icon size={20} color={THEME.tealDeep} />
@@ -87,7 +101,7 @@ export default function QuickToolsDashboard({ currentUser, onBack, wide }) {
           </button>
         </div>
         <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 16, padding: "16px 16px 18px" }}>
-          <Tool lang={lang} dir={dir} />
+          <Tool lang={lang} dir={dir} currentUser={currentUser} wide={wide} />
         </div>
         <p style={{ fontSize: 10.5, color: THEME.text3, marginTop: 12, lineHeight: 1.8 }}>{tt("disclaimer")}</p>
       </div>
