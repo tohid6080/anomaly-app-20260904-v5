@@ -53,6 +53,7 @@ export default function QuickToolsDashboard({ currentUser, onBack, wide }) {
     search: { fa: "جست‌وجوی ابزار…", en: "Search a tool…", de: "Werkzeug suchen…" },
     all: { fa: "همه", en: "All", de: "Alle" },
     fav: { fa: "برگزیده‌ها", en: "Favorites", de: "Favoriten" },
+    clearFav: { fa: "پاک‌کردنِ همهٔ برگزیده‌ها", en: "Clear all favorites", de: "Alle Favoriten löschen" },
     none: { fa: "ابزاری با این فیلتر پیدا نشد", en: "No tools match this filter", de: "Keine Werkzeuge für diesen Filter" },
     back: { fa: "بازگشت به ابزارها", en: "Back to tools", de: "Zurück zu den Werkzeugen" },
     disclaimer: { fa: "این ابزارها کمکِ سریع‌اند و جایگزینِ محاسبهٔ رسمی، استانداردِ محلی یا نظرِ کارشناسِ ذی‌صلاح نیستند.", en: "These tools are quick aids and do not replace formal calculation, local standards or a competent person's judgement.", de: "Diese Werkzeuge sind Schnellhilfen und ersetzen keine formale Berechnung, lokale Normen oder das Urteil einer befähigten Person." },
@@ -133,6 +134,15 @@ export default function QuickToolsDashboard({ currentUser, onBack, wide }) {
           );
         })}
       </div>
+
+      {cat === "fav" && favList.length > 0 && (
+        <div style={{ marginBottom: 12 }}>
+          <button type="button" onClick={() => setFav([])}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 700, color: THEME.danger, border: `1px solid ${THEME.danger}55`, background: "transparent", borderRadius: 9, padding: "6px 12px", cursor: "pointer", fontFamily: THEME.font }}>
+            <X size={13} /> {tt("clearFav")}
+          </button>
+        </div>
+      )}
 
       {list.length === 0 ? (
         <p style={{ fontSize: 12.5, color: THEME.text3, textAlign: "center", padding: "36px 10px" }}>{tt("none")}</p>
