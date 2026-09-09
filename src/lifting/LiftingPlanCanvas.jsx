@@ -43,7 +43,7 @@ export function makeObject(type, at = {}) {
   const B = { id: nid(type), type, x, y, rot: 0 };
   switch (type) {
     case "crane":
-      return { ...B, model: "", weightKg: 50000, pads: 4, padArea: 0.5, craneModelId: "", chart: [], chartRef: "" };
+      return { ...B, model: "", weightKg: 50000, pads: 4, padArea: 0.5, craneModelId: "", machineryId: "", chart: [], chartRef: "" };
     case "hook":
       return { ...B, weightKg: 200, wllKg: 20000, riggingH: 4 };
     case "slingset":

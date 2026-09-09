@@ -17,6 +17,8 @@ import {
 import LiftingPlanCanvas from "./LiftingPlanCanvas.jsx";
 import { computeLiftCalc, DEFAULT_CRITERIA } from "./liftingCalcEngine.js";
 import { validateLiftingPlan } from "./liftingSafetyEngine.js";
+import { loadPersonnelList } from "../personnel/personnelApi.js";
+import { loadMachineryList } from "../machinery/machineryApi.js";
 
 /* ============================================================================ *
  * Lifting Plan Designer — Workspace: فهرست + فرمِ متادیتا + بومِ Mini-CAD +
@@ -117,6 +119,8 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
   const [sceneSaving, setSceneSaving] = useState(false);
   const [craneModels, setCraneModels] = useState([]);
   const [criteria, setCriteria] = useState(DEFAULT_CRITERIA);
+  const [personnelList, setPersonnelList] = useState([]);
+  const [machineryList, setMachineryList] = useState([]);
   // ---- تایم‌لاینِ شبیه‌سازی ----
   const [phase, setPhase] = useState(0);
   const [frac, setFrac] = useState(0);
@@ -148,12 +152,18 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
 
   useEffect(() => {
     let alive = true;
-    Promise.all([loadCraneModels({ activeOnly: true }).catch(() => []), loadAcceptanceCriteria().catch(() => null)])
-      .then(([models, crit]) => {
-        if (!alive) return;
-        setCraneModels(Array.isArray(models) ? models : []);
-        if (crit && crit.criteria) setCriteria({ ...DEFAULT_CRITERIA, ...crit.criteria });
-      });
+    Promise.all([
+      loadCraneModels({ activeOnly: true }).catch(() => []),
+      loadAcceptanceCriteria().catch(() => null),
+      loadPersonnelList().catch(() => []),
+      loadMachineryList().catch(() => []),
+    ]).then(([models, crit, people, machines]) => {
+      if (!alive) return;
+      setCraneModels(Array.isArray(models) ? models : []);
+      if (crit && crit.criteria) setCriteria({ ...DEFAULT_CRITERIA, ...crit.criteria });
+      setPersonnelList(Array.isArray(people) ? people : []);
+      setMachineryList(Array.isArray(machines) ? machines : []);
+    });
     return () => { alive = false; };
   }, []);
 
@@ -539,6 +549,44 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
                       <option value="">{t("lpCraneModelNone")}</option>
                       {craneModels.map((cm) => (
                         <option key={cm.id} value={cm.id}>{[cm.manufacturer, cm.model].filter(Boolean).join(" ")}</option>
+                      ))}
+                    </select>
+                  </Field>
+                )}
+
+                {selObj.type === "crane" && (
+                  <Field label={t("lpFieldMachinery")} full>
+                    <select style={styles.input} disabled={readOnly} value={selObj.machineryId || ""}
+                      onChange={(e) => {
+                        const mm = machineryList.find((x) => x.id === e.target.value);
+                        patchObj(selObj.id, mm
+                          ? { machineryId: mm.id, model: selObj.model || mm.machineName || "" }
+                          : { machineryId: "" });
+                      }}>
+                      <option value="">{t("lpMachineryNone")}</option>
+                      {machineryList.map((mm) => (
+                        <option key={mm.id} value={mm.id}>
+                          {[mm.machineName, mm.plateNumber, mm.contractorName].filter(Boolean).join(" · ")}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                )}
+
+                {selObj.type === "worker" && (
+                  <Field label={t("lpFieldPersonnel")} full>
+                    <select style={styles.input} disabled={readOnly} value={selObj.personnelId || ""}
+                      onChange={(e) => {
+                        const pr = personnelList.find((x) => x.id === e.target.value);
+                        patchObj(selObj.id, pr
+                          ? { personnelId: pr.id, role: pr.jobTitle || pr.fullName || selObj.role || "" }
+                          : { personnelId: "" });
+                      }}>
+                      <option value="">{t("lpPersonnelNone")}</option>
+                      {personnelList.map((pr) => (
+                        <option key={pr.id} value={pr.id}>
+                          {[pr.fullName, pr.jobTitle, pr.contractorName].filter(Boolean).join(" · ")}
+                        </option>
                       ))}
                     </select>
                   </Field>

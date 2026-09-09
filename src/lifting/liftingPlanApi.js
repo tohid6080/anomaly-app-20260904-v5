@@ -70,7 +70,7 @@ export function normalizeScene(scene) {
         picks: [{ x: -(wm || 4) / 2 * 0.8, y: -(hm || 2) / 2 * 0.8 }, { x: (wm || 4) / 2 * 0.8, y: -(hm || 2) / 2 * 0.8 },
           { x: (wm || 4) / 2 * 0.8, y: (hm || 2) / 2 * 0.8 }, { x: -(wm || 4) / 2 * 0.8, y: (hm || 2) / 2 * 0.8 }] };
     }
-    if (o.type === "crane") return { ...b, model: p.model || "", weightKg: +p.weightKg || 50000, pads: +p.pads || 4, padArea: +p.padArea || 0.5, craneModelId: p.craneModelId || "", chart: Array.isArray(p.chart) ? p.chart : [], chartRef: p.chartRef || "" };
+    if (o.type === "crane") return { ...b, model: p.model || "", weightKg: +p.weightKg || 50000, pads: +p.pads || 4, padArea: +p.padArea || 0.5, craneModelId: p.craneModelId || "", machineryId: p.machineryId || "", chart: Array.isArray(p.chart) ? p.chart : [], chartRef: p.chartRef || "" };
     if (o.type === "hook") return { ...b, weightKg: +p.weightKg || 200, wllKg: +p.wllKg || 20000, riggingH: +p.riggingH || 4 };
     if (o.type === "sling") return { ...b, type: "slingset", count: +p.count || 4, wllKg: +p.wllKg || 10000, weightKg: +p.weightKg || 120, len: +p.lengthM || 6 };
     if (o.type === "shackle") return { ...b, count: +p.count || 4, wllKg: +p.wllKg || 9500, weightKg: +p.weightKg || 120 };
