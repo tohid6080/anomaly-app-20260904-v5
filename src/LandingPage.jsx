@@ -131,6 +131,11 @@ const LP_CSS = `
 .ihms-lp .mcard .mD{font-size:12px;color:${C.ink2};line-height:1.7;flex:1}
 .ihms-lp .mcard .more{font-size:11.5px;font-weight:800;color:${C.tealDeep};display:inline-flex;align-items:center;gap:5px}
 
+.ihms-lp .qt-block{margin-top:48px;padding-top:40px;border-top:1px solid ${C.line}}
+.ihms-lp .qt-grid{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;max-width:940px;margin:0 auto}
+.ihms-lp .qt-chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:${C.ink};
+  background:${C.tealSoft};border:1px solid ${C.line};border-radius:999px;padding:7px 14px}
+
 .ihms-lp .showcase{background:${C.bgSoft}}
 .ihms-lp .feat{display:flex;gap:12px;align-items:flex-start;padding:14px 0;border-bottom:1px solid ${C.line}}
 .ihms-lp .feat:last-child{border-bottom:0}
@@ -192,7 +197,7 @@ const L = {
     heroEyebrow: "سامانه یکپارچه مدیریت HSE",
     heroH1a: "مدیریت هوشمند HSE", heroH1b: "از گزارش تا تصمیم‌گیری",
     heroLede: "IHMS یک سامانهٔ جامع و یکپارچه برای مدیریت ایمنی، بهداشت، محیط‌زیست و فرآیندهای HSE سازمان است؛ با استفاده از اطلاعات واقعی، فرآیندهای سازمان را یکپارچه کنید، ریسک‌ها را کنترل کنید و تصمیم‌های دقیق‌تری بگیرید.",
-    ctaPrimary: "مشاهده پلن‌ها برای خرید", ctaSecondary: "مشاهده امکانات", login: "ورود کاربران",
+    ctaPrimary: "همین الان رایگان شروع کنید", ctaPlans: "مشاهده پلن‌ها برای خرید", ctaSecondary: "مشاهده امکانات", login: "ورود کاربران",
     ticks: ["شروع سریع", "دسترسی تحت وب و موبایل", "مدیریت یکپارچه HSE"],
     annTitle: "نسخهٔ جدید سامانهٔ IHMS منتشر شد", annBody: "امکانات جدید و بهبودهای سامانه را مشاهده کنید.",
     annDate: "۱۴۰۵/۰۶/۱۸", annBtn: "مشاهده اطلاعیه", annAll: "مشاهده همه اطلاعیه‌ها",
@@ -219,6 +224,17 @@ const L = {
     ],
     modEyebrow: "ماژول‌ها", modH2: "همه ابزارهای موردنیاز HSE در یک سامانه",
     modSub: "تمامی ماژول‌های مورد نیاز مدیریت HSE در یک بستر یکپارچه.",
+    qtEyebrow: "ابزارهای سریع HSE",
+    qtH2: "ابزارهای محاسباتیِ آمادهٔ HSE، داخلِ همین سامانه",
+    qtSub: "ده‌ها ماشین‌حسابِ تخصصیِ ایمنی، لیفتینگ و پرتونگاری — بدونِ نصب، همیشه در دسترس.",
+    qtList: [
+      "مبدل واحدها", "LTIFR و نرخِ شدت", "TRIR", "ترکیبِ ترازِ صدا",
+      "درصدِ بارِ جرثقیل", "ضریبِ زاویهٔ اسلینگ", "محاسبهٔ زاویهٔ اسلینگ", "کششِ پایه‌های اسلینگ",
+      "بارِ مجازِ شگل", "محاسبهٔ وزنِ بار", "مرکزِ ثقلِ بار (CG)", "شعاعِ کاری و ظرفیتِ جرثقیل",
+      "فشارِ واردشده به زمین", "بارِ جک‌های جرثقیل", "بارِ نقاطِ لیفت", "درصدِ استفاده از ظرفیتِ ریگینگ (WLL)",
+      "ارزیابیِ سریعِ ریسکِ لیفتینگ", "شعاعِ نواحیِ رادیوگرافی", "فاصلهٔ ایمنِ پرتونگاری",
+      "طراحی نقشهٔ لیفتینگ", "محاسبه‌گرِ شیب و عرضِ ایمنِ گودبرداری", "محاسبه و پایشِ مصرفِ برق", "محاسبهٔ مصرفِ سوختِ ناوگان",
+    ],
     modCats: ["همه", "ایمنی", "بهداشت", "محیط زیست", "مدیریت", "گزارش‌گیری"],
     modMore: "مشاهده جزئیات", soon: "به‌زودی",
     mods: [
@@ -287,7 +303,7 @@ const L = {
     heroEyebrow: "Integrated HSE Management System",
     heroH1a: "Smart HSE management", heroH1b: "from report to decision",
     heroLede: "IHMS is a complete, integrated platform for managing your organisation's safety, health, environment and HSE processes. Use real data to unify your workflows, control risk and make sharper decisions.",
-    ctaPrimary: "View plans to buy", ctaSecondary: "See features", login: "Sign in",
+    ctaPrimary: "Start free now", ctaPlans: "View plans to buy", ctaSecondary: "See features", login: "Sign in",
     ticks: ["Quick setup", "Web & mobile access", "Unified HSE management"],
     annTitle: "A new version of IHMS has been released", annBody: "See the new features and improvements.",
     annDate: "2026/09/09", annBtn: "View announcement", annAll: "View all announcements",
@@ -314,6 +330,17 @@ const L = {
     ],
     modEyebrow: "Modules", modH2: "Every HSE tool you need in one system",
     modSub: "All the modules HSE management needs, on one integrated platform.",
+    qtEyebrow: "HSE Quick Tools",
+    qtH2: "Ready-made HSE calculators, built into the same system",
+    qtSub: "Dozens of specialist safety, lifting and radiography calculators — nothing to install, always available.",
+    qtList: [
+      "Unit converter", "LTIFR & severity rate", "TRIR", "Combine sound levels",
+      "Crane load %", "Sling angle factor", "Sling angle calculation", "Sling leg tension",
+      "Shackle allowable load", "Load weight calculation", "Load centre of gravity (CG)", "Working radius & crane capacity",
+      "Ground bearing pressure", "Load on crane jacks", "Load on lift points", "Rigging WLL utilisation",
+      "Quick lifting risk assessment", "Radiography zone radii", "Radiography safe distance",
+      "Lifting Plan Designer", "Excavation slope & width calculator", "Electricity consumption calculator", "Fleet fuel calculator",
+    ],
     modCats: ["All", "Safety", "Health", "Environment", "Management", "Reporting"],
     modMore: "Details", soon: "Coming soon",
     mods: [
@@ -382,7 +409,7 @@ const L = {
     heroEyebrow: "Integriertes HSE-Managementsystem",
     heroH1a: "Intelligentes HSE-Management", heroH1b: "vom Bericht bis zur Entscheidung",
     heroLede: "IHMS ist eine vollständige, integrierte Plattform für das Management von Sicherheit, Gesundheit, Umwelt und HSE-Prozessen Ihrer Organisation. Nutzen Sie echte Daten, um Abläufe zu vereinheitlichen, Risiken zu steuern und fundiertere Entscheidungen zu treffen.",
-    ctaPrimary: "Tarife zum Kauf ansehen", ctaSecondary: "Funktionen ansehen", login: "Anmelden",
+    ctaPrimary: "Jetzt kostenlos starten", ctaPlans: "Tarife zum Kauf ansehen", ctaSecondary: "Funktionen ansehen", login: "Anmelden",
     ticks: ["Schnelle Einrichtung", "Web- & Mobilzugriff", "Einheitliches HSE-Management"],
     annTitle: "Eine neue Version von IHMS wurde veröffentlicht", annBody: "Sehen Sie die neuen Funktionen und Verbesserungen.",
     annDate: "09.09.2026", annBtn: "Ankündigung ansehen", annAll: "Alle Ankündigungen ansehen",
@@ -409,6 +436,17 @@ const L = {
     ],
     modEyebrow: "Module", modH2: "Alle benötigten HSE-Werkzeuge in einem System",
     modSub: "Alle Module, die das HSE-Management braucht, auf einer integrierten Plattform.",
+    qtEyebrow: "HSE-Schnellwerkzeuge",
+    qtH2: "Fertige HSE-Rechner, direkt im selben System",
+    qtSub: "Dutzende Fachrechner für Sicherheit, Hebevorgänge und Radiografie — ohne Installation, jederzeit verfügbar.",
+    qtList: [
+      "Einheitenrechner", "LTIFR & Schwererate", "TRIR", "Schallpegel kombinieren",
+      "Kranlast %", "Anschlagwinkel-Faktor", "Berechnung des Anschlagwinkels", "Zugkraft der Anschlagstränge",
+      "Zulässige Schäkellast", "Berechnung des Lastgewichts", "Lastschwerpunkt (CG)", "Arbeitsradius & Kranfähigkeit",
+      "Bodendruckberechnung", "Last auf Kranstützen", "Last an den Anschlagpunkten", "WLL-Auslastung der Anschlagmittel",
+      "Schnelle Risikobewertung für Hebevorgänge", "Radiografie-Zonenradien", "Sicherer Abstand Radiografie",
+      "Hebeplan-Designer", "Rechner für Böschungsneigung und Grabenbreite", "Stromverbrauchsrechner", "Kraftstoffverbrauchsrechner für den Fuhrpark",
+    ],
     modCats: ["Alle", "Sicherheit", "Gesundheit", "Umwelt", "Management", "Berichte"],
     modMore: "Details", soon: "Demnächst",
     mods: [
@@ -554,7 +592,8 @@ function useReveal() {
   return ref;
 }
 
-export default function LandingPage({ onStartFree, onUserLogin, announcements, logoUrl, systemName, heroImageUrl }) {
+export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, announcements, logoUrl, systemName, heroImageUrl }) {
+  const viewPlans = onViewPlans || onStartFree;
   const { lang, setLang } = useLanguage();
   const x = L[lang] || L.fa;
   const dir = lang === "fa" ? "rtl" : "ltr";
@@ -613,6 +652,9 @@ export default function LandingPage({ onStartFree, onUserLogin, announcements, l
             <span className="spacer" />
             {langSwitch}
             <button type="button" className="link-login" onClick={onUserLogin}>{x.login}</button>
+            <button type="button" className="btn btn-ghost" style={{ padding: "11px 16px", fontSize: 13 }} onClick={viewPlans}>
+              {x.ctaPlans}
+            </button>
             <button type="button" className="btn btn-primary" style={{ padding: "11px 18px", fontSize: 13.5 }} onClick={onStartFree}>
               {x.ctaPrimary}
             </button>
@@ -628,6 +670,7 @@ export default function LandingPage({ onStartFree, onUserLogin, announcements, l
             ))}
             <div style={{ marginTop: 10 }}>{langSwitch}</div>
             <button type="button" className="btn btn-login" style={{ marginTop: 8 }} onClick={() => { setMNav(false); onUserLogin(); }}>{x.login}</button>
+            <button type="button" className="btn btn-ghost" style={{ marginTop: 8 }} onClick={() => { setMNav(false); viewPlans(); }}>{x.ctaPlans}</button>
             <button type="button" className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => { setMNav(false); onStartFree(); }}>{x.ctaPrimary}</button>
           </div>
         </div>
@@ -643,6 +686,7 @@ export default function LandingPage({ onStartFree, onUserLogin, announcements, l
               <p className="lede">{x.heroLede}</p>
               <div className="cta">
                 <button type="button" className="btn btn-primary btn-lg" onClick={onStartFree}>{x.ctaPrimary}</button>
+                <button type="button" className="btn btn-ghost btn-lg" onClick={viewPlans}>{x.ctaPlans}</button>
                 <button type="button" className="btn btn-ghost btn-lg" onClick={() => go("features")}>{x.ctaSecondary}</button>
               </div>
               <div className="ticks">
@@ -746,6 +790,20 @@ export default function LandingPage({ onStartFree, onUserLogin, announcements, l
                   : <span className="more">{x.modMore} <Arrow size={13} /></span>}
               </div>
             ))}
+          </div>
+
+          {/* QUICK TOOLS — ابزارهای سریع HSE، زیرِ همین بخش */}
+          <div className="qt-block" data-rv>
+            <div className="center" style={{ marginBottom: 20 }}>
+              <span className="eyebrow">{x.qtEyebrow}</span>
+              <h3 className="h2" style={{ fontSize: "clamp(19px,2.6vw,26px)" }}>{x.qtH2}</h3>
+              <p className="sub">{x.qtSub}</p>
+            </div>
+            <div className="qt-grid">
+              {x.qtList.map((name) => (
+                <span key={name} className="qt-chip"><Check size={13} color={C.tealDeep} /> {name}</span>
+              ))}
+            </div>
           </div>
         </div>
       </section>

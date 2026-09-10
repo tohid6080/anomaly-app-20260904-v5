@@ -72,6 +72,7 @@ import ReportErrorModal from "./shared/ReportErrorModal.jsx";
 import PageBar, { PageBarContext } from "./shared/PageBar.jsx";
 import ModuleSubHeader from "./shared/ModuleSubHeader.jsx";
 import TrialRequestModal from "./TrialRequestModal.jsx";
+import PublicPlansScreen from "./subscription/PublicPlansScreen.jsx";
 const MachineryDashboard = lazy(() => import("./machinery/MachineryDashboard.jsx"));
 const MachineryForm = lazy(() => import("./machinery/MachineryForm.jsx"));
 import { loadMachineryListOfflineFirst } from "./machinery/machineryApi.js";
@@ -1082,6 +1083,7 @@ function LoginScreen({ onLogin }) {
   const [bioChecking, setBioChecking] = useState(false);
   const [showTrialRequest, setShowTrialRequest] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
+  const [showPlans, setShowPlans] = useState(false);
   const isDesktop = useIsDesktop();
   // اطلاعیه‌ی صفحه‌ی ورود همین‌جا (نه داخل خودِ پنل) بارگذاری می‌شود تا
   // بخش «ورود» و «اطلاعیه» یکجا و همزمان رندر شوند — نه اینکه اطلاعیه
@@ -1190,7 +1192,8 @@ function LoginScreen({ onLogin }) {
   return (
     <>
       <LandingPage
-        onStartFree={() => setShowLogin(true)}
+        onStartFree={() => setShowTrialRequest(true)}
+        onViewPlans={() => setShowPlans(true)}
         onUserLogin={() => setShowLogin(true)}
         announcements={landingAnnouncements}
         logoUrl={appearance?.logoUrl}
@@ -1267,6 +1270,15 @@ function LoginScreen({ onLogin }) {
       )}
 
       {showTrialRequest && <TrialRequestModal onClose={() => setShowTrialRequest(false)} />}
+
+      {showPlans && (
+        <PublicPlansScreen
+          logoUrl={appearance?.logoUrl}
+          onClose={() => setShowPlans(false)}
+          onLogin={() => { setShowPlans(false); setShowLogin(true); }}
+          onStartFree={() => { setShowPlans(false); setShowTrialRequest(true); }}
+        />
+      )}
     </>
   );
 }
