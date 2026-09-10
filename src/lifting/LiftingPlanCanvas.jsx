@@ -104,7 +104,7 @@ const CSS = `
 .lpc-tb:disabled{opacity:.4;cursor:default}
 .lpc-tb .sep{width:1px}
 .lpc-tb-wide{width:auto;padding:0 9px;gap:5px}
-.lpc-tb-label{font-size:10px;font-weight:800;white-space:nowrap}
+.lpc-tb-label{font-size:10px;font-weight:800;white-space:nowrap;font-family:var(--ihms-font)}
 .lpc-wrap{width:100%;height:clamp(360px,58vh,600px);border:1px solid var(--ihms-border,#1e3d4d);border-radius:12px;overflow:hidden;background:var(--ihms-bg,#0b1a24)}
 .lpc-svg{width:100%;height:100%;display:block;touch-action:none;direction:ltr;cursor:crosshair}
 .lpc-svg.pan{cursor:grab}.lpc-svg.panning{cursor:grabbing}.lpc-svg.sel{cursor:default}
@@ -406,11 +406,11 @@ export default function LiftingPlanCanvas({ scene, onChange, selectedId, onSelec
           <TB id="select" on={tool === "select"} title={t("lpToolSelect")}><MousePointer2 size={15} /></TB>
           <TB id="pan" on={tool === "pan"} title={t("lpToolPan")}><Hand size={15} /></TB>
           <span style={{ width: 6 }} />
-          <TB id="draw-rect" on={tool === "draw-rect"} title={t("lpToolRect")}><Square size={15} /></TB>
-          <TB id="draw-circle" on={tool === "draw-circle"} title={t("lpToolCircle")}><Circle size={15} /></TB>
-          <TB id="draw-poly" on={tool === "draw-poly"} title={t("lpToolPoly")}><Hexagon size={15} /></TB>
-          <TB id="pick" on={tool === "pick"} title={t("lpToolPick")}><Plus size={15} /></TB>
-          <TB id="cg" on={tool === "cg"} title={t("lpToolCg")}><Crosshair size={15} /></TB>
+          <TB id="draw-rect" on={tool === "draw-rect"} title={t("lpToolRect")} label={t("lpToolRectShort")}><Square size={15} /></TB>
+          <TB id="draw-circle" on={tool === "draw-circle"} title={t("lpToolCircle")} label={t("lpToolCircleShort")}><Circle size={15} /></TB>
+          <TB id="draw-poly" on={tool === "draw-poly"} title={t("lpToolPoly")} label={t("lpToolPolyShort")}><Hexagon size={15} /></TB>
+          <TB id="pick" on={tool === "pick"} title={t("lpToolPick")} label={t("lpToolPickShort")}><Plus size={15} /></TB>
+          <TB id="cg" on={tool === "cg"} title={t("lpToolCg")} label={t("lpToolCgShort")}><Crosshair size={15} /></TB>
           <span style={{ width: 6 }} />
           {LIFTING_OBJECT_META.map((o) => (
             <TB key={o.type} id={o.tool} on={tool === o.tool} title={t("lpObj_" + o.type)} label={t("lpObj_" + o.type)}>
@@ -418,16 +418,16 @@ export default function LiftingPlanCanvas({ scene, onChange, selectedId, onSelec
             </TB>
           ))}
           <span style={{ width: 6 }} />
-          <TB id="grid" on={grid} title={t("lpGridSnap")}><Grid3x3 size={15} /></TB>
-          <TB id="snap" on={snap} title="Snap"><Magnet size={15} /></TB>
+          <TB id="grid" on={grid} title={t("lpGridSnap")} label={t("lpGridSnap")}><Grid3x3 size={15} /></TB>
+          <TB id="snap" on={snap} title={t("lpSnap")} label={t("lpSnap")}><Magnet size={15} /></TB>
           <TB id="undo" disabled={!histRef.current.undo.length} title={t("lpUndo")}><RotateCcw size={15} /></TB>
           <TB id="redo" disabled={!histRef.current.redo.length} title={t("lpRedo")}><RotateCw size={15} /></TB>
           <TB id="copy" disabled={!sel} title={t("lpDuplicate")}><Copy size={15} /></TB>
           <TB id="del" disabled={!sel} title={t("lpDeleteObject")}><Trash2 size={15} /></TB>
           <span style={{ flex: 1 }} />
-          <TB id="zout" title="Zoom out"><ZoomOut size={15} /></TB>
-          <TB id="zin" title="Zoom in"><ZoomIn size={15} /></TB>
-          <TB id="fit" title={t("lpFitView")}><Maximize2 size={15} /></TB>
+          <TB id="zout" title={t("lpZoomOut")}><ZoomOut size={15} /></TB>
+          <TB id="zin" title={t("lpZoomIn")}><ZoomIn size={15} /></TB>
+          <TB id="fit" title={t("lpFitView")} label={t("lpFitView")}><Maximize2 size={15} /></TB>
         </div>
       )}
 
@@ -735,7 +735,17 @@ function ElevationView({ objs, sim, travelHeight, phase, t }) {
       {L(sx(-1.4), sy(footZ), hookX, sy(tipZ), THEME.text2, 4)}
       {L(hookX, sy(tipZ), hookX, sy(hookZ), THEME.text3, 2)}
       <rect x={hookX - 5} y={sy(hookZ) - 5} width="10" height="10" rx="2" fill={THEME.surface2} stroke={THEME.text3} strokeWidth="1.6" />
-      {T((sx(-1.4) + hookX) / 2 - 6, (sy(footZ) + sy(tipZ)) / 2 - 8, `${t("lpElevBoom")} ${boomLen}m · ${boomAngle}°`, THEME.text3, 9.5, "middle")}
+      {/* برچسبِ طول/زاویه‌ی بوم — با هالهٔ پس‌زمینه تا روی خطِ خودِ بوم هم خوانا بماند */}
+      {(() => {
+        const bx = (sx(-1.4) + hookX) / 2, by = (sy(footZ) + sy(tipZ)) / 2 - 14;
+        const boomTxt = `${t("lpElevBoom")} ${boomLen}m · ${boomAngle}°`;
+        return (
+          <g fontFamily={THEME.font} fontSize="10.5" textAnchor="middle">
+            <text x={bx} y={by} fill="none" stroke={THEME.bg} strokeWidth="4" strokeLinejoin="round">{boomTxt}</text>
+            <text x={bx} y={by} fill={THEME.text} fontWeight="700">{boomTxt}</text>
+          </g>
+        );
+      })()}
 
       {/* rigging + load */}
       {(() => {

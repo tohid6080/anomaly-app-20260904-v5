@@ -4,6 +4,7 @@ import { isOnline } from "../offline/networkStatus.js";
 import { getRecordsByModule, putRecord } from "../offline/offlineDb.js";
 import { translate, getCurrentLang } from "../i18n/translations.js";
 import { syncCraneRig } from "./liftingCalcEngine.js";
+import { deleteGateItemsForRecord } from "../hseGateApi.js";
 
 const terr = (key) => translate(getCurrentLang(), key);
 
@@ -357,6 +358,9 @@ export async function deleteLiftingPlan(id, actor) {
   await logAudit(id, "delete", {}, actor).catch(() => {});
   const result = await offlineWrite({ module: "liftingPlans", table: "lifting_plans", action: "delete", id, payload: {} });
   if (!result.ok) return { __error: true, message: result.error || terr("commonErrorDelete") };
+  // طبق همان رفعِ Machinery/Personnel/Anomaly: رکورد گیت مربوطه هم پاک شود —
+  // وگرنه یتیم می‌ماند و برای همیشه در «کارهای در دست اقدام من» باقی می‌ماند.
+  deleteGateItemsForRecord("liftingPlan", id).catch(() => {});
   return { ok: true };
 }
 

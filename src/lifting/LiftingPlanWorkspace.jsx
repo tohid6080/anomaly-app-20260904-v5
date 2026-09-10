@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Construction, Plus, Copy, Archive, ArchiveRestore, Trash2, GitBranch,
-  History, ClipboardList, ChevronDown, ChevronRight, Save, X, SlidersHorizontal, BookOpen,
+  History, ClipboardList, ChevronDown, ChevronRight, Save, X, SlidersHorizontal, BookOpen, ShieldCheck,
 } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import ModuleSubHeader from "../shared/ModuleSubHeader.jsx";
+import InfoHint from "../shared/InfoHint.jsx";
 import { JalaliDateInput, toJalaliSafe } from "../personnel/jalaliDate.jsx";
 import {
   loadLiftingPlans, createLiftingPlan, updateLiftingPlanMeta, setLiftingPlanStatus,
@@ -14,6 +15,10 @@ import {
   loadCraneModels, loadAcceptanceCriteria,
   LIFTING_STATUS_META, LIFTING_STATUS_ORDER, liftingStatusMeta, EMPTY_SCENE, normalizeScene,
 } from "./liftingPlanApi.js";
+import {
+  loadGateStatusForRecord, loadCompanyStaffOptions, assignForReview, submitReview,
+  approveGateItem, rejectGateItem, submitToGate, gateStatusLabel,
+} from "../hseGateApi.js";
 import LiftingPlanCanvas from "./LiftingPlanCanvas.jsx";
 import CraneModelManager from "./CraneModelManager.jsx";
 import LiftingCriteriaManager from "./LiftingCriteriaManager.jsx";
@@ -143,8 +148,28 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
   const { t, dir } = useLanguage();
   const actor = currentUser?.name || currentUser?.username || "";
   const isSupervisor = currentUser?.role === "HSE_SUPERVISOR";
+  const isContractor = role === "CONTRACTOR";
+  const isGatekeeper = isSupervisor && !readOnly;
   const card = wide ? styles.cardWide : styles.card;
   const [showGuide, setShowGuide] = useState(false);
+
+  // ---- گیتِ سرپرست/مدیر HSEِ کارفرما — همان زیرساختِ مشترکِ hse-gate که
+  // پرسنل/ماشین‌آلات هم استفاده می‌کنند: پیمانکار تکمیل می‌کند و به سرپرست
+  // کارفرما می‌فرستد؛ سرپرست یا مستقیم تأیید می‌کند یا به یک کارشناسِ
+  // کارفرما ارجاع می‌دهد؛ کارشناس نظرش را برمی‌گرداند؛ سرپرست تأیید نهایی
+  // می‌دهد. نتیجه با setLiftingPlanStatus روی وضعیتِ خودِ نقشه هم می‌نشیند.
+  const [gateItem, setGateItem] = useState(null);
+  const [gateStaff, setGateStaff] = useState([]);
+  const [assigningGate, setAssigningGate] = useState(false);
+  const [assignGateTo, setAssignGateTo] = useState("");
+  const [reviewingGate, setReviewingGate] = useState(false);
+  const [reviewComment, setReviewComment] = useState("");
+  const [showGateReject, setShowGateReject] = useState(false);
+  const [gateRejectNote, setGateRejectNote] = useState("");
+  const [gateBusy, setGateBusy] = useState(false);
+  const [gateMessage, setGateMessage] = useState("");
+  const [contractorSubmitMsg, setContractorSubmitMsg] = useState("");
+  const [contractorSubmitOk, setContractorSubmitOk] = useState(false);
 
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -263,6 +288,66 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
   }, []);
 
   useEffect(() => { refresh(); }, [refresh]);
+
+  const loadGate = useCallback(() => {
+    if (!editId) { setGateItem(null); return; }
+    loadGateStatusForRecord("liftingPlan", editId).then(setGateItem);
+    if (!isContractor) loadCompanyStaffOptions().then(setGateStaff).catch(() => {});
+  }, [editId, isContractor]);
+  useEffect(() => { loadGate(); }, [loadGate]);
+
+  const handleAssignForReview = async () => {
+    if (!gateItem || !assignGateTo) return;
+    setGateBusy(true); setGateMessage("");
+    const result = await assignForReview(gateItem.id, assignGateTo, actor);
+    setGateBusy(false);
+    if (result?.__error) { setGateMessage(result.message); return; }
+    setAssigningGate(false); setAssignGateTo("");
+    loadGate();
+  };
+  const handleSubmitGateReview = async () => {
+    if (!gateItem) return;
+    setGateBusy(true); setGateMessage("");
+    const result = await submitReview(gateItem.id, currentUser?.username, reviewComment);
+    setGateBusy(false);
+    if (result?.__error) { setGateMessage(result.message); return; }
+    setReviewingGate(false); setReviewComment("");
+    loadGate();
+  };
+  const handleApproveGate = async () => {
+    if (!gateItem) return;
+    setGateBusy(true); setGateMessage("");
+    const result = await approveGateItem(gateItem.id, actor);
+    if (result?.__error) { setGateBusy(false); setGateMessage(result.message); return; }
+    await setLiftingPlanStatus(editId, "approved", actor, meta.status);
+    setGateBusy(false);
+    setMeta((m) => ({ ...m, status: "approved" })); setBaseline((b) => ({ ...b, status: "approved" }));
+    await refresh(); loadGate();
+  };
+  const handleRejectGate = async (note) => {
+    if (!gateItem) return;
+    setGateBusy(true); setGateMessage("");
+    const result = await rejectGateItem(gateItem.id, actor, note);
+    if (result?.__error) { setGateBusy(false); setGateMessage(result.message); return; }
+    await setLiftingPlanStatus(editId, "rejected", actor, meta.status);
+    setGateBusy(false);
+    setMeta((m) => ({ ...m, status: "rejected" })); setBaseline((b) => ({ ...b, status: "rejected" }));
+    await refresh(); loadGate();
+  };
+  const handleSubmitToSupervisor = async () => {
+    setGateBusy(true); setContractorSubmitMsg(""); setContractorSubmitOk(false);
+    const result = await submitToGate({
+      moduleKey: "liftingPlan", recordId: editId,
+      recordLabel: [meta.planNumber, meta.title].filter(Boolean).join(" — ") || meta.planNumber,
+      direction: "contractor_to_employer",
+    }, actor);
+    if (result?.__error) { setGateBusy(false); setContractorSubmitMsg(result.message); return; }
+    await setLiftingPlanStatus(editId, "in_review", actor, meta.status);
+    setGateBusy(false);
+    setMeta((m) => ({ ...m, status: "in_review" })); setBaseline((b) => ({ ...b, status: "in_review" }));
+    setContractorSubmitMsg(t("gateSentToEmployerSupervisor")); setContractorSubmitOk(true);
+    await refresh(); loadGate();
+  };
 
   const filtered = useMemo(() => {
     if (statusFilter === "all") return plans;
@@ -517,6 +602,111 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
           )}
         </div>
 
+        {!isNew && !isContractor && gateItem && (gateItem.status === "pending_approval" || gateItem.status === "assigned_review" || gateItem.status === "reviewed") && (
+          <div style={{ ...card, background: THEME.surface2, border: "1px solid #bfdbfe" }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: "#1d4ed8", margin: "0 0 8px" }}>
+              {t("gateReviewGateHeading", { status: gateStatusLabel(gateItem.status) })}
+            </p>
+            {gateItem.status === "assigned_review" && (
+              <p style={{ fontSize: 12, fontWeight: 600, color: "#1d4ed8", margin: "0 0 8px" }}>
+                {t("gateAssignedToExpert", { name: gateStaff.find((s) => s.username === gateItem.assignedTo)?.name || gateItem.assignedTo })}
+              </p>
+            )}
+            {gateItem.reviewerComment && (
+              <p style={{ fontSize: 12, color: "#374151", margin: "0 0 8px", lineHeight: 1.8 }}>
+                <b>{t("gateExpertComment")}</b> {gateItem.reviewerComment}
+              </p>
+            )}
+            {gateMessage && <p style={styles.error}>{gateMessage}</p>}
+
+            {/* سمت سرپرست/مدیر HSEِ کارفرما */}
+            {isGatekeeper && (gateItem.status === "pending_approval" || gateItem.status === "reviewed") && (
+              <div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+                  <button type="button" style={{ ...styles.smallButton, background: THEME.ok }} onClick={handleApproveGate} disabled={gateBusy}>
+                    {t("gateApproveInitialReview")}
+                  </button>
+                  {gateItem.status === "pending_approval" && (
+                    <button type="button" style={styles.smallButton} onClick={() => { setAssigningGate(true); setAssignGateTo(""); }} disabled={gateBusy}>
+                      {t("gateAssignToExpertForReview")}
+                    </button>
+                  )}
+                  <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => setShowGateReject(true)} disabled={gateBusy}>
+                    {t("gateReject")}
+                  </button>
+                </div>
+                {assigningGate && (
+                  <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                    <select style={{ ...styles.input, marginTop: 0, maxWidth: 220 }} value={assignGateTo} onChange={(e) => setAssignGateTo(e.target.value)} dir={dir}>
+                      <option value="">{t("gateSelectExpert")}</option>
+                      {gateStaff.filter((s) => s.username !== currentUser?.username).map((s) => <option key={s.username} value={s.username}>{s.name}</option>)}
+                    </select>
+                    <button type="button" style={styles.smallButton} onClick={handleAssignForReview} disabled={gateBusy || !assignGateTo}>{t("gateSubmitAssignment")}</button>
+                    <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setAssigningGate(false)}>{t("commonCancel")}</button>
+                  </div>
+                )}
+                {showGateReject && (
+                  <div style={{ marginTop: 8 }}>
+                    <label style={styles.label}>{t("gateRejectReasonOptional")}</label>
+                    <textarea style={{ ...styles.input, minHeight: 50 }} value={gateRejectNote} onChange={(e) => setGateRejectNote(e.target.value)} dir={dir} />
+                    <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                      <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => { handleRejectGate(gateRejectNote); setShowGateReject(false); setGateRejectNote(""); }} disabled={gateBusy}>{t("gateSubmitReject")}</button>
+                      <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setShowGateReject(false)}>{t("commonCancel")}</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* سمت کارشناسی که این نقشه به او ارجاع شده */}
+            {gateItem.status === "assigned_review" && gateItem.assignedTo === currentUser?.username && (
+              <div>
+                {!reviewingGate ? (
+                  <button type="button" style={styles.smallButton} onClick={() => { setReviewingGate(true); setReviewComment(""); }} disabled={gateBusy}>
+                    {t("gateSendReviewResultToSupervisor")}
+                  </button>
+                ) : (
+                  <div>
+                    <label style={styles.label}>{t("gateCommentOptional")}</label>
+                    <textarea style={{ ...styles.input, minHeight: 50 }} value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} dir={dir} />
+                    <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                      <button type="button" style={styles.smallButton} onClick={handleSubmitGateReview} disabled={gateBusy}>{t("gateSend")}</button>
+                      <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setReviewingGate(false)}>{t("commonCancel")}</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {!isNew && isContractor && (
+          <div style={card}>
+            <h3 style={{ fontSize: 14.5, fontWeight: 800, color: THEME.heading, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 6 }}>
+              <ShieldCheck size={16} color={THEME.teal} /> {t("lpGateSendToEmployerSupervisor")}
+            </h3>
+            {gateItem && (gateItem.status === "pending_approval" || gateItem.status === "assigned_review" || gateItem.status === "reviewed") ? (
+              <p style={{ fontSize: 12.5, color: THEME.ok, margin: 0, fontWeight: 600 }}>
+                {t("lpGateSentStatus", { status: gateStatusLabel(gateItem.status) })}
+              </p>
+            ) : (
+              <>
+                {gateItem?.status === "rejected" && (
+                  <p style={{ fontSize: 11.5, color: THEME.danger, margin: "0 0 8px" }}>
+                    {t("lpGatePrevRejected", { note: gateItem.reviewNote ? `: ${gateItem.reviewNote}` : "" })}
+                  </p>
+                )}
+                <button type="button" style={styles.button} onClick={handleSubmitToSupervisor} disabled={gateBusy}>
+                  {gateBusy ? t("sendingEllipsis") : t("gateSubmitToEmployerSupervisor")}
+                </button>
+              </>
+            )}
+            {contractorSubmitMsg && (
+              <p style={{ fontSize: 11.5, color: contractorSubmitOk ? THEME.ok : THEME.danger, marginTop: 8 }}>{contractorSubmitMsg}</p>
+            )}
+          </div>
+        )}
+
         {/* بومِ Mini-CAD */}
         <div style={card}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 10 }}>
@@ -693,17 +883,17 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
           <h3 style={{ margin: "0 0 10px", fontSize: 14.5, fontWeight: 800, color: THEME.heading }}>{t("lpCalcSafetySection")}</h3>
 
           <div style={styles.formGridWide}>
-            <Field label={`${t("lpEnvSoil")} (kPa)`}>
+            <Field label={<>{t("lpEnvSoil")} (kPa) <InfoHint text={t("lpHintSoil")} /></>}>
               <input style={styles.input} type="number" inputMode="decimal" disabled={readOnly}
                 value={scene?.env?.soilKpa ?? EMPTY_SCENE.env.soilKpa}
                 onChange={(e) => setEnv("soilKpa", e.target.value === "" ? "" : Number(e.target.value))} />
             </Field>
-            <Field label={t("lpEnvSf")}>
+            <Field label={<>{t("lpEnvSf")} <InfoHint text={t("lpHintSf")} /></>}>
               <input style={styles.input} type="number" inputMode="decimal" disabled={readOnly}
                 value={scene?.env?.sf ?? EMPTY_SCENE.env.sf}
                 onChange={(e) => setEnv("sf", e.target.value === "" ? "" : Number(e.target.value))} />
             </Field>
-            <Field label={`${t("lpEnvTravelH")} (m)`}>
+            <Field label={<>{t("lpEnvTravelH")} (m) <InfoHint text={t("lpHintTravelH")} /></>}>
               <input style={styles.input} type="number" inputMode="decimal" disabled={readOnly}
                 value={scene?.env?.travelHeight ?? EMPTY_SCENE.env.travelHeight}
                 onChange={(e) => setEnv("travelHeight", e.target.value === "" ? "" : Number(e.target.value))} />

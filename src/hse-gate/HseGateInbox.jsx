@@ -13,6 +13,7 @@ const MODULE_LABEL_KEYS = {
   machineryManagement: "saDmcLabelMachinery",
   riskAssessment: "saDmcLabelRisk",
   scaffoldManagement: "saDmcLabelScaffold",
+  liftingPlan: "saDmcLabelLifting",
 };
 
 /**

@@ -3,6 +3,7 @@ import { SlidersHorizontal, Save, History } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import ModuleSubHeader from "../shared/ModuleSubHeader.jsx";
+import InfoHint from "../shared/InfoHint.jsx";
 import { loadAcceptanceCriteria, loadCriteriaHistory, saveAcceptanceCriteria } from "./liftingPlanApi.js";
 import { DEFAULT_CRITERIA } from "./liftingCalcEngine.js";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
@@ -14,14 +15,14 @@ import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
  * ============================================================================ */
 
 const NUM_FIELDS = [
-  { key: "maxUtilizationPct", labelKey: "lcMaxUtil", unit: "٪" },
-  { key: "warnUtilizationPct", labelKey: "lcWarnUtil", unit: "٪" },
-  { key: "minPersonnelClearance_m", labelKey: "lcMinPersonnel", unit: "m" },
-  { key: "groundBearingSafetyFactor", labelKey: "lcGroundSf", unit: "" },
-  { key: "windLimit_ms", labelKey: "lcWindLimit", unit: "m/s" },
-  { key: "slingAngleWarnFromVertical_deg", labelKey: "lcSlingAngleWarn", unit: "°" },
-  { key: "hookToCgWarn_m", labelKey: "lcCgWarn", unit: "m" },
-  { key: "hookToCgFail_m", labelKey: "lcCgFail", unit: "m" },
+  { key: "maxUtilizationPct", labelKey: "lcMaxUtil", hintKey: "lcHintMaxUtil", unit: "٪" },
+  { key: "warnUtilizationPct", labelKey: "lcWarnUtil", hintKey: "lcHintWarnUtil", unit: "٪" },
+  { key: "minPersonnelClearance_m", labelKey: "lcMinPersonnel", hintKey: "lcHintMinPersonnel", unit: "m" },
+  { key: "groundBearingSafetyFactor", labelKey: "lcGroundSf", hintKey: "lcHintGroundSf", unit: "" },
+  { key: "windLimit_ms", labelKey: "lcWindLimit", hintKey: "lcHintWindLimit", unit: "m/s" },
+  { key: "slingAngleWarnFromVertical_deg", labelKey: "lcSlingAngleWarn", hintKey: "lcHintSlingAngleWarn", unit: "°" },
+  { key: "hookToCgWarn_m", labelKey: "lcCgWarn", hintKey: "lcHintCgWarn", unit: "m" },
+  { key: "hookToCgFail_m", labelKey: "lcCgFail", hintKey: "lcHintCgFail", unit: "m" },
 ];
 
 export default function LiftingCriteriaManager({ onBack, wide, currentUser }) {
@@ -90,14 +91,16 @@ export default function LiftingCriteriaManager({ onBack, wide, currentUser }) {
         <div style={styles.formGridWide}>
           {NUM_FIELDS.map((f) => (
             <div key={f.key}>
-              <label style={{ ...styles.label, marginTop: 0 }}>{t(f.labelKey)}{f.unit ? ` (${f.unit})` : ""}</label>
+              <label style={{ ...styles.label, marginTop: 0 }}>
+                {t(f.labelKey)}{f.unit ? ` (${f.unit})` : ""} <InfoHint text={t(f.hintKey)} />
+              </label>
               <input style={styles.input} type="number" step="any" value={form[f.key] ?? ""} onChange={(e) => setNum(f.key, e.target.value)} />
             </div>
           ))}
         </div>
 
         <div style={{ marginTop: 16, borderTop: `1px solid ${THEME.borderSoft}`, paddingTop: 12 }}>
-          <div style={{ fontSize: 12.5, fontWeight: 800, color: THEME.heading, marginBottom: 6 }}>{t("lcPowerBands")}</div>
+          <div style={{ fontSize: 12.5, fontWeight: 800, color: THEME.heading, marginBottom: 6 }}>{t("lcPowerBands")} <InfoHint text={t("lcHintPowerBands")} /></div>
           <p style={{ fontSize: 11, color: THEME.text3, margin: "0 0 8px", lineHeight: 1.7 }}>{t("lcPowerBandsHint")}</p>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
             <thead><tr>
