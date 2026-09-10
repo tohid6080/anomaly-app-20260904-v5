@@ -22,7 +22,7 @@ import { loadHomeKpiSummary } from "./dashboard/homeKpiApi.js";
 import { loadModuleConfig, loadDashboardConfig, loadNotificationTypes, loadAppearanceConfig, applyAppearanceToDom, effectiveAppearance, cacheAppearanceConfig, readCachedAppearanceConfig, syncAppearanceNow, loadActiveAnnouncements, loadDashboardWidgetConfig } from "./systemConfigApi.js";
 import { mergeWidgetConfig, defaultWidgetConfig } from "./dashboard/dashboardWidgets.js";
 import { submitToGate, loadPendingGateItems, loadAssignedGateItems, loadAssignedReviewItemsForModule, deleteGateItemsForRecord, loadCompanyStaffOptions, assignForReview, submitReview, approveGateItem, rejectGateItem, GATE_STATUS_LABELS, gateStatusLabel } from "./hseGateApi.js";
-import SubscriptionGate from "./subscription/SubscriptionGate.jsx";
+import SubscriptionGate, { PlanSelectionScreen } from "./subscription/SubscriptionGate.jsx";
 import { checkMyAccountActive } from "./subscriptionApi.js";
 import { AppearanceProvider, useAppearance } from "./shared/AppearanceContext.jsx";
 const PublicHseClimateSurvey = lazy(() => import("./proactiveIndicators/PublicHseClimateSurvey.jsx"));
@@ -72,7 +72,6 @@ import ReportErrorModal from "./shared/ReportErrorModal.jsx";
 import PageBar, { PageBarContext } from "./shared/PageBar.jsx";
 import ModuleSubHeader from "./shared/ModuleSubHeader.jsx";
 import TrialRequestModal from "./TrialRequestModal.jsx";
-import PublicPlansScreen from "./subscription/PublicPlansScreen.jsx";
 const MachineryDashboard = lazy(() => import("./machinery/MachineryDashboard.jsx"));
 const MachineryForm = lazy(() => import("./machinery/MachineryForm.jsx"));
 import { loadMachineryListOfflineFirst } from "./machinery/machineryApi.js";
@@ -1272,12 +1271,17 @@ function LoginScreen({ onLogin }) {
       {showTrialRequest && <TrialRequestModal onClose={() => setShowTrialRequest(false)} />}
 
       {showPlans && (
-        <PublicPlansScreen
-          logoUrl={appearance?.logoUrl}
-          onClose={() => setShowPlans(false)}
-          onLogin={() => { setShowPlans(false); setShowLogin(true); }}
-          onStartFree={() => { setShowPlans(false); setShowTrialRequest(true); }}
-        />
+        <div style={{ position: "fixed", inset: 0, zIndex: 3000, overflowY: "auto", background: THEME.bg, direction: dir }}>
+          <PlanSelectionScreen
+            publicMode
+            currentUser={null}
+            company={null}
+            access={{ status: "browse" }}
+            onLogout={() => setShowPlans(false)}
+            onLogin={() => { setShowPlans(false); setShowLogin(true); }}
+            onStartFree={() => { setShowPlans(false); setShowTrialRequest(true); }}
+          />
+        </div>
       )}
     </>
   );

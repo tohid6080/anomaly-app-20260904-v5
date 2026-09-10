@@ -74,6 +74,7 @@ const LP_CSS = `
 @media (max-width:980px){
   .ihms-lp .nav{display:none}
   .ihms-lp .hdr .row .link-login{display:none}
+  .ihms-lp .hdr .row .hide-sm{display:none}
   .ihms-lp .hamb{display:flex}
   .ihms-lp .mnav.open{display:block;border-top:1px solid ${C.line};background:#fff}
   .ihms-lp .mnav .wrap{padding-top:12px;padding-bottom:16px;display:flex;flex-direction:column;gap:4px}
@@ -651,12 +652,11 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
             </nav>
             <span className="spacer" />
             {langSwitch}
-            <button type="button" className="link-login" onClick={onUserLogin}>{x.login}</button>
-            <button type="button" className="btn btn-ghost" style={{ padding: "11px 16px", fontSize: 13 }} onClick={viewPlans}>
+            <button type="button" className="btn btn-primary" style={{ padding: "10px 16px", fontSize: 13 }} onClick={viewPlans}>
               {x.ctaPlans}
             </button>
-            <button type="button" className="btn btn-primary" style={{ padding: "11px 18px", fontSize: 13.5 }} onClick={onStartFree}>
-              {x.ctaPrimary}
+            <button type="button" className="btn btn-primary hide-sm" style={{ padding: "10px 16px", fontSize: 13 }} onClick={onUserLogin}>
+              {x.login}
             </button>
             <button type="button" className="hamb" aria-label="menu" onClick={() => setMNav((v) => !v)}>
               {mNav ? <X size={18} /> : <Menu size={18} />}
@@ -669,9 +669,8 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
               <a key={i} href={"#lp-" + NAV_IDS[i]} onClick={(e) => { e.preventDefault(); go(NAV_IDS[i]); }}>{label}</a>
             ))}
             <div style={{ marginTop: 10 }}>{langSwitch}</div>
-            <button type="button" className="btn btn-login" style={{ marginTop: 8 }} onClick={() => { setMNav(false); onUserLogin(); }}>{x.login}</button>
-            <button type="button" className="btn btn-ghost" style={{ marginTop: 8 }} onClick={() => { setMNav(false); viewPlans(); }}>{x.ctaPlans}</button>
-            <button type="button" className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => { setMNav(false); onStartFree(); }}>{x.ctaPrimary}</button>
+            <button type="button" className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => { setMNav(false); viewPlans(); }}>{x.ctaPlans}</button>
+            <button type="button" className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => { setMNav(false); onUserLogin(); }}>{x.login}</button>
           </div>
         </div>
       </header>

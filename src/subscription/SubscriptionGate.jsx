@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { CheckCircle2, XCircle, LogOut, Loader2, Clock } from "lucide-react";
+import { CheckCircle2, XCircle, LogOut, Loader2, Clock, X, LogIn } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { toJalaliDateTime } from "../personnel/jalaliDate.jsx";
 import {
@@ -18,6 +18,9 @@ import { numLocale } from "../i18n/translations.js";
 function purchaseContext(access, company, t) {
   const hasTrial = !!(company && company.trialStart);
   const hasPaidBefore = !!(company && company.subscriptionStartDate);
+  // بازدیدکننده‌ای که از صفحه‌ی اصلی «مشاهده پلن‌ها برای خرید» را زده —
+  // هنوز وارد نشده، فقط دارد پلن‌ها را می‌بیند.
+  if (access && access.status === "browse") return { titleKey: "sgCtxBrowseTitle", subKey: "sgCtxBrowseSub", allowBuy: true };
   // حسابِ غیرفعال‌شده توسطِ مدیرِ سامانه: پیامِ هشدار بالای صفحه نشان داده
   // می‌شود، ولی — طبقِ تصمیمِ صریحِ قبلی در setCompanyActive — کاربر همچنان
   // صفحه‌ی انتخابِ پلن/خرید را می‌بیند و می‌تواند خودش اشتراک بگیرد؛ به
@@ -145,7 +148,7 @@ function PaymentResultScreen({ result, onContinue, onLogout }) {
   );
 }
 
-function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
+export function PlanSelectionScreen({ currentUser, company, access, onLogout, publicMode, onLogin, onStartFree }) {
   const { t, lang } = useLanguage();
   const [plans, setPlans] = useState(null);
   const [selectedPlanId, setSelectedPlanId] = useState("");
@@ -207,7 +210,7 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
             <p style={{ fontSize: 13, color: THEME.text2, margin: 0 }}>{t(ctx.subKey)}</p>
           </div>
           <button type="button" onClick={onLogout} style={{ ...styles.smallButton, background: THEME.text3, display: "flex", alignItems: "center", gap: 6 }}>
-            <LogOut size={13} /> {t("saLogout")}
+            {publicMode ? <X size={13} /> : <LogOut size={13} />} {publicMode ? t("commonClose") : t("saLogout")}
           </button>
         </div>
 
@@ -234,6 +237,7 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
             setSelSvc={setSelSvc} toggleMod={toggleMod} priceOfMod={priceOfMod}
             billingCycle={billingCycle} setBillingCycle={setBillingCycle}
             cart={cart} currentUser={currentUser} lang={lang} t={t}
+            publicMode={publicMode} onLogin={onLogin} onStartFree={onStartFree}
           />
         )}
 
@@ -346,7 +350,9 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
               {backupAmount > 0 && <div style={{ display: "flex", justifyContent: "space-between", color: THEME.warn }}><span>{t("backupBuyLineLabel")}</span><span>+ {backupAmount.toLocaleString(numLocale(lang))}</span></div>}
             </div>
             <p style={{ fontSize: 15, fontWeight: 800, color: THEME.teal, margin: "8px 0 10px" }}>{t("sgFinalAmount", { amount: amount.toLocaleString(numLocale(lang)) })}</p>
-            <PaymentMethodsSection currentUser={currentUser} selectedPlan={selectedPlan} billingCycle={billingCycle} amount={amount} backupPeriod={backupPeriod} />
+            {publicMode
+              ? <PublicBuyCta onLogin={onLogin} onStartFree={onStartFree} />
+              : <PaymentMethodsSection currentUser={currentUser} selectedPlan={selectedPlan} billingCycle={billingCycle} amount={amount} backupPeriod={backupPeriod} />}
           </div>
         )}
         </>
@@ -358,7 +364,7 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
 }
 
 /* ---------------- انتخابِ ماژول به ماژول ---------------- */
-function ModulePickerBlock({ modulePrices, services, selMods, selSvc, setSelSvc, toggleMod, priceOfMod, billingCycle, setBillingCycle, cart, currentUser, lang, t }) {
+function ModulePickerBlock({ modulePrices, services, selMods, selSvc, setSelSvc, toggleMod, priceOfMod, billingCycle, setBillingCycle, cart, currentUser, lang, t, publicMode, onLogin, onStartFree }) {
   if (modulePrices === null) return <p style={{ textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</p>;
   const money = (n) => (n || 0).toLocaleString(numLocale(lang));
   const paidMods = modulePrices.filter((m) => !m.isFree);
@@ -438,18 +444,20 @@ function ModulePickerBlock({ modulePrices, services, selMods, selSvc, setSelSvc,
           <span style={{ fontSize: 17, fontWeight: 800, color: THEME.teal, fontFamily: "monospace" }}>{cart ? money(cart.grandTotal) : "0"}</span>
         </div>
         <p style={{ fontSize: 10, color: THEME.text3, margin: "8px 0 0", lineHeight: 1.8 }}>{t("sgModulesDisclaimer")}</p>
-        {cart && cart.selReal.length > 0 && (
-          <PaymentMethodsSection
-            currentUser={currentUser}
-            selectedPlan={cart.resolvedPlanId ? { id: cart.resolvedPlanId } : null}
-            billingCycle={billingCycle}
-            amount={cart.grandTotal}
-            backupPeriod="none"
-            selectedModules={selMods}
-            selectedServices={selSvc}
-            resolvedPlanId={cart.resolvedPlanId || ""}
-          />
-        )}
+        {publicMode
+          ? <PublicBuyCta onLogin={onLogin} onStartFree={onStartFree} />
+          : (cart && cart.selReal.length > 0 && (
+            <PaymentMethodsSection
+              currentUser={currentUser}
+              selectedPlan={cart.resolvedPlanId ? { id: cart.resolvedPlanId } : null}
+              billingCycle={billingCycle}
+              amount={cart.grandTotal}
+              backupPeriod="none"
+              selectedModules={selMods}
+              selectedServices={selSvc}
+              resolvedPlanId={cart.resolvedPlanId || ""}
+            />
+          ))}
       </div>
     </div>
   );
@@ -460,6 +468,28 @@ function Row({ k, v }) {
     <div style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "5px 0", borderBottom: `1px dashed ${THEME.borderSoft}`, fontSize: 12 }}>
       <span style={{ color: THEME.text3 }}>{k}</span>
       <span style={{ fontWeight: 700, fontFamily: "monospace", color: THEME.text }}>{v}</span>
+    </div>
+  );
+}
+
+/* در نمای عمومی (بازدیدکننده‌ی صفحه‌ی اصلی)، جای فرمِ پرداخت دکمه‌ی
+ * «ورود برای خرید» / «شروعِ رایگان» نشان داده می‌شود. */
+function PublicBuyCta({ onLogin, onStartFree }) {
+  const { t } = useLanguage();
+  return (
+    <div style={{ marginTop: 6 }}>
+      <p style={{ fontSize: 12, color: THEME.text2, margin: "0 0 10px", lineHeight: 1.9 }}>{t("ppsBuyNote")}</p>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <button type="button" onClick={onLogin} style={{ ...styles.button, width: "auto", padding: "10px 20px", display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <LogIn size={14} /> {t("ppsSignInToBuy")}
+        </button>
+        {onStartFree && (
+          <button type="button" onClick={onStartFree}
+            style={{ padding: "10px 18px", borderRadius: 10, border: `1.5px solid ${THEME.teal}`, background: "transparent", color: THEME.tealDeep, fontFamily: THEME.font, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+            {t("ppsStartFree")}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

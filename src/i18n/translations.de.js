@@ -3179,6 +3179,8 @@ export const de = {
   "sgCtxRenewSub": "Wählen Sie zur weiteren Nutzung Ihren Tarif oder Modulsatz und schließen Sie die Zahlung ab. Ihre Daten bleiben erhalten.",
   "sgCtxPendingTitle": "Ihre Zahlung wird geprüft",
   "sgCtxPendingSub": "Ihr Zahlungsbeleg wurde eingereicht; das Abonnement wird nach Freigabe durch den Administrator aktiviert.",
+  "sgCtxBrowseTitle": "Tarife & Module",
+  "sgCtxBrowseSub": "Wählen Sie den passenden Tarif für Ihre Organisation; zum Abschluss des Kaufs und zur Zahlung melden Sie sich an oder fordern Sie eine Testversion an.",
   "sgCtxDisabledTitle": "Dieses Firmenkonto ist deaktiviert",
   "sgCtxDisabledSub": "Wählen Sie zur Reaktivierung Ihren Tarif oder Ihr Modulpaket und schließen Sie die Zahlung ab.",
   "sgModePlans": "Fertige Tarife",

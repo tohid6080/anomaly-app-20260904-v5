@@ -8793,6 +8793,8 @@ export const translations = {
   "sgCtxRenewSub": { "fa": "برای ادامه‌ی استفاده، پلن یا مجموعه‌ی ماژول‌های موردنظرتان را انتخاب و پرداخت کنید. داده‌های شما محفوظ است.", "en": "To keep using the system, choose your plan or module set and complete payment. Your data is safe." },
   "sgCtxPendingTitle": { "fa": "پرداختِ شما در حالِ بررسی است", "en": "Your payment is under review" },
   "sgCtxPendingSub": { "fa": "رسیدِ پرداختِ شما ثبت شده و پس از تأییدِ مدیرِ سامانه، اشتراک فعال می‌شود.", "en": "Your receipt has been submitted and the subscription will activate after the administrator approves it." },
+  "sgCtxBrowseTitle": { "fa": "پلن‌ها و ماژول‌های سامانه", "en": "Plans & modules" },
+  "sgCtxBrowseSub": { "fa": "پلنِ مناسبِ سازمانتان را انتخاب کنید؛ برای تکمیلِ خرید و پرداخت، وارد شوید یا حسابِ آزمایشی بگیرید.", "en": "Choose the plan that fits your organization; to complete the purchase and pay, sign in or request a trial." },
   "sgCtxDisabledTitle": { "fa": "حسابِ شرکت غیرفعال شده است", "en": "This company account is disabled" },
   "sgCtxDisabledSub": { "fa": "برای فعال‌سازیِ مجدد، پلن یا مجموعه‌ی ماژول‌های موردنظرتان را انتخاب و پرداخت کنید.", "en": "To reactivate, choose your plan or module set and complete payment." },
   "sgModePlans": { "fa": "پلن‌های آماده", "en": "Ready plans" },
