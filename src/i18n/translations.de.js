@@ -3180,7 +3180,7 @@ export const de = {
   "sgCtxPendingTitle": "Ihre Zahlung wird geprüft",
   "sgCtxPendingSub": "Ihr Zahlungsbeleg wurde eingereicht; das Abonnement wird nach Freigabe durch den Administrator aktiviert.",
   "sgCtxDisabledTitle": "Dieses Firmenkonto ist deaktiviert",
-  "sgCtxDisabledSub": "Bitte wenden Sie sich an den Support zur Reaktivierung.",
+  "sgCtxDisabledSub": "Wählen Sie zur Reaktivierung Ihren Tarif oder Ihr Modulpaket und schließen Sie die Zahlung ab.",
   "sgModePlans": "Fertige Tarife",
   "sgModeModules": "Module wählen",
   "sgPickModules": "Wählen Sie die benötigten Module",

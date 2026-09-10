@@ -22,7 +22,7 @@ function purchaseContext(access, company, t) {
   // می‌شود، ولی — طبقِ تصمیمِ صریحِ قبلی در setCompanyActive — کاربر همچنان
   // صفحه‌ی انتخابِ پلن/خرید را می‌بیند و می‌تواند خودش اشتراک بگیرد؛ به
   // بن‌بستِ «تماس با پشتیبانی» نمی‌خورد.
-  if (access.status === "disabled") return { titleKey: "sgCtxDisabledTitle", subKey: "sgCtxDisabledSub", allowBuy: true, warn: true };
+  if (access.status === "disabled") return { titleKey: "sgCtxDisabledTitle", subKey: "sgCtxDisabledSub", allowBuy: true };
   // «در انتظارِ تأیید» همچنان اجازه‌ی خرید دارد (اگر تلاشِ اول ناموفق بود) —
   // فقط پیامِ «در حالِ بررسی» بالای فرم نشان داده می‌شود.
   if (access.status === "pending_payment") return { titleKey: "sgCtxPendingTitle", subKey: "sgCtxPendingSub", allowBuy: true, warn: true };

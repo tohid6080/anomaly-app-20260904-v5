@@ -8794,7 +8794,7 @@ export const translations = {
   "sgCtxPendingTitle": { "fa": "پرداختِ شما در حالِ بررسی است", "en": "Your payment is under review" },
   "sgCtxPendingSub": { "fa": "رسیدِ پرداختِ شما ثبت شده و پس از تأییدِ مدیرِ سامانه، اشتراک فعال می‌شود.", "en": "Your receipt has been submitted and the subscription will activate after the administrator approves it." },
   "sgCtxDisabledTitle": { "fa": "حسابِ شرکت غیرفعال شده است", "en": "This company account is disabled" },
-  "sgCtxDisabledSub": { "fa": "برای فعال‌سازیِ مجدد با پشتیبانیِ سامانه تماس بگیرید.", "en": "Please contact support to reactivate it." },
+  "sgCtxDisabledSub": { "fa": "برای فعال‌سازیِ مجدد، پلن یا مجموعه‌ی ماژول‌های موردنظرتان را انتخاب و پرداخت کنید.", "en": "To reactivate, choose your plan or module set and complete payment." },
   "sgModePlans": { "fa": "پلن‌های آماده", "en": "Ready plans" },
   "sgModeModules": { "fa": "انتخابِ ماژول به ماژول", "en": "Pick modules" },
   "sgPickModules": { "fa": "ماژول‌های موردنیاز را انتخاب کنید", "en": "Select the modules you need" },
