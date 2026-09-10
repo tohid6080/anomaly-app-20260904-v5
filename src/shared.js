@@ -366,8 +366,13 @@ export async function loadCurrentCompanyPlanFeatures() {
   const companyId = getCurrentCompanyId();
   if (!companyId) return null;
   try {
-    const companyRows = await sb(`companies?id=eq.${companyId}&select=plan_id`);
-    if (!sbOk(companyRows) || companyRows.length === 0 || !companyRows[0].plan_id) return null;
+    const companyRows = await sb(`companies?id=eq.${companyId}&select=plan_id,module_overrides`);
+    if (!sbOk(companyRows) || companyRows.length === 0) return null;
+    // خریدِ ماژول به ماژول: اگر شرکت مجموعه‌ی صریحِ خودش را دارد، همین مبناست
+    // (به‌جای plan.features). NULL → رفتارِ قبلی، از پلن بخوان.
+    const overrides = companyRows[0].module_overrides;
+    if (Array.isArray(overrides)) return overrides;
+    if (!companyRows[0].plan_id) return null;
     const planRows = await sb(`plans?id=eq.${companyRows[0].plan_id}&select=features,is_active`);
     if (!sbOk(planRows) || planRows.length === 0 || planRows[0].is_active === false) return null;
     return Array.isArray(planRows[0].features) ? planRows[0].features : null;

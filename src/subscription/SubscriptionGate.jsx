@@ -6,9 +6,30 @@ import {
   computeSubscriptionAccess, loadMySubscriptionInfo, loadPurchasablePlans,
   verifyPayment, planBackupPeriodPrice,
 } from "../subscriptionApi.js";
+import { loadModulePrices, loadServices, computeCartTotal, applyModuleDeps } from "../pricingApi.js";
 import PaymentMethodsSection from "./CardTransferPayment.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { numLocale } from "../i18n/translations.js";
+
+// عنوان/زیرعنوانِ صفحه‌ی خرید بر پایه‌ی این‌که «چطور به این صفحه رسیده»:
+// خریدِ اولِ بدونِ آزمایشی / پایانِ آزمایشی / پایانِ اشتراکِ پولی / در انتظارِ
+// تأیید / غیرفعال‌شده توسط ادمین.
+function purchaseContext(access, company, t) {
+  const hasTrial = !!(company && company.trialStart);
+  const hasPaidBefore = !!(company && company.subscriptionStartDate);
+  if (access.status === "disabled") return { titleKey: "sgCtxDisabledTitle", subKey: "sgCtxDisabledSub", allowBuy: false };
+  // «در انتظارِ تأیید» همچنان اجازه‌ی خرید دارد (اگر تلاشِ اول ناموفق بود) —
+  // فقط پیامِ «در حالِ بررسی» بالای فرم نشان داده می‌شود.
+  if (access.status === "pending_payment") return { titleKey: "sgCtxPendingTitle", subKey: "sgCtxPendingSub", allowBuy: true };
+  if (access.status === "trial_expired" || (access.isLocked && hasTrial && !hasPaidBefore)) {
+    return { titleKey: "sgCtxTrialEndedTitle", subKey: "sgCtxTrialEndedSub", allowBuy: true };
+  }
+  if (access.status === "expired" && hasPaidBefore) {
+    return { titleKey: "sgCtxRenewTitle", subKey: "sgCtxRenewSub", allowBuy: true };
+  }
+  // خریدِ اولِ بدونِ دوره‌ی آزمایشی
+  return { titleKey: "sgCtxFirstBuyTitle", subKey: "sgCtxFirstBuySub", allowBuy: true };
+}
 
 /**
  * گیت اشتراک — درست بعد از ورود موفق (و بیومتریک، اگر فعال باشد) و قبل
@@ -123,25 +144,51 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
   const [selectedPlanId, setSelectedPlanId] = useState("");
   const [billingCycle, setBillingCycle] = useState("yearly");
   const [backupPeriod, setBackupPeriod] = useState("none");
+  // انتخابِ ماژول به ماژول
+  const [mode, setMode] = useState("plan");            // plan | modules
+  const [modulePrices, setModulePrices] = useState(null);
+  const [services, setServices] = useState([]);
+  const [selMods, setSelMods] = useState([]);
+  const [selSvc, setSelSvc] = useState([]);
 
   useEffect(() => { loadPurchasablePlans().then(setPlans); }, []);
+  useEffect(() => {
+    loadModulePrices().then((m) => {
+      setModulePrices(m);
+      setSelMods(m.filter((x) => x.isFree).map((x) => x.moduleKey));
+    });
+    loadServices().then(setServices);
+  }, []);
 
+  const ctx = purchaseContext(access, company, t);
   const selectedPlan = plans?.find((p) => p.id === selectedPlanId);
   const planAmount = selectedPlan ? (billingCycle === "monthly" ? selectedPlan.priceMonthly : selectedPlan.priceYearly) : 0;
   const backupAmount = planBackupPeriodPrice(selectedPlan, backupPeriod);
   const amount = planAmount + backupAmount;
 
-  const handleSelectPlan = (p, cycle) => {
-    setSelectedPlanId(p.id);
-    setBillingCycle(cycle);
-  };
+  const handleSelectPlan = (p, cycle) => { setSelectedPlanId(p.id); setBillingCycle(cycle); };
+
+  // سبدِ ماژولی
+  const cart = (modulePrices && mode === "modules")
+    ? computeCartTotal({
+        selectedModuleKeys: selMods, selectedServiceIds: selSvc, chosenPlan: null,
+        plans: plans || [], modulePrices, services, billingCycle,
+      })
+    : null;
+  const toggleMod = (k) => setSelMods((cur) => {
+    const has = cur.indexOf(k) > -1;
+    let next = has ? cur.filter((x) => x !== k) : [...cur, k];
+    if (!has) next = applyModuleDeps(next, modulePrices);
+    return next;
+  });
+  const priceOfMod = (m) => (billingCycle === "monthly" ? m.priceMonthly : m.priceYearly) || m.priceMonthly || 0;
 
   return (
     <div style={{ minHeight: "100vh", background: THEME.bg, padding: "40px 20px", fontFamily: THEME.font }}>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 10 }}>
           <div>
-            <h1 style={{ fontSize: 20, fontWeight: 800, color: THEME.heading, margin: "0 0 6px" }}>{access.label}</h1>
+            <h1 style={{ fontSize: 20, fontWeight: 800, color: THEME.heading, margin: "0 0 6px" }}>{t(ctx.titleKey)}</h1>
             {access.trialStart && access.trialEnd && (
               <p style={{ fontSize: 12, color: THEME.text3, margin: "0 0 6px" }}>
                 {t("saFromTo", { start: toJalaliDateTime(access.trialStart), end: toJalaliDateTime(access.trialEnd) })}
@@ -150,14 +197,43 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
             {access.subscriptionEndDate && (
               <p style={{ fontSize: 12, color: THEME.text3, margin: "0 0 6px" }}>{t("sgSubEnd", { date: toJalaliDateTime(access.subscriptionEndDate) })}</p>
             )}
-            <p style={{ fontSize: 13, color: THEME.text2, margin: 0 }}>{t("sgChoosePlanPrompt")}</p>
+            <p style={{ fontSize: 13, color: THEME.text2, margin: 0 }}>{t(ctx.subKey)}</p>
           </div>
           <button type="button" onClick={onLogout} style={{ ...styles.smallButton, background: THEME.text3, display: "flex", alignItems: "center", gap: 6 }}>
             <LogOut size={13} /> {t("saLogout")}
           </button>
         </div>
 
-        {plans === null && <p style={{ textAlign: "center", color: THEME.text3 }}>{t("sgLoadingPlans")}</p>}
+        {!ctx.allowBuy ? (
+          <div style={{ ...styles.card, maxWidth: 460, margin: "0 auto", textAlign: "center" }}>
+            <p style={{ fontSize: 13, color: THEME.text2, lineHeight: 1.9 }}>{t(ctx.subKey)}</p>
+          </div>
+        ) : (
+        <>
+        {/* حالت: پلنِ آماده یا ماژول به ماژول */}
+        <div style={{ display: "inline-flex", background: THEME.surface2, border: `1px solid ${THEME.border}`, borderRadius: 10, padding: 3, gap: 3, marginBottom: 18 }}>
+          {[["plan", t("sgModePlans")], ["modules", t("sgModeModules")]].map(([m, lbl]) => (
+            <button key={m} type="button" onClick={() => setMode(m)}
+              style={{ border: "none", borderRadius: 8, padding: "7px 14px", fontFamily: THEME.font, fontSize: 12.5, fontWeight: 700, cursor: "pointer",
+                background: mode === m ? THEME.teal : "transparent", color: mode === m ? "#fff" : THEME.text2 }}>
+              {lbl}
+            </button>
+          ))}
+        </div>
+
+        {mode === "modules" && (
+          <ModulePickerBlock
+            modulePrices={modulePrices} services={services} selMods={selMods} selSvc={selSvc}
+            setSelSvc={setSelSvc} toggleMod={toggleMod} priceOfMod={priceOfMod}
+            billingCycle={billingCycle} setBillingCycle={setBillingCycle}
+            cart={cart} currentUser={currentUser} lang={lang} t={t}
+          />
+        )}
+
+        {mode === "plan" && plans === null && <p style={{ textAlign: "center", color: THEME.text3 }}>{t("sgLoadingPlans")}</p>}
+        {mode === "plan" && (
+        <>
+        <p style={{ fontSize: 12.5, color: THEME.text3, margin: "0 0 14px" }}>{t("sgChoosePlanPrompt")}</p>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14, marginBottom: 24 }}>
           {plans?.map((p) => {
@@ -257,7 +333,118 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
             <PaymentMethodsSection currentUser={currentUser} selectedPlan={selectedPlan} billingCycle={billingCycle} amount={amount} backupPeriod={backupPeriod} />
           </div>
         )}
+        </>
+        )}
+        </>
+        )}
       </div>
+    </div>
+  );
+}
+
+/* ---------------- انتخابِ ماژول به ماژول ---------------- */
+function ModulePickerBlock({ modulePrices, services, selMods, selSvc, setSelSvc, toggleMod, priceOfMod, billingCycle, setBillingCycle, cart, currentUser, lang, t }) {
+  if (modulePrices === null) return <p style={{ textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</p>;
+  const money = (n) => (n || 0).toLocaleString(numLocale(lang));
+  const paidMods = modulePrices.filter((m) => !m.isFree);
+  const freeMods = modulePrices.filter((m) => m.isFree);
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 320px", gap: 16, alignItems: "start" }}>
+      <div>
+        <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 14, padding: 16, marginBottom: 12 }}>
+          <b style={{ fontSize: 12.5, color: THEME.heading }}>{t("sgPickModules")}</b>
+          <p style={{ fontSize: 10.5, color: THEME.text3, margin: "3px 0 10px" }}>{t("sgPickModulesHint")}</p>
+          {paidMods.map((m) => {
+            const on = selMods.indexOf(m.moduleKey) > -1;
+            return (
+              <label key={m.moduleKey} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", borderBottom: `1px solid ${THEME.borderSoft}`, cursor: "pointer" }}>
+                <input type="checkbox" checked={on} onChange={() => toggleMod(m.moduleKey)} style={{ width: 16, height: 16, accentColor: THEME.teal }} />
+                <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: THEME.text }}>{m.label || m.moduleKey}</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: THEME.text2, fontFamily: "monospace" }}>
+                  {priceOfMod(m) > 0 ? `+ ${money(priceOfMod(m))}` : "—"}
+                </span>
+              </label>
+            );
+          })}
+          {freeMods.length > 0 && (
+            <p style={{ fontSize: 10.5, color: THEME.text3, marginTop: 8 }}>
+              {t("sgFreeModulesLine", { list: freeMods.map((m) => m.label || m.moduleKey).join("، ") })}
+            </p>
+          )}
+        </div>
+
+        {services.length > 0 && (
+          <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 14, padding: 16 }}>
+            <b style={{ fontSize: 12.5, color: THEME.heading }}>{t("sgServicesTitle")}</b>
+            {services.map((s) => {
+              const on = selSvc.indexOf(s.id) > -1;
+              const p = billingCycle === "monthly" ? s.priceMonthly : s.priceYearly;
+              return (
+                <label key={s.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", borderBottom: `1px solid ${THEME.borderSoft}`, cursor: "pointer" }}>
+                  <input type="checkbox" checked={on} onChange={() => setSelSvc((c) => on ? c.filter((x) => x !== s.id) : [...c, s.id])} style={{ width: 16, height: 16, accentColor: THEME.teal }} />
+                  <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: THEME.text }}>
+                    {s.name}
+                    <span style={{ fontSize: 9.5, fontWeight: 800, padding: "1px 6px", borderRadius: 999, background: THEME.tealSoft, color: THEME.tealDeep, marginInlineStart: 6 }}>
+                      {s.period === "once" ? t("mpPeriodOnce") : t("mpPeriodMonthly")}
+                    </span>
+                    {s.description ? <span style={{ display: "block", fontSize: 10, color: THEME.text3 }}>{s.description}</span> : null}
+                  </span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: THEME.text2, fontFamily: "monospace" }}>+ {money(p || s.priceMonthly)}</span>
+                </label>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* خلاصه */}
+      <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 14, padding: 18, position: "sticky", top: 16 }}>
+        <h4 style={{ fontSize: 13, fontWeight: 700, color: THEME.heading, margin: "0 0 10px" }}>{t("sgPurchaseSummary")}</h4>
+        <div style={{ display: "flex", gap: 4, marginBottom: 10 }}>
+          {[["yearly", t("subTypeYearly")], ["monthly", t("subTypeMonthly")]].map(([c, lbl]) => (
+            <button key={c} type="button" onClick={() => setBillingCycle(c)}
+              style={{ flex: 1, border: `1px solid ${billingCycle === c ? THEME.teal : THEME.border}`, background: billingCycle === c ? THEME.tealSoft : "transparent", color: billingCycle === c ? THEME.tealDeep : THEME.text2, borderRadius: 8, padding: "6px 4px", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: THEME.font }}>
+              {lbl}
+            </button>
+          ))}
+        </div>
+        <Row k={t("sgSumModules")} v={cart ? cart.selReal.length.toLocaleString(numLocale(lang)) : "0"} />
+        <Row k={t("sgSumModulesPrice")} v={cart ? money(cart.sumAllModules) : "0"} />
+        <Row k={t("sgSumServices")} v={cart ? money(cart.svcRecurring + cart.svcOnce) : "0"} />
+        {cart && cart.suggestedPlan && (
+          <div style={{ background: THEME.tealSoft, border: `1px solid ${THEME.teal}55`, borderRadius: 9, padding: "8px 10px", margin: "8px 0", fontSize: 11.5, color: THEME.tealDeep }}>
+            {t("sgMatchedPlan", { name: cart.suggestedPlan.name })}
+            {cart.discount > 0 ? " — " + t("sgBundleSaves", { amount: money(cart.discount) }) : ""}
+          </div>
+        )}
+        <div style={{ borderTop: `2px solid ${THEME.border}`, marginTop: 8, paddingTop: 8, display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <span style={{ fontSize: 12, color: THEME.text3 }}>{billingCycle === "monthly" ? t("sgFinalMonthly") : t("sgFinalYearly")}</span>
+          <span style={{ fontSize: 17, fontWeight: 800, color: THEME.teal, fontFamily: "monospace" }}>{cart ? money(cart.grandTotal) : "0"}</span>
+        </div>
+        <p style={{ fontSize: 10, color: THEME.text3, margin: "8px 0 0", lineHeight: 1.8 }}>{t("sgModulesDisclaimer")}</p>
+        {cart && cart.selReal.length > 0 && (
+          <PaymentMethodsSection
+            currentUser={currentUser}
+            selectedPlan={cart.resolvedPlanId ? { id: cart.resolvedPlanId } : null}
+            billingCycle={billingCycle}
+            amount={cart.grandTotal}
+            backupPeriod="none"
+            selectedModules={selMods}
+            selectedServices={selSvc}
+            resolvedPlanId={cart.resolvedPlanId || ""}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Row({ k, v }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "5px 0", borderBottom: `1px dashed ${THEME.borderSoft}`, fontSize: 12 }}>
+      <span style={{ color: THEME.text3 }}>{k}</span>
+      <span style={{ fontWeight: 700, fontFamily: "monospace", color: THEME.text }}>{v}</span>
     </div>
   );
 }

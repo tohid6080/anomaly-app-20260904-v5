@@ -81,11 +81,12 @@ export async function checkMyAccountActive() {
 export async function loadMySubscriptionInfo() {
   const companyId = getCurrentCompanyId();
   if (!companyId) return null;
-  const rows = await sb(`companies?id=eq.${companyId}&select=id,name,plan_id,subscription_type,subscription_status,subscription_start_date,subscription_end_date,trial_start,trial_end`);
+  const rows = await sb(`companies?id=eq.${companyId}&select=id,name,plan_id,module_overrides,subscription_type,subscription_status,subscription_start_date,subscription_end_date,trial_start,trial_end`);
   if (!sbOk(rows) || rows.length === 0) return null;
   const r = rows[0];
   return {
     id: r.id, name: r.name, planId: r.plan_id || "",
+    moduleOverrides: Array.isArray(r.module_overrides) ? r.module_overrides : null,
     subscriptionType: r.subscription_type || "trial", subscriptionStatus: r.subscription_status || "active",
     subscriptionStartDate: r.subscription_start_date || "", subscriptionEndDate: r.subscription_end_date || "",
     trialStart: r.trial_start || "", trialEnd: r.trial_end || "",
@@ -227,22 +228,27 @@ export async function loadCardTransferSettings() {
 // ثبت رسید پرداخت — وضعیت اولیه همیشه «در انتظار تأیید» است (خودِ RLS هم
 // این را در with_check اجبار می‌کند، پس این فقط یک لایه‌ی اطمینانِ دوم
 // سمت کلاینت است، نه مرز امنیتی واقعی).
-export async function submitCardTransferReceipt({ planId, billingCycle, amount, backupPeriod, payerName, payerPhone, trackingNumber, receiptImage }, requestedBy) {
+export async function submitCardTransferReceipt({ planId, billingCycle, amount, backupPeriod, payerName, payerPhone, trackingNumber, receiptImage, selectedModules, selectedServices, resolvedPlanId }, requestedBy) {
   const companyId = getCurrentCompanyId();
   if (!companyId) return { __error: true, message: tr("subErrCompanyUnknown") };
-  if (!planId || !billingCycle) return { __error: true, message: tr("subErrPlanCycleInvalid") };
+  // مسیرِ ماژولی: پلنِ متناظر ممکن است خالی باشد، ولی مجموعه‌ی ماژول‌ها باید باشد.
+  const hasModules = Array.isArray(selectedModules) && selectedModules.length > 0;
+  if ((!planId && !hasModules) || !billingCycle) return { __error: true, message: tr("subErrPlanCycleInvalid") };
   if (!payerName?.trim() || !payerPhone?.trim() || !trackingNumber?.trim()) {
     return { __error: true, message: tr("subErrReceiptFieldsRequired") };
   }
   const id = uid("card");
   const payload = {
-    id, company_id: companyId, plan_id: planId, billing_cycle: billingCycle,
+    id, company_id: companyId, plan_id: planId || resolvedPlanId || null, billing_cycle: billingCycle,
     amount: Math.round(Number(amount) || 0), order_id: id,
     backup_period: backupPeriod && backupPeriod !== "none" ? backupPeriod : null,
     method: "card_transfer", status: "awaiting_review",
     payer_name: payerName.trim(), payer_phone: payerPhone.trim(),
     tracking_number: trackingNumber.trim(), receipt_image: receiptImage || null,
     requested_by: requestedBy || "",
+    selected_modules: hasModules ? selectedModules : null,
+    selected_services: Array.isArray(selectedServices) && selectedServices.length ? selectedServices : null,
+    resolved_plan_id: resolvedPlanId || null,
   };
   const rows = await sb("payments", { method: "POST", body: JSON.stringify([payload]) });
   if (!sbOk(rows)) return { __error: true, message: tr("subErrSubmitReceipt", { detail: rows?.message || tr("subUnknownShort") }) };

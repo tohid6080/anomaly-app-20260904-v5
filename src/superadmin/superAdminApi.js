@@ -270,6 +270,10 @@ function planFromRow(r) {
     maxPersonnel: r.max_personnel,
     maxStorageMb: r.max_storage_mb,
     features: Array.isArray(r.features) ? r.features : [],
+    // انتخابِ ماژول به ماژول: بازه‌ی تعداد + جهانِ مجازِ ماژول‌ها (NULL → همان features)
+    minModules: r.min_modules ?? null,
+    maxModules: r.max_modules ?? null,
+    moduleUniverse: Array.isArray(r.module_universe) ? r.module_universe : null,
     isActive: !!r.is_active,
     sortOrder: r.sort_order ?? 0,
     // دوره‌ی Backup خودکارِ قابل‌ارائه در این پلن (میراث؛ برای سازگاری)
@@ -440,6 +444,9 @@ export async function updatePlan(id, patch) {
   if ("maxPersonnel" in patch) dbPatch.max_personnel = patch.maxPersonnel || null;
   if ("maxStorageMb" in patch) dbPatch.max_storage_mb = patch.maxStorageMb || null;
   if ("features" in patch) dbPatch.features = patch.features;
+  if ("minModules" in patch) dbPatch.min_modules = patch.minModules === "" || patch.minModules == null ? null : Number(patch.minModules);
+  if ("maxModules" in patch) dbPatch.max_modules = patch.maxModules === "" || patch.maxModules == null ? null : Number(patch.maxModules);
+  if ("moduleUniverse" in patch) dbPatch.module_universe = Array.isArray(patch.moduleUniverse) && patch.moduleUniverse.length ? patch.moduleUniverse : null;
   if ("isActive" in patch) dbPatch.is_active = patch.isActive;
   if ("backupTier" in patch) dbPatch.backup_tier = patch.backupTier || "none";
   if ("backupPriceWeekly" in patch)  dbPatch.backup_price_weekly  = Number(patch.backupPriceWeekly) || 0;
@@ -621,9 +628,15 @@ export async function approveCardTransferPayment(paymentId, reviewedBy) {
   const previousPlanId = sbOk(companyRows) && companyRows.length > 0 ? companyRows[0].plan_id : null;
 
   const bp = ["weekly", "monthly", "yearly"].includes(payment.backup_period) ? payment.backup_period : null;
+  // خریدِ ماژول به ماژول: اگر رسید مجموعه‌ی صریحِ ماژول‌ها را دارد، همان روی
+  // شرکت ست می‌شود (module_overrides)؛ وگرنه NULL تا اگر قبلاً override داشت
+  // پاک شود و دوباره از plan.features بخواند.
+  const selectedModules = Array.isArray(payment.selected_modules) ? payment.selected_modules : null;
   const companyPatch = {
-    plan_id: payment.plan_id, subscription_type: payment.billing_cycle, subscription_status: "active",
+    plan_id: payment.resolved_plan_id || payment.plan_id,
+    subscription_type: payment.billing_cycle, subscription_status: "active",
     subscription_start_date: new Date().toISOString(), subscription_end_date: endDate,
+    module_overrides: selectedModules,
   };
   // دوره‌ی Backup این شرکت روی همان چیزی که در رسید خریده تنظیم می‌شود.
   if (bp) companyPatch.backup_frequency = bp;

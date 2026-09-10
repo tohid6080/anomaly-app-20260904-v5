@@ -8,6 +8,7 @@ import { loadModuleConfig, saveModuleConfig, loadNotificationTypes, saveNotifica
 import { DASHBOARD_WIDGET_GROUPS, mergeWidgetConfig, defaultWidgetConfig } from "../dashboard/dashboardWidgets.js";
 import { uploadBase64ToStorage, deleteFromStorage, parseStorageUrl } from "../offline/storageUpload.js";
 import AccountManagement from "./AccountManagement.jsx";
+import ModulePricingManager from "./ModulePricingManager.jsx";
 import AdminAnalytics from "../admin/AdminAnalytics.jsx";
 import { toJalaliSafe, toJalaliDateTime, JalaliDateInput } from "../personnel/jalaliDate.jsx";
 import {
@@ -141,6 +142,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
       { key: "systemConfig", labelKey: "saNavSystemConfig", icon: Settings2 },
     ] },
     { labelKey: "saNavGroupBilling", items: [
+      { key: "modulePricing", labelKey: "saNavModulePricing", icon: Layers },
       { key: "cardTransferPayments", labelKey: "saNavCardPayments", icon: CreditCard },
       { key: "trialRequests", labelKey: "saNavTrialRequests", icon: ClipboardList },
     ] },
@@ -215,6 +217,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
           )}
           {page === "accounts" && <AccountManagement currentAdmin={currentAdmin} />}
           {page === "plans" && <PlansManager plans={plans} companies={companies} currentAdmin={currentAdmin} onChanged={load} />}
+          {page === "modulePricing" && <ModulePricingManager plans={plans} currentAdmin={currentAdmin} onChanged={load} />}
           {page === "storage" && <StorageUsagePage />}
           {page === "monitoring" && <SystemInsights companies={companies} />}
           {page === "systemConfig" && <SystemConfigPage currentAdmin={currentAdmin} companies={companies} />}
