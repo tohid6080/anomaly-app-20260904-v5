@@ -379,8 +379,6 @@ export async function loadCurrentCompanyPlanFeatures() {
 // planFeatures === null یعنی «بدون محدودیت» (fail-open) — نه یک آرایه‌ی خالی
 export function isModuleInPlan(planFeatures, moduleKey) {
   if (planFeatures === null || planFeatures === undefined) return true;
-  // «ابزارهای سریع HSE» یک جعبه‌ابزارِ سبکِ رایگان است — همیشه در دسترس.
-  if (moduleKey === "quickTools") return true;
   // «داشبورد کاری» و «داشبورد مدیریتی» یک جفت‌اند — هر پلنی که یکی را دارد، دیگری را هم دارد.
   if (moduleKey === "operationalDashboard") {
     return planFeatures.includes("operationalDashboard") || planFeatures.includes("managementDashboard");

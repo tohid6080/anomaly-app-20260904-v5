@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Construction, Plus, Copy, Archive, ArchiveRestore, Trash2, GitBranch,
-  History, ClipboardList, ChevronDown, ChevronRight, Save, X,
+  History, ClipboardList, ChevronDown, ChevronRight, Save, X, SlidersHorizontal,
 } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
@@ -15,10 +15,21 @@ import {
   LIFTING_STATUS_META, LIFTING_STATUS_ORDER, liftingStatusMeta, EMPTY_SCENE, normalizeScene,
 } from "./liftingPlanApi.js";
 import LiftingPlanCanvas from "./LiftingPlanCanvas.jsx";
+import CraneModelManager from "./CraneModelManager.jsx";
+import LiftingCriteriaManager from "./LiftingCriteriaManager.jsx";
 import { computeLiftCalc, DEFAULT_CRITERIA, syncCraneRig } from "./liftingCalcEngine.js";
 import { validateLiftingPlan } from "./liftingSafetyEngine.js";
 import { loadPersonnelList } from "../personnel/personnelApi.js";
 import { loadMachineryList } from "../machinery/machineryApi.js";
+
+// دسترسی به مدل‌های جرثقیل/Load Chart و معیارهای پذیرش (دیتای مبنا، نه یک
+// پلنِ خاص) همچنان فقط برای HSE_SUPERVISOR است — دقیقاً همان محدودیتی که
+// پیش‌تر با ورودیِ «مدیریت سیستم» اعمال می‌شد، فقط جابه‌جا شده به اینجا.
+const headerIconBtn = {
+  width: 30, height: 30, borderRadius: 9, flexShrink: 0,
+  border: `1px solid ${THEME.border}`, background: THEME.surface, color: THEME.tealDeep,
+  display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+};
 
 /* ============================================================================ *
  * Lifting Plan Designer — Workspace: فهرست + فرمِ متادیتا + بومِ Mini-CAD +
@@ -97,6 +108,7 @@ function StatusBadge({ status, t }) {
 export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, readOnly = false }) {
   const { t, dir } = useLanguage();
   const actor = currentUser?.name || currentUser?.username || "";
+  const isSupervisor = currentUser?.role === "HSE_SUPERVISOR";
   const card = wide ? styles.cardWide : styles.card;
 
   const [plans, setPlans] = useState([]);
@@ -365,6 +377,14 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
     setRevisions(revs);
     setAudit(aud);
   };
+
+  // ---------- render: مدل‌های جرثقیل/Load Chart و معیارهای پذیرش (سراسری، HSE_SUPERVISOR) ----------
+  if (mode === "craneModels") {
+    return <CraneModelManager onBack={() => setMode("list")} wide={wide} currentUser={currentUser} />;
+  }
+  if (mode === "criteria") {
+    return <LiftingCriteriaManager onBack={() => setMode("list")} wide={wide} currentUser={currentUser} />;
+  }
 
   // ---------- render: editor ----------
   if (mode === "edit") {
@@ -741,6 +761,16 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
         note={t("lpSubHeaderNote")}
         onBack={onBack}
         backLabel={t("commonBackPlain")}
+        actions={isSupervisor && (
+          <>
+            <button type="button" onClick={() => setMode("craneModels")} title={t("subCraneModels")} aria-label={t("subCraneModels")} style={headerIconBtn}>
+              <Construction size={15} />
+            </button>
+            <button type="button" onClick={() => setMode("criteria")} title={t("subLiftingCriteria")} aria-label={t("subLiftingCriteria")} style={headerIconBtn}>
+              <SlidersHorizontal size={15} />
+            </button>
+          </>
+        )}
       />
 
       <div style={card}>

@@ -358,9 +358,22 @@ export const PLAN_FEATURES = [
     key: "scaffoldManagement", labelKey: "pfScaffoldManagement",
     sub: [{ key: "scaffoldDashboard", labelKey: "pfScaffoldDashboard" }],
   },
-  { key: "liftingPlan", labelKey: "pfLiftingPlan" },
   { key: "managementDashboard", labelKey: "pfManagementDashboard" },
   { key: "operationalDashboard", labelKey: "pfOperationalDashboard" },
+  {
+    key: "quickTools", labelKey: "pfQuickTools",
+    sub: [
+      { key: "unit-converter", labelKey: "pfQtUnitConverter" },
+      { key: "ltifr", labelKey: "pfQtLtifr" },
+      { key: "trir", labelKey: "pfQtTrir" },
+      { key: "noise", labelKey: "pfQtNoise" },
+      { key: "crane-load", labelKey: "pfQtCraneLoad" },
+      { key: "sling-angle", labelKey: "pfQtSlingAngle" },
+      { key: "rad-zones", labelKey: "pfQtRadZones" },
+      { key: "rad-distance", labelKey: "pfQtRadDistance" },
+      { key: "lifting-plan", labelKey: "pfLiftingPlan" },
+    ],
+  },
   {
     key: "systemManagement", labelKey: "pfSystemManagement",
     sub: [

@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Search, X, Star, ArrowRight, ArrowLeft, Zap } from "lucide-react";
-import { THEME, usePersistedState } from "../shared.js";
+import { THEME, usePersistedState, loadCurrentCompanyPlanFeatures, isModuleInPlan } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { QUICK_TOOLS, QT_CATEGORIES } from "./quickToolsData.jsx";
 
@@ -28,6 +28,10 @@ export default function QuickToolsDashboard({ currentUser, onBack, wide }) {
   const [cat, setCat] = useState("all");
   const [active, setActive] = useState(null);
   const [fav, setFav] = usePersistedState("ihms_quicktools_fav_" + (currentUser?.username || "anon"), []);
+  // فیلترِ سطحِ پلن: کدام ابزار برای شرکتِ جاری فعال است. null یعنی «بدون
+  // محدودیت» تا لحظه‌ی بارگذاری (fail-open، هم‌راستا با بقیه‌ی سامانه).
+  const [planFeatures, setPlanFeatures] = useState(null);
+  useEffect(() => { loadCurrentCompanyPlanFeatures().then(setPlanFeatures); }, []);
 
   const tr = (o) => (o && (o[lang] || o.fa)) || "";
   const toggleFav = (id) => setFav((f) => (Array.isArray(f) && f.includes(id) ? f.filter((x) => x !== id) : [...(Array.isArray(f) ? f : []), id]));
@@ -35,9 +39,11 @@ export default function QuickToolsDashboard({ currentUser, onBack, wide }) {
   const Fwd = dir === "rtl" ? ArrowLeft : ArrowRight;
   const Back = dir === "rtl" ? ArrowRight : ArrowLeft;
 
+  const allowedTools = useMemo(() => QUICK_TOOLS.filter((t) => isModuleInPlan(planFeatures, t.id)), [planFeatures]);
+
   const list = useMemo(() => {
     const ql = q.trim().toLowerCase();
-    return QUICK_TOOLS
+    return allowedTools
       .filter((t) => {
         if (cat === "fav") { if (!favList.includes(t.id)) return false; }
         else if (cat !== "all" && t.cat !== cat) return false;
@@ -45,7 +51,7 @@ export default function QuickToolsDashboard({ currentUser, onBack, wide }) {
         return tr(t.title).toLowerCase().includes(ql) || tr(t.desc).toLowerCase().includes(ql);
       })
       .sort((a, b) => (favList.includes(b.id) ? 1 : 0) - (favList.includes(a.id) ? 1 : 0));
-  }, [q, cat, favList, lang]);
+  }, [q, cat, favList, lang, allowedTools]);
 
   const T = {
     title: { fa: "ابزارهای سریع HSE", en: "HSE Quick Tools", de: "HSE-Schnellwerkzeuge" },
@@ -141,7 +147,7 @@ export default function QuickToolsDashboard({ currentUser, onBack, wide }) {
           { key: "all", label: tt("all"), icon: null },
           { key: "fav", label: `★ ${tt("fav")}`, icon: null },
           // فقط دسته‌هایی که دستِ‌کم یک ابزار دارند نشان داده می‌شوند.
-          ...QT_CATEGORIES.filter((c) => QUICK_TOOLS.some((t) => t.cat === c.key)).map((c) => ({ key: c.key, label: tr(c.label), icon: c.icon })),
+          ...QT_CATEGORIES.filter((c) => allowedTools.some((t) => t.cat === c.key)).map((c) => ({ key: c.key, label: tr(c.label), icon: c.icon })),
         ].map((c) => {
           const on = cat === c.key;
           return (
