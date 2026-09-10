@@ -10,6 +10,7 @@ import {
 import SurveyBuilder from "./SurveyBuilder.jsx";
 import SurveyResults from "./SurveyResults.jsx";
 import SurveyDistribute from "./SurveyDistribute.jsx";
+import { SURVEY_TEMPLATES, buildFromTemplate } from "./surveyTemplates.js";
 
 export default function SurveyDashboard({ currentUser, role, onBack, wide, readOnly }) {
   const { t, dir } = useLanguage();
@@ -18,6 +19,7 @@ export default function SurveyDashboard({ currentUser, role, onBack, wide, readO
   const [view, setView] = useState("list");        // list | build | results
   const [active, setActive] = useState(null);       // selected survey
   const [linkFor, setLinkFor] = useState(null);
+  const [showNew, setShowNew] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
@@ -28,9 +30,10 @@ export default function SurveyDashboard({ currentUser, role, onBack, wide, readO
   const openResults = (s) => { setActive(s); setView("results"); };
   const openDistribute = (s) => { setActive(s); setView("distribute"); };
 
-  const handleNew = async () => {
-    setBusy(true); setErr("");
-    const res = await createSurvey({ title: "" }, currentUser?.name);
+  const handleNew = async (templateId) => {
+    setBusy(true); setErr(""); setShowNew(false);
+    const payload = templateId ? buildFromTemplate(templateId) : { title: "" };
+    const res = await createSurvey(payload || { title: "" }, currentUser?.name);
     setBusy(false);
     if (res?.__error) { setErr(res.message); return; }
     await load();
@@ -82,9 +85,32 @@ export default function SurveyDashboard({ currentUser, role, onBack, wide, readO
       {err && <p style={styles.error}>{err}</p>}
 
       {!readOnly && (
-        <button type="button" onClick={handleNew} disabled={busy} style={{ ...styles.smallButton, display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 14 }}>
+        <button type="button" onClick={() => setShowNew((v) => !v)} disabled={busy} style={{ ...styles.smallButton, display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 14 }}>
           <Plus size={13} /> {t("svNewSurvey")}
         </button>
+      )}
+
+      {showNew && !readOnly && (
+        <div style={{ ...styles.cardWide, marginBottom: 16 }}>
+          <b style={{ fontSize: 12.5, color: THEME.heading }}>{t("svNewFrom")}</b>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 8, marginTop: 10 }}>
+            <button type="button" onClick={() => handleNew(null)} style={tplCard(THEME)}>
+              <span style={{ fontWeight: 800, fontSize: 12.5, color: THEME.heading }}>{t("svBlankSurvey")}</span>
+              <span style={{ fontSize: 10.5, color: THEME.text3 }}>{t("svBlankSurveyHint")}</span>
+            </button>
+            {SURVEY_TEMPLATES.map((tp) => (
+              <button key={tp.id} type="button" onClick={() => handleNew(tp.id)} style={tplCard(THEME)}>
+                <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 8.5, fontWeight: 800, padding: "1px 6px", borderRadius: 999, background: tp.kind === "exam" ? THEME.warnBg : THEME.tealSoft, color: tp.kind === "exam" ? THEME.warn : THEME.tealDeep }}>
+                    {tp.kind === "exam" ? t("svModeExam") : t("svModeSurvey")}
+                  </span>
+                  <span style={{ fontWeight: 800, fontSize: 12.5, color: THEME.heading }}>{tp.name.fa}</span>
+                </span>
+                <span style={{ fontSize: 10, color: THEME.text3 }}>{t("svTemplateReady", { n: tp.build().questions.length })}</span>
+              </button>
+            ))}
+          </div>
+        </div>
       )}
 
       {linkFor && (
@@ -144,4 +170,9 @@ export default function SurveyDashboard({ currentUser, role, onBack, wide, readO
 const iconBtn = (bg, fg) => ({
   ...styles.smallButton, fontSize: 11, background: bg, color: fg || "#fff",
   display: "inline-flex", alignItems: "center", gap: 4,
+});
+const tplCard = (THEME) => ({
+  display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start", textAlign: "start",
+  border: `1px solid ${THEME.border}`, background: "transparent", borderRadius: 10, padding: "10px 12px",
+  cursor: "pointer", fontFamily: THEME.font,
 });
