@@ -1190,7 +1190,7 @@ function LoginScreen({ onLogin }) {
   return (
     <>
       <LandingPage
-        onStartFree={() => setShowTrialRequest(true)}
+        onStartFree={() => setShowLogin(true)}
         onUserLogin={() => setShowLogin(true)}
         announcements={landingAnnouncements}
         logoUrl={appearance?.logoUrl}

@@ -59,8 +59,10 @@ const LP_CSS = `
 .ihms-lp .nav a{position:relative;padding:6px 0;transition:color .15s ease}
 .ihms-lp .nav a:hover{color:${C.tealDeep}}
 .ihms-lp .hdr .spacer{flex:1}
-.ihms-lp .link-login{font-size:13px;font-weight:800;color:${C.navy};padding:9px 14px;border-radius:10px;border:1px solid ${C.line};background:#fff;cursor:pointer;transition:border-color .15s ease}
-.ihms-lp .link-login:hover{border-color:${C.teal}}
+.ihms-lp .link-login{font-size:13px;font-weight:800;color:#fff;padding:9px 18px;border-radius:10px;border:1px solid ${C.good};background:${C.good};cursor:pointer;transition:filter .15s ease,box-shadow .15s ease;box-shadow:0 8px 20px -10px rgba(30,158,106,.55)}
+.ihms-lp .link-login:hover{filter:brightness(1.07);box-shadow:0 12px 26px -10px rgba(30,158,106,.65)}
+.ihms-lp .btn-login{background:${C.good};color:#fff;border-color:${C.good}}
+.ihms-lp .btn-login:hover{filter:brightness(1.07)}
 .ihms-lp .langsw{position:relative;display:inline-flex;align-items:center}
 .ihms-lp .langsw .glb{position:absolute;inset-inline-start:9px;pointer-events:none;color:${C.ink3}}
 .ihms-lp .langsw select{appearance:none;-webkit-appearance:none;font-family:inherit;font-size:12.5px;font-weight:800;color:${C.navy};
@@ -190,7 +192,7 @@ const L = {
     heroEyebrow: "سامانه یکپارچه مدیریت HSE",
     heroH1a: "مدیریت هوشمند HSE", heroH1b: "از گزارش تا تصمیم‌گیری",
     heroLede: "IHMS یک سامانهٔ جامع و یکپارچه برای مدیریت ایمنی، بهداشت، محیط‌زیست و فرآیندهای HSE سازمان است؛ با استفاده از اطلاعات واقعی، فرآیندهای سازمان را یکپارچه کنید، ریسک‌ها را کنترل کنید و تصمیم‌های دقیق‌تری بگیرید.",
-    ctaPrimary: "همین الان رایگان شروع کنید", ctaSecondary: "مشاهده امکانات", login: "ورود کاربران",
+    ctaPrimary: "مشاهده پلن‌ها برای خرید", ctaSecondary: "مشاهده امکانات", login: "ورود کاربران",
     ticks: ["شروع سریع", "دسترسی تحت وب و موبایل", "مدیریت یکپارچه HSE"],
     annTitle: "نسخهٔ جدید سامانهٔ IHMS منتشر شد", annBody: "امکانات جدید و بهبودهای سامانه را مشاهده کنید.",
     annDate: "۱۴۰۵/۰۶/۱۸", annBtn: "مشاهده اطلاعیه", annAll: "مشاهده همه اطلاعیه‌ها",
@@ -285,7 +287,7 @@ const L = {
     heroEyebrow: "Integrated HSE Management System",
     heroH1a: "Smart HSE management", heroH1b: "from report to decision",
     heroLede: "IHMS is a complete, integrated platform for managing your organisation's safety, health, environment and HSE processes. Use real data to unify your workflows, control risk and make sharper decisions.",
-    ctaPrimary: "Start free now", ctaSecondary: "See features", login: "Sign in",
+    ctaPrimary: "View plans to buy", ctaSecondary: "See features", login: "Sign in",
     ticks: ["Quick setup", "Web & mobile access", "Unified HSE management"],
     annTitle: "A new version of IHMS has been released", annBody: "See the new features and improvements.",
     annDate: "2026/09/09", annBtn: "View announcement", annAll: "View all announcements",
@@ -380,7 +382,7 @@ const L = {
     heroEyebrow: "Integriertes HSE-Managementsystem",
     heroH1a: "Intelligentes HSE-Management", heroH1b: "vom Bericht bis zur Entscheidung",
     heroLede: "IHMS ist eine vollständige, integrierte Plattform für das Management von Sicherheit, Gesundheit, Umwelt und HSE-Prozessen Ihrer Organisation. Nutzen Sie echte Daten, um Abläufe zu vereinheitlichen, Risiken zu steuern und fundiertere Entscheidungen zu treffen.",
-    ctaPrimary: "Jetzt kostenlos starten", ctaSecondary: "Funktionen ansehen", login: "Anmelden",
+    ctaPrimary: "Tarife zum Kauf ansehen", ctaSecondary: "Funktionen ansehen", login: "Anmelden",
     ticks: ["Schnelle Einrichtung", "Web- & Mobilzugriff", "Einheitliches HSE-Management"],
     annTitle: "Eine neue Version von IHMS wurde veröffentlicht", annBody: "Sehen Sie die neuen Funktionen und Verbesserungen.",
     annDate: "09.09.2026", annBtn: "Ankündigung ansehen", annAll: "Alle Ankündigungen ansehen",
@@ -625,7 +627,7 @@ export default function LandingPage({ onStartFree, onUserLogin, announcements, l
               <a key={i} href={"#lp-" + NAV_IDS[i]} onClick={(e) => { e.preventDefault(); go(NAV_IDS[i]); }}>{label}</a>
             ))}
             <div style={{ marginTop: 10 }}>{langSwitch}</div>
-            <button type="button" className="btn btn-ghost" style={{ marginTop: 8 }} onClick={() => { setMNav(false); onUserLogin(); }}>{x.login}</button>
+            <button type="button" className="btn btn-login" style={{ marginTop: 8 }} onClick={() => { setMNav(false); onUserLogin(); }}>{x.login}</button>
             <button type="button" className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => { setMNav(false); onStartFree(); }}>{x.ctaPrimary}</button>
           </div>
         </div>
