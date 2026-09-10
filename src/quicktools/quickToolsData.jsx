@@ -1,7 +1,8 @@
 import React, { useState, lazy, Suspense } from "react";
 import {
   Sigma, Construction, Flame, FlaskConical, Zap, Wind, Atom, HardHat, Leaf,
-  Wrench, ArrowRightLeft, Volume2,
+  Wrench, ArrowRightLeft, Volume2, Link2, Weight, Crosshair, Gauge, Layers,
+  ArrowDownToLine, MapPin, Percent, ListChecks,
 } from "lucide-react";
 import { THEME } from "../shared.js";
 
@@ -335,6 +336,393 @@ function RadZonesTool({ lang }) {
   );
 }
 
+// 16) زاویه‌ی اسلینگ از هندسه (فاصله‌ی افقی + ارتفاعِ ریگینگ)
+function SlingAngleGeoTool({ lang }) {
+  const [horiz, setHoriz] = useState("");
+  const [rigH, setRigH] = useState("");
+  const h = num(horiz), v = num(rigH);
+  const angDeg = h !== null && v ? (Math.atan2(h, v) * 180) / Math.PI : null;
+  const legLen = h !== null && v !== null ? Math.hypot(h, v) : null;
+  const tone = angDeg === null ? "ok" : angDeg > 60 ? "bad" : angDeg > 45 ? "warn" : "ok";
+  return (
+    <div>
+      <Num label={lang === "fa" ? "فاصلهٔ افقیِ قلاب تا نقطهٔ برداشت" : lang === "de" ? "Horizontaler Abstand Haken–Anschlagpunkt" : "Horizontal distance, hook to pick point"} value={horiz} onChange={setHoriz} unit="m" />
+      <Num label={lang === "fa" ? "ارتفاعِ ریگینگ (قلاب تا نقطهٔ برداشت)" : lang === "de" ? "Anschlaghöhe (Haken bis Anschlagpunkt)" : "Rigging height (hook to pick point)"} value={rigH} onChange={setRigH} unit="m" />
+      {angDeg !== null && <Result tone={tone}>
+        {lang === "fa" ? "زاویه نسبت به قائم" : lang === "de" ? "Winkel zur Senkrechten" : "Angle from vertical"} = <b>{fmt(angDeg, 1)}°</b>
+        {legLen !== null && <><br />{lang === "fa" ? "طولِ تقریبیِ هر پایه" : lang === "de" ? "Ungefähre Stranglänge" : "Approx. leg length"} = <b>{fmt(legLen, 2)} m</b></>}
+        {tone === "bad" && <><br />{lang === "fa" ? "بیش از ۶۰°: کششِ خیلی بالا، ریگینگ را بازبینی کنید" : lang === "de" ? "> 60°: sehr hohe Zugkraft, Anschlag überdenken" : "> 60°: very high tension, reconsider the rigging"}</>}
+        {tone === "warn" && <><br />{lang === "fa" ? "۴۵–۶۰°: کششِ بالا، اسپریدر بیم را در نظر بگیرید" : lang === "de" ? "45–60°: hohe Zugkraft, Traverse in Betracht ziehen" : "45–60°: high tension, consider a spreader beam"}</>}
+      </Result>}
+      <div style={{ fontSize: 10.5, color: THEME.text3, marginTop: 8, lineHeight: 1.7 }}>
+        {lang === "fa" ? "زاویه = arctan(فاصلهٔ افقی ÷ ارتفاعِ ریگینگ)" : "angle = arctan(horizontal distance ÷ rigging height)"}
+      </div>
+    </div>
+  );
+}
+
+// 17) کششِ پایه‌های اسلینگ
+function SlingTensionTool({ lang }) {
+  const [load, setLoad] = useState("");
+  const [legs, setLegs] = useState("2");
+  const [ang, setAng] = useState("30");
+  const [wll, setWll] = useState("");
+  const w = num(load), n = num(legs), a = num(ang), wl = num(wll);
+  const share = w !== null && n ? w / n : null;
+  const tension = share !== null && a !== null ? share / Math.cos((Math.min(89.5, a) * Math.PI) / 180) : null;
+  const tone = tension === null || !wl ? "ok" : tension > wl ? "bad" : tension > wl * 0.85 ? "warn" : "ok";
+  return (
+    <div>
+      <Num label={lang === "fa" ? "وزنِ کل روی قلاب" : lang === "de" ? "Gesamtlast am Haken" : "Total load on hook"} value={load} onChange={setLoad} unit="kg" />
+      <Sel label={lang === "fa" ? "تعدادِ پایه" : lang === "de" ? "Anzahl Stränge" : "Number of legs"} value={legs} onChange={setLegs} options={[{ v: "2", l: "2" }, { v: "3", l: "3" }, { v: "4", l: "4" }]} />
+      <Num label={lang === "fa" ? "زاویهٔ هر پایه نسبت به قائم" : lang === "de" ? "Winkel jedes Strangs zur Senkrechten" : "Each leg's angle from vertical"} value={ang} onChange={setAng} unit="°" />
+      <Num label={lang === "fa" ? "WLL هر پایهٔ اسلینگ (اختیاری)" : lang === "de" ? "WLL je Anschlagstrang (optional)" : "Sling WLL per leg (optional)"} value={wll} onChange={setWll} unit="kg" hint={lang === "fa" ? "برای مقایسه" : lang === "de" ? "zum Vergleich" : "for comparison"} />
+      {tension !== null && <Result tone={tone}>
+        {lang === "fa" ? "کششِ هر پایه" : lang === "de" ? "Zugkraft je Strang" : "Tension per leg"} = <b>{fmt(tension, 0)} kg</b>
+        {wl ? <><br />{lang === "fa" ? "بهره‌گیری از WLL" : lang === "de" ? "WLL-Auslastung" : "WLL utilisation"} = <b>{fmt((tension / wl) * 100, 0)}٪</b></> : null}
+      </Result>}
+      <div style={{ fontSize: 10.5, color: THEME.text3, marginTop: 8, lineHeight: 1.7 }}>
+        {lang === "fa" ? "کشش = (بار ÷ تعدادِ پایه) ÷ cos(زاویه) — با فرضِ توزیعِ متقارن" : "tension = (load ÷ legs) ÷ cos(angle) — assumes symmetric distribution"}
+      </div>
+    </div>
+  );
+}
+
+// 18) بارِ مجازِ شگل (WLL) + جدولِ مرجع
+const SHACKLE_WLL_TABLE = [
+  ["3/8\"", "3.25 t"], ["1/2\"", "4.75 t"], ["5/8\"", "6.5 t"], ["3/4\"", "8.5 t"],
+  ["7/8\"", "9.5 t"], ["1\"", "12 t"], ["1-1/8\"", "13.5 t"], ["1-1/4\"", "17 t"],
+  ["1-3/8\"", "19 t"], ["1-1/2\"", "25 t"], ["1-3/4\"", "35 t"], ["2\"", "55 t"],
+];
+function ShackleLoadTool({ lang }) {
+  const [applied, setApplied] = useState("");
+  const [wll, setWll] = useState("");
+  const a = num(applied), w = num(wll);
+  const pct = a !== null && w ? (a / w) * 100 : null;
+  const tone = pct === null ? "ok" : pct > 100 ? "bad" : pct > 80 ? "warn" : "ok";
+  return (
+    <div>
+      <Num label={lang === "fa" ? "بارِ واردشده به شگل" : lang === "de" ? "Last am Schäkel" : "Load applied to the shackle"} value={applied} onChange={setApplied} unit="kg" />
+      <Num label={lang === "fa" ? "WLL شگل (از روی بدنه یا کاتالوگ)" : lang === "de" ? "Schäkel-WLL (Prägung oder Katalog)" : "Shackle WLL (from body stamp or catalogue)"} value={wll} onChange={setWll} unit="kg" />
+      {pct !== null && <Result tone={tone}>
+        {lang === "fa" ? "درصدِ بهره‌گیری" : lang === "de" ? "Auslastung" : "Utilisation"} = <b>{fmt(pct, 0)}٪</b>
+        {tone === "bad" && <><br />{lang === "fa" ? "بیش از WLL — شگلِ بزرگ‌تر لازم است" : lang === "de" ? "über WLL — größerer Schäkel erforderlich" : "over WLL — a larger shackle is needed"}</>}
+      </Result>}
+      <div style={{ marginTop: 12 }}>
+        <RefTable head={[lang === "fa" ? "سایزِ پین" : lang === "de" ? "Bolzengröße" : "Pin size", "WLL"]} rows={SHACKLE_WLL_TABLE} />
+        <p style={{ fontSize: 10, color: THEME.text3, marginTop: 6, lineHeight: 1.6 }}>
+          {lang === "fa" ? "مقادیرِ مرجعِ شگلِ Bow معمولی (Grade 6/8) — همیشه رتبه‌ی حکاکی‌شده روی بدنه‌ی خودِ شگل را مبنا قرار دهید." : lang === "de" ? "Referenzwerte für gängige Bogenschäkel (Grade 6/8) — immer die auf dem Schäkel selbst eingeprägte Nennlast zugrunde legen." : "Typical bow-shackle reference values (Grade 6/8) — always use the rating stamped on the actual shackle body."}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// 19) وزنِ بار از هندسه + چگالی
+const MATERIAL_DENSITY = [
+  { v: "steel", l: { fa: "فولاد", en: "Steel", de: "Stahl" }, d: 7850 },
+  { v: "concrete", l: { fa: "بتن", en: "Concrete", de: "Beton" }, d: 2400 },
+  { v: "aluminum", l: { fa: "آلومینیوم", en: "Aluminium", de: "Aluminium" }, d: 2700 },
+  { v: "water", l: { fa: "آب", en: "Water", de: "Wasser" }, d: 1000 },
+  { v: "wood", l: { fa: "چوب", en: "Wood", de: "Holz" }, d: 700 },
+  { v: "custom", l: { fa: "دلخواه", en: "Custom", de: "Benutzerdefiniert" }, d: null },
+];
+function LoadWeightTool({ lang }) {
+  const [shape, setShape] = useState("block");
+  const [l, setL] = useState(""); const [wd, setWd] = useState(""); const [h, setH] = useState("");
+  const [dia, setDia] = useState(""); const [len2, setLen2] = useState("");
+  const [mat, setMat] = useState("steel");
+  const [customDensity, setCustomDensity] = useState("7850");
+  const matObj = MATERIAL_DENSITY.find((m) => m.v === mat);
+  const density = mat === "custom" ? num(customDensity) : matObj?.d;
+  let volume = null;
+  if (shape === "block") { const a = num(l), b = num(wd), c = num(h); if (a && b && c) volume = a * b * c; }
+  else { const dd = num(dia), ll = num(len2); if (dd && ll) volume = Math.PI * (dd / 2) ** 2 * ll; }
+  const weight = volume !== null && density ? volume * density : null;
+  return (
+    <div>
+      <Sel label={lang === "fa" ? "شکلِ هندسی" : lang === "de" ? "Form" : "Shape"} value={shape} onChange={setShape}
+        options={[{ v: "block", l: lang === "fa" ? "بلوکِ مستطیلی" : lang === "de" ? "Quader" : "Rectangular block" }, { v: "cyl", l: lang === "fa" ? "استوانه / لوله" : lang === "de" ? "Zylinder / Rohr" : "Cylinder / pipe" }]} />
+      {shape === "block" ? (
+        <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ flex: 1 }}><Num label={lang === "fa" ? "طول" : lang === "de" ? "Länge" : "Length"} value={l} onChange={setL} unit="m" /></div>
+          <div style={{ flex: 1 }}><Num label={lang === "fa" ? "عرض" : lang === "de" ? "Breite" : "Width"} value={wd} onChange={setWd} unit="m" /></div>
+          <div style={{ flex: 1 }}><Num label={lang === "fa" ? "ارتفاع" : lang === "de" ? "Höhe" : "Height"} value={h} onChange={setH} unit="m" /></div>
+        </div>
+      ) : (
+        <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ flex: 1 }}><Num label={lang === "fa" ? "قطر" : lang === "de" ? "Durchmesser" : "Diameter"} value={dia} onChange={setDia} unit="m" /></div>
+          <div style={{ flex: 1 }}><Num label={lang === "fa" ? "طول" : lang === "de" ? "Länge" : "Length"} value={len2} onChange={setLen2} unit="m" /></div>
+        </div>
+      )}
+      <Sel label={lang === "fa" ? "جنس" : lang === "de" ? "Material" : "Material"} value={mat} onChange={setMat} options={MATERIAL_DENSITY.map((m) => ({ v: m.v, l: m.l[lang] || m.l.en }))} />
+      {mat === "custom" && <Num label={lang === "fa" ? "چگالی" : lang === "de" ? "Dichte" : "Density"} value={customDensity} onChange={setCustomDensity} unit="kg/m³" />}
+      {weight !== null && <Result>
+        {lang === "fa" ? "حجم" : lang === "de" ? "Volumen" : "Volume"} = <b>{fmt(volume, 3)} m³</b><br />
+        {lang === "fa" ? "وزنِ تخمینی" : lang === "de" ? "Geschätztes Gewicht" : "Estimated weight"} = <b style={{ fontSize: 16 }}>{fmt(weight, 0)} kg</b>
+      </Result>}
+      <div style={{ fontSize: 10.5, color: THEME.text3, marginTop: 8, lineHeight: 1.7 }}>
+        {lang === "fa" ? "وزن = حجم × چگالی — برای بارِ توپُر و همگن؛ فضاهای خالی/سوراخ را خودتان کم کنید." : lang === "de" ? "Gewicht = Volumen × Dichte — für eine massive, homogene Last; Hohlräume/Bohrungen selbst abziehen." : "weight = volume × density — for a solid, uniform load; subtract voids/holes yourself."}
+      </div>
+    </div>
+  );
+}
+
+// 20) مرکزِ ثقلِ بار (چند جزء، یک‌بُعدی)
+function LoadCgTool({ lang }) {
+  const [rows, setRows] = useState([{ w: "", x: "" }, { w: "", x: "" }]);
+  const setRow = (i, k, v) => setRows((p) => p.map((r, j) => (j === i ? { ...r, [k]: v } : r)));
+  const valid = rows.map((r) => ({ w: num(r.w), x: num(r.x) })).filter((r) => r.w !== null && r.x !== null);
+  const totalW = valid.reduce((s, r) => s + r.w, 0);
+  const cg = valid.length && totalW ? valid.reduce((s, r) => s + r.w * r.x, 0) / totalW : null;
+  return (
+    <div>
+      <p style={{ fontSize: 10.5, color: THEME.text3, marginBottom: 10, lineHeight: 1.7 }}>
+        {lang === "fa" ? "برای هر جزءِ بار، وزن و فاصله‌اش را از یک نقطه‌ی مرجعِ ثابت (مثلاً یک انتهای بار) وارد کنید." : lang === "de" ? "Für jeden Lastteil Gewicht und Abstand von einem festen Bezugspunkt (z. B. einem Lastende) eingeben." : "For each part of the load, enter its weight and distance from a fixed reference point (e.g. one end of the load)."}
+      </p>
+      {rows.map((r, i) => (
+        <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-end", marginBottom: 8 }}>
+          <div style={{ flex: 1 }}><Num label={`${lang === "fa" ? "وزنِ جزء" : lang === "de" ? "Teilgewicht" : "Part weight"} ${i + 1}`} value={r.w} onChange={(v) => setRow(i, "w", v)} unit="kg" /></div>
+          <div style={{ flex: 1 }}><Num label={lang === "fa" ? "فاصله از مرجع" : lang === "de" ? "Abstand vom Bezugspunkt" : "Distance from reference"} value={r.x} onChange={(v) => setRow(i, "x", v)} unit="m" /></div>
+          {rows.length > 2 && <button type="button" onClick={() => setRows((p) => p.filter((_, j) => j !== i))}
+            style={{ border: "none", background: "transparent", color: THEME.danger, cursor: "pointer", padding: "0 0 10px" }}>✕</button>}
+        </div>
+      ))}
+      <button type="button" onClick={() => setRows((p) => [...p, { w: "", x: "" }])}
+        style={{ fontSize: 12, fontWeight: 700, color: THEME.teal, border: `1px solid ${THEME.teal}`, background: "transparent", borderRadius: 8, padding: "7px 12px", cursor: "pointer", marginBottom: 10 }}>
+        + {lang === "fa" ? "افزودنِ جزء" : lang === "de" ? "Teil hinzufügen" : "Add part"}
+      </button>
+      {cg !== null && <Result>
+        {lang === "fa" ? "وزنِ کل" : lang === "de" ? "Gesamtgewicht" : "Total weight"} = <b>{fmt(totalW, 0)} kg</b><br />
+        {lang === "fa" ? "مرکزِ ثقل از نقطهٔ مرجع" : lang === "de" ? "Schwerpunkt ab Bezugspunkt" : "CG from reference point"} = <b style={{ fontSize: 16 }}>{fmt(cg, 3)} m</b>
+      </Result>}
+    </div>
+  );
+}
+
+// 21) شعاعِ کار و ظرفیتِ جرثقیل (درون‌یابیِ چارتِ کوچک)
+function CraneRadiusCapacityTool({ lang }) {
+  const [chart, setChart] = useState([{ r: "6", c: "10000" }, { r: "12", c: "5000" }]);
+  const [radius, setRadius] = useState("");
+  const [load, setLoad] = useState("");
+  const setCell = (i, k, v) => setChart((p) => p.map((row, j) => (j === i ? { ...row, [k]: v } : row)));
+  const pts = chart.map((row) => ({ r: num(row.r), c: num(row.c) })).filter((p) => p.r !== null && p.c !== null).sort((a, b) => a.r - b.r);
+  const rNum = num(radius);
+  let capacity = null;
+  if (pts.length >= 2 && rNum !== null) {
+    if (rNum <= pts[0].r) capacity = pts[0].c;
+    else if (rNum < pts[pts.length - 1].r) {
+      for (let i = 1; i < pts.length; i++) {
+        if (rNum <= pts[i].r) { const f = (rNum - pts[i - 1].r) / (pts[i].r - pts[i - 1].r); capacity = pts[i - 1].c + f * (pts[i].c - pts[i - 1].c); break; }
+      }
+    }
+  }
+  const loadNum = num(load);
+  const pct = capacity && loadNum !== null ? (loadNum / capacity) * 100 : null;
+  const tone = pct === null ? "ok" : pct > 90 ? "bad" : pct > 75 ? "warn" : "ok";
+  const cellStyle = { width: "100%", padding: "6px 8px", borderRadius: 7, border: `1.5px solid ${THEME.border}`, background: THEME.surface, color: THEME.text, fontSize: 12.5, fontFamily: THEME.font, outline: "none" };
+  return (
+    <div>
+      <p style={{ fontSize: 10.5, color: THEME.text3, marginBottom: 8, lineHeight: 1.7 }}>
+        {lang === "fa" ? "چند نقطه از Load Chartِ جرثقیل (شعاع ← ظرفیت) را وارد کنید." : lang === "de" ? "Einige Punkte aus der Traglasttabelle des Krans eingeben (Radius → Kapazität)." : "Enter a few points from the crane's load chart (radius → capacity)."}
+      </p>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5, marginBottom: 8 }}>
+        <thead><tr>
+          <th style={{ textAlign: "start", fontSize: 10.5, fontWeight: 800, color: THEME.text3, padding: "4px 6px" }}>{lang === "fa" ? "شعاع (m)" : "Radius (m)"}</th>
+          <th style={{ textAlign: "start", fontSize: 10.5, fontWeight: 800, color: THEME.text3, padding: "4px 6px" }}>{lang === "fa" ? "ظرفیت (kg)" : "Capacity (kg)"}</th>
+          <th style={{ width: 30 }} />
+        </tr></thead>
+        <tbody>
+          {chart.map((row, i) => (
+            <tr key={i}>
+              <td style={{ padding: "3px 6px" }}><input type="number" value={row.r} onChange={(e) => setCell(i, "r", e.target.value)} style={cellStyle} /></td>
+              <td style={{ padding: "3px 6px" }}><input type="number" value={row.c} onChange={(e) => setCell(i, "c", e.target.value)} style={cellStyle} /></td>
+              <td style={{ padding: "3px 6px" }}>{chart.length > 2 && <button type="button" onClick={() => setChart((p) => p.filter((_, j) => j !== i))} style={{ border: "none", background: "transparent", color: THEME.danger, cursor: "pointer" }}>✕</button>}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <button type="button" onClick={() => setChart((p) => [...p, { r: "", c: "" }])}
+        style={{ fontSize: 12, fontWeight: 700, color: THEME.teal, border: `1px solid ${THEME.teal}`, background: "transparent", borderRadius: 8, padding: "6px 11px", cursor: "pointer", marginBottom: 12 }}>
+        + {lang === "fa" ? "افزودنِ ردیف" : lang === "de" ? "Zeile hinzufügen" : "Add row"}
+      </button>
+      <Num label={lang === "fa" ? "شعاعِ کارِ موردنظر" : lang === "de" ? "Gewünschter Arbeitsradius" : "Target working radius"} value={radius} onChange={setRadius} unit="m" />
+      <Num label={lang === "fa" ? "وزنِ بار (شاملِ ریگینگ)" : lang === "de" ? "Lastgewicht (inkl. Anschlagmittel)" : "Load weight (incl. rigging)"} value={load} onChange={setLoad} unit="kg" />
+      {rNum !== null && (
+        <Result tone={capacity === null ? "bad" : tone}>
+          {capacity === null ? (lang === "fa" ? "خارج از دامنهٔ چارت" : lang === "de" ? "Außerhalb des Tabellenbereichs" : "Outside the chart range") : (<>
+            {lang === "fa" ? "ظرفیتِ درون‌یابی‌شده" : lang === "de" ? "Interpolierte Kapazität" : "Interpolated capacity"} = <b>{fmt(capacity, 0)} kg</b>
+            {pct !== null && <><br />{lang === "fa" ? "بهره‌برداری" : lang === "de" ? "Auslastung" : "Utilisation"} = <b>{fmt(pct, 0)}٪</b></>}
+          </>)}
+        </Result>
+      )}
+    </div>
+  );
+}
+
+// 22) فشارِ واردشده به زمین
+function GroundPressureTool({ lang }) {
+  const [craneW, setCraneW] = useState("");
+  const [loadW, setLoadW] = useState("");
+  const [pads, setPads] = useState("4");
+  const [padArea, setPadArea] = useState("0.5");
+  const [factor, setFactor] = useState("60");
+  const [soil, setSoil] = useState("");
+  const [sf, setSf] = useState("2");
+  const cw = num(craneW), lw = num(loadW), pa = num(padArea), f = num(factor), s = num(soil), sff = num(sf);
+  const reaction = (cw || 0) + (lw || 0);
+  const pressure = reaction && pa && f !== null ? ((reaction * 9.80665) / 1000) * (f / 100) / pa : null;
+  const allow = s && sff ? s / sff : null;
+  const tone = pressure === null || allow === null ? "ok" : pressure > allow ? "bad" : "ok";
+  return (
+    <div>
+      <Num label={lang === "fa" ? "وزنِ جرثقیل" : lang === "de" ? "Krangewicht" : "Crane weight"} value={craneW} onChange={setCraneW} unit="kg" />
+      <Num label={lang === "fa" ? "وزنِ بار + ریگینگ" : lang === "de" ? "Last- + Anschlagmittelgewicht" : "Load + rigging weight"} value={loadW} onChange={setLoadW} unit="kg" />
+      <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ flex: 1 }}><Num label={lang === "fa" ? "تعدادِ پَد/اوتریگر" : lang === "de" ? "Anzahl Stützen" : "Pads / outriggers"} value={pads} onChange={setPads} /></div>
+        <div style={{ flex: 1 }}><Num label={lang === "fa" ? "مساحتِ هر پَد" : lang === "de" ? "Fläche je Stütze" : "Area per pad"} value={padArea} onChange={setPadArea} unit="m²" /></div>
+      </div>
+      <Num label={lang === "fa" ? "درصدِ بار روی بدترین پَد" : lang === "de" ? "% der Last auf ungünstigster Stütze" : "% of load on worst pad"} value={factor} onChange={setFactor} unit="٪" hint={lang === "fa" ? "پیش‌فرضِ محافظه‌کارانه: ۶۰٪" : lang === "de" ? "konservativer Standard: 60 %" : "conservative default: 60%"} />
+      <Num label={lang === "fa" ? "ظرفیتِ باربریِ خاک" : lang === "de" ? "Bodentragfähigkeit" : "Soil bearing capacity"} value={soil} onChange={setSoil} unit="kPa" />
+      <Num label={lang === "fa" ? "ضریبِ اطمینان (SF)" : lang === "de" ? "Sicherheitsfaktor (SF)" : "Safety factor (SF)"} value={sf} onChange={setSf} />
+      {pressure !== null && <Result tone={tone}>
+        {lang === "fa" ? "فشارِ واردشده به زمین" : lang === "de" ? "Bodendruck" : "Ground bearing pressure"} = <b>{fmt(pressure, 0)} kPa</b>
+        {allow !== null && <><br />{lang === "fa" ? "مجاز (خاک ÷ SF)" : lang === "de" ? "Zulässig (Boden ÷ SF)" : "Allowable (soil ÷ SF)"} = <b>{fmt(allow, 0)} kPa</b></>}
+        {tone === "bad" && <><br />{lang === "fa" ? "فشار از حدِ مجاز بیشتر است — پَد را بزرگ‌تر یا موقعیت را عوض کنید" : lang === "de" ? "Druck über dem zulässigen Wert — größere Stützplatten oder Position ändern" : "pressure exceeds the allowable — use bigger pads or reposition"}</>}
+      </Result>}
+    </div>
+  );
+}
+
+// 23) بارِ واردشده بر جک‌ها/اوتریگرهای جرثقیل
+function JackLoadTool({ lang }) {
+  const [totalW, setTotalW] = useState("");
+  const [jacks, setJacks] = useState("4");
+  const [unevenFactor, setUnevenFactor] = useState("1.5");
+  const w = num(totalW), n = num(jacks), f = num(unevenFactor);
+  const avg = w !== null && n ? w / n : null;
+  const worst = avg !== null && f ? avg * f : null;
+  return (
+    <div>
+      <Num label={lang === "fa" ? "وزنِ کل (جرثقیل + بار)" : lang === "de" ? "Gesamtgewicht (Kran + Last)" : "Total weight (crane + load)"} value={totalW} onChange={setTotalW} unit="kg" />
+      <Sel label={lang === "fa" ? "تعدادِ جک/اوتریگر" : lang === "de" ? "Anzahl Stützen" : "Number of jacks / outriggers"} value={jacks} onChange={setJacks} options={[{ v: "3", l: "3" }, { v: "4", l: "4" }]} />
+      <Num label={lang === "fa" ? "ضریبِ توزیعِ نامتقارن (بدترین جک)" : lang === "de" ? "Ungleichverteilungsfaktor (ungünstigste Stütze)" : "Uneven-distribution factor (worst jack)"} value={unevenFactor} onChange={setUnevenFactor}
+        hint={lang === "fa" ? "در چرخش/شعاعِ حداکثر معمولاً ۱٫۵ تا ۲؛ اگر دفترچهٔ جرثقیل دارید، از همان استفاده کنید" : lang === "de" ? "beim Schwenken/max. Radius typischerweise 1,5–2; Krananleitung bevorzugen, falls vorhanden" : "typically 1.5–2 during slew/max radius; use the crane manual's value if available"} />
+      {worst !== null && <Result tone={f >= 2 ? "warn" : "ok"}>
+        {lang === "fa" ? "بارِ متوسطِ هر جک" : lang === "de" ? "Durchschnittliche Stützenlast" : "Average load per jack"} = <b>{fmt(avg, 0)} kg</b><br />
+        {lang === "fa" ? "بارِ بدترین جک (تخمینی)" : lang === "de" ? "Ungünstigste Stützenlast (geschätzt)" : "Worst-jack load (estimated)"} = <b style={{ fontSize: 16 }}>{fmt(worst, 0)} kg</b>
+      </Result>}
+      <div style={{ fontSize: 10.5, color: THEME.text3, marginTop: 8, lineHeight: 1.7 }}>
+        {lang === "fa" ? "یک تخمینِ سریع است، نه جایگزینِ محاسبه‌ی دقیقِ سازنده‌ی جرثقیل بر پایه‌ی شعاع/زاویه‌ی واقعی." : lang === "de" ? "Eine schnelle Schätzung, kein Ersatz für die genaue Berechnung des Kranherstellers nach tatsächlichem Radius/Winkel." : "a quick estimate, not a substitute for the crane manufacturer's exact radius/angle-based calculation."}
+      </div>
+    </div>
+  );
+}
+
+// 24) بارِ واردشده بر نقاطِ لیفت (دو نقطه، تعادلِ گشتاور)
+function LiftPointLoadTool({ lang }) {
+  const [w, setW] = useState("");
+  const [d1, setD1] = useState("");
+  const [d2, setD2] = useState("");
+  const ww = num(w), a = num(d1), b = num(d2);
+  const total = a !== null && b !== null ? a + b : null;
+  const p1 = ww !== null && total ? ww * (b / total) : null;
+  const p2 = ww !== null && total ? ww * (a / total) : null;
+  return (
+    <div>
+      <Num label={lang === "fa" ? "وزنِ کلِ بار" : lang === "de" ? "Gesamtlastgewicht" : "Total load weight"} value={w} onChange={setW} unit="kg" />
+      <Num label={lang === "fa" ? "فاصلهٔ نقطهٔ لیفتِ ۱ تا مرکزِ ثقل" : lang === "de" ? "Abstand Anschlagpunkt 1 zum Schwerpunkt" : "Distance, lift point 1 to CG"} value={d1} onChange={setD1} unit="m" />
+      <Num label={lang === "fa" ? "فاصلهٔ نقطهٔ لیفتِ ۲ تا مرکزِ ثقل" : lang === "de" ? "Abstand Anschlagpunkt 2 zum Schwerpunkt" : "Distance, lift point 2 to CG"} value={d2} onChange={setD2} unit="m" />
+      {p1 !== null && p2 !== null && <Result>
+        {lang === "fa" ? "بارِ نقطهٔ لیفتِ ۱" : lang === "de" ? "Last an Anschlagpunkt 1" : "Load at lift point 1"} = <b>{fmt(p1, 0)} kg</b><br />
+        {lang === "fa" ? "بارِ نقطهٔ لیفتِ ۲" : lang === "de" ? "Last an Anschlagpunkt 2" : "Load at lift point 2"} = <b>{fmt(p2, 0)} kg</b>
+      </Result>}
+      <div style={{ fontSize: 10.5, color: THEME.text3, marginTop: 8, lineHeight: 1.7 }}>
+        {lang === "fa" ? "تعادلِ گشتاور برای دو نقطهٔ لیفتِ هم‌راستا با مرکزِ ثقل — نقاطِ لیفتِ بیشتر یا نامنظم نیاز به تحلیلِ دقیق‌تر دارند." : lang === "de" ? "Momentengleichgewicht für zwei mit dem Schwerpunkt fluchtende Anschlagpunkte — mehr oder unregelmäßige Punkte erfordern eine genauere Analyse." : "moment balance for two lift points in line with the CG — more or irregular lift points need a more detailed analysis."}
+      </div>
+    </div>
+  );
+}
+
+// 25) درصدِ استفاده از ظرفیتِ ریگینگ (WLL Utilization) — چند قطعه
+function RiggingUtilTool({ lang }) {
+  const [rows, setRows] = useState([{ name: "", applied: "", wll: "" }]);
+  const setRow = (i, k, v) => setRows((p) => p.map((r, j) => (j === i ? { ...r, [k]: v } : r)));
+  return (
+    <div>
+      {rows.map((r, i) => {
+        const a = num(r.applied), w = num(r.wll);
+        const pct = a !== null && w ? (a / w) * 100 : null;
+        const tone = pct === null ? null : pct > 100 ? "bad" : pct > 80 ? "warn" : "ok";
+        return (
+          <div key={i} style={{ ...box, marginBottom: 10 }}>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
+              <input value={r.name} onChange={(e) => setRow(i, "name", e.target.value)} placeholder={lang === "fa" ? "نامِ قطعه (مثلاً اسلینگِ شمارهٔ ۱)" : lang === "de" ? "Bauteilname (z. B. Anschlagstrang 1)" : "Component name (e.g. sling #1)"}
+                style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: `1.5px solid ${THEME.border}`, background: THEME.surface, color: THEME.text, fontSize: 12.5, fontFamily: THEME.font, outline: "none" }} />
+              {rows.length > 1 && <button type="button" onClick={() => setRows((p) => p.filter((_, j) => j !== i))} style={{ border: "none", background: "transparent", color: THEME.danger, cursor: "pointer" }}>✕</button>}
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ flex: 1 }}><Num label={lang === "fa" ? "بارِ واردشده" : lang === "de" ? "Einwirkende Last" : "Applied load"} value={r.applied} onChange={(v) => setRow(i, "applied", v)} unit="kg" /></div>
+              <div style={{ flex: 1 }}><Num label="WLL" value={r.wll} onChange={(v) => setRow(i, "wll", v)} unit="kg" /></div>
+            </div>
+            {pct !== null && <Result tone={tone}>{lang === "fa" ? "بهره‌گیری" : lang === "de" ? "Auslastung" : "Utilisation"} = <b>{fmt(pct, 0)}٪</b></Result>}
+          </div>
+        );
+      })}
+      <button type="button" onClick={() => setRows((p) => [...p, { name: "", applied: "", wll: "" }])}
+        style={{ fontSize: 12, fontWeight: 700, color: THEME.teal, border: `1px solid ${THEME.teal}`, background: "transparent", borderRadius: 8, padding: "7px 12px", cursor: "pointer" }}>
+        + {lang === "fa" ? "افزودنِ قطعه" : lang === "de" ? "Bauteil hinzufügen" : "Add component"}
+      </button>
+    </div>
+  );
+}
+
+// 26) ارزیابیِ سریعِ ریسکِ عملیاتِ لیفتینگ — چک‌لیست
+const LIFT_RISK_ITEMS = [
+  { k: "weight", critical: true, l: { fa: "وزنِ بار مشخص و تأییدشده است", en: "Load weight is known and verified", de: "Lastgewicht ist bekannt und bestätigt" } },
+  { k: "chart", critical: true, l: { fa: "ظرفیتِ جرثقیل از Load Chart بررسی شده", en: "Crane capacity checked against the load chart", de: "Krankapazität anhand der Traglasttabelle geprüft" } },
+  { k: "ground", critical: true, l: { fa: "وضعیتِ زمین/فشارِ مجاز بررسی شده", en: "Ground conditions / bearing capacity checked", de: "Bodenverhältnisse/Tragfähigkeit geprüft" } },
+  { k: "rigging", critical: true, l: { fa: "ریگینگ (اسلینگ/شگل/قلاب) بازرسی شده و WLL کافی است", en: "Rigging (slings/shackles/hook) inspected, WLL sufficient", de: "Anschlagmittel geprüft, WLL ausreichend" } },
+  { k: "operator", critical: true, l: { fa: "اپراتور و ریگر گواهی‌نامه‌ی معتبر دارند", en: "Operator and rigger hold valid certification", de: "Kranführer und Anschläger besitzen gültige Zertifizierung" } },
+  { k: "exclusion", critical: false, l: { fa: "محدودهٔ ممنوعه/حصار مشخص شده", en: "Exclusion zone / barrier established", de: "Sperrbereich/Absperrung eingerichtet" } },
+  { k: "powerline", critical: true, l: { fa: "فاصله تا خطِ برق بررسی و کافی است", en: "Clearance to power lines checked and adequate", de: "Abstand zu Stromleitungen geprüft und ausreichend" } },
+  { k: "wind", critical: false, l: { fa: "سرعتِ باد در محدودهٔ مجاز است", en: "Wind speed is within the allowed limit", de: "Windgeschwindigkeit innerhalb der zulässigen Grenze" } },
+  { k: "tagline", critical: false, l: { fa: "طنابِ راهنما (Tag line) در نظر گرفته شده", en: "Tag lines are in use where needed", de: "Führungsleinen sind bei Bedarf vorgesehen" } },
+  { k: "comm", critical: false, l: { fa: "روشِ ارتباطیِ اپراتور/ریگر مشخص است", en: "Operator/rigger communication method is defined", de: "Kommunikationsmethode Kranführer/Anschläger ist festgelegt" } },
+  { k: "supervisor", critical: false, l: { fa: "سرپرستِ لیفت در محل حضور دارد", en: "A lift supervisor is present on site", de: "Ein Hebeaufsichtsführer ist vor Ort" } },
+];
+function LiftRiskChecklistTool({ lang }) {
+  const [checked, setChecked] = useState({});
+  const toggle = (k) => setChecked((p) => ({ ...p, [k]: !p[k] }));
+  const criticalUnchecked = LIFT_RISK_ITEMS.filter((i) => i.critical && !checked[i.k]).length;
+  const totalUnchecked = LIFT_RISK_ITEMS.filter((i) => !checked[i.k]).length;
+  const level = criticalUnchecked > 0 ? "bad" : totalUnchecked > 2 ? "warn" : "ok";
+  const levelText = {
+    bad: { fa: "ریسکِ بالا — موردِ حیاتیِ تیک‌نخورده وجود دارد؛ قبل از لیفت رفع کنید", en: "High risk — a critical item is unchecked; resolve before lifting", de: "Hohes Risiko — ein kritischer Punkt ist nicht abgehakt; vor dem Heben beheben" },
+    warn: { fa: "ریسکِ متوسط — چند موردِ غیرِحیاتی هنوز باقی است", en: "Medium risk — a few non-critical items remain", de: "Mittleres Risiko — einige nicht kritische Punkte verbleiben" },
+    ok: { fa: "آماده — همه یا تقریباً همه‌ی موارد تکمیل است", en: "Ready — all or nearly all items are complete", de: "Bereit — alle oder fast alle Punkte sind erledigt" },
+  };
+  return (
+    <div>
+      {LIFT_RISK_ITEMS.map((it) => (
+        <label key={it.k} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "8px 0", borderBottom: `1px solid ${THEME.border}`, cursor: "pointer" }}>
+          <input type="checkbox" checked={!!checked[it.k]} onChange={() => toggle(it.k)} style={{ marginTop: 3 }} />
+          <span style={{ fontSize: 13, color: THEME.text, lineHeight: 1.7 }}>
+            {it.l[lang] || it.l.fa}
+            {it.critical && <span style={{ fontSize: 10, color: THEME.danger, fontWeight: 700, marginInlineStart: 6 }}>({lang === "fa" ? "حیاتی" : lang === "de" ? "kritisch" : "critical"})</span>}
+          </span>
+        </label>
+      ))}
+      <div style={{ marginTop: 12 }}>
+        <Result tone={level}>{levelText[level][lang] || levelText[level].fa}</Result>
+      </div>
+      <p style={{ fontSize: 10, color: THEME.text3, marginTop: 8, lineHeight: 1.7 }}>
+        {lang === "fa" ? "این یک ارزیابیِ سریعِ کیفی است، نه جایگزینِ نقشه/مجوزِ رسمیِ لیفتینگ." : lang === "de" ? "Dies ist eine schnelle qualitative Prüfung, kein Ersatz für einen formellen Hebeplan/eine Genehmigung." : "this is a quick qualitative check, not a substitute for a formal lift plan/permit."}
+      </p>
+    </div>
+  );
+}
+
 /* --------------------------- registry ---------------------------- */
 /* --------------------- ابزارِ full-bleed: طراحی نقشه‌ی لیفتینگ --------------------- *
  * برخلافِ بقیهٔ ابزارها که سبک و client-side‌اند، این یک میان‌بر به Workspaceِ
@@ -369,6 +757,39 @@ export const QUICK_TOOLS = [
   { id: "sling-angle", cat: "lifting", icon: Construction, Tool: SlingAngleTool,
     title: { fa: "ضریبِ زاویهٔ اسلینگ", en: "Sling angle factor", de: "Anschlagwinkel-Faktor" },
     desc: { fa: "نیرویِ هر پایه و ظرفیتِ مؤثرِ سیستمِ اسلینگ", en: "Leg tension and effective sling capacity", de: "Strangkraft und effektive Anschlagkapazität" } },
+  { id: "sling-angle-geo", cat: "lifting", icon: Construction, Tool: SlingAngleGeoTool,
+    title: { fa: "محاسبهٔ زاویهٔ اسلینگ", en: "Sling angle calculation", de: "Berechnung des Anschlagwinkels" },
+    desc: { fa: "زاویه نسبت به قائم از روی فاصلهٔ افقی و ارتفاعِ ریگینگ", en: "Angle from vertical, from horizontal offset and rigging height", de: "Winkel zur Senkrechten aus horizontalem Abstand und Anschlaghöhe" } },
+  { id: "sling-tension", cat: "lifting", icon: Construction, Tool: SlingTensionTool,
+    title: { fa: "محاسبهٔ کششِ پایه‌های اسلینگ", en: "Sling leg tension", de: "Zugkraft der Anschlagstränge" },
+    desc: { fa: "کششِ هر پایه از وزنِ بار، تعدادِ پایه و زاویه", en: "Per-leg tension from load, leg count and angle", de: "Zugkraft je Strang aus Last, Stranganzahl und Winkel" } },
+  { id: "shackle-load", cat: "lifting", icon: Link2, Tool: ShackleLoadTool,
+    title: { fa: "محاسبهٔ بارِ مجازِ شگل", en: "Shackle allowable load", de: "Zulässige Schäkellast" },
+    desc: { fa: "درصدِ بهره‌گیریِ شگل از WLL + جدولِ مرجعِ سایزها", en: "Shackle WLL utilisation + a size reference table", de: "Schäkel-WLL-Auslastung + Referenztabelle der Größen" } },
+  { id: "load-weight", cat: "calc", icon: Weight, Tool: LoadWeightTool,
+    title: { fa: "محاسبهٔ وزنِ بار", en: "Load weight calculation", de: "Berechnung des Lastgewichts" },
+    desc: { fa: "وزنِ تخمینی از هندسه (بلوک/استوانه) و چگالیِ جنس", en: "Estimated weight from geometry (block/cylinder) and material density", de: "Geschätztes Gewicht aus Geometrie (Quader/Zylinder) und Materialdichte" } },
+  { id: "load-cg", cat: "lifting", icon: Crosshair, Tool: LoadCgTool,
+    title: { fa: "محاسبهٔ مرکزِ ثقلِ بار (CG)", en: "Load centre of gravity (CG)", de: "Lastschwerpunkt (CG)" },
+    desc: { fa: "ترکیبِ چند جزءِ بار با وزن/فاصلهٔ متفاوت", en: "Combine several load parts with different weight/distance", de: "Kombination mehrerer Lastteile mit unterschiedlichem Gewicht/Abstand" } },
+  { id: "crane-radius-capacity", cat: "lifting", icon: Gauge, Tool: CraneRadiusCapacityTool,
+    title: { fa: "کنترلِ شعاعِ کاری و ظرفیتِ جرثقیل", en: "Working radius & crane capacity check", de: "Prüfung von Arbeitsradius und Kranfähigkeit" },
+    desc: { fa: "درون‌یابیِ ظرفیت از یک Load Chartِ کوچکِ دستی", en: "Capacity interpolated from a small manual load chart", de: "Kapazität interpoliert aus einer kleinen manuellen Traglasttabelle" } },
+  { id: "ground-pressure", cat: "lifting", icon: Layers, Tool: GroundPressureTool,
+    title: { fa: "محاسبهٔ فشارِ واردشده به زمین", en: "Ground bearing pressure", de: "Bodendruckberechnung" },
+    desc: { fa: "فشارِ زیرِ بدترین پَد در برابرِ ظرفیتِ باربریِ خاک", en: "Pressure under the worst pad vs. soil bearing capacity", de: "Druck unter der ungünstigsten Stütze gegenüber der Bodentragfähigkeit" } },
+  { id: "jack-load", cat: "lifting", icon: ArrowDownToLine, Tool: JackLoadTool,
+    title: { fa: "محاسبهٔ بارِ واردشده بر جک‌های جرثقیل", en: "Load on crane jacks", de: "Last auf Kranstützen" },
+    desc: { fa: "بارِ متوسط و بدترینِ هر جک/اوتریگر", en: "Average and worst-case load per jack/outrigger", de: "Durchschnittliche und ungünstigste Last je Stütze" } },
+  { id: "lift-point-load", cat: "lifting", icon: MapPin, Tool: LiftPointLoadTool,
+    title: { fa: "محاسبهٔ بارِ واردشده بر نقاطِ لیفت", en: "Load on lift points", de: "Last an den Anschlagpunkten" },
+    desc: { fa: "توزیعِ بار بینِ دو نقطهٔ لیفت بر پایهٔ تعادلِ گشتاور", en: "Load split between two lift points via moment balance", de: "Lastverteilung auf zwei Anschlagpunkte über Momentengleichgewicht" } },
+  { id: "rigging-wll-util", cat: "lifting", icon: Percent, Tool: RiggingUtilTool,
+    title: { fa: "درصدِ استفاده از ظرفیتِ ریگینگ (WLL)", en: "Rigging WLL utilisation", de: "WLL-Auslastung der Anschlagmittel" },
+    desc: { fa: "بهره‌گیریِ چند قطعه (اسلینگ/شگل/…) از WLL هم‌زمان", en: "WLL utilisation of several components at once", de: "WLL-Auslastung mehrerer Bauteile gleichzeitig" } },
+  { id: "lift-risk-checklist", cat: "lifting", icon: ListChecks, Tool: LiftRiskChecklistTool,
+    title: { fa: "ارزیابیِ سریعِ ریسکِ عملیاتِ لیفتینگ", en: "Quick lifting risk assessment", de: "Schnelle Risikobewertung für Hebevorgänge" },
+    desc: { fa: "چک‌لیستِ کوتاه؛ موارد حیاتی که تیک نخورده باشند ریسک را بالا می‌برند", en: "A short checklist; unchecked critical items raise the risk level", de: "Eine kurze Checkliste; nicht abgehakte kritische Punkte erhöhen das Risiko" } },
   { id: "rad-zones", cat: "rad", icon: Atom, Tool: RadZonesTool,
     title: { fa: "محاسبه شعاع نواحی رادیوگرافی", en: "Radiography zone radii", de: "Radiografie-Zonenradien" },
     desc: { fa: "شعاعِ منطقهٔ ممنوعه، کنترل‌شده و تحت نظارت بر پایهٔ قدرتِ چشمه (Ci) + نمودارِ دایره‌ای", en: "Prohibited / controlled / supervised radii from source activity (Ci) + radial diagram", de: "Sperr-, Kontroll- und Überwachungsradien aus Quellenaktivität (Ci) + Radialdiagramm" } },
