@@ -385,6 +385,7 @@ export const PLAN_FEATURES = [
       { key: "lifting-plan", labelKey: "pfLiftingPlan" },
       { key: "excavation-calculator", labelKey: "pfQtExcavation" },
       { key: "energy-calculator", labelKey: "pfQtEnergy" },
+      { key: "fleet-fuel-calculator", labelKey: "pfQtFleetFuel" },
     ],
   },
   {

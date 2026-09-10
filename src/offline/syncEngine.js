@@ -41,6 +41,8 @@ export const MODULE_TABLE_MAP = {
   excavationStandardProfiles: { table: "excavation_standard_profiles", idField: "id" },
   energyAssessments: { table: "energy_assessments", idField: "id" },
   energyAudit: { table: "energy_audit", idField: "id" },
+  fleetFuelAssessments: { table: "fleet_fuel_assessments", idField: "id" },
+  fleetFuelAudit: { table: "fleet_fuel_audit", idField: "id" },
   // future modules register here once built
 };
 

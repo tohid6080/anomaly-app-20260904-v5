@@ -2,7 +2,7 @@ import React, { useState, lazy, Suspense } from "react";
 import {
   Sigma, Construction, Flame, FlaskConical, Zap, Wind, Atom, HardHat, Leaf,
   Wrench, ArrowRightLeft, Volume2, Link2, Weight, Crosshair, Gauge, Layers,
-  ArrowDownToLine, MapPin, Percent, ListChecks, Mountain,
+  ArrowDownToLine, MapPin, Percent, ListChecks, Mountain, Fuel,
 } from "lucide-react";
 import { THEME } from "../shared.js";
 
@@ -763,6 +763,16 @@ function EnergyBridge({ currentUser, wide }) {
   );
 }
 
+/* --------------- ابزارِ full-bleed: محاسبه‌ی مصرفِ سوختِ ناوگانِ خودرو --------------- */
+const FleetFuelCalculatorWorkspace = lazy(() => import("../fleet/FleetFuelCalculator.jsx"));
+function FleetFuelBridge({ currentUser, wide }) {
+  return (
+    <Suspense fallback={<div style={{ padding: 24, fontSize: 13, color: THEME.text3, fontFamily: THEME.font }}>…</div>}>
+      <FleetFuelCalculatorWorkspace currentUser={currentUser} role={currentUser?.role || "EMPLOYER"} wide={wide} />
+    </Suspense>
+  );
+}
+
 export const QUICK_TOOLS = [
   { id: "unit-converter", cat: "general", icon: ArrowRightLeft, Tool: UnitConverter,
     title: { fa: "مبدل واحدها", en: "Unit converter", de: "Einheitenrechner" },
@@ -830,4 +840,7 @@ export const QUICK_TOOLS = [
   { id: "energy-calculator", cat: "general", icon: Zap, Tool: EnergyBridge, full: true,
     title: { fa: "محاسبه و پایشِ مصرفِ برق", en: "Electricity Consumption Calculator", de: "Stromverbrauchsrechner" },
     desc: { fa: "میان‌بر به Workspaceِ کامل: بانکِ تجهیزات، توان/جریان/انرژی و هزینه در بازه‌های ساعتی تا سالانه، داشبورد و تعرفه‌ی نسخه‌دار", en: "Shortcut to the full workspace: equipment bank, power/current/energy and cost from hourly to yearly, dashboard and versioned tariff", de: "Verknüpfung zum vollständigen Arbeitsbereich: Gerätebank, Leistung/Strom/Energie und Kosten von stündlich bis jährlich, Dashboard und versioniertem Tarif" } },
+  { id: "fleet-fuel-calculator", cat: "general", icon: Fuel, Tool: FleetFuelBridge, full: true,
+    title: { fa: "محاسبه‌ی مصرفِ سوختِ ناوگان", en: "Vehicle Fleet Fuel Calculator", de: "Kraftstoffverbrauchsrechner für den Fuhrpark" },
+    desc: { fa: "میان‌بر به Workspaceِ کامل: بانکِ خودرو، پیمایشِ شهری/جاده‌ای، لیترِ روزانه/ماهانه/سالانه، مقایسه‌ی برآوردی با واقعی و داشبورد", en: "Shortcut to the full workspace: vehicle bank, city/highway mileage, daily/monthly/yearly litres, estimated-vs-actual comparison and dashboard", de: "Verknüpfung zum vollständigen Arbeitsbereich: Fahrzeugbank, Stadt-/Überlandkilometer, Liter täglich/monatlich/jährlich, Soll-Ist-Vergleich und Dashboard" } },
 ];
