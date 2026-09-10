@@ -36,6 +36,9 @@ export const MODULE_TABLE_MAP = {
   liftingCraneModels: { table: "lifting_crane_models", idField: "id" },
   liftingRiggingItems: { table: "lifting_rigging_items", idField: "id" },
   liftingAcceptanceCriteria: { table: "lifting_acceptance_criteria", idField: "id" },
+  excavationAssessments: { table: "excavation_assessments", idField: "id" },
+  excavationAudit: { table: "excavation_audit", idField: "id" },
+  excavationStandardProfiles: { table: "excavation_standard_profiles", idField: "id" },
   // future modules register here once built
 };
 

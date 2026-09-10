@@ -383,6 +383,7 @@ export const PLAN_FEATURES = [
       { key: "rad-zones", labelKey: "pfQtRadZones" },
       { key: "rad-distance", labelKey: "pfQtRadDistance" },
       { key: "lifting-plan", labelKey: "pfLiftingPlan" },
+      { key: "excavation-calculator", labelKey: "pfQtExcavation" },
     ],
   },
   {

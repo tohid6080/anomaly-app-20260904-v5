@@ -2,7 +2,7 @@ import React, { useState, lazy, Suspense } from "react";
 import {
   Sigma, Construction, Flame, FlaskConical, Zap, Wind, Atom, HardHat, Leaf,
   Wrench, ArrowRightLeft, Volume2, Link2, Weight, Crosshair, Gauge, Layers,
-  ArrowDownToLine, MapPin, Percent, ListChecks,
+  ArrowDownToLine, MapPin, Percent, ListChecks, Mountain,
 } from "lucide-react";
 import { THEME } from "../shared.js";
 
@@ -738,6 +738,19 @@ function LiftingPlanBridge({ currentUser, wide }) {
   );
 }
 
+/* --------------- ابزارِ full-bleed: محاسبه‌گرِ شیب و عرضِ ایمنِ گودبرداری --------------- *
+ * همان الگوی LiftingPlanBridge: میان‌بر به Workspaceِ کاملِ ماژولِ Excavation
+ * (جدول‌های واقعی، Standard Profile قابلِ‌تنظیم، Audit Trail) به‌جای یک
+ * ابزارِ سبکِ client-only. lazy تا در چانکِ خودِ ماژول بماند.                */
+const ExcavationCalculatorWorkspace = lazy(() => import("../excavation/ExcavationCalculator.jsx"));
+function ExcavationBridge({ currentUser, wide }) {
+  return (
+    <Suspense fallback={<div style={{ padding: 24, fontSize: 13, color: THEME.text3, fontFamily: THEME.font }}>…</div>}>
+      <ExcavationCalculatorWorkspace currentUser={currentUser} role={currentUser?.role || "EMPLOYER"} wide={wide} />
+    </Suspense>
+  );
+}
+
 export const QUICK_TOOLS = [
   { id: "unit-converter", cat: "general", icon: ArrowRightLeft, Tool: UnitConverter,
     title: { fa: "مبدل واحدها", en: "Unit converter", de: "Einheitenrechner" },
@@ -799,4 +812,7 @@ export const QUICK_TOOLS = [
   { id: "lifting-plan", cat: "lifting", icon: Construction, Tool: LiftingPlanBridge, full: true,
     title: { fa: "طراحی نقشه‌ی لیفتینگ", en: "Lifting Plan Designer", de: "Hebeplan-Designer" },
     desc: { fa: "میان‌بر به Workspaceِ کامل: بومِ داده‌محور، محاسبه بر پایهٔ Load Chart، نسخه‌بندی و Audit Trail", en: "Shortcut to the full workspace: data-driven canvas, load-chart calculations, versioning and audit trail", de: "Verknüpfung zum vollständigen Arbeitsbereich: datengesteuerte Zeichenfläche, Traglasttabellen-Berechnung, Versionierung und Audit-Trail" } },
+  { id: "excavation-calculator", cat: "general", icon: Mountain, Tool: ExcavationBridge, full: true,
+    title: { fa: "محاسبه‌گرِ شیب و عرضِ ایمنِ گودبرداری", en: "Excavation Slope & Width Calculator", de: "Rechner für Böschungsneigung und Grabenbreite" },
+    desc: { fa: "میان‌بر به Workspaceِ کامل: محاسبه بر اساسِ OSHA 1926 Subpart P، مقطعِ گرافیکی، Standard Profile قابلِ‌تنظیم و Audit Trail", en: "Shortcut to the full workspace: OSHA 1926 Subpart P calculations, graphical cross-section, configurable standard profile and audit trail", de: "Verknüpfung zum vollständigen Arbeitsbereich: Berechnungen nach OSHA 1926 Subpart P, grafischer Querschnitt, konfigurierbares Standardprofil und Audit-Trail" } },
 ];
