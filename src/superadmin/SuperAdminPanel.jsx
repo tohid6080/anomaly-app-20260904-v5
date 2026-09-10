@@ -2,7 +2,7 @@ import React, { useState, useEffect, useId, useContext, createContext } from "re
 import { ShieldAlert, Plus, LogOut, Send, CreditCard, AlertTriangle, UserPlus, KeyRound, Layers, Trash2, History, Activity, TrendingDown, Clock, LogIn, ShieldX, LayoutDashboard, Building2, Users, FileClock, ChevronLeft, HardDrive, RefreshCw, Settings2, Copy, GripVertical, ArrowUp, ArrowDown, RotateCcw, Eye, EyeOff, LayoutGrid, PanelsTopLeft, Bell, Palette, Megaphone, Sparkles, Gift, Info, ImagePlus, X, ClipboardList, Smartphone, UploadCloud, CheckCircle2, Download } from "lucide-react";
 import { loadAppReleases, createAppRelease, setReleasePublished, deleteAppRelease, loadLatestPublishedRelease, nextPatchVersion, triggerMobileBuild } from "./appReleaseApi.js";
 import { APP_VERSION, APP_VERSION_CODE } from "../shared.js";
-import { THEME } from "../shared.js";
+import { THEME, usePersistedState } from "../shared.js";
 import { changeMyPassword } from "../sessionToken.js";
 import { loadModuleConfig, saveModuleConfig, loadNotificationTypes, saveNotificationType, syncNotificationTypesWithPlans, loadAppearanceConfig, saveAppearanceConfig, resolveAppearanceTokens, loadAllAnnouncements, createAnnouncement, updateAnnouncement, setAnnouncementActive, deleteAnnouncement, loadDashboardWidgetConfig, saveDashboardWidgetsBulk, notificationTypeLabel, notificationTypeDescription } from "../systemConfigApi.js";
 import { DASHBOARD_WIDGET_GROUPS, mergeWidgetConfig, defaultWidgetConfig } from "../dashboard/dashboardWidgets.js";
@@ -49,7 +49,14 @@ const smallLabelStyle = { display: "block", marginBottom: 4, fontSize: 11.5, fon
 
 export default function SuperAdminPanel({ currentAdmin, onLogout }) {
   const { t, dir } = useLanguage();
-  const [page, setPage] = useState("overview");
+  // صفحه‌ی جاری در localStorage نگه داشته می‌شود تا با Refresh روی همان
+  // صفحه بمانیم، نه اینکه به «نمای کلی» برگردیم.
+  const [page, setPage] = usePersistedState("ihms_sa_page", "overview");
+  useEffect(() => {
+    const VALID = ["overview", "companies", "accounts", "plans", "monitoring", "storage", "auditLog", "errorReports", "systemConfig", "cardTransferPayments", "trialRequests"];
+    if (!VALID.includes(page)) setPage("overview");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [companies, setCompanies] = useState([]);
   const [plans, setPlans] = useState([]);
   const [usageStats, setUsageStats] = useState({ personnelByCompany: {}, anomalyByCompany: {}, attachmentByCompany: {} });
