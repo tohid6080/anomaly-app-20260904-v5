@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Plus, Copy, QrCode, Lock, Unlock, Trash2, Pencil, BarChart3, ClipboardList } from "lucide-react";
+import { Plus, Copy, QrCode, Lock, Unlock, Trash2, Pencil, BarChart3, ClipboardList, Send } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
@@ -9,6 +9,7 @@ import {
 } from "./surveyApi.js";
 import SurveyBuilder from "./SurveyBuilder.jsx";
 import SurveyResults from "./SurveyResults.jsx";
+import SurveyDistribute from "./SurveyDistribute.jsx";
 
 export default function SurveyDashboard({ currentUser, role, onBack, wide, readOnly }) {
   const { t, dir } = useLanguage();
@@ -25,6 +26,7 @@ export default function SurveyDashboard({ currentUser, role, onBack, wide, readO
 
   const openBuild = (s) => { setActive(s); setView("build"); };
   const openResults = (s) => { setActive(s); setView("results"); };
+  const openDistribute = (s) => { setActive(s); setView("distribute"); };
 
   const handleNew = async () => {
     setBusy(true); setErr("");
@@ -63,7 +65,10 @@ export default function SurveyDashboard({ currentUser, role, onBack, wide, readO
       onBack={() => { setView("list"); load(); }} onSaved={load} />;
   }
   if (view === "results" && active) {
-    return <SurveyResults survey={surveys.find((s) => s.id === active.id) || active} wide={wide} onBack={() => { setView("list"); load(); }} />;
+    return <SurveyResults survey={surveys.find((s) => s.id === active.id) || active} wide={wide} onBack={() => { setView("list"); load(); }} onChanged={load} />;
+  }
+  if (view === "distribute" && active) {
+    return <SurveyDistribute survey={surveys.find((s) => s.id === active.id) || active} wide={wide} onBack={() => { setView("list"); load(); }} onSaved={load} />;
   }
 
   return (
@@ -120,6 +125,7 @@ export default function SurveyDashboard({ currentUser, role, onBack, wide, readO
               {!readOnly && <button type="button" style={iconBtn(THEME.navyMid)} onClick={() => openBuild(s)}><Pencil size={11} /> {t("svEdit")}</button>}
               <button type="button" style={iconBtn(THEME.navyMid)} onClick={() => openResults(s)}><BarChart3 size={11} /> {t("svResults")}</button>
               {s.status !== "draft" && <button type="button" style={iconBtn(THEME.tealDeep)} onClick={() => setLinkFor(s.publicToken)}><QrCode size={11} /> {t("svLink")}</button>}
+              {!readOnly && s.status === "active" && <button type="button" style={iconBtn(THEME.navyMid)} onClick={() => openDistribute(s)}><Send size={11} /> {t("svDistribute")}</button>}
               {!readOnly && (
                 <button type="button" style={iconBtn(s.status === "active" ? THEME.danger : THEME.ok)} onClick={() => toggleStatus(s)}>
                   {s.status === "active" ? <Lock size={11} /> : <Unlock size={11} />} {s.status === "active" ? t("svClose") : t("svActivate")}

@@ -75,7 +75,7 @@ document.head.appendChild(baseStyle);
 // نبود، همان مقادیرِ :root بالا ظاهرِ پیش‌فرض را حفظ می‌کنند.
 try {
   const hash = location.hash || "";
-  if (!/^#(hse-climate-survey|survey)\//.test(hash)) {
+  if (!/^#(hse-climate-survey|survey|survey-results)\//.test(hash)) {
     const cfg = readCachedAppearanceConfig();
     if (cfg) {
       const scope = /^#super-admin/.test(hash) ? "superadmin" : (window.innerWidth < 1024 ? "mobile" : "web");

@@ -150,7 +150,29 @@ export function validateResponse(questions, answers, t) {
   return { ok: Object.keys(errors).length === 0, errors };
 }
 
-// خلاصه‌ی یک سؤال برای تحلیل (فاز ۳ کامل‌ترش می‌کند)
+// شمارِ پاسخ‌ها به تفکیکِ روز (برای نمودارِ روند) — [{ day: "YYYY-MM-DD", count }]
+export function responsesByDay(responses) {
+  const map = {};
+  (responses || []).forEach((r) => {
+    const d = (r.submittedAt || "").slice(0, 10);
+    if (!d) return;
+    map[d] = (map[d] || 0) + 1;
+  });
+  return Object.keys(map).sort().map((day) => ({ day, count: map[day] }));
+}
+
+// توزیعِ نمرهٔ آزمون در ۵ سطل (۰–۲۰ … ۸۰–۱۰۰)
+export function scoreBuckets(responses) {
+  const b = [0, 0, 0, 0, 0];
+  (responses || []).forEach((r) => {
+    if (r.percent == null) return;
+    const i = Math.min(4, Math.floor(r.percent / 20));
+    b[i] += 1;
+  });
+  return b.map((count, i) => ({ label: `${i * 20}–${i * 20 + 20}`, count }));
+}
+
+// خلاصه‌ی یک سؤال برای تحلیل
 export function summarizeQuestion(q, responses) {
   const vals = responses.map((r) => r.answers?.[q.id]).filter((v) => v != null && v !== "");
   if (CHOICE_TYPES.includes(q.type)) {

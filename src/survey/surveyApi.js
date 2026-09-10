@@ -18,6 +18,7 @@ export function surveyFromRow(r) {
     questions: Array.isArray(r.questions) ? r.questions : [],
     settings: r.settings && typeof r.settings === "object" ? r.settings : {},
     publicToken: r.public_token,
+    resultsToken: r.results_token,
     responseCount: Number(r.response_count) || 0,
     createdBy: r.created_by || "",
     createdAt: r.created_at,
@@ -128,6 +129,36 @@ export function buildSurveyLink(publicToken) {
 }
 export function surveyQrUrl(publicToken, size = 220) {
   return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(buildSurveyLink(publicToken))}`;
+}
+export function buildResultsLink(resultsToken) {
+  const base = PUBLIC_APP_URL.endsWith("/") ? PUBLIC_APP_URL : `${PUBLIC_APP_URL}/`;
+  return `${base}#survey-results/${resultsToken}`;
+}
+
+// روشن/خاموش‌کردنِ اشتراکِ عمومیِ نتایج — کلِ رکورد دوباره نوشته می‌شود
+// (settings jsonb، partial patch ندارد؛ همان الگوی saveSurvey).
+export async function setShareResults(survey, on) {
+  return saveSurvey({ ...survey, settings: { ...(survey.settings || {}), shareResults: !!on } });
+}
+
+// نشانه‌گذاریِ «ارسال شد» برای فهرستِ پخش (فقط ردیابیِ سمتِ مدیر)
+export async function setSurveyRecipients(survey, sentTo) {
+  return saveSurvey({ ...survey, settings: { ...(survey.settings || {}), sentTo: Array.isArray(sentTo) ? sentTo : [] } });
+}
+
+export async function loadPublicSurveyResults(token) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/survey-results-public`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${SUPABASE_ANON_KEY}`, apikey: SUPABASE_ANON_KEY },
+      body: JSON.stringify({ token }),
+    });
+    const data = await res.json();
+    if (!res.ok) return { __error: true, message: data?.error || tr("svErrFetchInfo") };
+    return data;
+  } catch {
+    return { __error: true, message: tr("svErrServer") };
+  }
 }
 
 /* ---------------- مسیرِ عمومی (بدونِ ورود) — از طریق Edge Function ---------------- */

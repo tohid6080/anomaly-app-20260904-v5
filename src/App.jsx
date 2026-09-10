@@ -27,6 +27,7 @@ import { checkMyAccountActive } from "./subscriptionApi.js";
 import { AppearanceProvider, useAppearance } from "./shared/AppearanceContext.jsx";
 const PublicHseClimateSurvey = lazy(() => import("./proactiveIndicators/PublicHseClimateSurvey.jsx"));
 const PublicSurvey = lazy(() => import("./survey/PublicSurvey.jsx"));
+const PublicSurveyResults = lazy(() => import("./survey/PublicSurveyResults.jsx"));
 const SurveyDashboard = lazy(() => import("./survey/SurveyDashboard.jsx"));
 const HomeDashboard = lazy(() => import("./dashboard/HomeDashboard.jsx"));
 const OperationalDashboard = lazy(() => import("./dashboard/OperationalDashboard.jsx"));
@@ -5749,8 +5750,9 @@ export default function App() {
   // مسیر پرسشنامه‌ی عمومی HSE Climate — دقیقاً مثل super-admin، کاملاً جدا
   // از درخت اصلی و بدون هیچ نیازی به ورود؛ فقط با لینک/QR واقعی قابل‌دسترسی است.
   const hseClimateSurveyMatch = typeof window !== "undefined" ? window.location.hash.match(/^#hse-climate-survey\/(.+)$/) : null;
-  // مسیرِ عمومیِ «نظرسنجی HSE» — همان الگو، با توکنِ عمومی؛ بدونِ نیاز به ورود.
+  // مسیرِ عمومیِ «نظرسنجی و آزمون HSE» — همان الگو، با توکنِ عمومی؛ بدونِ ورود.
   const surveyMatch = typeof window !== "undefined" ? window.location.hash.match(/^#survey\/(.+)$/) : null;
+  const surveyResultsMatch = typeof window !== "undefined" ? window.location.hash.match(/^#survey-results\/(.+)$/) : null;
   // پنل Super Admin زبانِ کاملاً جداگانه‌ای دارد (کلید localStorage:
   // "ihms_lang_superadmin") تا انتخابِ زبانِ سوپرادمین هیچ اثری روی
   // کاربران عادیِ سامانه نگذارد و برعکس.
@@ -5770,6 +5772,8 @@ export default function App() {
           <LazyPanel><PublicHseClimateSurvey publicToken={hseClimateSurveyMatch[1]} /></LazyPanel>
         ) : surveyMatch ? (
           <LazyPanel><PublicSurvey publicToken={surveyMatch[1]} /></LazyPanel>
+        ) : surveyResultsMatch ? (
+          <LazyPanel><PublicSurveyResults resultsToken={surveyResultsMatch[1]} /></LazyPanel>
         ) : (
           <AppInnerWithAppearance />
         )}

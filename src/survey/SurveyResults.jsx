@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Download, Printer, RefreshCw, Trash2 } from "lucide-react";
+import { Download, Printer, RefreshCw, Trash2, Search, Share2, Copy, Check } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
-import { loadSurveyResponses, deleteSurveyResponse } from "./surveyApi.js";
-import { summarizeQuestion, isAnswerable, CHOICE_TYPES, SCORABLE_TYPES } from "./surveyModel.js";
+import { loadSurveyResponses, deleteSurveyResponse, setShareResults, buildResultsLink } from "./surveyApi.js";
+import { summarizeQuestion, isAnswerable, CHOICE_TYPES, SCORABLE_TYPES, responsesByDay } from "./surveyModel.js";
 
 const MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
 
@@ -18,17 +18,41 @@ function isCorrect(q, a) {
   return a != null && a === correct[0];
 }
 
-export default function SurveyResults({ survey, onBack, wide }) {
+export default function SurveyResults({ survey, onBack, wide, onChanged }) {
   const { t, dir, lang } = useLanguage();
-  const [responses, setResponses] = useState(null);
+  const [allResponses, setAllResponses] = useState(null);
   const isExam = survey.settings?.mode === "exam";
   const [tab, setTab] = useState(isExam ? "scores" : "summary"); // summary | responses | scores
+  const [filter, setFilter] = useState("");
+  const [shareBusy, setShareBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const shareOn = !!survey.settings?.shareResults;
 
-  const load = async () => setResponses(await loadSurveyResponses(survey.id));
+  const load = async () => setAllResponses(await loadSurveyResponses(survey.id));
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [survey.id]);
 
   const questions = survey.questions || [];
   const answerable = questions.filter(isAnswerable);
+
+  const responses = useMemo(() => {
+    if (!allResponses) return null;
+    if (!filter.trim()) return allResponses;
+    const s = filter.trim();
+    return allResponses.filter((r) => {
+      const m = r.respondentMeta || {};
+      return (m.name || "").includes(s) || (m.unit || "").includes(s);
+    });
+  }, [allResponses, filter]);
+
+  const trend = useMemo(() => (responses ? responsesByDay(responses) : []), [responses]);
+
+  const toggleShare = async () => {
+    setShareBusy(true);
+    const res = await setShareResults(survey, !shareOn);
+    setShareBusy(false);
+    if (!res?.__error) onChanged && onChanged();
+  };
+  const copyResultsLink = () => { navigator.clipboard?.writeText(buildResultsLink(survey.resultsToken)); setCopied(true); setTimeout(() => setCopied(false), 1500); };
 
   const optLabel = (q, id) => (q.config?.options || []).find((o) => o.id === id)?.label || id;
 
@@ -99,13 +123,51 @@ export default function SurveyResults({ survey, onBack, wide }) {
         </div>
       </div>
 
-      <div style={{ display: "inline-flex", background: THEME.surface2, border: `1px solid ${THEME.border}`, borderRadius: 9, padding: 3, gap: 3, marginBottom: 14 }}>
-        {[...(isExam ? [["scores", t("svTabScores")]] : []), ["summary", t("svTabSummary")], ["responses", t("svTabResponses")]].map(([k, lbl]) => (
-          <button key={k} type="button" onClick={() => setTab(k)}
-            style={{ border: "none", borderRadius: 7, padding: "6px 14px", fontFamily: THEME.font, fontSize: 12, fontWeight: 700, cursor: "pointer",
-              background: tab === k ? THEME.teal : "transparent", color: tab === k ? "#fff" : THEME.text2 }}>{lbl}</button>
-        ))}
+      {/* اشتراکِ عمومیِ نتایجِ تجمیعی */}
+      <div style={{ background: THEME.surface, border: `1px solid ${shareOn ? THEME.teal : THEME.border}`, borderRadius: 10, padding: "10px 12px", marginBottom: 12 }}>
+        <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: THEME.text2, cursor: "pointer" }}>
+          <input type="checkbox" checked={shareOn} disabled={shareBusy} onChange={toggleShare} style={{ width: 15, height: 15, accentColor: THEME.teal }} />
+          <Share2 size={13} /> {t("svShareResults")}
+        </label>
+        {shareOn && (
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 8 }}>
+            <code style={{ fontSize: 10.5, background: THEME.surface2, padding: "5px 9px", borderRadius: 6, wordBreak: "break-all", direction: "ltr" }}>{buildResultsLink(survey.resultsToken)}</code>
+            <button type="button" onClick={copyResultsLink} style={{ ...styles.smallButton, display: "inline-flex", alignItems: "center", gap: 5 }}>{copied ? <Check size={12} /> : <Copy size={12} />} {t("svCopyLink")}</button>
+          </div>
+        )}
+        <p style={{ fontSize: 10, color: THEME.text3, margin: "6px 0 0", lineHeight: 1.7 }}>{t("svShareResultsHint")}</p>
       </div>
+
+      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12, flexWrap: "wrap" }}>
+        <div style={{ display: "inline-flex", background: THEME.surface2, border: `1px solid ${THEME.border}`, borderRadius: 9, padding: 3, gap: 3 }}>
+          {[...(isExam ? [["scores", t("svTabScores")]] : []), ["summary", t("svTabSummary")], ["responses", t("svTabResponses")]].map(([k, lbl]) => (
+            <button key={k} type="button" onClick={() => setTab(k)}
+              style={{ border: "none", borderRadius: 7, padding: "6px 14px", fontFamily: THEME.font, fontSize: 12, fontWeight: 700, cursor: "pointer",
+                background: tab === k ? THEME.teal : "transparent", color: tab === k ? "#fff" : THEME.text2 }}>{lbl}</button>
+          ))}
+        </div>
+        {!survey.settings?.anonymous && (
+          <div style={{ position: "relative", flex: "1 1 160px", maxWidth: 240 }}>
+            <Search size={12} style={{ position: "absolute", insetInlineStart: 9, top: 10, color: THEME.text3 }} />
+            <input style={{ ...styles.input, paddingInlineStart: 26, fontSize: 12 }} placeholder={t("svFilterRespondent")} value={filter} onChange={(e) => setFilter(e.target.value)} dir={dir} />
+          </div>
+        )}
+      </div>
+
+      {trend.length > 1 && (
+        <div style={{ ...styles.card, width: "auto", marginBottom: 12 }}>
+          <div style={{ fontSize: 11.5, fontWeight: 700, color: THEME.text3, marginBottom: 6 }}>{t("svResponseTrend")}</div>
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 64 }}>
+            {trend.map((x) => {
+              const mx = Math.max(...trend.map((y) => y.count));
+              return <div key={x.day} title={`${x.day}: ${x.count}`} style={{ flex: 1, background: THEME.teal, borderRadius: "3px 3px 0 0", height: `${Math.max(6, (x.count / mx) * 100)}%` }} />;
+            })}
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9.5, color: THEME.text3, marginTop: 3 }}>
+            <span>{trend[0].day}</span><span>{trend[trend.length - 1].day}</span>
+          </div>
+        </div>
+      )}
 
       {responses === null && <p style={{ color: THEME.text3, textAlign: "center", padding: 20 }}>{t("commonLoading")}</p>}
       {responses && responses.length === 0 && <p style={{ color: THEME.text3, textAlign: "center", padding: 20 }}>{t("svNoResponses")}</p>}
