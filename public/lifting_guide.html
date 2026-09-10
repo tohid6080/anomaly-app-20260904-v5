@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>راهنمای طراحی نقشه‌ی لیفتینگ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EAECEC;
+    --paper:#FFFFFF;
+    --ink:#201F1D;
+    --ink-soft:#5B5851;
+    --ink-faint:#8B8880;
+    --rule:#DAD7CD;
+    --rule-soft:#EAE8E1;
+
+    --red:#AE2A2E;
+    --red-deep:#7E1E22;
+    --red-soft:#F4DEDD;
+    --red-line:#D9A9A8;
+
+    --blue:#2C4A6B;
+    --blue-soft:#DCE6EE;
+    --blue-line:#AEC3D4;
+
+    --teal:#2F6E5D;
+    --teal-soft:#DCEAE4;
+    --teal-line:#A9CBBE;
+
+    --amber:#9C6B22;
+    --amber-soft:#F1E4CC;
+    --amber-line:#D9BD86;
+
+    --radius:10px;
+    --shadow: 0 1px 2px rgba(32,31,29,.06), 0 8px 24px -12px rgba(32,31,29,.18);
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    font-family:'Vazirmatn', sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    line-height:1.9;
+    font-feature-settings:"tnum" 1, "ss01" 1;
+  }
+  h1,h2,h3,h4{font-family:'Vazirmatn', sans-serif; margin:0; font-weight:900;}
+  p{margin:0 0 14px;}
+  a{color:inherit;}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    background:
+      radial-gradient(1100px 420px at 85% -10%, rgba(47,110,93,.14), transparent 60%),
+      linear-gradient(180deg, #FBFAF8 0%, var(--bg) 100%);
+    border-bottom:1px solid var(--rule);
+    padding:56px 24px 34px;
+  }
+  .hero-inner{max-width:1180px; margin:0 auto;}
+
+  .hero h1{
+    font-size:clamp(28px, 4vw, 44px);
+    line-height:1.35;
+    margin-bottom:14px;
+  }
+  .hero .lede{
+    font-size:16.5px; color:var(--ink-soft); margin-bottom:0;
+  }
+
+  /* ---------- LAYOUT ---------- */
+  .layout{
+    max-width:1180px; margin:0 auto; padding:40px 24px 80px;
+    display:grid; grid-template-columns:210px 1fr; gap:36px;
+    align-items:start;
+  }
+  @media (max-width: 880px){ .layout{grid-template-columns:1fr;} .toc{position:static; order:-1;} }
+
+  .toc{
+    position:sticky; top:20px;
+    background:var(--paper); border:1px solid var(--rule); border-radius:var(--radius);
+    padding:16px 12px; box-shadow:var(--shadow);
+  }
+  .toc h4{font-size:11.5px; color:var(--ink-faint); font-weight:700; margin-bottom:10px;}
+  .toc ol{list-style:none; margin:0; padding:0; counter-reset:toc;}
+  .toc li{counter-increment:toc; margin-bottom:2px;}
+  .toc a{
+    display:flex; gap:6px; align-items:baseline;
+    font-size:12px; line-height:1.6; padding:6px 5px; border-radius:6px; text-decoration:none; color:var(--ink-soft);
+  }
+  .toc a::before{
+    content: counter(toc, persian) "";
+    font-size:11px; color:var(--ink-faint); flex:none;
+  }
+  .toc a:hover, .toc a.active{background:var(--rule-soft); color:var(--ink); font-weight:700;}
+
+  /* ---------- MAIN CONTENT ---------- */
+  main{min-width:0;}
+  section{margin-bottom:56px; scroll-margin-top:20px;}
+
+  .sec-head{display:flex; align-items:flex-start; gap:14px; margin-bottom:6px;}
+  .sec-num{
+    font-size:13px; font-weight:800; color:var(--paper);
+    background:var(--ink); width:34px; height:34px; border-radius:8px;
+    display:flex; align-items:center; justify-content:center; flex:none;
+  }
+  section h2{font-size:24px;}
+  .sec-sub{color:var(--ink-faint); font-size:13.5px; margin:6px 0 22px 48px;}
+
+  .card{
+    background:var(--paper); border:1px solid var(--rule); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:26px 26px 22px; margin-bottom:20px;
+  }
+
+  .meta-row{
+    display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; margin-bottom:22px;
+  }
+  @media (max-width:700px){.meta-row{grid-template-columns:1fr;}}
+  .meta{
+    background:var(--rule-soft); border:1px solid var(--rule); border-radius:8px; padding:12px 14px;
+  }
+  .meta .k{font-size:11px; color:var(--ink-faint); font-weight:700; margin-bottom:4px;}
+  .meta .v{font-size:13.5px; font-weight:600;}
+
+  h3.h{font-size:16px; margin:26px 0 10px; padding-right:12px; border-right:3px solid var(--teal);}
+  h4.h{font-size:14px; margin:20px 0 8px; color:var(--ink-soft); font-weight:700;}
+
+  table{width:100%; border-collapse:collapse; font-size:13.5px; margin:12px 0 22px;}
+  caption{text-align:right; font-size:12px; color:var(--ink-faint); margin-bottom:6px; caption-side:top;}
+  th,td{border:1px solid var(--rule); padding:9px 12px; text-align:right; vertical-align:top;}
+  th{background:var(--rule-soft); font-weight:700; font-size:12.5px; color:var(--ink-soft);}
+  tr:nth-child(even) td{background:#FCFCFB;}
+  td.num, th.num{text-align:center;}
+  td.ico{text-align:center; font-size:16px; width:40px;}
+
+  .badge{display:inline-block; padding:2px 9px; border-radius:999px; font-size:11.5px; font-weight:700;}
+  .b-low{background:var(--red-soft); color:var(--red-deep); border:1px solid var(--red-line);}
+  .b-mid{background:var(--amber-soft); color:var(--amber); border:1px solid var(--amber-line);}
+  .b-high{background:var(--teal-soft); color:var(--teal); border:1px solid var(--teal-line);}
+  .b-vhigh{background:var(--blue-soft); color:var(--blue); border:1px solid var(--blue-line);}
+
+  ol.steps{margin:0 0 8px; padding-right:0; list-style:none; counter-reset:step;}
+  ol.steps > li{
+    counter-increment:step;
+    position:relative;
+    padding:2px 0 18px 0; margin-right:0;
+    padding-right:46px;
+    border-right:2px solid var(--rule);
+    margin-right:16px;
+  }
+  ol.steps > li:last-child{border-color:transparent; padding-bottom:2px;}
+  ol.steps > li::before{
+    content: counter(step);
+    position:absolute; right:-16px; top:0;
+    width:32px; height:32px; border-radius:50%;
+    background:var(--paper); border:2px solid var(--ink); color:var(--ink);
+    font-weight:800; font-size:13px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  ol.steps > li b{display:block; font-size:14.5px; margin-bottom:4px;}
+  ol.steps > li p{margin:0; color:var(--ink-soft); font-size:13.5px;}
+
+  .callout{
+    display:flex; gap:12px; align-items:flex-start;
+    background:var(--red-soft); border:1px solid var(--red-line); border-radius:8px;
+    padding:14px 16px; margin:16px 0; font-size:13.5px;
+  }
+  .callout .ico{font-size:16px; flex:none;}
+  .callout b{color:var(--red-deep);}
+
+  .callout.note{background:var(--rule-soft); border-color:var(--rule);}
+  .callout.note b{color:var(--ink);}
+
+  .callout.ok{background:var(--teal-soft); border-color:var(--teal-line);}
+  .callout.ok b{color:var(--teal);}
+
+  .formula{
+    background:#22221F; color:#F1EFE8; border-radius:8px; padding:16px 18px;
+    font-size:13px; line-height:2; direction:ltr; text-align:left;
+    overflow-x:auto; margin:12px 0 18px; unicode-bidi:embed;
+  }
+  .formula .label{display:block; direction:rtl; text-align:right; color:#B7B4A9; font-size:11.5px; margin-bottom:8px;}
+
+  .example{
+    border:1px dashed var(--rule); border-radius:8px; padding:14px 16px; font-size:13.5px;
+    background:#FCFCFB; margin:12px 0 18px;
+  }
+  .example b{color:var(--ink);}
+
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  @media (max-width:700px){.grid2{grid-template-columns:1fr;}}
+
+  .taglist{display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 4px;}
+  .tag{font-size:12px; background:var(--rule-soft); border:1px solid var(--rule); border-radius:999px; padding:4px 11px; color:var(--ink-soft);}
+
+  @media print{
+    .toc, .hero{display:none;}
+    .layout{grid-template-columns:1fr; padding:0;}
+    .card{box-shadow:none; break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <h1>راهنمای طراحی نقشه‌ی لیفتینگ</h1>
+    <p class="lede">
+      این صفحه قدم‌به‌قدم توضیح می‌دهد که یک <b>نقشه‌ی لیفتینگ (Lift Plan)</b> از صفر تا تأیید نهایی
+      چگونه در سامانه ساخته می‌شود: از پُرکردنِ اطلاعاتِ پایه، تا چیدنِ جرثقیل/بار/ریگینگ روی بومِ
+      دوبعدی، خواندنِ محاسبات و هشدارهای ایمنیِ لحظه‌ای، شبیه‌سازیِ مراحلِ لیفت، و در نهایت
+      نسخه‌بندی و تأیید.
+    </p>
+  </div>
+</header>
+
+<div class="layout">
+
+  <nav class="toc">
+    <h4>فهرست راهنما</h4>
+    <ol>
+      <li><a href="#overview">این ابزار چیست؟</a></li>
+      <li><a href="#before-start">پیش از شروع</a></li>
+      <li><a href="#new-plan">ساختِ نقشه‌ی جدید</a></li>
+      <li><a href="#canvas-basics">کار با بومِ نقشه</a></li>
+      <li><a href="#crane-setup">تنظیمِ جرثقیل</a></li>
+      <li><a href="#load-rigging">بار و ریگینگ</a></li>
+      <li><a href="#site-context">محیطِ سایت</a></li>
+      <li><a href="#save-scene">ذخیره‌ی نقشه</a></li>
+      <li><a href="#calc-safety">محاسبات و ایمنی</a></li>
+      <li><a href="#simulation">شبیه‌سازیِ مراحل</a></li>
+      <li><a href="#status-versioning">وضعیت و نسخه‌بندی</a></li>
+      <li><a href="#checklist">چک‌لیستِ سریع</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section id="overview">
+      <div class="sec-head"><div class="sec-num">۱</div><h2>این ابزار چیست؟</h2></div>
+      <p class="sec-sub">قبل از هر کاری، بدانید این صفحه دقیقاً چه چیزی را می‌سازد.</p>
+      <div class="card">
+        <p>
+          «طراحی نقشه‌ی لیفتینگ» یک نقشه‌ی مهندسیِ داده‌محور برای یک عملیاتِ بلندکردنِ بار با
+          جرثقیل می‌سازد: موقعیتِ دقیقِ جرثقیل، بار، مسیرِ حرکت و موانعِ اطراف را روی یک بومِ
+          دوبعدی (به مقیاسِ متر) می‌چینید، و سامانه بر همان مبنا <b>ظرفیتِ واقعیِ جرثقیل از Load
+          Chart</b>، <b>درصدِ بهره‌برداری</b>، <b>فشارِ روی زمین</b>، <b>زاویه و کششِ اسلینگ</b> و
+          <b>فاصله تا خط برق/موانع</b> را لحظه‌به‌لحظه محاسبه و اعتبارسنجی می‌کند.
+        </p>
+        <div class="callout note">
+          <span class="ico">ℹ️</span>
+          <div><b>هیچ عددِ فرضی وجود ندارد:</b> اگر جرثقیل روی شعاعِ کار، Load Chart نداشته باشد،
+          ظرفیت «خارج از چارت» می‌ماند و ارزیابی fail می‌شود — سامانه هرگز یک ظرفیتِ حدسی جایگزین
+          نمی‌کند.</div>
+        </div>
+        <p>هر تغییری روی نقشه ابتدا فقط پیش‌نویسِ محلی است؛ چیزی در پایگاه‌داده ذخیره نمی‌شود مگر
+        با یکی از دکمه‌های صریحِ «ذخیره» — پس آزادانه امتحان کنید.</p>
+      </div>
+    </section>
+
+    <!-- ============ BEFORE START ============ -->
+    <section id="before-start">
+      <div class="sec-head"><div class="sec-num">۲</div><h2>پیش از شروع — سه آیکونِ بالای صفحه</h2></div>
+      <p class="sec-sub">بالای لیستِ نقشه‌ها، روبه‌روی عنوانِ «طراحی نقشه‌ی لیفتینگ»، سه دکمه هست. این‌جا هستند تا معلوم باشد هرکدام دقیقاً چیست.</p>
+      <div class="card">
+        <table>
+          <thead><tr><th class="ico"></th><th>نامِ دکمه</th><th>چیست</th><th>چه کسی می‌بیند</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="ico">🏗️</td>
+              <td><b>مدل‌های جرثقیل</b><br><span class="tag" style="margin-top:4px;display:inline-block;">Load Chart</span></td>
+              <td>فهرستِ مدل‌های جرثقیلِ شرکت به‌همراه Load Chartِ واقعیِ سازنده (جفت‌های شعاع←ظرفیت). این داده مبنای محاسبه‌ی ظرفیت در همه‌ی نقشه‌هاست.</td>
+              <td>فقط سرپرستِ HSE</td>
+            </tr>
+            <tr>
+              <td class="ico">🎚️</td>
+              <td><b>معیارهای پذیرش</b></td>
+              <td>آستانه‌های ایمنیِ سراسریِ شرکت (حداکثر بهره‌برداری، فاصله‌ی ایمنِ پرسنل، حدِ باد، زاویه‌ی اسلینگ، حریمِ خط برق و…). این آستانه‌ها پایه‌ی اعتبارسنجیِ ایمنیِ هر نقشه‌اند.</td>
+              <td>فقط سرپرستِ HSE</td>
+            </tr>
+            <tr>
+              <td class="ico">📖</td>
+              <td><b>راهنما</b></td>
+              <td>همین صفحه — راهنمای گام‌به‌گامِ پُرکردنِ یک نقشه‌ی لیفتینگ.</td>
+              <td>همه‌ی کاربران</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="callout ok">
+          <span class="ico">✅</span>
+          <div><b>اگر سرپرستِ HSE نیستید:</b> کارِ شما ساخت/ویرایشِ خودِ نقشه‌هاست (بخش‌های ۳ به بعد) — دو آیتمِ «مدل‌های جرثقیل» و «معیارهای پذیرش» را اصلاً نمی‌بینید، چون یک‌بار در سطحِ شرکت توسط سرپرست تنظیم می‌شوند و نیازی به تکرار در هر نقشه ندارند.</div>
+        </div>
+        <div class="callout">
+          <span class="ico">⚠️</span>
+          <div><b>اگر سرپرستِ HSE هستید:</b> پیش از آنکه کسی اولین نقشه را بسازد، حتماً سری به «مدل‌های جرثقیل» بزنید و دستِ‌کم یک مدل با Load Chart ثبت کنید. بدونِ آن، هر نقشه‌ای که بسازید «خارج از چارت» می‌ماند و قابلِ تأیید نیست. «معیارهای پذیرش» یک مقدارِ پیش‌فرضِ سیستمی دارد و تنظیمِ اولیه‌اش اختیاری است.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ NEW PLAN ============ -->
+    <section id="new-plan">
+      <div class="sec-head"><div class="sec-num">۳</div><h2>ساختِ نقشه‌ی جدید — اطلاعاتِ پایه</h2></div>
+      <p class="sec-sub">دکمه‌ی «نقشه‌ی جدید» در لیست را بزنید تا فرمِ «اطلاعات نقشه» باز شود.</p>
+      <div class="card">
+        <table>
+          <caption>فیلدهای فرمِ اطلاعاتِ نقشه</caption>
+          <thead><tr><th>فیلد</th><th>توضیح</th></tr></thead>
+          <tbody>
+            <tr><td>شماره‌ی نقشه</td><td>شماره‌ی شناساییِ داخلیِ نقشه (آزاد، مطابقِ روالِ خودتان).</td></tr>
+            <tr><td>نسخه (Revision)</td><td>خودکار است — با دکمه‌ی «ثبت نسخه» بالا می‌رود (بخش ۱۱).</td></tr>
+            <tr><td>تاریخ</td><td>تاریخِ نقشه، به‌صورتِ جلالی.</td></tr>
+            <tr><td>وضعیت</td><td>پیش‌نویس / در حال بررسی / تأییدشده / ردشده / بایگانی‌شده (بخش ۱۱).</td></tr>
+            <tr><td>پروژه</td><td>نامِ پروژه یا سایت.</td></tr>
+            <tr><td>شرکت / پیمانکار</td><td>پیمانکارِ اجراکننده‌ی لیفت.</td></tr>
+            <tr><td>عنوان نقشه</td><td>یک عنوانِ کوتاهِ توصیفی (مثلاً «نصبِ تیرِ سقفیِ سالنِ ۲»).</td></tr>
+            <tr><td>تهیه‌کننده / بررسی‌کننده / تأییدکننده</td><td>نام‌هایی که در گردشِ کارِ تأییدِ نقشه ثبت می‌شوند.</td></tr>
+          </tbody>
+        </table>
+        <div class="callout note">
+          <span class="ico">🔒</span>
+          <div><b>چرا این فرم اول است:</b> بومِ نقشه (بخشِ بعد) تا وقتی این فرم برای اولین‌بار «ذخیره» نشود، غیرِفعال است — چون رسمِ نقشه نیاز به یک شناسه‌ی نقشه‌ی ذخیره‌شده دارد.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CANVAS BASICS ============ -->
+    <section id="canvas-basics">
+      <div class="sec-head"><div class="sec-num">۴</div><h2>کار با بومِ نقشه (نمای بالا)</h2></div>
+      <p class="sec-sub">بعد از ذخیره‌ی اطلاعاتِ پایه، بخشِ «نقشه‌ی دوبعدی (نمای بالا)» فعال می‌شود.</p>
+      <div class="card">
+        <h3 class="h">نوارِ ابزار</h3>
+        <p>هر ابزار یک نوعِ شیء است؛ ابزار را انتخاب کنید و روی بوم کلیک کنید تا آن شیء در همان نقطه اضافه شود.</p>
+        <table>
+          <thead><tr><th class="ico"></th><th>ابزار</th><th>چیست</th></tr></thead>
+          <tbody>
+            <tr><td class="ico">🏗️</td><td>جرثقیل</td><td>با کلیک، یک جرثقیل <b>و قلابِ متصل به آن</b> با هم اضافه می‌شوند (بخش ۵).</td></tr>
+            <tr><td class="ico">🪝</td><td>قلاب</td><td>معمولاً خودکار با جرثقیل ساخته می‌شود؛ نیازی به افزودنِ دستی نیست.</td></tr>
+            <tr><td class="ico">🧵</td><td>اسلینگ</td><td>مجموعه‌ی طنابِ باربر بینِ قلاب و بار.</td></tr>
+            <tr><td class="ico">🔗</td><td>شکل (Shackle)</td><td>اتصال‌دهنده‌ی اسلینگ به بار/قلاب.</td></tr>
+            <tr><td class="ico">➖</td><td>اسپریدر بیم</td><td>تیرِ توزیعِ بار — وقتی فعال باشد، زاویه‌ی اسلینگ را اصلاح می‌کند.</td></tr>
+            <tr><td class="ico">🚛</td><td>تریلی</td><td>وسیله‌ی حمل، فقط برای نمایشِ محدوده‌ی اشغالِ فضا.</td></tr>
+            <tr><td class="ico">🧱</td><td>سازه / فونداسیون</td><td>ساختمان یا فونداسیونِ مجاور، برای بررسیِ تداخلِ مسیر.</td></tr>
+            <tr><td class="ico">👷</td><td>نفر</td><td>محلِ استقرارِ افراد؛ فاصله‌شان تا مسیرِ بار اعتبارسنجی می‌شود (بخش ۹).</td></tr>
+            <tr><td class="ico">🚧</td><td>بریر (Barrier)</td><td>حصارِ فیزیکیِ محدوده‌ی کار.</td></tr>
+            <tr><td class="ico">⚡</td><td>خط برق</td><td>هادیِ هوایی با ولتاژِ مشخص؛ حریمِ ایمنی از «معیارهای پذیرش» خوانده می‌شود.</td></tr>
+            <tr><td class="ico">⛔</td><td>ناحیه‌ی ممنوعه</td><td>محدوده‌ای که مسیرِ بار مطلقاً نباید وارد آن شود.</td></tr>
+            <tr><td class="ico">⚑</td><td>نقطه‌ی قرارگیری</td><td>مقصدِ نهاییِ بار؛ فقط یکی می‌تواند روی نقشه باشد (بخش ۷).</td></tr>
+          </tbody>
+        </table>
+        <p><b>بار</b> با ابزارهای رسمِ شکل (مستطیل/دایره/چندضلعیِ آزاد) کشیده می‌شود، نه با یک کلیکِ ساده — چون هندسه‌ی بار برای محاسبه‌ی نقاطِ برداشت (Pick Points) و مرکزِ ثقل (CG) لازم است (بخشِ ۶).</p>
+
+        <h4 class="h">وقتی یک شیء را انتخاب می‌کنید</h4>
+        <ul>
+          <li>پنلِ «مشخصاتِ شیء» زیرِ بوم باز می‌شود — همه‌ی فیلدهای عددیِ آن شیء (وزن، طول، WLL، تعداد و…) از همین‌جا ویرایش می‌شوند.</li>
+          <li>جابه‌جایی با درگ‌کردن روی بوم، چرخش و تغییرِ اندازه با دستگیره‌های دورِ شیء.</li>
+          <li>نوارِ ابزار همچنین Zoom / Pan / نمایشِ Grid / Snap-to-grid و Undo / Redo دارد.</li>
+        </ul>
+        <div class="callout note">
+          <span class="ico">👁️</span>
+          <div>بالای بوم یک سوییچِ نما هست: <b>نمای بالا</b> / <b>نمای جانبی (الویشن)</b> / <b>هر دو</b>. نمای جانبی صرفاً محاسبه‌شده و فقط‌خواندنی است — همه‌ی ویرایش‌ها از نمای بالا انجام می‌شود.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CRANE SETUP ============ -->
+    <section id="crane-setup">
+      <div class="sec-head"><div class="sec-num">۵</div><h2>تنظیمِ جرثقیل — مجموعه‌ی بازو + قلاب</h2></div>
+      <p class="sec-sub">جرثقیل و قلاب یک مجموعه‌ی واحدند؛ قلاب را جدا جابه‌جا نکنید.</p>
+      <div class="card">
+        <ol class="steps">
+          <li><b>مدلِ جرثقیل را انتخاب کنید</b><p>در پنلِ «مشخصاتِ شیء»، فیلدِ «مدلِ جرثقیل (از Master Data)» را به یکی از مدل‌های ثبت‌شده در بخشِ ۲ وصل کنید تا Load Chartِ واقعی برای محاسبه‌ی ظرفیت در دسترس باشد.</p></li>
+          <li><b>در صورتِ نیاز، به رجیستریِ ماشین‌آلات وصل کنید</b><p>فیلدِ «جرثقیلِ مرتبط (از رجیستریِ ماشین‌آلات)» همین جرثقیل را به یک دستگاهِ واقعیِ ثبت‌شده در ماژولِ ماشین‌آلات پیوند می‌دهد (پلاک، مدارکِ فنی و…).</p></li>
+          <li><b>طولِ بوم و زاویه‌ی بوم را تنظیم کنید</b><p>این دو عدد، همراهِ «چرخش» (که جهتِ اسلوِ بوم را تعیین می‌کند)، شعاع و ارتفاعِ سرِ بوم را می‌سازند. قلاب همیشه دقیقاً همان‌جا می‌نشیند و لحظه‌ای دنبال می‌کند.</p></li>
+          <li><b>وزن، تعدادِ پَد و مساحتِ پَد را وارد کنید</b><p>این سه برای محاسبه‌ی فشارِ روی زمین در بخشِ ۹ استفاده می‌شوند.</p></li>
+        </ol>
+        <div class="callout">
+          <span class="ico">⚠️</span>
+          <div><b>هشدارِ «Load Chart ندارد»:</b> اگر زیرِ فیلدهای جرثقیل این پیام را دیدید، یعنی مدلِ انتخاب‌شده در بخشِ ۲ چارت ندارد — ظرفیت «خارج از چارت» محاسبه می‌شود و ارزیابیِ ایمنی fail می‌ماند تا وقتی مدلی با چارت انتخاب شود.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ LOAD & RIGGING ============ -->
+    <section id="load-rigging">
+      <div class="sec-head"><div class="sec-num">۶</div><h2>بار و ریگینگ</h2></div>
+      <p class="sec-sub">وزنِ کل روی قلاب = وزنِ بار + وزنِ قلاب + وزنِ اسلینگ + وزنِ شکل + (وزنِ اسپریدر، اگر فعال باشد).</p>
+      <div class="card">
+        <div class="grid2">
+          <div>
+            <h4 class="h">بار</h4>
+            <p>شکل (مستطیل/دایره/چندضلعی)، وزن، و نقاطِ برداشت (Pick Points) + مرکزِ ثقل (CG) را با درگ‌کردنِ دستگیره‌ها روی خودِ بار تنظیم می‌کنید. اسلینگ‌ها به‌طورِ خودکار از قلاب به همین نقاط رسم می‌شوند.</p>
+          </div>
+          <div>
+            <h4 class="h">قلاب و اسلینگ</h4>
+            <p>وزن و WLL (ظرفیتِ مجازِ کار) قلاب، و تعداد/WLL/طولِ اسلینگ را از پنلِ مشخصات وارد کنید. کششِ هر شاخه از هندسه‌ی واقعیِ زاویه محاسبه می‌شود (بخش ۹).</p>
+          </div>
+        </div>
+        <h4 class="h">اسپریدر بیم — اختیاری</h4>
+        <p>وقتی «فعال» باشد، بار به‌جای اتصالِ مستقیم از یک تیرِ افقی آویزان می‌شود؛ این معمولاً زاویه‌ی اسلینگ نسبت به قائم را کوچک‌تر (بهتر) می‌کند و کششِ هر شاخه را کاهش می‌دهد.</p>
+        <div class="callout note">
+          <span class="ico">💡</span>
+          <div>اگر پنلِ محاسبات هشدارِ «زاویه‌ی اسلینگ» داد، اولین راه‌حل معمولاً همین است: اسپریدر بیم را فعال کنید یا نقاطِ برداشتِ بار را بازتر کنید.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SITE CONTEXT ============ -->
+    <section id="site-context">
+      <div class="sec-head"><div class="sec-num">۷</div><h2>محیطِ سایت</h2></div>
+      <p class="sec-sub">هرچه اطرافِ لیفت مؤثر است را روی بوم اضافه کنید تا موتورِ ایمنی بتواند تداخل را ببیند.</p>
+      <div class="card">
+        <table>
+          <thead><tr><th>شیء</th><th>چه چیزی اعتبارسنجی می‌شود</th></tr></thead>
+          <tbody>
+            <tr><td>نفر</td><td>فاصله‌ی مسیرِ بار تا هر نفر، در مقایسه با «حداقل فاصله‌ی پرسنل» در معیارهای پذیرش.</td></tr>
+            <tr><td>خط برق</td><td>فاصله‌ی مسیرِ بار تا هادی، در مقایسه با حریمِ متناظرِ ولتاژش (بخشِ ۲ / معیارهای پذیرش).</td></tr>
+            <tr><td>ناحیه‌ی ممنوعه</td><td>هرگونه تداخلِ مسیرِ بار با این ناحیه = fail.</td></tr>
+            <tr><td>سازه / فونداسیون / بریر</td><td>تداخلِ مسیرِ بار با این‌ها = هشدار.</td></tr>
+            <tr><td>نقطه‌ی قرارگیری (⚑)</td><td>مقصدِ نهاییِ بار در مراحلِ Slew/Travel/Place (بخشِ ۱۰). اگر نگذارید، بار سرِ جای خودش «Pick» جابه‌جا و برداشته می‌شود.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ SAVE SCENE ============ -->
+    <section id="save-scene">
+      <div class="sec-head"><div class="sec-num">۸</div><h2>ذخیره‌ی نقشه</h2></div>
+      <p class="sec-sub">هرچه روی بوم می‌کشید، محلی و موقت است تا وقتی «ذخیره‌ی نقشه» را بزنید.</p>
+      <div class="card">
+        <p>
+          دکمه‌ی «ذخیره‌ی نقشه» زیرِ بوم، از دکمه‌ی «ذخیره»ی بالای فرم (بخشِ ۳) کاملاً جداست:
+          یکی اطلاعاتِ پایه (شماره، تاریخ، وضعیت و…) را ذخیره می‌کند، دیگری خودِ ترسیمِ بوم
+          (جرثقیل، بار، ریگینگ، محیط) را. وقتی چیزی رویِ بوم تغییر کرده و هنوز ذخیره نشده، پیامِ
+          «تغییرهای نقشه ذخیره نشده» را می‌بینید.
+        </p>
+        <div class="callout note">
+          <span class="ico">💾</span>
+          <div>قبل از بستنِ نقشه یا خروج از صفحه، همیشه مطمئن شوید هر دو ذخیره (اطلاعات پایه + نقشه) انجام شده‌اند.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CALC & SAFETY ============ -->
+    <section id="calc-safety">
+      <div class="sec-head"><div class="sec-num">۹</div><h2>خواندنِ پنلِ محاسبات و ایمنی</h2></div>
+      <p class="sec-sub">به‌محضِ داشتنِ حداقل یک جرثقیل و یک بار روی بوم، این پنل زیرِ نقشه ظاهر و لحظه‌ای به‌روز می‌شود.</p>
+      <div class="card">
+        <h4 class="h">سه فیلدِ محیطی</h4>
+        <p>«ظرفیتِ باربریِ خاک»، «ضریبِ اطمینانِ زمین (SF)» و «ارتفاعِ سفرِ بار» — این سه ورودیِ دستیِ همین نقشه‌اند (نه معیارِ سراسری) و مستقیماً روی محاسباتِ زیر اثر می‌گذارند.</p>
+
+        <h4 class="h">ستونِ محاسبات</h4>
+        <table>
+          <thead><tr><th>ردیف</th><th>یعنی چه</th></tr></thead>
+          <tbody>
+            <tr><td>وزنِ بار / وزنِ ریگینگ / بارِ کل روی قلاب</td><td>مجموعِ وزنِ بار + قلاب + اسلینگ + شکل + اسپریدرِ فعال.</td></tr>
+            <tr><td>شعاعِ کار</td><td>فاصله‌ی افقیِ جرثقیل تا بار در وضعیتِ فعلی/مرحله‌ی شبیه‌سازی.</td></tr>
+            <tr><td>ظرفیتِ مجاز (Load Chart)</td><td>درون‌یابیِ خطیِ چارتِ مدلِ جرثقیل در همین شعاع؛ فراتر از دامنه = «خارج از چارت».</td></tr>
+            <tr><td>بهره‌برداری</td><td>(بارِ کل ÷ ظرفیتِ مجاز) × ۱۰۰ — رنگِ سبز/زرد/قرمز طبقِ آستانه‌های معیارهای پذیرش.</td></tr>
+            <tr><td>زاویه‌ی اسلینگ / کششِ بیشینه‌ی شاخه / WLL هر شاخه</td><td>هندسه‌ی واقعیِ قلاب تا نقاطِ برداشتِ بار.</td></tr>
+            <tr><td>فشارِ روی زمین (بدترین پَد) / مجاز</td><td>واکنشِ کل (وزنِ جرثقیل + بار) روی بدترین پَد، در برابرِ (خاک ÷ SF).</td></tr>
+          </tbody>
+        </table>
+
+        <h4 class="h">ستونِ اعتبارسنجیِ ایمنی</h4>
+        <p>فهرستی از یافته‌ها، هرکدام با یک نقطه‌ی رنگی:</p>
+        <table>
+          <thead><tr><th class="ico"></th><th>سطح</th><th>معنی</th></tr></thead>
+          <tbody>
+            <tr><td class="ico">🟢</td><td>ok</td><td>در محدوده‌ی مجاز — نیازی به اقدام نیست.</td></tr>
+            <tr><td class="ico">🟡</td><td>warn</td><td>نزدیکِ آستانه — قابلِ ادامه با احتیاط/بازبینیِ سرپرست.</td></tr>
+            <tr><td class="ico">🔴</td><td>fail</td><td>خارج از حدِ مجاز — نقشه نباید بدونِ اصلاح اجرا/تأیید شود.</td></tr>
+          </tbody>
+        </table>
+        <div class="callout note">
+          <span class="ico">🧮</span>
+          <div>همه‌ی آستانه‌ها (حدِ بهره‌برداری، حداقل فاصله، زاویه‌ی اسلینگ و…) از «معیارهای پذیرش» می‌آیند (بخشِ ۲) — چیزی در این محاسبه هاردکد نیست.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SIMULATION ============ -->
+    <section id="simulation">
+      <div class="sec-head"><div class="sec-num">۱۰</div><h2>شبیه‌سازیِ مراحلِ لیفت</h2></div>
+      <p class="sec-sub">دکمه‌ی ▶ زیرِ بوم، حرکتِ قلاب را از برداشت تا قرارگیری در شش مرحله پخش می‌کند.</p>
+      <div class="card">
+        <table>
+          <thead><tr><th class="num">#</th><th>مرحله</th><th>اتفاقِ می‌افتد</th></tr></thead>
+          <tbody>
+            <tr><td class="num">۱</td><td>استقرار (Setup)</td><td>قلاب روی سرِ بومِ پیکربندی‌شده می‌نشیند — همان حالتِ ویرایش.</td></tr>
+            <tr><td class="num">۲</td><td>برداشت (Pick)</td><td>قلاب پایین می‌آید تا روی بار.</td></tr>
+            <tr><td class="num">۳</td><td>بلندکردن (Lift)</td><td>قلاب تا ارتفاعِ سفرِ بار بالا می‌رود.</td></tr>
+            <tr><td class="num">۴</td><td>چرخش (Slew)</td><td>جرثقیل حولِ خودش می‌چرخد تا روی امتدادِ مقصد قرار بگیرد.</td></tr>
+            <tr><td class="num">۵</td><td>انتقال (Travel)</td><td>شعاع تغییر می‌کند تا بار روی نقطه‌ی قرارگیری برسد.</td></tr>
+            <tr><td class="num">۶</td><td>قرار دادن (Place)</td><td>قلاب پایین می‌آید و بار روی نقطه‌ی قرارگیری می‌نشیند.</td></tr>
+          </tbody>
+        </table>
+        <p>می‌توانید با کلیک روی هر برچسبِ مرحله یا با اسلایدرِ کنارش، مستقیم به همان مرحله بپرید. در حالتِ شبیه‌سازی، ویرایشِ بوم موقتاً غیرفعال است و پنلِ محاسبات/ایمنی برای همان لحظه از حرکت به‌روز می‌شود — یعنی می‌توانید کلِ مسیرِ لیفت را قبل از اجرا، لحظه‌به‌لحظه بازبینی کنید.</p>
+      </div>
+    </section>
+
+    <!-- ============ STATUS & VERSIONING ============ -->
+    <section id="status-versioning">
+      <div class="sec-head"><div class="sec-num">۱۱</div><h2>وضعیت، نسخه‌بندی، تکثیر و Audit Trail</h2></div>
+      <p class="sec-sub">یک نقشه‌ی تأییدشده باید قابلِ ردیابی باشد: چه کسی چه‌چیزی را کِی تغییر داد.</p>
+      <div class="card">
+        <h4 class="h">وضعیتِ نقشه</h4>
+        <div class="taglist">
+          <span class="tag"><span class="badge b-mid">پیش‌نویس</span></span>
+          <span class="tag"><span class="badge b-mid">در حال بررسی</span></span>
+          <span class="tag"><span class="badge b-high">تأییدشده</span></span>
+          <span class="tag"><span class="badge b-low">ردشده</span></span>
+          <span class="tag"><span class="badge b-vhigh">بایگانی‌شده</span></span>
+        </div>
+        <p>وضعیت از همان فیلدِ «وضعیت» در فرمِ اطلاعاتِ پایه تغییر می‌کند و با هر ذخیره ثبت می‌شود.</p>
+
+        <h4 class="h">ثبت نسخه (Freeze Revision)</h4>
+        <p>یک عکسِ‌فوریِ غیرقابل‌تغییر از وضعِ فعلیِ نقشه می‌سازد و شماره‌ی نسخه را یکی بالا می‌برد — برای زمانی که نقشه به تأیید رسیده و می‌خواهید سابقه‌اش قفل بماند.</p>
+
+        <h4 class="h">نسخه‌برداری (Duplicate)</h4>
+        <p>یک کپیِ کاملِ نقشه (اطلاعات + بوم) با شماره/نسخه‌ی جدید می‌سازد — برای لیفتِ مشابه در پروژه‌ای دیگر، بدونِ شروع از صفر.</p>
+
+        <h4 class="h">تاریخچه‌ی تغییرات (Audit Trail)</h4>
+        <p>هر رویداد — ایجاد، ویرایشِ اطلاعات، ذخیره‌ی نقشه، ثبتِ نسخه، تغییرِ وضعیت، نسخه‌برداری، بایگانی/بازگردانی — با نامِ کاربر و زمان ثبت می‌شود و از پایینِ صفحه‌ی ویرایش قابلِ مشاهده است.</p>
+      </div>
+    </section>
+
+    <!-- ============ CHECKLIST ============ -->
+    <section id="checklist">
+      <div class="sec-head"><div class="sec-num">۱۲</div><h2>چک‌لیستِ سریع</h2></div>
+      <p class="sec-sub">همان کاری که باید انجام دهید، بدونِ توضیحاتِ اضافه.</p>
+      <div class="card">
+        <ol class="steps">
+          <li><b>(فقط سرپرست HSE، یک‌بار) مدل‌های جرثقیل را با Load Chart ثبت کنید.</b><p>بخشِ ۲.</p></li>
+          <li><b>«نقشه‌ی جدید» را بزنید و اطلاعاتِ پایه را پُر و ذخیره کنید.</b><p>بخشِ ۳.</p></li>
+          <li><b>جرثقیل را روی بوم بگذارید، مدل را وصل کنید، بوم/زاویه را تنظیم کنید.</b><p>بخش‌های ۴–۵.</p></li>
+          <li><b>بار را رسم کنید؛ وزن، Pick Points و CG را تنظیم کنید.</b><p>بخشِ ۶.</p></li>
+          <li><b>قلاب/اسلینگ/شکل (و در صورتِ نیاز اسپریدر) را تنظیم کنید.</b><p>بخشِ ۶.</p></li>
+          <li><b>نفر، خط برق، موانع و نقطه‌ی قرارگیری را اضافه کنید.</b><p>بخشِ ۷.</p></li>
+          <li><b>«ذخیره‌ی نقشه» را بزنید.</b><p>بخشِ ۸.</p></li>
+          <li><b>پنلِ محاسبات/ایمنی را بررسی کنید — همه چیز باید سبز یا حداقل بدونِ 🔴 باشد.</b><p>بخشِ ۹.</p></li>
+          <li><b>با ▶ کلِ مسیرِ لیفت را شبیه‌سازی و بازبینی کنید.</b><p>بخشِ ۱۰.</p></li>
+          <li><b>وضعیت را به «در حال بررسی» ببرید و پس از تأیید، «ثبت نسخه» بزنید.</b><p>بخشِ ۱۱.</p></li>
+        </ol>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+</body>
+</html>

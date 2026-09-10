@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Construction, Plus, Copy, Archive, ArchiveRestore, Trash2, GitBranch,
-  History, ClipboardList, ChevronDown, ChevronRight, Save, X, SlidersHorizontal,
+  History, ClipboardList, ChevronDown, ChevronRight, Save, X, SlidersHorizontal, BookOpen,
 } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
@@ -24,12 +24,46 @@ import { loadMachineryList } from "../machinery/machineryApi.js";
 
 // دسترسی به مدل‌های جرثقیل/Load Chart و معیارهای پذیرش (دیتای مبنا، نه یک
 // پلنِ خاص) همچنان فقط برای HSE_SUPERVISOR است — دقیقاً همان محدودیتی که
-// پیش‌تر با ورودیِ «مدیریت سیستم» اعمال می‌شد، فقط جابه‌جا شده به اینجا.
-const headerIconBtn = {
-  width: 30, height: 30, borderRadius: 9, flexShrink: 0,
-  border: `1px solid ${THEME.border}`, background: THEME.surface, color: THEME.tealDeep,
-  display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+// پیش‌تر با ورودیِ «مدیریت سیستم» اعمال می‌شد، فقط جابه‌جا شده به اینجا. آیکونِ
+// راهنما برای همه‌ی کاربران است. هر سه دکمه متن دارند تا نقشِ‌شان بدونِ hover
+// (خصوصاً موبایل) هم معلوم باشد.
+const headerActionBtn = {
+  ...styles.smallButton,
+  background: THEME.surface2, color: THEME.text,
+  display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap", flexShrink: 0,
 };
+
+// لایه‌ی تمام‌صفحه‌ی «راهنمای طراحی نقشه‌ی لیفتینگ» — همان الگویِ
+// HseGuideOverlayِ ماژولِ proactiveIndicators: فایلِ استاتیکِ public/lifting_guide.html
+// (یا نسخه‌ی en) را داخلِ iframe نشان می‌دهد، با دکمه‌ی × و Escape برای بستن.
+function LiftingGuideOverlay({ onClose }) {
+  const { t, lang } = useLanguage();
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 3000, background: THEME.surface, display: "flex", flexDirection: "column" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderBottom: `1px solid ${THEME.border}`, background: THEME.surface, flexShrink: 0 }}>
+        <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 700, color: THEME.heading }}>
+          <BookOpen size={15} color={THEME.teal} /> {t("lpGuideTitle")}
+        </span>
+        <button
+          type="button" onClick={onClose} title={t("commonClose")}
+          style={{ display: "flex", alignItems: "center", gap: 5, border: "none", cursor: "pointer", fontFamily: THEME.font, fontSize: 12, fontWeight: 700, color: "#fff", background: THEME.navy, padding: "7px 14px", borderRadius: 8 }}
+        >
+          <X size={15} /> {t("commonClose")}
+        </button>
+      </div>
+      <iframe
+        src={`${import.meta.env.BASE_URL}${lang === "fa" ? "lifting_guide.html" : "lifting_guide_en.html"}`}
+        title={t("lpGuideTitle")}
+        style={{ flex: 1, width: "100%", border: "none" }}
+      />
+    </div>
+  );
+}
 
 /* ============================================================================ *
  * Lifting Plan Designer — Workspace: فهرست + فرمِ متادیتا + بومِ Mini-CAD +
@@ -110,6 +144,7 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
   const actor = currentUser?.name || currentUser?.username || "";
   const isSupervisor = currentUser?.role === "HSE_SUPERVISOR";
   const card = wide ? styles.cardWide : styles.card;
+  const [showGuide, setShowGuide] = useState(false);
 
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -761,17 +796,26 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
         note={t("lpSubHeaderNote")}
         onBack={onBack}
         backLabel={t("commonBackPlain")}
-        actions={isSupervisor && (
+        actions={(
           <>
-            <button type="button" onClick={() => setMode("craneModels")} title={t("subCraneModels")} aria-label={t("subCraneModels")} style={headerIconBtn}>
-              <Construction size={15} />
-            </button>
-            <button type="button" onClick={() => setMode("criteria")} title={t("subLiftingCriteria")} aria-label={t("subLiftingCriteria")} style={headerIconBtn}>
-              <SlidersHorizontal size={15} />
+            {isSupervisor && (
+              <button type="button" onClick={() => setMode("craneModels")} title={t("subCraneModels")} style={headerActionBtn}>
+                <Construction size={14} /> {t("lpBtnCraneModels")}
+              </button>
+            )}
+            {isSupervisor && (
+              <button type="button" onClick={() => setMode("criteria")} title={t("subLiftingCriteria")} style={headerActionBtn}>
+                <SlidersHorizontal size={14} /> {t("lpBtnCriteria")}
+              </button>
+            )}
+            <button type="button" onClick={() => setShowGuide(true)} title={t("lpGuideTitle")} style={headerActionBtn}>
+              <BookOpen size={14} /> {t("lpBtnGuide")}
             </button>
           </>
         )}
       />
+
+      {showGuide && <LiftingGuideOverlay onClose={() => setShowGuide(false)} />}
 
       <div style={card}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>

@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lifting Plan Designer — Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EAECEC;
+    --paper:#FFFFFF;
+    --ink:#201F1D;
+    --ink-soft:#5B5851;
+    --ink-faint:#8B8880;
+    --rule:#DAD7CD;
+    --rule-soft:#EAE8E1;
+
+    --red:#AE2A2E;
+    --red-deep:#7E1E22;
+    --red-soft:#F4DEDD;
+    --red-line:#D9A9A8;
+
+    --blue:#2C4A6B;
+    --blue-soft:#DCE6EE;
+    --blue-line:#AEC3D4;
+
+    --teal:#2F6E5D;
+    --teal-soft:#DCEAE4;
+    --teal-line:#A9CBBE;
+
+    --amber:#9C6B22;
+    --amber-soft:#F1E4CC;
+    --amber-line:#D9BD86;
+
+    --radius:10px;
+    --shadow: 0 1px 2px rgba(32,31,29,.06), 0 8px 24px -12px rgba(32,31,29,.18);
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    font-family:'Inter', sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    line-height:1.9;
+    font-feature-settings:"tnum" 1;
+  }
+  h1,h2,h3,h4{font-family:'Inter', sans-serif; margin:0; font-weight:900;}
+  p{margin:0 0 14px;}
+  a{color:inherit;}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    background:
+      radial-gradient(1100px 420px at 15% -10%, rgba(47,110,93,.14), transparent 60%),
+      linear-gradient(180deg, #FBFAF8 0%, var(--bg) 100%);
+    border-bottom:1px solid var(--rule);
+    padding:56px 24px 34px;
+  }
+  .hero-inner{max-width:1180px; margin:0 auto;}
+
+  .hero h1{
+    font-size:clamp(28px, 4vw, 44px);
+    line-height:1.35;
+    margin-bottom:14px;
+  }
+  .hero .lede{
+    font-size:16.5px; color:var(--ink-soft); margin-bottom:0;
+  }
+
+  /* ---------- LAYOUT ---------- */
+  .layout{
+    max-width:1180px; margin:0 auto; padding:40px 24px 80px;
+    display:grid; grid-template-columns:210px 1fr; gap:36px;
+    align-items:start;
+  }
+  @media (max-width: 880px){ .layout{grid-template-columns:1fr;} .toc{position:static; order:-1;} }
+
+  .toc{
+    position:sticky; top:20px;
+    background:var(--paper); border:1px solid var(--rule); border-radius:var(--radius);
+    padding:16px 12px; box-shadow:var(--shadow);
+  }
+  .toc h4{font-size:11.5px; color:var(--ink-faint); font-weight:700; margin-bottom:10px;}
+  .toc ol{list-style:none; margin:0; padding:0; counter-reset:toc;}
+  .toc li{counter-increment:toc; margin-bottom:2px;}
+  .toc a{
+    display:flex; gap:6px; align-items:baseline;
+    font-size:12px; line-height:1.6; padding:6px 5px; border-radius:6px; text-decoration:none; color:var(--ink-soft);
+  }
+  .toc a::before{
+    content: counter(toc) ".";
+    font-size:11px; color:var(--ink-faint); flex:none;
+  }
+  .toc a:hover, .toc a.active{background:var(--rule-soft); color:var(--ink); font-weight:700;}
+
+  /* ---------- MAIN CONTENT ---------- */
+  main{min-width:0;}
+  section{margin-bottom:56px; scroll-margin-top:20px;}
+
+  .sec-head{display:flex; align-items:flex-start; gap:14px; margin-bottom:6px;}
+  .sec-num{
+    font-size:13px; font-weight:800; color:var(--paper);
+    background:var(--ink); width:34px; height:34px; border-radius:8px;
+    display:flex; align-items:center; justify-content:center; flex:none;
+  }
+  section h2{font-size:24px;}
+  .sec-sub{color:var(--ink-faint); font-size:13.5px; margin:6px 0 22px 48px;}
+
+  .card{
+    background:var(--paper); border:1px solid var(--rule); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:26px 26px 22px; margin-bottom:20px;
+  }
+
+  .meta-row{
+    display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; margin-bottom:22px;
+  }
+  @media (max-width:700px){.meta-row{grid-template-columns:1fr;}}
+  .meta{
+    background:var(--rule-soft); border:1px solid var(--rule); border-radius:8px; padding:12px 14px;
+  }
+  .meta .k{font-size:11px; color:var(--ink-faint); font-weight:700; margin-bottom:4px;}
+  .meta .v{font-size:13.5px; font-weight:600;}
+
+  h3.h{font-size:16px; margin:26px 0 10px; padding-left:12px; border-left:3px solid var(--teal);}
+  h4.h{font-size:14px; margin:20px 0 8px; color:var(--ink-soft); font-weight:700;}
+
+  table{width:100%; border-collapse:collapse; font-size:13.5px; margin:12px 0 22px;}
+  caption{text-align:left; font-size:12px; color:var(--ink-faint); margin-bottom:6px; caption-side:top;}
+  th,td{border:1px solid var(--rule); padding:9px 12px; text-align:left; vertical-align:top;}
+  th{background:var(--rule-soft); font-weight:700; font-size:12.5px; color:var(--ink-soft);}
+  tr:nth-child(even) td{background:#FCFCFB;}
+  td.num, th.num{text-align:center;}
+  td.ico{text-align:center; font-size:16px; width:40px;}
+
+  .badge{display:inline-block; padding:2px 9px; border-radius:999px; font-size:11.5px; font-weight:700;}
+  .b-low{background:var(--red-soft); color:var(--red-deep); border:1px solid var(--red-line);}
+  .b-mid{background:var(--amber-soft); color:var(--amber); border:1px solid var(--amber-line);}
+  .b-high{background:var(--teal-soft); color:var(--teal); border:1px solid var(--teal-line);}
+  .b-vhigh{background:var(--blue-soft); color:var(--blue); border:1px solid var(--blue-line);}
+
+  ol.steps{margin:0 0 8px; padding-left:0; list-style:none; counter-reset:step;}
+  ol.steps > li{
+    counter-increment:step;
+    position:relative;
+    padding:2px 0 18px 0; margin-left:0;
+    padding-left:46px;
+    border-left:2px solid var(--rule);
+    margin-left:16px;
+  }
+  ol.steps > li:last-child{border-color:transparent; padding-bottom:2px;}
+  ol.steps > li::before{
+    content: counter(step);
+    position:absolute; left:-16px; top:0;
+    width:32px; height:32px; border-radius:50%;
+    background:var(--paper); border:2px solid var(--ink); color:var(--ink);
+    font-weight:800; font-size:13px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  ol.steps > li b{display:block; font-size:14.5px; margin-bottom:4px;}
+  ol.steps > li p{margin:0; color:var(--ink-soft); font-size:13.5px;}
+
+  .callout{
+    display:flex; gap:12px; align-items:flex-start;
+    background:var(--red-soft); border:1px solid var(--red-line); border-radius:8px;
+    padding:14px 16px; margin:16px 0; font-size:13.5px;
+  }
+  .callout .ico{font-size:16px; flex:none;}
+  .callout b{color:var(--red-deep);}
+
+  .callout.note{background:var(--rule-soft); border-color:var(--rule);}
+  .callout.note b{color:var(--ink);}
+
+  .callout.ok{background:var(--teal-soft); border-color:var(--teal-line);}
+  .callout.ok b{color:var(--teal);}
+
+  .formula{
+    background:#22221F; color:#F1EFE8; border-radius:8px; padding:16px 18px;
+    font-size:13px; line-height:2; overflow-x:auto; margin:12px 0 18px;
+  }
+  .formula .label{display:block; color:#B7B4A9; font-size:11.5px; margin-bottom:8px;}
+
+  .example{
+    border:1px dashed var(--rule); border-radius:8px; padding:14px 16px; font-size:13.5px;
+    background:#FCFCFB; margin:12px 0 18px;
+  }
+  .example b{color:var(--ink);}
+
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  @media (max-width:700px){.grid2{grid-template-columns:1fr;}}
+
+  .taglist{display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 4px;}
+  .tag{font-size:12px; background:var(--rule-soft); border:1px solid var(--rule); border-radius:999px; padding:4px 11px; color:var(--ink-soft);}
+
+  @media print{
+    .toc, .hero{display:none;}
+    .layout{grid-template-columns:1fr; padding:0;}
+    .card{box-shadow:none; break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <h1>Lifting Plan Designer — Guide</h1>
+    <p class="lede">
+      A step-by-step walkthrough of building a <b>lift plan</b> from a blank page to final approval:
+      filling in the plan details, placing the crane/load/rigging on the 2D canvas, reading the live
+      calculations and safety findings, simulating the lift phases, and finally versioning and
+      approval.
+    </p>
+  </div>
+</header>
+
+<div class="layout">
+
+  <nav class="toc">
+    <h4>Contents</h4>
+    <ol>
+      <li><a href="#overview">What is this tool?</a></li>
+      <li><a href="#before-start">Before you start</a></li>
+      <li><a href="#new-plan">Creating a new plan</a></li>
+      <li><a href="#canvas-basics">Working the canvas</a></li>
+      <li><a href="#crane-setup">Setting up the crane</a></li>
+      <li><a href="#load-rigging">Load & rigging</a></li>
+      <li><a href="#site-context">Site context</a></li>
+      <li><a href="#save-scene">Saving the plan</a></li>
+      <li><a href="#calc-safety">Calculations & safety</a></li>
+      <li><a href="#simulation">Simulating the phases</a></li>
+      <li><a href="#status-versioning">Status & versioning</a></li>
+      <li><a href="#checklist">Quick checklist</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section id="overview">
+      <div class="sec-head"><div class="sec-num">1</div><h2>What is this tool?</h2></div>
+      <p class="sec-sub">Before anything else, know exactly what this screen builds.</p>
+      <div class="card">
+        <p>
+          The Lifting Plan Designer builds a data-driven engineering plan for a single crane lift: you
+          place the exact position of the crane, the load, its travel path and the surrounding
+          obstacles on a 2D canvas (to scale, in metres), and the system computes and validates —
+          live — the crane's <b>real capacity from its load chart</b>, <b>utilization percentage</b>,
+          <b>ground bearing pressure</b>, <b>sling angle and tension</b>, and <b>clearance to power
+          lines/obstacles</b>.
+        </p>
+        <div class="callout note">
+          <span class="ico">ℹ️</span>
+          <div><b>No assumed numbers:</b> if the crane has no load chart at the working radius,
+          capacity stays "off chart" and the check fails — the system never substitutes a guessed
+          value.</div>
+        </div>
+        <p>Anything you draw is a local draft until you press one of the explicit "Save" buttons —
+        nothing reaches the database before that, so feel free to experiment.</p>
+      </div>
+    </section>
+
+    <!-- ============ BEFORE START ============ -->
+    <section id="before-start">
+      <div class="sec-head"><div class="sec-num">2</div><h2>Before you start — the three header buttons</h2></div>
+      <p class="sec-sub">Above the plan list, opposite the "Lifting Plan Designer" title, there are three buttons. Here's exactly what each one is.</p>
+      <div class="card">
+        <table>
+          <thead><tr><th class="ico"></th><th>Button</th><th>What it is</th><th>Who sees it</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="ico">🏗️</td>
+              <td><b>Crane models</b><br><span class="tag" style="margin-top:4px;display:inline-block;">Load charts</span></td>
+              <td>The company's registry of crane models, each with the manufacturer's real load chart (radius → capacity pairs). This data is the basis for capacity in every plan.</td>
+              <td>HSE supervisors only</td>
+            </tr>
+            <tr>
+              <td class="ico">🎚️</td>
+              <td><b>Acceptance criteria</b></td>
+              <td>Company-wide safety thresholds (max utilization, personnel clearance, wind limit, sling angle, power-line clearance, etc.). These thresholds drive the safety validation on every plan.</td>
+              <td>HSE supervisors only</td>
+            </tr>
+            <tr>
+              <td class="ico">📖</td>
+              <td><b>Guide</b></td>
+              <td>This page — a step-by-step guide to filling in a lifting plan.</td>
+              <td>Everyone</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="callout ok">
+          <span class="ico">✅</span>
+          <div><b>If you're not an HSE supervisor:</b> your job is building/editing plans themselves (sections 3 onward) — you won't see "Crane models" or "Acceptance criteria" at all, since those are set up once at company level and don't need repeating per plan.</div>
+        </div>
+        <div class="callout">
+          <span class="ico">⚠️</span>
+          <div><b>If you are an HSE supervisor:</b> before anyone builds their first plan, open "Crane models" and register at least one model with a load chart. Without it, every plan you build stays "off chart" and can't be approved. "Acceptance criteria" ships with a system default, so setting it up initially is optional.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ NEW PLAN ============ -->
+    <section id="new-plan">
+      <div class="sec-head"><div class="sec-num">3</div><h2>Creating a new plan — the basic details</h2></div>
+      <p class="sec-sub">Click "New plan" in the list to open the "Plan details" form.</p>
+      <div class="card">
+        <table>
+          <caption>Plan details fields</caption>
+          <thead><tr><th>Field</th><th>What it's for</th></tr></thead>
+          <tbody>
+            <tr><td>Plan number</td><td>Your internal identifier for the plan (free text, follow your own convention).</td></tr>
+            <tr><td>Revision</td><td>Automatic — bumped by the "Freeze revision" action (section 11).</td></tr>
+            <tr><td>Date</td><td>The plan's date, shown in the Jalali calendar.</td></tr>
+            <tr><td>Status</td><td>Draft / In review / Approved / Rejected / Archived (section 11).</td></tr>
+            <tr><td>Project</td><td>The project or site name.</td></tr>
+            <tr><td>Company / Contractor</td><td>The contractor performing the lift.</td></tr>
+            <tr><td>Plan title</td><td>A short descriptive title (e.g. "Roof beam installation, hall 2").</td></tr>
+            <tr><td>Prepared by / Reviewed by / Approved by</td><td>The names recorded in the plan's approval workflow.</td></tr>
+          </tbody>
+        </table>
+        <div class="callout note">
+          <span class="ico">🔒</span>
+          <div><b>Why this form comes first:</b> the canvas (next section) stays disabled until this form is saved for the first time — drawing needs an existing, saved plan id to attach to.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CANVAS BASICS ============ -->
+    <section id="canvas-basics">
+      <div class="sec-head"><div class="sec-num">4</div><h2>Working the canvas (top view)</h2></div>
+      <p class="sec-sub">Once the basic details are saved, the "2D plan (top view)" section becomes active.</p>
+      <div class="card">
+        <h3 class="h">The toolbar</h3>
+        <p>Each tool is an object type; pick a tool and click the canvas to drop that object at that point.</p>
+        <table>
+          <thead><tr><th class="ico"></th><th>Tool</th><th>What it is</th></tr></thead>
+          <tbody>
+            <tr><td class="ico">🏗️</td><td>Crane</td><td>One click adds a crane <b>and its linked hook</b> together (section 5).</td></tr>
+            <tr><td class="ico">🪝</td><td>Hook</td><td>Usually created automatically with the crane; you rarely add it by hand.</td></tr>
+            <tr><td class="ico">🧵</td><td>Sling set</td><td>The rigging lines between hook and load.</td></tr>
+            <tr><td class="ico">🔗</td><td>Shackle</td><td>Connects the sling set to the load/hook.</td></tr>
+            <tr><td class="ico">➖</td><td>Spreader beam</td><td>A load-spreading beam — when enabled, it corrects the sling angle.</td></tr>
+            <tr><td class="ico">🚛</td><td>Truck</td><td>A transport vehicle, shown only for its footprint.</td></tr>
+            <tr><td class="ico">🧱</td><td>Structure / foundation</td><td>A nearby building or foundation, checked for path interference.</td></tr>
+            <tr><td class="ico">👷</td><td>Worker</td><td>Where a person is stationed; their clearance to the load path is validated (section 9).</td></tr>
+            <tr><td class="ico">🚧</td><td>Barrier</td><td>Physical fencing around the work area.</td></tr>
+            <tr><td class="ico">⚡</td><td>Power line</td><td>An overhead conductor at a given voltage; its clearance comes from Acceptance Criteria.</td></tr>
+            <tr><td class="ico">⛔</td><td>Exclusion zone</td><td>An area the load path must never enter.</td></tr>
+            <tr><td class="ico">⚑</td><td>Place point</td><td>The load's final destination; only one can exist on the plan (section 7).</td></tr>
+          </tbody>
+        </table>
+        <p><b>Load</b> is drawn with the shape tools (rectangle / circle / free polygon) rather than a single click, because its geometry drives the pick points and centre of gravity (CG) used in section 6.</p>
+
+        <h4 class="h">Once an object is selected</h4>
+        <ul>
+          <li>The "Object properties" panel opens below the canvas — every numeric field for that object (weight, length, WLL, count, etc.) is edited there.</li>
+          <li>Drag to move, use the handles around the object to rotate and resize.</li>
+          <li>The toolbar also has Zoom / Pan / Grid / Snap-to-grid and Undo / Redo.</li>
+        </ul>
+        <div class="callout note">
+          <span class="ico">👁️</span>
+          <div>Above the canvas is a view switch: <b>Top view</b> / <b>Elevation</b> / <b>Both</b>. Elevation is fully computed and read-only — all editing happens in the top view.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CRANE SETUP ============ -->
+    <section id="crane-setup">
+      <div class="sec-head"><div class="sec-num">5</div><h2>Setting up the crane — a boom + hook assembly</h2></div>
+      <p class="sec-sub">The crane and its hook are one assembly; never drag the hook on its own.</p>
+      <div class="card">
+        <ol class="steps">
+          <li><b>Pick the crane model</b><p>In the "Object properties" panel, set "Crane model (from master data)" to one of the models registered in section 2, so the real load chart is available for the capacity calculation.</p></li>
+          <li><b>Optionally link the machinery registry</b><p>"Linked machinery (from machinery registry)" ties this crane to an actual unit registered in the machinery module (plate number, technical documents, etc.).</p></li>
+          <li><b>Set boom length and boom angle</b><p>These two, together with "Rotation" (the boom's slew bearing), determine the reach and height of the boom tip. The hook always sits exactly there and follows in real time.</p></li>
+          <li><b>Enter weight, pad count and pad area</b><p>These three feed the ground bearing pressure calculation in section 9.</p></li>
+        </ol>
+        <div class="callout">
+          <span class="ico">⚠️</span>
+          <div><b>The "no load chart" warning:</b> if you see this under the crane fields, the selected model in section 2 has no chart — capacity computes as "off chart" and the safety check stays failed until a model with a chart is selected.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ LOAD & RIGGING ============ -->
+    <section id="load-rigging">
+      <div class="sec-head"><div class="sec-num">6</div><h2>Load & rigging</h2></div>
+      <p class="sec-sub">Total load on the hook = load weight + hook + sling set + shackle + (spreader beam, if enabled).</p>
+      <div class="card">
+        <div class="grid2">
+          <div>
+            <h4 class="h">Load</h4>
+            <p>Set its shape (rectangle / circle / polygon), weight, and drag the handles on the load itself to set pick points and centre of gravity (CG). Slings are drawn automatically from the hook to those points.</p>
+          </div>
+          <div>
+            <h4 class="h">Hook & sling set</h4>
+            <p>Enter the hook's weight and WLL (rated working load), and the sling set's count/WLL/length in the properties panel. Each leg's tension is computed from the real geometry of the angle (section 9).</p>
+          </div>
+        </div>
+        <h4 class="h">Spreader beam — optional</h4>
+        <p>When "enabled", the load hangs from a horizontal beam instead of a direct connection; this usually reduces the sling angle from vertical (better) and lowers the tension per leg.</p>
+        <div class="callout note">
+          <span class="ico">💡</span>
+          <div>If the calculations panel warns about "sling angle", the first fix is usually this: enable a spreader beam, or spread the load's pick points further apart.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SITE CONTEXT ============ -->
+    <section id="site-context">
+      <div class="sec-head"><div class="sec-num">7</div><h2>Site context</h2></div>
+      <p class="sec-sub">Add anything around the lift that matters, so the safety engine can see the interference.</p>
+      <div class="card">
+        <table>
+          <thead><tr><th>Object</th><th>What gets validated</th></tr></thead>
+          <tbody>
+            <tr><td>Worker</td><td>Load-path clearance to each person, checked against "Min personnel clearance" in Acceptance Criteria.</td></tr>
+            <tr><td>Power line</td><td>Load-path clearance to the conductor, checked against the band matching its voltage (section 2 / Acceptance Criteria).</td></tr>
+            <tr><td>Exclusion zone</td><td>Any path interference = fail.</td></tr>
+            <tr><td>Structure / foundation / barrier</td><td>Path interference with these = warning.</td></tr>
+            <tr><td>Place point (⚑)</td><td>The load's final destination during Slew/Travel/Place (section 10). Without one, the load is picked and set back down in place.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ SAVE SCENE ============ -->
+    <section id="save-scene">
+      <div class="sec-head"><div class="sec-num">8</div><h2>Saving the plan (scene)</h2></div>
+      <p class="sec-sub">Everything you draw on the canvas is local and temporary until you press "Save plan".</p>
+      <div class="card">
+        <p>
+          The "Save plan" button below the canvas is entirely separate from the "Save" button at the
+          top of the form (section 3): one saves the basic details (number, date, status, …), the
+          other saves the drawing itself (crane, load, rigging, site context). While something on the
+          canvas has changed and isn't saved yet, you'll see "Unsaved plan changes".
+        </p>
+        <div class="callout note">
+          <span class="ico">💾</span>
+          <div>Before closing a plan or leaving the page, always make sure both saves (details + drawing) have gone through.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CALC & SAFETY ============ -->
+    <section id="calc-safety">
+      <div class="sec-head"><div class="sec-num">9</div><h2>Reading the calculations & safety panel</h2></div>
+      <p class="sec-sub">As soon as the canvas has at least one crane and one load, this panel appears below the plan and updates live.</p>
+      <div class="card">
+        <h4 class="h">Three environment fields</h4>
+        <p>"Soil bearing capacity", "Ground safety factor (SF)" and "Load travel height" are manual inputs for this specific plan (not a company-wide setting) and feed directly into the calculations below.</p>
+
+        <h4 class="h">The calculations column</h4>
+        <table>
+          <thead><tr><th>Row</th><th>What it means</th></tr></thead>
+          <tbody>
+            <tr><td>Load weight / Rigging weight / Total load on hook</td><td>Sum of load + hook + sling set + shackle + enabled spreader weight.</td></tr>
+            <tr><td>Working radius</td><td>Horizontal distance from crane to load at the current position / simulation phase.</td></tr>
+            <tr><td>Rated capacity (load chart)</td><td>Linear interpolation of the crane model's chart at this radius; beyond its range = "off chart".</td></tr>
+            <tr><td>Utilization</td><td>(total load ÷ rated capacity) × 100 — green/amber/red per the Acceptance Criteria thresholds.</td></tr>
+            <tr><td>Sling angle / Max leg tension / Sling WLL per leg</td><td>The real geometry from hook to the load's pick points.</td></tr>
+            <tr><td>Ground bearing pressure (worst pad) / Allowable</td><td>Total reaction (crane weight + load) on the worst pad, against (soil ÷ SF).</td></tr>
+          </tbody>
+        </table>
+
+        <h4 class="h">The safety validation column</h4>
+        <p>A list of findings, each with a coloured dot:</p>
+        <table>
+          <thead><tr><th class="ico"></th><th>Level</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td class="ico">🟢</td><td>ok</td><td>Within limits — no action needed.</td></tr>
+            <tr><td class="ico">🟡</td><td>warn</td><td>Close to the threshold — proceed with caution / supervisor review.</td></tr>
+            <tr><td class="ico">🔴</td><td>fail</td><td>Outside the allowed limit — the plan must not be executed or approved as-is.</td></tr>
+          </tbody>
+        </table>
+        <div class="callout note">
+          <span class="ico">🧮</span>
+          <div>Every threshold (utilization limit, min clearance, sling angle, etc.) comes from Acceptance Criteria (section 2) — nothing in this calculation is hardcoded.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SIMULATION ============ -->
+    <section id="simulation">
+      <div class="sec-head"><div class="sec-num">10</div><h2>Simulating the lift phases</h2></div>
+      <p class="sec-sub">The ▶ button below the canvas plays back the hook's motion from pick to place across six phases.</p>
+      <div class="card">
+        <table>
+          <thead><tr><th class="num">#</th><th>Phase</th><th>What happens</th></tr></thead>
+          <tbody>
+            <tr><td class="num">1</td><td>Setup</td><td>The hook sits at the configured boom tip — the same as edit mode.</td></tr>
+            <tr><td class="num">2</td><td>Pick</td><td>The hook lowers onto the load.</td></tr>
+            <tr><td class="num">3</td><td>Lift</td><td>The hook rises to the load's travel height.</td></tr>
+            <tr><td class="num">4</td><td>Slew</td><td>The crane rotates in place to line up with the destination bearing.</td></tr>
+            <tr><td class="num">5</td><td>Travel</td><td>The radius changes until the load reaches the place point.</td></tr>
+            <tr><td class="num">6</td><td>Place</td><td>The hook lowers and the load sets down on the place point.</td></tr>
+          </tbody>
+        </table>
+        <p>Click any phase label, or drag the slider beside it, to jump straight to that phase. During simulation, canvas editing is temporarily disabled and the calculations/safety panel updates for that exact moment of motion — so you can review the whole lift path, moment by moment, before it's actually executed.</p>
+      </div>
+    </section>
+
+    <!-- ============ STATUS & VERSIONING ============ -->
+    <section id="status-versioning">
+      <div class="sec-head"><div class="sec-num">11</div><h2>Status, versioning, duplication & audit trail</h2></div>
+      <p class="sec-sub">An approved plan needs to be traceable: who changed what, and when.</p>
+      <div class="card">
+        <h4 class="h">Plan status</h4>
+        <div class="taglist">
+          <span class="tag"><span class="badge b-mid">Draft</span></span>
+          <span class="tag"><span class="badge b-mid">In review</span></span>
+          <span class="tag"><span class="badge b-high">Approved</span></span>
+          <span class="tag"><span class="badge b-low">Rejected</span></span>
+          <span class="tag"><span class="badge b-vhigh">Archived</span></span>
+        </div>
+        <p>Status changes from the same "Status" field on the plan details form and is recorded on every save.</p>
+
+        <h4 class="h">Freeze revision</h4>
+        <p>Creates an immutable snapshot of the plan's current state and bumps the revision number — use it once a plan has been approved and you want its record locked.</p>
+
+        <h4 class="h">Duplicate</h4>
+        <p>Creates a full copy of the plan (details + canvas) under a new number/revision — for a similar lift on a different project, without starting from a blank canvas.</p>
+
+        <h4 class="h">Audit trail</h4>
+        <p>Every event — created, details updated, plan saved, revision frozen, status changed, duplicated, archived/restored — is recorded with the user and timestamp, visible at the bottom of the edit screen.</p>
+      </div>
+    </section>
+
+    <!-- ============ CHECKLIST ============ -->
+    <section id="checklist">
+      <div class="sec-head"><div class="sec-num">12</div><h2>Quick checklist</h2></div>
+      <p class="sec-sub">Just the actions, no extra explanation.</p>
+      <div class="card">
+        <ol class="steps">
+          <li><b>(HSE supervisors only, one time) Register crane models with a load chart.</b><p>Section 2.</p></li>
+          <li><b>Click "New plan", fill in and save the basic details.</b><p>Section 3.</p></li>
+          <li><b>Drop the crane on the canvas, link its model, set boom length/angle.</b><p>Sections 4–5.</p></li>
+          <li><b>Draw the load; set weight, pick points and CG.</b><p>Section 6.</p></li>
+          <li><b>Set up hook/sling set/shackle (and a spreader beam if needed).</b><p>Section 6.</p></li>
+          <li><b>Add workers, power lines, obstacles and the place point.</b><p>Section 7.</p></li>
+          <li><b>Click "Save plan".</b><p>Section 8.</p></li>
+          <li><b>Check the calculations/safety panel — everything should be green, or at least free of 🔴.</b><p>Section 9.</p></li>
+          <li><b>Play ▶ to simulate and review the whole lift path.</b><p>Section 10.</p></li>
+          <li><b>Move status to "In review", then "Freeze revision" once approved.</b><p>Section 11.</p></li>
+        </ol>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+</body>
+</html>
