@@ -17,17 +17,23 @@ import { numLocale } from "../i18n/translations.js";
 function purchaseContext(access, company, t) {
   const hasTrial = !!(company && company.trialStart);
   const hasPaidBefore = !!(company && company.subscriptionStartDate);
-  if (access.status === "disabled") return { titleKey: "sgCtxDisabledTitle", subKey: "sgCtxDisabledSub", allowBuy: false };
+  // حسابِ غیرفعال‌شده توسطِ مدیرِ سامانه: پیامِ هشدار بالای صفحه نشان داده
+  // می‌شود، ولی — طبقِ تصمیمِ صریحِ قبلی در setCompanyActive — کاربر همچنان
+  // صفحه‌ی انتخابِ پلن/خرید را می‌بیند و می‌تواند خودش اشتراک بگیرد؛ به
+  // بن‌بستِ «تماس با پشتیبانی» نمی‌خورد.
+  if (access.status === "disabled") return { titleKey: "sgCtxDisabledTitle", subKey: "sgCtxDisabledSub", allowBuy: true, warn: true };
   // «در انتظارِ تأیید» همچنان اجازه‌ی خرید دارد (اگر تلاشِ اول ناموفق بود) —
   // فقط پیامِ «در حالِ بررسی» بالای فرم نشان داده می‌شود.
-  if (access.status === "pending_payment") return { titleKey: "sgCtxPendingTitle", subKey: "sgCtxPendingSub", allowBuy: true };
-  if (access.status === "trial_expired" || (access.isLocked && hasTrial && !hasPaidBefore)) {
+  if (access.status === "pending_payment") return { titleKey: "sgCtxPendingTitle", subKey: "sgCtxPendingSub", allowBuy: true, warn: true };
+  // پایانِ دوره‌ی آزمایشی — فقط وقتی واقعاً Trial داشته
+  if (access.status === "trial_expired" && hasTrial) {
     return { titleKey: "sgCtxTrialEndedTitle", subKey: "sgCtxTrialEndedSub", allowBuy: true };
   }
+  // پایانِ اشتراکِ پولی — تمدید
   if (access.status === "expired" && hasPaidBefore) {
     return { titleKey: "sgCtxRenewTitle", subKey: "sgCtxRenewSub", allowBuy: true };
   }
-  // خریدِ اولِ بدونِ دوره‌ی آزمایشی
+  // خریدِ اولِ بدونِ دوره‌ی آزمایشی (هیچ‌وقت Trial نداشته یا تازه ساخته شده)
   return { titleKey: "sgCtxFirstBuyTitle", subKey: "sgCtxFirstBuySub", allowBuy: true };
 }
 
@@ -204,11 +210,11 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
           </button>
         </div>
 
-        {!ctx.allowBuy ? (
-          <div style={{ ...styles.card, maxWidth: 460, margin: "0 auto", textAlign: "center" }}>
-            <p style={{ fontSize: 13, color: THEME.text2, lineHeight: 1.9 }}>{t(ctx.subKey)}</p>
+        {ctx.warn && (
+          <div style={{ background: THEME.warnBg, border: `1px solid ${THEME.warn}`, borderRadius: 10, padding: "10px 14px", marginBottom: 16, fontSize: 12.5, color: THEME.warn, fontWeight: 700, maxWidth: 640 }}>
+            {t(ctx.subKey)}
           </div>
-        ) : (
+        )}
         <>
         {/* حالت: پلنِ آماده یا ماژول به ماژول */}
         <div style={{ display: "inline-flex", background: THEME.surface2, border: `1px solid ${THEME.border}`, borderRadius: 10, padding: 3, gap: 3, marginBottom: 18 }}>
@@ -336,7 +342,6 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
         </>
         )}
         </>
-        )}
       </div>
     </div>
   );
