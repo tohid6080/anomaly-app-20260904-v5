@@ -103,6 +103,8 @@ const CSS = `
 .lpc-tb.on{background:var(--ihms-teal,#14b8a6);border-color:var(--ihms-teal,#14b8a6);color:#fff}
 .lpc-tb:disabled{opacity:.4;cursor:default}
 .lpc-tb .sep{width:1px}
+.lpc-tb-wide{width:auto;padding:0 9px;gap:5px}
+.lpc-tb-label{font-size:10px;font-weight:800;white-space:nowrap}
 .lpc-wrap{width:100%;height:clamp(360px,58vh,600px);border:1px solid var(--ihms-border,#1e3d4d);border-radius:12px;overflow:hidden;background:var(--ihms-bg,#0b1a24)}
 .lpc-svg{width:100%;height:100%;display:block;touch-action:none;direction:ltr;cursor:crosshair}
 .lpc-svg.pan{cursor:grab}.lpc-svg.panning{cursor:grabbing}.lpc-svg.sel{cursor:default}
@@ -370,8 +372,8 @@ export default function LiftingPlanCanvas({ scene, onChange, selectedId, onSelec
   const P = useMemo(() => `translate(${pan.x} ${pan.y}) scale(${zoom})`, [pan, zoom]);
   const m = (v) => v * PPM; // metre → local px (inside the scaled group)
 
-  const TB = ({ id, on, disabled, title, children }) => (
-    <button type="button" className={"lpc-tb" + (on ? " on" : "")} disabled={disabled}
+  const TB = ({ id, on, disabled, title, label, children }) => (
+    <button type="button" className={"lpc-tb" + (on ? " on" : "") + (label ? " lpc-tb-wide" : "")} disabled={disabled}
       title={title} aria-label={title}
       onClick={() => {
         if (id === "grid") { setGrid((g) => { onChange({ ...(scene || EMPTY_SCENE), canvas: { ...(scene?.canvas || {}), grid: !g }, objects: objs }); return !g; }); return; }
@@ -384,7 +386,7 @@ export default function LiftingPlanCanvas({ scene, onChange, selectedId, onSelec
         if (id === "del") return removeSel();
         if (id === "copy") return copySel();
         setTool(id);
-      }}>{children}</button>
+      }}>{children}{label && <span className="lpc-tb-label">{label}</span>}</button>
   );
 
   return (
@@ -411,7 +413,7 @@ export default function LiftingPlanCanvas({ scene, onChange, selectedId, onSelec
           <TB id="cg" on={tool === "cg"} title={t("lpToolCg")}><Crosshair size={15} /></TB>
           <span style={{ width: 6 }} />
           {LIFTING_OBJECT_META.map((o) => (
-            <TB key={o.type} id={o.tool} on={tool === o.tool} title={t("lpObj_" + o.type)}>
+            <TB key={o.type} id={o.tool} on={tool === o.tool} title={t("lpObj_" + o.type)} label={t("lpObj_" + o.type)}>
               <span style={{ fontSize: 13 }}>{o.emoji}</span>
             </TB>
           ))}
@@ -537,6 +539,7 @@ function GridLayer({ pan, zoom, wrapRef }) {
 }
 
 function ObjView({ o: o0, sel, zoom, m, readOnly, off }) {
+  const { t } = useLanguage();
   const o = off ? { ...o0, x: off.ox, y: off.oy } : o0;
   const sw = (n) => n / zoom;
   const teal = THEME.teal, ink = THEME.text3, steel = THEME.text2;
@@ -555,7 +558,7 @@ function ObjView({ o: o0, sel, zoom, m, readOnly, off }) {
         {[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sy], i) => (
           <rect key={i} x={m(sx * 2.2) - sw(4)} y={m(sy * 2.2) - sw(4)} width={sw(8)} height={sw(8)} fill="none" stroke={steel} strokeWidth={sw(1.5)} />
         ))}
-        {lbl(o.model || "Crane", m(3.2))}
+        {lbl(o.model || t("lpObj_crane"), m(3.2))}
       </g>
     );
   }
@@ -576,7 +579,7 @@ function ObjView({ o: o0, sel, zoom, m, readOnly, off }) {
         {(o.picks || []).map((p, i) => (
           <circle key={i} data-pick={`${o.id}:${i}`} cx={m(p.x)} cy={m(p.y)} r={sw(4.5)} fill={THEME.warn} stroke="#fff" strokeWidth={sw(1.5)} style={{ cursor: "pointer" }} />
         ))}
-        {lbl(`${o.label || "بار"} · ${(o.weightKg || 0).toLocaleString("en-US")} kg`, m(-(o.h || (o.r || 1.5) * 2) / 2) - sw(6))}
+        {lbl(`${o.label || t("lpObj_load")} · ${(o.weightKg || 0).toLocaleString("en-US")} kg`, m(-(o.h || (o.r || 1.5) * 2) / 2) - sw(6))}
       </g>
     );
   }
@@ -586,6 +589,7 @@ function ObjView({ o: o0, sel, zoom, m, readOnly, off }) {
         <rect data-hit x={sw(-8)} y={sw(-7)} width={sw(16)} height={sw(14)} rx={sw(3)} fill={THEME.surface2} stroke={ink} strokeWidth={sw(2)} />
         <path d={`M0 ${sw(7)} q ${sw(-6)} ${sw(6)} 0 ${sw(6)} q ${sw(6)} ${sw(-6)} 0 ${sw(-6)}`} fill="none" stroke={ink} strokeWidth={sw(2)} />
         {sel && <circle r={sw(13)} fill="none" stroke={THEME.teal} strokeWidth={sw(1.5)} strokeDasharray={`${sw(4)} ${sw(3)}`} />}
+        {lbl(t("lpObj_hook"), sw(24))}
       </g>
     );
   }
@@ -595,7 +599,7 @@ function ObjView({ o: o0, sel, zoom, m, readOnly, off }) {
       <g data-id={o.id} transform={`translate(${m(o.x)} ${m(o.y)})`} style={{ cursor: readOnly ? "pointer" : "move" }}>
         <line data-hit x1="0" y1="0" x2={m(end[0])} y2={m(end[1])} stroke={THEME.warn} strokeWidth={sw(3)} />
         <circle r={sw(5)} fill={THEME.warn} />
-        <text x={m(end[0] / 2)} y={m(end[1] / 2) - sw(8)} fill={THEME.warn} fontSize={sw(10)} textAnchor="middle" fontFamily={THEME.font}>{(o.kv || 132) + "kV"}</text>
+        <text x={m(end[0] / 2)} y={m(end[1] / 2) - sw(8)} fill={THEME.warn} fontSize={sw(10)} textAnchor="middle" fontFamily={THEME.font}>{`${t("lpObj_power_line")} · ${o.kv || 132}kV`}</text>
       </g>
     );
   }
@@ -604,7 +608,7 @@ function ObjView({ o: o0, sel, zoom, m, readOnly, off }) {
       <g data-id={o.id} transform={`translate(${m(o.x)} ${m(o.y)})`} style={{ cursor: readOnly ? "pointer" : "move" }}>
         <circle data-hit r={sw(7)} fill={THEME.warn} stroke="#fff" strokeWidth={sw(1.5)} />
         {sel && <circle r={sw(11)} fill="none" stroke={THEME.teal} strokeWidth={sw(1.5)} strokeDasharray={`${sw(4)} ${sw(3)}`} />}
-        {o.role ? <text y={sw(20)} fill={THEME.warn} fontSize={sw(9.5)} textAnchor="middle" fontFamily={THEME.font}>{o.role}</text> : null}
+        <text y={sw(20)} fill={THEME.warn} fontSize={sw(9.5)} textAnchor="middle" fontFamily={THEME.font}>{o.role || t("lpObj_worker")}</text>
       </g>
     );
   }
@@ -612,10 +616,11 @@ function ObjView({ o: o0, sel, zoom, m, readOnly, off }) {
     return (
       <g data-id={o.id} transform={`translate(${m(o.x)} ${m(o.y)})`} style={{ cursor: readOnly ? "pointer" : "move" }}>
         <path data-hit d={`M0 ${sw(10)} V ${sw(-14)} h ${sw(12)} l ${sw(-4)} ${sw(5)} l ${sw(4)} ${sw(5)} h ${sw(-12)}`} fill="#a78bfa" stroke="#a78bfa" />
+        <text x={sw(6)} y={sw(24)} fill="#a78bfa" fontSize={sw(10)} textAnchor="middle" fontFamily={THEME.font}>{t("lpObj_target")}</text>
       </g>
     );
   }
-  // rect-like: structure / truck / barrier / exclusion_zone
+  // rect-like: structure / truck / barrier / exclusion_zone / slingset / shackle / spreader
   const dashed = o.type === "exclusion_zone";
   const col = o.type === "exclusion_zone" ? THEME.danger : ink;
   return wrap(
@@ -623,7 +628,7 @@ function ObjView({ o: o0, sel, zoom, m, readOnly, off }) {
       <rect data-hit x={m(-(o.w || 4) / 2)} y={m(-(o.h || 2) / 2)} width={m(o.w || 4)} height={m(o.h || 2)} rx={m(0.2)}
         fill={col} fillOpacity={dashed ? "0.09" : "0.14"} stroke={col} strokeWidth={sw(dashed ? 2 : 1.6)}
         strokeDasharray={dashed ? `${sw(9)} ${sw(6)}` : ""} />
-      {o.label ? lbl(o.label, 0) : null}
+      {lbl(o.label || t("lpObj_" + o.type), 0)}
     </>
   );
 }
