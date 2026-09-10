@@ -58,6 +58,9 @@ function companyFromRow(r) {
     lastLoginAt: r.last_login_at || "",
     notes: r.notes || "",
     planId: r.plan_id || "",
+    // انتخابِ ماژول‌به‌ماژول: اگر آرایه باشد، مبنای دسترسیِ شرکت همین است
+    // (نه plan.features)؛ NULL = از پلن ارث می‌برد.
+    moduleOverrides: Array.isArray(r.module_overrides) ? r.module_overrides : null,
     contractAmount: Number(r.contract_amount) || 0,
     discountAmount: Number(r.discount_amount) || 0,
     finalAmount: Number(r.final_amount) || 0,

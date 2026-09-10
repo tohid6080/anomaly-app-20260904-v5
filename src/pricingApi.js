@@ -8,16 +8,106 @@ import { sb, sbOk } from "./shared.js";
  * این توابع فقط برای نمایشِ لحظه‌ای در صفحه‌ی خرید است.
  * ============================================================================ */
 
+/* ---------------------------------------------------------------------------- *
+ * انتشار (Save ≠ Publish)
+ * «ذخیره» رکوردهای زنده‌ی module_prices / services را می‌نویسد (پیش‌نویسِ داخلی).
+ * «انتشار» یک عکسِ فوری از قیمت‌ها/خدمات را در system_settings می‌گذارد؛ صفحه‌ی
+ * خریدِ مشتری همان عکسِ منتشرشده را می‌خواند. تا اولین انتشار، رفتار دقیقاً مثلِ
+ * امروز است (خواندنِ مستقیمِ جدول‌ها) — کاملاً افزایشی و بدونِ رگرسیون.
+ * گروه‌بندیِ دلخواهِ ماژول‌ها هم در همان جدول (کلیدِ module_pricing_groups) است؛
+ * فقط برچسبِ نمایشی است و روی دسترسی/قیمت اثر ندارد.
+ * ---------------------------------------------------------------------------- */
+const SS_SNAPSHOT_KEY = "module_pricing_snapshot";
+const SS_GROUPS_KEY = "module_pricing_groups";
+
+async function readSystemSettingJson(key) {
+  try {
+    const rows = await sb(`system_settings?key=eq.${key}&select=value_text`);
+    if (!sbOk(rows) || !rows.length || !rows[0].value_text) return null;
+    return JSON.parse(rows[0].value_text);
+  } catch { return null; }
+}
+async function writeSystemSettingJson(key, obj, updatedBy) {
+  const payload = [{ key, value_text: JSON.stringify(obj), value_numeric: null, updated_at: new Date().toISOString(), updated_by: updatedBy || "" }];
+  const rows = await sb("system_settings?on_conflict=key", { method: "POST", body: JSON.stringify(payload), prefer: "resolution=merge-duplicates,return=representation" }, "super_admin");
+  return sbOk(rows) ? { ok: true } : { __error: true, message: rows?.message };
+}
+
 // ---------- خواندن (هر لاگینی، حتی صفحه‌ی قفلِ اشتراک) ----------
-export async function loadModulePrices() {
+// opts.live === true → همیشه از جدولِ زنده بخوان (برای کنسولِ سوپرادمین که
+// پیش‌نویس را ویرایش می‌کند). پیش‌فرض: اگر عکسِ منتشرشده وجود دارد، همان.
+export async function loadModulePrices(opts) {
+  if (!opts || !opts.live) {
+    const snap = await readSystemSettingJson(SS_SNAPSHOT_KEY);
+    if (snap && Array.isArray(snap.modules)) return snap.modules.map(mpFromSnap);
+  }
   const rows = await sb("module_prices?is_active=eq.true&select=*&order=sort_order.asc,module_key.asc");
   if (!sbOk(rows)) return [];
   return rows.map(mpFromRow);
 }
-export async function loadServices() {
+export async function loadServices(opts) {
+  if (!opts || !opts.live) {
+    const snap = await readSystemSettingJson(SS_SNAPSHOT_KEY);
+    if (snap && Array.isArray(snap.services)) return snap.services.map(svcFromSnap);
+  }
   const rows = await sb("services?is_active=eq.true&select=*&order=sort_order.asc,name.asc");
   if (!sbOk(rows)) return [];
   return rows.map(svcFromRow);
+}
+
+function mpFromSnap(m) {
+  return {
+    moduleKey: m.moduleKey, label: m.label || "",
+    priceMonthly: Number(m.priceMonthly) || 0, priceYearly: Number(m.priceYearly) || 0,
+    isFree: !!m.isFree, requires: Array.isArray(m.requires) ? m.requires : [],
+    sortOrder: m.sortOrder ?? 0, isActive: true,
+  };
+}
+function svcFromSnap(s) {
+  return {
+    id: s.id, name: s.name || "", description: s.description || "",
+    priceMonthly: Number(s.priceMonthly) || 0, priceYearly: Number(s.priceYearly) || 0,
+    period: s.period || "monthly", sortOrder: s.sortOrder ?? 0, isActive: true,
+  };
+}
+
+// گروه‌بندیِ دلخواه — { groups: [{id,name}], byModule: { moduleKey: groupId } }
+export async function loadPricingGroups() {
+  const g = await readSystemSettingJson(SS_GROUPS_KEY);
+  return {
+    groups: Array.isArray(g?.groups) ? g.groups : [],
+    byModule: g && typeof g.byModule === "object" && g.byModule ? g.byModule : {},
+  };
+}
+export async function savePricingGroups(obj, updatedBy) {
+  return writeSystemSettingJson(SS_GROUPS_KEY, {
+    groups: Array.isArray(obj?.groups) ? obj.groups : [],
+    byModule: obj && obj.byModule ? obj.byModule : {},
+  }, updatedBy);
+}
+
+// وضعیتِ آخرین انتشار (برای نشانِ «منتشرشده / پیش‌نویس»)
+export async function loadPricingPublishInfo() {
+  const snap = await readSystemSettingJson(SS_SNAPSHOT_KEY);
+  return snap ? { publishedAt: snap.publishedAt || null, publishedBy: snap.publishedBy || "" } : null;
+}
+
+// انتشار: عکسِ فعلیِ قیمت‌ها/خدمات را ذخیره کن تا مشتری ببیند.
+export async function publishPricingSnapshot({ modules, services }, publishedBy) {
+  const snap = {
+    v: 1, publishedAt: new Date().toISOString(), publishedBy: publishedBy || "",
+    modules: (modules || []).map((m) => ({
+      moduleKey: m.moduleKey, label: m.label || "",
+      priceMonthly: Number(m.priceMonthly) || 0, priceYearly: Number(m.priceYearly) || 0,
+      isFree: !!m.isFree, requires: Array.isArray(m.requires) ? m.requires : [], sortOrder: m.sortOrder ?? 0,
+    })),
+    services: (services || []).map((s) => ({
+      id: s.id, name: s.name || "", description: s.description || "",
+      priceMonthly: Number(s.priceMonthly) || 0, priceYearly: Number(s.priceYearly) || 0,
+      period: s.period || "monthly", sortOrder: s.sortOrder ?? 0,
+    })),
+  };
+  return writeSystemSettingJson(SS_SNAPSHOT_KEY, snap, publishedBy);
 }
 
 function mpFromRow(r) {

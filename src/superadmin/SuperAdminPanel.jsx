@@ -8,7 +8,7 @@ import { loadModuleConfig, saveModuleConfig, loadNotificationTypes, saveNotifica
 import { DASHBOARD_WIDGET_GROUPS, mergeWidgetConfig, defaultWidgetConfig } from "../dashboard/dashboardWidgets.js";
 import { uploadBase64ToStorage, deleteFromStorage, parseStorageUrl } from "../offline/storageUpload.js";
 import AccountManagement from "./AccountManagement.jsx";
-import ModulePricingManager from "./ModulePricingManager.jsx";
+import PricingConsole from "./PricingConsole.jsx";
 import AdminAnalytics from "../admin/AdminAnalytics.jsx";
 import { toJalaliSafe, toJalaliDateTime, JalaliDateInput } from "../personnel/jalaliDate.jsx";
 import {
@@ -130,7 +130,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
       { key: "overview", labelKey: "saNavOverview", icon: LayoutDashboard },
       { key: "companies", labelKey: "saNavCompanies", icon: Building2 },
       { key: "accounts", labelKey: "saNavAccounts", icon: Users },
-      { key: "plans", labelKey: "saNavPlans", icon: Layers },
+      { key: "plans", labelKey: "saNavPricingConsole", icon: Layers },
     ] },
     { labelKey: "saNavGroupMonitoring", items: [
       { key: "monitoring", labelKey: "saNavMonitoring", icon: Activity },
@@ -142,7 +142,6 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
       { key: "systemConfig", labelKey: "saNavSystemConfig", icon: Settings2 },
     ] },
     { labelKey: "saNavGroupBilling", items: [
-      { key: "modulePricing", labelKey: "saNavModulePricing", icon: Layers },
       { key: "cardTransferPayments", labelKey: "saNavCardPayments", icon: CreditCard },
       { key: "trialRequests", labelKey: "saNavTrialRequests", icon: ClipboardList },
     ] },
@@ -216,8 +215,14 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
             />
           )}
           {page === "accounts" && <AccountManagement currentAdmin={currentAdmin} />}
-          {page === "plans" && <PlansManager plans={plans} companies={companies} currentAdmin={currentAdmin} onChanged={load} />}
-          {page === "modulePricing" && <ModulePricingManager plans={plans} currentAdmin={currentAdmin} onChanged={load} />}
+          {page === "plans" && (
+            <>
+              <PricingConsole plans={plans} companies={companies} currentAdmin={currentAdmin} onChanged={load} />
+              <AdvancedPlansSection>
+                <PlansManager plans={plans} companies={companies} currentAdmin={currentAdmin} onChanged={load} />
+              </AdvancedPlansSection>
+            </>
+          )}
           {page === "storage" && <StorageUsagePage />}
           {page === "monitoring" && <SystemInsights companies={companies} />}
           {page === "systemConfig" && <SystemConfigPage currentAdmin={currentAdmin} companies={companies} />}
@@ -3308,6 +3313,25 @@ function SuperAdminChangePassword({ onClose }) {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+// بخشِ جمع‌شونده‌ی «مدیریت پیشرفتهٔ پلن‌ها» زیرِ کنسولِ قیمت‌گذاری — ساخت/حذف/
+// فعال‌سازی/ترتیب/بکاپ. کارِ روزمره (قیمت و عضویتِ ماژول‌ها) در خودِ کنسول است.
+function AdvancedPlansSection({ children }) {
+  const { t } = useLanguage();
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ marginTop: 8 }}>
+      <button type="button" onClick={() => setOpen((v) => !v)}
+        style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "start", padding: "10px 14px",
+          borderRadius: 10, border: `1px solid ${THEME.border}`, background: THEME.surface, cursor: "pointer",
+          fontFamily: THEME.font, fontSize: 12.5, fontWeight: 700, color: THEME.text2 }}>
+        <ChevronLeft size={15} style={{ transform: open ? "rotate(-90deg)" : "rotate(0deg)", transition: "transform .15s" }} />
+        {t("pcAdvancedPlans")}
+      </button>
+      {open && <div style={{ marginTop: 10 }}>{children}</div>}
     </div>
   );
 }
