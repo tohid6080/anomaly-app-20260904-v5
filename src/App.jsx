@@ -29,6 +29,7 @@ const PublicHseClimateSurvey = lazy(() => import("./proactiveIndicators/PublicHs
 const PublicSurvey = lazy(() => import("./survey/PublicSurvey.jsx"));
 const PublicSurveyResults = lazy(() => import("./survey/PublicSurveyResults.jsx"));
 const SurveyDashboard = lazy(() => import("./survey/SurveyDashboard.jsx"));
+const PermitDashboard = lazy(() => import("./permit/PermitDashboard.jsx"));
 const HomeDashboard = lazy(() => import("./dashboard/HomeDashboard.jsx"));
 const OperationalDashboard = lazy(() => import("./dashboard/OperationalDashboard.jsx"));
 const QuickToolsDashboard = lazy(() => import("./quicktools/QuickToolsDashboard.jsx"));
@@ -176,6 +177,12 @@ const HSE_MODULES = [
     key: "hseSurvey",
     label: "نظرسنجی و آزمون HSE",
     labelKey: "moduleHseSurvey",
+    icon: true,
+  },
+  {
+    key: "permitToWork",
+    label: "صدور مجوز کار",
+    labelKey: "modulePermitToWork",
     icon: true,
   },
   {
@@ -3435,7 +3442,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
 }
 
 // ---------- پنل ادمین ----------
-const MODULE_ICON = { profile: User, chat: MessageCircle, anomalyReport: AlertTriangle, personnelAccess: Users, managementDashboard: BarChart3, operationalDashboard: ClipboardList, proactiveIndicators: TrendingUp, incidentManagement: ShieldAlert, quickTools: Zap, hseSurvey: ClipboardList };
+const MODULE_ICON = { profile: User, chat: MessageCircle, anomalyReport: AlertTriangle, personnelAccess: Users, managementDashboard: BarChart3, operationalDashboard: ClipboardList, proactiveIndicators: TrendingUp, incidentManagement: ShieldAlert, quickTools: Zap, hseSurvey: ClipboardList, permitToWork: FileSpreadsheet };
 
 // اعمال «پیکربندی سامانه» (ترتیب + برچسب نمایشی، از پنل Super Admin) روی
 // لیست ماژول‌های از‌قبل فیلترشده‌ی هر داشبورد. آیکون/badge/muted/sub که از
@@ -3662,7 +3669,7 @@ function MenuRow({ icon: IconEl, label, onClick, accent, muted, sub, badge }) {
 // بدون کتابخانهٔ ناوبری — طبقِ قیدِ کارایی.
 // ============================================================
 const MOBILE_MODULE_GROUP = {
-  anomalyReport: "safety", riskAssessment: "safety", proactiveIndicators: "safety", incidentManagement: "safety", hseSurvey: "safety",
+  anomalyReport: "safety", riskAssessment: "safety", proactiveIndicators: "safety", incidentManagement: "safety", hseSurvey: "safety", permitToWork: "safety",
   personnelAccess: "operations", machineryManagement: "operations", scaffoldManagement: "operations", chat: "operations",
   managementDashboard: "management", operationalDashboard: "management", archiveManagement: "management",
   systemManagement: "system",
@@ -3699,6 +3706,7 @@ function mobileTabMeta(t) {
     proactiveIndicators: { icon: TrendingUp, label: t("moduleProactiveIndicators") },
     incidentManagement: { icon: ShieldAlert, label: t("moduleIncidentManagement") },
     hseSurvey: { icon: ClipboardList, label: t("moduleHseSurvey") },
+    permitToWork: { icon: FileSpreadsheet, label: t("modulePermitToWork") },
   };
 }
 
@@ -4759,6 +4767,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
     if (mod.key === "operationalDashboard") { setView("operationalDashboard"); return; }
     if (mod.key === "proactiveIndicators") { setView("proactiveIndicators"); return; }
     if (mod.key === "hseSurvey") { setView("hseSurvey"); return; }
+    if (mod.key === "permitToWork") { setView("permitToWork"); return; }
     if (mod.sub) { setView(mod.key); return; }
     alert(t("moduleComingSoon", { name: mt(mod) }));
   };
@@ -5077,6 +5086,11 @@ function EmployerDashboard({ onLogout, currentUser }) {
           readOnly={!canEdit || getAccessLevel(permMap, "hseSurvey") === "view"}
           onBack={() => setView("menu")} />
       )}
+      {view === "permitToWork" && (
+        <PermitDashboard wide={isDesktop} role="EMPLOYER" currentUser={currentUser}
+          readOnly={!canEdit || getAccessLevel(permMap, "permitToWork") === "view"}
+          onBack={() => setView("menu")} />
+      )}
       {view === "incidentsList" && <IncidentsListPage wide={isDesktop} currentUser={currentUser} role="EMPLOYER" readOnly={!canEdit} />}
       {!isDesktop && view === "machineryDashboard" && (
         <MachineryDashboard onBack={() => setView("machineryManagement")} currentUser={currentUser} role="EMPLOYER" readOnly={!canEdit || getAccessLevel(permMap, "machineryManagement") === "view"} initialApprovalFilter={navFilter?.module === "machinery" ? navFilter.approvalFilter : undefined} initialContractorFilter={navFilter?.module === "machinery" ? navFilter.contractorFilter : undefined} />
@@ -5188,6 +5202,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
     if (mod.key === "operationalDashboard") { setView("operationalDashboard"); return; }
     if (mod.key === "proactiveIndicators") { setView("proactiveIndicators"); return; }
     if (mod.key === "hseSurvey") { setView("hseSurvey"); return; }
+    if (mod.key === "permitToWork") { setView("permitToWork"); return; }
     if (mod.sub) { setView(mod.key); return; }
     alert(t("moduleComingSoon", { name: mt(mod) }));
   };
@@ -5421,6 +5436,11 @@ function ContractorDashboard({ onLogout, currentUser }) {
       {view === "hseSurvey" && (
         <SurveyDashboard wide={isDesktop} role="CONTRACTOR" currentUser={currentUser}
           readOnly={getAccessLevel(permMap, "hseSurvey") === "view"}
+          onBack={() => setView("menu")} />
+      )}
+      {view === "permitToWork" && (
+        <PermitDashboard wide={isDesktop} role="CONTRACTOR" currentUser={currentUser}
+          readOnly={getAccessLevel(permMap, "permitToWork") === "view"}
           onBack={() => setView("menu")} />
       )}
       {view === "incidentsList" && <IncidentsListPage wide={isDesktop} currentUser={currentUser} role="CONTRACTOR" readOnly={false} />}

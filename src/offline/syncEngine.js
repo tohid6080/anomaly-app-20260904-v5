@@ -44,6 +44,9 @@ export const MODULE_TABLE_MAP = {
   fleetFuelAssessments: { table: "fleet_fuel_assessments", idField: "id" },
   fleetFuelAudit: { table: "fleet_fuel_audit", idField: "id" },
   hseSurvey: { table: "surveys", idField: "id" },
+  permitToWork: { table: "permits", idField: "id" },
+  permitTemplates: { table: "permit_templates", idField: "id" },
+  permitRenewals: { table: "permit_renewals", idField: "id" },
   // future modules register here once built
 };
 

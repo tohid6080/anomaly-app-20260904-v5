@@ -66,6 +66,7 @@ export const PLAN_FEATURES = [
   { key: "managementDashboard", labelKey: "pfManagementDashboard" },
   { key: "operationalDashboard", labelKey: "pfOperationalDashboard" },
   { key: "hseSurvey", labelKey: "pfHseSurvey" },
+  { key: "permitToWork", labelKey: "pfPermitToWork" },
   {
     key: "quickTools", labelKey: "pfQuickTools",
     sub: [
