@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
-import { QUESTION_TYPES, CHOICE_TYPES, newQuestion, newOption } from "./surveyModel.js";
+import { QUESTION_TYPES, CHOICE_TYPES, SCORABLE_TYPES, newQuestion, newOption, examHasScorable } from "./surveyModel.js";
 import { saveSurvey } from "./surveyApi.js";
 import SurveyRuntime from "./SurveyRuntime.jsx";
 
@@ -32,6 +32,13 @@ export default function SurveyBuilder({ survey, onBack, onSaved, currentUser, wi
   const dirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(base), [draft, base]);
 
   const sel = draft.questions.find((q) => q.id === selId) || null;
+  const isExam = draft.settings.mode === "exam";
+  const toggleCorrect = (qid, oid, multi) => setQuestions((qs) => qs.map((q) => {
+    if (q.id !== qid) return q;
+    const cur = Array.isArray(q.config?.correct) ? q.config.correct : [];
+    const next = multi ? (cur.includes(oid) ? cur.filter((x) => x !== oid) : [...cur, oid]) : [oid];
+    return { ...q, config: { ...q.config, correct: next } };
+  }));
 
   const setQuestions = (fn) => setDraft((d) => ({ ...d, questions: fn(d.questions) }));
   const patchQ = (id, patch) => setQuestions((qs) => qs.map((q) => (q.id === id ? { ...q, ...patch } : q)));
@@ -216,6 +223,40 @@ export default function SurveyBuilder({ survey, onBack, onSaved, currentUser, wi
                     <input style={styles.input} value={sel.config?.placeholder || ""} onChange={(e) => patchCfg(sel.id, { placeholder: e.target.value })} dir={dir} />
                   </div>
                 )}
+
+                {isExam && SCORABLE_TYPES.includes(sel.type) && (
+                  <div style={{ marginTop: 10, background: THEME.warnBg, border: `1px solid ${THEME.warn}44`, borderRadius: 9, padding: 10 }}>
+                    <b style={{ fontSize: 11.5, color: THEME.warn }}>{t("svExamKey")}</b>
+                    <div style={{ marginTop: 8 }}>
+                      <label style={styles.label}>{t("svPoints")}</label>
+                      <input type="number" min={0} step={0.5} style={{ ...styles.input, width: 100 }} value={sel.config?.points ?? 1}
+                        onChange={(e) => patchCfg(sel.id, { points: Math.max(0, Number(e.target.value) || 0) })} dir="ltr" />
+                    </div>
+                    <label style={styles.label}>{t("svCorrectAnswer")}</label>
+                    {sel.type === "yes_no" ? (
+                      <div style={{ display: "flex", gap: 8 }}>
+                        {[["yes", t("commonYes")], ["no", t("commonNo")]].map(([v, lbl]) => (
+                          <label key={v} style={ckRow}>
+                            <input type="radio" name={`correct-${sel.id}`} checked={(sel.config?.correct || [])[0] === v} onChange={() => toggleCorrect(sel.id, v, false)} /> {lbl}
+                          </label>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                        {(sel.config?.options || []).map((o, oi) => {
+                          const multi = sel.type === "multi_choice";
+                          const on = (sel.config?.correct || []).includes(o.id);
+                          return (
+                            <label key={o.id} style={ckRow}>
+                              <input type={multi ? "checkbox" : "radio"} name={`correct-${sel.id}`} checked={on} onChange={() => toggleCorrect(sel.id, o.id, multi)} />
+                              {o.label || `${t("svOption")} ${oi + 1}`}
+                            </label>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -243,9 +284,34 @@ function IconBtn({ children, onClick, disabled, danger }) {
 function SettingsPanel({ draft, setDraft, t, dir }) {
   const s = draft.settings;
   const set = (patch) => setDraft((d) => ({ ...d, settings: { ...d.settings, ...patch } }));
+  const isExam = s.mode === "exam";
   return (
     <div style={{ ...styles.cardWide, marginBottom: 14, background: THEME.surface2 }}>
       <b style={{ fontSize: 12.5, color: THEME.heading }}>{t("svSettings")}</b>
+
+      <div style={{ marginTop: 10, marginBottom: 4 }}>
+        <label style={styles.label}>{t("svMode")}</label>
+        <div style={{ display: "inline-flex", background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 9, padding: 3, gap: 3 }}>
+          {[["survey", t("svModeSurvey")], ["exam", t("svModeExam")]].map(([m, lbl]) => (
+            <button key={m} type="button" onClick={() => set({ mode: m })}
+              style={{ border: "none", borderRadius: 7, padding: "6px 16px", fontFamily: THEME.font, fontSize: 12, fontWeight: 700, cursor: "pointer",
+                background: s.mode === m ? THEME.teal : "transparent", color: s.mode === m ? "#fff" : THEME.text2 }}>{lbl}</button>
+          ))}
+        </div>
+        {isExam && !examHasScorable(draft.questions) && (
+          <p style={{ ...styles.error, marginTop: 8, marginBottom: 0 }}>{t("svExamNoKeyWarn")}</p>
+        )}
+      </div>
+
+      {isExam && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10, marginTop: 8, marginBottom: 4 }}>
+          <div><label style={styles.label}>{t("svPassScore")}</label><input type="number" min={0} max={100} style={styles.input} value={s.passScore ?? 60} onChange={(e) => set({ passScore: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })} dir="ltr" /></div>
+          <div><label style={styles.label}>{t("svTimeLimit")}</label><input type="number" min={0} style={styles.input} value={s.timeLimitMin ?? ""} onChange={(e) => set({ timeLimitMin: e.target.value === "" ? null : Math.max(0, Number(e.target.value)) })} dir="ltr" /></div>
+          <label style={{ ...ckRow, alignSelf: "end" }}><input type="checkbox" checked={s.showScoreToRespondent !== false} onChange={(e) => set({ showScoreToRespondent: e.target.checked })} /> {t("svShowScore")}</label>
+          <label style={{ ...ckRow, alignSelf: "end" }}><input type="checkbox" checked={!!s.shuffleQuestions} onChange={(e) => set({ shuffleQuestions: e.target.checked })} /> {t("svShuffle")}</label>
+        </div>
+      )}
+
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10, marginTop: 10 }}>
         <label style={ckRow}><input type="checkbox" checked={!!s.anonymous} onChange={(e) => set({ anonymous: e.target.checked })} /> {t("svAnonymous")}</label>
         {!s.anonymous && <label style={ckRow}><input type="checkbox" checked={!!s.collectName} onChange={(e) => set({ collectName: e.target.checked })} /> {t("svCollectName")}</label>}

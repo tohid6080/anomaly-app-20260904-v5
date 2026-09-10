@@ -107,6 +107,11 @@ export default function SurveyDashboard({ currentUser, role, onBack, wide, readO
               </div>
             </div>
             <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+              <span style={{ fontSize: 10, padding: "3px 9px", borderRadius: 999, fontWeight: 800,
+                background: s.settings?.mode === "exam" ? THEME.warnBg : THEME.tealSoft,
+                color: s.settings?.mode === "exam" ? THEME.warn : THEME.tealDeep }}>
+                {s.settings?.mode === "exam" ? t("svModeExam") : t("svModeSurvey")}
+              </span>
               <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, fontWeight: 700,
                 background: s.status === "active" ? THEME.okBg : s.status === "closed" ? THEME.surface2 : THEME.warnBg,
                 color: s.status === "active" ? THEME.ok : s.status === "closed" ? THEME.text3 : THEME.warn }}>

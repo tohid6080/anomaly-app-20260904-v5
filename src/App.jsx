@@ -173,7 +173,7 @@ const HSE_MODULES = [
   },
   {
     key: "hseSurvey",
-    label: "نظرسنجی HSE",
+    label: "نظرسنجی و آزمون HSE",
     labelKey: "moduleHseSurvey",
     icon: true,
   },

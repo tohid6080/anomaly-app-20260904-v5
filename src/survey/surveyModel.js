@@ -23,6 +23,8 @@ export const QUESTION_TYPES = [
 
 export const CHOICE_TYPES = ["single_choice", "multi_choice", "dropdown"];
 export const SCALE_TYPES = ["rating", "linear_scale"];
+// نوع‌هایی که در «حالتِ آزمون» می‌توانند پاسخِ درست/نمره داشته باشند
+export const SCORABLE_TYPES = ["single_choice", "multi_choice", "dropdown", "yes_no"];
 
 let _n = 0;
 function rid(prefix) {
@@ -36,6 +38,7 @@ export function newOption(label = "") {
 
 export function newQuestion(type) {
   const q = { id: rid("q"), type, title: "", description: "", required: false, config: {} };
+  if (SCORABLE_TYPES.includes(type)) { q.config.points = 1; q.config.correct = []; }
   if (CHOICE_TYPES.includes(type)) {
     q.config.options = [newOption(""), newOption("")];
   } else if (type === "rating") {
@@ -56,6 +59,7 @@ export function newSurvey() {
     status: "draft",
     questions: [],
     settings: {
+      mode: "survey",              // survey | exam
       anonymous: true,
       collectName: false,
       collectUnit: false,
@@ -64,8 +68,47 @@ export function newSurvey() {
       endAt: "",
       maxResponses: null,
       onePerDevice: true,
+      // فقط در حالتِ آزمون:
+      passScore: 60,               // درصدِ قبولی
+      showScoreToRespondent: true, // نمره بلافاصله به پاسخ‌دهنده نشان داده شود
+      shuffleQuestions: false,
+      timeLimitMin: null,          // محدودیتِ زمانی (دقیقه) — تهی = بدون محدودیت
     },
   };
+}
+
+/* ---------------- نمره‌دهیِ آزمون (خالص؛ نسخهٔ آینهٔ همین در Edge Function) ----------------
+ * چندگزینه‌ای: تطبیقِ دقیقِ مجموعه (همهٔ درست‌ها انتخاب، هیچ غلطی نه).
+ * تک‌گزینه/کشویی/بله‌خیر: پاسخ باید برابرِ اولین (تنها) گزینهٔ درست باشد.
+ */
+export function scoreExam(questions, answers, passScore = 60) {
+  let score = 0;
+  let maxScore = 0;
+  (questions || []).forEach((q) => {
+    if (!isAnswerable(q) || !SCORABLE_TYPES.includes(q.type)) return;
+    const pts = Number(q.config?.points);
+    const correct = Array.isArray(q.config?.correct) ? q.config.correct : [];
+    if (!(pts > 0) || correct.length === 0) return;
+    maxScore += pts;
+    const a = answers?.[q.id];
+    let right = false;
+    if (q.type === "multi_choice") {
+      const got = Array.isArray(a) ? a : [];
+      right = got.length === correct.length && correct.every((c) => got.includes(c));
+    } else {
+      right = a != null && a === correct[0];
+    }
+    if (right) score += pts;
+  });
+  const percent = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
+  return { score, maxScore, percent, passed: maxScore > 0 && percent >= passScore };
+}
+
+// آیا این آزمون اصلاً سؤالِ نمره‌دار دارد؟
+export function examHasScorable(questions) {
+  return (questions || []).some(
+    (q) => SCORABLE_TYPES.includes(q.type) && Number(q.config?.points) > 0 && Array.isArray(q.config?.correct) && q.config.correct.length > 0,
+  );
 }
 
 // آیا این سؤال «قابلِ پاسخ» است (بخش/توضیح نه)

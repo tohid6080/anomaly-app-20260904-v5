@@ -59,6 +59,10 @@ export async function loadSurveyResponses(surveyId) {
         respondentMeta: r.respondent_meta && typeof r.respondent_meta === "object" ? r.respondent_meta : {},
         source: r.source || "link",
         submittedAt: r.submitted_at,
+        score: r.score != null ? Number(r.score) : null,
+        maxScore: r.max_score != null ? Number(r.max_score) : null,
+        percent: r.percent != null ? Number(r.percent) : null,
+        passed: typeof r.passed === "boolean" ? r.passed : null,
       }))
     : [];
 }
@@ -151,7 +155,8 @@ export async function submitSurveyResponse(token, answers, respondentMeta, sourc
     });
     const data = await res.json();
     if (!res.ok) return { __error: true, message: data?.error || tr("svErrSubmit") };
-    return { ok: true };
+    // در حالتِ آزمون (اگر نمایشِ نمره روشن باشد) نمره هم برمی‌گردد.
+    return { ok: true, score: data?.score, maxScore: data?.maxScore, percent: data?.percent, passed: data?.passed };
   } catch {
     return { __error: true, message: tr("svErrServer") };
   }
