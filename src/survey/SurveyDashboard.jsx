@@ -19,7 +19,7 @@ export default function SurveyDashboard({ currentUser, role, onBack, wide, readO
   const [view, setView] = useState("list");        // list | build | results
   const [active, setActive] = useState(null);       // selected survey
   const [linkFor, setLinkFor] = useState(null);
-  const [showNew, setShowNew] = useState(false);
+  const [newKind, setNewKind] = useState(null); // null | "survey" | "exam"
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
@@ -30,9 +30,13 @@ export default function SurveyDashboard({ currentUser, role, onBack, wide, readO
   const openResults = (s) => { setActive(s); setView("results"); };
   const openDistribute = (s) => { setActive(s); setView("distribute"); };
 
-  const handleNew = async (templateId) => {
-    setBusy(true); setErr(""); setShowNew(false);
-    const payload = templateId ? buildFromTemplate(templateId) : { title: "" };
+  const BLANK_EXAM_SETTINGS = { mode: "exam", anonymous: false, collectName: true, collectUnit: true, passScore: 70, showScoreToRespondent: true, shuffleQuestions: true, onePerDevice: true, thankYouText: "" };
+
+  const handleNew = async (templateId, kind) => {
+    setBusy(true); setErr(""); setNewKind(null);
+    const payload = templateId
+      ? buildFromTemplate(templateId)
+      : (kind === "exam" ? { title: "", settings: { ...BLANK_EXAM_SETTINGS } } : { title: "" });
     const res = await createSurvey(payload || { title: "" }, currentUser?.name);
     setBusy(false);
     if (res?.__error) { setErr(res.message); return; }
@@ -85,27 +89,29 @@ export default function SurveyDashboard({ currentUser, role, onBack, wide, readO
       {err && <p style={styles.error}>{err}</p>}
 
       {!readOnly && (
-        <button type="button" onClick={() => setShowNew((v) => !v)} disabled={busy} style={{ ...styles.smallButton, display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 14 }}>
-          <Plus size={13} /> {t("svNewSurvey")}
-        </button>
+        <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+          <button type="button" onClick={() => setNewKind((v) => (v === "survey" ? null : "survey"))} disabled={busy}
+            style={{ ...styles.smallButton, display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <Plus size={13} /> {t("svNewSurvey")}
+          </button>
+          <button type="button" onClick={() => setNewKind((v) => (v === "exam" ? null : "exam"))} disabled={busy}
+            style={{ ...styles.smallButton, background: THEME.warn, display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <Plus size={13} /> {t("svNewExam")}
+          </button>
+        </div>
       )}
 
-      {showNew && !readOnly && (
+      {newKind && !readOnly && (
         <div style={{ ...styles.cardWide, marginBottom: 16 }}>
-          <b style={{ fontSize: 12.5, color: THEME.heading }}>{t("svNewFrom")}</b>
+          <b style={{ fontSize: 12.5, color: THEME.heading }}>{newKind === "exam" ? t("svNewExamFrom") : t("svNewFrom")}</b>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 8, marginTop: 10 }}>
-            <button type="button" onClick={() => handleNew(null)} style={tplCard(THEME)}>
-              <span style={{ fontWeight: 800, fontSize: 12.5, color: THEME.heading }}>{t("svBlankSurvey")}</span>
-              <span style={{ fontSize: 10.5, color: THEME.text3 }}>{t("svBlankSurveyHint")}</span>
+            <button type="button" onClick={() => handleNew(null, newKind)} style={tplCard(THEME)}>
+              <span style={{ fontWeight: 800, fontSize: 12.5, color: THEME.heading }}>{newKind === "exam" ? t("svBlankExam") : t("svBlankSurvey")}</span>
+              <span style={{ fontSize: 10.5, color: THEME.text3 }}>{newKind === "exam" ? t("svBlankExamHint") : t("svBlankSurveyHint")}</span>
             </button>
-            {SURVEY_TEMPLATES.map((tp) => (
-              <button key={tp.id} type="button" onClick={() => handleNew(tp.id)} style={tplCard(THEME)}>
-                <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ fontSize: 8.5, fontWeight: 800, padding: "1px 6px", borderRadius: 999, background: tp.kind === "exam" ? THEME.warnBg : THEME.tealSoft, color: tp.kind === "exam" ? THEME.warn : THEME.tealDeep }}>
-                    {tp.kind === "exam" ? t("svModeExam") : t("svModeSurvey")}
-                  </span>
-                  <span style={{ fontWeight: 800, fontSize: 12.5, color: THEME.heading }}>{tp.name.fa}</span>
-                </span>
+            {SURVEY_TEMPLATES.filter((tp) => tp.kind === newKind).map((tp) => (
+              <button key={tp.id} type="button" onClick={() => handleNew(tp.id, newKind)} style={tplCard(THEME)}>
+                <span style={{ fontWeight: 800, fontSize: 12.5, color: THEME.heading }}>{tp.name.fa}</span>
                 <span style={{ fontSize: 10, color: THEME.text3 }}>{t("svTemplateReady", { n: tp.build().questions.length })}</span>
               </button>
             ))}
