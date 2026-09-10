@@ -151,10 +151,12 @@ export async function saveModulePrice(rec, updatedBy) {
   const existing = await sb(`module_prices?module_key=eq.${encodeURIComponent(rec.moduleKey)}&select=module_key`, {}, "super_admin");
   if (sbOk(existing) && existing.length) {
     const rows = await sb(`module_prices?module_key=eq.${encodeURIComponent(rec.moduleKey)}`, { method: "PATCH", body: JSON.stringify(body) }, "super_admin");
-    return sbOk(rows) ? mpFromRow(rows[0]) : { __error: true, message: rows?.message };
+    if (!sbOk(rows)) return { __error: true, message: rows?.message };
+    return rows[0] ? mpFromRow(rows[0]) : { ...rec };
   }
   const rows = await sb("module_prices", { method: "POST", body: JSON.stringify([{ module_key: rec.moduleKey, ...body }]) }, "super_admin");
-  return sbOk(rows) ? mpFromRow(rows[0]) : { __error: true, message: rows?.message };
+  if (!sbOk(rows)) return { __error: true, message: rows?.message };
+  return rows[0] ? mpFromRow(rows[0]) : { ...rec };
 }
 
 export async function upsertService(rec, createdBy) {
@@ -170,11 +172,13 @@ export async function upsertService(rec, createdBy) {
   };
   if (rec.id) {
     const rows = await sb(`services?id=eq.${rec.id}`, { method: "PATCH", body: JSON.stringify(body) }, "super_admin");
-    return sbOk(rows) ? svcFromRow(rows[0]) : { __error: true, message: rows?.message };
+    if (!sbOk(rows)) return { __error: true, message: rows?.message };
+    return rows[0] ? svcFromRow(rows[0]) : { ...rec };
   }
   const id = "svc-" + Date.now().toString(36);
   const rows = await sb("services", { method: "POST", body: JSON.stringify([{ id, created_by: createdBy || "", ...body }]) }, "super_admin");
-  return sbOk(rows) ? svcFromRow(rows[0]) : { __error: true, message: rows?.message };
+  if (!sbOk(rows)) return { __error: true, message: rows?.message };
+  return rows[0] ? svcFromRow(rows[0]) : { ...rec, id };
 }
 export async function deleteService(id) {
   const res = await sb(`services?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" }, "super_admin");

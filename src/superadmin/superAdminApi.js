@@ -356,8 +356,10 @@ export async function updatePlan(id, patch) {
   if ("backupPriceMonthly" in patch) dbPatch.backup_price_monthly = Number(patch.backupPriceMonthly) || 0;
   if ("backupPriceYearly" in patch)  dbPatch.backup_price_yearly  = Number(patch.backupPriceYearly) || 0;
   const rows = await sb(`plans?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(dbPatch) }, "super_admin");
-  if (!sbOk(rows)) return { __error: true, message: tr("saErrSavePlan") };
-  return planFromRow(rows[0]);
+  if (!sbOk(rows)) return { __error: true, message: rows?.message || tr("saErrSavePlan") };
+  // PATCH با Prefer=representation معمولاً ردیف را برمی‌گرداند؛ ولی اگر پاسخ
+  // خالی بود (۲۰۴ یا صفر ردیف) نباید planFromRow(undefined) بترکد.
+  return rows[0] ? planFromRow(rows[0]) : { ok: true, id };
 }
 
 // حذف واقعی نمی‌کنیم — پلنی که به شرکت‌های واقعی وصل بوده نباید ناپدید شود

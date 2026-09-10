@@ -27,21 +27,23 @@ const clone = (v) => JSON.parse(JSON.stringify(v ?? null));
 const fmt = (n) => Number(Math.round(Number(n) || 0)).toLocaleString("fa-IR");
 const faInt = (n) => Number(n || 0).toLocaleString("fa-IR");
 
+function planEntryFromPlan(p) {
+  if (!p) return null;
+  return {
+    priceMonthly: p.priceMonthly || 0,
+    priceYearly: p.priceYearly || 0,
+    priceTotal: p.priceTotal || 0,
+    minModules: p.minModules ?? "",
+    maxModules: p.maxModules ?? "",
+    maxUsers: p.maxUsers ?? "",
+    maxPersonnel: p.maxPersonnel ?? "",
+    trialDays: p.trialDays ?? "",
+    features: Array.isArray(p.features) ? [...p.features] : [],
+  };
+}
 function initPlanDraft(plans) {
   const d = {};
-  (plans || []).forEach((p) => {
-    d[p.id] = {
-      priceMonthly: p.priceMonthly || 0,
-      priceYearly: p.priceYearly || 0,
-      priceTotal: p.priceTotal || 0,
-      minModules: p.minModules ?? "",
-      maxModules: p.maxModules ?? "",
-      maxUsers: p.maxUsers ?? "",
-      maxPersonnel: p.maxPersonnel ?? "",
-      trialDays: p.trialDays ?? "",
-      features: Array.isArray(p.features) ? [...p.features] : [],
-    };
-  });
+  (plans || []).forEach((p) => { d[p.id] = planEntryFromPlan(p); });
   return d;
 }
 
@@ -137,11 +139,15 @@ export default function PricingConsole({ plans, companies, currentAdmin, onChang
     await refresh();
   };
 
-  const planField = (pid, patch) => setPlanDraft((d) => ({ ...d, [pid]: { ...d[pid], ...patch } }));
+  const planField = (pid, patch) => setPlanDraft((d) => {
+    const cur = d[pid] || planEntryFromPlan((plans || []).find((p) => p.id === pid)) || {};
+    return { ...d, [pid]: { ...cur, ...patch } };
+  });
   const togglePlanModule = (pid, key) => setPlanDraft((d) => {
-    const cur = d[pid].features || [];
-    const has = cur.indexOf(key) > -1;
-    return { ...d, [pid]: { ...d[pid], features: has ? cur.filter((x) => x !== key) : [...cur, key] } };
+    const cur = d[pid] || planEntryFromPlan((plans || []).find((p) => p.id === pid)) || { features: [] };
+    const list = cur.features || [];
+    const has = list.indexOf(key) > -1;
+    return { ...d, [pid]: { ...cur, features: has ? list.filter((x) => x !== key) : [...list, key] } };
   });
 
   // ---------- ذخیره ----------
@@ -162,21 +168,24 @@ export default function PricingConsole({ plans, companies, currentAdmin, onChang
         const res = await savePricingGroups(grp, actor);
         if (res?.__error) throw new Error(res.message || t("commonErrorSave"));
       }
+      const numOrNull = (v) => (v === "" || v == null ? null : Number(v));
       let planChanged = false;
       for (const id of Object.keys(planDraft)) {
-        if (JSON.stringify(planDraft[id]) === JSON.stringify(planBase[id])) continue;
-        planChanged = true;
         const d = planDraft[id];
+        if (!d) continue;
+        const b = planBase[id];
+        if (b && JSON.stringify(d) === JSON.stringify(b)) continue;
+        planChanged = true;
         const res = await updatePlan(id, {
           priceMonthly: Number(d.priceMonthly) || 0,
           priceYearly: Number(d.priceYearly) || 0,
           priceTotal: Number(d.priceTotal) || 0,
-          minModules: d.minModules === "" ? null : Number(d.minModules),
-          maxModules: d.maxModules === "" ? null : Number(d.maxModules),
-          maxUsers: d.maxUsers === "" ? null : Number(d.maxUsers),
-          maxPersonnel: d.maxPersonnel === "" ? null : Number(d.maxPersonnel),
-          trialDays: d.trialDays === "" ? null : Number(d.trialDays),
-          features: d.features || [],
+          minModules: numOrNull(d.minModules),
+          maxModules: numOrNull(d.maxModules),
+          maxUsers: numOrNull(d.maxUsers),
+          maxPersonnel: numOrNull(d.maxPersonnel),
+          trialDays: numOrNull(d.trialDays),
+          features: Array.isArray(d.features) ? d.features : [],
         });
         if (res?.__error) throw new Error(res.message || t("commonErrorSave"));
       }
@@ -186,6 +195,12 @@ export default function PricingConsole({ plans, companies, currentAdmin, onChang
       setBusy(false);
       setOk(t("pcSavedDraft"));
       setNeedsPublish(true);
+      // پلن‌ها را از حقیقتِ سرور دوباره بساز تا حالتِ «ذخیره‌نشده» گیر نکند.
+      try {
+        const freshPlans = await loadPlans();
+        const fresh = initPlanDraft(freshPlans);
+        setPlanDraft(fresh); setPlanBase(clone(fresh));
+      } catch { /* effect وابسته به prop خودش هم‌تراز می‌کند */ }
       await refresh();
       onChanged && onChanged();
     } catch (e) {
@@ -326,7 +341,8 @@ export default function PricingConsole({ plans, companies, currentAdmin, onChang
                           </label>
                         </td>
                         {plans.map((p) => {
-                          const on = (planDraft[p.id]?.features || []).indexOf(r.moduleKey) > -1;
+                          const feats = planDraft[p.id]?.features || p.features || [];
+                          const on = feats.indexOf(r.moduleKey) > -1;
                           return (
                             <td key={p.id}>
                               <button type="button" className={"pc-pill" + (on ? " on" : "")} onClick={() => togglePlanModule(p.id, r.moduleKey)}>
@@ -359,27 +375,37 @@ export default function PricingConsole({ plans, companies, currentAdmin, onChang
               {PLAN_ROWS.map((row) => (
                 <tr key={row.key}>
                   <td className="pc-sticky" style={{ fontWeight: 700, color: THEME.text2 }}>{t(row.labelKey)}</td>
-                  {plans.map((p) => (
-                    <td key={p.id}>
-                      <input type="number" value={planDraft[p.id]?.[row.key] ?? ""}
-                        onChange={(e) => planField(p.id, { [row.key]: e.target.value })}
-                        style={{ ...cellIn, width: row.wide ? 118 : 78 }} />
-                    </td>
-                  ))}
+                  {plans.map((p) => {
+                    const pd = planDraft[p.id] || planEntryFromPlan(p) || {};
+                    return (
+                      <td key={p.id}>
+                        <input type="number" value={pd[row.key] ?? ""}
+                          onChange={(e) => planField(p.id, { [row.key]: e.target.value })}
+                          style={{ ...cellIn, width: row.wide ? 118 : 78 }} />
+                      </td>
+                    );
+                  })}
                 </tr>
               ))}
               <tr className="pc-computed">
                 <td className="pc-sticky" style={{ fontWeight: 700, color: THEME.text2 }}>{t("pcSelCount")}</td>
-                {plans.map((p) => <td key={p.id} style={mono}>{faInt((planDraft[p.id]?.features || []).length)}</td>)}
+                {plans.map((p) => {
+                  const feats = (planDraft[p.id] || planEntryFromPlan(p) || {}).features || [];
+                  return <td key={p.id} style={mono}>{faInt(feats.length)}</td>;
+                })}
               </tr>
               <tr className="pc-computed">
                 <td className="pc-sticky" style={{ fontWeight: 700, color: THEME.text2 }}>{t("pcSumPrice")}</td>
-                {plans.map((p) => <td key={p.id} style={mono}>{fmt(sumModulePrices(planDraft[p.id]?.features, mp))}</td>)}
+                {plans.map((p) => {
+                  const feats = (planDraft[p.id] || planEntryFromPlan(p) || {}).features || [];
+                  return <td key={p.id} style={mono}>{fmt(sumModulePrices(feats, mp))}</td>;
+                })}
               </tr>
               <tr className="pc-computed">
                 <td className="pc-sticky" style={{ fontWeight: 700, color: THEME.text2 }}>{t("pcBundleDiscount")}</td>
                 {plans.map((p) => {
-                  const d = sumModulePrices(planDraft[p.id]?.features, mp) - (Number(planDraft[p.id]?.priceMonthly) || 0);
+                  const pd = planDraft[p.id] || planEntryFromPlan(p) || {};
+                  const d = sumModulePrices(pd.features || [], mp) - (Number(pd.priceMonthly) || 0);
                   return <td key={p.id} style={{ ...mono, color: d > 0 ? THEME.ok : d < 0 ? THEME.warn : THEME.text3 }}>{d === 0 ? "—" : (d > 0 ? "↓ " : "↑ ") + fmt(Math.abs(d))}</td>;
                 })}
               </tr>
