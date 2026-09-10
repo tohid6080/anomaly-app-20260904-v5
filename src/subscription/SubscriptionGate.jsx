@@ -7,6 +7,7 @@ import {
   verifyPayment, planBackupPeriodPrice,
 } from "../subscriptionApi.js";
 import { loadModulePrices, loadServices, computeCartTotal, applyModuleDeps } from "../pricingApi.js";
+import { PLAN_FEATURES } from "../planFeatureCatalog.js";
 import PaymentMethodsSection from "./CardTransferPayment.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { numLocale } from "../i18n/translations.js";
@@ -302,6 +303,10 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
                 {p.maxPersonnel && <p style={{ fontSize: 11.5, color: THEME.text2, margin: "0 0 4px" }}>{t("sgMaxPersonnelLine", { n: p.maxPersonnel.toLocaleString(numLocale(lang)) })}</p>}
                 {p.maxUsers && <p style={{ fontSize: 11.5, color: THEME.text2, margin: "0 0 4px" }}>{t("sgMaxUsersLine", { n: p.maxUsers.toLocaleString(numLocale(lang)) })}</p>}
                 <p style={{ fontSize: 11.5, color: THEME.text3, margin: 0 }}>{t("sgActiveModulesCount", { n: p.features.length.toLocaleString(numLocale(lang)) })}</p>
+                <details style={{ marginTop: 8 }}>
+                  <summary style={{ cursor: "pointer", fontSize: 11, fontWeight: 700, color: THEME.teal }}>{t("sgPlanIncludesToggle")}</summary>
+                  <PlanFeatureChips features={p.features} />
+                </details>
               </div>
             );
           })}
@@ -312,6 +317,11 @@ function PlanSelectionScreen({ currentUser, company, access, onLogout }) {
             <h4 style={{ fontSize: 13, fontWeight: 700, color: THEME.heading, margin: "0 0 10px" }}>{t("sgPurchaseSummary")}</h4>
             <p style={{ fontSize: 12.5, color: THEME.text2, margin: "0 0 4px" }}>{t("sgPlanLabel")}<b>{selectedPlan.name}</b></p>
             <p style={{ fontSize: 12.5, color: THEME.text2, margin: "0 0 8px" }}>{t("sgCycleLabel")}<b>{billingCycle === "monthly" ? t("subTypeMonthly") : t("subTypeYearly")}</b></p>
+
+            <div style={{ margin: "0 0 10px", padding: "8px 10px", background: THEME.bg, borderRadius: 9, border: `1px solid ${THEME.border}` }}>
+              <div style={{ fontSize: 11.5, fontWeight: 700, color: THEME.heading, marginBottom: 2 }}>{t("sgPlanIncludesTitle")}</div>
+              <PlanFeatureChips features={selectedPlan.features} />
+            </div>
 
             <label style={{ fontSize: 11.5, color: THEME.text2, fontWeight: 700, display: "block", marginBottom: 6 }}>{t("backupBuyPeriodLabel")}</label>
             <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 8 }}>
@@ -450,6 +460,38 @@ function Row({ k, v }) {
     <div style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "5px 0", borderBottom: `1px dashed ${THEME.borderSoft}`, fontSize: 12 }}>
       <span style={{ color: THEME.text3 }}>{k}</span>
       <span style={{ fontWeight: 700, fontFamily: "monospace", color: THEME.text }}>{v}</span>
+    </div>
+  );
+}
+
+/* ---------------- ماژول‌ها و امکاناتِ یک پلن ---------------- */
+// درختِ PLAN_FEATURES را با آرایه‌ی features پلن تلاقی می‌دهد و سرِ ماژول‌های
+// اصلیِ فعال را چیپ‌وار نشان می‌دهد؛ زیرماژول‌ها فقط شمرده می‌شوند (نه فهرست).
+function planIncludedModules(features) {
+  const set = new Set(Array.isArray(features) ? features : []);
+  return PLAN_FEATURES
+    .filter((m) => set.has(m.key))
+    .map((m) => ({
+      key: m.key,
+      labelKey: m.labelKey,
+      subCount: (m.sub || []).filter((s) => set.has(s.key)).length,
+      subTotal: (m.sub || []).length,
+    }));
+}
+
+function PlanFeatureChips({ features }) {
+  const { t, lang } = useLanguage();
+  const mods = planIncludedModules(features);
+  if (!mods.length) return <p style={{ fontSize: 11.5, color: THEME.text3, margin: "6px 0 0" }}>{t("sgPlanIncludesNone")}</p>;
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
+      {mods.map((m) => (
+        <span key={m.key} style={{ fontSize: 10.5, fontWeight: 600, padding: "3px 9px", borderRadius: 999, background: THEME.tealSoft, color: THEME.tealDeep, display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <CheckCircle2 size={11} />
+          {t(m.labelKey)}
+          {m.subTotal > 0 && m.subCount > 0 && <span style={{ opacity: 0.7 }}>({m.subCount.toLocaleString(numLocale(lang))})</span>}
+        </span>
+      ))}
     </div>
   );
 }
