@@ -55,10 +55,10 @@ export default function PaymentMethodsSection({ currentUser, selectedPlan, billi
 
   const handleSubmit = async () => {
     setError("");
-    if (!payerName.trim() || !payerPhone.trim() || !trackingNumber.trim()) {
-      setError(t("subErrReceiptFieldsRequired"));
-      return;
-    }
+    // همه‌ی موارد الزامی‌اند به‌جز «شماره‌ی پیگیریِ تراکنش».
+    if (!payerName.trim()) { setError(t("subErrReceiptFieldsRequired")); return; }
+    if (!/^09\d{9}$/.test(payerPhone.trim())) { setError(t("ctpErrPhoneFormat")); return; }
+    if (!receiptImage) { setError(t("ctpErrReceiptRequired")); return; }
     setSaving(true);
     const result = await submitCardTransferReceipt(
       {
@@ -162,12 +162,12 @@ export default function PaymentMethodsSection({ currentUser, selectedPlan, billi
           <input style={styles.input} value={payerName} onChange={(e) => setPayerName(e.target.value)} dir={dir} />
 
           <label style={styles.label}>{t("ctpMobileNumber")}</label>
-          <input style={styles.input} value={payerPhone} onChange={(e) => setPayerPhone(e.target.value)} dir="ltr" placeholder="09xxxxxxxxx" />
+          <input style={styles.input} value={payerPhone} onChange={(e) => setPayerPhone(e.target.value.replace(/[^\d]/g, "").slice(0, 11))} dir="ltr" inputMode="numeric" maxLength={11} placeholder="09xxxxxxxxx" />
 
-          <label style={styles.label}>{t("ctpTransactionTrackingNumber")}</label>
+          <label style={styles.label}>{t("ctpTransactionTrackingNumberOptional")}</label>
           <input style={styles.input} value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} dir="ltr" />
 
-          <label style={styles.label}>{t("ctpReceiptImageOptional")}</label>
+          <label style={styles.label}>{t("ctpReceiptImageRequired")}</label>
           {!receiptImage ? (
             <label
               style={{

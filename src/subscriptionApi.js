@@ -234,9 +234,11 @@ export async function submitCardTransferReceipt({ planId, billingCycle, amount, 
   // مسیرِ ماژولی: پلنِ متناظر ممکن است خالی باشد، ولی مجموعه‌ی ماژول‌ها باید باشد.
   const hasModules = Array.isArray(selectedModules) && selectedModules.length > 0;
   if ((!planId && !hasModules) || !billingCycle) return { __error: true, message: tr("subErrPlanCycleInvalid") };
-  if (!payerName?.trim() || !payerPhone?.trim() || !trackingNumber?.trim()) {
+  // «شماره‌ی پیگیریِ تراکنش» اختیاری است؛ بقیه الزامی.
+  if (!payerName?.trim() || !/^09\d{9}$/.test((payerPhone || "").trim())) {
     return { __error: true, message: tr("subErrReceiptFieldsRequired") };
   }
+  if (!receiptImage) return { __error: true, message: tr("ctpErrReceiptRequired") };
   const id = uid("card");
   const payload = {
     id, company_id: companyId, plan_id: planId || resolvedPlanId || null, billing_cycle: billingCycle,
@@ -244,7 +246,7 @@ export async function submitCardTransferReceipt({ planId, billingCycle, amount, 
     backup_period: backupPeriod && backupPeriod !== "none" ? backupPeriod : null,
     method: "card_transfer", status: "awaiting_review",
     payer_name: payerName.trim(), payer_phone: payerPhone.trim(),
-    tracking_number: trackingNumber.trim(), receipt_image: receiptImage || null,
+    tracking_number: (trackingNumber || "").trim() || null, receipt_image: receiptImage || null,
     requested_by: requestedBy || "",
     selected_modules: hasModules ? selectedModules : null,
     selected_services: Array.isArray(selectedServices) && selectedServices.length ? selectedServices : null,
