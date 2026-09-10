@@ -218,7 +218,6 @@ export const translations = {
   "moduleQuickTools": { "fa": "ابزارهای سریع HSE", "en": "HSE Quick Tools" },
   "moduleLiftingPlan": { "fa": "طراحی نقشه‌ی لیفتینگ", "en": "Lifting Plan Designer" },
   "pfLiftingPlan": { "fa": "طراحی نقشه‌ی لیفتینگ", "en": "Lifting Plan Designer" },
-  "saDmcDescLiftingPlan": { "fa": "طراحی، محاسبه و بایگانیِ نقشه‌های لیفتینگ (Lift Plan)", "en": "Design, calculate and archive lifting plans" },
   "lpSubHeaderNote": { "fa": "طراحی داده‌محورِ نقشه‌ی لیفتینگ، محاسبات بر پایه‌ی Load Chart واقعی، نسخه‌بندی و Audit Trail", "en": "Data-driven lift plan design, load-chart-based calculations, versioning and audit trail" },
   "lpStatusDraft": { "fa": "پیش‌نویس", "en": "Draft" },
   "lpStatusInReview": { "fa": "در حال بررسی", "en": "In review" },
@@ -8389,6 +8388,15 @@ export const translations = {
   "pfHcmsMatrixManagement": { "fa": "مدیریت ماتریس HCMS", "en": "HCMS Matrix Management" },
   "pfEffectivenessThresholds": { "fa": "Threshold اثربخشی Barrier", "en": "Barrier Effectiveness Threshold" },
   "pfAnomalyCategoryManagement": { "fa": "مدیریت دسته‌بندی آنومالی", "en": "Anomaly Category Management" },
+  "pfQuickTools": { "fa": "ابزارهای سریع HSE", "en": "HSE Quick Tools" },
+  "pfQtUnitConverter": { "fa": "مبدل واحدها", "en": "Unit converter" },
+  "pfQtLtifr": { "fa": "LTIFR و نرخِ شدت", "en": "LTIFR & severity rate" },
+  "pfQtTrir": { "fa": "TRIR", "en": "TRIR" },
+  "pfQtNoise": { "fa": "ترکیبِ ترازِ صدا", "en": "Combine sound levels" },
+  "pfQtCraneLoad": { "fa": "درصدِ بارِ جرثقیل", "en": "Crane load %" },
+  "pfQtSlingAngle": { "fa": "ضریبِ زاویهٔ اسلینگ", "en": "Sling angle factor" },
+  "pfQtRadZones": { "fa": "محاسبه شعاع نواحی رادیوگرافی", "en": "Radiography zone radii" },
+  "pfQtRadDistance": { "fa": "فاصلهٔ ایمنِ پرتونگاری (بر پایهٔ آهنگِ دُز)", "en": "Radiography safe distance (dose-rate)" },
 
   // --- dashboardWidgets.js: management-dashboard panel registry (batch 14) ---
   "dwGroupHome": { "fa": "صفحه اصلی سایت", "en": "Site Home Page" },
