@@ -751,6 +751,18 @@ function ExcavationBridge({ currentUser, wide }) {
   );
 }
 
+/* --------------- ابزارِ full-bleed: محاسبه و پایشِ مصرفِ برق --------------- *
+ * همان الگوی بالا: میان‌بر به Workspaceِ کاملِ ماژولِ Energy (جدول‌های واقعی،
+ * بانکِ تجهیزاتِ Company/Project، تعرفه‌ی نسخه‌دار، Audit Trail).            */
+const EnergyCalculatorWorkspace = lazy(() => import("../energy/EnergyCalculator.jsx"));
+function EnergyBridge({ currentUser, wide }) {
+  return (
+    <Suspense fallback={<div style={{ padding: 24, fontSize: 13, color: THEME.text3, fontFamily: THEME.font }}>…</div>}>
+      <EnergyCalculatorWorkspace currentUser={currentUser} role={currentUser?.role || "EMPLOYER"} wide={wide} />
+    </Suspense>
+  );
+}
+
 export const QUICK_TOOLS = [
   { id: "unit-converter", cat: "general", icon: ArrowRightLeft, Tool: UnitConverter,
     title: { fa: "مبدل واحدها", en: "Unit converter", de: "Einheitenrechner" },
@@ -815,4 +827,7 @@ export const QUICK_TOOLS = [
   { id: "excavation-calculator", cat: "general", icon: Mountain, Tool: ExcavationBridge, full: true,
     title: { fa: "محاسبه‌گرِ شیب و عرضِ ایمنِ گودبرداری", en: "Excavation Slope & Width Calculator", de: "Rechner für Böschungsneigung und Grabenbreite" },
     desc: { fa: "میان‌بر به Workspaceِ کامل: محاسبه بر اساسِ OSHA 1926 Subpart P، مقطعِ گرافیکی، Standard Profile قابلِ‌تنظیم و Audit Trail", en: "Shortcut to the full workspace: OSHA 1926 Subpart P calculations, graphical cross-section, configurable standard profile and audit trail", de: "Verknüpfung zum vollständigen Arbeitsbereich: Berechnungen nach OSHA 1926 Subpart P, grafischer Querschnitt, konfigurierbares Standardprofil und Audit-Trail" } },
+  { id: "energy-calculator", cat: "general", icon: Zap, Tool: EnergyBridge, full: true,
+    title: { fa: "محاسبه و پایشِ مصرفِ برق", en: "Electricity Consumption Calculator", de: "Stromverbrauchsrechner" },
+    desc: { fa: "میان‌بر به Workspaceِ کامل: بانکِ تجهیزات، توان/جریان/انرژی و هزینه در بازه‌های ساعتی تا سالانه، داشبورد و تعرفه‌ی نسخه‌دار", en: "Shortcut to the full workspace: equipment bank, power/current/energy and cost from hourly to yearly, dashboard and versioned tariff", de: "Verknüpfung zum vollständigen Arbeitsbereich: Gerätebank, Leistung/Strom/Energie und Kosten von stündlich bis jährlich, Dashboard und versioniertem Tarif" } },
 ];
