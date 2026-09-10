@@ -26,6 +26,8 @@ import SubscriptionGate, { PlanSelectionScreen } from "./subscription/Subscripti
 import { checkMyAccountActive } from "./subscriptionApi.js";
 import { AppearanceProvider, useAppearance } from "./shared/AppearanceContext.jsx";
 const PublicHseClimateSurvey = lazy(() => import("./proactiveIndicators/PublicHseClimateSurvey.jsx"));
+const PublicSurvey = lazy(() => import("./survey/PublicSurvey.jsx"));
+const SurveyDashboard = lazy(() => import("./survey/SurveyDashboard.jsx"));
 const HomeDashboard = lazy(() => import("./dashboard/HomeDashboard.jsx"));
 const OperationalDashboard = lazy(() => import("./dashboard/OperationalDashboard.jsx"));
 const QuickToolsDashboard = lazy(() => import("./quicktools/QuickToolsDashboard.jsx"));
@@ -167,6 +169,12 @@ const HSE_MODULES = [
     key: "proactiveIndicators",
     label: "اندازه‌گیری شاخص‌های Proactive HSE",
     labelKey: "moduleProactiveIndicators",
+    icon: true,
+  },
+  {
+    key: "hseSurvey",
+    label: "نظرسنجی HSE",
+    labelKey: "moduleHseSurvey",
     icon: true,
   },
   {
@@ -3426,7 +3434,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
 }
 
 // ---------- پنل ادمین ----------
-const MODULE_ICON = { profile: User, chat: MessageCircle, anomalyReport: AlertTriangle, personnelAccess: Users, managementDashboard: BarChart3, operationalDashboard: ClipboardList, proactiveIndicators: TrendingUp, incidentManagement: ShieldAlert, quickTools: Zap };
+const MODULE_ICON = { profile: User, chat: MessageCircle, anomalyReport: AlertTriangle, personnelAccess: Users, managementDashboard: BarChart3, operationalDashboard: ClipboardList, proactiveIndicators: TrendingUp, incidentManagement: ShieldAlert, quickTools: Zap, hseSurvey: ClipboardList };
 
 // اعمال «پیکربندی سامانه» (ترتیب + برچسب نمایشی، از پنل Super Admin) روی
 // لیست ماژول‌های از‌قبل فیلترشده‌ی هر داشبورد. آیکون/badge/muted/sub که از
@@ -3653,7 +3661,7 @@ function MenuRow({ icon: IconEl, label, onClick, accent, muted, sub, badge }) {
 // بدون کتابخانهٔ ناوبری — طبقِ قیدِ کارایی.
 // ============================================================
 const MOBILE_MODULE_GROUP = {
-  anomalyReport: "safety", riskAssessment: "safety", proactiveIndicators: "safety", incidentManagement: "safety",
+  anomalyReport: "safety", riskAssessment: "safety", proactiveIndicators: "safety", incidentManagement: "safety", hseSurvey: "safety",
   personnelAccess: "operations", machineryManagement: "operations", scaffoldManagement: "operations", chat: "operations",
   managementDashboard: "management", operationalDashboard: "management", archiveManagement: "management",
   systemManagement: "system",
@@ -3689,6 +3697,7 @@ function mobileTabMeta(t) {
     riskAssessment: { icon: ShieldCheck, label: t("moduleRiskAssessment") },
     proactiveIndicators: { icon: TrendingUp, label: t("moduleProactiveIndicators") },
     incidentManagement: { icon: ShieldAlert, label: t("moduleIncidentManagement") },
+    hseSurvey: { icon: ClipboardList, label: t("moduleHseSurvey") },
   };
 }
 
@@ -4748,6 +4757,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
     if (mod.key === "managementDashboard") { setView("managementDashboard"); return; }
     if (mod.key === "operationalDashboard") { setView("operationalDashboard"); return; }
     if (mod.key === "proactiveIndicators") { setView("proactiveIndicators"); return; }
+    if (mod.key === "hseSurvey") { setView("hseSurvey"); return; }
     if (mod.sub) { setView(mod.key); return; }
     alert(t("moduleComingSoon", { name: mt(mod) }));
   };
@@ -5061,6 +5071,11 @@ function EmployerDashboard({ onLogout, currentUser }) {
           focusPersonnelName={assessmentContext?.personnelName}
         />
       )}
+      {view === "hseSurvey" && (
+        <SurveyDashboard wide={isDesktop} role="EMPLOYER" currentUser={currentUser}
+          readOnly={!canEdit || getAccessLevel(permMap, "hseSurvey") === "view"}
+          onBack={() => setView("menu")} />
+      )}
       {view === "incidentsList" && <IncidentsListPage wide={isDesktop} currentUser={currentUser} role="EMPLOYER" readOnly={!canEdit} />}
       {!isDesktop && view === "machineryDashboard" && (
         <MachineryDashboard onBack={() => setView("machineryManagement")} currentUser={currentUser} role="EMPLOYER" readOnly={!canEdit || getAccessLevel(permMap, "machineryManagement") === "view"} initialApprovalFilter={navFilter?.module === "machinery" ? navFilter.approvalFilter : undefined} initialContractorFilter={navFilter?.module === "machinery" ? navFilter.contractorFilter : undefined} />
@@ -5171,6 +5186,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
     if (mod.key === "managementDashboard") { setView("managementDashboard"); return; }
     if (mod.key === "operationalDashboard") { setView("operationalDashboard"); return; }
     if (mod.key === "proactiveIndicators") { setView("proactiveIndicators"); return; }
+    if (mod.key === "hseSurvey") { setView("hseSurvey"); return; }
     if (mod.sub) { setView(mod.key); return; }
     alert(t("moduleComingSoon", { name: mt(mod) }));
   };
@@ -5400,6 +5416,11 @@ function ContractorDashboard({ onLogout, currentUser }) {
           focusJobTitle={assessmentContext?.jobTitle}
           focusPersonnelName={assessmentContext?.personnelName}
         />
+      )}
+      {view === "hseSurvey" && (
+        <SurveyDashboard wide={isDesktop} role="CONTRACTOR" currentUser={currentUser}
+          readOnly={getAccessLevel(permMap, "hseSurvey") === "view"}
+          onBack={() => setView("menu")} />
       )}
       {view === "incidentsList" && <IncidentsListPage wide={isDesktop} currentUser={currentUser} role="CONTRACTOR" readOnly={false} />}
       {!isDesktop && view === "machineryDashboard" && <MachineryDashboard onBack={() => setView("machineryManagement")} currentUser={currentUser} role="CONTRACTOR" readOnly={getAccessLevel(permMap, "machineryManagement") === "view"} initialApprovalFilter={navFilter?.module === "machinery" ? navFilter.approvalFilter : undefined} />}
@@ -5728,6 +5749,8 @@ export default function App() {
   // مسیر پرسشنامه‌ی عمومی HSE Climate — دقیقاً مثل super-admin، کاملاً جدا
   // از درخت اصلی و بدون هیچ نیازی به ورود؛ فقط با لینک/QR واقعی قابل‌دسترسی است.
   const hseClimateSurveyMatch = typeof window !== "undefined" ? window.location.hash.match(/^#hse-climate-survey\/(.+)$/) : null;
+  // مسیرِ عمومیِ «نظرسنجی HSE» — همان الگو، با توکنِ عمومی؛ بدونِ نیاز به ورود.
+  const surveyMatch = typeof window !== "undefined" ? window.location.hash.match(/^#survey\/(.+)$/) : null;
   // پنل Super Admin زبانِ کاملاً جداگانه‌ای دارد (کلید localStorage:
   // "ihms_lang_superadmin") تا انتخابِ زبانِ سوپرادمین هیچ اثری روی
   // کاربران عادیِ سامانه نگذارد و برعکس.
@@ -5745,6 +5768,8 @@ export default function App() {
       <LanguageProvider>
         {hseClimateSurveyMatch ? (
           <LazyPanel><PublicHseClimateSurvey publicToken={hseClimateSurveyMatch[1]} /></LazyPanel>
+        ) : surveyMatch ? (
+          <LazyPanel><PublicSurvey publicToken={surveyMatch[1]} /></LazyPanel>
         ) : (
           <AppInnerWithAppearance />
         )}
