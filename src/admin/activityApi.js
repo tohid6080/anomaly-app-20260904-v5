@@ -51,12 +51,22 @@ export function trackPageView(user, page) {
 //   undefined            → شرکت جاری (رفتار پیش‌فرض داخل اپ مستأجر)
 //   "" یا "all"           → همه‌ی شرکت‌ها، بدون فیلتر (فقط از پنل Super Admin)
 //   یک شناسه‌ی مشخص       → همان یک شرکت (انتخاب‌شده در پنل Super Admin)
-export async function loadActivitySummary(fromDate, toDate, companyId) {
+//
+// authScope: توکنِ نشستی که برای sb() فرستاده می‌شود — پیش‌فرض "customer"
+// (رفتار قبلی، داخل اپ مستأجر درست است چون کاربر یک توکن مشتری دارد). وقتی
+// این تابع از پنل Super Admin صدا زده می‌شود، Super Admin هیچ توکن مشتری‌ای
+// ندارد؛ sb() با scope="customer" آن‌جا به‌جای توکن معتبر از SUPABASE_ANON_KEY
+// استفاده می‌کند و چون user_activity پالیسی RLS دارد، همیشه صفر ردیف
+// برمی‌گرداند — دقیقاً همان باگِ «فیلتر تاریخ هیچی برنمی‌گردونه». پس فراخوانیِ
+// Super Admin باید صریحاً authScope="super_admin" بدهد (مثل بقیه‌ی
+// خواندن‌های Super Admin در superAdminApi.js که همگی getSessionToken("super_admin")
+// می‌گیرند).
+export async function loadActivitySummary(fromDate, toDate, companyId, authScope = "customer") {
   const scope = companyId === undefined ? getCurrentCompanyId() : companyId;
   const filter = scope && scope !== "all" ? `&company_id=eq.${scope}` : "";
   const since = fromDate ? `${fromDate}T00:00:00` : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
   const until = toDate ? `${toDate}T23:59:59` : null;
   const untilFilter = until ? `&created_at=lte.${until}` : "";
-  const rows = await sb(`user_activity?created_at=gte.${since}${untilFilter}&select=*&order=created_at.asc&limit=5000${filter}`);
+  const rows = await sb(`user_activity?created_at=gte.${since}${untilFilter}&select=*&order=created_at.asc&limit=5000${filter}`, {}, authScope);
   return sbOk(rows) ? rows : [];
 }

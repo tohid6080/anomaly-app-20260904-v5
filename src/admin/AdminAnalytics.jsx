@@ -99,7 +99,10 @@ export default function AdminAnalytics({ onBack, currentUser, companies }) {
   const load = async (scopeOverride) => {
     setLoading(true);
     const scope = isMultiCompany ? (scopeOverride ?? companyScope) : undefined;
-    setRawRows(await loadActivitySummary(fromDate || undefined, toDate || undefined, scope));
+    // از پنل Super Admin (isMultiCompany) هیچ توکنِ مشتری‌ای وجود ندارد — باید
+    // صریحاً scope=super_admin بدهیم وگرنه sb() با anon key صدا زده می‌شود و
+    // به‌خاطر RLS همیشه صفر ردیف برمی‌گردد (نگاه کنید به توضیح در activityApi.js).
+    setRawRows(await loadActivitySummary(fromDate || undefined, toDate || undefined, scope, isMultiCompany ? "super_admin" : "customer"));
     setLoading(false);
   };
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
