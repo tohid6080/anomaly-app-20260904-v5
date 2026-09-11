@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, AlertTriangle, XCircle, Clock } from "lucide-react";
+import { CheckCircle2, AlertTriangle, XCircle, Clock, PlayCircle } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { loadPublicSurvey, submitSurveyResponse } from "./surveyApi.js";
@@ -23,6 +23,7 @@ export default function PublicSurvey({ publicToken }) {
   const [done, setDone] = useState(false);
   const [result, setResult] = useState(null);       // { percent, passed } از سرور (حالتِ آزمون)
   const [remaining, setRemaining] = useState(null);  // ثانیه‌های باقی‌مانده (محدودیتِ زمانی)
+  const [started, setStarted] = useState(false);     // برای آزمونِ زمان‌دار: تا زدنِ «شروعِ آزمون» زمان‌سنج فعال نمی‌شود
   const deadlineRef = useRef(null);
   const submitRef = useRef(null);
 
@@ -45,9 +46,12 @@ export default function PublicSurvey({ publicToken }) {
     return qs;
   }, [info, isExam]);
 
-  // محدودیتِ زمانی
+  const needsStartGate = isExam && !!info?.settings?.timeLimitMin;
+
+  // محدودیتِ زمانی — برای آزمونِ زمان‌دار، فقط پس از زدنِ «شروعِ آزمون» شمارش آغاز می‌شود
   useEffect(() => {
     if (!isExam || !info?.settings?.timeLimitMin || done || already) return;
+    if (needsStartGate && !started) return;
     deadlineRef.current = Date.now() + info.settings.timeLimitMin * 60000;
     const tick = () => {
       const left = Math.max(0, Math.round((deadlineRef.current - Date.now()) / 1000));
@@ -57,7 +61,7 @@ export default function PublicSurvey({ publicToken }) {
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [isExam, info, done, already]);
+  }, [isExam, info, done, already, needsStartGate, started]);
 
   if (info === undefined) return <Center>{t("commonLoading")}</Center>;
   if (info?.__error) return <ErrScreen msg={info.message} />;
@@ -88,6 +92,41 @@ export default function PublicSurvey({ publicToken }) {
           <p style={{ fontSize: 13, color: THEME.text2, lineHeight: 1.9, whiteSpace: "pre-wrap" }}>
             {settings.thankYouText || t("svThankYouBody")}
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (needsStartGate && !started) {
+    const nameErr = !settings.anonymous && settings.collectName && errors.__name;
+    const tryStart = () => {
+      if (!settings.anonymous && settings.collectName && !meta.name.trim()) { setErrors({ __name: t("svErrRequired") }); return; }
+      setErrors({});
+      setStarted(true);
+    };
+    return (
+      <div style={wrap}>
+        <div style={{ maxWidth: 480, margin: "0 auto", padding: "40px 16px 60px", direction: dir }}>
+          <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 14, padding: 22, textAlign: "center" }}>
+            <PlayCircle size={40} color={THEME.teal} style={{ marginBottom: 10 }} />
+            <h1 style={{ fontSize: 18, fontWeight: 800, color: THEME.heading, margin: "0 0 6px" }}>{info.title || t("svUntitled")}</h1>
+            <p style={{ fontSize: 13, fontWeight: 700, color: THEME.heading, margin: "0 0 10px" }}>{t("svWelcomeTitle")}</p>
+            {info.description && <p style={{ fontSize: 12.5, color: THEME.text2, lineHeight: 1.9, margin: "0 0 10px", whiteSpace: "pre-wrap" }}>{info.description}</p>}
+            <p style={{ fontSize: 11.5, color: THEME.text3, margin: "0 0 6px" }}>{t("svExamIntro", { pass: settings.passScore })}</p>
+            <p style={{ fontSize: 11.5, color: THEME.warn, background: THEME.warnBg, borderRadius: 9, padding: "8px 10px", margin: "0 0 16px", lineHeight: 1.9, textAlign: "start" }}>
+              {t("svExamTimeLimitNote", { min: settings.timeLimitMin })}
+            </p>
+
+            {!settings.anonymous && (settings.collectName || settings.collectUnit) && (
+              <div style={{ textAlign: "start", border: `1px solid ${nameErr ? THEME.danger : THEME.border}`, borderRadius: 12, padding: 14, marginBottom: 16 }}>
+                {settings.collectName && (<><label style={styles.label}>{t("svRespName")}</label><input style={styles.input} value={meta.name} onChange={(e) => setMeta((m) => ({ ...m, name: e.target.value }))} dir={dir} /></>)}
+                {settings.collectUnit && (<><label style={styles.label}>{t("svRespUnit")}</label><input style={styles.input} value={meta.unit} onChange={(e) => setMeta((m) => ({ ...m, unit: e.target.value }))} dir={dir} /></>)}
+                {nameErr && <p style={{ ...styles.error, marginTop: 6, marginBottom: 0 }}>{nameErr}</p>}
+              </div>
+            )}
+
+            <button type="button" style={{ ...styles.button, width: "100%" }} onClick={tryStart}>{t("svStartExam")}</button>
+          </div>
         </div>
       </div>
     );
@@ -132,11 +171,11 @@ export default function PublicSurvey({ publicToken }) {
           <h1 style={{ fontSize: 19, fontWeight: 800, color: THEME.heading, margin: 0 }}>{info.title || t("svUntitled")}</h1>
           {isExam && <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 999, background: THEME.warnBg, color: THEME.warn }}>{t("svModeExam")}</span>}
         </div>
-        {info.description && <p style={{ fontSize: 13, color: THEME.text2, lineHeight: 1.95, margin: "0 0 14px", whiteSpace: "pre-wrap" }}>{info.description}</p>}
+        {info.description && !needsStartGate && <p style={{ fontSize: 13, color: THEME.text2, lineHeight: 1.95, margin: "0 0 14px", whiteSpace: "pre-wrap" }}>{info.description}</p>}
         {isExam && <p style={{ fontSize: 11.5, color: THEME.text3, margin: "0 0 14px" }}>{t("svExamIntro", { pass: settings.passScore })}</p>}
         {settings.anonymous && <p style={{ fontSize: 11.5, color: THEME.text3, margin: "0 0 16px" }}>{t("svAnonymousNote")}</p>}
 
-        {!settings.anonymous && (settings.collectName || settings.collectUnit) && (
+        {!needsStartGate && !settings.anonymous && (settings.collectName || settings.collectUnit) && (
           <div style={{ background: THEME.surface, border: `1px solid ${errors.__name ? THEME.danger : THEME.border}`, borderRadius: 12, padding: 14, marginBottom: 16 }}>
             {settings.collectName && (<><label style={styles.label}>{t("svRespName")}</label><input style={styles.input} value={meta.name} onChange={(e) => setMeta((m) => ({ ...m, name: e.target.value }))} dir={dir} /></>)}
             {settings.collectUnit && (<><label style={styles.label}>{t("svRespUnit")}</label><input style={styles.input} value={meta.unit} onChange={(e) => setMeta((m) => ({ ...m, unit: e.target.value }))} dir={dir} /></>)}
