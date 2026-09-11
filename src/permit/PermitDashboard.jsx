@@ -1,13 +1,15 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Plus, FileSpreadsheet, Trash2, Layers } from "lucide-react";
+import { Plus, FileSpreadsheet, Trash2, Layers, PenSquare } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { STATUS_META } from "./permitModel.js";
 import {
   loadPermits, createPermit, deletePermit, loadPermitTemplates, cloneTemplateToCompany,
+  createBlankTemplate, deleteCompanyTemplate,
 } from "./permitApi.js";
 import PermitWorkspace from "./PermitWorkspace.jsx";
+import PermitTemplateBuilder from "./PermitTemplateBuilder.jsx";
 
 const chip = (tone) => ({
   gray: { bg: THEME.surface2, fg: THEME.text3 }, teal: { bg: THEME.tealSoft, fg: THEME.tealDeep },
@@ -22,6 +24,7 @@ export default function PermitDashboard({ currentUser, role, readOnly, onBack, w
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openId, setOpenId] = useState(null);
+  const [builderId, setBuilderId] = useState(null);
   const [showNew, setShowNew] = useState(false);
   const [showTpl, setShowTpl] = useState(false);
   const [filter, setFilter] = useState("all");
@@ -58,7 +61,24 @@ export default function PermitDashboard({ currentUser, role, readOnly, onBack, w
     const res = await cloneTemplateToCompany(srcId, "", currentUser?.name);
     setBusy(false);
     if (res?.__error) { setErr(res.message); return; }
-    setShowTpl(false); load();
+    setShowTpl(false); await load();
+    setBuilderId(res.id);
+  };
+
+  const handleNewTemplate = async () => {
+    setBusy(true); setErr("");
+    const res = await createBlankTemplate(t("pmUntitledTemplate"), "general", currentUser?.name);
+    setBusy(false);
+    if (res?.__error) { setErr(res.message); return; }
+    setShowTpl(false); await load();
+    setBuilderId(res.id);
+  };
+
+  const handleDeleteTemplate = async (tpl) => {
+    if (!window.confirm(t("pmConfirmDeleteTemplate"))) return;
+    const res = await deleteCompanyTemplate(tpl.id);
+    if (res?.__error) { setErr(res.message); return; }
+    load();
   };
 
   const handleDelete = async (p) => {
@@ -71,6 +91,10 @@ export default function PermitDashboard({ currentUser, role, readOnly, onBack, w
   if (openId) {
     return <PermitWorkspace permitId={openId} currentUser={currentUser} readOnly={readOnly} wide={wide}
       onBack={() => { setOpenId(null); load(); }} />;
+  }
+  if (builderId) {
+    return <PermitTemplateBuilder templateId={builderId} currentUser={currentUser}
+      onBack={() => { setBuilderId(null); load(); }} onSaved={load} />;
   }
 
   const companyTpls = templates.filter((x) => !x.isSystem);
@@ -109,13 +133,21 @@ export default function PermitDashboard({ currentUser, role, readOnly, onBack, w
 
       {showTpl && !readOnly && (
         <div style={{ ...styles.cardWide, marginBottom: 14 }}>
-          <b style={{ fontSize: 12.5, color: THEME.heading }}>{t("pmTemplates")}</b>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <b style={{ fontSize: 12.5, color: THEME.heading }}>{t("pmTemplates")}</b>
+            <button type="button" onClick={handleNewTemplate} disabled={busy}
+              style={{ ...styles.smallButton, fontSize: 11, marginInlineStart: "auto", display: "inline-flex", alignItems: "center", gap: 5 }}>
+              <Plus size={12} /> {t("pmNewTemplate")}
+            </button>
+          </div>
           <p style={{ fontSize: 10.5, color: THEME.text3, margin: "3px 0 10px" }}>{t("pmTemplatesHint")}</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {companyTpls.map((tp) => (
               <div key={tp.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, padding: "7px 10px", border: `1px solid ${THEME.border}`, borderRadius: 8 }}>
                 <b style={{ flex: 1, color: THEME.text }}>{tp.name}</b>
                 <span style={{ fontSize: 10, color: THEME.text3 }}>{t("pmCompanyTemplate")} · v{tp.version}</span>
+                <button type="button" onClick={() => setBuilderId(tp.id)} style={{ ...styles.smallButton, fontSize: 11, background: THEME.surface2, color: THEME.text, display: "inline-flex", alignItems: "center", gap: 4 }}><PenSquare size={11} /> {t("pmEdit")}</button>
+                <button type="button" onClick={() => handleDeleteTemplate(tp)} style={{ ...styles.smallButton, fontSize: 11, background: THEME.surface2, color: THEME.danger }}><Trash2 size={11} /></button>
               </div>
             ))}
             {sysTpls.map((tp) => (
@@ -126,7 +158,6 @@ export default function PermitDashboard({ currentUser, role, readOnly, onBack, w
               </div>
             ))}
           </div>
-          <p style={{ fontSize: 10, color: THEME.text3, marginTop: 10 }}>{t("pmBuilderSoon")}</p>
         </div>
       )}
 

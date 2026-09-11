@@ -81,6 +81,36 @@ export function validateForm(schema, formData, t) {
   return { ok: Object.keys(errors).length === 0, errors };
 }
 
+// ---------- کارخانه‌ی عناصرِ اسکیما — برای فرم‌سازِ گرید/جدولی (فازِ ۲) ----------
+const genId = (p) => `${p}_${Math.random().toString(36).slice(2, 9)}`;
+
+export const BIND_TARGETS = ["title", "workLocation", "workDescription", "riskRef"];
+
+export function defaultConfigFor(type) {
+  if (type === "select" || type === "radio" || type === "checkgroup") return { options: [] };
+  if (type === "table") return { columns: [] };
+  if (type === "terms") return { text: "" };
+  return {};
+}
+export function newField(type) {
+  return { id: genId("f"), type: type || "text", label: "", required: false, config: defaultConfigFor(type || "text") };
+}
+export function newCell(kind) {
+  return kind === "label" ? { span: 12, kind: "label", label: "" } : { span: 12, kind: "field", field: newField("text") };
+}
+export function newRow() { return { id: genId("r"), cells: [newCell("field")] }; }
+export function newSection() { return { id: genId("s"), title: "", locked: false, rows: [newRow()] }; }
+export function blankSchema() { return { sections: [newSection()] }; }
+
+// جابه‌جاییِ یک عنصر در آرایه (i → i+dir)، بدونِ تغییرِ آرایه‌ی ورودی
+export function arrMove(arr, i, dir) {
+  const j = i + dir;
+  if (j < 0 || j >= arr.length) return arr;
+  const out = arr.slice();
+  const tmp = out[i]; out[i] = out[j]; out[j] = tmp;
+  return out;
+}
+
 // ---------- قالبِ سیستمیِ پیش‌فرض (آینه‌ی seedِ migration؛ fallback آفلاین) ----------
 export const SYSTEM_TEMPLATE = {
   id: "ptpl-system-general-v1",

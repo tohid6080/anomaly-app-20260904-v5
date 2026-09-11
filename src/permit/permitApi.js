@@ -1,7 +1,7 @@
 import { sb, sbOk, uid, getCurrentCompanyId } from "../shared.js";
 import { offlineWrite } from "../offline/offlineWrite.js";
 import { translate, getCurrentLang } from "../i18n/translations.js";
-import { SYSTEM_TEMPLATE } from "./permitModel.js";
+import { SYSTEM_TEMPLATE, blankSchema } from "./permitModel.js";
 
 const tr = (k, p) => translate(getCurrentLang(), k, p);
 const MODULE = "permitToWork";
@@ -57,6 +57,50 @@ export async function cloneTemplateToCompany(srcId, name, createdBy) {
   });
   if (!res?.ok) return { __error: true, message: res?.error || tr("pmErrSave") };
   return { ok: true, id };
+}
+
+// قالبِ خالی برای شرکتِ جاری — فرم‌سازِ کامل (فازِ ۲)
+export async function createBlankTemplate(name, permitType, createdBy) {
+  const id = uid("ptpl");
+  const res = await offlineWrite({
+    module: "permitTemplates", table: "permit_templates", action: "insert", id,
+    payload: {
+      company_id: getCurrentCompanyId(),
+      permit_type: (permitType || "general").trim() || "general",
+      name: (name || "").trim() || tr("pmUntitledTemplate"),
+      version: 1, is_active: true,
+      schema: blankSchema(), workflow: {}, branding: {},
+      created_by: createdBy || "", updated_at: new Date().toISOString(),
+    },
+  });
+  if (!res?.ok) return { __error: true, message: res?.error || tr("pmErrSave") };
+  return { ok: true, id };
+}
+
+// ذخیره‌ی کاملِ قالب (متادیتا + اسکیمای پویا) — نسخه با هر ذخیره یکی جلو می‌رود
+export async function saveTemplate(template) {
+  if (!template?.id) return { __error: true, message: tr("pmErrSave") };
+  const res = await offlineWrite({
+    module: "permitTemplates", table: "permit_templates", action: "update", id: template.id,
+    payload: {
+      name: (template.name || "").trim() || tr("pmUntitledTemplate"),
+      permit_type: (template.permitType || "general").trim() || "general",
+      version: (Number(template.version) || 1) + 1,
+      is_active: template.isActive !== false,
+      schema: template.schema && typeof template.schema === "object" ? template.schema : {},
+      workflow: template.workflow && typeof template.workflow === "object" ? template.workflow : {},
+      branding: template.branding && typeof template.branding === "object" ? template.branding : {},
+      updated_at: new Date().toISOString(),
+    },
+  });
+  if (!res?.ok) return { __error: true, message: res?.error || tr("pmErrSave") };
+  return { ok: true };
+}
+
+export async function deleteCompanyTemplate(id) {
+  const res = await offlineWrite({ module: "permitTemplates", table: "permit_templates", action: "delete", id });
+  if (!res?.ok) return { __error: true, message: res?.error || tr("pmErrSave") };
+  return { ok: true };
 }
 
 /* ---------------- مجوزها ---------------- */
