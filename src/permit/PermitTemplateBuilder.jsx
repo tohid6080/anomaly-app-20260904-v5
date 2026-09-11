@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, ArrowUp, ArrowDown, Lock, Unlock, Save, Eye, EyeOff, BookOpen } from "lucide-react";
+import { Plus, Trash2, ArrowUp, ArrowDown, Lock, Unlock, Save, Eye, EyeOff, BookOpen, Send, Undo2 } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import PermitRuntime from "./PermitRuntime.jsx";
@@ -8,7 +8,7 @@ import {
   newField, newCell, newRow, newSection, arrMove,
   APPROVAL_STEPS, blankWorkflow, getStepApproval,
 } from "./permitModel.js";
-import { loadPermitTemplate, saveTemplate } from "./permitApi.js";
+import { loadPermitTemplate, saveTemplate, publishTemplate } from "./permitApi.js";
 import { loadActiveJobPositions } from "../jobpositions/jobPositionsApi.js";
 
 const clone = (v) => JSON.parse(JSON.stringify(v ?? null));
@@ -133,6 +133,16 @@ export default function PermitTemplateBuilder({ templateId, currentUser, onBack,
     onSaved && onSaved();
   };
 
+  const doPublish = async () => {
+    setBusy(true); setErr(""); setOk("");
+    const res = await publishTemplate(tpl.id, !tpl.isPublished);
+    setBusy(false);
+    if (res?.__error) { setErr(res.message); return; }
+    setOk(tpl.isPublished ? t("pmUnpublishedOk") : t("pmPublishedOk"));
+    await load();
+    onSaved && onSaved();
+  };
+
   if (err && !tpl) return (
     <div style={{ padding: 24 }}>
       {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>}
@@ -147,7 +157,16 @@ export default function PermitTemplateBuilder({ templateId, currentUser, onBack,
 
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
         <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: THEME.heading }}>{t("pmTemplateBuilder")}</h3>
+        <span style={{ fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 999, background: tpl.isPublished ? THEME.okBg : THEME.surface2, color: tpl.isPublished ? THEME.ok : THEME.text3 }}>
+          {tpl.isPublished ? t("pmPublished") : t("pmDraftStatus")}
+        </span>
         <div style={{ marginInlineStart: "auto", display: "flex", gap: 6 }}>
+          {isHse && (
+            <button type="button" onClick={doPublish} disabled={busy}
+              style={{ ...styles.smallButton, background: tpl.isPublished ? THEME.surface2 : THEME.teal, color: tpl.isPublished ? THEME.text : "#fff", display: "inline-flex", alignItems: "center", gap: 5 }}>
+              {tpl.isPublished ? <Undo2 size={13} /> : <Send size={13} />} {tpl.isPublished ? t("pmUnpublish") : t("pmPublish")}
+            </button>
+          )}
           <button type="button" onClick={() => setShowGuide((v) => !v)}
             style={{ ...styles.smallButton, background: THEME.surface2, color: THEME.text, display: "inline-flex", alignItems: "center", gap: 5 }}>
             <BookOpen size={13} /> {t("pmGuideBtn")}

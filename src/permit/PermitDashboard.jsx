@@ -97,8 +97,11 @@ export default function PermitDashboard({ currentUser, role, readOnly, onBack, w
       onBack={() => { setBuilderId(null); load(); }} onSaved={load} />;
   }
 
+  const isContractor = role === "CONTRACTOR";
   const companyTpls = templates.filter((x) => !x.isSystem);
   const sysTpls = templates.filter((x) => x.isSystem);
+  const pickableTpls = isContractor ? companyTpls.filter((x) => x.isPublished) : templates;
+  const noPublished = isContractor && companyTpls.filter((x) => x.isPublished).length === 0;
 
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
@@ -110,18 +113,24 @@ export default function PermitDashboard({ currentUser, role, readOnly, onBack, w
       <p style={{ color: THEME.text3, fontSize: 12, margin: "2px 0 14px", lineHeight: 1.8 }}>{t("pmIntro")}</p>
       {err && <p style={styles.error}>{err}</p>}
 
-      {!readOnly && (
-        <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
-          <button type="button" onClick={() => setShowNew((v) => !v)} disabled={busy} style={{ ...styles.smallButton, display: "inline-flex", alignItems: "center", gap: 6 }}><Plus size={13} /> {t("pmNewPermit")}</button>
-          <button type="button" onClick={() => setShowTpl((v) => !v)} style={{ ...styles.smallButton, background: THEME.surface2, color: THEME.text, display: "inline-flex", alignItems: "center", gap: 6 }}><Layers size={13} /> {t("pmTemplates")}</button>
+      {!readOnly && noPublished && (
+        <div style={{ ...styles.cardWide, marginBottom: 14, textAlign: "center", color: THEME.text3, fontSize: 12.5 }}>
+          {t("pmNoPublishedTemplates")}
         </div>
       )}
 
-      {showNew && !readOnly && (
+      {!readOnly && !noPublished && (
+        <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+          <button type="button" onClick={() => setShowNew((v) => !v)} disabled={busy} style={{ ...styles.smallButton, display: "inline-flex", alignItems: "center", gap: 6 }}><Plus size={13} /> {t("pmNewPermit")}</button>
+          {!isContractor && <button type="button" onClick={() => setShowTpl((v) => !v)} style={{ ...styles.smallButton, background: THEME.surface2, color: THEME.text, display: "inline-flex", alignItems: "center", gap: 6 }}><Layers size={13} /> {t("pmTemplates")}</button>}
+        </div>
+      )}
+
+      {showNew && !readOnly && !noPublished && (
         <div style={{ ...styles.cardWide, marginBottom: 14 }}>
           <b style={{ fontSize: 12.5, color: THEME.heading }}>{t("pmPickTemplate")}</b>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 8, marginTop: 10 }}>
-            {templates.map((tp) => (
+            {pickableTpls.map((tp) => (
               <button key={tp.id} type="button" onClick={() => handleNew(tp.id)} style={tplCard}>
                 <span style={{ fontWeight: 800, fontSize: 12.5, color: THEME.heading }}>{tp.name || tp.permitType}</span>
                 <span style={{ fontSize: 10, color: THEME.text3 }}>{tp.isSystem ? t("pmSystemTemplate") : t("pmCompanyTemplate")} · v{tp.version}</span>
@@ -131,7 +140,7 @@ export default function PermitDashboard({ currentUser, role, readOnly, onBack, w
         </div>
       )}
 
-      {showTpl && !readOnly && (
+      {showTpl && !readOnly && !isContractor && (
         <div style={{ ...styles.cardWide, marginBottom: 14 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <b style={{ fontSize: 12.5, color: THEME.heading }}>{t("pmTemplates")}</b>
@@ -146,6 +155,9 @@ export default function PermitDashboard({ currentUser, role, readOnly, onBack, w
               <div key={tp.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, padding: "7px 10px", border: `1px solid ${THEME.border}`, borderRadius: 8 }}>
                 <b style={{ flex: 1, color: THEME.text }}>{tp.name}</b>
                 <span style={{ fontSize: 10, color: THEME.text3 }}>{t("pmCompanyTemplate")} · v{tp.version}</span>
+                <span style={{ fontSize: 9.5, fontWeight: 800, padding: "2px 8px", borderRadius: 999, background: tp.isPublished ? THEME.okBg : THEME.surface2, color: tp.isPublished ? THEME.ok : THEME.text3 }}>
+                  {tp.isPublished ? t("pmPublished") : t("pmDraftStatus")}
+                </span>
                 <button type="button" onClick={() => setBuilderId(tp.id)} style={{ ...styles.smallButton, fontSize: 11, background: THEME.surface2, color: THEME.text, display: "inline-flex", alignItems: "center", gap: 4 }}><PenSquare size={11} /> {t("pmEdit")}</button>
                 <button type="button" onClick={() => handleDeleteTemplate(tp)} style={{ ...styles.smallButton, fontSize: 11, background: THEME.surface2, color: THEME.danger }}><Trash2 size={11} /></button>
               </div>

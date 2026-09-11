@@ -18,6 +18,7 @@ export function templateFromRow(r) {
     schema: r.schema && typeof r.schema === "object" ? r.schema : {},
     workflow: r.workflow && typeof r.workflow === "object" ? r.workflow : {},
     branding: r.branding && typeof r.branding === "object" ? r.branding : {},
+    isPublished: r.is_published === true,
     isSystem: !r.company_id,
     createdBy: r.created_by || "",
     updatedAt: r.updated_at,
@@ -99,6 +100,17 @@ export async function saveTemplate(template) {
 
 export async function deleteCompanyTemplate(id) {
   const res = await offlineWrite({ module: "permitTemplates", table: "permit_templates", action: "delete", id });
+  if (!res?.ok) return { __error: true, message: res?.error || tr("pmErrSave") };
+  return { ok: true };
+}
+
+// انتشار/لغوِ انتشارِ قالب — فقط پس از انتشار، پیمانکار آن را در فهرستِ
+// انتخابِ قالب برایِ ثبتِ مجوزِ جدید می‌بیند.
+export async function publishTemplate(id, publish) {
+  const res = await offlineWrite({
+    module: "permitTemplates", table: "permit_templates", action: "update", id,
+    payload: { is_published: !!publish, updated_at: new Date().toISOString() },
+  });
   if (!res?.ok) return { __error: true, message: res?.error || tr("pmErrSave") };
   return { ok: true };
 }
