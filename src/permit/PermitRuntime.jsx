@@ -6,9 +6,11 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 /**
  * Renderer گرید/جدولیِ فرمِ مجوز کار — Section → Row(۱۲ ستون) → Cell(span) → Field.
- * props: schema, values, onChange(fieldId, value), errors, readOnly
+ * props: schema, values, onChange(fieldId, value), errors, readOnly, riskOptions,
+ * personOptions — riskOptions/personOptions فقط برای فیلدهایی که bindTo="riskRef"
+ * یا type="person" دارند استفاده می‌شوند (بقیه‌ی فیلدها بی‌تفاوت‌اند).
  */
-export default function PermitRuntime({ schema, values, onChange, errors, readOnly }) {
+export default function PermitRuntime({ schema, values, onChange, errors, readOnly, riskOptions, personOptions }) {
   const { t, dir } = useLanguage();
   const v = values || {};
   const err = errors || {};
@@ -25,7 +27,8 @@ export default function PermitRuntime({ schema, values, onChange, errors, readOn
               {(r.cells || []).map((c, ci) => (
                 <div key={ci} className="pr-cell" style={{ gridColumn: `span ${Math.min(12, Math.max(1, c.span || 12))}` }}>
                   {c.kind === "field" && c.field
-                    ? <Field f={c.field} value={v[c.field.id]} onChange={(val) => set(c.field.id, val)} error={err[c.field.id]} readOnly={readOnly} dir={dir} t={t} />
+                    ? <Field f={c.field} value={v[c.field.id]} onChange={(val) => set(c.field.id, val)} error={err[c.field.id]} readOnly={readOnly} dir={dir} t={t}
+                        riskOptions={riskOptions} personOptions={personOptions} />
                     : <span className="pr-lbl">{c.label || ""}</span>}
                 </div>
               ))}
@@ -37,7 +40,7 @@ export default function PermitRuntime({ schema, values, onChange, errors, readOn
   );
 }
 
-function Field({ f, value, onChange, error, readOnly, dir, t }) {
+function Field({ f, value, onChange, error, readOnly, dir, t, riskOptions, personOptions }) {
   const label = (
     <div className="pr-flbl">{f.label || f.id}{f.required && <span style={{ color: THEME.danger }}> *</span>}</div>
   );
@@ -64,7 +67,29 @@ function Field({ f, value, onChange, error, readOnly, dir, t }) {
       ),
     );
   }
-  if (f.type === "text" || f.type === "person") {
+  if (f.bindTo === "riskRef") {
+    const opts = riskOptions || [];
+    if (readOnly) {
+      const hit = opts.find((o) => o.id === value);
+      return box(<div className="pr-sig">{hit ? hit.title : (value || <span style={{ color: THEME.text3 }}>—</span>)}</div>);
+    }
+    return box(
+      <select style={styles.input} value={value || ""} dir={dir} onChange={(e) => onChange(e.target.value)}>
+        <option value="">{t("pmSelect")}</option>
+        {opts.map((o) => <option key={o.id} value={o.id}>{o.title}</option>)}
+      </select>,
+    );
+  }
+  if (f.type === "person") {
+    const listId = `pr-persons-${f.id}`;
+    return box(
+      <>
+        <input style={styles.input} value={value || ""} disabled={readOnly} dir={dir} list={listId} onChange={(e) => onChange(e.target.value)} />
+        <datalist id={listId}>{(personOptions || []).map((p) => <option key={p} value={p} />)}</datalist>
+      </>,
+    );
+  }
+  if (f.type === "text") {
     return box(<input style={styles.input} value={value || ""} disabled={readOnly} dir={dir} onChange={(e) => onChange(e.target.value)} />);
   }
   if (f.type === "long_text") {

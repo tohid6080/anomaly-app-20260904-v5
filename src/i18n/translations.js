@@ -8950,6 +8950,11 @@ export const translations = {
   "pmWfTitle": { "fa": "گردشِ تأیید بر اساسِ سمتِ سازمانی", "en": "Approval workflow by job position" },
   "pmWfHint": { "fa": "برایِ هر گام می‌توانید یک سمتِ تأییدکننده و یک سمتِ جانشین (برایِ وقتی صاحبِ سمتِ اصلی در دسترس نیست) تعیین کنید. اگر گامی بدونِ سمت بماند، هر کاربرِ دارایِ دسترسیِ ویرایش می‌تواند آن را انجام دهد.", "en": "For each step you can set an approver position and a substitute position (for when the primary holder is unavailable). A step left without a position can be performed by anyone with edit access." },
   "pmWfReadOnlyHint": { "fa": "فقط سرپرستِ HSE کارفرما می‌تواند این تنظیمات را تغییر دهد.", "en": "Only the Employer's HSE supervisor can change these settings." },
+  "pmBrandingTitle": { "fa": "برندینگ و سربرگِ چاپ", "en": "Branding & print letterhead" },
+  "pmBrandingHint": { "fa": "این‌ها فقط روی نسخه‌ی چاپیِ مجوز (خروجیِ رسمی) نمایش داده می‌شوند؛ فرم داخلِ برنامه تغییری نمی‌کند.", "en": "These only appear on the printed permit (the official output); the in-app form is unaffected." },
+  "pmBrandingLogo": { "fa": "لوگو", "en": "Logo" },
+  "pmBrandingHeader": { "fa": "متنِ سربرگ (مثلاً نامِ شرکت)", "en": "Header text (e.g. company name)" },
+  "pmBrandingFormCode": { "fa": "کدِ فرم", "en": "Form code" },
   "pmWfStep_review": { "fa": "شروعِ بازبینی (پس از ارسال)", "en": "Start review (after submission)" },
   "pmWfStep_decide": { "fa": "صدور یا ردِ مجوز", "en": "Issue or reject the permit" },
   "pmWfStep_activate": { "fa": "فعال‌سازیِ مجوز", "en": "Activate the permit" },
@@ -9864,6 +9869,10 @@ export const translations = {
   "smartMachExpiringCompany": { "fa": "شرکت {name}: {count} ماشین با بیمه/معاینه فنی منقضی یا نزدیک به انقضا", "en": "{name}: {count} machines with expired or near-expiry insurance/inspection" },
   "smartMachAttentionSelf": { "fa": "{count} ماشین رد شده یا نیاز به اصلاح دارد", "en": "{count} machines rejected or needing correction" },
   "smartMachPendingCompany": { "fa": "شرکت {name}: {count} درخواست ثبت ماشین‌آلات در انتظار بررسی", "en": "{name}: {count} machinery registration requests awaiting review" },
+  "smartPermitReviewCompany": { "fa": "{count} مجوز کار در انتظار بررسی یا تصمیم‌گیری", "en": "{count} work permits awaiting review or a decision" },
+  "smartPermitExpiringCompany": { "fa": "{count} مجوز کار فعال نزدیک به پایان اعتبار است", "en": "{count} active work permits are near their expiry" },
+  "smartPermitRejectedSelf": { "fa": "{count} مجوز کار شما رد شده و نیاز به اصلاح دارد", "en": "{count} of your work permits were rejected and need correction" },
+  "smartPermitExpiringSelf": { "fa": "{count} مجوز کار فعال شما نزدیک به پایان اعتبار است", "en": "{count} of your active work permits are near their expiry" },
 
   // App.jsx: account-deactivated, change password, biometric confirm
   "appDeactivatedTitle": { "fa": "دسترسی قطع شد", "en": "Access revoked" },
@@ -10062,6 +10071,12 @@ export const translations = {
   "saNtMachineryPendingReviewDesc": { "fa": "اعلان درخواست‌های ثبت ماشین‌آلات که منتظر بررسی کارفرما هستند.", "en": "Alerts about machinery registration requests awaiting employer review." },
   "saNtBarrierEffectivenessLabel": { "fa": "اثربخشی Barrier", "en": "Barrier effectiveness" },
   "saNtBarrierEffectivenessDesc": { "fa": "هشدار کاهش اثربخشی Barrierهای BowTie.", "en": "Warns when the effectiveness of BowTie barriers drops." },
+  "saNtPermitPendingReviewLabel": { "fa": "مجوزهای کار در انتظار بررسی", "en": "Work permits pending review" },
+  "saNtPermitPendingReviewDesc": { "fa": "اعلان مجوزهای کاری که ارسال یا آماده‌ی تصمیم‌گیری‌اند.", "en": "Alerts about work permits that were submitted or are awaiting a decision." },
+  "saNtPermitRejectedLabel": { "fa": "مجوزهای کار ردشده", "en": "Rejected work permits" },
+  "saNtPermitRejectedDesc": { "fa": "اعلان مجوزهای کاری که رد شده و نیاز به اصلاح دارند.", "en": "Alerts about work permits that were rejected and need correction." },
+  "saNtPermitExpiringLabel": { "fa": "نزدیک به انقضای مجوز کار", "en": "Work permit expiring soon" },
+  "saNtPermitExpiringDesc": { "fa": "هشدار نزدیک‌شدنِ مجوز کار فعال به پایانِ اعتبار.", "en": "Warns when an active work permit is near its expiry." },
 
   // --- SuperAdmin: مدیریت آپدیت نرم‌افزار و موبایل (app_releases) ---
   "saScTabAppUpdate": { "fa": "مدیریت آپدیت نرم‌افزار و موبایل", "en": "Software & Mobile Update Management" },

@@ -9,7 +9,10 @@ import {
   loadPermit, loadPermitTemplate, savePermit, transitionPermit,
   loadPermitAudit, loadRenewals, addRenewal,
 } from "./permitApi.js";
+import { printPermit } from "./permitPrint.js";
 import { loadJobPositionTitle } from "../jobpositions/jobPositionsApi.js";
+import { loadBowtiesOfflineFirst } from "../bowtie/bowtieApi.js";
+import { loadPersonnelListOfflineFirst } from "../personnel/personnelApi.js";
 
 const clone = (v) => JSON.parse(JSON.stringify(v ?? null));
 const chip = (tone) => ({
@@ -28,6 +31,8 @@ export default function PermitWorkspace({ permitId, currentUser, readOnly, onBac
   const [audit, setAudit] = useState([]);
   const [renewals, setRenewals] = useState([]);
   const [posTitles, setPosTitles] = useState({});
+  const [riskOptions, setRiskOptions] = useState([]);
+  const [personOptions, setPersonOptions] = useState([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
@@ -62,6 +67,10 @@ export default function PermitWorkspace({ permitId, currentUser, readOnly, onBac
     if (["issued", "active", "suspended", "closed", "expired"].includes(p.status)) setRenewals(await loadRenewals(permitId));
   };
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [permitId]);
+  useEffect(() => {
+    loadBowtiesOfflineFirst().then((list) => setRiskOptions(list.map((b) => ({ id: b.id, title: b.title || b.topEvent || b.id })))).catch(() => setRiskOptions([]));
+    loadPersonnelListOfflineFirst().then((list) => setPersonOptions([...new Set(list.map((p) => p.fullName).filter(Boolean))])).catch(() => setPersonOptions([]));
+  }, []);
 
   const editable = !readOnly && permit && (permit.status === "draft" || permit.status === "rejected");
   const can = (stepId) => canPerformStep(template?.workflow, stepId, currentUser);
@@ -151,7 +160,7 @@ export default function PermitWorkspace({ permitId, currentUser, readOnly, onBac
         <span style={{ fontSize: 11, color: THEME.text3 }}>{template?.name || t("pmGeneralTemplate")}</span>
         <div style={{ marginInlineStart: "auto", display: "flex", gap: 6 }}>
           <button type="button" onClick={() => setShowAudit((v) => !v)} style={{ ...styles.smallButton, background: THEME.surface2, color: THEME.text, display: "inline-flex", alignItems: "center", gap: 5 }}><History size={12} /> {t("pmAudit")}</button>
-          {permit.status !== "draft" && <button type="button" onClick={() => window.print()} style={{ ...styles.smallButton, background: THEME.surface2, color: THEME.text, display: "inline-flex", alignItems: "center", gap: 5 }}><Printer size={12} /> {t("pmPrint")}</button>}
+          {permit.status !== "draft" && <button type="button" onClick={() => printPermit(permit, template, riskOptions)} style={{ ...styles.smallButton, background: THEME.surface2, color: THEME.text, display: "inline-flex", alignItems: "center", gap: 5 }}><Printer size={12} /> {t("pmPrint")}</button>}
         </div>
       </div>
       {err && <p style={styles.error}>{err}</p>}
@@ -195,7 +204,7 @@ export default function PermitWorkspace({ permitId, currentUser, readOnly, onBac
       {/* فرمِ پویا */}
       <div style={{ ...styles.cardWide, marginBottom: 12 }}>
         <PermitRuntime schema={template?.schema} values={draft.formData} errors={errors}
-          readOnly={!editable} onChange={setField} />
+          readOnly={!editable} onChange={setField} riskOptions={riskOptions} personOptions={personOptions} />
       </div>
 
       {/* تمدیدِ روزانه */}

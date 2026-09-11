@@ -101,6 +101,9 @@ const NOTIFICATION_TYPE_LABEL_KEYS = {
   machinery_needs_correction: { label: "saNtMachineryNeedsCorrectionLabel", desc: "saNtMachineryNeedsCorrectionDesc" },
   machinery_pending_review: { label: "saNtMachineryPendingReviewLabel", desc: "saNtMachineryPendingReviewDesc" },
   barrier_effectiveness: { label: "saNtBarrierEffectivenessLabel", desc: "saNtBarrierEffectivenessDesc" },
+  permit_pending_review: { label: "saNtPermitPendingReviewLabel", desc: "saNtPermitPendingReviewDesc" },
+  permit_rejected: { label: "saNtPermitRejectedLabel", desc: "saNtPermitRejectedDesc" },
+  permit_expiring: { label: "saNtPermitExpiringLabel", desc: "saNtPermitExpiringDesc" },
 };
 
 export function notificationTypeLabel(nt) {

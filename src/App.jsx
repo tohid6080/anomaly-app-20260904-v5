@@ -79,6 +79,7 @@ import TrialRequestModal from "./TrialRequestModal.jsx";
 const MachineryDashboard = lazy(() => import("./machinery/MachineryDashboard.jsx"));
 const MachineryForm = lazy(() => import("./machinery/MachineryForm.jsx"));
 import { loadMachineryListOfflineFirst } from "./machinery/machineryApi.js";
+import { loadPermits } from "./permit/permitApi.js";
 const ScaffoldDashboard = lazy(() => import("./scaffold/ScaffoldDashboard.jsx"));
 const ScaffoldTagCodeManager = lazy(() => import("./scaffold/ScaffoldTagCodeManager.jsx"));
 import { syncOfflineCacheCompanyScope } from "./offline/offlineDb.js";
@@ -635,6 +636,41 @@ function daysUntilIso(iso) {
 }
 const MACHINERY_EXPIRY_WARNING_DAYS = 30;
 
+/**
+ * صدور مجوز کار — permits هنوز contractorId/contractorName ندارند (کل
+ * شرکت روی همان company_id مشترک است)، پس برخلافِ machinery/anomaly اینجا
+ * تفکیکِ پیمانکار نداریم؛ فقط دو دسته: چیزهایی که کارفرما/HSE باید برایشان
+ * تصمیم بگیرد (submitted/under_review/issued)، و چیزهایی که خودِ پیمانکار
+ * باید ببیند (ردشده، یا فعالِ نزدیک به پایانِ اعتبار — برای هر دو نقش).
+ */
+function computePermitSmartItems(permitsList, scopeContractorName, currentUserName, warningDays = PERMIT_EXPIRY_WARNING_DAYS) {
+  const items = [];
+  const expiringCount = permitsList.filter((p) => {
+    if (p.status !== "active" || !p.validUntil) return false;
+    const d = daysUntilIso(p.validUntil);
+    return d !== null && d <= warningDays;
+  }).length;
+
+  if (scopeContractorName) {
+    const name = (currentUserName || "").trim();
+    const mine = name ? permitsList.filter((p) => (p.applicantName || "").trim() === name || (p.performerName || "").trim() === name) : permitsList;
+    const rejected = mine.filter((p) => p.status === "rejected").length;
+    const myExpiring = mine.filter((p) => {
+      if (p.status !== "active" || !p.validUntil) return false;
+      const d = daysUntilIso(p.validUntil);
+      return d !== null && d <= warningDays;
+    }).length;
+    if (rejected > 0) items.push({ key: "permit-rejected-self", label: tr("smartPermitRejectedSelf", { count: rejected }), target: { module: "permitToWork" } });
+    if (myExpiring > 0) items.push({ key: "permit-expiring-self", label: tr("smartPermitExpiringSelf", { count: myExpiring }), target: { module: "permitToWork" } });
+  } else {
+    const pending = permitsList.filter((p) => ["submitted", "under_review", "issued"].includes(p.status)).length;
+    if (pending > 0) items.push({ key: "permit-review-company", label: tr("smartPermitReviewCompany", { count: pending }), target: { module: "permitToWork" } });
+    if (expiringCount > 0) items.push({ key: "permit-expiring-company", label: tr("smartPermitExpiringCompany", { count: expiringCount }), target: { module: "permitToWork" } });
+  }
+  return items;
+}
+const PERMIT_EXPIRY_WARNING_DAYS = 3;
+
 // طبقه‌بندی هر آیتم زنده‌محاسبه‌شده‌ی اعلان به یکی از انواع رجیستری
 // system_notification_types — فقط بر اساس pattern کلید، بدون هیچ تغییری
 // در خودِ منطق محاسبه (computeSmartNotifications و بقیه). کلید ناشناخته
@@ -648,6 +684,9 @@ function classifyNotificationKey(key) {
   if (key.endsWith("-attention")) return "machinery_needs_correction";
   if (key.endsWith("-pending")) return "machinery_pending_review";
   if (key.startsWith("barrier-eff-")) return "barrier_effectiveness";
+  if (key.startsWith("permit-review")) return "permit_pending_review";
+  if (key.startsWith("permit-rejected")) return "permit_rejected";
+  if (key.startsWith("permit-expiring")) return "permit_expiring";
   return null;
 }
 
@@ -4720,12 +4759,13 @@ function EmployerDashboard({ onLogout, currentUser }) {
   }, [currentUser?.id]);
 
   const loadNotifs = async () => {
-    const [allPersonnel, allAnomalies, allMachinery, notifTypes] = await Promise.all([loadPersonnelList(), loadAnomaliesOfflineFirst(), loadMachineryListOfflineFirst(), loadNotificationTypes().catch(() => null)]);
+    const [allPersonnel, allAnomalies, allMachinery, allPermits, notifTypes] = await Promise.all([loadPersonnelList(), loadAnomaliesOfflineFirst(), loadMachineryListOfflineFirst(), loadPermits().catch(() => []), loadNotificationTypes().catch(() => null)]);
     await checkAndUpdateDeadlines(allPersonnel); // فقط برای انتقال خودکار به «منقضی» — دیگر اعلان ثبت نمی‌کند
     const barrierAlerts = await loadDegradedBarrierAlerts().catch(() => []);
     const rawItems = [
       ...computeSmartNotifications(allPersonnel, allAnomalies), // بدون scopeContractorName → تجمیعی به‌ازای هر پیمانکار
       ...computeMachinerySmartItems(allMachinery, undefined, notifTypes?.find((t) => t.typeKey === "machinery_expiring")?.warningDays),
+      ...computePermitSmartItems(allPermits, undefined, undefined, notifTypes?.find((t) => t.typeKey === "permit_expiring")?.warningDays),
       ...barrierAlerts, // فاز ۴: هشدار کاهش اثربخشی Barrier — برای کارفرما/HSE بدون محدودیت پیمانکار
       // داربست عمداً اینجا نیست — طبق خواسته‌ی کاربر، این ماژول توی زنگوله اعلان نمی‌شود
     ];
@@ -4779,6 +4819,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
     else if (target.module === "machinery") setView("machineryDashboard");
     else if (target.module === "scaffold") setView("scaffoldDashboard");
     else if (target.module === "bowtie") setView("bowtieDashboard");
+    else if (target.module === "permitToWork") setView("permitToWork");
   };
 
   const anomalyMod = HSE_MODULES.find((m) => m.key === "anomalyReport");
@@ -5155,12 +5196,13 @@ function ContractorDashboard({ onLogout, currentUser }) {
   }, [currentUser?.id]);
 
   const loadNotifs = async () => {
-    const [personnelList, allAnomalies, allMachinery, notifTypes] = await Promise.all([loadPersonnelList(), loadAnomaliesOfflineFirst(), loadMachineryListOfflineFirst(), loadNotificationTypes().catch(() => null)]);
+    const [personnelList, allAnomalies, allMachinery, allPermits, notifTypes] = await Promise.all([loadPersonnelList(), loadAnomaliesOfflineFirst(), loadMachineryListOfflineFirst(), loadPermits().catch(() => []), loadNotificationTypes().catch(() => null)]);
     await checkAndUpdateDeadlines(personnelList); // فقط برای انتقال خودکار به «منقضی» — دیگر اعلان ثبت نمی‌کند
     const barrierAlerts = await loadDegradedBarrierAlerts(currentUser?.name).catch(() => []);
     const rawItems = [
       ...computeSmartNotifications(personnelList, allAnomalies, currentUser?.name),
       ...computeMachinerySmartItems(allMachinery, currentUser?.name, notifTypes?.find((t) => t.typeKey === "machinery_expiring")?.warningDays),
+      ...computePermitSmartItems(allPermits, currentUser?.name, currentUser?.name, notifTypes?.find((t) => t.typeKey === "permit_expiring")?.warningDays),
       ...barrierAlerts, // فاز ۴: فقط بریرهایی که «این پیمانکار» در شواهدشان نقش دارد («پیمانکار مرتبط»)
       // داربست عمداً اینجا نیست — طبق خواسته‌ی کاربر، این ماژول توی زنگوله اعلان نمی‌شود
     ];
@@ -5214,6 +5256,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
     else if (target.module === "machinery") setView("machineryDashboard");
     else if (target.module === "scaffold") setView("scaffoldDashboard");
     else if (target.module === "bowtie") setView("bowtieDashboard");
+    else if (target.module === "permitToWork") setView("permitToWork");
   };
 
   const anomalyMod = HSE_MODULES.find((m) => m.key === "anomalyReport");

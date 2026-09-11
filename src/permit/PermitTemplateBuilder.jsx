@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, ArrowUp, ArrowDown, Lock, Unlock, Save, Eye, EyeOff, BookOpen, Send, Undo2 } from "lucide-react";
+import { Plus, Trash2, ArrowUp, ArrowDown, Lock, Unlock, Save, Eye, EyeOff, BookOpen, Send, Undo2, Image as ImageIcon } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import PermitRuntime from "./PermitRuntime.jsx";
@@ -10,6 +10,10 @@ import {
 } from "./permitModel.js";
 import { loadPermitTemplate, saveTemplate, publishTemplate } from "./permitApi.js";
 import { loadActiveJobPositions } from "../jobpositions/jobPositionsApi.js";
+import { uploadBase64ToStorage } from "../offline/storageUpload.js";
+import DocUploadField from "../personnel/DocUploadField.jsx";
+import { loadBowtiesOfflineFirst } from "../bowtie/bowtieApi.js";
+import { loadPersonnelListOfflineFirst } from "../personnel/personnelApi.js";
 
 const clone = (v) => JSON.parse(JSON.stringify(v ?? null));
 const genColId = () => `c_${Math.random().toString(36).slice(2, 7)}`;
@@ -63,7 +67,10 @@ export default function PermitTemplateBuilder({ templateId, currentUser, onBack,
   const [meta, setMeta] = useState(null);
   const [schema, setSchema] = useState(null);
   const [workflow, setWorkflow] = useState(null);
+  const [branding, setBranding] = useState(null);
   const [positions, setPositions] = useState([]);
+  const [riskOptions, setRiskOptions] = useState([]);
+  const [personOptions, setPersonOptions] = useState([]);
   const [baseline, setBaseline] = useState(null);
   const isHse = currentUser?.role === "HSE_SUPERVISOR";
   const [preview, setPreview] = useState(false);
@@ -81,18 +88,24 @@ export default function PermitTemplateBuilder({ templateId, currentUser, onBack,
     const m = { name: row.name, permitType: row.permitType, isActive: row.isActive };
     const s = row.schema && Array.isArray(row.schema.sections) ? row.schema : { sections: [] };
     const w = row.workflow && typeof row.workflow === "object" && row.workflow.approvals ? row.workflow : blankWorkflow();
+    const b = row.branding && typeof row.branding === "object" ? row.branding : {};
     setMeta(m);
     setSchema(clone(s));
     setWorkflow(clone(w));
-    setBaseline({ meta: m, schema: clone(s), workflow: clone(w) });
+    setBranding(clone(b));
+    setBaseline({ meta: m, schema: clone(s), workflow: clone(w), branding: clone(b) });
   };
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [templateId]);
   useEffect(() => { loadActiveJobPositions().then(setPositions).catch(() => setPositions([])); }, []);
+  useEffect(() => {
+    loadBowtiesOfflineFirst().then((list) => setRiskOptions(list.map((b) => ({ id: b.id, title: b.title || b.topEvent || b.id })))).catch(() => setRiskOptions([]));
+    loadPersonnelListOfflineFirst().then((list) => setPersonOptions([...new Set(list.map((p) => p.fullName).filter(Boolean))])).catch(() => setPersonOptions([]));
+  }, []);
 
   const dirty = useMemo(() => {
     if (!baseline) return false;
-    return JSON.stringify({ meta, schema, workflow }) !== JSON.stringify(baseline);
-  }, [meta, schema, workflow, baseline]);
+    return JSON.stringify({ meta, schema, workflow, branding }) !== JSON.stringify(baseline);
+  }, [meta, schema, workflow, branding, baseline]);
 
   const setStepApproval = (stepId, patch) => setWorkflow((w) => ({
     ...(w || blankWorkflow()),
@@ -123,9 +136,21 @@ export default function PermitTemplateBuilder({ templateId, currentUser, onBack,
     f.config = { ...(f.config || {}), ...patch };
   });
 
+  const uploadLogo = async (base64Data, fileName, mimeType) => {
+    try {
+      const ext = (mimeType || "").includes("png") ? "png" : (mimeType || "").includes("webp") ? "webp" : "jpg";
+      const url = await uploadBase64ToStorage("permit-branding", `${tpl.id}-${Date.now()}.${ext}`, base64Data, mimeType);
+      setBranding((b) => ({ ...(b || {}), logoUrl: url }));
+      return { ok: true };
+    } catch (e) {
+      return { __error: true, message: e?.message || t("pmErrSave") };
+    }
+  };
+  const removeLogo = () => setBranding((b) => ({ ...(b || {}), logoUrl: "" }));
+
   const doSave = async () => {
     setBusy(true); setErr(""); setOk("");
-    const res = await saveTemplate({ ...tpl, ...meta, schema, workflow });
+    const res = await saveTemplate({ ...tpl, ...meta, schema, workflow, branding });
     setBusy(false);
     if (res?.__error) { setErr(res.message); return; }
     setOk(t("pmTemplateSaved"));
@@ -236,6 +261,32 @@ export default function PermitTemplateBuilder({ templateId, currentUser, onBack,
         </div>
       </div>
 
+      <div style={{ ...styles.cardWide, marginBottom: 12 }}>
+        <b style={{ fontSize: 12, color: THEME.heading }}>{t("pmBrandingTitle")}</b>
+        <p style={{ fontSize: 10.5, color: THEME.text3, margin: "4px 0 10px", lineHeight: 1.8 }}>{t("pmBrandingHint")}</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
+          <div>
+            <label style={styles.label}><ImageIcon size={12} style={{ verticalAlign: "middle" }} /> {t("pmBrandingLogo")}</label>
+            <DocUploadField
+              existingDoc={branding?.logoUrl ? { fileData: branding.logoUrl, fileName: t("pmBrandingLogo") } : null}
+              onConfirm={uploadLogo}
+              onDelete={removeLogo}
+              onView={() => window.open(branding.logoUrl, "_blank")}
+            />
+          </div>
+          <div>
+            <label style={styles.label}>{t("pmBrandingHeader")}</label>
+            <input style={styles.input} value={branding?.header || ""} dir={dir}
+              onChange={(e) => setBranding((b) => ({ ...(b || {}), header: e.target.value }))} />
+          </div>
+          <div>
+            <label style={styles.label}>{t("pmBrandingFormCode")}</label>
+            <input style={styles.input} value={branding?.formCode || ""} dir="ltr"
+              onChange={(e) => setBranding((b) => ({ ...(b || {}), formCode: e.target.value }))} />
+          </div>
+        </div>
+      </div>
+
       {showGuide && (
         <div style={{ ...styles.cardWide, marginBottom: 12 }}>
           <b style={{ fontSize: 12, color: THEME.heading }}>{t("pmGuideTitle")}</b>
@@ -258,7 +309,8 @@ export default function PermitTemplateBuilder({ templateId, currentUser, onBack,
         <div style={{ ...styles.cardWide, marginBottom: 12 }}>
           <b style={{ fontSize: 12, color: THEME.heading }}>{t("pmPreview")}</b>
           <div style={{ marginTop: 8 }}>
-            <PermitRuntime schema={schema} values={previewValues} onChange={(id, val) => setPreviewValues((v) => ({ ...v, [id]: val }))} />
+            <PermitRuntime schema={schema} values={previewValues} onChange={(id, val) => setPreviewValues((v) => ({ ...v, [id]: val }))}
+              riskOptions={riskOptions} personOptions={personOptions} />
           </div>
         </div>
       )}
