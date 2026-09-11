@@ -33,7 +33,7 @@ export const SUPABASE_PING_URL = `${SUPABASE_URL}/rest/v1/`;
 // (Capacitor) مقدار window.location.origin برابر http://localhost است و
 // در محیط dev هم localhost؛ لینکِ ساخته‌شده در آن حالت‌ها از اینترنت
 // قابل‌دسترسی نیست. اگر روزی دامنه عوض شود، فقط همین‌جا تغییر کند.
-export const PUBLIC_APP_URL = "https://tohid6080.github.io/anomaly-app-20260904-v5/";
+export const PUBLIC_APP_URL = "https://ihmsapp.ir/";
 
 export async function sb(path, options = {}, scope = "customer") {
   try {
