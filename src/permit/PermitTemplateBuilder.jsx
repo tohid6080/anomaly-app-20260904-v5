@@ -6,8 +6,10 @@ import PermitRuntime from "./PermitRuntime.jsx";
 import {
   FIELD_TYPES, isInput, BIND_TARGETS, defaultConfigFor,
   newField, newCell, newRow, newSection, arrMove,
+  APPROVAL_STEPS, blankWorkflow, getStepApproval,
 } from "./permitModel.js";
 import { loadPermitTemplate, saveTemplate } from "./permitApi.js";
+import { loadActiveJobPositions } from "../jobpositions/jobPositionsApi.js";
 
 const clone = (v) => JSON.parse(JSON.stringify(v ?? null));
 const genColId = () => `c_${Math.random().toString(36).slice(2, 7)}`;
@@ -60,7 +62,10 @@ export default function PermitTemplateBuilder({ templateId, currentUser, onBack,
   const [tpl, setTpl] = useState(null);
   const [meta, setMeta] = useState(null);
   const [schema, setSchema] = useState(null);
+  const [workflow, setWorkflow] = useState(null);
+  const [positions, setPositions] = useState([]);
   const [baseline, setBaseline] = useState(null);
+  const isHse = currentUser?.role === "HSE_SUPERVISOR";
   const [preview, setPreview] = useState(false);
   const [previewValues, setPreviewValues] = useState({});
   const [showGuide, setShowGuide] = useState(false);
@@ -75,16 +80,24 @@ export default function PermitTemplateBuilder({ templateId, currentUser, onBack,
     setTpl(row);
     const m = { name: row.name, permitType: row.permitType, isActive: row.isActive };
     const s = row.schema && Array.isArray(row.schema.sections) ? row.schema : { sections: [] };
+    const w = row.workflow && typeof row.workflow === "object" && row.workflow.approvals ? row.workflow : blankWorkflow();
     setMeta(m);
     setSchema(clone(s));
-    setBaseline({ meta: m, schema: clone(s) });
+    setWorkflow(clone(w));
+    setBaseline({ meta: m, schema: clone(s), workflow: clone(w) });
   };
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [templateId]);
+  useEffect(() => { loadActiveJobPositions().then(setPositions).catch(() => setPositions([])); }, []);
 
   const dirty = useMemo(() => {
     if (!baseline) return false;
-    return JSON.stringify({ meta, schema }) !== JSON.stringify(baseline);
-  }, [meta, schema, baseline]);
+    return JSON.stringify({ meta, schema, workflow }) !== JSON.stringify(baseline);
+  }, [meta, schema, workflow, baseline]);
+
+  const setStepApproval = (stepId, patch) => setWorkflow((w) => ({
+    ...(w || blankWorkflow()),
+    approvals: { ...((w || blankWorkflow()).approvals || {}), [stepId]: { ...getStepApproval(w, stepId), ...patch } },
+  }));
 
   const updateSchema = (fn) => setSchema((s) => { const next = clone(s); fn(next); return next; });
 
@@ -112,7 +125,7 @@ export default function PermitTemplateBuilder({ templateId, currentUser, onBack,
 
   const doSave = async () => {
     setBusy(true); setErr(""); setOk("");
-    const res = await saveTemplate({ ...tpl, ...meta, schema });
+    const res = await saveTemplate({ ...tpl, ...meta, schema, workflow });
     setBusy(false);
     if (res?.__error) { setErr(res.message); return; }
     setOk(t("pmTemplateSaved"));
@@ -168,6 +181,39 @@ export default function PermitTemplateBuilder({ templateId, currentUser, onBack,
               <input type="checkbox" checked={meta.isActive} onChange={(e) => setMeta((m) => ({ ...m, isActive: e.target.checked }))} /> {t("pmTemplateActive")}
             </label>
           </div>
+        </div>
+      </div>
+
+      <div style={{ ...styles.cardWide, marginBottom: 12 }}>
+        <b style={{ fontSize: 12, color: THEME.heading }}>{t("pmWfTitle")}</b>
+        <p style={{ fontSize: 10.5, color: THEME.text3, margin: "4px 0 10px", lineHeight: 1.8 }}>
+          {isHse ? t("pmWfHint") : t("pmWfReadOnlyHint")}
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {APPROVAL_STEPS.map((stepId) => {
+            const cfg = getStepApproval(workflow, stepId);
+            return (
+              <div key={stepId} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 8, alignItems: "end", border: `1px solid ${THEME.borderSoft}`, borderRadius: 8, padding: 8 }}>
+                <div style={{ fontSize: 11.5, fontWeight: 700, color: THEME.text }}>{t("pmWfStep_" + stepId)}</div>
+                <div>
+                  <label style={styles.label}>{t("pmWfApprover")}</label>
+                  <select style={styles.input} value={cfg.jobPositionId || ""} disabled={!isHse}
+                    onChange={(e) => setStepApproval(stepId, { jobPositionId: e.target.value || undefined })}>
+                    <option value="">{t("pmWfNone")}</option>
+                    {positions.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={styles.label}>{t("pmWfSubstitute")}</label>
+                  <select style={styles.input} value={cfg.substituteJobPositionId || ""} disabled={!isHse || !cfg.jobPositionId}
+                    onChange={(e) => setStepApproval(stepId, { substituteJobPositionId: e.target.value || undefined })}>
+                    <option value="">{t("pmWfNone")}</option>
+                    {positions.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+                  </select>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

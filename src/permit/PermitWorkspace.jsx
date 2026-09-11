@@ -4,11 +4,12 @@ import { THEME, styles } from "../shared.js";
 import { toJalaliDateTime, toJalaliSafe } from "../personnel/jalaliDate.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import PermitRuntime from "./PermitRuntime.jsx";
-import { STATUS_META, validateForm, collectBinds } from "./permitModel.js";
+import { STATUS_META, validateForm, collectBinds, canPerformStep, getStepApproval } from "./permitModel.js";
 import {
   loadPermit, loadPermitTemplate, savePermit, transitionPermit,
   loadPermitAudit, loadRenewals, addRenewal,
 } from "./permitApi.js";
+import { loadJobPositionTitle } from "../jobpositions/jobPositionsApi.js";
 
 const clone = (v) => JSON.parse(JSON.stringify(v ?? null));
 const chip = (tone) => ({
@@ -26,6 +27,7 @@ export default function PermitWorkspace({ permitId, currentUser, readOnly, onBac
   const [errors, setErrors] = useState({});
   const [audit, setAudit] = useState([]);
   const [renewals, setRenewals] = useState([]);
+  const [posTitles, setPosTitles] = useState({});
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
@@ -35,7 +37,17 @@ export default function PermitWorkspace({ permitId, currentUser, readOnly, onBac
     const p = await loadPermit(permitId);
     if (!p) { setErr(t("pmErrNotFound")); return; }
     setPermit(p);
-    setTemplate(await loadPermitTemplate(p.templateId));
+    const tpl = await loadPermitTemplate(p.templateId);
+    setTemplate(tpl);
+    const ids = new Set();
+    ["review", "decide", "activate", "suspend", "resume", "close"].forEach((s) => {
+      const cfg = getStepApproval(tpl?.workflow, s);
+      if (cfg.jobPositionId) ids.add(cfg.jobPositionId);
+      if (cfg.substituteJobPositionId) ids.add(cfg.substituteJobPositionId);
+    });
+    const titles = {};
+    await Promise.all([...ids].map(async (id) => { titles[id] = await loadJobPositionTitle(id); }));
+    setPosTitles(titles);
     setDraft({
       title: p.title, applicantName: p.applicantName, performerName: p.performerName,
       startAt: p.startAt ? String(p.startAt).slice(0, 16) : "", endAt: p.endAt ? String(p.endAt).slice(0, 16) : "",
@@ -52,6 +64,14 @@ export default function PermitWorkspace({ permitId, currentUser, readOnly, onBac
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [permitId]);
 
   const editable = !readOnly && permit && (permit.status === "draft" || permit.status === "rejected");
+  const can = (stepId) => canPerformStep(template?.workflow, stepId, currentUser);
+  const stepNote = (stepId) => {
+    const cfg = getStepApproval(template?.workflow, stepId);
+    if (!cfg.jobPositionId || can(stepId)) return null;
+    const a = posTitles[cfg.jobPositionId] || "—";
+    const s = cfg.substituteJobPositionId ? posTitles[cfg.substituteJobPositionId] : "";
+    return s ? t("pmWfBlockedNoteSub", { approver: a, substitute: s }) : t("pmWfBlockedNote", { approver: a });
+  };
   const dirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(base), [draft, base]);
 
   const setF = (patch) => setDraft((d) => ({ ...d, ...patch }));
@@ -201,18 +221,31 @@ export default function PermitWorkspace({ permitId, currentUser, readOnly, onBac
 
       {/* کنش‌ها */}
       {!readOnly && (
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {editable && <button type="button" onClick={doSave} disabled={busy || !dirty} style={{ ...styles.smallButton, background: THEME.surface2, color: THEME.text, opacity: busy || !dirty ? 0.55 : 1, display: "inline-flex", alignItems: "center", gap: 5 }}><Save size={13} /> {t("pmSave")}</button>}
-          {editable && <button type="button" onClick={doSubmit} disabled={busy} style={{ ...styles.smallButton, background: THEME.teal, display: "inline-flex", alignItems: "center", gap: 5 }}><Send size={13} /> {t("pmSubmit")}</button>}
-          {permit.status === "submitted" && <button type="button" onClick={() => act("under_review")} disabled={busy} style={{ ...styles.smallButton, background: THEME.teal, display: "inline-flex", alignItems: "center", gap: 5 }}><ShieldCheck size={13} /> {t("pmStartReview")}</button>}
-          {permit.status === "under_review" && <>
-            <button type="button" onClick={() => act("issued")} disabled={busy} style={{ ...styles.smallButton, background: THEME.ok, display: "inline-flex", alignItems: "center", gap: 5 }}><FileCheck2 size={13} /> {t("pmIssue")}</button>
-            <button type="button" onClick={() => { const n = window.prompt(t("pmRejectReason")); if (n != null) act("rejected", { note: n }); }} disabled={busy} style={{ ...styles.smallButton, background: THEME.danger, display: "inline-flex", alignItems: "center", gap: 5 }}><XCircle size={13} /> {t("pmReject")}</button>
-          </>}
-          {permit.status === "issued" && <button type="button" onClick={() => act("active", { validUntil: draft.endAt ? draft.endAt.slice(0, 10) : null })} disabled={busy} style={{ ...styles.smallButton, background: THEME.ok, display: "inline-flex", alignItems: "center", gap: 5 }}><PlayCircle size={13} /> {t("pmActivate")}</button>}
-          {permit.status === "active" && <button type="button" onClick={() => act("suspended")} disabled={busy} style={{ ...styles.smallButton, background: THEME.warn, display: "inline-flex", alignItems: "center", gap: 5 }}><PauseCircle size={13} /> {t("pmSuspend")}</button>}
-          {permit.status === "suspended" && <button type="button" onClick={() => act("active")} disabled={busy} style={{ ...styles.smallButton, background: THEME.ok, display: "inline-flex", alignItems: "center", gap: 5 }}><PlayCircle size={13} /> {t("pmResume")}</button>}
-          {["issued", "active", "suspended"].includes(permit.status) && <button type="button" onClick={() => { const r = window.prompt(t("pmCloseReason")); if (r != null) act("closed", { reason: r }); }} disabled={busy} style={{ ...styles.smallButton, background: THEME.navyMid, color: "#fff", display: "inline-flex", alignItems: "center", gap: 5 }}><CheckCircle2 size={13} /> {t("pmClose")}</button>}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {editable && <button type="button" onClick={doSave} disabled={busy || !dirty} style={{ ...styles.smallButton, background: THEME.surface2, color: THEME.text, opacity: busy || !dirty ? 0.55 : 1, display: "inline-flex", alignItems: "center", gap: 5 }}><Save size={13} /> {t("pmSave")}</button>}
+            {editable && <button type="button" onClick={doSubmit} disabled={busy} style={{ ...styles.smallButton, background: THEME.teal, display: "inline-flex", alignItems: "center", gap: 5 }}><Send size={13} /> {t("pmSubmit")}</button>}
+            {permit.status === "submitted" && can("review") && <button type="button" onClick={() => act("under_review")} disabled={busy} style={{ ...styles.smallButton, background: THEME.teal, display: "inline-flex", alignItems: "center", gap: 5 }}><ShieldCheck size={13} /> {t("pmStartReview")}</button>}
+            {permit.status === "under_review" && can("decide") && <>
+              <button type="button" onClick={() => act("issued")} disabled={busy} style={{ ...styles.smallButton, background: THEME.ok, display: "inline-flex", alignItems: "center", gap: 5 }}><FileCheck2 size={13} /> {t("pmIssue")}</button>
+              <button type="button" onClick={() => { const n = window.prompt(t("pmRejectReason")); if (n != null) act("rejected", { note: n }); }} disabled={busy} style={{ ...styles.smallButton, background: THEME.danger, display: "inline-flex", alignItems: "center", gap: 5 }}><XCircle size={13} /> {t("pmReject")}</button>
+            </>}
+            {permit.status === "issued" && can("activate") && <button type="button" onClick={() => act("active", { validUntil: draft.endAt ? draft.endAt.slice(0, 10) : null })} disabled={busy} style={{ ...styles.smallButton, background: THEME.ok, display: "inline-flex", alignItems: "center", gap: 5 }}><PlayCircle size={13} /> {t("pmActivate")}</button>}
+            {permit.status === "active" && can("suspend") && <button type="button" onClick={() => act("suspended")} disabled={busy} style={{ ...styles.smallButton, background: THEME.warn, display: "inline-flex", alignItems: "center", gap: 5 }}><PauseCircle size={13} /> {t("pmSuspend")}</button>}
+            {permit.status === "suspended" && can("resume") && <button type="button" onClick={() => act("active")} disabled={busy} style={{ ...styles.smallButton, background: THEME.ok, display: "inline-flex", alignItems: "center", gap: 5 }}><PlayCircle size={13} /> {t("pmResume")}</button>}
+            {["issued", "active", "suspended"].includes(permit.status) && can("close") && <button type="button" onClick={() => { const r = window.prompt(t("pmCloseReason")); if (r != null) act("closed", { reason: r }); }} disabled={busy} style={{ ...styles.smallButton, background: THEME.navyMid, color: "#fff", display: "inline-flex", alignItems: "center", gap: 5 }}><CheckCircle2 size={13} /> {t("pmClose")}</button>}
+          </div>
+          {["review", "decide", "activate", "suspend", "resume", "close"].map((s) => {
+            const active =
+              (s === "review" && permit.status === "submitted") ||
+              (s === "decide" && permit.status === "under_review") ||
+              (s === "activate" && permit.status === "issued") ||
+              (s === "suspend" && permit.status === "active") ||
+              (s === "resume" && permit.status === "suspended") ||
+              (s === "close" && ["issued", "active", "suspended"].includes(permit.status));
+            const note = active && stepNote(s);
+            return note ? <p key={s} style={{ fontSize: 10.5, color: THEME.text3, margin: 0 }}>{note}</p> : null;
+          })}
         </div>
       )}
     </div>

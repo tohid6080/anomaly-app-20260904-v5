@@ -111,6 +111,28 @@ export function arrMove(arr, i, dir) {
   return out;
 }
 
+// ---------- گردشِ تأییدِ مبتنی بر سمتِ سازمانی ----------
+// هر گامِ گذار (submitted→under_review و ...) می‌تواند به یک «سمت» (از
+// job_positions شرکت) به‌عنوانِ تأییدکننده محدود شود، به‌همراهِ یک سمتِ
+// جانشین برایِ وقتی صاحبِ سمتِ اصلی در دسترس نیست. این تنظیمات را فقط
+// سرپرستِ HSE کارفرما، در فرم‌سازِ قالب، مشخص می‌کند. اگر برایِ گامی سمتی
+// تعیین نشود، هر کاربرِ دارایِ دسترسیِ ویرایش می‌تواند آن را انجام دهد —
+// یعنی قالب‌هایی که هنوز این بخش را تنظیم نکرده‌اند، رفتارِ قبلی را دارند.
+export const APPROVAL_STEPS = ["review", "decide", "activate", "suspend", "resume", "close"];
+
+export function blankWorkflow() { return { approvals: {} }; }
+
+export function getStepApproval(workflow, stepId) {
+  return (workflow?.approvals && workflow.approvals[stepId]) || {};
+}
+
+export function canPerformStep(workflow, stepId, currentUser) {
+  const cfg = getStepApproval(workflow, stepId);
+  if (!cfg.jobPositionId) return true;
+  const jp = currentUser?.jobPositionId;
+  return !!jp && (jp === cfg.jobPositionId || jp === cfg.substituteJobPositionId);
+}
+
 // ---------- قالبِ سیستمیِ پیش‌فرض (آینه‌ی seedِ migration؛ fallback آفلاین) ----------
 export const SYSTEM_TEMPLATE = {
   id: "ptpl-system-general-v1",
@@ -159,12 +181,6 @@ export const SYSTEM_TEMPLATE = {
       ] },
     ],
   },
-  workflow: {
-    parties: [
-      { id: "requester", name: "درخواست‌کننده", steps: [{ id: "request", role: "performer", action: "request" }] },
-      { id: "hse", name: "HSE", steps: [{ id: "hse_review", role: "hse", action: "review" }] },
-      { id: "issuer", name: "صادرکننده", steps: [{ id: "issue", role: "issuer", action: "issue" }, { id: "close", role: "issuer", action: "close" }] },
-    ],
-  },
+  workflow: { approvals: {} },
   branding: {},
 };
