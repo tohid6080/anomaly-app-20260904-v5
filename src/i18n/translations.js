@@ -1953,8 +1953,8 @@ export const translations = {
     "en": "System Announcement"
   },
   "saNavAuditLog": {
-    "fa": "گزارش تغییرات",
-    "en": "Change Log"
+    "fa": "تاریخچه فعالیت‌ها",
+    "en": "Activity History"
   },
   "saHeaderTitle": {
     "fa": "Super Admin — مالک سامانه",
@@ -2049,8 +2049,8 @@ export const translations = {
     "en": "Manage Plans"
   },
   "saQuickAuditLog": {
-    "fa": "گزارش تغییرات",
-    "en": "Change Log"
+    "fa": "تاریخچه فعالیت‌ها",
+    "en": "Activity History"
   },
   "saDetails": {
     "fa": "جزئیات",
@@ -8973,6 +8973,33 @@ export const translations = {
   "pmPublishedOk": { "fa": "قالب منتشر شد ✓", "en": "Template published ✓" },
   "pmUnpublishedOk": { "fa": "انتشارِ قالب لغو شد", "en": "Template unpublished" },
   "pmNoPublishedTemplates": { "fa": "فعلاً هیچ فرمتی برای پرمیتِ کار توسطِ کارفرما منتشر نشده است.", "en": "The employer hasn't published any permit-to-work format yet." },
+  "pmRequestMobileOnly": { "fa": "درخواستِ مجوزِ کار فقط از طریقِ اپِ موبایلِ IHMS امکان‌پذیر است (نه نسخه‌ی وب).", "en": "Requesting a work permit is only possible from the IHMS mobile app (not the web version)." },
+  "pmSigners": { "fa": "لیستِ امضاهایِ مجاز", "en": "Authorized signers" },
+  "pmSignersIntro": { "fa": "افرادِ مجاز به امضایِ «امضایِ مجری» در مجوزهایِ کار. امضا فقط از موبایل و با تأییدِ بیومتریکِ همان فرد ثبت می‌شود.", "en": "People authorized to sign the \"performer signature\" on work permits. A signature is only recorded from a mobile device with that person's own biometric verification." },
+  "pmSignersIntroContractor": { "fa": "امضاکنندگانِ مجازِ ثبت‌شده برایِ مجموعه‌ی شما — مدیریتِ این فهرست فقط توسطِ سرپرستِ HSEِ کارفرما انجام می‌شود.", "en": "The authorized signers registered for your company — this list is managed only by the employer's HSE supervisor." },
+  "pmSignersPickContractor": { "fa": "پیمانکار", "en": "Contractor" },
+  "pmSignerFullName": { "fa": "نام و نام خانوادگی", "en": "Full name" },
+  "pmSignerJobTitle": { "fa": "شغل", "en": "Job title" },
+  "pmSignerSubstitute": { "fa": "جانشین", "en": "Substitute" },
+  "pmSignerSubstituteNone": { "fa": "— بدونِ جانشین —", "en": "— no substitute —" },
+  "pmSignerStatus": { "fa": "وضعیت", "en": "Status" },
+  "pmSignerActive": { "fa": "فعال", "en": "Active" },
+  "pmSignerLeave": { "fa": "در مرخصی", "en": "On leave" },
+  "pmSignerSetLeave": { "fa": "غیرفعال‌سازیِ موقت (مرخصی)", "en": "Temporarily deactivate (leave)" },
+  "pmSignerSetActive": { "fa": "فعال‌سازیِ مجدد", "en": "Reactivate" },
+  "pmSignerConfirmLeave": { "fa": "این فرد به‌صورتِ موقت از فهرستِ امضاکنندگانِ مجاز خارج شود؟ اگر جانشین دارد، جانشین به‌جایِ او امضاکننده خواهد بود.", "en": "Temporarily remove this person from the authorized-signer list? If they have a substitute, the substitute becomes the signer in their place." },
+  "pmAddSigner": { "fa": "افزودنِ امضاکننده", "en": "Add signer" },
+  "pmNoSigners": { "fa": "هنوز امضاکننده‌ای برایِ این پیمانکار ثبت نشده است.", "en": "No signers have been registered for this contractor yet." },
+  "pmSignerConfirmDelete": { "fa": "این امضاکننده حذف شود؟", "en": "Delete this signer?" },
+  "pmSelectContractorFirst": { "fa": "ابتدا یک پیمانکار را انتخاب کنید.", "en": "Select a contractor first." },
+  "pmSignPickSigner": { "fa": "انتخابِ امضاکننده", "en": "Select signer" },
+  "pmSignSelectSigner": { "fa": "امضاکننده را انتخاب کنید…", "en": "Select a signer…" },
+  "pmSignWithBiometric": { "fa": "امضا با اثرِ انگشت", "en": "Sign with fingerprint" },
+  "pmSignVerifying": { "fa": "در حالِ تأیید…", "en": "Verifying…" },
+  "pmSignMobileOnly": { "fa": "امضایِ پیمانکار فقط از طریقِ اپِ موبایلِ IHMS و با تأییدِ بیومتریک امکان‌پذیر است.", "en": "The contractor's signature is only possible from the IHMS mobile app, with biometric verification." },
+  "pmSignNoSigners": { "fa": "هیچ امضاکننده‌ی مجازِ فعالی برایِ مجموعه‌ی شما ثبت نشده است — با سرپرستِ HSEِ کارفرما هماهنگ کنید.", "en": "No active authorized signer is registered for your company — contact the employer's HSE supervisor." },
+  "pmSignedBiometric": { "fa": "امضایِ تأییدشده با بیومتریک", "en": "Signature verified by biometrics" },
+  "pmFieldSignerRoleContractor": { "fa": "این فیلد امضایِ پیمانکار است (فقط موبایل + بیومتریک، از فهرستِ امضاهایِ مجاز)", "en": "This field is the contractor's signature (mobile + biometric only, from the authorized-signer list)" },
   "svIntro": { "fa": "نظرسنجی یا آزمونِ HSE بساز، لینک/QR بگیر، از پرسنل نظرسنجی/آزمون بگیر و نتیجه را تحلیل، نمره‌دهی و ذخیره کن.", "en": "Build an HSE survey or exam, get a link/QR, run it with your personnel, then analyze, grade and store the results." },
   "svMode": { "fa": "نوعِ فرم", "en": "Form type" },
   "svModeSurvey": { "fa": "نظرسنجی", "en": "Survey" },
@@ -9801,6 +9828,9 @@ export const translations = {
   "bioErrVerifyCancelledLogin": { "fa": "تأیید بیومتریک لغو شد یا ناموفق بود.", "en": "Biometric verification was cancelled or failed." },
   "bioErrNoStoredCreds": { "fa": "اطلاعات ورود ذخیره‌شده یافت نشد.", "en": "No stored login details found." },
   "bioErrRetrieveCreds": { "fa": "خطا در بازیابی امن اطلاعات ورود.", "en": "Error securely retrieving login details." },
+  "bioReasonSign": { "fa": "برای امضای مجوز کار", "en": "To sign the work permit" },
+  "bioTitleSign": { "fa": "تأیید هویت امضاکننده", "en": "Verify signer identity" },
+  "bioErrVerifyCancelledSign": { "fa": "تأیید بیومتریک لغو شد یا ناموفق بود — امضا ثبت نشد.", "en": "Biometric verification was cancelled or failed — the signature was not recorded." },
   "sharedErrUnknown": { "fa": "خطای نامشخص", "en": "Unknown error" },
   "sharedErrReadFile": { "fa": "خطا در خواندن فایل", "en": "Error reading the file" },
   "sharedErrInvalidImage": { "fa": "فایل تصویر معتبر نیست", "en": "The image file is not valid" },

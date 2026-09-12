@@ -162,7 +162,7 @@ export default function AdminAnalytics({ onBack, currentUser, companies }) {
           <label style={styles.label}>{t("adminAnalyticsToDate")}</label>
           <JalaliDateInput value={toDate} onChange={setToDate} allowEmpty />
         </div>
-        <button type="button" style={styles.smallButton} onClick={load}>{t("adminAnalyticsApplyFilter")}</button>
+        <button type="button" style={styles.smallButton} onClick={() => load()}>{t("adminAnalyticsApplyFilter")}</button>
       </div>
 
       {loading && <p style={{ color: THEME.text3, textAlign: "center", padding: 30 }}>{t("commonLoading")}</p>}
