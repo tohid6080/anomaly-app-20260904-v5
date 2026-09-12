@@ -293,7 +293,12 @@ function SettingsPanel({ draft, setDraft, t, dir }) {
         <label style={styles.label}>{t("svMode")}</label>
         <div style={{ display: "inline-flex", background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 9, padding: 3, gap: 3 }}>
           {[["survey", t("svModeSurvey")], ["exam", t("svModeExam")]].map(([m, lbl]) => (
-            <button key={m} type="button" onClick={() => set({ mode: m })}
+            // «آزمون» یعنی نتیجه باید قابل انتساب به شخص باشد (قبول/رد فردی)،
+            // پس با انتخابِ این حالت هم‌زمان anonymous خاموش و collectName
+            // روشن می‌شود — بدونِ این، جدولِ «نتایج آزمون» ستونِ نام ندارد و
+            // این‌که کدام نفر قبول/رد شده مشخص نیست. مدیر همچنان می‌تواند بعداً
+            // دستی خاموشش کند (مثلاً برای آزمونِ عمداً ناشناس).
+            <button key={m} type="button" onClick={() => set(m === "exam" ? { mode: m, anonymous: false, collectName: true } : { mode: m })}
               style={{ border: "none", borderRadius: 7, padding: "6px 16px", fontFamily: THEME.font, fontSize: 12, fontWeight: 700, cursor: "pointer",
                 background: s.mode === m ? THEME.teal : "transparent", color: s.mode === m ? "#fff" : THEME.text2 }}>{lbl}</button>
           ))}
