@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Plus, FileSpreadsheet, Trash2, Layers, PenSquare } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
+import { Plus, FileSpreadsheet, Trash2, Layers, PenSquare, ShieldCheck } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
@@ -10,6 +11,7 @@ import {
 } from "./permitApi.js";
 import PermitWorkspace from "./PermitWorkspace.jsx";
 import PermitTemplateBuilder from "./PermitTemplateBuilder.jsx";
+import PermitSignersManager from "./PermitSignersManager.jsx";
 
 const chip = (tone) => ({
   gray: { bg: THEME.surface2, fg: THEME.text3 }, teal: { bg: THEME.tealSoft, fg: THEME.tealDeep },
@@ -27,6 +29,7 @@ export default function PermitDashboard({ currentUser, role, readOnly, onBack, w
   const [builderId, setBuilderId] = useState(null);
   const [showNew, setShowNew] = useState(false);
   const [showTpl, setShowTpl] = useState(false);
+  const [showSigners, setShowSigners] = useState(false);
   const [filter, setFilter] = useState("all");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -96,8 +99,14 @@ export default function PermitDashboard({ currentUser, role, readOnly, onBack, w
     return <PermitTemplateBuilder templateId={builderId} currentUser={currentUser}
       onBack={() => { setBuilderId(null); load(); }} onSaved={load} />;
   }
+  if (showSigners) {
+    return <PermitSignersManager currentUser={currentUser} role={role} wide={wide} onBack={() => setShowSigners(false)} />;
+  }
 
   const isContractor = role === "CONTRACTOR";
+  // درخواستِ مجوزِ کار توسطِ پیمانکار فقط از اپِ موبایل (نه نسخه‌ی وب) مجاز
+  // است — چون امضایِ مجری در همان درخواست، به بیومتریکِ موبایل گره خورده.
+  const contractorNeedsMobile = isContractor && !Capacitor.isNativePlatform();
   const companyTpls = templates.filter((x) => !x.isSystem);
   const sysTpls = templates.filter((x) => x.isSystem);
   const pickableTpls = isContractor ? companyTpls.filter((x) => x.isPublished) : templates;
@@ -113,20 +122,32 @@ export default function PermitDashboard({ currentUser, role, readOnly, onBack, w
       <p style={{ color: THEME.text3, fontSize: 12, margin: "2px 0 14px", lineHeight: 1.8 }}>{t("pmIntro")}</p>
       {err && <p style={styles.error}>{err}</p>}
 
+      <div style={{ display: "flex", marginBottom: 12 }}>
+        <button type="button" onClick={() => setShowSigners(true)} style={{ ...styles.smallButton, background: THEME.surface2, color: THEME.text, display: "inline-flex", alignItems: "center", gap: 6 }}><ShieldCheck size={13} /> {t("pmSigners")}</button>
+      </div>
+
       {!readOnly && noPublished && (
         <div style={{ ...styles.cardWide, marginBottom: 14, textAlign: "center", color: THEME.text3, fontSize: 12.5 }}>
           {t("pmNoPublishedTemplates")}
         </div>
       )}
 
+      {!readOnly && contractorNeedsMobile && (
+        <div style={{ ...styles.cardWide, marginBottom: 14, textAlign: "center", color: THEME.warn, fontSize: 12.5 }}>
+          {t("pmRequestMobileOnly")}
+        </div>
+      )}
+
       {!readOnly && !noPublished && (
         <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
-          <button type="button" onClick={() => setShowNew((v) => !v)} disabled={busy} style={{ ...styles.smallButton, display: "inline-flex", alignItems: "center", gap: 6 }}><Plus size={13} /> {t("pmNewPermit")}</button>
+          {!contractorNeedsMobile && (
+            <button type="button" onClick={() => setShowNew((v) => !v)} disabled={busy} style={{ ...styles.smallButton, display: "inline-flex", alignItems: "center", gap: 6 }}><Plus size={13} /> {t("pmNewPermit")}</button>
+          )}
           {!isContractor && <button type="button" onClick={() => setShowTpl((v) => !v)} style={{ ...styles.smallButton, background: THEME.surface2, color: THEME.text, display: "inline-flex", alignItems: "center", gap: 6 }}><Layers size={13} /> {t("pmTemplates")}</button>}
         </div>
       )}
 
-      {showNew && !readOnly && !noPublished && (
+      {showNew && !readOnly && !noPublished && !contractorNeedsMobile && (
         <div style={{ ...styles.cardWide, marginBottom: 14 }}>
           <b style={{ fontSize: 12.5, color: THEME.heading }}>{t("pmPickTemplate")}</b>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 8, marginTop: 10 }}>

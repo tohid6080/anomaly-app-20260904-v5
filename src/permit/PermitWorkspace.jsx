@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { Capacitor } from "@capacitor/core";
 import { Save, Send, ShieldCheck, XCircle, FileCheck2, PlayCircle, PauseCircle, CheckCircle2, RotateCcw, Printer, History } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { toJalaliDateTime, toJalaliSafe } from "../personnel/jalaliDate.jsx";
@@ -9,6 +10,7 @@ import {
   loadPermit, loadPermitTemplate, savePermit, transitionPermit,
   loadPermitAudit, loadRenewals, addRenewal,
 } from "./permitApi.js";
+import { loadContractorSigners } from "./permitSignersApi.js";
 import { printPermit } from "./permitPrint.js";
 import { loadJobPositionTitle } from "../jobpositions/jobPositionsApi.js";
 import { loadBowtiesOfflineFirst } from "../bowtie/bowtieApi.js";
@@ -33,6 +35,7 @@ export default function PermitWorkspace({ permitId, currentUser, readOnly, onBac
   const [posTitles, setPosTitles] = useState({});
   const [riskOptions, setRiskOptions] = useState([]);
   const [personOptions, setPersonOptions] = useState([]);
+  const [contractorSigners, setContractorSigners] = useState([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
@@ -70,7 +73,14 @@ export default function PermitWorkspace({ permitId, currentUser, readOnly, onBac
   useEffect(() => {
     loadBowtiesOfflineFirst().then((list) => setRiskOptions(list.map((b) => ({ id: b.id, title: b.title || b.topEvent || b.id })))).catch(() => setRiskOptions([]));
     loadPersonnelListOfflineFirst().then((list) => setPersonOptions([...new Set(list.map((p) => p.fullName).filter(Boolean))])).catch(() => setPersonOptions([]));
+    // امضایِ پیمانکار فقط از فهرستِ امضاهایِ مجازِ همان پیمانکار قابلِ انتخاب
+    // است؛ سایرِ نقش‌ها (کارفرما/سرپرستِ HSE) این فیلد را فقط readOnly می‌بینند.
+    if (currentUser?.role === "CONTRACTOR" && currentUser?.id) {
+      loadContractorSigners(currentUser.id).then(setContractorSigners).catch(() => setContractorSigners([]));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  const isNativeApp = Capacitor.isNativePlatform();
 
   const editable = !readOnly && permit && (permit.status === "draft" || permit.status === "rejected");
   const can = (stepId) => canPerformStep(template?.workflow, stepId, currentUser);
@@ -204,7 +214,8 @@ export default function PermitWorkspace({ permitId, currentUser, readOnly, onBac
       {/* فرمِ پویا */}
       <div style={{ ...styles.cardWide, marginBottom: 12 }}>
         <PermitRuntime schema={template?.schema} values={draft.formData} errors={errors}
-          readOnly={!editable} onChange={setField} riskOptions={riskOptions} personOptions={personOptions} />
+          readOnly={!editable} onChange={setField} riskOptions={riskOptions} personOptions={personOptions}
+          contractorSigners={contractorSigners} isNativeApp={isNativeApp} />
       </div>
 
       {/* تمدیدِ روزانه */}

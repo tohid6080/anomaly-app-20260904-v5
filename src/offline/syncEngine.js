@@ -47,6 +47,7 @@ export const MODULE_TABLE_MAP = {
   permitToWork: { table: "permits", idField: "id" },
   permitTemplates: { table: "permit_templates", idField: "id" },
   permitRenewals: { table: "permit_renewals", idField: "id" },
+  permitSigners: { table: "permit_authorized_signers", idField: "id" },
   // future modules register here once built
 };
 

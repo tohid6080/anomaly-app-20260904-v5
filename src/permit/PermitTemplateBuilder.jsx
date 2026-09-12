@@ -424,6 +424,13 @@ function FieldEditor({ field, locked, onPatch, onConfigPatch, t, dir }) {
           </select>
         )}
       </div>
+      {field.type === "signature" && (
+        <label style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: THEME.text2 }}>
+          <input type="checkbox" checked={field.config?.signerRole === "contractor"} disabled={locked}
+            onChange={(e) => onConfigPatch({ signerRole: e.target.checked ? "contractor" : undefined })} />
+          {t("pmFieldSignerRoleContractor")}
+        </label>
+      )}
       {(field.type === "select" || field.type === "radio" || field.type === "checkgroup") &&
         <OptionsEditor field={field} locked={locked} onChange={onConfigPatch} t={t} dir={dir} />}
       {field.type === "table" && <ColumnsEditor field={field} locked={locked} onChange={onConfigPatch} t={t} dir={dir} />}

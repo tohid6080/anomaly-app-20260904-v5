@@ -1,16 +1,19 @@
-import React from "react";
-import { Plus, Trash2, PenLine } from "lucide-react";
+import React, { useState } from "react";
+import { Plus, Trash2, PenLine, Fingerprint } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { toJalaliDateTime } from "../personnel/jalaliDate.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { verifyBiometricForSigning } from "../biometricAuth.js";
 
 /**
  * Renderer گرید/جدولیِ فرمِ مجوز کار — Section → Row(۱۲ ستون) → Cell(span) → Field.
  * props: schema, values, onChange(fieldId, value), errors, readOnly, riskOptions,
  * personOptions — riskOptions/personOptions فقط برای فیلدهایی که bindTo="riskRef"
- * یا type="person" دارند استفاده می‌شوند (بقیه‌ی فیلدها بی‌تفاوت‌اند).
+ * یا type="person" دارند استفاده می‌شوند. contractorSigners/isNativeApp فقط
+ * برای فیلدِ signature با config.signerRole="contractor" (امضایِ پیمانکار،
+ * امنیتِ امضا — نگاه کن به توضیحِ ContractorSignatureField پایینِ همین فایل).
  */
-export default function PermitRuntime({ schema, values, onChange, errors, readOnly, riskOptions, personOptions }) {
+export default function PermitRuntime({ schema, values, onChange, errors, readOnly, riskOptions, personOptions, contractorSigners, isNativeApp }) {
   const { t, dir } = useLanguage();
   const v = values || {};
   const err = errors || {};
@@ -28,7 +31,7 @@ export default function PermitRuntime({ schema, values, onChange, errors, readOn
                 <div key={ci} className="pr-cell" style={{ gridColumn: `span ${Math.min(12, Math.max(1, c.span || 12))}` }}>
                   {c.kind === "field" && c.field
                     ? <Field f={c.field} value={v[c.field.id]} onChange={(val) => set(c.field.id, val)} error={err[c.field.id]} readOnly={readOnly} dir={dir} t={t}
-                        riskOptions={riskOptions} personOptions={personOptions} />
+                        riskOptions={riskOptions} personOptions={personOptions} contractorSigners={contractorSigners} isNativeApp={isNativeApp} />
                     : <span className="pr-lbl">{c.label || ""}</span>}
                 </div>
               ))}
@@ -40,7 +43,7 @@ export default function PermitRuntime({ schema, values, onChange, errors, readOn
   );
 }
 
-function Field({ f, value, onChange, error, readOnly, dir, t, riskOptions, personOptions }) {
+function Field({ f, value, onChange, error, readOnly, dir, t, riskOptions, personOptions, contractorSigners, isNativeApp }) {
   const label = (
     <div className="pr-flbl">{f.label || f.id}{f.required && <span style={{ color: THEME.danger }}> *</span>}</div>
   );
@@ -56,9 +59,21 @@ function Field({ f, value, onChange, error, readOnly, dir, t, riskOptions, perso
   }
   if (f.type === "signature") {
     const sig = value && typeof value === "object" ? value : null;
+    const isContractorField = f.config?.signerRole === "contractor";
+    if (isContractorField && !readOnly && !sig) {
+      return box(<ContractorSignatureField signers={contractorSigners} isNativeApp={isNativeApp} onSign={onChange} t={t} dir={dir} />);
+    }
     return box(
       readOnly || sig ? (
-        <div className="pr-sig">{sig ? <><b>{sig.name || "—"}</b><span className="pr-mono">{sig.at ? toJalaliDateTime(sig.at) : ""}</span></> : <span style={{ color: THEME.text3 }}>—</span>}</div>
+        <div className="pr-sig">
+          {sig ? (
+            <>
+              <b>{sig.name || "—"}</b>
+              <span className="pr-mono">{sig.at ? toJalaliDateTime(sig.at) : ""}</span>
+              {sig.verifiedBiometric && <span className="pr-sig-bio"><Fingerprint size={11} /> {t("pmSignedBiometric")}</span>}
+            </>
+          ) : <span style={{ color: THEME.text3 }}>—</span>}
+        </div>
       ) : (
         <div style={{ display: "flex", gap: 6 }}>
           <input style={styles.input} placeholder={t("pmSigName")} value={sig?.name || ""} onChange={(e) => onChange({ name: e.target.value, at: sig?.at || "" })} dir={dir} />
@@ -178,6 +193,46 @@ function Field({ f, value, onChange, error, readOnly, dir, t, riskOptions, perso
   return box(<input style={styles.input} value={value || ""} disabled={readOnly} onChange={(e) => onChange(e.target.value)} />);
 }
 
+/**
+ * فیلدِ امضایِ «امنِ» پیمانکار — فقط از اپِ موبایل، فقط از فهرستِ امضاهایِ
+ * مجازِ همان پیمانکار (status=active؛ افرادِ در مرخصی از این فهرست حذفند
+ * پس جانشین‌شان به‌جای‌شان انتخاب‌پذیر است)، و فقط پس از یک تأییدِ بیومتریکِ
+ * تازه (verifyBiometricForSigning). آزادانه‌نوشتنِ نام مثلِ فیلدِ عمومیِ
+ * signature اینجا عمداً حذف شده — دقیقاً همان چیزی که این تغییر می‌خواست رفع کند.
+ */
+function ContractorSignatureField({ signers, isNativeApp, onSign, t, dir }) {
+  const [signerId, setSignerId] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const active = (signers || []).filter((s) => s.status === "active");
+
+  if (!isNativeApp) return <div className="pr-sig" style={{ color: THEME.warn, fontSize: 11 }}>{t("pmSignMobileOnly")}</div>;
+  if (active.length === 0) return <div className="pr-sig" style={{ color: THEME.warn, fontSize: 11 }}>{t("pmSignNoSigners")}</div>;
+
+  const handleSign = async () => {
+    const signer = active.find((s) => s.id === signerId);
+    if (!signer) { setErr(t("pmSignSelectSigner")); return; }
+    setBusy(true); setErr("");
+    const res = await verifyBiometricForSigning(signer.fullName);
+    setBusy(false);
+    if (res?.__error) { setErr(res.message); return; }
+    onSign({ name: signer.fullName, jobTitle: signer.jobTitle, signerId: signer.id, at: new Date().toISOString(), verifiedBiometric: true });
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <select style={styles.input} value={signerId} dir={dir} disabled={busy} onChange={(e) => setSignerId(e.target.value)}>
+        <option value="">{t("pmSignSelectSigner")}</option>
+        {active.map((s) => <option key={s.id} value={s.id}>{s.fullName}{s.jobTitle ? ` — ${s.jobTitle}` : ""}</option>)}
+      </select>
+      <button type="button" className="pr-btn" disabled={busy || !signerId} onClick={handleSign}>
+        <Fingerprint size={13} /> {busy ? t("pmSignVerifying") : t("pmSignWithBiometric")}
+      </button>
+      {err && <div style={{ color: THEME.danger, fontSize: 10.5 }}>{err}</div>}
+    </div>
+  );
+}
+
 const CSS = `
 .pr-sec{border:1px solid var(--ihms-border,#20404f);border-radius:10px;overflow:hidden;margin-bottom:12px}
 .pr-sec-h{background:var(--ihms-navy,#0f2a3a);color:#e4eef2;font-size:11.5px;font-weight:800;padding:7px 12px}
@@ -194,6 +249,7 @@ const CSS = `
 .pr-sig{font-size:12px;color:var(--ihms-text,#e9eff2)}
 .pr-sig b{margin-inline-end:8px}
 .pr-mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10px;color:var(--ihms-text3,#6a8492)}
+.pr-sig-bio{display:inline-flex;align-items:center;gap:3px;margin-inline-start:8px;font-size:9.5px;font-weight:700;color:var(--ihms-ok,#3ecf8e)}
 .pr-ck{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:var(--ihms-text2,#9fb3bd);cursor:pointer}
 .pr-btn{border:1px solid var(--ihms-border,#20404f);background:transparent;color:var(--ihms-text2,#9fb3bd);border-radius:7px;
   padding:5px 10px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px}

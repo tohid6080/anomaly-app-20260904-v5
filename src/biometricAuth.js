@@ -105,6 +105,34 @@ export async function disableBiometricLogin() {
 // اعتبار ورود بیومتریک را باطل کند، نه فقط نشست جاری را پاک کند.
 export const invalidateBiometricOnLogout = disableBiometricLogin;
 
+// تأیید بیومتریکِ لحظه‌ای برای امضایِ دیجیتالِ Permit — بدونِ بازیابیِ
+// اعتبارنامه‌ی ورود (کاری به Keystore ندارد). فقط می‌خواهیم درست پیش از
+// ثبتِ امضا مطمئن شویم شخصِ حاضر، صاحبِ همین گوشی است — تا کسِ دیگری با
+// گوشیِ فردِ دیگر به‌جایِ او امضا نکند. عمداً مستقل از ورودِ بیومتریک است:
+// حتی اگر ورودِ بیومتریک برایِ این دستگاه فعال نباشد، امضا همچنان یک
+// verifyIdentity تازه می‌خواهد.
+export async function verifyBiometricForSigning(signerName) {
+  if (!isNative()) return { __error: true, message: tr("bioErrNativeOnly") };
+  const avail = await isBiometricAvailable();
+  if (!avail.available) {
+    return {
+      __error: true,
+      message: avail.reason === "not_available" ? tr("bioErrNotSupported") : tr("bioErrHardwareCheck"),
+    };
+  }
+  try {
+    await NativeBiometric.verifyIdentity({
+      reason: tr("bioReasonSign"),
+      title: tr("bioTitleSign"),
+      subtitle: signerName || "",
+      description: tr("bioDescVerify"),
+    });
+    return { ok: true };
+  } catch {
+    return { __error: true, cancelled: true, message: tr("bioErrVerifyCancelledSign") };
+  }
+}
+
 // گیت ورود بیومتریک: یک تأیید واقعی می‌گیرد؛ در صورت موفقیت، اعتبارنامه‌ی
 // ذخیره‌شده را برمی‌گرداند تا فراخوان (BiometricGateScreen در App.jsx)
 // همان را به attemptCredentialLogin واقعی بدهد.
