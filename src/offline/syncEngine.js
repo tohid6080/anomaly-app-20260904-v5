@@ -48,6 +48,13 @@ export const MODULE_TABLE_MAP = {
   permitTemplates: { table: "permit_templates", idField: "id" },
   permitRenewals: { table: "permit_renewals", idField: "id" },
   permitSigners: { table: "permit_authorized_signers", idField: "id" },
+  pssrs: { table: "pssrs", idField: "id" },
+  pssrTeamMembers: { table: "pssr_team_members", idField: "id" },
+  pssrMeetings: { table: "pssr_meetings", idField: "id" },
+  pssrChecklistResponses: { table: "pssr_checklist_responses", idField: "id" },
+  pssrActionItems: { table: "pssr_action_items", idField: "id" },
+  pssrActionHistory: { table: "pssr_action_history", idField: "id" },
+  pssrNotifications: { table: "pssr_notifications", idField: "id" },
   // future modules register here once built
 };
 

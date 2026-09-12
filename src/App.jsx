@@ -18,6 +18,7 @@ const PersonnelForm = lazy(() => import("./personnel/PersonnelForm.jsx"));
 const PersonnelDashboard = lazy(() => import("./personnel/PersonnelDashboard.jsx"));
 const ProactiveIndicatorsDashboard = lazy(() => import("./proactiveIndicators/ProactiveIndicatorsDashboard.jsx"));
 const IncidentsListPage = lazy(() => import("./incidents/IncidentsListPage.jsx"));
+const PSSRListPage = lazy(() => import("./pssr/PSSRListPage.jsx"));
 import { loadHomeKpiSummary } from "./dashboard/homeKpiApi.js";
 import { loadModuleConfig, loadDashboardConfig, loadNotificationTypes, loadAppearanceConfig, applyAppearanceToDom, effectiveAppearance, cacheAppearanceConfig, readCachedAppearanceConfig, syncAppearanceNow, loadActiveAnnouncements, loadDashboardWidgetConfig } from "./systemConfigApi.js";
 import { mergeWidgetConfig, defaultWidgetConfig } from "./dashboard/dashboardWidgets.js";
@@ -204,6 +205,15 @@ const HSE_MODULES = [
     icon: true,
     sub: [
       { key: "incidentsList", label: "فهرست حوادث", labelKey: "subIncidentsList" },
+    ],
+  },
+  {
+    key: "pssrManagement",
+    label: "بازبینی ایمنی پیش از راه‌اندازی (PSSR)",
+    labelKey: "modulePssr",
+    icon: true,
+    sub: [
+      { key: "pssrList", label: "لیست PSSR", labelKey: "subPssrList" },
     ],
   },
   {
@@ -5156,6 +5166,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
           onBack={() => setView("menu")} />
       )}
       {view === "incidentsList" && <IncidentsListPage wide={isDesktop} currentUser={currentUser} role="EMPLOYER" readOnly={!canEdit} />}
+      {view === "pssrList" && <PSSRListPage wide={isDesktop} currentUser={currentUser} role="EMPLOYER" readOnly={!canEdit || getAccessLevel(permMap, "pssrManagement") === "view"} />}
       {!isDesktop && view === "machineryDashboard" && (
         <MachineryDashboard onBack={() => setView("machineryManagement")} currentUser={currentUser} role="EMPLOYER" readOnly={!canEdit || getAccessLevel(permMap, "machineryManagement") === "view"} initialApprovalFilter={navFilter?.module === "machinery" ? navFilter.approvalFilter : undefined} initialContractorFilter={navFilter?.module === "machinery" ? navFilter.contractorFilter : undefined} />
       )}
@@ -5510,6 +5521,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
           onBack={() => setView("menu")} />
       )}
       {view === "incidentsList" && <IncidentsListPage wide={isDesktop} currentUser={currentUser} role="CONTRACTOR" readOnly={false} />}
+      {view === "pssrList" && <PSSRListPage wide={isDesktop} currentUser={currentUser} role="CONTRACTOR" readOnly={getAccessLevel(permMap, "pssrManagement") === "view"} />}
       {!isDesktop && view === "machineryDashboard" && <MachineryDashboard onBack={() => setView("machineryManagement")} currentUser={currentUser} role="CONTRACTOR" readOnly={getAccessLevel(permMap, "machineryManagement") === "view"} initialApprovalFilter={navFilter?.module === "machinery" ? navFilter.approvalFilter : undefined} />}
       {view === "scaffoldDashboard" && <ScaffoldDashboard wide={isDesktop} onBack={() => setView("scaffoldManagement")} currentUser={currentUser} role="CONTRACTOR" readOnly={getAccessLevel(permMap, "scaffoldManagement") === "view"} initialStatusFilter={navFilter?.module === "scaffold" ? navFilter.statusFilter : undefined} />}
       {view === "managementDashboard" && <HomeDashboard role="CONTRACTOR" currentUser={currentUser} onNavigate={handleHomeNavigate} onBack={() => setView("menu")} />}

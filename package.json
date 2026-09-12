@@ -20,6 +20,7 @@
     "@capacitor/share": "^6.0.2",
     "@capacitor/splash-screen": "^6.0.3",
     "@capgo/capacitor-native-biometric": "^6.0.4",
+    "@supabase/supabase-js": "^2.116.0",
     "exceljs": "^4.4.0",
     "jszip": "^3.10.1",
     "lucide-react": "^0.383.0",

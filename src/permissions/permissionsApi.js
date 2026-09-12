@@ -28,6 +28,7 @@ export const PERMISSION_MODULES = [
   { key: "proactiveIndicators", labelKey: "moduleProactiveIndicators" },
   { key: "machineryManagement", labelKey: "moduleMachinery" },
   { key: "scaffoldManagement", labelKey: "moduleScaffold" },
+  { key: "pssrManagement", labelKey: "modulePssr" },
   { key: "managementDashboard", labelKey: "moduleManagementDashboard" },
   { key: "operationalDashboard", labelKey: "moduleOperationalDashboard" },
 ];
