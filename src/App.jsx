@@ -143,7 +143,12 @@ const HSE_MODULES = [
     icon: true,
     sub: [
       { key: "anomalyForm", label: "ثبت آنومالی", labelKey: "subAnomalyForm", employerOnly: true },
-      { key: "anomalyList", label: "لیست آنومالی‌ها", labelKey: "subAnomalyList" },
+      // برای کارفرمایی که خودِ «ثبت آنومالی» را می‌بیند، این ردیف جدا دیگر
+      // نشان داده نمی‌شود — چون هر دو (فرم + لیست) در همان صفحه‌ی ترکیبیِ
+      // anomalyWebCombined با هم می‌آیند (هم در دسکتاپ، هم بعدِ ثبتِ موبایل).
+      // پیمانکار (که اصلاً «ثبت» ندارد) همچنان همین ردیف را می‌بیند —
+      // hideWhenEditable فقط در فیلترهای سمتِ کارفرما اثر دارد.
+      { key: "anomalyList", label: "لیست آنومالی‌ها", labelKey: "subAnomalyList", hideWhenEditable: true },
       { key: "correctiveActionsList", label: "لیست اقدامات اصلاحی", labelKey: "subCorrectiveActionsList" },
     ],
   },
@@ -163,9 +168,15 @@ const HSE_MODULES = [
     label: "مدیریت ورود و تردد پرسنل",
     labelKey: "modulePersonnelAccess",
     icon: true,
+    // «ثبت پرسنل جدید» و «لیست پرسنل» یک ردیفِ سایدبار شدند چون هر دو در
+    // همان صفحه‌ی ترکیبیِ personnelWebCombined با هم می‌آیند (دسکتاپ). ردیفِ
+    // نمایش‌داده‌شده بسته به سطحِ دسترسیِ کاربر به همین ماژول عوض می‌شود: کسی
+    // که فقط دسترسیِ «مشاهده» دارد (نه ویرایش) همچنان «لیست پرسنل» می‌بیند —
+    // چون فرمِ ثبت برای او در موبایل رندر نمی‌شود (نگاه کن به personnelForm
+    // در رندرِ ContractorDashboard) و نباید تنها گزینه‌اش صفحه‌ی خالی باشد.
     sub: [
-      { key: "personnelDashboard", label: "لیست پرسنل", labelKey: "subPersonnelList" },
-      { key: "personnelForm", label: "ثبت پرسنل جدید", labelKey: "subPersonnelForm" },
+      { key: "personnelForm", label: "ثبت پرسنل جدید", labelKey: "subPersonnelForm", hideWhenViewOnly: true },
+      { key: "personnelDashboard", label: "لیست پرسنل", labelKey: "subPersonnelList", showOnlyWhenViewOnly: true },
     ],
   },
   {
@@ -491,6 +502,18 @@ async function loadAnomaliesOfflineFirst() {
 }
 
 
+
+// یک زیرمنو ممکن است فقط برای حالتِ «مشاهده» (showOnlyWhenViewOnly) یا فقط
+// برای حالتِ «ویرایش» (hideWhenViewOnly) نشان داده شود — برای زیرماژول‌هایی
+// که فرم+لیست را در یک ردیف ادغام کرده‌اند (مثلِ «ثبت پرسنل جدید») ولی
+// نسخه‌ی فقط-فرم برای کاربرِ view-only در موبایل چیزی رندر نمی‌کند، پس باید
+// به‌جایش همان ردیفِ لیست را ببیند. بدونِ این دو پرچم (اکثرِ زیرمنوها)، همیشه true.
+function subViewOnlyOk(sub, mod, permMap) {
+  if (!sub.showOnlyWhenViewOnly && !sub.hideWhenViewOnly) return true;
+  const viewOnly = getAccessLevel(permMap, mod.key) === "view";
+  if (sub.showOnlyWhenViewOnly) return viewOnly;
+  return !viewOnly;
+}
 
 /**
  * Smart, live-computed notifications — NOT stored anywhere, recalculated
@@ -4824,7 +4847,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
 
   const anomalyMod = HSE_MODULES.find((m) => m.key === "anomalyReport");
   const anomalyCanEdit = canEdit && getAccessLevel(permMap, "anomalyReport") !== "view";
-  const anomalySub = anomalyMod.sub.filter((s) => anomalyCanEdit || !s.employerOnly);
+  const anomalySub = anomalyMod.sub.filter((s) => (anomalyCanEdit || !s.employerOnly) && !(s.hideWhenEditable && anomalyCanEdit));
   const riskMod = HSE_MODULES.find((m) => m.key === "riskAssessment");
   const personnelMod = HSE_MODULES.find((m) => m.key === "personnelAccess");
   const machineryMod = HSE_MODULES.find((m) => m.key === "machineryManagement");
@@ -4936,7 +4959,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       label: mt(mod),
       badge: mod.key === "chat" ? chatUnread : undefined,
       muted: mod.employerOnly && !canEdit,
-      sub: mod.sub ? mod.sub.filter((s) => canEdit || !s.employerOnly).map((s) => ({ key: s.key, label: mt(s) })) : undefined,
+      sub: mod.sub ? mod.sub.filter((s) => (canEdit || !s.employerOnly) && !(s.hideWhenEditable && canEdit) && subViewOnlyOk(s, mod, permMap)).map((s) => ({ key: s.key, label: mt(s) })) : undefined,
     })),
     systemManagementEntry,
   ].filter(Boolean), moduleConfig);
@@ -5055,7 +5078,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(personnelMod)}</h3>
           <div style={styles.menuList2}>
-            {personnelMod.sub.map((s) => (
+            {personnelMod.sub.filter((s) => subViewOnlyOk(s, personnelMod, permMap)).map((s) => (
               <MenuRow key={s.key} icon={Users} label={mt(s)} onClick={() => setView(s.key)} accent />
             ))}
           </div>
@@ -5334,7 +5357,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
     label: mt(mod),
     badge: mod.key === "chat" ? chatUnread : undefined,
     muted: !!mod.employerOnly,
-    sub: mod.sub ? mod.sub.filter((s) => !s.employerOnly).map((s) => ({ key: s.key, label: mt(s) })) : undefined,
+    sub: mod.sub ? mod.sub.filter((s) => !s.employerOnly && subViewOnlyOk(s, mod, permMap)).map((s) => ({ key: s.key, label: mt(s) })) : undefined,
   })), moduleConfig);
 
   const bottomNavCandidates = (() => {
@@ -5400,7 +5423,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(personnelMod)}</h3>
           <div style={styles.menuList2}>
-            {personnelMod.sub.map((s) => (
+            {personnelMod.sub.filter((s) => subViewOnlyOk(s, personnelMod, permMap)).map((s) => (
               <MenuRow key={s.key} icon={Users} label={mt(s)} onClick={() => setView(s.key)} accent />
             ))}
           </div>
