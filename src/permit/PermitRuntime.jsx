@@ -9,11 +9,13 @@ import { verifyBiometricForSigning } from "../biometricAuth.js";
  * Renderer گرید/جدولیِ فرمِ مجوز کار — Section → Row(۱۲ ستون) → Cell(span) → Field.
  * props: schema, values, onChange(fieldId, value), errors, readOnly, riskOptions,
  * personOptions — riskOptions/personOptions فقط برای فیلدهایی که bindTo="riskRef"
- * یا type="person" دارند استفاده می‌شوند. contractorSigners/isNativeApp فقط
- * برای فیلدِ signature با config.signerRole="contractor" (امضایِ پیمانکار،
+ * یا type="person" دارند استفاده می‌شوند. mySigner/currentUserName/isNativeApp
+ * فقط برای فیلدِ signature با config.signerRole="contractor" (امضایِ پیمانکار،
  * امنیتِ امضا — نگاه کن به توضیحِ ContractorSignatureField پایینِ همین فایل).
+ * mySigner: ردیفِ permit_authorized_signers برایِ همین حسابِ لاگین‌کرده،
+ * یا null اگر این حساب مجاز به امضا نیست/در مرخصی است.
  */
-export default function PermitRuntime({ schema, values, onChange, errors, readOnly, riskOptions, personOptions, contractorSigners, isNativeApp }) {
+export default function PermitRuntime({ schema, values, onChange, errors, readOnly, riskOptions, personOptions, mySigner, currentUserName, isNativeApp }) {
   const { t, dir } = useLanguage();
   const v = values || {};
   const err = errors || {};
@@ -31,7 +33,7 @@ export default function PermitRuntime({ schema, values, onChange, errors, readOn
                 <div key={ci} className="pr-cell" style={{ gridColumn: `span ${Math.min(12, Math.max(1, c.span || 12))}` }}>
                   {c.kind === "field" && c.field
                     ? <Field f={c.field} value={v[c.field.id]} onChange={(val) => set(c.field.id, val)} error={err[c.field.id]} readOnly={readOnly} dir={dir} t={t}
-                        riskOptions={riskOptions} personOptions={personOptions} contractorSigners={contractorSigners} isNativeApp={isNativeApp} />
+                        riskOptions={riskOptions} personOptions={personOptions} mySigner={mySigner} currentUserName={currentUserName} isNativeApp={isNativeApp} />
                     : <span className="pr-lbl">{c.label || ""}</span>}
                 </div>
               ))}
@@ -43,7 +45,7 @@ export default function PermitRuntime({ schema, values, onChange, errors, readOn
   );
 }
 
-function Field({ f, value, onChange, error, readOnly, dir, t, riskOptions, personOptions, contractorSigners, isNativeApp }) {
+function Field({ f, value, onChange, error, readOnly, dir, t, riskOptions, personOptions, mySigner, currentUserName, isNativeApp }) {
   const label = (
     <div className="pr-flbl">{f.label || f.id}{f.required && <span style={{ color: THEME.danger }}> *</span>}</div>
   );
@@ -61,7 +63,7 @@ function Field({ f, value, onChange, error, readOnly, dir, t, riskOptions, perso
     const sig = value && typeof value === "object" ? value : null;
     const isContractorField = f.config?.signerRole === "contractor";
     if (isContractorField && !readOnly && !sig) {
-      return box(<ContractorSignatureField signers={contractorSigners} isNativeApp={isNativeApp} onSign={onChange} t={t} dir={dir} />);
+      return box(<ContractorSignatureField mySigner={mySigner} currentUserName={currentUserName} isNativeApp={isNativeApp} onSign={onChange} t={t} />);
     }
     return box(
       readOnly || sig ? (
@@ -200,32 +202,24 @@ function Field({ f, value, onChange, error, readOnly, dir, t, riskOptions, perso
  * تازه (verifyBiometricForSigning). آزادانه‌نوشتنِ نام مثلِ فیلدِ عمومیِ
  * signature اینجا عمداً حذف شده — دقیقاً همان چیزی که این تغییر می‌خواست رفع کند.
  */
-function ContractorSignatureField({ signers, isNativeApp, onSign, t, dir }) {
-  const [signerId, setSignerId] = useState("");
+function ContractorSignatureField({ mySigner, currentUserName, isNativeApp, onSign, t }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
-  const active = (signers || []).filter((s) => s.status === "active");
 
   if (!isNativeApp) return <div className="pr-sig" style={{ color: THEME.warn, fontSize: 11 }}>{t("pmSignMobileOnly")}</div>;
-  if (active.length === 0) return <div className="pr-sig" style={{ color: THEME.warn, fontSize: 11 }}>{t("pmSignNoSigners")}</div>;
+  if (!mySigner || mySigner.status !== "active") return <div className="pr-sig" style={{ color: THEME.warn, fontSize: 11 }}>{t("pmSignNoSigners")}</div>;
 
   const handleSign = async () => {
-    const signer = active.find((s) => s.id === signerId);
-    if (!signer) { setErr(t("pmSignSelectSigner")); return; }
     setBusy(true); setErr("");
-    const res = await verifyBiometricForSigning(signer.fullName);
+    const res = await verifyBiometricForSigning(currentUserName);
     setBusy(false);
     if (res?.__error) { setErr(res.message); return; }
-    onSign({ name: signer.fullName, jobTitle: signer.jobTitle, signerId: signer.id, at: new Date().toISOString(), verifiedBiometric: true });
+    onSign({ name: currentUserName, jobTitle: mySigner.jobTitle, signerId: mySigner.id, at: new Date().toISOString(), verifiedBiometric: true });
   };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      <select style={styles.input} value={signerId} dir={dir} disabled={busy} onChange={(e) => setSignerId(e.target.value)}>
-        <option value="">{t("pmSignSelectSigner")}</option>
-        {active.map((s) => <option key={s.id} value={s.id}>{s.fullName}{s.jobTitle ? ` — ${s.jobTitle}` : ""}</option>)}
-      </select>
-      <button type="button" className="pr-btn" disabled={busy || !signerId} onClick={handleSign}>
+      <button type="button" className="pr-btn" disabled={busy} onClick={handleSign}>
         <Fingerprint size={13} /> {busy ? t("pmSignVerifying") : t("pmSignWithBiometric")}
       </button>
       {err && <div style={{ color: THEME.danger, fontSize: 10.5 }}>{err}</div>}

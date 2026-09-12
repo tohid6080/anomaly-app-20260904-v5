@@ -196,8 +196,7 @@ const pairsToMods = (pairs) => pairs.map(([title, desc], i) => ({ title, desc, c
 const pickIcon = (arr, i) => arr[i] || arr[arr.length - 1];
 
 // روی‌هم‌گذاریِ متنِ ویرایش‌شده از «مدیریتِ صفحه اصلی سامانه» (SuperAdmin)
-// روی پیش‌فرضِ استاتیکِ همین فایل — فقط برای fa/en (طبقِ محدودیتِ دوزبانه‌ی
-// پروژه)؛ آلمانی همیشه همان پیش‌فرضِ ثابت می‌ماند. هر فیلد که سوپرادمین
+// روی پیش‌فرضِ استاتیکِ همین فایل — برایِ هر سه زبان (fa/en/de). هر فیلد که سوپرادمین
 // هنوز چیزی برایش ذخیره نکرده (رشته‌ی خالی/آرایه‌ی خالی/نبودن)، دقیقاً
 // همان مقدارِ پیش‌فرضِ کد را نشان می‌دهد — بدونِ رگرسیون.
 function mergeLandingContent(base, ov) {
@@ -562,8 +561,8 @@ const L = {
 // خروجیِ همین آبجکتِ L برای «مدیریتِ صفحه اصلی سامانه» در SuperAdmin —
 // تا وقتی سوپرادمین چیزی ذخیره نکرده، ویرایشگر همین متنِ واقعیِ زنده را
 // به‌عنوانِ نقطه‌ی شروع نشان می‌دهد (نه فیلدهای خالی)، بدونِ تکرارِ محتوا
-// در دو فایل. فقط fa/en (طبقِ محدودیتِ دوزبانه‌ی پروژه؛ de مدیریت نمی‌شود).
-export const LANDING_DEFAULTS = { fa: L.fa, en: L.en };
+// در دو فایل. هر سه زبان (fa/en/de) قابلِ مدیریت‌اند.
+export const LANDING_DEFAULTS = { fa: L.fa, en: L.en, de: L.de };
 
 const LANG_OPTIONS = [
   { code: "fa", label: "فارسی" },
@@ -665,7 +664,7 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
   const [landingOverride, setLandingOverride] = useState(null);
   useEffect(() => { loadLandingPageContent().then(setLandingOverride).catch(() => setLandingOverride(null)); }, []);
   const base = L[lang] || L.fa;
-  const ov = lang === "fa" || lang === "en" ? landingOverride?.[lang] : null;
+  const ov = landingOverride?.[lang] || null;
   const x = useMemo(() => mergeLandingContent(base, ov), [base, ov]);
 
   useEffect(() => {

@@ -30,6 +30,7 @@ export default function LandingPageManagementTab({ currentAdmin }) {
     const merged = {
       fa: { ...LANDING_DEFAULTS.fa, ...(saved?.fa || {}) },
       en: { ...LANDING_DEFAULTS.en, ...(saved?.en || {}) },
+      de: { ...LANDING_DEFAULTS.de, ...(saved?.de || {}) },
     };
     setBaseline(merged);
     setDraft(JSON.parse(JSON.stringify(merged)));
@@ -39,6 +40,9 @@ export default function LandingPageManagementTab({ currentAdmin }) {
   if (!draft) return <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("commonLoading")}</p>;
 
   const d = draft[activeLang];
+  // جهتِ فیلدهایِ متنی از زبانِ محتوایی که در حالِ ویرایش‌اش هستیم می‌آید
+  // (نه زبانِ خودِ پنلِ سوپرادمین) — آلمانی/انگلیسی همیشه LTR تایپ می‌شوند.
+  const contentDir = activeLang === "fa" ? "rtl" : "ltr";
   const setField = (patch) => setDraft((prev) => ({ ...prev, [activeLang]: { ...prev[activeLang], ...patch } }));
   const setItem = (key, idx, value) => setField({ [key]: d[key].map((x, i) => (i === idx ? value : x)) });
   const removeItem = (key, idx) => setField({ [key]: d[key].filter((_, i) => i !== idx) });
@@ -67,7 +71,7 @@ export default function LandingPageManagementTab({ currentAdmin }) {
 
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
         <div style={{ display: "inline-flex", background: THEME.surface2, border: `1px solid ${THEME.border}`, borderRadius: 9, padding: 3, gap: 3 }}>
-          {["fa", "en"].map((l) => (
+          {["fa", "en", "de"].map((l) => (
             <button key={l} type="button" onClick={() => setActiveLang(l)}
               style={{ border: "none", borderRadius: 7, padding: "6px 16px", fontFamily: THEME.font, fontSize: 12, fontWeight: 800, cursor: "pointer",
                 background: activeLang === l ? THEME.teal : "transparent", color: activeLang === l ? "#fff" : THEME.text2 }}>{l.toUpperCase()}</button>
@@ -79,28 +83,28 @@ export default function LandingPageManagementTab({ currentAdmin }) {
       {message && <p style={{ fontSize: 11.5, color: msgErr ? THEME.danger : THEME.ok, marginBottom: 10 }}>{message}</p>}
 
       <Section title={t("lpSecHero")}>
-        <Field label={t("lpHeroEyebrow")} value={d.heroEyebrow} onChange={(v) => setField({ heroEyebrow: v })} dir={dir} />
+        <Field label={t("lpHeroEyebrow")} value={d.heroEyebrow} onChange={(v) => setField({ heroEyebrow: v })} dir={contentDir} />
         <Row>
-          <Field label={t("lpHeroH1a")} value={d.heroH1a} onChange={(v) => setField({ heroH1a: v })} dir={dir} />
-          <Field label={t("lpHeroH1b")} value={d.heroH1b} onChange={(v) => setField({ heroH1b: v })} dir={dir} />
+          <Field label={t("lpHeroH1a")} value={d.heroH1a} onChange={(v) => setField({ heroH1a: v })} dir={contentDir} />
+          <Field label={t("lpHeroH1b")} value={d.heroH1b} onChange={(v) => setField({ heroH1b: v })} dir={contentDir} />
         </Row>
-        <Field label={t("lpHeroLede")} value={d.heroLede} onChange={(v) => setField({ heroLede: v })} dir={dir} textarea />
+        <Field label={t("lpHeroLede")} value={d.heroLede} onChange={(v) => setField({ heroLede: v })} dir={contentDir} textarea />
         <Row>
-          <Field label={t("lpCtaPrimary")} value={d.ctaPrimary} onChange={(v) => setField({ ctaPrimary: v })} dir={dir} />
-          <Field label={t("lpCtaPlans")} value={d.ctaPlans} onChange={(v) => setField({ ctaPlans: v })} dir={dir} />
-          <Field label={t("lpCtaSecondary")} value={d.ctaSecondary} onChange={(v) => setField({ ctaSecondary: v })} dir={dir} />
+          <Field label={t("lpCtaPrimary")} value={d.ctaPrimary} onChange={(v) => setField({ ctaPrimary: v })} dir={contentDir} />
+          <Field label={t("lpCtaPlans")} value={d.ctaPlans} onChange={(v) => setField({ ctaPlans: v })} dir={contentDir} />
+          <Field label={t("lpCtaSecondary")} value={d.ctaSecondary} onChange={(v) => setField({ ctaSecondary: v })} dir={contentDir} />
         </Row>
-        <StringListEditor label={t("lpTicks")} items={d.ticks} dir={dir} t={t}
+        <StringListEditor label={t("lpTicks")} items={d.ticks} dir={contentDir} t={t}
           onChange={(i, v) => setItem("ticks", i, v)} onRemove={(i) => removeItem("ticks", i)} onAdd={() => addItem("ticks", "")} />
       </Section>
 
       <Section title={t("lpSecWhy")} countLabel={`${d.why.length}`}>
-        <TupleListEditor items={d.why} dir={dir} t={t}
+        <TupleListEditor items={d.why} dir={contentDir} t={t}
           onChange={(i, v) => setItem("why", i, v)} onRemove={(i) => removeItem("why", i)} onAdd={() => addItem("why", ["", ""])} />
       </Section>
 
       <Section title={t("lpSecFlow")} countLabel={`${d.flow.length}`}>
-        <TupleListEditor items={d.flow} dir={dir} t={t}
+        <TupleListEditor items={d.flow} dir={contentDir} t={t}
           onChange={(i, v) => setItem("flow", i, v)} onRemove={(i) => removeItem("flow", i)} onAdd={() => addItem("flow", ["", ""])} />
       </Section>
 
@@ -108,9 +112,9 @@ export default function LandingPageManagementTab({ currentAdmin }) {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 8 }}>
           {d.mods.map((m, i) => (
             <div key={i} style={{ background: THEME.surface2, border: `1px solid ${THEME.borderSoft}`, borderRadius: 10, padding: 9 }}>
-              <input style={{ ...styles.input, fontWeight: 700, marginBottom: 6 }} value={m.title} dir={dir}
+              <input style={{ ...styles.input, fontWeight: 700, marginBottom: 6 }} value={m.title} dir={contentDir}
                 onChange={(e) => setItem("mods", i, { ...m, title: e.target.value })} placeholder={t("lpFieldTitle")} />
-              <textarea style={{ ...styles.input, minHeight: 46, resize: "vertical", fontSize: 12 }} value={m.desc} dir={dir}
+              <textarea style={{ ...styles.input, minHeight: 46, resize: "vertical", fontSize: 12 }} value={m.desc} dir={contentDir}
                 onChange={(e) => setItem("mods", i, { ...m, desc: e.target.value })} placeholder={t("lpFieldDesc")} />
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
                 <select style={{ ...styles.filterSelect, fontSize: 11, padding: "5px 7px" }} value={m.category} dir={dir}
@@ -132,44 +136,44 @@ export default function LandingPageManagementTab({ currentAdmin }) {
       </Section>
 
       <Section title={t("lpSecTools")} countLabel={`${d.qtList.length}`}>
-        <StringListEditor items={d.qtList} dir={dir} t={t} chips
+        <StringListEditor items={d.qtList} dir={contentDir} t={t} chips
           onChange={(i, v) => setItem("qtList", i, v)} onRemove={(i) => removeItem("qtList", i)} onAdd={() => addItem("qtList", "")} />
       </Section>
 
       <Section title={t("lpSecShowcase")}>
-        <Field label={t("lpScTitle")} value={d.scH2} onChange={(v) => setField({ scH2: v })} dir={dir} />
-        <Field label={t("lpScDesc")} value={d.scPara} onChange={(v) => setField({ scPara: v })} dir={dir} textarea />
+        <Field label={t("lpScTitle")} value={d.scH2} onChange={(v) => setField({ scH2: v })} dir={contentDir} />
+        <Field label={t("lpScDesc")} value={d.scPara} onChange={(v) => setField({ scPara: v })} dir={contentDir} textarea />
         <div style={{ fontSize: 10.5, fontWeight: 700, color: THEME.text3, margin: "8px 0 4px" }}>{t("lpScFeatures")}</div>
-        <TupleListEditor items={d.scFeat} dir={dir} t={t}
+        <TupleListEditor items={d.scFeat} dir={contentDir} t={t}
           onChange={(i, v) => setItem("scFeat", i, v)} onRemove={(i) => removeItem("scFeat", i)} onAdd={() => addItem("scFeat", ["", ""])} />
       </Section>
 
       <Section title={t("lpSecMobile")}>
-        <Field label={t("lpScTitle")} value={d.mbH2} onChange={(v) => setField({ mbH2: v })} dir={dir} />
-        <Field label={t("lpScDesc")} value={d.mbPara} onChange={(v) => setField({ mbPara: v })} dir={dir} textarea />
+        <Field label={t("lpScTitle")} value={d.mbH2} onChange={(v) => setField({ mbH2: v })} dir={contentDir} />
+        <Field label={t("lpScDesc")} value={d.mbPara} onChange={(v) => setField({ mbPara: v })} dir={contentDir} textarea />
         <div style={{ fontSize: 10.5, fontWeight: 700, color: THEME.text3, margin: "8px 0 4px" }}>{t("lpScFeatures")}</div>
-        <TupleListEditor items={d.mbFeat} dir={dir} t={t}
+        <TupleListEditor items={d.mbFeat} dir={contentDir} t={t}
           onChange={(i, v) => setItem("mbFeat", i, v)} onRemove={(i) => removeItem("mbFeat", i)} onAdd={() => addItem("mbFeat", ["", ""])} />
-        <Field label={t("lpMbTag")} value={d.mbTag} onChange={(v) => setField({ mbTag: v })} dir={dir} />
+        <Field label={t("lpMbTag")} value={d.mbTag} onChange={(v) => setField({ mbTag: v })} dir={contentDir} />
       </Section>
 
       <Section title={t("lpSecTrust")} countLabel={`${d.trust.length}`}>
-        <StringListEditor items={d.trust} dir={dir} t={t}
+        <StringListEditor items={d.trust} dir={contentDir} t={t}
           onChange={(i, v) => setItem("trust", i, v)} onRemove={(i) => removeItem("trust", i)} onAdd={() => addItem("trust", "")} />
       </Section>
 
       <Section title={t("lpSecFinal")}>
-        <Field label={t("lpScTitle")} value={d.fH2} onChange={(v) => setField({ fH2: v })} dir={dir} />
-        <Field label={t("lpScDesc")} value={d.fP} onChange={(v) => setField({ fP: v })} dir={dir} textarea />
-        <Field label={t("lpFinalSub")} value={d.fSub} onChange={(v) => setField({ fSub: v })} dir={dir} />
+        <Field label={t("lpScTitle")} value={d.fH2} onChange={(v) => setField({ fH2: v })} dir={contentDir} />
+        <Field label={t("lpScDesc")} value={d.fP} onChange={(v) => setField({ fP: v })} dir={contentDir} textarea />
+        <Field label={t("lpFinalSub")} value={d.fSub} onChange={(v) => setField({ fSub: v })} dir={contentDir} />
       </Section>
 
       <Section title={t("lpSecFooter")}>
-        <Field label={t("lpFooterBlurb")} value={d.ftBlurb} onChange={(v) => setField({ ftBlurb: v })} dir={dir} textarea />
+        <Field label={t("lpFooterBlurb")} value={d.ftBlurb} onChange={(v) => setField({ ftBlurb: v })} dir={contentDir} textarea />
         <div style={{ fontSize: 10.5, fontWeight: 700, color: THEME.text3, margin: "8px 0 4px" }}>{t("lpFooterLinks")}</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 6 }}>
           {d.ftLinks.map((lnk, i) => (
-            <input key={i} style={styles.input} value={lnk} dir={dir} placeholder={FOOTER_LINK_HINTS[i] || ""}
+            <input key={i} style={styles.input} value={lnk} dir={contentDir} placeholder={FOOTER_LINK_HINTS[i] || ""}
               onChange={(e) => setItem("ftLinks", i, e.target.value)} />
           ))}
         </div>

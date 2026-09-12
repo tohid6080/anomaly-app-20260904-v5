@@ -35,7 +35,11 @@ export default function PermitWorkspace({ permitId, currentUser, readOnly, onBac
   const [posTitles, setPosTitles] = useState({});
   const [riskOptions, setRiskOptions] = useState([]);
   const [personOptions, setPersonOptions] = useState([]);
-  const [contractorSigners, setContractorSigners] = useState([]);
+  // امضایِ پیمانکار: نام/شغل از حسابِ لاگین‌کرده (contactPersonName، نه name
+  // که همان نامِ شرکت است)؛ mySigner = ردیفِ permit_authorized_signers برایِ
+  // همین حساب اگر ثبت و active باشد، وگرنه null (یعنی این حساب مجاز نیست).
+  const [mySigner, setMySigner] = useState(null);
+  const signerDisplayName = currentUser?.role === "CONTRACTOR" ? (currentUser?.contactPersonName || currentUser?.name || "") : actor;
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
@@ -73,10 +77,11 @@ export default function PermitWorkspace({ permitId, currentUser, readOnly, onBac
   useEffect(() => {
     loadBowtiesOfflineFirst().then((list) => setRiskOptions(list.map((b) => ({ id: b.id, title: b.title || b.topEvent || b.id })))).catch(() => setRiskOptions([]));
     loadPersonnelListOfflineFirst().then((list) => setPersonOptions([...new Set(list.map((p) => p.fullName).filter(Boolean))])).catch(() => setPersonOptions([]));
-    // امضایِ پیمانکار فقط از فهرستِ امضاهایِ مجازِ همان پیمانکار قابلِ انتخاب
-    // است؛ سایرِ نقش‌ها (کارفرما/سرپرستِ HSE) این فیلد را فقط readOnly می‌بینند.
+    // آیا همین حسابِ لاگین‌کرده در فهرستِ امضاهایِ مجاز است؟ چون هر حساب
+    // حداکثر یک‌بار می‌تواند امضاکننده باشد، این صفر یا یک ردیف برمی‌گرداند.
+    // سایرِ نقش‌ها (کارفرما/سرپرستِ HSE) این فیلد را فقط readOnly می‌بینند.
     if (currentUser?.role === "CONTRACTOR" && currentUser?.id) {
-      loadContractorSigners(currentUser.id).then(setContractorSigners).catch(() => setContractorSigners([]));
+      loadContractorSigners(currentUser.id).then((rows) => setMySigner(rows[0] || null)).catch(() => setMySigner(null));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -215,7 +220,7 @@ export default function PermitWorkspace({ permitId, currentUser, readOnly, onBac
       <div style={{ ...styles.cardWide, marginBottom: 12 }}>
         <PermitRuntime schema={template?.schema} values={draft.formData} errors={errors}
           readOnly={!editable} onChange={setField} riskOptions={riskOptions} personOptions={personOptions}
-          contractorSigners={contractorSigners} isNativeApp={isNativeApp} />
+          mySigner={mySigner} currentUserName={signerDisplayName} isNativeApp={isNativeApp} />
       </div>
 
       {/* تمدیدِ روزانه */}
