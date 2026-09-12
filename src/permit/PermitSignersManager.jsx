@@ -135,7 +135,7 @@ export default function PermitSignersManager({ currentUser, role, onBack, wide }
                       <select style={{ ...styles.filterSelect, fontSize: 11, padding: "4px 6px" }} value={s.substituteId || ""} dir={dir}
                         onChange={(e) => changeSubstitute(s, e.target.value)} disabled={busy}>
                         <option value="">{t("pmSignerSubstituteNone")}</option>
-                        {signers.filter((x) => x.id !== s.id).map((x) => <option key={x.id} value={x.id}>{x.fullName}</option>)}
+                        {signers.filter((x) => x.id !== s.id && x.contractorCompanyName === s.contractorCompanyName).map((x) => <option key={x.id} value={x.id}>{x.fullName}</option>)}
                       </select>
                     )}
                   </td>
