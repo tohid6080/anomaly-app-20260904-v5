@@ -682,3 +682,35 @@ export async function deleteAnnouncement(id) {
   if (!sbOk(rows)) return { __error: true, message: tr("scErrDeleteAnnouncement") };
   return { ok: true };
 }
+
+// ---------- محتوای صفحه اصلی سامانه (LandingPage.jsx، صفحه‌ی فرودِ عمومی) ----------
+// طبق الزام «از ساختارهای موجود استفاده کن»: هیچ جدولِ جدیدی ساخته
+// نمی‌شود — دقیقاً مثلِ appearance_*، یک ردیفِ دیگر در همان system_settings
+// (key-value سراسری، از قبل خواندنیِ عمومی پیش از ورود و نوشتنیِ فقط
+// سوپرادمین). چون شکلِ داده تودرتو است (آرایه‌های چندسطحی)، به‌جایِ باز
+// کردنش به ده‌ها ستون، کلِ آبجکت یک‌جا JSON.stringify و در یک value_text
+// ذخیره می‌شود — همان الگویی که مدل‌های JSONBِ سایرِ ماژول‌ها (schema در
+// survey/permit) هم دنبال می‌کنند.
+const LANDING_CONTENT_KEY = "landing_page_content";
+
+export async function loadLandingPageContent() {
+  let rows = null;
+  try {
+    rows = await sb(`system_settings?key=eq.${LANDING_CONTENT_KEY}&select=value_text`);
+  } catch { rows = null; }
+  if (!sbOk(rows) || rows.length === 0 || !rows[0].value_text) return null;
+  try { return JSON.parse(rows[0].value_text); } catch { return null; }
+}
+
+export async function saveLandingPageContent(content, updatedBy) {
+  const payload = [{
+    key: LANDING_CONTENT_KEY,
+    value_text: JSON.stringify(content || {}),
+    value_numeric: null,
+    updated_at: new Date().toISOString(),
+    updated_by: updatedBy || "",
+  }];
+  const rows = await sb("system_settings?on_conflict=key", { method: "POST", body: JSON.stringify(payload), prefer: "resolution=merge-duplicates,return=representation" }, "super_admin");
+  if (!sbOk(rows)) return { __error: true, message: tr("scErrSaveLanding") };
+  return { ok: true };
+}

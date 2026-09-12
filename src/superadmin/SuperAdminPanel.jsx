@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useId, useContext, createContext } from "react";
-import { ShieldAlert, Plus, LogOut, Send, CreditCard, AlertTriangle, UserPlus, KeyRound, Layers, Trash2, History, Activity, TrendingDown, Clock, LogIn, ShieldX, LayoutDashboard, Building2, Users, FileClock, ChevronLeft, HardDrive, RefreshCw, Settings2, Copy, GripVertical, ArrowUp, ArrowDown, RotateCcw, Eye, EyeOff, LayoutGrid, PanelsTopLeft, Bell, Palette, Megaphone, Sparkles, Gift, Info, ImagePlus, X, ClipboardList, Smartphone, UploadCloud, CheckCircle2, Download } from "lucide-react";
+import { ShieldAlert, Plus, LogOut, Send, CreditCard, AlertTriangle, UserPlus, KeyRound, Layers, Trash2, History, Activity, TrendingDown, Clock, LogIn, ShieldX, LayoutDashboard, Building2, Users, FileClock, ChevronLeft, HardDrive, RefreshCw, Settings2, Copy, GripVertical, ArrowUp, ArrowDown, RotateCcw, Eye, EyeOff, LayoutGrid, PanelsTopLeft, Bell, Palette, Megaphone, Sparkles, Gift, Info, ImagePlus, X, ClipboardList, Smartphone, UploadCloud, CheckCircle2, Download, Globe } from "lucide-react";
 import { loadAppReleases, createAppRelease, setReleasePublished, deleteAppRelease, loadLatestPublishedRelease, nextPatchVersion, triggerMobileBuild } from "./appReleaseApi.js";
 import { APP_VERSION, APP_VERSION_CODE } from "../shared.js";
 import { THEME, usePersistedState } from "../shared.js";
@@ -10,6 +10,7 @@ import { uploadBase64ToStorage, deleteFromStorage, parseStorageUrl } from "../of
 import AccountManagement from "./AccountManagement.jsx";
 import PricingConsole from "./PricingConsole.jsx";
 import AdminAnalytics from "../admin/AdminAnalytics.jsx";
+import LandingPageManagementTab from "./LandingPageManagementTab.jsx";
 import { toJalaliSafe, toJalaliDateTime, JalaliDateInput } from "../personnel/jalaliDate.jsx";
 import {
   loadCompanies, createCompany, updateCompany, deleteCompanySecure, setCompanyActive,
@@ -1211,6 +1212,7 @@ function CompaniesPage({
 // روی همان جدول system_announcements موجود، بدون هیچ ساختار موازی.
 const SYSTEM_CONFIG_TABS = [
   { key: "modules", labelKey: "saScTabModules", icon: LayoutGrid },
+  { key: "landing", labelKey: "saScTabLanding", icon: Globe },
   { key: "dashboard", labelKey: "saScTabDashboard", icon: PanelsTopLeft },
   { key: "notifications", labelKey: "saScTabNotifications", icon: Bell },
   { key: "appearance", labelKey: "saScTabAppearance", icon: Palette },
@@ -1238,6 +1240,7 @@ function SystemConfigPage({ currentAdmin, companies }) {
         ))}
       </div>
       {tab === "modules" && <ModuleManagementTab currentAdmin={currentAdmin} />}
+      {tab === "landing" && <LandingPageManagementTab currentAdmin={currentAdmin} />}
       {tab === "dashboard" && <DashboardManagementTab currentAdmin={currentAdmin} />}
       {tab === "notifications" && <NotificationManagementTab currentAdmin={currentAdmin} />}
       {tab === "appearance" && <AppearanceManagementTab currentAdmin={currentAdmin} />}

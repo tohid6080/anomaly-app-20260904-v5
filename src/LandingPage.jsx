@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle, ClipboardCheck, ListChecks, Wrench, GraduationCap, Users,
   FileCheck, HardHat, Boxes, MessagesSquare, FolderOpen, UserCog, LayoutDashboard,
@@ -6,6 +6,7 @@ import {
   Zap, Database, FileBarChart, Recycle, Layers, TrendingUp, Bell, Globe, Tag,
 } from "lucide-react";
 import { useLanguage } from "./i18n/LanguageContext.jsx";
+import { loadLandingPageContent } from "./systemConfigApi.js";
 
 /* ------------------------------------------------------------------ *
  * صفحهٔ فرودِ عمومیِ IHMS — Enterprise SaaS، سه‌زبانه (فا/EN/DE)، تمِ
@@ -178,15 +179,62 @@ const LP_CSS = `
 `;
 
 /* ------------------------------ i18n ------------------------------ */
-const MOD_ICONS = [
-  AlertTriangle, Layers, ClipboardCheck, Wrench, GraduationCap, Users, FileCheck,
-  Gauge, Boxes, Tag, Recycle, FolderOpen, UserCog, LayoutDashboard,
-];
-const MOD_CATS_KEYS = ["safety", "safety", "safety", "management", "health", "management", "safety", "safety", "management", "safety", "env", "management", "health", "report"];
-const MODULES_IDX = MOD_ICONS.map((_, i) => i);
+// آیکونِ هر کارتِ ماژول از دسته‌اش می‌آید (نه از موقعیتش در آرایه) — چون
+// از «مدیریتِ صفحه اصلی سامانه» در SuperAdmin می‌شود ماژول افزود/حذف/
+// جابه‌جا کرد و یک آیکونِ index-based با هر تغییرِ ترتیب از هم می‌پاشید.
+const CATEGORY_ICON = { safety: AlertTriangle, health: HardHat, env: Recycle, management: UserCog, report: LayoutDashboard };
 const CAT_INDEX = { safety: 1, health: 2, env: 3, management: 4, report: 5 };
-// ماژول‌هایی که هنوز روی صفحهٔ فرود «مشاهده جزئیات» ندارند و «به‌زودی» می‌خورند.
-const SOON = new Set([6, 10]); // مجوز کار، محیط زیست
+// دسته/وضعیتِ «به‌زودی»ِ ۱۴ ماژولِ پیش‌فرض، بر اساسِ موقعیت — فقط برای
+// ساختنِ پیش‌فرضِ استاتیکِ زیر؛ داده‌ای که از SuperAdmin می‌آید category/soon
+// را مستقیم روی هر آیتم دارد (نگاه کن به mergeLandingContent پایین‌تر).
+const DEFAULT_MOD_CATS = ["safety", "safety", "safety", "management", "health", "management", "safety", "safety", "management", "safety", "env", "management", "health", "report"];
+const DEFAULT_MOD_SOON = new Set([6, 10]); // مجوز کار، محیط زیست
+const pairsToMods = (pairs) => pairs.map(([title, desc], i) => ({ title, desc, category: DEFAULT_MOD_CATS[i] || "management", soon: DEFAULT_MOD_SOON.has(i) }));
+// آیکونِ ثابتِ هر بخش (چرا IHMS، جریانِ کار، ...) به تعدادِ محدود تعریف
+// شده؛ اگر سوپرادمین از «مدیریتِ صفحه اصلی سامانه» آیتمِ بیشتری اضافه
+// کند، آخرین آیکون تکرار می‌شود به‌جایِ crash روی undefined.
+const pickIcon = (arr, i) => arr[i] || arr[arr.length - 1];
+
+// روی‌هم‌گذاریِ متنِ ویرایش‌شده از «مدیریتِ صفحه اصلی سامانه» (SuperAdmin)
+// روی پیش‌فرضِ استاتیکِ همین فایل — فقط برای fa/en (طبقِ محدودیتِ دوزبانه‌ی
+// پروژه)؛ آلمانی همیشه همان پیش‌فرضِ ثابت می‌ماند. هر فیلد که سوپرادمین
+// هنوز چیزی برایش ذخیره نکرده (رشته‌ی خالی/آرایه‌ی خالی/نبودن)، دقیقاً
+// همان مقدارِ پیش‌فرضِ کد را نشان می‌دهد — بدونِ رگرسیون.
+function mergeLandingContent(base, ov) {
+  if (!ov) return base;
+  const pick = (v, fallback) => (typeof v === "string" && v.trim() ? v : fallback);
+  const pickArr = (v, fallback) => (Array.isArray(v) && v.length > 0 ? v : fallback);
+  return {
+    ...base,
+    heroEyebrow: pick(ov.heroEyebrow, base.heroEyebrow),
+    heroH1a: pick(ov.heroH1a, base.heroH1a),
+    heroH1b: pick(ov.heroH1b, base.heroH1b),
+    heroLede: pick(ov.heroLede, base.heroLede),
+    ctaPrimary: pick(ov.ctaPrimary, base.ctaPrimary),
+    ctaPlans: pick(ov.ctaPlans, base.ctaPlans),
+    ctaSecondary: pick(ov.ctaSecondary, base.ctaSecondary),
+    ticks: pickArr(ov.ticks, base.ticks),
+    why: pickArr(ov.why, base.why),
+    flow: pickArr(ov.flow, base.flow),
+    mods: pickArr(ov.mods, base.mods),
+    qtList: pickArr(ov.qtList, base.qtList),
+    scEyebrow: pick(ov.scEyebrow, base.scEyebrow),
+    scH2: pick(ov.scH2, base.scH2),
+    scPara: pick(ov.scPara, base.scPara),
+    scFeat: pickArr(ov.scFeat, base.scFeat),
+    mbEyebrow: pick(ov.mbEyebrow, base.mbEyebrow),
+    mbH2: pick(ov.mbH2, base.mbH2),
+    mbPara: pick(ov.mbPara, base.mbPara),
+    mbFeat: pickArr(ov.mbFeat, base.mbFeat),
+    mbTag: pick(ov.mbTag, base.mbTag),
+    trust: pickArr(ov.trust, base.trust),
+    fH2: pick(ov.fH2, base.fH2),
+    fP: pick(ov.fP, base.fP),
+    fSub: pick(ov.fSub, base.fSub),
+    ftBlurb: pick(ov.ftBlurb, base.ftBlurb),
+    ftLinks: pickArr(ov.ftLinks, base.ftLinks),
+  };
+}
 const WHY_ICONS = [Database, FileCheck, AlertTriangle, ClipboardCheck, FileBarChart, TrendingUp];
 const FLOW_ICONS = [FileCheck, LineChart, AlertTriangle, Wrench, ListChecks, FileBarChart];
 const TRUST_ICONS = [Zap, Layers, Database, FileBarChart, AlertTriangle, TrendingUp];
@@ -238,7 +286,7 @@ const L = {
     ],
     modCats: ["همه", "ایمنی", "بهداشت", "محیط زیست", "مدیریت", "گزارش‌گیری"],
     modMore: "مشاهده جزئیات", soon: "به‌زودی",
-    mods: [
+    mods: pairsToMods([
       ["حوادث (شبه‌حوادث به‌زودی)", "ثبت، بررسی و تحلیل حوادث به روش Tripod Beta."],
       ["سیستم به‌روزرسانی ارزیابی ریسک", "تأثیرگذاری بر روی بریرهای BowTie طبق موتور اثربخشی."],
       ["سیستم ثبت و گزارش آنومالی", "بازرسی و اعلام عدم‌انطباق‌ها به پیمانکار و پایش آن‌ها."],
@@ -253,7 +301,7 @@ const L = {
       ["مستندات HSE", "مدیریت رویه‌ها، دستورالعمل‌ها و مدارک سامانه."],
       ["مدیریت کارکنان", "ورود و تردد، صلاحیت و پرونده سلامت شغلی افراد."],
       ["داشبورد و KPI", "شاخص‌های کلیدی و نمای کامل عملکرد HSE سازمان."],
-    ],
+    ]),
     scEyebrow: "محیط سامانه", scH2: "تصمیم‌های بهتر با داده‌های واقعی",
     scPara: "نمای کامل عملکرد HSE سازمان در یک صفحه؛ شاخص‌ها، روندها و نقاط بحرانی در یک نگاه.",
     scFeat: [
@@ -344,7 +392,7 @@ const L = {
     ],
     modCats: ["All", "Safety", "Health", "Environment", "Management", "Reporting"],
     modMore: "Details", soon: "Coming soon",
-    mods: [
+    mods: pairsToMods([
       ["Incidents (near-misses coming soon)", "Log, review and analyse incidents using the Tripod Beta method."],
       ["Living risk-assessment system", "Feeds BowTie barrier effectiveness through the effectiveness engine."],
       ["Anomaly logging & reporting", "Inspect, report non-conformities to the contractor and monitor them to closure."],
@@ -359,7 +407,7 @@ const L = {
       ["HSE documents", "Manage procedures, instructions and system records."],
       ["Personnel management", "Access & attendance, competency and occupational-health files."],
       ["Dashboard & KPI", "Key indicators and a full view of the organisation's HSE performance."],
-    ],
+    ]),
     scEyebrow: "The product", scH2: "Better decisions with real data",
     scPara: "A full view of your organisation's HSE performance on one screen — indicators, trends and critical points at a glance.",
     scFeat: [
@@ -450,7 +498,7 @@ const L = {
     ],
     modCats: ["Alle", "Sicherheit", "Gesundheit", "Umwelt", "Management", "Berichte"],
     modMore: "Details", soon: "Demnächst",
-    mods: [
+    mods: pairsToMods([
       ["Vorfälle (Beinaheunfälle demnächst)", "Vorfälle erfassen, prüfen und mit der Tripod-Beta-Methode analysieren."],
       ["Fortlaufende Risikobewertung", "Speist die Wirksamkeit der BowTie-Barrieren über die Wirksamkeits-Engine."],
       ["Anomalie-Erfassung & -Meldung", "Nichtkonformitäten prüfen, an den Auftragnehmer melden und bis zum Abschluss überwachen."],
@@ -465,7 +513,7 @@ const L = {
       ["HSE-Dokumente", "Verfahren, Anweisungen und Systemunterlagen verwalten."],
       ["Personalverwaltung", "Zutritt & Anwesenheit, Kompetenz und arbeitsmedizinische Akten."],
       ["Dashboard & KPI", "Kennzahlen und ein vollständiger Überblick über die HSE-Leistung."],
-    ],
+    ]),
     scEyebrow: "Das Produkt", scH2: "Bessere Entscheidungen mit echten Daten",
     scPara: "Ein vollständiger Überblick über die HSE-Leistung Ihrer Organisation auf einem Bildschirm – Kennzahlen, Trends und kritische Punkte auf einen Blick.",
     scFeat: [
@@ -510,6 +558,12 @@ const L = {
     mkOpen: "Offen", mkInProg: "In Bearbeitung", mkClosed: "Geschlossen", mkCloseRate: "Abschlussquote",
   },
 };
+
+// خروجیِ همین آبجکتِ L برای «مدیریتِ صفحه اصلی سامانه» در SuperAdmin —
+// تا وقتی سوپرادمین چیزی ذخیره نکرده، ویرایشگر همین متنِ واقعیِ زنده را
+// به‌عنوانِ نقطه‌ی شروع نشان می‌دهد (نه فیلدهای خالی)، بدونِ تکرارِ محتوا
+// در دو فایل. فقط fa/en (طبقِ محدودیتِ دوزبانه‌ی پروژه؛ de مدیریت نمی‌شود).
+export const LANDING_DEFAULTS = { fa: L.fa, en: L.en };
 
 const LANG_OPTIONS = [
   { code: "fa", label: "فارسی" },
@@ -596,7 +650,6 @@ function useReveal() {
 export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, announcements, logoUrl, systemName, heroImageUrl }) {
   const viewPlans = onViewPlans || onStartFree;
   const { lang, setLang } = useLanguage();
-  const x = L[lang] || L.fa;
   const dir = lang === "fa" ? "rtl" : "ltr";
   const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
 
@@ -605,6 +658,15 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
   const [yearly, setYearly] = useState(false);
   const [modCat, setModCat] = useState(0);
   const rootRef = useReveal();
+
+  // متنِ سفارشی‌شده از «مدیریتِ صفحه اصلی سامانه» — اگر سوپرادمین چیزی
+  // ذخیره نکرده باشد (یا شبکه در دسترس نباشد)، override=null می‌ماند و
+  // mergeLandingContent همان پیش‌فرضِ ثابتِ کد را برمی‌گرداند.
+  const [landingOverride, setLandingOverride] = useState(null);
+  useEffect(() => { loadLandingPageContent().then(setLandingOverride).catch(() => setLandingOverride(null)); }, []);
+  const base = L[lang] || L.fa;
+  const ov = lang === "fa" || lang === "en" ? landingOverride?.[lang] : null;
+  const x = useMemo(() => mergeLandingContent(base, ov), [base, ov]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -621,7 +683,7 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
   const NAV_IDS = ["top", "features", "modules", "benefits", "pricing", "about", "contact"];
 
   const ann = Array.isArray(announcements) && announcements.length > 0 ? announcements[0] : null;
-  const shownIdx = MODULES_IDX.filter((i) => modCat === 0 || CAT_INDEX[MOD_CATS_KEYS[i]] === modCat);
+  const shownMods = (x.mods || []).filter((m) => modCat === 0 || CAT_INDEX[m.category] === modCat);
 
   const langSwitch = (
     <label className="langsw">
@@ -729,7 +791,7 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
           <div className="g3" style={{ marginTop: 40 }}>
             {x.why.map(([t, d], i) => (
               <div key={t} className="card hoverable" style={{ padding: 22 }} data-rv>
-                <IcoBox icon={WHY_ICONS[i]} />
+                <IcoBox icon={pickIcon(WHY_ICONS, i)} />
                 <div style={{ fontSize: 15.5, fontWeight: 800, color: C.ink, margin: "14px 0 6px" }}>{t}</div>
                 <p style={{ fontSize: 12.5, color: C.ink2, lineHeight: 1.85 }}>{d}</p>
               </div>
@@ -750,8 +812,8 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
             {x.flow.map(([t, d], i) => (
               <React.Fragment key={t}>
                 <div className="step" data-rv>
-                  <div className="sIco">{React.createElement(FLOW_ICONS[i], { size: 22, strokeWidth: 2.1 })}</div>
-                  <div className="num">{x.step} {x.stepNo[i]}</div>
+                  <div className="sIco">{React.createElement(pickIcon(FLOW_ICONS, i), { size: 22, strokeWidth: 2.1 })}</div>
+                  <div className="num">{x.step} {x.stepNo[i] || String(i + 1)}</div>
                   <div className="sT">{t}</div>
                   <div className="sD">{d}</div>
                 </div>
@@ -776,15 +838,15 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
             ))}
           </div>
           <div className="g4">
-            {shownIdx.map((i) => (
+            {shownMods.map((m, i) => (
               /* بدونِ data-rv: با تغییرِ فیلتر، کارت‌های جدید mount می‌شوند و
                  چون IntersectionObserver دیگر اجرا نمی‌شود، روی opacity:0
                  گیر می‌کردند («محو می‌شد»). این کارت‌ها همیشه دیده می‌شوند. */
-              <div key={i} className="card hoverable mcard">
-                <IcoBox icon={MOD_ICONS[i]} size={42} />
-                <div className="mT">{x.mods[i][0]}</div>
-                <div className="mD">{x.mods[i][1]}</div>
-                {SOON.has(i)
+              <div key={m.title + i} className="card hoverable mcard">
+                <IcoBox icon={CATEGORY_ICON[m.category] || LayoutDashboard} size={42} />
+                <div className="mT">{m.title}</div>
+                <div className="mD">{m.desc}</div>
+                {m.soon
                   ? <span className="more" style={{ color: C.ink3, fontWeight: 700 }}>{x.soon}</span>
                   : <span className="more">{x.modMore} <Arrow size={13} /></span>}
               </div>
@@ -818,7 +880,7 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
               <div style={{ marginTop: 8 }}>
                 {x.scFeat.map(([t, d], i) => (
                   <div key={t} className="feat">
-                    <IcoBox icon={[LayoutDashboard, BarChart3, Gauge][i]} size={40} />
+                    <IcoBox icon={pickIcon([LayoutDashboard, BarChart3, Gauge], i)} size={40} />
                     <div><div className="fT">{t}</div><div className="fD">{d}</div></div>
                   </div>
                 ))}
@@ -870,7 +932,7 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
               <p style={{ fontSize: 14, color: C.ink2, margin: "12px 0 10px" }}>{x.mbPara}</p>
               {x.mbFeat.map(([t, d], i) => (
                 <div key={t} className="feat">
-                  <IcoBox icon={[Zap, ListChecks, ClipboardCheck][i]} size={40} tint={C.bgTint} />
+                  <IcoBox icon={pickIcon([Zap, ListChecks, ClipboardCheck], i)} size={40} tint={C.bgTint} />
                   <div><div className="fT">{t}</div><div className="fD">{d}</div></div>
                 </div>
               ))}
@@ -929,7 +991,7 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
           <div className="g3" style={{ marginTop: 38 }}>
             {x.trust.map((t, i) => (
               <div key={t} className="card" style={{ padding: "18px 20px", display: "flex", alignItems: "center", gap: 14 }} data-rv>
-                <IcoBox icon={TRUST_ICONS[i]} size={42} tint={C.bgTint} />
+                <IcoBox icon={pickIcon(TRUST_ICONS, i)} size={42} tint={C.bgTint} />
                 <div style={{ fontSize: 14, fontWeight: 800, color: C.ink }}>{t}</div>
               </div>
             ))}
