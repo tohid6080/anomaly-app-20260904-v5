@@ -2,24 +2,33 @@ import React, { useEffect, useState } from "react";
 import { UserCheck, UserX, Plus, Trash2, ShieldCheck } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
-import { loadAllAuthorizedSigners, loadContractorSigners, loadContractorAccountsForSigning, createSigner, setSignerStatus, setSignerSubstitute, deleteSigner } from "./permitSignersApi.js";
+import {
+  loadAllAuthorizedSigners, loadContractorSigners, loadContractorAccountsForSigning, loadEmployerAccountsForSigning,
+  createSigner, setSignerStatus, setSignerSubstitute, deleteSigner,
+} from "./permitSignersApi.js";
+
+const keyOf = (accountType, id) => `${accountType}:${id}`;
 
 /**
  * «لیستِ امضاهایِ مجاز» — پیمانکار فقط ردیفِ خودش را می‌بیند (readOnly).
  * سرپرست/کارشناسِ HSEِ کارفرما فهرستِ کاملِ شرکت را می‌بیند و مدیریت
  * می‌کند. نام و شغلِ هر امضاکننده آزادانه تایپ نمی‌شود — «افزودنِ
- * امضاکننده» از میانِ حساب‌های پیمانکاریِ واقعاً ثبت‌شده در SuperAdmin
- * (مدیریتِ حساب‌ها) انتخاب می‌شود؛ نام/شغل همیشه از همان حساب خوانده
- * می‌شود. فعال/مرخصی و جانشین، فرمان‌هایِ اتمیک‌اند (اثرِ فوری، نه بخشی
- * از یک فرمِ ویرایش).
+ * امضاکننده» از میانِ حساب‌هایِ واقعاً ثبت‌شده در SuperAdmin (مدیریتِ
+ * حساب‌ها) انتخاب می‌شود: هم حساب‌هایِ پیمانکاری، هم حساب‌هایِ کارفرما/
+ * سرپرستِ HSE — تا سرپرستِ کارفرما و بقیه‌ی کارشناسانش هم بتوانند در همین
+ * فهرست باشند و جانشین معرفی کنند. جانشین فقط از همان «گروه» انتخاب‌پذیر
+ * است: برایِ یک امضاکننده‌ی پیمانکاری، فقط هم‌شرکتی‌هایِ خودش؛ برایِ یک
+ * امضاکننده‌ی کارفرمایی، فقط بقیه‌ی حساب‌هایِ کارفرما/سرپرستِ HSE.
+ * فعال/مرخصی و جانشین، فرمان‌هایِ اتمیک‌اند (اثرِ فوری، نه بخشی از فرم).
  */
 export default function PermitSignersManager({ currentUser, role, onBack, wide }) {
   const { t, dir } = useLanguage();
   const isContractor = role === "CONTRACTOR";
   const [signers, setSigners] = useState(null);
-  const [accounts, setAccounts] = useState([]);
+  const [contractorAccounts, setContractorAccounts] = useState([]);
+  const [employerAccounts, setEmployerAccounts] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
-  const [pickId, setPickId] = useState("");
+  const [pickKey, setPickKey] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
@@ -28,20 +37,25 @@ export default function PermitSignersManager({ currentUser, role, onBack, wide }
   };
   useEffect(() => {
     load();
-    if (!isContractor) loadContractorAccountsForSigning().then(setAccounts);
+    if (!isContractor) {
+      loadContractorAccountsForSigning().then(setContractorAccounts);
+      loadEmployerAccountsForSigning().then(setEmployerAccounts);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const addedIds = new Set((signers || []).map((s) => s.contractorId));
-  const candidates = accounts.filter((a) => a.isActive && !addedIds.has(a.id));
+  const addedKeys = new Set((signers || []).map((s) => keyOf(s.accountType, s.contractorId || s.employerAccountId)));
+  const candidateContractors = contractorAccounts.filter((a) => a.isActive && !addedKeys.has(keyOf("contractor", a.id)));
+  const candidateEmployers = employerAccounts.filter((a) => a.isActive && !addedKeys.has(keyOf("employer", a.id)));
 
   const submitAdd = async () => {
-    if (!pickId) { setErr(t("pmErrRequired")); return; }
+    if (!pickKey) { setErr(t("pmErrRequired")); return; }
+    const [accountType, accountId] = pickKey.split(":");
     setBusy(true); setErr("");
-    const res = await createSigner(pickId, currentUser?.name);
+    const res = await createSigner(accountType, accountId, currentUser?.name);
     setBusy(false);
     if (res?.__error) { setErr(res.message); return; }
-    setShowAdd(false); setPickId(""); await load();
+    setShowAdd(false); setPickKey(""); await load();
   };
 
   const toggleStatus = async (s) => {
@@ -68,6 +82,14 @@ export default function PermitSignersManager({ currentUser, role, onBack, wide }
     await load();
   };
 
+  // جانشین فقط از همان «گروه»: هم‌شرکتی‌هایِ خودِ پیمانکار، یا بقیه‌ی
+  // حساب‌هایِ کارفرما/سرپرستِ HSE — هیچ‌وقت از یک گروهِ دیگر.
+  const substituteCandidates = (s) => (signers || []).filter((x) => {
+    if (x.id === s.id) return false;
+    if (x.accountType !== s.accountType) return false;
+    return s.accountType === "contractor" ? x.groupName === s.groupName : true;
+  });
+
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
       {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>}
@@ -90,16 +112,33 @@ export default function PermitSignersManager({ currentUser, role, onBack, wide }
         <div style={{ ...styles.cardWide, marginBottom: 14, display: "flex", gap: 10, alignItems: "flex-end", flexWrap: "wrap" }}>
           <div style={{ flex: "1 1 260px" }}>
             <label style={styles.label}>{t("pmPickAccount")}</label>
-            <select style={styles.input} value={pickId} dir={dir} onChange={(e) => setPickId(e.target.value)}>
+            <select style={styles.input} value={pickKey} dir={dir} onChange={(e) => setPickKey(e.target.value)}>
               <option value="">{t("pmSelect")}</option>
-              {candidates.map((a) => (
-                <option key={a.id} value={a.id}>{[a.fullName, a.companyName, a.jobTitle].filter(Boolean).join(" — ")}</option>
-              ))}
+              {candidateContractors.length > 0 && (
+                <optgroup label={t("pmAddSignerContractor")}>
+                  {candidateContractors.map((a) => (
+                    <option key={keyOf("contractor", a.id)} value={keyOf("contractor", a.id)}>
+                      {[a.fullName, a.groupName, a.jobTitle].filter(Boolean).join(" — ")}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {candidateEmployers.length > 0 && (
+                <optgroup label={t("pmAddSignerEmployer")}>
+                  {candidateEmployers.map((a) => (
+                    <option key={keyOf("employer", a.id)} value={keyOf("employer", a.id)}>
+                      {[a.fullName, a.jobTitle].filter(Boolean).join(" — ")}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
             </select>
-            {candidates.length === 0 && <div style={{ fontSize: 10.5, color: THEME.text3, marginTop: 4 }}>{t("pmNoCandidateAccounts")}</div>}
+            {candidateContractors.length === 0 && candidateEmployers.length === 0 && (
+              <div style={{ fontSize: 10.5, color: THEME.text3, marginTop: 4 }}>{t("pmNoCandidateAccounts")}</div>
+            )}
           </div>
-          <button type="button" onClick={submitAdd} disabled={busy || !pickId} style={{ ...styles.smallButton, background: THEME.teal, opacity: busy || !pickId ? 0.6 : 1 }}>{t("pmSave")}</button>
-          <button type="button" onClick={() => { setShowAdd(false); setPickId(""); }} style={{ ...styles.smallButton, background: THEME.surface2, color: THEME.text }}>{t("commonCancel")}</button>
+          <button type="button" onClick={submitAdd} disabled={busy || !pickKey} style={{ ...styles.smallButton, background: THEME.teal, opacity: busy || !pickKey ? 0.6 : 1 }}>{t("pmSave")}</button>
+          <button type="button" onClick={() => { setShowAdd(false); setPickKey(""); }} style={{ ...styles.smallButton, background: THEME.surface2, color: THEME.text }}>{t("commonCancel")}</button>
         </div>
       )}
 
@@ -112,7 +151,7 @@ export default function PermitSignersManager({ currentUser, role, onBack, wide }
             <thead>
               <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
                 <th style={thS}>{t("pmSignerFullName")}</th>
-                <th style={thS}>{t("pmSignersPickContractor")}</th>
+                <th style={thS}>{t("pmSignerGroup")}</th>
                 <th style={thS}>{t("pmSignerJobTitle")}</th>
                 <th style={thS}>{t("pmSignerStatus")}</th>
                 <th style={thS}>{t("pmSignerSubstitute")}</th>
@@ -123,7 +162,7 @@ export default function PermitSignersManager({ currentUser, role, onBack, wide }
               {signers.map((s) => (
                 <tr key={s.id} style={{ borderBottom: `1px solid ${THEME.borderSoft}` }}>
                   <td style={{ ...tdS, fontWeight: 700, color: THEME.text }}>{s.fullName || "—"}</td>
-                  <td style={tdS}>{s.contractorCompanyName || "—"}</td>
+                  <td style={tdS}>{s.groupName || "—"}</td>
                   <td style={tdS}>{s.jobTitle || "—"}</td>
                   <td style={tdS}>
                     <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 999, background: s.status === "active" ? THEME.okBg : THEME.warnBg, color: s.status === "active" ? THEME.ok : THEME.warn }}>
@@ -135,7 +174,7 @@ export default function PermitSignersManager({ currentUser, role, onBack, wide }
                       <select style={{ ...styles.filterSelect, fontSize: 11, padding: "4px 6px" }} value={s.substituteId || ""} dir={dir}
                         onChange={(e) => changeSubstitute(s, e.target.value)} disabled={busy}>
                         <option value="">{t("pmSignerSubstituteNone")}</option>
-                        {signers.filter((x) => x.id !== s.id && x.contractorCompanyName === s.contractorCompanyName).map((x) => <option key={x.id} value={x.id}>{x.fullName}</option>)}
+                        {substituteCandidates(s).map((x) => <option key={x.id} value={x.id}>{x.fullName}</option>)}
                       </select>
                     )}
                   </td>
