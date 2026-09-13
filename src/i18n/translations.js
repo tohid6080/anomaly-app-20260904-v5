@@ -10411,7 +10411,11 @@ export const translations = {
   "pssrReviewProgress": { "fa": "پیشرفتِ بررسی", "en": "Review progress" },
   "pssrDueSoon": { "fa": "نزدیک به Deadline", "en": "Due soon" },
   "pssrCatCOpen": { "fa": "CAT C باز", "en": "Open CAT C" },
-  "pssrDisciplineStatus": { "fa": "وضعیتِ هر Discipline", "en": "Status per discipline" }
+  "pssrDisciplineStatus": { "fa": "وضعیتِ هر Discipline", "en": "Status per discipline" },
+  "pssrSeedResult": { "fa": "{imported} چک‌لیست جدید اضافه شد، {repaired} چک‌لیستِ ناقص تکمیل شد.", "en": "{imported} new checklists added, {repaired} incomplete checklists completed." },
+  "pssrSeedFailed": { "fa": "بارگذاریِ برخی چک‌لیست‌ها ناموفق بود ({list}) — دوباره تلاش کنید.", "en": "Loading some checklists failed ({list}) — please try again." },
+  "pssrChecklistsIncomplete": { "fa": "{count} چک‌لیست ناقص است — بعضی موارد آن هنوز بارگذاری نشده‌اند.", "en": "{count} checklist(s) are incomplete — some items haven't been loaded yet." },
+  "pssrRepairChecklists": { "fa": "تکمیلِ چک‌لیست‌های ناقص", "en": "Complete incomplete checklists" }
 };
 
 // ---------- تزریقِ تنبلِ ترجمهٔ آلمانی ----------

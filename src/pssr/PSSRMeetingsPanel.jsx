@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { Plus, History, Radio, X } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { JalaliDateInput, toJalaliSafe } from "../personnel/jalaliDate.jsx";
-import { loadCurrentChecklists, hasAnyChecklists, seedOfficialChecklists } from "./pssrApi.js";
+import { loadCurrentChecklists, seedOfficialChecklists } from "./pssrApi.js";
+import { PSSR_CHECKLIST_SEED } from "./pssrChecklistSeedData.js";
 import { createMeeting, loadLatestResponsePerRequirement, loadActionHistory, submitMeetingResponses } from "./pssrMeetingsApi.js";
 import { disciplineLabel, catLabel, ACTION_STATUS_META } from "./pssrModel.js";
 import { Field, YnaToggle, CatPicker, StatusBadge } from "./pssrUi.jsx";
@@ -15,6 +16,7 @@ export default function PSSRMeetingsPanel({ pssrId, meetings, teamMembers, actio
   const { t, dir } = useLanguage();
   const [checklists, setChecklists] = useState(null); // null = در حال بارگذاری
   const [seeding, setSeeding] = useState(false);
+  const [seedMsg, setSeedMsg] = useState("");
   const [selectedMeetingId, setSelectedMeetingId] = useState(meetings.length > 0 ? meetings[meetings.length - 1].id : null);
   const [activeDiscipline, setActiveDiscipline] = useState(null);
   const [draft, setDraft] = useState({}); // requirementTemplateId -> {status, comment, actionByText, cat, deadline}
@@ -80,10 +82,22 @@ export default function PSSRMeetingsPanel({ pssrId, meetings, teamMembers, actio
 
   const handleSeed = async () => {
     setSeeding(true);
-    await seedOfficialChecklists(currentUser?.name);
+    setSeedMsg("");
+    const res = await seedOfficialChecklists(currentUser?.name);
     setChecklists(await loadCurrentChecklists());
     setSeeding(false);
+    if (!res?.ok) { setSeedMsg(t("pssrSeedFailed", { list: (res?.failedCodes || []).join("، ") })); return; }
+    setSeedMsg(t("pssrSeedResult", { imported: res.imported, repaired: res.repaired }));
   };
+
+  // چک‌لیستی که تعدادِ Requirementهایش کمتر از تعدادِ واقعیِ فایلِ مرجع است —
+  // مثلاً به‌خاطرِ قطعیِ شبکه وسطِ یک بارگذاریِ قبلی ناقص مانده.
+  const incompleteCodes = (checklists || [])
+    .filter((c) => {
+      const seed = PSSR_CHECKLIST_SEED.find((s) => s.code === c.code);
+      return seed && c.requirements.length < seed.requirements.length;
+    })
+    .map((c) => c.code);
 
   const handleNewMeeting = async () => {
     const m = await createMeeting(pssrId, newMeetingDate, "", currentUser?.name);
@@ -131,6 +145,7 @@ export default function PSSRMeetingsPanel({ pssrId, meetings, teamMembers, actio
             {seeding ? t("pssrSaving") : t("pssrSeedChecklists")}
           </button>
         )}
+        {seedMsg && <p style={{ fontSize: 11.5, color: THEME.text2, marginTop: 10 }}>{seedMsg}</p>}
       </div>
     );
   }
@@ -139,6 +154,15 @@ export default function PSSRMeetingsPanel({ pssrId, meetings, teamMembers, actio
 
   return (
     <div>
+      {!readOnly && incompleteCodes.length > 0 && (
+        <div style={{ background: THEME.warnBg, border: `1px solid ${THEME.warn}`, borderRadius: 10, padding: "10px 14px", marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <span style={{ fontSize: 12, color: THEME.warn, fontWeight: 700 }}>{t("pssrChecklistsIncomplete", { count: incompleteCodes.length })}</span>
+          <button type="button" style={{ ...styles.smallButton, background: THEME.warn }} disabled={seeding} onClick={handleSeed}>
+            {seeding ? t("pssrSaving") : t("pssrRepairChecklists")}
+          </button>
+        </div>
+      )}
+      {seedMsg && <p style={{ fontSize: 11.5, color: THEME.text2, marginBottom: 10 }}>{seedMsg}</p>}
       <div style={{ display: "grid", gridTemplateColumns: "250px 1fr", gap: 14, alignItems: "start" }}>
         {/* ---- لیست جلسات ---- */}
         <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 14, padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>

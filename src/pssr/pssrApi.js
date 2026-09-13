@@ -115,35 +115,57 @@ export async function loadCurrentChecklists() {
   return templates.map((t) => ({ ...checklistFromRow(t), requirements: reqByChecklist[t.id] || [] }));
 }
 
-// وارد کردن ۹ چک‌لیست مرجع از فایل رسمی (یک‌بار، به‌ازای هر شرکت) — بدون
-// تغییر محتوایی؛ داده در pssrChecklistSeedData.js عیناً از اکسل استخراج شده.
-// اگر چک‌لیستی با همین code از قبل «جاری» باشد، دوباره وارد نمی‌شود (idempotent).
+// وارد کردن ۹ چک‌لیست مرجع از فایل رسمی (به‌ازای هر شرکت) — بدون تغییر
+// محتوایی؛ داده در pssrChecklistSeedData.js عیناً از اکسل استخراج شده.
+// «خودترمیم‌شونده» است: اگر چک‌لیستی از قبل ساخته شده ولی به هر دلیلی
+// (مثلاً قطعیِ شبکه وسطِ درجِ دسته‌ای) بخشی از Requirementهایش کم باشد،
+// همان مواردِ کم‌شده را تکمیل می‌کند — هرگز ردیفِ موجودی را حذف نمی‌کند
+// (چون ممکن است همان‌ها قبلاً در یک جلسه‌ی واقعی پاسخ گرفته باشند)، پس
+// هربار اجرا با خیال راحت قابلِ تکرار است.
 export async function seedOfficialChecklists(createdBy) {
   const companyId = getCurrentCompanyId();
-  const existing = await sb(`pssr_checklist_templates?is_current=eq.true&select=code&company_id=eq.${companyId}`);
-  const existingCodes = new Set((sbOk(existing) ? existing : []).map((r) => r.code));
-  let imported = 0;
+  const existing = await sb(`pssr_checklist_templates?is_current=eq.true&select=id,code&company_id=eq.${companyId}`);
+  const existingByCode = {};
+  (sbOk(existing) ? existing : []).forEach((r) => { existingByCode[r.code] = r.id; });
+
+  let imported = 0, repaired = 0;
+  const failedCodes = [];
+
   for (const cl of PSSR_CHECKLIST_SEED) {
-    if (existingCodes.has(cl.code)) continue;
-    const templateId = uid("psc");
-    const tplRows = await sb("pssr_checklist_templates", {
-      method: "POST",
-      body: JSON.stringify([{
-        id: templateId, company_id: companyId, code: cl.code, discipline: cl.discipline,
-        title: cl.title, version: 1, is_current: true, created_by: createdBy || "",
-      }]),
-    });
-    if (!sbOk(tplRows)) continue;
-    const reqPayload = cl.requirements.map((r) => ({
+    let templateId = existingByCode[cl.code];
+    let isNew = false;
+
+    if (!templateId) {
+      isNew = true;
+      templateId = uid("psc");
+      const tplRows = await sb("pssr_checklist_templates", {
+        method: "POST",
+        body: JSON.stringify([{
+          id: templateId, company_id: companyId, code: cl.code, discipline: cl.discipline,
+          title: cl.title, version: 1, is_current: true, created_by: createdBy || "",
+        }]),
+      });
+      if (!sbOk(tplRows)) { failedCodes.push(cl.code); continue; }
+    }
+
+    // فقط Requirementهایی که واقعاً کم‌اند درج می‌شوند — تطبیق بر اساسِ
+    // order_index (۱ به ۱ با آرایه‌ی seed مطابقت دارد).
+    const existingReqs = await sb(`pssr_requirement_templates?checklist_template_id=eq.${templateId}&select=order_index`);
+    const existingOrders = new Set((sbOk(existingReqs) ? existingReqs : []).map((r) => r.order_index));
+    const missing = cl.requirements.filter((r) => !existingOrders.has(r.order));
+    if (missing.length === 0) { if (isNew) imported++; continue; }
+
+    const reqPayload = missing.map((r) => ({
       id: uid("psreq"), checklist_template_id: templateId, company_id: companyId,
       req_no: r.reqNo, group_title: r.group, requirement_text: r.text, order_index: r.order,
     }));
-    // درجِ دسته‌ای: این «داده‌ی مرجعِ یک‌باره» است (Import اولیه)، نه ثبتِ
-    // میدانیِ روزمره — پس نیازی به صفِ آفلاینِ تکی‌به‌تکی ندارد.
+    let allOk = true;
     for (let i = 0; i < reqPayload.length; i += 100) {
-      await sb("pssr_requirement_templates", { method: "POST", body: JSON.stringify(reqPayload.slice(i, i + 100)) });
+      const rows = await sb("pssr_requirement_templates", { method: "POST", body: JSON.stringify(reqPayload.slice(i, i + 100)) });
+      if (!sbOk(rows)) { allOk = false; break; }
     }
-    imported++;
+    if (!allOk) { failedCodes.push(cl.code); continue; }
+    if (isNew) imported++; else repaired++;
   }
-  return { ok: true, imported };
+  return { ok: failedCodes.length === 0, imported, repaired, failedCodes };
 }
