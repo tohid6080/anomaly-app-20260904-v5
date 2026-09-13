@@ -67,12 +67,48 @@ export default function PermitSignersManager({ currentUser, role, onBack, wide }
     await load();
   };
 
-  const changeSubstitute = async (s, substituteId) => {
+  // مقدارِ گزینه‌ی «new:accountType:accountId» یعنی این فرد هنوز ردیفِ
+  // امضاکننده ندارد (فقط در SuperAdmin ثبت شده) — قبل از تنظیمِ جانشین، اول
+  // برایش یک ردیفِ امضاکننده می‌سازیم؛ همانی که باگِ «جانشینِ هم‌شرکتی دیده
+  // نمی‌شود» را حل می‌کند: قبلاً substituteCandidates فقط از میانِ
+  // امضاکنندگانِ از‌قبل‌اضافه‌شده انتخاب می‌کرد، نه همه‌ی کارکنانِ ثبت‌شده‌ی
+  // همان شرکت در SuperAdmin.
+  const changeSubstitute = async (s, value) => {
+    if (!value) { await commitSubstitute(s, null); return; }
+    if (value.startsWith("new:")) {
+      const [, accountType, accountId] = value.split(":");
+      setBusy(true); setErr("");
+      const created = await createSigner(accountType, accountId, currentUser?.name);
+      if (created?.__error) { setBusy(false); setErr(created.message); return; }
+      await commitSubstitute(s, created.id);
+      return;
+    }
+    await commitSubstitute(s, value);
+  };
+
+  const commitSubstitute = async (s, substituteId) => {
     setBusy(true);
     const res = await setSignerSubstitute(s.id, substituteId);
     setBusy(false);
     if (res?.__error) { setErr(res.message); return; }
     await load();
+  };
+
+  // گزینه‌های جانشین برای یک امضاکننده: هم امضاکنندگانِ از‌قبل‌اضافه‌شده‌ی
+  // همان گروه (ردیفِ signer واقعی، بدونِ تغییر)، هم بقیه‌ی حساب‌هایِ
+  // ثبت‌شده‌ی همان گروه در SuperAdmin که هنوز امضاکننده نشده‌اند (با پیشوندِ
+  // «new:» — با انتخاب، خودکار به امضاکننده تبدیل می‌شوند).
+  const substituteOptions = (s) => {
+    const sameGroup = (x) => x.id !== s.id && x.accountType === s.accountType && (s.accountType === "contractor" ? x.groupName === s.groupName : true);
+    const existing = (signers || []).filter(sameGroup);
+    const existingAccountIds = new Set(existing.map((x) => (x.accountType === "contractor" ? x.contractorId : x.employerAccountId)));
+    const myAccountId = s.accountType === "contractor" ? s.contractorId : s.employerAccountId;
+    const rawPool = s.accountType === "contractor" ? contractorAccounts : employerAccounts;
+    const notYetAdded = rawPool.filter((a) =>
+      a.isActive && a.id !== myAccountId && !existingAccountIds.has(a.id) &&
+      (s.accountType === "contractor" ? a.groupName === s.groupName : true)
+    );
+    return { existing, notYetAdded };
   };
 
   const remove = async (s) => {
@@ -81,14 +117,6 @@ export default function PermitSignersManager({ currentUser, role, onBack, wide }
     if (res?.__error) { setErr(res.message); return; }
     await load();
   };
-
-  // جانشین فقط از همان «گروه»: هم‌شرکتی‌هایِ خودِ پیمانکار، یا بقیه‌ی
-  // حساب‌هایِ کارفرما/سرپرستِ HSE — هیچ‌وقت از یک گروهِ دیگر.
-  const substituteCandidates = (s) => (signers || []).filter((x) => {
-    if (x.id === s.id) return false;
-    if (x.accountType !== s.accountType) return false;
-    return s.accountType === "contractor" ? x.groupName === s.groupName : true;
-  });
 
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
@@ -170,13 +198,21 @@ export default function PermitSignersManager({ currentUser, role, onBack, wide }
                     </span>
                   </td>
                   <td style={tdS}>
-                    {isContractor ? (signers.find((x) => x.id === s.substituteId)?.fullName || "—") : (
-                      <select style={{ ...styles.filterSelect, fontSize: 11, padding: "4px 6px" }} value={s.substituteId || ""} dir={dir}
-                        onChange={(e) => changeSubstitute(s, e.target.value)} disabled={busy}>
-                        <option value="">{t("pmSignerSubstituteNone")}</option>
-                        {substituteCandidates(s).map((x) => <option key={x.id} value={x.id}>{x.fullName}</option>)}
-                      </select>
-                    )}
+                    {isContractor ? (signers.find((x) => x.id === s.substituteId)?.fullName || "—") : (() => {
+                      const { existing, notYetAdded } = substituteOptions(s);
+                      return (
+                        <select style={{ ...styles.filterSelect, fontSize: 11, padding: "4px 6px" }} value={s.substituteId || ""} dir={dir}
+                          onChange={(e) => changeSubstitute(s, e.target.value)} disabled={busy}>
+                          <option value="">{t("pmSignerSubstituteNone")}</option>
+                          {existing.map((x) => <option key={x.id} value={x.id}>{x.fullName}</option>)}
+                          {notYetAdded.map((a) => (
+                            <option key={`new:${s.accountType}:${a.id}`} value={`new:${s.accountType}:${a.id}`}>
+                              {[a.fullName, a.jobTitle].filter(Boolean).join(" — ")}
+                            </option>
+                          ))}
+                        </select>
+                      );
+                    })()}
                   </td>
                   {!isContractor && (
                     <td style={{ ...tdS, whiteSpace: "nowrap" }}>
