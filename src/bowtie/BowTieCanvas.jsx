@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Plus, ZoomIn, ZoomOut, Maximize2, ShieldAlert, Undo2, Redo2, ImageDown, FileDown, FileSpreadsheet, Check, Loader2, RefreshCw } from "lucide-react";
+import { Plus, ZoomIn, ZoomOut, Maximize2, ShieldAlert, Undo2, Redo2, ImageDown, FileDown, FileSpreadsheet, Check, Loader2, RefreshCw, AlertTriangle, Flame } from "lucide-react";
 import { recalculateAllBarriersForBowtie } from "./effectivenessApi.js";
 import { THEME } from "../shared.js";
 import {
@@ -28,6 +28,21 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
  * (threat/consequence chains AND escalation drop-lines) now render as smooth
  * cubic-bezier curves instead of straight polylines.
  */
+
+// ---------- بازطراحیِ شیشه‌ای (Glassmorphism) ----------
+// فقط ظاهر/Rendering عوض شده؛ همان هندسه/مختصات/منطقِ پایین همین فایل
+// دست‌نخورده مانده. رنگ‌ها تا حدِ ممکن از همان توکن‌های THEME (نه رنگ‌های
+// دلخواهِ جدید) گرفته می‌شوند تا با بقیه‌ی سامانه هماهنگ بماند.
+const GLASS = {
+  bg: `radial-gradient(1100px 560px at 18% -10%, rgba(20,184,166,.10), transparent 60%), radial-gradient(820px 620px at 100% 15%, rgba(111,199,255,.07), transparent 55%), linear-gradient(175deg, ${THEME.navy}, #050c11 65%)`,
+  grid: "rgba(148,196,212,.06)",
+  threat: "#f2a63d",
+  conseq: "#ef5a5a",
+  barrier: "#4fe4da",
+  event: "#6fc7ff",
+  esc: "#d9832e",
+  edgeMain: "#dff6f4",
+};
 
 const WORLD_W = 1400;
 const WORLD_H = 900;
@@ -552,7 +567,7 @@ export default function BowTieCanvas({ bowtie, threats, consequences, barriers, 
   // مستقیماً registerBounds صدا زده می‌شود (پایین همین فایل)
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "74vh", background: "#f7f9fb", borderRadius: 14, border: `1px solid ${THEME.border}`, overflow: "hidden" }}>
+    <div style={{ position: "relative", width: "100%", height: "74vh", background: GLASS.bg, borderRadius: 14, border: `1px solid ${THEME.border}`, overflow: "hidden" }}>
       <div style={{ position: "absolute", top: 10, insetInlineStart: 10, zIndex: 5, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
         {!readOnly && (
           <>
@@ -614,14 +629,14 @@ export default function BowTieCanvas({ bowtie, threats, consequences, barriers, 
         onPointerDown={(e) => { if (e.target === svgRef.current || e.target.dataset?.bg) beginPan(e); }}
         style={{ cursor: dragRef.current?.kind === "pan" ? "grabbing" : "grab", touchAction: "none" }}
       >
-        <rect data-bg="1" x={0} y={0} width="100%" height="100%" fill="#f7f9fb" />
+        <rect data-bg="1" x={0} y={0} width="100%" height="100%" fill="transparent" />
         <g transform={`translate(${view.tx},${view.ty}) scale(${view.scale})`}>
           <g opacity={0.5}>
             {Array.from({ length: Math.ceil(WORLD_W / 40) }).map((_, i) => (
-              <line key={"gx" + i} x1={i * 40} y1={0} x2={i * 40} y2={WORLD_H} stroke="#e7ebf0" strokeWidth={1} />
+              <line key={"gx" + i} x1={i * 40} y1={0} x2={i * 40} y2={WORLD_H} stroke={GLASS.grid} strokeWidth={1} />
             ))}
             {Array.from({ length: Math.ceil(WORLD_H / 40) }).map((_, i) => (
-              <line key={"gy" + i} x1={0} y1={i * 40} x2={WORLD_W} y2={i * 40} stroke="#e7ebf0" strokeWidth={1} />
+              <line key={"gy" + i} x1={0} y1={i * 40} x2={WORLD_W} y2={i * 40} stroke={GLASS.grid} strokeWidth={1} />
             ))}
           </g>
 
@@ -631,7 +646,7 @@ export default function BowTieCanvas({ bowtie, threats, consequences, barriers, 
             let points = [[tp.x + NODE_W / 2, tp.y]];
             chain.forEach((b) => { const bp = resolvedBarrierPos[b.id]; points.push([bp.x, bp.y]); });
             points.push([TOP_EVENT.x - 80, TOP_EVENT.y]);
-            return <path key={"tline" + t.id} d={curvedPathH(points)} fill="none" stroke={THEME.text3} strokeWidth={2} />;
+            return <path key={"tline" + t.id} d={curvedPathH(points)} fill="none" stroke={GLASS.edgeMain} strokeWidth={2.2} opacity={0.85} strokeLinecap="round" />;
           })}
           {consForBowtie.map((c, i) => {
             const cp = displayPos(c.id, ...Object.values(consPositions[i]));
@@ -639,7 +654,7 @@ export default function BowTieCanvas({ bowtie, threats, consequences, barriers, 
             let points = [[TOP_EVENT.x + 80, TOP_EVENT.y]];
             chain.forEach((b) => { const bp = resolvedBarrierPos[b.id]; points.push([bp.x, bp.y]); });
             points.push([cp.x - NODE_W / 2, cp.y]);
-            return <path key={"cline" + c.id} d={curvedPathH(points)} fill="none" stroke={THEME.text3} strokeWidth={2} />;
+            return <path key={"cline" + c.id} d={curvedPathH(points)} fill="none" stroke={GLASS.edgeMain} strokeWidth={2.2} opacity={0.85} strokeLinecap="round" />;
           })}
           {barriers.map((b) => {
             const bp = resolvedBarrierPos[b.id];
@@ -650,12 +665,12 @@ export default function BowTieCanvas({ bowtie, threats, consequences, barriers, 
                 const cxs = childXs(fp.x, controlsFor(f.id).length);
                 const ccp = displayPos(ctl.id, cxs[k], fp.y + ESC_DROP);
                 return (
-                  <path key={"ecline" + ctl.id} d={curvedPathV(fp.x, fp.y + 20, ccp.x, ccp.y - 18)} fill="none" stroke="#d97706" strokeWidth={1.6} strokeDasharray="4 3" />
+                  <path key={"ecline" + ctl.id} d={curvedPathV(fp.x, fp.y + 20, ccp.x, ccp.y - 18)} fill="none" stroke={GLASS.esc} strokeWidth={1.6} strokeDasharray="3 4" opacity={0.75} />
                 );
               });
               return (
                 <React.Fragment key={"efline" + f.id}>
-                  <path d={curvedPathV(bp.x, bp.y + 28, fp.x, fp.y - 18)} fill="none" stroke="#d97706" strokeWidth={1.6} strokeDasharray="4 3" />
+                  <path d={curvedPathV(bp.x, bp.y + 28, fp.x, fp.y - 18)} fill="none" stroke={GLASS.esc} strokeWidth={1.6} strokeDasharray="3 4" opacity={0.75} />
                   {controlEls}
                 </React.Fragment>
               );
@@ -668,7 +683,31 @@ export default function BowTieCanvas({ bowtie, threats, consequences, barriers, 
             onClick={() => setSelected({ type: "topEvent", id: bowtie.id })}
             style={{ cursor: "pointer" }}
           >
-            <polygon points="-90,0 -55,-40 55,-40 90,0 55,40 -55,40" fill={THEME.navy} stroke={selected?.type === "topEvent" ? THEME.teal : "none"} strokeWidth={3} />
+            {/* برچسبِ Hazard — درست بالایِ Top Event، همیشه همراهش (چون داخلِ
+                همان <g> ترنسفورم‌شده است) */}
+            {bowtie.hazard && (
+              <foreignObject x={-110} y={-92} width={220} height={30} style={{ overflow: "visible" }}>
+                <div style={{
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 5, whiteSpace: "nowrap",
+                  margin: "0 auto", width: "fit-content", fontFamily: THEME.font, fontSize: 10.5, fontWeight: 800,
+                  padding: "5px 12px", borderRadius: 999, color: "#d8f0ff",
+                  background: "rgba(111,199,255,.16)", border: "1px solid rgba(111,199,255,.45)",
+                  backdropFilter: "blur(8px)",
+                }}>
+                  <span style={{ opacity: 0.65, fontWeight: 700 }}>Hazard ·</span> {bowtie.hazard}
+                </div>
+              </foreignObject>
+            )}
+            <defs>
+              <radialGradient id="teGlow" cx="35%" cy="30%" r="75%">
+                <stop offset="0%" stopColor="rgba(111,199,255,.55)" />
+                <stop offset="55%" stopColor={THEME.navyMid} />
+                <stop offset="100%" stopColor={THEME.navy} />
+              </radialGradient>
+            </defs>
+            <polygon points="-90,0 -55,-40 55,-40 90,0 55,40 -55,40" fill="url(#teGlow)"
+              stroke={selected?.type === "topEvent" ? THEME.teal : "rgba(111,199,255,.5)"} strokeWidth={selected?.type === "topEvent" ? 3 : 1.5}
+              style={{ filter: "drop-shadow(0 0 14px rgba(111,199,255,.35))" }} />
             <text textAnchor="middle" y={-4} fill="#fff" fontSize={12} fontWeight={700} fontFamily={THEME.font}>Top Event</text>
             <foreignObject x={-80} y={4} width={160} height={34}>
               <div style={{ color: "#cfe3ea", fontSize: 10.5, textAlign: "center", fontFamily: THEME.font, lineHeight: 1.3, padding: "0 4px" }}>
@@ -682,7 +721,7 @@ export default function BowTieCanvas({ bowtie, threats, consequences, barriers, 
             const chain = barriersFor("preventive", t.id);
             return (
               <React.Fragment key={t.id}>
-                <RectNode x={tp.x} y={tp.y} fill="#fef3c7" stroke="#d97706" label={t.label}
+                <RectNode x={tp.x} y={tp.y} kind="threat" label={t.label}
                   selected={selected?.type === "threat" && selected.id === t.id}
                   onDown={(e) => beginNodeDrag(e, "threat", t, tp.x, tp.y)} />
                 {chain.map((b) => (
@@ -696,7 +735,7 @@ export default function BowTieCanvas({ bowtie, threats, consequences, barriers, 
                 ))}
                 {!readOnly && (
                   <g transform={`translate(${tp.x + NODE_W / 2 + 60},${tp.y})`} onPointerDown={(e) => e.stopPropagation()} onClick={() => addBarrier("preventive", t.id)} style={{ cursor: "pointer" }}>
-                    <circle r={11} fill="#fff" stroke={THEME.teal} strokeWidth={1.5} />
+                    <circle r={11} fill={THEME.surface} stroke={THEME.teal} strokeWidth={1.5} />
                     <text textAnchor="middle" y={4} fontSize={14} fill={THEME.teal} fontWeight={700}>+</text>
                   </g>
                 )}
@@ -709,7 +748,7 @@ export default function BowTieCanvas({ bowtie, threats, consequences, barriers, 
             const chain = barriersFor("recovery", c.id);
             return (
               <React.Fragment key={c.id}>
-                <RectNode x={cp.x} y={cp.y} fill="#fee2e2" stroke="#c92a2a" label={c.label}
+                <RectNode x={cp.x} y={cp.y} kind="consequence" label={c.label}
                   selected={selected?.type === "consequence" && selected.id === c.id}
                   onDown={(e) => beginNodeDrag(e, "consequence", c, cp.x, cp.y)} />
                 {chain.map((b) => (
@@ -723,7 +762,7 @@ export default function BowTieCanvas({ bowtie, threats, consequences, barriers, 
                 ))}
                 {!readOnly && (
                   <g transform={`translate(${cp.x - NODE_W / 2 - 60},${cp.y})`} onPointerDown={(e) => e.stopPropagation()} onClick={() => addBarrier("recovery", c.id)} style={{ cursor: "pointer" }}>
-                    <circle r={11} fill="#fff" stroke={THEME.teal} strokeWidth={1.5} />
+                    <circle r={11} fill={THEME.surface} stroke={THEME.teal} strokeWidth={1.5} />
                     <text textAnchor="middle" y={4} fontSize={14} fill={THEME.teal} fontWeight={700}>+</text>
                   </g>
                 )}
@@ -768,22 +807,39 @@ function SaveIndicator({ status }) {
 function toolBtnStyle(bg) {
   return {
     display: "flex", alignItems: "center", gap: 4, background: bg, color: "#fff", border: "none",
-    borderRadius: 8, padding: "7px 12px", fontSize: 12.5, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font,
-    boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+    borderRadius: 9, padding: "7px 12px", fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: THEME.font,
+    boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
   };
 }
 const iconBtnStyle = {
-  display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, background: "#fff",
-  border: `1px solid ${THEME.border}`, borderRadius: 8, cursor: "pointer", boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+  display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32,
+  background: "rgba(255,255,255,0.05)", color: THEME.text2, backdropFilter: "blur(10px)",
+  border: `1px solid ${THEME.border}`, borderRadius: 9, cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
 };
 
-function RectNode({ x, y, fill, stroke, label, selected, onDown }) {
+const RECT_NODE_STYLE = {
+  threat: { accent: GLASS.threat, icon: AlertTriangle },
+  consequence: { accent: GLASS.conseq, icon: Flame },
+};
+function RectNode({ x, y, kind, label, selected, onDown }) {
+  const st = RECT_NODE_STYLE[kind];
+  const Icon = st.icon;
   return (
     <g transform={`translate(${x},${y})`} onPointerDown={onDown} style={{ cursor: "grab" }}>
-      <rect x={-NODE_W / 2} y={-NODE_H / 2} width={NODE_W} height={NODE_H} rx={9} fill={fill} stroke={selected ? THEME.teal : stroke} strokeWidth={selected ? 3 : 1.5} />
-      <foreignObject x={-NODE_W / 2 + 6} y={-NODE_H / 2 + 4} width={NODE_W - 12} height={NODE_H - 8}>
-        <div style={{ fontSize: 11.5, color: "#1e293b", fontFamily: THEME.font, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", height: "100%", lineHeight: 1.3, fontWeight: 600 }}>
-          {label}
+      <defs>
+        <linearGradient id={`rn-${kind}`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor={st.accent} stopOpacity="0.30" />
+          <stop offset="100%" stopColor={THEME.surface} stopOpacity="0.92" />
+        </linearGradient>
+      </defs>
+      <rect x={-NODE_W / 2} y={-NODE_H / 2} width={NODE_W} height={NODE_H} rx={12}
+        fill={`url(#rn-${kind})`} stroke={selected ? THEME.teal : st.accent} strokeOpacity={selected ? 1 : 0.55} strokeWidth={selected ? 3 : 1.4} />
+      <foreignObject x={-NODE_W / 2 + 4} y={-NODE_H / 2} width={NODE_W - 8} height={NODE_H}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, height: "100%", padding: "0 6px", fontFamily: THEME.font }}>
+          <span style={{ flex: "0 0 auto", width: 20, height: 20, borderRadius: 6, background: `${st.accent}33`, color: st.accent, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icon size={12} />
+          </span>
+          <span style={{ fontSize: 11.5, color: THEME.text, textAlign: "start", lineHeight: 1.3, fontWeight: 600 }}>{label}</span>
         </div>
       </foreignObject>
     </g>
@@ -796,20 +852,33 @@ function BarrierNode({ x, y, barrier, selected, onDown }) {
   const em = effectivenessMeta(barrier.effectivenessStatus);
   return (
     <g transform={`translate(${x},${y})`} onPointerDown={onDown} style={{ cursor: "grab" }}>
-      <rect x={-46} y={-30} width={92} height={60} rx={8} fill="#fff" stroke={selected ? THEME.teal : "#cbd5e1"} strokeWidth={selected ? 3 : 1.5} />
-      <rect x={-46} y={-30} width={7} height={60} rx={3} fill={sm.color} />
+      <defs>
+        <linearGradient id="bn-glass" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor={GLASS.barrier} stopOpacity="0.26" />
+          <stop offset="100%" stopColor={THEME.surface} stopOpacity="0.94" />
+        </linearGradient>
+      </defs>
+      <rect x={-46} y={-30} width={92} height={60} rx={10} fill="url(#bn-glass)"
+        stroke={selected ? THEME.teal : GLASS.barrier} strokeOpacity={selected ? 1 : 0.5} strokeWidth={selected ? 3 : 1.4} />
+      {/* نوارِ وضعیتِ دستیِ HSE — سمتِ لبه، همان رنگِ سابق */}
+      <rect x={-46} y={-24} width={4} height={48} rx={2} fill={sm.color} />
       {/* دایره‌ی پنج‌رنگی اثربخشی (🟢🟡🟠🔴⚪) — محاسبه‌شده در فاز ۳، مستقل از
           نوار وضعیت دستی سمت چپ که همان قضاوت فوری HSE باقی می‌ماند */}
-      <circle cx={38} cy={-24} r={6} fill={em.color} stroke="#fff" strokeWidth={1.5} />
+      <circle cx={38} cy={-24} r={6} fill={em.color} stroke={THEME.surface} strokeWidth={1.5} />
       <title>{t(em.labelKey)}{barrier.effectivenessScore != null ? ` — ${barrier.effectivenessScore}%` : ""}</title>
       {barrier.effectivenessScore != null && (
         <text x={38} y={-6} textAnchor="middle" fontSize={8.5} fontWeight="700" fill={em.color} fontFamily={THEME.font}>
           {barrier.effectivenessScore}%
         </text>
       )}
-      {barrier.isCriticalControl && <g transform="translate(24,-22)"><ShieldAlert size={12} color="#c92a2a" /></g>}
-      <foreignObject x={-38} y={-24} width={76} height={48}>
-        <div style={{ fontSize: 10, color: "#1e293b", fontFamily: THEME.font, textAlign: "center", lineHeight: 1.25 }}>{barrier.label}</div>
+      {barrier.isCriticalControl && (
+        <g transform="translate(-32,-22)">
+          <circle r={8} fill={THEME.surface} stroke={THEME.ok} strokeWidth={1.3} />
+          <g transform="translate(-6,-6)"><ShieldAlert size={12} color={THEME.ok} /></g>
+        </g>
+      )}
+      <foreignObject x={-36} y={-24} width={72} height={48}>
+        <div style={{ fontSize: 10, color: THEME.text, fontFamily: THEME.font, textAlign: "center", lineHeight: 1.25, fontWeight: 600 }}>{barrier.label}</div>
       </foreignObject>
     </g>
   );
@@ -818,9 +887,15 @@ function BarrierNode({ x, y, barrier, selected, onDown }) {
 function EscalationFactorNode({ x, y, factor, selected, onDown }) {
   return (
     <g transform={`translate(${x},${y})`} onPointerDown={onDown} style={{ cursor: "grab" }}>
-      <polygon points="0,-20 34,18 -34,18" fill="#fff7ed" stroke={selected ? THEME.teal : "#d97706"} strokeWidth={selected ? 3 : 1.5} />
+      <defs>
+        <linearGradient id="ef-glass" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={GLASS.esc} stopOpacity="0.28" />
+          <stop offset="100%" stopColor={THEME.surface} stopOpacity="0.94" />
+        </linearGradient>
+      </defs>
+      <polygon points="0,-20 34,18 -34,18" fill="url(#ef-glass)" stroke={selected ? THEME.teal : GLASS.esc} strokeOpacity={selected ? 1 : 0.55} strokeWidth={selected ? 3 : 1.4} />
       <foreignObject x={-32} y={-8} width={64} height={30}>
-        <div style={{ fontSize: 8.5, color: "#7c2d12", fontFamily: THEME.font, textAlign: "center", lineHeight: 1.15 }}>{factor.label}</div>
+        <div style={{ fontSize: 8.5, color: THEME.text, fontFamily: THEME.font, textAlign: "center", lineHeight: 1.15, fontWeight: 600 }}>{factor.label}</div>
       </foreignObject>
     </g>
   );
@@ -829,9 +904,15 @@ function EscalationFactorNode({ x, y, factor, selected, onDown }) {
 function EscalationControlNode({ x, y, control, selected, onDown }) {
   return (
     <g transform={`translate(${x},${y})`} onPointerDown={onDown} style={{ cursor: "grab" }}>
-      <rect x={-34} y={-18} width={68} height={36} rx={18} fill="#fff" stroke={selected ? THEME.teal : "#d97706"} strokeWidth={selected ? 3 : 1.5} />
+      <defs>
+        <linearGradient id="ec-glass" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#2fa6a0" stopOpacity="0.26" />
+          <stop offset="100%" stopColor={THEME.surface} stopOpacity="0.94" />
+        </linearGradient>
+      </defs>
+      <rect x={-34} y={-18} width={68} height={36} rx={18} fill="url(#ec-glass)" stroke={selected ? THEME.teal : "#2fa6a0"} strokeOpacity={selected ? 1 : 0.55} strokeWidth={selected ? 3 : 1.4} />
       <foreignObject x={-30} y={-14} width={60} height={28}>
-        <div style={{ fontSize: 8.5, color: "#7c2d12", fontFamily: THEME.font, textAlign: "center", lineHeight: 1.15 }}>{control.label}</div>
+        <div style={{ fontSize: 8.5, color: THEME.text, fontFamily: THEME.font, textAlign: "center", lineHeight: 1.15, fontWeight: 600 }}>{control.label}</div>
       </foreignObject>
     </g>
   );
@@ -848,8 +929,8 @@ function BarrierWithEscalation({ barrier, pos, factors, resolvedFactorPos, contr
       />
       {!readOnly && (
         <g transform={`translate(${pos.x},${pos.y + 42})`} onPointerDown={(e) => e.stopPropagation()} onClick={onAddFactor} style={{ cursor: "pointer" }}>
-          <circle r={9} fill="#fff" stroke="#d97706" strokeWidth={1.4} />
-          <text textAnchor="middle" y={3.5} fontSize={12} fill="#d97706" fontWeight={700}>+</text>
+          <circle r={9} fill={THEME.surface} stroke={GLASS.esc} strokeWidth={1.4} />
+          <text textAnchor="middle" y={3.5} fontSize={12} fill={GLASS.esc} fontWeight={700}>+</text>
         </g>
       )}
       {factors.map((f) => {
@@ -866,8 +947,8 @@ function BarrierWithEscalation({ barrier, pos, factors, resolvedFactorPos, contr
             />
             {!readOnly && (
               <g transform={`translate(${fp.x},${fp.y + 40})`} onPointerDown={(e) => e.stopPropagation()} onClick={() => onAddControl(f.id)} style={{ cursor: "pointer" }}>
-                <circle r={8} fill="#fff" stroke="#d97706" strokeWidth={1.3} />
-                <text textAnchor="middle" y={3} fontSize={11} fill="#d97706" fontWeight={700}>+</text>
+                <circle r={8} fill={THEME.surface} stroke={GLASS.esc} strokeWidth={1.3} />
+                <text textAnchor="middle" y={3} fontSize={11} fill={GLASS.esc} fontWeight={700}>+</text>
               </g>
             )}
             {controls.map((ctl, k) => {
