@@ -485,6 +485,14 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
         sortOptions={SORT_OPTIONS}
         sortValue={sort}
         onSortChange={setSort}
+        savedViewsKey={`machinery_${currentUser?.username || "anon"}`}
+        filterState={{ search, sort, approvalFilter, typeFilter }}
+        onApplyFilterState={(s) => {
+          setSearch(s.search ?? "");
+          setSort(s.sort ?? "newest");
+          setApprovalFilter(s.approvalFilter ?? "all");
+          setTypeFilter(s.typeFilter ?? "all");
+        }}
         filterSlot={
           <>
             <select style={styles.filterSelect} value={approvalFilter} onChange={(e) => setApprovalFilter(e.target.value)} dir={dir}>

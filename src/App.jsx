@@ -74,6 +74,7 @@ import { trackLogin, trackLogout, trackPageView, trackFailedLogin } from "./admi
 const SuperAdminLogin = lazy(() => import("./superadmin/SuperAdminLogin.jsx"));
 const SuperAdminPanel = lazy(() => import("./superadmin/SuperAdminPanel.jsx"));
 import DataView, { StatusPill } from "./shared/DataView.jsx";
+import { useFormDraft } from "./shared/useFormDraft.js";
 import ReportErrorModal from "./shared/ReportErrorModal.jsx";
 import PageBar, { PageBarContext } from "./shared/PageBar.jsx";
 import ModuleSubHeader from "./shared/ModuleSubHeader.jsx";
@@ -2254,6 +2255,47 @@ function AnomalyForm({ onBack, currentUser, onSaved, embedded }) {
   const [photos, setPhotos] = useState([]);
   const [photoBusy, setPhotoBusy] = useState(false);
 
+  // پیش‌نویسِ محلیِ این فرم (بدون عکس‌ها — حجمشان برای localStorage مناسب
+  // نیست) تا اگر برق قطع شد یا صفحه‌ی موبایل قبل از ثبت بسته شد، متنِ
+  // تایپ‌شده از دست نرود. هیچ درخواستِ بک‌اندی اینجا نیست — طبق «local
+  // draft, explicit commit»، ثبتِ نهایی همچنان فقط با دکمه‌ی «ثبت» است.
+  const draftKey = `ihms_draft_anomalyForm_${currentUser?.username || "anon"}`;
+  const [draftBannerVisible, setDraftBannerVisible] = useState(true);
+  const draftValues = useMemo(() => ({
+    project, contractor, subContractor, area, trackingNumber, date, time, riskLevel,
+    category, format, description, follower, needsRiskAssessment, identifiedHazard,
+    affectsBarrier, selectedBowtieId, selectedBarrierIds,
+  }), [project, contractor, subContractor, area, trackingNumber, date, time, riskLevel, category, format, description, follower, needsRiskAssessment, identifiedHazard, affectsBarrier, selectedBowtieId, selectedBarrierIds]);
+  const { hasDraft, readDraft, discardDraft } = useFormDraft(draftKey, draftValues);
+
+  const applyDraft = () => {
+    const d = readDraft();
+    if (d) {
+      if (d.project !== undefined) setProject(d.project);
+      if (d.contractor !== undefined) setContractor(d.contractor);
+      if (d.subContractor !== undefined) setSubContractor(d.subContractor);
+      if (d.area !== undefined) setArea(d.area);
+      if (d.trackingNumber !== undefined) setTrackingNumber(d.trackingNumber);
+      if (d.date !== undefined) setDate(d.date);
+      if (d.time !== undefined) setTime(d.time);
+      if (d.riskLevel !== undefined) setRiskLevel(d.riskLevel);
+      if (d.category !== undefined) setCategory(d.category);
+      if (d.format !== undefined) setFormat(d.format);
+      if (d.description !== undefined) setDescription(d.description);
+      if (d.follower !== undefined) setFollower(d.follower);
+      if (d.needsRiskAssessment !== undefined) setNeedsRiskAssessment(d.needsRiskAssessment);
+      if (d.identifiedHazard !== undefined) setIdentifiedHazard(d.identifiedHazard);
+      if (d.affectsBarrier !== undefined) setAffectsBarrier(d.affectsBarrier);
+      if (d.selectedBowtieId !== undefined) setSelectedBowtieId(d.selectedBowtieId);
+      if (d.selectedBarrierIds !== undefined) setSelectedBarrierIds(d.selectedBarrierIds);
+    }
+    setDraftBannerVisible(false);
+  };
+  const dismissDraft = () => {
+    discardDraft();
+    setDraftBannerVisible(false);
+  };
+
   const handlePickFiles = async (fileList) => {
     const files = Array.from(fileList || []).slice(0, 2 - photos.length);
     if (files.length === 0) return;
@@ -2396,6 +2438,7 @@ function AnomalyForm({ onBack, currentUser, onSaved, embedded }) {
         recordLabel: `${record.trackingNumber} — ${record.area}`, direction: "employer_to_contractor",
       }, currentUser?.name).catch(() => {});
     }
+    discardDraft(); // با ثبتِ موفق، پیش‌نویسِ محلی دیگر لازم نیست
     onSaved ? onSaved() : onBack && onBack();
     } catch (e) {
       // رفع باگ واقعی گزارش‌شده: قبلاً اگه هر خطای غیرمنتظره‌ای اینجا رخ
@@ -2415,6 +2458,18 @@ function AnomalyForm({ onBack, currentUser, onSaved, embedded }) {
       {!embedded && onBack && <div style={styles.backLink} onClick={onBack}>{t("cmBackToMenu")}</div>}
 
       <div style={embedded ? {} : { ...styles.card, width: "auto" }}>
+        {hasDraft && draftBannerVisible && (
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap",
+            background: THEME.warnBg, border: `1px solid ${THEME.warn}`, borderRadius: 10, padding: "9px 12px", marginBottom: 14,
+          }}>
+            <span style={{ fontSize: 12.5, color: THEME.warn, fontWeight: 600 }}>{t("afDraftFoundMsg")}</span>
+            <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+              <button type="button" onClick={applyDraft} style={{ background: THEME.warn, color: "#fff", border: "none", borderRadius: 7, padding: "5px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: THEME.font }}>{t("afDraftRestore")}</button>
+              <button type="button" onClick={dismissDraft} style={{ background: "transparent", color: THEME.warn, border: `1px solid ${THEME.warn}`, borderRadius: 7, padding: "5px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: THEME.font }}>{t("afDraftDiscard")}</button>
+            </div>
+          </div>
+        )}
         {!embedded && (
           <>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>

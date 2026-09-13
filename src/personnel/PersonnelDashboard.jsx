@@ -243,6 +243,15 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
         sortOptions={SORT_OPTIONS}
         sortValue={sort}
         onSortChange={setSort}
+        virtualize
+        savedViewsKey={`personnel_${currentUser?.username || "anon"}`}
+        filterState={{ search, sort, statusFilter, contractorFilter }}
+        onApplyFilterState={(s) => {
+          setSearch(s.search ?? "");
+          setSort(s.sort ?? "name");
+          setStatusFilter(s.statusFilter ?? "all");
+          setContractorFilter(s.contractorFilter ?? "all");
+        }}
         filterSlot={
           <>
             <select style={styles.filterSelect} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir={dir}>

@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { List, LayoutGrid, ArrowUpDown, Search } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { List, LayoutGrid, ArrowUpDown, Search, Bookmark, Plus, Trash2 } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 const VIEW_MODE_KEY = "ihms_view_mode";
+const VIRTUALIZE_THRESHOLD = 80; // زیرِ این تعداد، مزیتِ مجازی‌سازی ارزشِ پیچیدگی‌اش را ندارد
+const VIRTUAL_ROW_H = 40; // تقریبِ ارتفاعِ هر ردیف به پیکسل (padding: 8px + فونتِ 12.5)
 
 /**
  * Shared list/grid renderer used across every module (Personnel, Anomaly,
@@ -41,6 +43,25 @@ const VIEW_MODE_KEY = "ihms_view_mode";
  *   filterSlot        — arbitrary JSX the parent wants next to search/sort
  *   bulkActions       — [{ label, onClick(selectedIds), danger? }] (omit to hide bulk select)
  *   emptyMessage
+ *   filterState        — plain serializable object of the parent's current
+ *                        search/sort/filter values (parent decides what's
+ *                        included). Together with onApplyFilterState and
+ *                        savedViewsKey, enables the "Saved Views" picker —
+ *                        a named snapshot the user can restore later. Any
+ *                        one of the three omitted hides the feature.
+ *   onApplyFilterState(state) — parent applies a restored snapshot back onto
+ *                        its own search/sort/filter useState setters
+ *   savedViewsKey      — stable key (module + optionally user) views are
+ *                        stored under in localStorage; must be unique per module/user
+ *   virtualize         — opt-in (default false): for List view only, once
+ *                        `items.length` passes VIRTUALIZE_THRESHOLD, render
+ *                        only the rows near the visible scroll area instead
+ *                        of the whole table, so very large lists (hundreds+
+ *                        of rows) stay smooth to scroll. Falls back to the
+ *                        normal full render whenever a row is expanded
+ *                        (renderExpanded), since that needs variable row
+ *                        height. Off by default — every existing call site
+ *                        is unaffected unless it opts in.
  */
 export default function DataView({
   items,
@@ -59,6 +80,10 @@ export default function DataView({
   filterSlot,
   bulkActions,
   emptyMessage,
+  filterState,
+  onApplyFilterState,
+  savedViewsKey,
+  virtualize = false,
 }) {
   const { t, dir } = useLanguage();
   const finalSearchPlaceholder = searchPlaceholder ?? t("dvSearchDefault");
@@ -75,6 +100,61 @@ export default function DataView({
   useEffect(() => {
     try { localStorage.setItem(VIEW_MODE_KEY, viewMode); } catch { /* بی‌اهمیت اگر ذخیره نشد */ }
   }, [viewMode]);
+
+  // نماهای فیلترشدهٔ ذخیره‌شونده — یک اسنپ‌شاتِ نام‌گذاری‌شده از
+  // searchQuery/sortValue/فیلترهای خودِ ماژول که بعداً با یک کلیک بازیابی
+  // می‌شود. کاملاً محلی (localStorage)، هیچ تماسِ بک‌اندی ندارد.
+  const savedViewsEnabled = !!savedViewsKey && !!onApplyFilterState;
+  const savedViewsStorageKey = `ihms_saved_views_${savedViewsKey}`;
+  const [savedViews, setSavedViews] = useState([]);
+  const [viewsOpen, setViewsOpen] = useState(false);
+  const [namingView, setNamingView] = useState(false);
+  const [newViewName, setNewViewName] = useState("");
+  const viewsWrapRef = useRef(null);
+
+  useEffect(() => {
+    if (!savedViewsEnabled) return;
+    try {
+      const raw = localStorage.getItem(savedViewsStorageKey);
+      setSavedViews(raw ? JSON.parse(raw) : []);
+    } catch {
+      setSavedViews([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedViewsStorageKey, savedViewsEnabled]);
+
+  useEffect(() => {
+    if (!viewsOpen) return;
+    const onDocPointer = (e) => {
+      if (viewsWrapRef.current && !viewsWrapRef.current.contains(e.target)) { setViewsOpen(false); setNamingView(false); }
+    };
+    document.addEventListener("mousedown", onDocPointer);
+    document.addEventListener("touchstart", onDocPointer);
+    return () => {
+      document.removeEventListener("mousedown", onDocPointer);
+      document.removeEventListener("touchstart", onDocPointer);
+    };
+  }, [viewsOpen]);
+
+  const persistViews = (next) => {
+    setSavedViews(next);
+    try { localStorage.setItem(savedViewsStorageKey, JSON.stringify(next)); } catch { /* بی‌اهمیت */ }
+  };
+  const handleSaveView = () => {
+    const name = newViewName.trim();
+    if (!name) return;
+    persistViews([...savedViews, { id: `v${Date.now()}`, name, state: filterState, createdAt: new Date().toISOString() }]);
+    setNewViewName("");
+    setNamingView(false);
+  };
+  const handleApplyView = (view) => {
+    onApplyFilterState(view.state || {});
+    setViewsOpen(false);
+  };
+  const handleDeleteView = (id, e) => {
+    e.stopPropagation();
+    persistViews(savedViews.filter((v) => v.id !== id));
+  };
 
   // با عوض‌شدن لیست (فیلتر/جستجوی جدید)، انتخاب‌های قبلی که دیگر توی نتیجه نیستند پاک شوند
   useEffect(() => {
@@ -130,6 +210,89 @@ export default function DataView({
             <ArrowUpDown size={13} color={THEME.text3} style={{ position: "absolute", insetInlineStart: 8, top: 10, pointerEvents: "none" }} />
           </div>
         )}
+        {savedViewsEnabled && (
+          <div ref={viewsWrapRef} style={{ position: "relative" }}>
+            <button
+              type="button"
+              onClick={() => setViewsOpen((v) => !v)}
+              style={{
+                display: "flex", alignItems: "center", gap: 6, background: THEME.surface, border: `1.5px solid ${THEME.border}`,
+                borderRadius: 9, padding: "0 12px", height: 36, cursor: "pointer", color: THEME.text2, fontSize: 12.5, fontWeight: 600, fontFamily: THEME.font,
+              }}
+            >
+              <Bookmark size={14} color={THEME.text3} />
+              {t("dvSavedViews")}
+              {savedViews.length > 0 && (
+                <span style={{ background: THEME.tealSoft, color: THEME.tealDeep, borderRadius: 999, padding: "1px 6px", fontSize: 10.5, fontWeight: 700 }}>{savedViews.length}</span>
+              )}
+            </button>
+
+            {viewsOpen && (
+              <div
+                style={{
+                  position: "absolute", top: "calc(100% + 6px)", insetInlineEnd: 0, minWidth: 250, maxWidth: 300,
+                  background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 10,
+                  boxShadow: "0 10px 30px -8px rgba(15,42,63,0.25)", zIndex: 30, padding: 10,
+                }}
+              >
+                {savedViews.length === 0 && !namingView && (
+                  <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: "6px 0" }}>{t("dvSavedViewsEmpty")}</p>
+                )}
+                {savedViews.length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 8, maxHeight: 220, overflowY: "auto" }}>
+                    {savedViews.map((v) => (
+                      <div
+                        key={v.id}
+                        onClick={() => handleApplyView(v)}
+                        style={{
+                          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6,
+                          background: THEME.bg, borderRadius: 8, padding: "7px 9px", cursor: "pointer",
+                        }}
+                      >
+                        <span style={{ fontSize: 12, color: THEME.text, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{v.name}</span>
+                        <Trash2
+                          size={13} color={THEME.text3} style={{ flexShrink: 0, cursor: "pointer" }}
+                          title={t("dvDeleteViewTitle")}
+                          onClick={(e) => handleDeleteView(v.id, e)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {namingView ? (
+                  <div>
+                    <input
+                      autoFocus
+                      style={{ ...styles.input, fontSize: 12, marginBottom: 6 }}
+                      value={newViewName}
+                      onChange={(e) => setNewViewName(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") handleSaveView(); if (e.key === "Escape") setNamingView(false); }}
+                      placeholder={t("dvViewNamePlaceholder")}
+                      dir={dir}
+                    />
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button type="button" onClick={handleSaveView} disabled={!newViewName.trim()} style={{ ...styles.smallButton, flex: 1, opacity: newViewName.trim() ? 1 : 0.5 }}>{t("dvSaveViewConfirm")}</button>
+                      <button type="button" onClick={() => { setNamingView(false); setNewViewName(""); }} style={{ ...styles.smallButton, flex: 1, background: THEME.text3 }}>{t("dvSaveViewCancel")}</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setNamingView(true)}
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%",
+                      background: "transparent", border: `1px dashed ${THEME.border}`, borderRadius: 8, padding: "7px 0",
+                      color: THEME.teal, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: THEME.font,
+                    }}
+                  >
+                    <Plus size={13} /> {t("dvSaveCurrentView")}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
         <div style={{ display: "flex", background: THEME.surface, border: `1.5px solid ${THEME.border}`, borderRadius: 9, overflow: "hidden" }}>
           <ViewToggleButton active={viewMode === "list"} onClick={() => setViewMode("list")} icon={List} title={t("dvListView")} />
           <ViewToggleButton active={viewMode === "grid"} onClick={() => setViewMode("grid")} icon={LayoutGrid} title={t("dvGridView")} />
@@ -159,18 +322,31 @@ export default function DataView({
       {items.length === 0 && <p style={{ color: THEME.text3, textAlign: "center", padding: "24px 0" }}>{finalEmptyMessage}</p>}
 
       {items.length > 0 && viewMode === "list" && (
-        <ListTable
-          items={items}
-          getId={getId}
-          columns={columns}
-          renderRowActions={renderRowActions}
-          expandedId={expandedId}
-          renderExpanded={renderExpanded}
-          hasBulk={hasBulk}
-          selected={selected}
-          toggleSelect={toggleSelect}
-          toggleSelectAll={toggleSelectAll}
-        />
+        virtualize && items.length > VIRTUALIZE_THRESHOLD && expandedId == null ? (
+          <VirtualizedListTable
+            items={items}
+            getId={getId}
+            columns={columns}
+            renderRowActions={renderRowActions}
+            hasBulk={hasBulk}
+            selected={selected}
+            toggleSelect={toggleSelect}
+            toggleSelectAll={toggleSelectAll}
+          />
+        ) : (
+          <ListTable
+            items={items}
+            getId={getId}
+            columns={columns}
+            renderRowActions={renderRowActions}
+            expandedId={expandedId}
+            renderExpanded={renderExpanded}
+            hasBulk={hasBulk}
+            selected={selected}
+            toggleSelect={toggleSelect}
+            toggleSelectAll={toggleSelectAll}
+          />
+        )
       )}
 
       {items.length > 0 && viewMode === "grid" && (
@@ -281,6 +457,89 @@ function ListTable({ items, getId, columns, renderRowActions, expandedId, render
                 </React.Fragment>
               );
             })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// نسخه‌ی مجازی‌سازی‌شده‌ی ListTable — فقط ردیف‌های نزدیکِ ناحیه‌ی دیدِ
+// اسکرول رندر می‌شوند (به‌علاوه‌ی چند ردیفِ overscan) تا فهرست‌های خیلی
+// بزرگ (صدها ردیف) نرم اسکرول شوند. عمداً از ListTable جدا نگه داشته شده
+// (کمی تکرارِ کد، اما بدون هیچ ریسکی برای فراخوانی‌های موجودِ ListTable که
+// این ویژگی را فعال نکرده‌اند) و پشتیبانی از renderExpanded ندارد — چون
+// ارتفاعِ متغیرِ پنلِ جزئیات با محاسبه‌ی ارتفاعِ ثابتِ ردیف در تضاد است؛
+// DataView در چنین حالتی خودش به ListTable معمولی برمی‌گردد.
+function VirtualizedListTable({ items, getId, columns, renderRowActions, hasBulk, selected, toggleSelect, toggleSelectAll }) {
+  const scrollRef = useRef(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [viewportH, setViewportH] = useState(560);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setViewportH(el.clientHeight);
+    const onScroll = () => setScrollTop(el.scrollTop);
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const OVERSCAN = 8;
+  const startIdx = Math.max(0, Math.floor(scrollTop / VIRTUAL_ROW_H) - OVERSCAN);
+  const endIdx = Math.min(items.length, Math.ceil((scrollTop + viewportH) / VIRTUAL_ROW_H) + OVERSCAN);
+  const visible = items.slice(startIdx, endIdx);
+  const topPad = startIdx * VIRTUAL_ROW_H;
+  const bottomPad = (items.length - endIdx) * VIRTUAL_ROW_H;
+
+  return (
+    <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 10, overflow: "hidden" }}>
+      <div ref={scrollRef} style={{ overflow: "auto", maxHeight: 560 }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5, minWidth: 480 }}>
+          <thead>
+            <tr style={{ background: THEME.bg, borderBottom: `1px solid ${THEME.border}`, position: "sticky", top: 0, zIndex: 1 }}>
+              {hasBulk && (
+                <th style={{ width: 34, padding: "9px 8px", background: THEME.bg }}>
+                  <input type="checkbox" checked={items.length > 0 && selected.size === items.length} onChange={toggleSelectAll} />
+                </th>
+              )}
+              <th style={{ width: 40, padding: "9px 8px", textAlign: "center", color: THEME.text3, fontWeight: 600, background: THEME.bg }}>#</th>
+              {columns.map((col) => (
+                <th key={col.key} style={{ padding: "9px 10px", textAlign: "start", color: THEME.text2, fontWeight: 600, whiteSpace: "nowrap", background: THEME.bg }}>
+                  {col.label}
+                </th>
+              ))}
+              {renderRowActions && <th style={{ padding: "9px 10px", background: THEME.bg }} />}
+            </tr>
+          </thead>
+          <tbody>
+            {topPad > 0 && <tr aria-hidden style={{ height: topPad }}><td colSpan={(hasBulk ? 1 : 0) + 1 + columns.length + (renderRowActions ? 1 : 0)} style={{ padding: 0, border: "none" }} /></tr>}
+            {visible.map((item, i) => {
+              const id = getId(item);
+              return (
+                <tr key={id} style={{ borderBottom: `1px solid ${THEME.border}`, height: VIRTUAL_ROW_H }}>
+                  {hasBulk && (
+                    <td style={{ padding: "8px", textAlign: "center" }}>
+                      <input type="checkbox" checked={selected.has(id)} onChange={() => toggleSelect(id)} />
+                    </td>
+                  )}
+                  <td style={{ padding: "8px", textAlign: "center", color: THEME.text3 }}>{startIdx + i + 1}</td>
+                  {columns.map((col) => (
+                    <td key={col.key} style={{ padding: "8px 10px", color: THEME.text, verticalAlign: "middle" }}>
+                      {col.render(item)}
+                    </td>
+                  ))}
+                  {renderRowActions && (
+                    <td style={{ padding: "8px 10px" }}>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                        {renderRowActions(item)}
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              );
+            })}
+            {bottomPad > 0 && <tr aria-hidden style={{ height: bottomPad }}><td colSpan={(hasBulk ? 1 : 0) + 1 + columns.length + (renderRowActions ? 1 : 0)} style={{ padding: 0, border: "none" }} /></tr>}
           </tbody>
         </table>
       </div>

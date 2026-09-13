@@ -1,43 +1,79 @@
 import React, { useState, useEffect } from "react";
-import { Wifi, WifiOff, RefreshCw, Info, X, Download } from "lucide-react";
-import { THEME, styles, APP_NAME, APP_VERSION, APP_VERSION_CODE } from "./shared.js";
+import { Wifi, WifiOff, RefreshCw, Info, X, Download, AlertTriangle, RotateCcw } from "lucide-react";
+import { THEME, styles, APP_NAME, APP_VERSION, APP_VERSION_CODE, usePersistedState } from "./shared.js";
 import { useLanguage } from "./i18n/LanguageContext.jsx";
 import { numLocale } from "./i18n/translations.js";
 import { useAppearance } from "./shared/AppearanceContext.jsx";
 import { isoToJalaliDisplay } from "./personnel/jalaliDate.jsx";
 import { subscribeNetworkStatus, startNetworkMonitor } from "./offline/networkStatus.js";
-import { startAutoSync, subscribeSyncStatus } from "./offline/syncEngine.js";
+import { startAutoSync, subscribeSyncStatus, retryItemNow, processQueue } from "./offline/syncEngine.js";
 import { getQueue } from "./offline/offlineDb.js";
 import { loadLatestPublishedRelease, isNewerThanCurrent } from "./superadmin/appReleaseApi.js";
 import { resolveLatestApkUrl, openApkDownload } from "./appDownload.js";
+
+// نگاشتِ کلیدِ ماژولِ صفِ آفلاین (از MODULE_TABLE_MAP در syncEngine.js) به
+// کلیدِ i18n نامِ همان ماژول که جای دیگری در سامانه هم استفاده می‌شود —
+// برای نمایشِ خوانا در فهرستِ صفِ هم‌گام‌سازی، بدون تعریفِ دوبارهٔ نام‌ها.
+const QUEUE_MODULE_LABEL_KEYS = {
+  personnel: "modulePersonnelAccess", personnelDocuments: "modulePersonnelAccess",
+  anomalies: "moduleAnomalyReport", anomalyPhotos: "moduleAnomalyReport",
+  bowties: "subBowtie",
+  machinery: "moduleMachinery", machineryDocuments: "moduleMachinery",
+  scaffoldTags: "moduleScaffold", scaffoldPhotos: "moduleScaffold",
+  hseSurvey: "moduleHseSurvey",
+  permitToWork: "modulePermitToWork", permitTemplates: "modulePermitToWork", permitRenewals: "modulePermitToWork", permitSigners: "modulePermitToWork",
+  pssrs: "modulePssr", pssrTeamMembers: "modulePssr", pssrMeetings: "modulePssr", pssrChecklistResponses: "modulePssr", pssrActionItems: "modulePssr", pssrActionHistory: "modulePssr", pssrNotifications: "modulePssr",
+  liftingPlans: "moduleQuickTools", liftingPlanRevisions: "moduleQuickTools", liftingPlanAudit: "moduleQuickTools", liftingCraneModels: "moduleQuickTools", liftingRiggingItems: "moduleQuickTools", liftingAcceptanceCriteria: "moduleQuickTools",
+  excavationAssessments: "moduleQuickTools", excavationAudit: "moduleQuickTools", excavationStandardProfiles: "moduleQuickTools",
+  energyAssessments: "moduleQuickTools", energyAudit: "moduleQuickTools",
+  fleetFuelAssessments: "moduleQuickTools", fleetFuelAudit: "moduleQuickTools",
+};
+const QUEUE_ACTION_LABEL_KEYS = { insert: "onlineIndActionInsert", update: "onlineIndActionUpdate", delete: "onlineIndActionDelete" };
+
+function formatRelativeTime(t, iso, lang) {
+  if (!iso) return t("onlineIndLastSyncNever");
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const minutes = Math.floor(diffMs / 60000);
+  const loc = numLocale(lang);
+  if (minutes < 1) return t("onlineIndTimeJustNow");
+  if (minutes < 60) return t("onlineIndTimeMinutesAgo", { n: minutes.toLocaleString(loc) });
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return t("onlineIndTimeHoursAgo", { n: hours.toLocaleString(loc) });
+  return t("onlineIndTimeDaysAgo", { n: Math.floor(hours / 24).toLocaleString(loc) });
+}
 
 // وضعیت آنلاین/آفلاین + شمارنده‌ی عملیات معلق + بوت‌استرپِ حلقه‌ی
 // همگام‌سازی — دقیقاً همان کاری که OnlineIndicator می‌کرد. حالا داخلِ
 // دکمه‌ی «درباره IHMS» در هدر زندگی می‌کند (طبق خواسته: جایگاه/نحوه‌ی
 // نمایش عوض شود ولی قابلیت آنلاین/آفلاین کاملاً حفظ شود).
+// همچنین جزئیاتِ صفِ هم‌گام‌سازی (هر آیتم + خطا + تلاشِ مجددِ تکی) و زمانِ
+// آخرین هم‌گام‌سازیِ موفق را نگه می‌دارد تا در پنلِ «درباره IHMS» دیده شوند.
 function useOnlineStatus() {
   const [status, setStatus] = useState({ online: typeof navigator !== "undefined" ? navigator.onLine : true });
-  const [pendingCount, setPendingCount] = useState(0);
+  const [queueItems, setQueueItems] = useState([]);
   const [syncing, setSyncing] = useState(false);
+  const [lastSyncAt, setLastSyncAt] = usePersistedState("ihms_last_sync_at", null);
 
   useEffect(() => {
     startNetworkMonitor();
     startAutoSync();
     const unsubNet = subscribeNetworkStatus(setStatus);
-    const refreshCount = async () => {
+    const refreshQueue = async () => {
       const q = await getQueue();
-      setPendingCount(q.filter((i) => i.status !== "syncing").length);
+      setQueueItems(q);
     };
-    refreshCount();
+    refreshQueue();
     const unsubSync = subscribeSyncStatus((summary) => {
       setSyncing(summary.phase === "syncing");
-      refreshCount();
+      if (summary.phase === "idle" && summary.done > 0) setLastSyncAt(new Date().toISOString());
+      refreshQueue();
     });
-    const interval = setInterval(refreshCount, 10000);
+    const interval = setInterval(refreshQueue, 10000);
     return () => { unsubNet(); unsubSync(); clearInterval(interval); };
   }, []);
 
-  return { status, pendingCount, syncing };
+  const pendingCount = queueItems.filter((i) => i.status !== "syncing").length;
+  return { status, queueItems, pendingCount, syncing, lastSyncAt };
 }
 
 // دکمه‌ی هدر: آیکونِ Wifi/WifiOff (سبز/قرمز) = وضعیت آنلاین، برچسب
@@ -45,7 +81,7 @@ function useOnlineStatus() {
 // منتشر شده باشد. کلیک → پنل مشخصات نرم‌افزار.
 export function HeaderAboutButton() {
   const { t } = useLanguage();
-  const { status, pendingCount, syncing } = useOnlineStatus();
+  const { status, queueItems, pendingCount, syncing, lastSyncAt } = useOnlineStatus();
   const [open, setOpen] = useState(false);
   const [latestRelease, setLatestRelease] = useState(null);
 
@@ -87,20 +123,43 @@ export function HeaderAboutButton() {
         )}
         <style>{`@keyframes ihms-spin { from { transform: rotate(0deg);} to { transform: rotate(360deg);} }`}</style>
       </button>
-      {open && <AboutIhmsModal onClose={() => setOpen(false)} latestRelease={latestRelease} online={status.online} />}
+      {open && (
+        <AboutIhmsModal
+          onClose={() => setOpen(false)}
+          latestRelease={latestRelease}
+          online={status.online}
+          queueItems={queueItems}
+          syncing={syncing}
+          lastSyncAt={lastSyncAt}
+        />
+      )}
     </>
   );
 }
 
 // پنلِ «درباره IHMS» — مشخصات نرم‌افزار + وضعیت به‌روزرسانی (نسخه‌ی
 // نصب‌شده، آخرین نسخه‌ی منتشرشده، Release Notes، دکمه‌ی دانلود).
-export function AboutIhmsModal({ onClose, latestRelease, online }) {
+export function AboutIhmsModal({ onClose, latestRelease, online, queueItems = [], syncing = false, lastSyncAt = null }) {
   const { t, dir, lang } = useLanguage();
   const appearance = useAppearance();
   const [release, setRelease] = useState(latestRelease || null);
   const [checking, setChecking] = useState(latestRelease === undefined || latestRelease === null);
   // لینکِ دانلودِ مستقیمِ APK — از Assetِ Releaseِ GitHub گرفته می‌شود.
   const [apkUrl, setApkUrl] = useState("");
+  const [retryingId, setRetryingId] = useState(null);
+  const [retryingAll, setRetryingAll] = useState(false);
+
+  const pendingItems = queueItems.filter((i) => i.status !== "syncing");
+  const problemItems = queueItems.filter((i) => i.status === "failed" || i.status === "conflict");
+
+  const handleRetryOne = async (queueId) => {
+    setRetryingId(queueId);
+    try { await retryItemNow(queueId); } finally { setRetryingId(null); }
+  };
+  const handleRetryAll = async () => {
+    setRetryingAll(true);
+    try { await processQueue(); } finally { setRetryingAll(false); }
+  };
 
   useEffect(() => {
     let alive = true;
@@ -161,6 +220,77 @@ export function AboutIhmsModal({ onClose, latestRelease, online }) {
           {checking ? t("commonLoading") : updateAvailable
             ? t("aboutNewVersionAvailable")
             : t("aboutUpToDate")}
+        </div>
+
+        {/* وضعیت هم‌گام‌سازی: زمانِ آخرین موفقیت + فهرستِ صفِ فعلی با تلاشِ
+            مجددِ تکی/همگانی — تا کاربر دقیقاً بداند چه چیزی هنوز ارسال نشده. */}
+        <div style={{
+          borderRadius: 10, padding: "10px 14px", marginBottom: 14, textAlign: dir === "rtl" ? "right" : "left",
+          background: problemItems.length ? THEME.dangerBg : pendingItems.length ? THEME.warnBg : THEME.okBg,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: pendingItems.length ? 8 : 0 }}>
+            <span style={{ fontSize: 12.5, fontWeight: 700, color: problemItems.length ? THEME.danger : pendingItems.length ? THEME.warn : THEME.ok, display: "flex", alignItems: "center", gap: 6 }}>
+              {syncing
+                ? <RefreshCw size={13} style={{ animation: "ihms-spin 1s linear infinite" }} />
+                : problemItems.length ? <AlertTriangle size={13} /> : null}
+              {pendingItems.length === 0 ? t("onlineIndQueueEmpty") : t("onlineIndQueueCount", { n: pendingItems.length.toLocaleString(numLocale(lang)) })}
+            </span>
+            {problemItems.length > 0 && (
+              <button
+                type="button"
+                onClick={handleRetryAll}
+                disabled={retryingAll || !online}
+                style={{
+                  display: "flex", alignItems: "center", gap: 4, background: "transparent", border: `1px solid ${THEME.danger}`,
+                  color: THEME.danger, borderRadius: 999, padding: "3px 10px", fontSize: 11, fontWeight: 700,
+                  cursor: retryingAll || !online ? "default" : "pointer", opacity: retryingAll || !online ? 0.5 : 1, fontFamily: THEME.font,
+                }}
+              >
+                <RotateCcw size={11} /> {t("onlineIndRetryAll")}
+              </button>
+            )}
+          </div>
+
+          <div style={{ fontSize: 11, color: THEME.text3, marginBottom: pendingItems.length ? 8 : 0 }}>
+            {t("onlineIndLastSyncLabel")}: {formatRelativeTime(t, lastSyncAt, lang)}
+          </div>
+
+          {pendingItems.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 190, overflowY: "auto" }}>
+              {pendingItems.map((item) => {
+                const moduleKey = QUEUE_MODULE_LABEL_KEYS[item.module];
+                const moduleLabel = moduleKey ? t(moduleKey) : item.module;
+                const actionKey = QUEUE_ACTION_LABEL_KEYS[item.action];
+                const isProblem = item.status === "failed" || item.status === "conflict";
+                return (
+                  <div key={item.queueId} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, background: "rgba(255,255,255,0.5)", borderRadius: 8, padding: "6px 9px" }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 11.5, fontWeight: 700, color: THEME.heading, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {moduleLabel} — {actionKey ? t(actionKey) : item.action}
+                      </div>
+                      <div style={{ fontSize: 10.5, color: isProblem ? THEME.danger : THEME.text3 }}>
+                        {isProblem ? (item.lastError || t(item.status === "conflict" ? "syncBadgeConflict" : "syncBadgeFailed")) : t("syncBadgePending")}
+                      </div>
+                    </div>
+                    {isProblem && (
+                      <button
+                        type="button"
+                        onClick={() => handleRetryOne(item.queueId)}
+                        disabled={retryingId === item.queueId || !online}
+                        style={{
+                          flexShrink: 0, background: THEME.danger, color: "#fff", border: "none", borderRadius: 7,
+                          padding: "4px 9px", fontSize: 10.5, fontWeight: 700, cursor: retryingId === item.queueId || !online ? "default" : "pointer",
+                          opacity: retryingId === item.queueId || !online ? 0.6 : 1, fontFamily: THEME.font,
+                        }}
+                      >
+                        {retryingId === item.queueId ? t("onlineIndRetrying") : t("onlineIndRetryOne")}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div style={{ textAlign: dir === "rtl" ? "right" : "left" }}>
