@@ -9,6 +9,7 @@ import { StatusBadge } from "./pssrUi.jsx";
 import PSSRTeamPanel from "./PSSRTeamPanel.jsx";
 import PSSRMeetingsPanel from "./PSSRMeetingsPanel.jsx";
 import PSSRActionPlanPanel from "./PSSRActionPlanPanel.jsx";
+import PSSRDashboardPanel from "./PSSRDashboardPanel.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 export default function PSSRWorkspace({ pssrId, currentUser, role, readOnly, onBack }) {
@@ -39,6 +40,7 @@ export default function PSSRWorkspace({ pssrId, currentUser, role, readOnly, onB
     { key: "team", label: t("pssrTabTeam"), count: teamMembers.length },
     { key: "meetings", label: t("pssrTabMeetings"), count: meetings.length },
     { key: "actionPlan", label: t("pssrTabActionPlan"), count: openActions },
+    { key: "dashboard", label: t("pssrTabDashboard"), count: 0 },
   ];
 
   return (
@@ -77,6 +79,7 @@ export default function PSSRWorkspace({ pssrId, currentUser, role, readOnly, onB
             readOnly={readOnly} onChanged={refresh} />
         )}
         {tab === "actionPlan" && <PSSRActionPlanPanel pssrId={pssrId} actionItems={actionItems} teamMembers={teamMembers} />}
+        {tab === "dashboard" && <PSSRDashboardPanel pssrId={pssrId} meetings={meetings} actionItems={actionItems} />}
       </div>
     </div>
   );

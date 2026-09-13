@@ -10406,7 +10406,12 @@ export const translations = {
   "pssrFilterAllDiscipline": { "fa": "همه‌ی Disciplineها", "en": "All disciplines" },
   "pssrFilterAllStatus": { "fa": "همه‌ی وضعیت‌ها", "en": "All statuses" },
   "pssrNoActions": { "fa": "هیچ Actionی با این فیلتر یافت نشد.", "en": "No actions match this filter." },
-  "pssrResponsible": { "fa": "مسئول", "en": "Responsible" }
+  "pssrResponsible": { "fa": "مسئول", "en": "Responsible" },
+  "pssrTabDashboard": { "fa": "داشبورد", "en": "Dashboard" },
+  "pssrReviewProgress": { "fa": "پیشرفتِ بررسی", "en": "Review progress" },
+  "pssrDueSoon": { "fa": "نزدیک به Deadline", "en": "Due soon" },
+  "pssrCatCOpen": { "fa": "CAT C باز", "en": "Open CAT C" },
+  "pssrDisciplineStatus": { "fa": "وضعیتِ هر Discipline", "en": "Status per discipline" }
 };
 
 // ---------- تزریقِ تنبلِ ترجمهٔ آلمانی ----------
