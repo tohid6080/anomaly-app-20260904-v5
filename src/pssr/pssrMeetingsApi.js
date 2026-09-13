@@ -191,6 +191,19 @@ function actionItemFromRow(r) {
   };
 }
 
+// برای زنگوله‌ی اعلانِ سراسری (App.jsx) — همان فلسفه‌ی «زنده‌محاسبه‌شده»یِ
+// بقیه‌ی ماژول‌ها (computeMachinerySmartItems و ...): بدونِ خواندنِ جدولِ
+// pssr_notifications، مستقیم از وضعیتِ فعلیِ pssr_action_items.
+export async function loadOpenActionsForResponsible(accountType, accountId) {
+  if (!accountId) return [];
+  const field = accountType === "employer" ? "responsible_employer_account_id" : "responsible_contractor_id";
+  const rows = await sb(`pssr_action_items?${field}=eq.${accountId}&status=neq.closed&select=id,pssr_id,discipline,cat,status,due_date,pssrs(report_no)`);
+  return sbOk(rows) ? rows.map((r) => ({
+    id: r.id, pssrId: r.pssr_id, pssrReportNo: r.pssrs?.report_no || "", discipline: r.discipline,
+    cat: r.cat || "", status: r.status, dueDate: r.due_date || "",
+  })) : [];
+}
+
 export async function loadActionItems(pssrId) {
   if (!pssrId) return [];
   const rows = await sb(`pssr_action_items?pssr_id=eq.${pssrId}&select=*,contractors(contact_person_name),employer_accounts(name)&order=created_at.asc`);

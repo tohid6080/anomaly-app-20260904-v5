@@ -19,6 +19,7 @@ const PersonnelDashboard = lazy(() => import("./personnel/PersonnelDashboard.jsx
 const ProactiveIndicatorsDashboard = lazy(() => import("./proactiveIndicators/ProactiveIndicatorsDashboard.jsx"));
 const IncidentsListPage = lazy(() => import("./incidents/IncidentsListPage.jsx"));
 const PSSRListPage = lazy(() => import("./pssr/PSSRListPage.jsx"));
+import { loadOpenActionsForResponsible } from "./pssr/pssrMeetingsApi.js";
 import { loadHomeKpiSummary } from "./dashboard/homeKpiApi.js";
 import { loadModuleConfig, loadDashboardConfig, loadNotificationTypes, loadAppearanceConfig, applyAppearanceToDom, effectiveAppearance, cacheAppearanceConfig, readCachedAppearanceConfig, syncAppearanceNow, loadActiveAnnouncements, loadDashboardWidgetConfig } from "./systemConfigApi.js";
 import { mergeWidgetConfig, defaultWidgetConfig } from "./dashboard/dashboardWidgets.js";
@@ -704,6 +705,24 @@ function computePermitSmartItems(permitsList, scopeContractorName, currentUserNa
 }
 const PERMIT_EXPIRY_WARNING_DAYS = 3;
 
+/**
+ * همان فلسفه‌ی زنده‌محاسبه‌شده برای PSSR: به‌جای خواندنِ جدولِ ماندگارِ
+ * pssr_notifications (که فقط سابقه/تاریخچه است)، مستقیم از وضعیتِ فعلیِ
+ * pssr_action_items مربوط به همین کاربر می‌خواند — با بسته‌شدنِ Action،
+ * خط خودش ناپدید می‌شود، بدونِ نیاز به mark-as-read.
+ */
+function computePssrSmartItems(myOpenActions) {
+  if (!myOpenActions || myOpenActions.length === 0) return [];
+  const catAOpen = myOpenActions.filter((a) => a.cat === "CAT_A").length;
+  return [{
+    key: "pssr-action-open",
+    label: catAOpen > 0
+      ? tr("smartPssrActionOpenWithCatA", { count: myOpenActions.length, catA: catAOpen })
+      : tr("smartPssrActionOpen", { count: myOpenActions.length }),
+    target: { module: "pssr" },
+  }];
+}
+
 // طبقه‌بندی هر آیتم زنده‌محاسبه‌شده‌ی اعلان به یکی از انواع رجیستری
 // system_notification_types — فقط بر اساس pattern کلید، بدون هیچ تغییری
 // در خودِ منطق محاسبه (computeSmartNotifications و بقیه). کلید ناشناخته
@@ -720,6 +739,7 @@ function classifyNotificationKey(key) {
   if (key.startsWith("permit-review")) return "permit_pending_review";
   if (key.startsWith("permit-rejected")) return "permit_rejected";
   if (key.startsWith("permit-expiring")) return "permit_expiring";
+  if (key.startsWith("pssr-action")) return "pssr_action_open";
   return null;
 }
 
@@ -4792,13 +4812,14 @@ function EmployerDashboard({ onLogout, currentUser }) {
   }, [currentUser?.id]);
 
   const loadNotifs = async () => {
-    const [allPersonnel, allAnomalies, allMachinery, allPermits, notifTypes] = await Promise.all([loadPersonnelList(), loadAnomaliesOfflineFirst(), loadMachineryListOfflineFirst(), loadPermits().catch(() => []), loadNotificationTypes().catch(() => null)]);
+    const [allPersonnel, allAnomalies, allMachinery, allPermits, notifTypes, myPssrActions] = await Promise.all([loadPersonnelList(), loadAnomaliesOfflineFirst(), loadMachineryListOfflineFirst(), loadPermits().catch(() => []), loadNotificationTypes().catch(() => null), loadOpenActionsForResponsible("employer", currentUser?.id).catch(() => [])]);
     await checkAndUpdateDeadlines(allPersonnel); // فقط برای انتقال خودکار به «منقضی» — دیگر اعلان ثبت نمی‌کند
     const barrierAlerts = await loadDegradedBarrierAlerts().catch(() => []);
     const rawItems = [
       ...computeSmartNotifications(allPersonnel, allAnomalies), // بدون scopeContractorName → تجمیعی به‌ازای هر پیمانکار
       ...computeMachinerySmartItems(allMachinery, undefined, notifTypes?.find((t) => t.typeKey === "machinery_expiring")?.warningDays),
       ...computePermitSmartItems(allPermits, undefined, undefined, notifTypes?.find((t) => t.typeKey === "permit_expiring")?.warningDays),
+      ...computePssrSmartItems(myPssrActions),
       ...barrierAlerts, // فاز ۴: هشدار کاهش اثربخشی Barrier — برای کارفرما/HSE بدون محدودیت پیمانکار
       // داربست عمداً اینجا نیست — طبق خواسته‌ی کاربر، این ماژول توی زنگوله اعلان نمی‌شود
     ];
@@ -4853,6 +4874,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
     else if (target.module === "scaffold") setView("scaffoldDashboard");
     else if (target.module === "bowtie") setView("bowtieDashboard");
     else if (target.module === "permitToWork") setView("permitToWork");
+    else if (target.module === "pssr") setView("pssrList");
   };
 
   const anomalyMod = HSE_MODULES.find((m) => m.key === "anomalyReport");
@@ -5230,13 +5252,14 @@ function ContractorDashboard({ onLogout, currentUser }) {
   }, [currentUser?.id]);
 
   const loadNotifs = async () => {
-    const [personnelList, allAnomalies, allMachinery, allPermits, notifTypes] = await Promise.all([loadPersonnelList(), loadAnomaliesOfflineFirst(), loadMachineryListOfflineFirst(), loadPermits().catch(() => []), loadNotificationTypes().catch(() => null)]);
+    const [personnelList, allAnomalies, allMachinery, allPermits, notifTypes, myPssrActions] = await Promise.all([loadPersonnelList(), loadAnomaliesOfflineFirst(), loadMachineryListOfflineFirst(), loadPermits().catch(() => []), loadNotificationTypes().catch(() => null), loadOpenActionsForResponsible("contractor", currentUser?.id).catch(() => [])]);
     await checkAndUpdateDeadlines(personnelList); // فقط برای انتقال خودکار به «منقضی» — دیگر اعلان ثبت نمی‌کند
     const barrierAlerts = await loadDegradedBarrierAlerts(currentUser?.name).catch(() => []);
     const rawItems = [
       ...computeSmartNotifications(personnelList, allAnomalies, currentUser?.name),
       ...computeMachinerySmartItems(allMachinery, currentUser?.name, notifTypes?.find((t) => t.typeKey === "machinery_expiring")?.warningDays),
       ...computePermitSmartItems(allPermits, currentUser?.name, currentUser?.name, notifTypes?.find((t) => t.typeKey === "permit_expiring")?.warningDays),
+      ...computePssrSmartItems(myPssrActions),
       ...barrierAlerts, // فاز ۴: فقط بریرهایی که «این پیمانکار» در شواهدشان نقش دارد («پیمانکار مرتبط»)
       // داربست عمداً اینجا نیست — طبق خواسته‌ی کاربر، این ماژول توی زنگوله اعلان نمی‌شود
     ];
@@ -5291,6 +5314,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
     else if (target.module === "scaffold") setView("scaffoldDashboard");
     else if (target.module === "bowtie") setView("bowtieDashboard");
     else if (target.module === "permitToWork") setView("permitToWork");
+    else if (target.module === "pssr") setView("pssrList");
   };
 
   const anomalyMod = HSE_MODULES.find((m) => m.key === "anomalyReport");

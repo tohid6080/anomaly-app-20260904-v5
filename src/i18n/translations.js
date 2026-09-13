@@ -9967,6 +9967,8 @@ export const translations = {
   "smartPermitExpiringCompany": { "fa": "{count} مجوز کار فعال نزدیک به پایان اعتبار است", "en": "{count} active work permits are near their expiry" },
   "smartPermitRejectedSelf": { "fa": "{count} مجوز کار شما رد شده و نیاز به اصلاح دارد", "en": "{count} of your work permits were rejected and need correction" },
   "smartPermitExpiringSelf": { "fa": "{count} مجوز کار فعال شما نزدیک به پایان اعتبار است", "en": "{count} of your active work permits are near their expiry" },
+  "smartPssrActionOpen": { "fa": "{count} Action باز PSSR به شما واگذار شده است", "en": "{count} open PSSR actions are assigned to you" },
+  "smartPssrActionOpenWithCatA": { "fa": "{count} Action باز PSSR به شما واگذار شده ({catA} مورد CAT A)", "en": "{count} open PSSR actions are assigned to you ({catA} CAT A)" },
 
   // App.jsx: account-deactivated, change password, biometric confirm
   "appDeactivatedTitle": { "fa": "دسترسی قطع شد", "en": "Access revoked" },
@@ -10171,6 +10173,8 @@ export const translations = {
   "saNtPermitRejectedDesc": { "fa": "اعلان مجوزهای کاری که رد شده و نیاز به اصلاح دارند.", "en": "Alerts about work permits that were rejected and need correction." },
   "saNtPermitExpiringLabel": { "fa": "نزدیک به انقضای مجوز کار", "en": "Work permit expiring soon" },
   "saNtPermitExpiringDesc": { "fa": "هشدار نزدیک‌شدنِ مجوز کار فعال به پایانِ اعتبار.", "en": "Warns when an active work permit is near its expiry." },
+  "saNtPssrActionOpenLabel": { "fa": "Action باز PSSR", "en": "Open PSSR action" },
+  "saNtPssrActionOpenDesc": { "fa": "اعلانِ Actionِ بازِ PSSR که مسئولِ آن Discipline هستید (به‌ویژه CAT A/B).", "en": "Alerts about an open PSSR action for a discipline you are responsible for (especially CAT A/B)." },
 
   // --- SuperAdmin: مدیریت آپدیت نرم‌افزار و موبایل (app_releases) ---
   "saScTabAppUpdate": { "fa": "مدیریت آپدیت نرم‌افزار و موبایل", "en": "Software & Mobile Update Management" },

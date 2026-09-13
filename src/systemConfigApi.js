@@ -104,6 +104,7 @@ const NOTIFICATION_TYPE_LABEL_KEYS = {
   permit_pending_review: { label: "saNtPermitPendingReviewLabel", desc: "saNtPermitPendingReviewDesc" },
   permit_rejected: { label: "saNtPermitRejectedLabel", desc: "saNtPermitRejectedDesc" },
   permit_expiring: { label: "saNtPermitExpiringLabel", desc: "saNtPermitExpiringDesc" },
+  pssr_action_open: { label: "saNtPssrActionOpenLabel", desc: "saNtPssrActionOpenDesc" },
 };
 
 export function notificationTypeLabel(nt) {
