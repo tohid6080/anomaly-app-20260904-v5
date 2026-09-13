@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { ClipboardCheck, Plus } from "lucide-react";
+import { ClipboardCheck, Plus, Settings2 } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { JalaliDateInput } from "../personnel/jalaliDate.jsx";
 import { loadPssrs, createPssr } from "./pssrApi.js";
 import { PSSR_STATUS_META } from "./pssrModel.js";
 import { StatusBadge, Row, Field } from "./pssrUi.jsx";
 import PSSRWorkspace from "./PSSRWorkspace.jsx";
+import PSSRChecklistAdmin from "./PSSRChecklistAdmin.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 const inputStyle = styles.input;
@@ -23,6 +24,7 @@ export default function PSSRListPage({ currentUser, role, readOnly, wide }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [selectedId, setSelectedId] = useState(null);
+  const [showChecklistAdmin, setShowChecklistAdmin] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -30,6 +32,10 @@ export default function PSSRListPage({ currentUser, role, readOnly, wide }) {
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
+
+  if (showChecklistAdmin) {
+    return <PSSRChecklistAdmin currentUser={currentUser} onBack={() => setShowChecklistAdmin(false)} />;
+  }
 
   if (selectedId) {
     return <PSSRWorkspace pssrId={selectedId} currentUser={currentUser} role={role} readOnly={readOnly} onBack={() => { setSelectedId(null); load(); }} />;
@@ -60,11 +66,18 @@ export default function PSSRListPage({ currentUser, role, readOnly, wide }) {
             <ClipboardCheck size={20} color={THEME.teal} /> {t("pssrTitle")}
           </h2>
         )}
-        {!readOnly && (
-          <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6 }} onClick={() => { setShowForm((v) => !v); setError(""); }}>
-            <Plus size={14} /> {t("pssrNewPssr")}
-          </button>
-        )}
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          {!readOnly && role === "EMPLOYER" && (
+            <button type="button" style={{ ...styles.smallButton, background: THEME.surface2, color: THEME.text2, display: "flex", alignItems: "center", gap: 6 }} onClick={() => setShowChecklistAdmin(true)}>
+              <Settings2 size={14} /> {t("pssrManageChecklists")}
+            </button>
+          )}
+          {!readOnly && (
+            <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6 }} onClick={() => { setShowForm((v) => !v); setError(""); }}>
+              <Plus size={14} /> {t("pssrNewPssr")}
+            </button>
+          )}
+        </div>
       </div>
 
       <div style={styles.statsRow}>

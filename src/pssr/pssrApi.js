@@ -169,3 +169,40 @@ export async function seedOfficialChecklists(createdBy) {
   }
   return { ok: failedCodes.length === 0, imported, repaired, failedCodes };
 }
+
+// ---------- ویرایش/نگارش‌گذاریِ چک‌لیستِ مرجع ----------
+// ویرایش هرگز نگارشِ فعلی را جا‌به‌جا نمی‌کند — یک نگارشِ کاملاً جدید
+// می‌سازد (checklist_template + requirement_templates تازه)، و فقط بعد از
+// موفقیتِ کاملِ درجِ Requirementهای نگارشِ جدید، نگارشِ قبلی را is_current=false
+// و نگارشِ جدید را is_current=true می‌کند؛ اگر جایی وسطِ کار شکست بخورد،
+// نگارشِ قبلی همچنان فعال می‌ماند (چیزی خراب نمی‌شود). PSSRهای موجود همچنان
+// به همان requirement_template_id قدیمی وصل‌اند، پس سابقه‌شان دست‌نخورده می‌ماند.
+export async function createChecklistVersion(checklistTemplateId, requirements, createdBy) {
+  const oldRows = await sb(`pssr_checklist_templates?id=eq.${checklistTemplateId}&select=*`);
+  if (!sbOk(oldRows) || oldRows.length === 0) return { __error: true, message: tr("pssrErrSave") };
+  const old = oldRows[0];
+
+  const newId = uid("psc");
+  const tplRows = await sb("pssr_checklist_templates", {
+    method: "POST",
+    body: JSON.stringify([{
+      id: newId, company_id: old.company_id, code: old.code, discipline: old.discipline,
+      title: old.title, version: (old.version || 1) + 1, is_current: false, created_by: createdBy || "",
+    }]),
+  });
+  if (!sbOk(tplRows)) return { __error: true, message: tr("pssrErrSave") };
+
+  const payload = requirements.map((r, i) => ({
+    id: uid("psreq"), checklist_template_id: newId, company_id: old.company_id,
+    req_no: r.reqNo || "", group_title: r.groupTitle || null, requirement_text: r.requirementText || "", order_index: i + 1,
+  }));
+  for (let i = 0; i < payload.length; i += 100) {
+    const rows = await sb("pssr_requirement_templates", { method: "POST", body: JSON.stringify(payload.slice(i, i + 100)) });
+    if (!sbOk(rows)) return { __error: true, message: tr("pssrErrSave") };
+  }
+
+  await sb(`pssr_checklist_templates?id=eq.${checklistTemplateId}`, { method: "PATCH", body: JSON.stringify({ is_current: false }) });
+  const flip = await sb(`pssr_checklist_templates?id=eq.${newId}`, { method: "PATCH", body: JSON.stringify({ is_current: true }) });
+  if (!sbOk(flip)) return { __error: true, message: tr("pssrErrSave") };
+  return { ok: true, id: newId, version: (old.version || 1) + 1 };
+}

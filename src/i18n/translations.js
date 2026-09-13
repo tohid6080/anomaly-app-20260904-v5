@@ -10415,7 +10415,19 @@ export const translations = {
   "pssrSeedResult": { "fa": "{imported} چک‌لیست جدید اضافه شد، {repaired} چک‌لیستِ ناقص تکمیل شد.", "en": "{imported} new checklists added, {repaired} incomplete checklists completed." },
   "pssrSeedFailed": { "fa": "بارگذاریِ برخی چک‌لیست‌ها ناموفق بود ({list}) — دوباره تلاش کنید.", "en": "Loading some checklists failed ({list}) — please try again." },
   "pssrChecklistsIncomplete": { "fa": "{count} چک‌لیست ناقص است — بعضی موارد آن هنوز بارگذاری نشده‌اند.", "en": "{count} checklist(s) are incomplete — some items haven't been loaded yet." },
-  "pssrRepairChecklists": { "fa": "تکمیلِ چک‌لیست‌های ناقص", "en": "Complete incomplete checklists" }
+  "pssrRepairChecklists": { "fa": "تکمیلِ چک‌لیست‌های ناقص", "en": "Complete incomplete checklists" },
+  "pssrManageChecklists": { "fa": "مدیریت چک‌لیست‌های مرجع", "en": "Manage reference checklists" },
+  "pssrChecklistAdminTitle": { "fa": "مدیریت چک‌لیست‌های مرجعِ PSSR", "en": "Manage PSSR reference checklists" },
+  "pssrChecklistAdminNote": { "fa": "ذخیره‌ی تغییرات یک نگارشِ جدید می‌سازد؛ PSSRهای موجود همچنان به نگارشِ قبلی وصل می‌مانند و سابقه‌شان تغییر نمی‌کند.", "en": "Saving changes creates a new version; existing PSSRs stay linked to the previous version and their history does not change." },
+  "pssrVersionLabel": { "fa": "نگارش {version}", "en": "Version {version}" },
+  "pssrItemsCount": { "fa": "مورد", "en": "items" },
+  "pssrPickChecklistHint": { "fa": "یک چک‌لیست را از فهرست انتخاب کنید.", "en": "Pick a checklist from the list." },
+  "pssrAddRequirement": { "fa": "افزودن Requirement", "en": "Add requirement" },
+  "pssrGroupTitle": { "fa": "سرتیتر بخش", "en": "Group title" },
+  "pssrNoRequirementsYet": { "fa": "هنوز Requirementی در این چک‌لیست نیست.", "en": "This checklist has no requirements yet." },
+  "pssrSaveAsNewVersion": { "fa": "ذخیره به‌عنوان نگارش جدید", "en": "Save as new version" },
+  "pssrVersionSaved": { "fa": "نگارش {version} ذخیره شد.", "en": "Version {version} saved." },
+  "pssrErrRequirementTextRequired": { "fa": "متن همه‌ی Requirementها باید پر باشد.", "en": "All requirements must have text." }
 };
 
 // ---------- تزریقِ تنبلِ ترجمهٔ آلمانی ----------
