@@ -23,6 +23,11 @@ comment on table public.contractor_companies is
 
 alter table public.contractor_companies enable row level security;
 
+-- برخلافِ create table/create index، این پایگاه‌داده از «create policy if not
+-- exists» پشتیبانی نمی‌کند — پس برای اینکه اجرای دوباره‌ی همین فایل خطا
+-- ندهد (مثلاً وقتی سوپرادمین یک بار دیگر همان اسکریپت را برای اطمینان
+-- اجرا می‌کند)، اول policy قبلی (اگر بود) حذف و دوباره ساخته می‌شود.
+drop policy if exists contractor_companies_super_admin_all on public.contractor_companies;
 create policy contractor_companies_super_admin_all on public.contractor_companies
   for all
   using (coalesce((auth.jwt() ->> 'is_super_admin')::boolean, false) = true)
