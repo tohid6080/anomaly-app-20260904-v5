@@ -3,7 +3,7 @@ import { UserPlus, KeyRound, Power, Pencil, Users, Trash2 } from "lucide-react";
 import { THEME } from "../shared.js";
 import {
   loadCompanies, loadAccountsByType, createAccount, updateAccount, setAccountActive, resetAccountPassword, deleteAccount,
-  loadJobPositionsForCompany,
+  loadJobPositionsForCompany, loadContractorCompanies,
 } from "./superAdminApi.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
@@ -247,6 +247,7 @@ export function AccountForm({ tab, form, setForm, companies, onSave, saving, sav
   const { t, dir } = useLanguage();
   const isContractor = tab === "contractor";
   const [jobPositions, setJobPositions] = useState([]);
+  const [contractorCompanies, setContractorCompanies] = useState([]);
 
   useEffect(() => {
     if (form.companyId) {
@@ -255,6 +256,14 @@ export function AccountForm({ tab, form, setForm, companies, onSave, saving, sav
       setJobPositions([]);
     }
   }, [form.companyId]);
+
+  useEffect(() => {
+    if (isContractor && form.companyId) {
+      loadContractorCompanies(form.companyId).then((list) => setContractorCompanies(list.filter((c) => c.isActive)));
+    } else {
+      setContractorCompanies([]);
+    }
+  }, [isContractor, form.companyId]);
 
   return (
     <div style={{ background: THEME.bg, padding: 14, borderRadius: 8, marginBottom: 14 }}>
@@ -269,7 +278,16 @@ export function AccountForm({ tab, form, setForm, companies, onSave, saving, sav
         )}
         <div>
           <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{isContractor ? t("amContractorCompanyName") : t("amFullName")}</label>
-          <input style={inputStyle} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} dir={dir} />
+          {isContractor ? (
+            <select style={inputStyle} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} dir={dir} disabled={!form.companyId}>
+              <option value="">{form.companyId ? t("amSelectPlaceholder") : t("amSelectCompanyFirst")}</option>
+              {contractorCompanies.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
+              {/* مقدارِ فعلی اگر در فهرستِ فعال نباشد (مثلاً حسابِ قدیمی/غیرفعال) هم نشان داده شود — هرگز خاموش/گم نشود */}
+              {form.name && !contractorCompanies.some((c) => c.name === form.name) && <option value={form.name}>{form.name}</option>}
+            </select>
+          ) : (
+            <input style={inputStyle} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} dir={dir} />
+          )}
         </div>
         <div>
           <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("amColUsername")}</label>
@@ -283,7 +301,7 @@ export function AccountForm({ tab, form, setForm, companies, onSave, saving, sav
         )}
         <div>
           <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{isContractor ? t("amEmployerCompanyWhichWorksUnder") : t("amColCompany")}</label>
-          <select style={inputStyle} value={form.companyId} onChange={(e) => setForm({ ...form, companyId: e.target.value, jobPositionId: "" })} dir={dir} disabled={disableCompanySelect}>
+          <select style={inputStyle} value={form.companyId} onChange={(e) => setForm({ ...form, companyId: e.target.value, jobPositionId: "", name: isContractor ? "" : form.name })} dir={dir} disabled={disableCompanySelect}>
             <option value="">{t("amSelectPlaceholder")}</option>
             {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>

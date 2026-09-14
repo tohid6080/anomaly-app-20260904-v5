@@ -15,7 +15,8 @@ import { toJalaliSafe, toJalaliDateTime, JalaliDateInput } from "../personnel/ja
 import {
   loadCompanies, createCompany, updateCompany, deleteCompanySecure, setCompanyActive,
   loadCompanyPayments, addCompanyPayment, PAYMENT_TYPES,
-  loadCompanyUserAccounts, loadAccountsByType, createAccount,
+  loadCompanyUserAccounts, createAccount,
+  loadContractorCompanies, createContractorCompany, setContractorCompanyActive,
   SUBSCRIPTION_TYPES, SUBSCRIPTION_STATUSES,
   loadPlans, createPlan, updatePlan, deactivatePlan, activatePlan, movePlan, deletePlan, assignPlanToCompany, loadCompanySubscriptionHistory, backupPeriodPrice,
   PLAN_FEATURES, computeContractAmount, computeMonthlyRecurringAmount,
@@ -3824,7 +3825,10 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
   const [onlinePayments, setOnlinePayments] = useState([]);
   const [payAmount, setPayAmount] = useState("");
   const [accounts, setAccounts] = useState([]);
-  const [contractors, setContractors] = useState([]);
+  const [contractorCompanies, setContractorCompanies] = useState([]);
+  const [newContractorCompanyName, setNewContractorCompanyName] = useState("");
+  const [addingContractorCompany, setAddingContractorCompany] = useState(false);
+  const [contractorCompanyError, setContractorCompanyError] = useState("");
   const [showAddContractor, setShowAddContractor] = useState(false);
   const [contractorForm, setContractorForm] = useState({ ...emptyAccountForm(), companyId: company.id });
   const [contractorSaving, setContractorSaving] = useState(false);
@@ -3852,8 +3856,24 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
   const loadAccounts = () => loadCompanyUserAccounts(company.id).then(setAccounts);
   useEffect(() => { loadAccounts(); }, [company.id]);
 
-  const loadContractors = () => loadAccountsByType("contractor", company.id).then(setContractors);
-  useEffect(() => { loadContractors(); }, [company.id]);
+  const loadContractorCompaniesList = () => loadContractorCompanies(company.id).then(setContractorCompanies);
+  useEffect(() => { loadContractorCompaniesList(); }, [company.id]);
+
+  const handleAddContractorCompany = async () => {
+    setAddingContractorCompany(true);
+    setContractorCompanyError("");
+    const result = await createContractorCompany(company.id, newContractorCompanyName, currentAdmin?.fullName);
+    setAddingContractorCompany(false);
+    if (result?.__error) { setContractorCompanyError(result.message); return; }
+    setNewContractorCompanyName("");
+    await loadContractorCompaniesList();
+  };
+
+  const handleToggleContractorCompanyActive = async (c) => {
+    const result = await setContractorCompanyActive(c.id, c.isActive === false);
+    if (result?.__error) { alert(result.message); return; }
+    await loadContractorCompaniesList();
+  };
 
   const handleCreateContractor = async () => {
     if (!contractorForm.name.trim() || !contractorForm.username.trim() || contractorForm.password.length < 8) {
@@ -3867,7 +3887,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
     if (result?.__error || result?.error) { setContractorError(result.message || result.error); return; }
     setShowAddContractor(false);
     setContractorForm({ ...emptyAccountForm(), companyId: company.id });
-    await Promise.all([loadContractors(), loadAccounts()]);
+    await loadAccounts();
   };
 
   useEffect(() => {
@@ -4158,21 +4178,33 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
         <p style={{ fontSize: 10.5, color: THEME.text3, marginBottom: 8, lineHeight: 1.8 }}>
           {t("saContractorSubsidiariesNote")}
         </p>
-        {contractors.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saNoContractorSubsidiaries")}</p>}
-        {contractors.map((c) => (
+        {contractorCompanies.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saNoContractorSubsidiaries")}</p>}
+        {contractorCompanies.map((c) => (
           <div key={c.id} style={{ fontSize: 11.5, color: THEME.text2, padding: "6px 0", borderBottom: `1px solid ${THEME.border}`, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
             <span style={{ fontWeight: 700, color: THEME.heading }}>{c.name}</span>
-            {c.contact_person_name && <span>{c.contact_person_name}</span>}
-            <span style={{ direction: "ltr" }}>({c.username})</span>
-            {c.phone && <span style={{ direction: "ltr", color: THEME.text3 }}>{c.phone}</span>}
-            <span style={{
-              marginInlineStart: "auto", fontSize: 10, padding: "2px 8px", borderRadius: 999, fontWeight: 600,
-              background: c.is_active === false ? THEME.surface2 : THEME.okBg, color: c.is_active === false ? THEME.text3 : THEME.ok,
-            }}>
-              {c.is_active === false ? t("commonInactive") : t("commonActive")}
-            </span>
+            <button
+              type="button" onClick={() => handleToggleContractorCompanyActive(c)}
+              style={{
+                marginInlineStart: "auto", fontSize: 10, padding: "2px 8px", borderRadius: 999, fontWeight: 600, border: "none", cursor: "pointer",
+                background: c.isActive === false ? THEME.surface2 : THEME.okBg, color: c.isActive === false ? THEME.text3 : THEME.ok,
+              }}
+            >
+              {c.isActive === false ? t("commonInactive") : t("commonActive")}
+            </button>
           </div>
         ))}
+
+        <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+          <input
+            style={{ ...inputStyle, flex: 1, minWidth: 160 }} value={newContractorCompanyName}
+            onChange={(e) => setNewContractorCompanyName(e.target.value)} dir={dir}
+            placeholder={t("saContractorCompanyNamePlaceholder")}
+          />
+          <button type="button" onClick={handleAddContractorCompany} disabled={addingContractorCompany || !newContractorCompanyName.trim()} style={btnStyle()}>
+            {addingContractorCompany ? t("saSavingEllipsis") : t("saAddContractorCompany")}
+          </button>
+        </div>
+        {contractorCompanyError && <p style={{ color: THEME.danger, fontSize: 12, marginTop: 6 }}>{contractorCompanyError}</p>}
 
         <button
           type="button"

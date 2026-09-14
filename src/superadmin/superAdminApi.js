@@ -653,6 +653,40 @@ export async function loadJobPositionsForCompany(companyId) {
   return sbOk(rows) ? rows : [];
 }
 
+// ---------- شرکت‌های پیمانکاریِ زیرمجموعه (فهرستِ نام، فقط سوپرادمین) ----------
+// این جدول جدا از contractors (حساب‌های کاربری/ورود) است — فقط یک فهرستِ
+// نامِ تمیز که سوپرادمین برای هر شرکت (کارفرما) از قبل تعریف می‌کند، تا
+// هنگامِ ساختِ حسابِ پیمانکار، فیلدِ «نام شرکت پیمانکار» به‌جای تایپِ
+// آزاد از همین فهرست انتخاب شود (نگاه کنید به AccountForm در
+// AccountManagement.jsx) — یک اشتباهِ تایپی دیگر باعثِ ثبتِ ناخواسته‌ی
+// یک شرکتِ کاملاً متفاوت نمی‌شود.
+function contractorCompanyFromRow(r) {
+  return { id: r.id, companyId: r.company_id, name: r.name, isActive: r.is_active !== false, createdAt: r.created_at };
+}
+
+export async function loadContractorCompanies(companyId) {
+  if (!companyId) return [];
+  const rows = await sb(`contractor_companies?company_id=eq.${companyId}&select=*&order=name.asc`, {}, "super_admin");
+  return sbOk(rows) ? rows.map(contractorCompanyFromRow) : [];
+}
+
+export async function createContractorCompany(companyId, name, createdBy) {
+  const clean = (name || "").trim();
+  if (!clean) return { __error: true, message: tr("saErrContractorCompanyNameRequired") };
+  const rows = await sb("contractor_companies", {
+    method: "POST",
+    body: JSON.stringify([{ company_id: companyId, name: clean, created_by: createdBy || "" }]),
+  }, "super_admin");
+  if (!sbOk(rows)) return { __error: true, message: tr("saErrSave") };
+  return contractorCompanyFromRow(rows[0]);
+}
+
+export async function setContractorCompanyActive(id, active) {
+  const rows = await sb(`contractor_companies?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ is_active: active }) }, "super_admin");
+  if (!sbOk(rows)) return { __error: true, message: tr("saErrSave") };
+  return { ok: true };
+}
+
 // ---------- مدیریت حساب‌ها (Admin/Employer/Contractor) — فقط Super Admin ----------
 // این توابع مستقیم به دیتابیس نمی‌نویسند؛ همه از طریق Edge Function
 // manage-account رد می‌شوند که خودش امضای توکن فراخوان را بررسی می‌کند و
