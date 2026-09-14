@@ -9,6 +9,8 @@ import { DASHBOARD_WIDGET_GROUPS, mergeWidgetConfig, defaultWidgetConfig } from 
 import { uploadBase64ToStorage, deleteFromStorage, parseStorageUrl } from "../offline/storageUpload.js";
 import AccountManagement, { AccountForm, emptyForm as emptyAccountForm } from "./AccountManagement.jsx";
 import PricingConsole from "./PricingConsole.jsx";
+import { loadCompanyModules, addCompanyModule, updateCompanyModule, removeCompanyModule } from "./companyModulesApi.js";
+import { loadModulePrices } from "../pricingApi.js";
 import AdminAnalytics from "../admin/AdminAnalytics.jsx";
 import LandingPageManagementTab from "./LandingPageManagementTab.jsx";
 import { toJalaliSafe, toJalaliDateTime, JalaliDateInput } from "../personnel/jalaliDate.jsx";
@@ -18,8 +20,8 @@ import {
   loadCompanyUserAccounts, createAccount,
   loadContractorCompanies, createContractorCompany, setContractorCompanyActive, deleteContractorCompany,
   SUBSCRIPTION_TYPES, SUBSCRIPTION_STATUSES,
-  loadPlans, createPlan, updatePlan, deactivatePlan, activatePlan, movePlan, deletePlan, assignPlanToCompany, loadCompanySubscriptionHistory, backupPeriodPrice,
-  PLAN_FEATURES, computeContractAmount, computeMonthlyRecurringAmount,
+  loadPlans, setCompanySubscriptionContract, loadCompanySubscriptionHistory,
+  computeContractAmount, computeMonthlyRecurringAmount,
   computePaymentStatus, isPaymentOverdue, computeMonthlyPaymentAlarm, computeSubscriptionAlertTier,
   loadCompanyUsageStats, loadRecentLogins, loadRecentFailedLogins, computeInactiveCompanies,
   loadAuditLog, loadStorageUsage, setStorageCapacity, storageUsageStatus,
@@ -224,14 +226,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
             />
           )}
           {page === "accounts" && <AccountManagement currentAdmin={currentAdmin} />}
-          {page === "plans" && (
-            <>
-              <PricingConsole plans={plans} companies={companies} currentAdmin={currentAdmin} onChanged={load} />
-              <AdvancedPlansSection>
-                <PlansManager plans={plans} companies={companies} currentAdmin={currentAdmin} onChanged={load} />
-              </AdvancedPlansSection>
-            </>
-          )}
+          {page === "plans" && <PricingConsole companies={companies} currentAdmin={currentAdmin} onChanged={load} />}
           {page === "storage" && <StorageUsagePage />}
           {page === "monitoring" && <SystemInsights companies={companies} />}
           {page === "systemConfig" && <SystemConfigPage currentAdmin={currentAdmin} companies={companies} />}
@@ -3328,328 +3323,6 @@ function SuperAdminChangePassword({ onClose }) {
   );
 }
 
-// بخشِ جمع‌شونده‌ی «مدیریت پیشرفتهٔ پلن‌ها» زیرِ کنسولِ قیمت‌گذاری — ساخت/حذف/
-// فعال‌سازی/ترتیب/بکاپ. کارِ روزمره (قیمت و عضویتِ ماژول‌ها) در خودِ کنسول است.
-function AdvancedPlansSection({ children }) {
-  const { t } = useLanguage();
-  const [open, setOpen] = useState(false);
-  return (
-    <div style={{ marginTop: 8 }}>
-      <button type="button" onClick={() => setOpen((v) => !v)}
-        style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "start", padding: "10px 14px",
-          borderRadius: 10, border: `1px solid ${THEME.border}`, background: THEME.surface, cursor: "pointer",
-          fontFamily: THEME.font, fontSize: 12.5, fontWeight: 700, color: THEME.text2 }}>
-        <ChevronLeft size={15} style={{ transform: open ? "rotate(-90deg)" : "rotate(0deg)", transition: "transform .15s" }} />
-        {t("pcAdvancedPlans")}
-      </button>
-      {open && <div style={{ marginTop: 10 }}>{children}</div>}
-    </div>
-  );
-}
-
-function PlansManager({ plans, companies, currentAdmin, onChanged }) {
-  const { t } = useLanguage();
-  const [showCreate, setShowCreate] = useState(false);
-  const [expandedId, setExpandedId] = useState(null);
-  const [form, setForm] = useState(emptyPlanForm());
-  const [saving, setSaving] = useState(false);
-
-  function emptyPlanForm() {
-    return { name: "", description: "", priceMonthly: 0, priceYearly: 0, priceTotal: 0, trialDays: "", maxUsers: "", maxPersonnel: "", maxStorageMb: "", features: [], backupTier: "none", backupPriceWeekly: 0, backupPriceMonthly: 0, backupPriceYearly: 0 };
-  }
-
-  const handleCreate = async () => {
-    if (!form.name.trim()) return;
-    setSaving(true);
-    await createPlan({
-      name: form.name.trim(), description: form.description.trim(),
-      priceMonthly: Number(form.priceMonthly) || 0, priceYearly: Number(form.priceYearly) || 0, priceTotal: Number(form.priceTotal) || 0,
-      trialDays: form.trialDays ? Number(form.trialDays) : null,
-      maxUsers: form.maxUsers ? Number(form.maxUsers) : null, maxPersonnel: form.maxPersonnel ? Number(form.maxPersonnel) : null,
-      maxStorageMb: form.maxStorageMb ? Number(form.maxStorageMb) : null, features: form.features,
-      backupTier: form.backupTier || "none",
-      backupPriceWeekly: Number(form.backupPriceWeekly) || 0,
-      backupPriceMonthly: Number(form.backupPriceMonthly) || 0,
-      backupPriceYearly: Number(form.backupPriceYearly) || 0,
-    });
-    await syncNotificationTypesWithPlans((await loadPlans()).map((p) => p.features));
-    setSaving(false);
-    setForm(emptyPlanForm());
-    setShowCreate(false);
-    onChanged();
-  };
-
-  const openEdit = (p) => {
-    setExpandedId(expandedId === p.id ? null : p.id);
-    setForm({ name: p.name, description: p.description ?? "", priceMonthly: p.priceMonthly, priceYearly: p.priceYearly, priceTotal: p.priceTotal ?? 0, trialDays: p.trialDays ?? "", maxUsers: p.maxUsers ?? "", maxPersonnel: p.maxPersonnel ?? "", maxStorageMb: p.maxStorageMb ?? "", features: p.features, backupTier: p.backupTier || "none", backupPriceWeekly: p.backupPriceWeekly ?? 0, backupPriceMonthly: p.backupPriceMonthly ?? 0, backupPriceYearly: p.backupPriceYearly ?? 0 });
-  };
-
-  const handleSaveEdit = async (id) => {
-    setSaving(true);
-    await updatePlan(id, {
-      name: form.name.trim(), description: form.description.trim(),
-      priceMonthly: Number(form.priceMonthly) || 0, priceYearly: Number(form.priceYearly) || 0, priceTotal: Number(form.priceTotal) || 0,
-      trialDays: form.trialDays ? Number(form.trialDays) : null,
-      maxUsers: form.maxUsers ? Number(form.maxUsers) : null, maxPersonnel: form.maxPersonnel ? Number(form.maxPersonnel) : null,
-      maxStorageMb: form.maxStorageMb ? Number(form.maxStorageMb) : null, features: form.features,
-      backupTier: form.backupTier || "none",
-      backupPriceWeekly: Number(form.backupPriceWeekly) || 0,
-      backupPriceMonthly: Number(form.backupPriceMonthly) || 0,
-      backupPriceYearly: Number(form.backupPriceYearly) || 0,
-    });
-    await syncNotificationTypesWithPlans((await loadPlans()).map((p) => p.features));
-    setSaving(false);
-    setExpandedId(null);
-    onChanged();
-  };
-
-  const toggleModule = (mod) => {
-    setForm((prev) => {
-      const subKeys = (mod.sub || []).map((s) => s.key);
-      const isOn = prev.features.includes(mod.key);
-      if (isOn) {
-        // خاموش‌کردن ماژول: خودش و همه‌ی زیرماژول‌هایش حذف می‌شوند
-        return { ...prev, features: prev.features.filter((f) => f !== mod.key && !subKeys.includes(f)) };
-      }
-      // روشن‌کردن ماژول: خودش و همه‌ی زیرماژول‌هایش اضافه می‌شوند
-      return { ...prev, features: [...new Set([...prev.features, mod.key, ...subKeys])] };
-    });
-  };
-
-  const toggleSub = (mod, subKey) => {
-    setForm((prev) => {
-      const has = prev.features.includes(subKey);
-      let features = has ? prev.features.filter((f) => f !== subKey) : [...prev.features, subKey];
-      return { ...prev, features };
-    });
-  };
-
-  return (
-    <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16, marginBottom: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-        <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
-          <Layers size={14} color={THEME.teal} /> {t("saSubscriptionPlans")}
-        </h3>
-        <button type="button" onClick={() => { setShowCreate((v) => !v); setForm(emptyPlanForm()); }} style={{ ...btnStyle(), display: "flex", alignItems: "center", gap: 6 }}>
-          <Plus size={13} /> {t("saNewPlan")}
-        </button>
-      </div>
-
-      {showCreate && <PlanForm form={form} setForm={setForm} toggleModule={toggleModule} toggleSub={toggleSub} onSave={handleCreate} saving={saving} saveLabel={t("saSubmitPlan")} />}
-
-      <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-          <thead>
-            <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
-              <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColOrder")}</th>
-              <th style={{ textAlign: "start", padding: "6px 8px" }}>{t("saColPlanName")}</th>
-              <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColMonthlyPrice")}</th>
-              <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColYearlyPrice")}</th>
-              <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColTotalPrice")}</th>
-              <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColUserCap")}</th>
-              <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColPersonnelCap")}</th>
-              <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColStorageCapMb")}</th>
-              <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("commonStatus")}</th>
-              <th style={{ padding: "6px 8px" }} />
-            </tr>
-          </thead>
-          <tbody>
-            {plans.map((p, idx) => (
-              <React.Fragment key={p.id}>
-                <tr style={{ borderBottom: `1px solid ${THEME.border}`, opacity: p.isActive ? 1 : 0.5 }}>
-                  <td style={{ padding: "8px", textAlign: "center", whiteSpace: "nowrap" }}>
-                    <button type="button" onClick={() => movePlan(plans, p.id, "up").then(onChanged)} disabled={idx === 0} style={{ ...btnStyle(THEME.navyMid), fontSize: 10, padding: "3px 7px", opacity: idx === 0 ? 0.3 : 1, marginInlineEnd: 3 }} title={t("saMoveUp")}>▲</button>
-                    <button type="button" onClick={() => movePlan(plans, p.id, "down").then(onChanged)} disabled={idx === plans.length - 1} style={{ ...btnStyle(THEME.navyMid), fontSize: 10, padding: "3px 7px", opacity: idx === plans.length - 1 ? 0.3 : 1 }} title={t("saMoveDown")}>▼</button>
-                  </td>
-                  <td style={{ padding: "8px", fontWeight: 600 }}>{p.name}</td>
-                  <td style={{ padding: "8px", textAlign: "center" }}>{p.priceMonthly.toLocaleString(numLocale())}</td>
-                  <td style={{ padding: "8px", textAlign: "center" }}>{p.priceYearly.toLocaleString(numLocale())}</td>
-                  <td style={{ padding: "8px", textAlign: "center" }}>{p.priceTotal ? p.priceTotal.toLocaleString(numLocale()) : "—"}</td>
-                  <td style={{ padding: "8px", textAlign: "center" }}>{p.maxUsers ?? t("saUnlimited")}</td>
-                  <td style={{ padding: "8px", textAlign: "center" }}>{p.maxPersonnel ?? t("saUnlimited")}</td>
-                  <td style={{ padding: "8px", textAlign: "center" }}>{p.maxStorageMb ?? t("saUnlimited")}</td>
-                  <td style={{ padding: "8px", textAlign: "center" }}>
-                    <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: p.isActive ? THEME.okBg : THEME.surface2, color: p.isActive ? THEME.ok : THEME.text3, fontWeight: 600 }}>
-                      {p.isActive ? t("commonActive") : t("commonInactive")}
-                    </span>
-                  </td>
-                  <td style={{ padding: "8px", textAlign: "left", whiteSpace: "nowrap" }}>
-                    <button type="button" onClick={() => openEdit(p)} style={{ ...btnStyle(THEME.navyMid), fontSize: 11, marginInlineEnd: 6 }}>
-                      {expandedId === p.id ? t("saClose") : t("saEdit")}
-                    </button>
-                    {p.isActive ? (
-                      <button type="button" onClick={() => { if (confirm(t("saDeactivateConfirm", { name: p.name }))) { deactivatePlan(p.id).then(onChanged); } }} style={{ ...btnStyle(THEME.warn), fontSize: 11, marginInlineEnd: 6 }}>
-                        {t("saDeactivate")}
-                      </button>
-                    ) : (
-                      <button type="button" onClick={() => { activatePlan(p.id).then(onChanged); }} style={{ ...btnStyle(THEME.ok), fontSize: 11, marginInlineEnd: 6 }}>
-                        {t("saActivatePlan")}
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        if (!confirm(t("saDeletePlanConfirm", { name: p.name }))) return;
-                        const result = await deletePlan(p.id);
-                        if (result?.__error) { alert(result.message); return; }
-                        onChanged();
-                      }}
-                      style={{ ...btnStyle(THEME.danger), fontSize: 11 }}
-                    >
-                      {t("saDelete")}
-                    </button>
-                  </td>
-                </tr>
-                <tr>
-                  <td colSpan={10} style={{ padding: "0 8px 8px" }}>
-                    <PlanCompanyUsage plan={p} companies={companies} />
-                  </td>
-                </tr>
-                {expandedId === p.id && (
-                  <tr>
-                    <td colSpan={10} style={{ padding: 0 }}>
-                      <PlanForm form={form} setForm={setForm} toggleModule={toggleModule} toggleSub={toggleSub} onSave={() => handleSaveEdit(p.id)} saving={saving} saveLabel={t("saSaveChanges")} />
-                    </td>
-                  </tr>
-                )}
-              </React.Fragment>
-            ))}
-            {plans.length === 0 && (
-              <tr><td colSpan={10} style={{ padding: 20, textAlign: "center", color: THEME.text3 }}>{t("saNoPlansYet")}</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-function PlanCompanyUsage({ plan, companies }) {
-  const { t } = useLanguage();
-  const usingCompanies = (companies || []).filter((c) => c.planId === plan.id);
-  if (usingCompanies.length === 0) {
-    return <p style={{ fontSize: 11, color: THEME.text3, margin: 0 }}>{t("saPcuNone")}</p>;
-  }
-  return (
-    <div style={{ background: THEME.bg, borderRadius: 8, padding: "8px 10px" }}>
-      <p style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, margin: "0 0 6px" }}>
-        {t("saPcuHeader", { count: usingCompanies.length.toLocaleString(numLocale()) })}
-      </p>
-      {usingCompanies.map((c) => {
-        const isTrial = c.subscriptionType === "trial";
-        const now = new Date();
-        const relevantEnd = isTrial ? c.trialEnd : c.subscriptionEndDate;
-        const isExpired = relevantEnd ? new Date(relevantEnd).getTime() <= now.getTime() : false;
-        return (
-          <div key={c.id} style={{ fontSize: 11, color: THEME.text2, padding: "4px 0", borderBottom: `1px solid ${THEME.border}`, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-            <span style={{ fontWeight: 700, color: THEME.heading }}>{c.name}</span>
-            <span style={{ fontSize: 10, padding: "1px 8px", borderRadius: 999, background: isTrial ? "#ede9fe" : "#dbeafe", color: isTrial ? "#5b21b6" : "#1d4ed8", fontWeight: 600 }}>
-              {isTrial ? t("saPcuTrial") : t("saPcuPaid")}
-            </span>
-            {isTrial && c.trialStart && c.trialEnd ? (
-              <span>{t("saFromTo", { start: toJalaliDateTime(c.trialStart), end: toJalaliDateTime(c.trialEnd) })}</span>
-            ) : relevantEnd ? (
-              <span>{t("saUntilDate", { end: toJalaliDateTime(relevantEnd) })}</span>
-            ) : (
-              <span style={{ color: THEME.text3 }}>{t("saPcuNoEndDate")}</span>
-            )}
-            {relevantEnd && (
-              <span style={{ fontSize: 10, padding: "1px 8px", borderRadius: 999, background: isExpired ? THEME.dangerBg : THEME.okBg, color: isExpired ? THEME.danger : THEME.ok, fontWeight: 600 }}>
-                {isExpired ? t("saExpiredStatus") : t("commonActive")}
-              </span>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function PlanForm({ form, setForm, toggleModule, toggleSub, onSave, saving, saveLabel }) {
-  const { t, dir } = useLanguage();
-  return (
-    <div style={{ background: THEME.bg, padding: 14, borderRadius: 8, marginBottom: 14 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8, marginBottom: 10 }}>
-        <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saPlanName")}</label>
-          <input style={inputStyle} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} dir={dir} />
-        </div>
-        <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saMonthlyPriceToman")}</label>
-          <input type="number" style={inputStyle} value={form.priceMonthly} onChange={(e) => setForm({ ...form, priceMonthly: e.target.value })} dir="ltr" />
-        </div>
-        <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saYearlyPriceToman")}</label>
-          <input type="number" style={inputStyle} value={form.priceYearly} onChange={(e) => setForm({ ...form, priceYearly: e.target.value })} dir="ltr" />
-        </div>
-        <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saPfPriceTotal")}</label>
-          <input type="number" style={inputStyle} value={form.priceTotal} onChange={(e) => setForm({ ...form, priceTotal: e.target.value })} dir="ltr" placeholder={t("saPfZeroNone")} />
-        </div>
-        <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saPfTrialDays")}</label>
-          <input type="number" style={inputStyle} value={form.trialDays} onChange={(e) => setForm({ ...form, trialDays: e.target.value })} dir="ltr" placeholder={t("saPfEg7")} />
-        </div>
-        <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saUserCapEmptyUnlimited")}</label>
-          <input type="number" style={inputStyle} value={form.maxUsers} onChange={(e) => setForm({ ...form, maxUsers: e.target.value })} dir="ltr" />
-        </div>
-        <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saPersonnelCapEmptyUnlimited")}</label>
-          <input type="number" style={inputStyle} value={form.maxPersonnel} onChange={(e) => setForm({ ...form, maxPersonnel: e.target.value })} dir="ltr" />
-        </div>
-        <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saStorageCapEmptyUnlimited")}</label>
-          <input type="number" style={inputStyle} value={form.maxStorageMb} onChange={(e) => setForm({ ...form, maxStorageMb: e.target.value })} dir="ltr" />
-        </div>
-        <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("backupPriceWeeklyLabel")}</label>
-          <input type="number" style={inputStyle} value={form.backupPriceWeekly} onChange={(e) => setForm({ ...form, backupPriceWeekly: e.target.value })} dir="ltr" placeholder="0" />
-        </div>
-        <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("backupPriceMonthlyLabel")}</label>
-          <input type="number" style={inputStyle} value={form.backupPriceMonthly} onChange={(e) => setForm({ ...form, backupPriceMonthly: e.target.value })} dir="ltr" placeholder="0" />
-        </div>
-        <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("backupPriceYearlyLabel")}</label>
-          <input type="number" style={inputStyle} value={form.backupPriceYearly} onChange={(e) => setForm({ ...form, backupPriceYearly: e.target.value })} dir="ltr" placeholder="0" />
-        </div>
-      </div>
-      <p style={{ fontSize: 10, color: THEME.text3, margin: "-4px 0 10px" }}>{t("backupPriceHint")}</p>
-      <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saPfDescription")}</label>
-      <textarea
-        style={{ ...inputStyle, minHeight: 60, resize: "vertical", marginBottom: 12 }}
-        value={form.description}
-        onChange={(e) => setForm({ ...form, description: e.target.value })}
-        dir={dir}
-        placeholder={t("saPfDescPlaceholder")}
-      />
-      <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 6 }}>{t("saActiveModulesLabel")}</label>
-      <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 12, background: THEME.surface, borderRadius: 8, padding: 10 }}>
-        {PLAN_FEATURES.map((mod) => (
-          <div key={mod.key} style={{ borderBottom: `1px solid ${THEME.border}`, paddingBottom: 6, marginBottom: 2 }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: THEME.heading, fontWeight: 700, cursor: "pointer" }}>
-              <input type="checkbox" checked={form.features.includes(mod.key)} onChange={() => toggleModule(mod)} />
-              {mod.labelKey ? t(mod.labelKey) : mod.label}
-            </label>
-            {mod.sub && form.features.includes(mod.key) && (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 6, paddingInlineStart: 22 }}>
-                {mod.sub.map((s) => (
-                  <label key={s.key} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11.5, color: THEME.text2, cursor: "pointer" }}>
-                    <input type="checkbox" checked={form.features.includes(s.key)} onChange={() => toggleSub(mod, s.key)} />
-                    {s.labelKey ? t(s.labelKey) : s.label}
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-      <button type="button" onClick={onSave} disabled={saving} style={btnStyle()}>{saving ? t("saSavingEllipsis") : saveLabel}</button>
-    </div>
-  );
-}
-
 function UsageChip({ label, value }) {
   return (
     <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 8, padding: "6px 12px", fontSize: 12 }}>
@@ -3833,8 +3506,20 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
   const [contractorForm, setContractorForm] = useState({ ...emptyAccountForm(), companyId: company.id });
   const [contractorSaving, setContractorSaving] = useState(false);
   const [contractorError, setContractorError] = useState("");
-  const [selectedPlanId, setSelectedPlanId] = useState(company.planId || "");
-  const [planNote, setPlanNote] = useState("");
+  // ---------- Module-Based: ماژول‌های فعالِ این شرکت ----------
+  const [companyModules, setCompanyModules] = useState([]);
+  const [modulePricesCatalog, setModulePricesCatalog] = useState([]);
+  const [showAddModule, setShowAddModule] = useState(false);
+  const [newModuleKey, setNewModuleKey] = useState("");
+  const [newModuleStart, setNewModuleStart] = useState(() => new Date().toISOString().slice(0, 16));
+  const [newModuleEnd, setNewModuleEnd] = useState("");
+  const [moduleBusy, setModuleBusy] = useState(false);
+  const [moduleError, setModuleError] = useState("");
+
+  const loadCompanyModulesList = () => loadCompanyModules(company.id).then(setCompanyModules);
+  useEffect(() => { loadCompanyModulesList(); loadModulePrices({ live: true }).then(setModulePricesCatalog); }, [company.id]);
+
+  const planNote = ""; // یادداشتِ قراردادِ کلی — دیگر ورودیِ جدا ندارد، در تاریخچه ثبت می‌شود
   const [planSaving, setPlanSaving] = useState(false);
   const [assignType, setAssignType] = useState(company.subscriptionType || "monthly");
   const [assignDays, setAssignDays] = useState(company.subscriptionDays || "");
@@ -3903,13 +3588,16 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
 
   useEffect(() => { loadOnlinePaymentsForCompany(company.id).then(setOnlinePayments); }, [company.id]);
 
-  const currentPlan = plans.find((p) => p.id === company.planId);
-  const selectedPlanForAssign = plans.find((p) => p.id === selectedPlanId);
-  const [assignBackupPeriod, setAssignBackupPeriod] = useState("none");
-  const previewBackupAdd = backupPeriodPrice(selectedPlanForAssign, assignBackupPeriod);
-  // پیش‌نمایش زنده‌ی مبلغ قرارداد — قبل از ذخیره، همین که پلن/نوع/روز/Backup عوض بشه
-  const previewContractAmount = computeContractAmount(selectedPlanForAssign, assignType, assignDays) + previewBackupAdd;
-  const previewMonthlyRecurring = computeMonthlyRecurringAmount(selectedPlanForAssign, assignType);
+  // ماژول‌های فعلاً فعالِ شرکت (نه منقضی، نه غیرفعال‌شده) — مبنای محاسبه‌ی
+  // مبلغِ قراردادِ کلی، دقیقاً مثلِ قبل که مبنا priceMonthly/priceYearly خودِ پلن بود.
+  const activeCompanyModules = companyModules.filter((m) => m.isActive);
+  const moduleTotals = {
+    priceMonthly: activeCompanyModules.reduce((a, m) => a + (m.priceMonthly || 0), 0),
+    priceYearly: activeCompanyModules.reduce((a, m) => a + (m.priceYearly || 0), 0),
+  };
+  // پیش‌نمایش زنده‌ی مبلغ قرارداد — قبل از ذخیره، همین که نوع/روز عوض بشه
+  const previewContractAmount = computeContractAmount(moduleTotals, assignType, assignDays);
+  const previewMonthlyRecurring = computeMonthlyRecurringAmount(moduleTotals, assignType);
   const previewFinalAmount = Math.max(0, previewContractAmount - (Number(discountInput) || 0));
 
   // وضعیت پرداخت و هشدار پایان اشتراک — کاملاً محاسبه‌شده، مستقل از هم
@@ -3918,15 +3606,42 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
   const liveAccess = computeSubscriptionAccess(company);
   const monthlyAlarm = computeMonthlyPaymentAlarm(company, paymentsList);
 
-  const handleAssignPlan = async () => {
-    if (!selectedPlanId) return;
+  const handleSaveContract = async () => {
     setPlanSaving(true);
-    const result = await assignPlanToCompany(company.id, selectedPlanId, "assigned", currentAdmin?.fullName, planNote.trim(), assignType, assignDays, discountInput, assignBackupPeriod);
+    const result = await setCompanySubscriptionContract(company.id, moduleTotals, assignType, assignDays, discountInput, currentAdmin?.fullName, planNote);
     setPlanSaving(false);
     if (result?.__error) { alert(result.message); return; }
-    setPlanNote("");
     onPlanChanged();
   };
+
+  const handleAddModule = async () => {
+    if (!newModuleKey) return;
+    setModuleBusy(true); setModuleError("");
+    const catalogEntry = modulePricesCatalog.find((m) => m.moduleKey === newModuleKey);
+    const result = await addCompanyModule(company.id, newModuleKey, {
+      startsAt: newModuleStart ? new Date(newModuleStart).toISOString() : undefined,
+      endsAt: newModuleEnd ? new Date(newModuleEnd).toISOString() : null,
+      priceMonthly: catalogEntry?.priceMonthly || 0,
+      priceYearly: catalogEntry?.priceYearly || 0,
+      source: "admin_grant",
+    }, currentAdmin?.fullName);
+    setModuleBusy(false);
+    if (result?.__error) { setModuleError(result.message); return; }
+    setNewModuleKey(""); setNewModuleEnd(""); setShowAddModule(false);
+    await loadCompanyModulesList();
+  };
+  const handleToggleModuleActive = async (m) => { await updateCompanyModule(m.id, { isActive: !m.isActive }); await loadCompanyModulesList(); };
+  const handleModuleDateChange = async (m, field, value) => {
+    await updateCompanyModule(m.id, { [field]: value ? new Date(value).toISOString() : (field === "endsAt" ? null : undefined) });
+    await loadCompanyModulesList();
+  };
+  const handleRemoveModule = async (m) => {
+    if (!confirm(t("saRemoveCompanyModuleConfirm", { name: moduleLabel(m.moduleKey) }))) return;
+    await removeCompanyModule(m.id);
+    await loadCompanyModulesList();
+  };
+  const moduleLabel = (key) => modulePricesCatalog.find((m) => m.moduleKey === key)?.label || key;
+  const unassignedModules = modulePricesCatalog.filter((m) => !companyModules.some((cm) => cm.moduleKey === m.moduleKey));
 
   const toggleHistory = async () => {
     if (!showHistory) setHistory(await loadCompanySubscriptionHistory(company.id));
@@ -4004,17 +3719,14 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
 
       <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 12, marginBottom: 16 }}>
         <h4 style={{ fontSize: 12.5, color: THEME.heading, fontWeight: 700, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 6 }}>
-          <Layers size={13} /> {t("saCompanyPlanSub")}
-        </h4>
-        <p style={{ fontSize: 11.5, color: THEME.text3, marginBottom: 8 }}>
-          {t("saCurrentPlanLabel")} <b style={{ color: THEME.heading }}>{currentPlan ? currentPlan.name : t("saNoPlanAssigned")}</b>
+          <Layers size={13} /> {t("saCompanyModulesSub")}
           <span style={{
             marginInlineStart: 8, fontSize: 10.5, padding: "2px 9px", borderRadius: 999, fontWeight: 600,
             background: liveAccess.isLocked ? THEME.dangerBg : THEME.okBg, color: liveAccess.isLocked ? THEME.danger : THEME.ok,
           }}>
             {t("saStatusLabel", { label: liveAccess.labelKey ? t(liveAccess.labelKey) : liveAccess.label })}
           </span>
-        </p>
+        </h4>
         {(liveAccess.trialStart || liveAccess.subscriptionStartDate) && (
           <p style={{ fontSize: 12, color: THEME.heading, fontWeight: 600, marginBottom: 8, background: THEME.bg, borderRadius: 8, padding: "8px 12px" }}>
             {liveAccess.trialStart ? (
@@ -4024,47 +3736,70 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
             )}
           </p>
         )}
+
+        {/* ---------- ماژول‌های فعالِ این شرکت ---------- */}
+        {moduleError && <p style={{ color: THEME.danger, fontSize: 11.5, marginBottom: 6 }}>{moduleError}</p>}
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
+          {companyModules.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saNoCompanyModulesYet")}</p>}
+          {companyModules.map((m) => (
+            <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", background: THEME.bg, border: `1px solid ${THEME.border}`, borderRadius: 8, padding: "7px 10px" }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: THEME.heading, minWidth: 150 }}>{moduleLabel(m.moduleKey)}</span>
+              <span style={{ fontSize: 9.5, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: m.isActive ? THEME.okBg : THEME.surface2, color: m.isActive ? THEME.ok : THEME.text3 }}>
+                {m.isActive ? t("commonActive") : t("commonInactive")}
+              </span>
+              <input type="datetime-local" style={{ ...inputStyle, width: 168, fontSize: 10.5 }} defaultValue={m.startsAt ? m.startsAt.slice(0, 16) : ""} onBlur={(e) => handleModuleDateChange(m, "startsAt", e.target.value)} title={t("saModuleStartsAt")} />
+              <input type="datetime-local" style={{ ...inputStyle, width: 168, fontSize: 10.5 }} defaultValue={m.endsAt ? m.endsAt.slice(0, 16) : ""} onBlur={(e) => handleModuleDateChange(m, "endsAt", e.target.value)} title={t("saModuleEndsAtNoExpiry")} />
+              <button type="button" onClick={() => handleToggleModuleActive(m)} style={{ ...btnStyle(m.isActive ? THEME.warn : THEME.ok), fontSize: 10.5, padding: "4px 9px" }}>
+                {m.isActive ? t("commonDeactivate") : t("commonActivate")}
+              </button>
+              <button type="button" onClick={() => handleRemoveModule(m)} style={{ ...btnStyle(THEME.danger), fontSize: 10.5, padding: "4px 9px", marginInlineStart: "auto" }}>
+                <Trash2 size={11} />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {!showAddModule ? (
+          <button type="button" onClick={() => setShowAddModule(true)} style={{ ...btnStyle(THEME.navyMid), display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
+            <Plus size={13} /> {t("saAddCompanyModule")}
+          </button>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8, marginBottom: 12, background: THEME.bg, borderRadius: 8, padding: 10 }}>
+            <select style={inputStyle} value={newModuleKey} onChange={(e) => setNewModuleKey(e.target.value)} dir={dir}>
+              <option value="">{t("saSelectModulePlaceholder")}</option>
+              {unassignedModules.map((m) => <option key={m.moduleKey} value={m.moduleKey}>{m.label || m.moduleKey}</option>)}
+            </select>
+            <input type="datetime-local" style={inputStyle} value={newModuleStart} onChange={(e) => setNewModuleStart(e.target.value)} title={t("saModuleStartsAt")} />
+            <input type="datetime-local" style={inputStyle} value={newModuleEnd} onChange={(e) => setNewModuleEnd(e.target.value)} title={t("saModuleEndsAtNoExpiry")} placeholder={t("saModuleEndsAtNoExpiry")} />
+            <div style={{ display: "flex", gap: 6 }}>
+              <button type="button" onClick={handleAddModule} disabled={moduleBusy || !newModuleKey} style={btnStyle()}>{moduleBusy ? t("saSubmittingEllipsis") : t("commonAdd")}</button>
+              <button type="button" onClick={() => { setShowAddModule(false); setModuleError(""); }} style={btnStyle(THEME.text3)}>{t("commonCancel")}</button>
+            </div>
+          </div>
+        )}
+
+        {/* ---------- بازه/مبلغِ کلیِ قرارداد — بر پایه‌ی جمعِ ماژول‌های فعال بالا ---------- */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8, marginBottom: 8 }}>
-          <select style={inputStyle} value={selectedPlanId} onChange={(e) => setSelectedPlanId(e.target.value)} dir={dir}>
-            <option value="">{t("saSelectPlanPlaceholder")}</option>
-            {plans.filter((p) => p.isActive).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
           <select style={inputStyle} value={assignType} onChange={(e) => setAssignType(e.target.value)} dir={dir}>
-            {SUBSCRIPTION_TYPES.filter((st) => {
-              if (!selectedPlanForAssign) return true; // پلنی هنوز انتخاب نشده — همه‌ی گزینه‌ها را نشان بده
-              if (st.value === "monthly") return selectedPlanForAssign.priceMonthly > 0;
-              if (st.value === "yearly") return selectedPlanForAssign.priceYearly > 0;
-              if (st.value === "monthly_and_yearly") return selectedPlanForAssign.priceMonthly > 0 && selectedPlanForAssign.priceYearly > 0;
-              return true; // روزانه/آزمایشی/دائمی همیشه در دسترس‌اند
-            }).map((st) => <option key={st.value} value={st.value}>{t(st.labelKey)}</option>)}
+            {SUBSCRIPTION_TYPES.map((st) => <option key={st.value} value={st.value}>{t(st.labelKey)}</option>)}
           </select>
           {assignType === "daily" && (
             <input type="number" style={inputStyle} placeholder={t("saDayCountPlaceholder")} value={assignDays} onChange={(e) => setAssignDays(e.target.value)} dir="ltr" />
           )}
           <input type="number" style={inputStyle} placeholder={t("saDiscountTomanOptional")} value={discountInput} onChange={(e) => setDiscountInput(e.target.value)} dir="ltr" />
-          <select style={inputStyle} value={assignBackupPeriod} onChange={(e) => setAssignBackupPeriod(e.target.value)} dir={dir} title={t("backupBuyPeriodLabel")}>
-            <option value="none">{t("backupTierNone")}</option>
-            <option value="weekly">{t("backupTierWeekly")} — {(selectedPlanForAssign?.backupPriceWeekly || 0).toLocaleString(numLocale())} {t("currencyToman")}</option>
-            <option value="monthly">{t("backupTierMonthly")} — {(selectedPlanForAssign?.backupPriceMonthly || 0).toLocaleString(numLocale())} {t("currencyToman")}</option>
-            <option value="yearly">{t("backupTierYearly")} — {(selectedPlanForAssign?.backupPriceYearly || 0).toLocaleString(numLocale())} {t("currencyToman")}</option>
-          </select>
-          <input style={inputStyle} placeholder={t("saNoteOptional")} value={planNote} onChange={(e) => setPlanNote(e.target.value)} dir={dir} />
         </div>
 
-        {selectedPlanForAssign && (
-          <div style={{ background: THEME.bg, borderRadius: 8, padding: "8px 12px", marginBottom: 8, fontSize: 11.5, color: THEME.text2, lineHeight: 1.9 }}>
-            <div>{t("saPlanMonthlyYearlyPrice", { monthly: (selectedPlanForAssign.priceMonthly || 0).toLocaleString(numLocale()), yearly: (selectedPlanForAssign.priceYearly || 0).toLocaleString(numLocale()) })}</div>
-            {previewBackupAdd > 0 && <div style={{ color: THEME.warn }}>{t("backupBuyAddLine", { period: t("backupTier" + assignBackupPeriod.charAt(0).toUpperCase() + assignBackupPeriod.slice(1)), amount: previewBackupAdd.toLocaleString(numLocale()) })}</div>}
-            {(assignType === "monthly" || assignType === "yearly" || assignType === "daily" || assignType === "monthly_and_yearly") && (
-              <div>
-                {t("saPreviewBasedOnSelection")}
-                {previewContractAmount > 0 && t("saOneTimeContractAmount", { amount: previewContractAmount.toLocaleString(numLocale()) })}
-                {previewContractAmount > 0 && Number(discountInput) > 0 && t("saWithDiscount", { amount: previewFinalAmount.toLocaleString(numLocale()) })}
-                {previewMonthlyRecurring > 0 && <><br />{t("saMonthlyRecurringAmount", { amount: previewMonthlyRecurring.toLocaleString(numLocale()) })}</>}
-              </div>
-            )}
-          </div>
-        )}
+        <div style={{ background: THEME.bg, borderRadius: 8, padding: "8px 12px", marginBottom: 8, fontSize: 11.5, color: THEME.text2, lineHeight: 1.9 }}>
+          <div>{t("saPlanMonthlyYearlyPrice", { monthly: moduleTotals.priceMonthly.toLocaleString(numLocale()), yearly: moduleTotals.priceYearly.toLocaleString(numLocale()) })}</div>
+          {(assignType === "monthly" || assignType === "yearly" || assignType === "daily" || assignType === "monthly_and_yearly") && (
+            <div>
+              {t("saPreviewBasedOnSelection")}
+              {previewContractAmount > 0 && t("saOneTimeContractAmount", { amount: previewContractAmount.toLocaleString(numLocale()) })}
+              {previewContractAmount > 0 && Number(discountInput) > 0 && t("saWithDiscount", { amount: previewFinalAmount.toLocaleString(numLocale()) })}
+              {previewMonthlyRecurring > 0 && <><br />{t("saMonthlyRecurringAmount", { amount: previewMonthlyRecurring.toLocaleString(numLocale()) })}</>}
+            </div>
+          )}
+        </div>
 
         <div style={{ marginBottom: 10 }}>
           <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saStorageCapMb")}</label>
@@ -4087,7 +3822,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
         </div>
 
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-          <button type="button" style={btnStyle()} onClick={handleAssignPlan} disabled={planSaving || !selectedPlanId}>
+          <button type="button" style={btnStyle()} onClick={handleSaveContract} disabled={planSaving}>
             {planSaving ? t("saSubmittingEllipsis") : t("saSubmitPlanAndContract")}
           </button>
           <button type="button" onClick={toggleHistory} style={{ ...btnStyle(THEME.navyMid), display: "flex", alignItems: "center", gap: 6 }}>

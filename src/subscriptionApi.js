@@ -93,29 +93,6 @@ export async function loadMySubscriptionInfo() {
   };
 }
 
-// پلن‌های قابل‌خرید — customer scope؛ فقط پلن‌های فعال، برای نمایش در
-// صفحه‌ی انتخاب پلن. قیمت مستقیم از همین رکورد خوانده می‌شود (نه
-// Hard-code در Frontend).
-export async function loadPurchasablePlans() {
-  const rows = await sb("plans?is_active=eq.true&select=*&order=sort_order.asc.nullslast,price_monthly.asc");
-  if (!sbOk(rows)) return [];
-  return rows.map((r) => ({
-    id: r.id, name: r.name, description: r.description || "",
-    priceMonthly: Number(r.price_monthly) || 0, priceYearly: Number(r.price_yearly) || 0, priceTotal: Number(r.price_total) || 0,
-    maxUsers: r.max_users, maxPersonnel: r.max_personnel, maxStorageMb: r.max_storage_mb,
-    features: Array.isArray(r.features) ? r.features : [], trialDays: r.trial_days || null,
-    backupPriceWeekly: Number(r.backup_price_weekly) || 0,
-    backupPriceMonthly: Number(r.backup_price_monthly) || 0,
-    backupPriceYearly: Number(r.backup_price_yearly) || 0,
-  }));
-}
-
-// قیمتِ افزودنیِ یک دوره‌ی Backup برای یک پلن (تومان). "none"/نامعتبر → ۰
-export function planBackupPeriodPrice(plan, period) {
-  if (!plan || !period || period === "none") return 0;
-  return Number(plan[`backupPrice${period.charAt(0).toUpperCase()}${period.slice(1)}`]) || 0;
-}
-
 // تاریخچه‌ی پرداخت‌های آنلاین شرکت جاری — برای نمایش در پنل شرکت
 export async function loadMyPayments() {
   const companyId = getCurrentCompanyId();

@@ -137,17 +137,16 @@ export async function saveNotificationType(typeKey, patch, updatedBy) {
   return { ok: true };
 }
 
-// طبق خواسته‌ی صریح: «هر ماژولی که در پلن سوپرادمین غیرفعال می‌شود،
-// اعلان‌های همان ماژول نیز خودکار غیرفعال شوند». چون یک ماژول می‌تواند
-// در یک پلن فعال و در پلن دیگری غیرفعال باشد، معیار این است: اگر هیچ
-// پلنی (از میان همه‌ی پلن‌های فعال سامانه) دیگر این ماژول را در features
-// نداشته باشد، آن نوع اعلان خاموش می‌شود. این تابع بعد از هر ذخیره‌ی
-// پلن (ایجاد/ویرایش) صدا زده می‌شود — نه یک قانون دائمی-قفل‌شده: اگر
-// دوباره حداقل یک پلن آن ماژول را روشن کند، در دفعه‌ی بعدی ذخیره‌ی پلن،
-// اعلان مربوطه دوباره قابل‌فعال‌سازی می‌شود (ولی خودکار روشن نمی‌شود —
-// چون ممکن است سوپرادمین عمداً آن را دستی خاموش کرده باشد).
-export async function syncNotificationTypesWithPlans(allPlansFeatures) {
-  const activeModuleKeys = new Set(allPlansFeatures.flat());
+// طبق خواسته‌ی صریح: «هر ماژولی که سوپرادمین غیرفعال می‌کند، اعلان‌های
+// همان ماژول نیز خودکار غیرفعال شوند». Module-Based: معیار این است که آیا
+// آن ماژول هنوز در فهرستِ ماژول‌های فعالِ سامانه (module_prices با
+// is_active=true) هست یا نه. این تابع بعد از هر ذخیره‌ی ماتریسِ قیمت‌گذاریِ
+// ماژول‌ها صدا زده می‌شود — نه یک قانون دائمی-قفل‌شده: اگر ماژول دوباره
+// فعال شود، در دفعه‌ی بعدیِ ذخیره، اعلان مربوطه دوباره قابل‌فعال‌سازی
+// می‌شود (ولی خودکار روشن نمی‌شود — چون ممکن است سوپرادمین عمداً آن را
+// دستی خاموش کرده باشد).
+export async function syncNotificationTypesWithModules(activeModuleKeysList) {
+  const activeModuleKeys = new Set(activeModuleKeysList);
   const notifTypes = await sb("system_notification_types?select=type_key,owner_module_key,is_enabled");
   if (!sbOk(notifTypes)) return;
   const toDisable = notifTypes.filter((t) => t.owner_module_key && t.is_enabled && !activeModuleKeys.has(t.owner_module_key));

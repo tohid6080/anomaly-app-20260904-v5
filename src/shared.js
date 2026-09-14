@@ -367,26 +367,25 @@ export function usePersistedState(key, initialValue) {
 }
 
 /**
- * ماژول‌ها/زیرماژول‌های فعال پلنِ فعلیِ شرکت — طبق خواسته‌ی صریح: «اگه پلن
- * اشتراکی برای شرکتی فعال میشه دیگه ماژول هایی که غیرفعال کردیم دیگه رو
- * هیچ‌کدوم از کاربراش نشون نده». اگر شرکتی هنوز پلنی تخصیص نگرفته (یا
- * features آن پلن خالی/نامشخص است)، عمداً null برمی‌گردد — یعنی «باز»
- * (همه‌چیز نمایش داده شود)، تا رفتار شرکت‌های موجود بدون پلن خراب نشود.
+ * ماژول‌ها/زیرماژول‌های فعالِ شرکتِ فعلی — Module-Based: از جدولِ
+ * company_modules خوانده می‌شود (هر ردیف یک ماژول با تاریخ+ساعتِ دقیقِ
+ * شروع/پایان). فقط ماژول‌هایی که is_active=true و در بازه‌ی زمانیِ فعلی‌اند
+ * برگردانده می‌شوند. اگر شرکتی هنوز هیچ ماژولی تخصیص نگرفته، عمداً null
+ * برمی‌گردد — یعنی «باز» (همه‌چیز نمایش داده شود)، تا رفتار شرکت‌های
+ * تازه/بدونِ داده خراب نشود. خروجی دقیقاً همان شکلِ قبلی است (آرایه یا
+ * null) تا isModuleInPlan و همه‌ی صدازننده‌هایش دست‌نخورده بمانند.
  */
 export async function loadCurrentCompanyPlanFeatures() {
   const companyId = getCurrentCompanyId();
   if (!companyId) return null;
   try {
-    const companyRows = await sb(`companies?id=eq.${companyId}&select=plan_id,module_overrides`);
-    if (!sbOk(companyRows) || companyRows.length === 0) return null;
-    // خریدِ ماژول به ماژول: اگر شرکت مجموعه‌ی صریحِ خودش را دارد، همین مبناست
-    // (به‌جای plan.features). NULL → رفتارِ قبلی، از پلن بخوان.
-    const overrides = companyRows[0].module_overrides;
-    if (Array.isArray(overrides)) return overrides;
-    if (!companyRows[0].plan_id) return null;
-    const planRows = await sb(`plans?id=eq.${companyRows[0].plan_id}&select=features,is_active`);
-    if (!sbOk(planRows) || planRows.length === 0 || planRows[0].is_active === false) return null;
-    return Array.isArray(planRows[0].features) ? planRows[0].features : null;
+    const nowIso = new Date().toISOString();
+    const rows = await sb(
+      `company_modules?company_id=eq.${companyId}&is_active=eq.true&starts_at=lte.${nowIso}` +
+      `&or=(ends_at.is.null,ends_at.gt.${nowIso})&select=module_key`
+    );
+    if (!sbOk(rows) || rows.length === 0) return null;
+    return rows.map((r) => r.module_key);
   } catch {
     return null;
   }

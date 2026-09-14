@@ -187,42 +187,18 @@ export async function deleteService(id) {
 }
 
 /* ---------------------------------------------------------------------------- *
- * محاسبه‌ی خالص
+ * محاسبه‌ی خالص — Module-Based: صرفاً مجموعِ قیمتِ ماژول‌های انتخابی + خدمات.
+ * هیچ مفهومِ پلن/بسته/تخفیفِ بسته‌ای دیگر در کار نیست.
  * ---------------------------------------------------------------------------- */
-
-// جهانِ ماژول‌های یک پلن (module_universe یا features)
-export function planUniverse(plan) {
-  if (plan && Array.isArray(plan.moduleUniverse) && plan.moduleUniverse.length) return plan.moduleUniverse;
-  return Array.isArray(plan?.features) ? plan.features : [];
-}
-
-// ارزان‌ترین پلنی که کلِ انتخاب زیرمجموعه‌ی جهانش است و تعداد در بازه‌ی min/max.
-// plans: آرایه‌ای از پلن‌ها با فیلدهای camelCase (features, moduleUniverse, minModules, maxModules, priceMonthly, priceYearly).
-export function resolvePlanForSelection(selectedRealKeys, plans, billingCycle) {
-  const sel = selectedRealKeys || [];
-  const cands = (plans || []).filter((p) => {
-    const uni = planUniverse(p);
-    if (!uni.length) return false;
-    const subset = sel.every((k) => uni.indexOf(k) > -1);
-    const min = p.minModules == null ? 0 : p.minModules;
-    const max = p.maxModules == null ? 999 : p.maxModules;
-    return subset && sel.length >= min && sel.length <= max;
-  });
-  const price = (p) => (billingCycle === "monthly" ? p.priceMonthly : p.priceYearly) || p.priceMonthly || 0;
-  cands.sort((a, b) => price(a) - price(b));
-  return cands[0] || null;
-}
 
 /**
  * محاسبه‌ی سبدِ خرید.
  *  selectedModuleKeys : کلیدهای ماژولِ انتخابیِ کاربر (شاملِ رایگان‌ها هم اشکالی ندارد)
  *  selectedServiceIds : آیدیِ خدماتِ انتخابی
- *  chosenPlan         : پلنِ آماده‌ای که کاربر انتخاب کرده (یا null → انتخابِ آزاد)
- *  plans, modulePrices, services : داده‌های خام (camelCase)
+ *  modulePrices, services : داده‌های خام (camelCase)
  *  billingCycle       : 'monthly' | 'yearly'
- * برمی‌گرداند breakdown + مبلغِ نهایی + پلنِ پیشنهادی (اگر انتخاب به محدوده‌ی پلنی رسید).
  */
-export function computeCartTotal({ selectedModuleKeys, selectedServiceIds, chosenPlan, plans, modulePrices, services, billingCycle }) {
+export function computeCartTotal({ selectedModuleKeys, selectedServiceIds, modulePrices, services, billingCycle }) {
   billingCycle = billingCycle === "monthly" ? "monthly" : "yearly";
   const mpMap = {};
   (modulePrices || []).forEach((m) => { mpMap[m.moduleKey] = m; });
@@ -234,15 +210,8 @@ export function computeCartTotal({ selectedModuleKeys, selectedServiceIds, chose
     if (!m || m.isFree) return 0;
     return (billingCycle === "monthly" ? m.priceMonthly : m.priceYearly) || m.priceMonthly || 0;
   };
-  const isFree = (k) => !!(mpMap[k] && mpMap[k].isFree);
 
   const selReal = (selectedModuleKeys || []).filter((k) => mpMap[k] && !mpMap[k].isFree);
-  const uni = chosenPlan ? planUniverse(chosenPlan) : [];
-  const included = selReal.filter((k) => uni.indexOf(k) > -1);
-  const addons = selReal.filter((k) => uni.indexOf(k) === -1);
-
-  const planPrice = chosenPlan ? ((billingCycle === "monthly" ? chosenPlan.priceMonthly : chosenPlan.priceYearly) || chosenPlan.priceMonthly || 0) : 0;
-  const addonsTotal = addons.reduce((a, k) => a + priceOf(k), 0);
   const sumAllModules = selReal.reduce((a, k) => a + priceOf(k), 0);
 
   // خدمات
@@ -254,47 +223,16 @@ export function computeCartTotal({ selectedModuleKeys, selectedServiceIds, chose
   }, 0);
   const svcOnce = svcIds.reduce((a, id) => (svcMap[id].period === "once" ? a + (svcMap[id].priceMonthly || svcMap[id].priceYearly || 0) : a), 0);
 
-  // پلنِ پیشنهادی بر پایه‌ی کلِ انتخاب
-  const suggestedPlan = resolvePlanForSelection(selReal, plans, billingCycle);
-
-  let recurringBase;
-  if (chosenPlan) {
-    recurringBase = planPrice + addonsTotal;
-  } else {
-    recurringBase = suggestedPlan
-      ? Math.min(sumAllModules, (billingCycle === "monthly" ? suggestedPlan.priceMonthly : suggestedPlan.priceYearly) || suggestedPlan.priceMonthly || 0)
-      : sumAllModules;
-  }
-
-  const discount = (chosenPlan && suggestedPlan && suggestedPlan.id !== chosenPlan.id)
-    ? Math.max(0, recurringBase - ((billingCycle === "monthly" ? suggestedPlan.priceMonthly : suggestedPlan.priceYearly) || suggestedPlan.priceMonthly || 0))
-    : (!chosenPlan && suggestedPlan ? Math.max(0, sumAllModules - recurringBase) : 0);
-
-  const recurringTotal = recurringBase + svcRecurring;
+  const recurringTotal = sumAllModules + svcRecurring;
   const grandTotal = recurringTotal + svcOnce;
-
-  // اگر پلنِ متناظر نبود → resolvedPlanId خالی است و module_overrides ست می‌شود
-  const resolvedPlan = chosenPlan || (suggestedPlan && sameSet(selReal, planUniverse(suggestedPlan)) ? suggestedPlan : null);
 
   return {
     billingCycle,
-    selReal, included, addons,
-    planPrice, addonsTotal, sumAllModules,
+    selReal,
+    sumAllModules,
     svcRecurring, svcOnce, serviceIds: svcIds,
-    suggestedPlan: suggestedPlan ? { id: suggestedPlan.id, name: suggestedPlan.name } : null,
-    resolvedPlanId: resolvedPlan ? resolvedPlan.id : null,
-    discount,
     recurringTotal, grandTotal,
-    label: chosenPlan ? chosenPlan.name : (suggestedPlan ? suggestedPlan.name : (selReal.length ? "سفارشی" : "")),
   };
-}
-
-function sameSet(a, b) {
-  if (!a || !b) return false;
-  const A = new Set(a), B = new Set(b);
-  if (A.size !== B.size) return false;
-  for (const x of A) if (!B.has(x)) return false;
-  return true;
 }
 
 // وابستگی‌ها را اعمال می‌کند: انتخابِ یک ماژول، requires آن را هم روشن می‌کند.

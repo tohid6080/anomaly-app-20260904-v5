@@ -6,48 +6,26 @@ import {
   loadModulePrices, saveModulePrice, loadServices, upsertService, deleteService,
   loadPricingGroups, savePricingGroups, loadPricingPublishInfo, publishPricingSnapshot,
 } from "../pricingApi.js";
-import { updatePlan, loadPlans } from "./superAdminApi.js";
-import { syncNotificationTypesWithPlans } from "../systemConfigApi.js";
+import { syncNotificationTypesWithModules } from "../systemConfigApi.js";
+import { loadAllCompanyModules } from "./companyModulesApi.js";
 
 /* ============================================================================ *
- * کنسولِ یکپارچه‌ی «قیمت‌گذاری و پلن‌ها» — ادغامِ دو تبِ قبلی:
- *   ۱) ماتریسِ ماژول × پلن  (قیمتِ ماهانه/سالانه، رایگان به‌صورتِ نوارِ روشن/خاموش،
- *      و عضویتِ هر ماژول در هر پلن — همه در یک ردیف)
- *   ۲) تنظیماتِ پلن‌ها       (قیمتِ پلن، سقف‌ها، روزِ آزمایشی، بازه‌ی حداقل/حداکثرِ ماژول)
- *   ۳) نمای شرکت‌های فعلی    (کدام شرکت چه ماژول‌هایی فعال دارد — فقط‌خواندنی)
- *   ۴) خدمات و افزودنی‌ها
+ * کنسولِ «قیمت‌گذاریِ ماژول‌ها» — Module-Based: دیگر مفهومِ پلن/بسته وجود
+ * ندارد، فقط خودِ ماژول‌ها مدیریت می‌شوند:
+ *   ۱) ماتریسِ ماژول‌ها  (قیمتِ ماهانه/سالانه، رایگان به‌صورتِ نوارِ روشن/خاموش)
+ *   ۲) نمای شرکت‌های فعلی (کدام شرکت چه ماژول‌هایی فعال دارد — فقط‌خواندنی)
+ *   ۳) خدمات و افزودنی‌ها
  *
  * «ذخیره» = نوشتنِ پیش‌نویس در جدول‌های زنده.  «انتشار» = عکسِ قیمت‌ها/خدمات را
  * برای صفحه‌ی خریدِ مشتری زنده می‌کند.  دسته‌بندی‌ها را خودِ مدیر می‌سازد و فقط
  * برچسبِ نمایشی‌اند (هیچ اثری بر دسترسی/قیمت ندارند).
- * کلیدِ هر ردیف === همان کلیدی که isModuleInPlan استفاده می‌کند.
+ * کلیدِ هر ردیف === همان کلیدی که isModuleInPlan/company_modules استفاده می‌کند.
  * ============================================================================ */
 
 const clone = (v) => JSON.parse(JSON.stringify(v ?? null));
-const fmt = (n) => Number(Math.round(Number(n) || 0)).toLocaleString("fa-IR");
 const faInt = (n) => Number(n || 0).toLocaleString("fa-IR");
 
-function planEntryFromPlan(p) {
-  if (!p) return null;
-  return {
-    priceMonthly: p.priceMonthly || 0,
-    priceYearly: p.priceYearly || 0,
-    priceTotal: p.priceTotal || 0,
-    minModules: p.minModules ?? "",
-    maxModules: p.maxModules ?? "",
-    maxUsers: p.maxUsers ?? "",
-    maxPersonnel: p.maxPersonnel ?? "",
-    trialDays: p.trialDays ?? "",
-    features: Array.isArray(p.features) ? [...p.features] : [],
-  };
-}
-function initPlanDraft(plans) {
-  const d = {};
-  (plans || []).forEach((p) => { d[p.id] = planEntryFromPlan(p); });
-  return d;
-}
-
-export default function PricingConsole({ plans, companies, currentAdmin, onChanged }) {
+export default function PricingConsole({ companies, currentAdmin, onChanged }) {
   const { t, dir } = useLanguage();
   const actor = currentAdmin?.fullName || currentAdmin?.username || "";
 
@@ -57,8 +35,6 @@ export default function PricingConsole({ plans, companies, currentAdmin, onChang
   const [svcBase, setSvcBase] = useState([]);
   const [grp, setGrp] = useState({ groups: [], byModule: {} });
   const [grpBase, setGrpBase] = useState({ groups: [], byModule: {} });
-  const [planDraft, setPlanDraft] = useState(() => initPlanDraft(plans));
-  const [planBase, setPlanBase] = useState(() => initPlanDraft(plans));
   const [pubInfo, setPubInfo] = useState(undefined); // undefined=loading, null=never, {publishedAt}
   const [needsPublish, setNeedsPublish] = useState(false);
 
@@ -84,16 +60,6 @@ export default function PricingConsole({ plans, companies, currentAdmin, onChang
   }, []);
   useEffect(() => { refresh(); }, [refresh]);
 
-  // پلن‌ها از props می‌آیند؛ وقتی والد دوباره لود کرد و چیزی دستِ ما تغییرنکرده،
-  // پیش‌نویسِ محلی را با نسخه‌ی تازه هم‌تراز کن (بدون از دست دادنِ ویرایشِ نشده).
-  const planDirty = useMemo(() => JSON.stringify(planDraft) !== JSON.stringify(planBase), [planDraft, planBase]);
-  useEffect(() => {
-    if (planDirty) return;
-    const fresh = initPlanDraft(plans);
-    setPlanDraft(fresh); setPlanBase(clone(fresh));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plans]);
-
   const mpDirty = useMemo(() => JSON.stringify(mp) !== JSON.stringify(mpBase), [mp, mpBase]);
   const svcDirty = useMemo(() => JSON.stringify(svc) !== JSON.stringify(svcBase), [svc, svcBase]);
   const grpDirty = useMemo(() => JSON.stringify(grp) !== JSON.stringify(grpBase), [grp, grpBase]);
@@ -101,11 +67,10 @@ export default function PricingConsole({ plans, companies, currentAdmin, onChang
     let n = 0;
     mp.forEach((r) => { const b = mpBase.find((x) => x.moduleKey === r.moduleKey); if (!b || JSON.stringify(b) !== JSON.stringify(r)) n++; });
     svc.forEach((r) => { if (r.__new || JSON.stringify(svcBase.find((x) => x.id === r.id)) !== JSON.stringify(r)) n++; });
-    Object.keys(planDraft).forEach((id) => { if (JSON.stringify(planDraft[id]) !== JSON.stringify(planBase[id])) n++; });
     if (grpDirty) n++;
     return n;
-  }, [mp, mpBase, svc, svcBase, planDraft, planBase, grpDirty]);
-  const anyDirty = mpDirty || svcDirty || grpDirty || planDirty;
+  }, [mp, mpBase, svc, svcBase, grpDirty]);
+  const anyDirty = mpDirty || svcDirty || grpDirty;
 
   // ---------- گروه‌بندی ----------
   const groupList = grp.groups.length ? grp.groups : [{ id: "__ungrouped", name: t("pcUngrouped") }];
@@ -139,17 +104,6 @@ export default function PricingConsole({ plans, companies, currentAdmin, onChang
     await refresh();
   };
 
-  const planField = (pid, patch) => setPlanDraft((d) => {
-    const cur = d[pid] || planEntryFromPlan((plans || []).find((p) => p.id === pid)) || {};
-    return { ...d, [pid]: { ...cur, ...patch } };
-  });
-  const togglePlanModule = (pid, key) => setPlanDraft((d) => {
-    const cur = d[pid] || planEntryFromPlan((plans || []).find((p) => p.id === pid)) || { features: [] };
-    const list = cur.features || [];
-    const has = list.indexOf(key) > -1;
-    return { ...d, [pid]: { ...cur, features: has ? list.filter((x) => x !== key) : [...list, key] } };
-  });
-
   // ---------- ذخیره ----------
   const save = async () => {
     setBusy(true); setErr(""); setOk("");
@@ -168,39 +122,12 @@ export default function PricingConsole({ plans, companies, currentAdmin, onChang
         const res = await savePricingGroups(grp, actor);
         if (res?.__error) throw new Error(res.message || t("commonErrorSave"));
       }
-      const numOrNull = (v) => (v === "" || v == null ? null : Number(v));
-      let planChanged = false;
-      for (const id of Object.keys(planDraft)) {
-        const d = planDraft[id];
-        if (!d) continue;
-        const b = planBase[id];
-        if (b && JSON.stringify(d) === JSON.stringify(b)) continue;
-        planChanged = true;
-        const res = await updatePlan(id, {
-          priceMonthly: Number(d.priceMonthly) || 0,
-          priceYearly: Number(d.priceYearly) || 0,
-          priceTotal: Number(d.priceTotal) || 0,
-          minModules: numOrNull(d.minModules),
-          maxModules: numOrNull(d.maxModules),
-          maxUsers: numOrNull(d.maxUsers),
-          maxPersonnel: numOrNull(d.maxPersonnel),
-          trialDays: numOrNull(d.trialDays),
-          features: Array.isArray(d.features) ? d.features : [],
-        });
-        if (res?.__error) throw new Error(res.message || t("commonErrorSave"));
-      }
-      if (planChanged) {
-        try { await syncNotificationTypesWithPlans((await loadPlans()).map((p) => p.features)); } catch { /* بی‌اهمیت */ }
+      if (changedMp.length > 0) {
+        try { await syncNotificationTypesWithModules(mp.filter((r) => r.isActive).map((r) => r.moduleKey)); } catch { /* بی‌اهمیت */ }
       }
       setBusy(false);
       setOk(t("pcSavedDraft"));
       setNeedsPublish(true);
-      // پلن‌ها را از حقیقتِ سرور دوباره بساز تا حالتِ «ذخیره‌نشده» گیر نکند.
-      try {
-        const freshPlans = await loadPlans();
-        const fresh = initPlanDraft(freshPlans);
-        setPlanDraft(fresh); setPlanBase(clone(fresh));
-      } catch { /* effect وابسته به prop خودش هم‌تراز می‌کند */ }
       await refresh();
       onChanged && onChanged();
     } catch (e) {
@@ -289,7 +216,6 @@ export default function PricingConsole({ plans, companies, currentAdmin, onChang
                 <th>{t("mpColMonthly")}</th>
                 <th>{t("mpColYearly")}</th>
                 <th>{t("mpColFree")}</th>
-                {plans.map((p) => <th key={p.id}>{p.name}</th>)}
               </tr>
             </thead>
             <tbody>
@@ -299,7 +225,7 @@ export default function PricingConsole({ plans, companies, currentAdmin, onChang
                 return (
                   <React.Fragment key={g.id}>
                     <tr className="pc-grouprow">
-                      <td className="pc-sticky" colSpan={4 + plans.length}>
+                      <td className="pc-sticky" colSpan={4}>
                         <button type="button" className="pc-caret" onClick={() => setCollapsed((c) => ({ ...c, [g.id]: !c[g.id] }))}>
                           {collapsed[g.id] ? "▸" : "▾"}
                         </button>
@@ -340,81 +266,18 @@ export default function PricingConsole({ plans, companies, currentAdmin, onChang
                             <span className="pc-track"><span className="pc-knob" /></span>
                           </label>
                         </td>
-                        {plans.map((p) => {
-                          const feats = planDraft[p.id]?.features || p.features || [];
-                          const on = feats.indexOf(r.moduleKey) > -1;
-                          return (
-                            <td key={p.id}>
-                              <button type="button" className={"pc-pill" + (on ? " on" : "")} onClick={() => togglePlanModule(p.id, r.moduleKey)}>
-                                {on ? "✓" : ""}
-                              </button>
-                            </td>
-                          );
-                        })}
                       </tr>
                     ))}
                   </React.Fragment>
                 );
               })}
-              {mp.length === 0 && <tr><td colSpan={4 + plans.length} style={{ padding: 16, textAlign: "center", color: THEME.text3 }}>{t("commonNoData")}</td></tr>}
+              {mp.length === 0 && <tr><td colSpan={4} style={{ padding: 16, textAlign: "center", color: THEME.text3 }}>{t("commonNoData")}</td></tr>}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* ---------- ۲) تنظیماتِ پلن‌ها ---------- */}
-      <div style={{ ...styles.cardWide, marginBottom: 16 }}>
-        <b style={{ fontSize: 13, color: THEME.heading }}>{t("pcPlanCfgTitle")}</b>
-        <p style={{ fontSize: 11, color: THEME.text3, margin: "4px 0 10px", lineHeight: 1.8 }}>{t("pcPlanCfgIntro")}</p>
-        <div style={{ overflowX: "auto" }}>
-          <table className="pc-matrix">
-            <thead>
-              <tr><th className="pc-sticky">{t("pcColProp")}</th>{plans.map((p) => <th key={p.id}>{p.name}</th>)}</tr>
-            </thead>
-            <tbody>
-              {PLAN_ROWS.map((row) => (
-                <tr key={row.key}>
-                  <td className="pc-sticky" style={{ fontWeight: 700, color: THEME.text2 }}>{t(row.labelKey)}</td>
-                  {plans.map((p) => {
-                    const pd = planDraft[p.id] || planEntryFromPlan(p) || {};
-                    return (
-                      <td key={p.id}>
-                        <input type="number" value={pd[row.key] ?? ""}
-                          onChange={(e) => planField(p.id, { [row.key]: e.target.value })}
-                          style={{ ...cellIn, width: row.wide ? 118 : 78 }} />
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-              <tr className="pc-computed">
-                <td className="pc-sticky" style={{ fontWeight: 700, color: THEME.text2 }}>{t("pcSelCount")}</td>
-                {plans.map((p) => {
-                  const feats = (planDraft[p.id] || planEntryFromPlan(p) || {}).features || [];
-                  return <td key={p.id} style={mono}>{faInt(feats.length)}</td>;
-                })}
-              </tr>
-              <tr className="pc-computed">
-                <td className="pc-sticky" style={{ fontWeight: 700, color: THEME.text2 }}>{t("pcSumPrice")}</td>
-                {plans.map((p) => {
-                  const feats = (planDraft[p.id] || planEntryFromPlan(p) || {}).features || [];
-                  return <td key={p.id} style={mono}>{fmt(sumModulePrices(feats, mp))}</td>;
-                })}
-              </tr>
-              <tr className="pc-computed">
-                <td className="pc-sticky" style={{ fontWeight: 700, color: THEME.text2 }}>{t("pcBundleDiscount")}</td>
-                {plans.map((p) => {
-                  const pd = planDraft[p.id] || planEntryFromPlan(p) || {};
-                  const d = sumModulePrices(pd.features || [], mp) - (Number(pd.priceMonthly) || 0);
-                  return <td key={p.id} style={{ ...mono, color: d > 0 ? THEME.ok : d < 0 ? THEME.warn : THEME.text3 }}>{d === 0 ? "—" : (d > 0 ? "↓ " : "↑ ") + fmt(Math.abs(d))}</td>;
-                })}
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* ---------- ۳) شرکت‌های فعلی ---------- */}
+      {/* ---------- ۲) شرکت‌های فعلی ---------- */}
       <div style={{ ...styles.cardWide, marginBottom: 16 }}>
         <div className="pc-panelhead">
           <b style={{ fontSize: 13, color: THEME.heading }}>{t("pcCompaniesTitle")}</b>
@@ -422,7 +285,7 @@ export default function PricingConsole({ plans, companies, currentAdmin, onChang
             style={{ ...cellIn, width: 160, fontFamily: THEME.font, textAlign: "start" }} />
         </div>
         <p style={{ fontSize: 11, color: THEME.text3, margin: "0 0 10px", lineHeight: 1.8 }}>{t("pcCompaniesIntro")}</p>
-        <CompaniesMatrix companies={companies} plans={plans} mp={mp} query={coQuery} t={t} />
+        <CompaniesMatrix companies={companies} mp={mp} query={coQuery} t={t} />
       </div>
 
       {/* ---------- ۴) خدمات ---------- */}
@@ -471,23 +334,22 @@ export default function PricingConsole({ plans, companies, currentAdmin, onChang
 }
 
 /* ---------------- شرکت‌های فعلی — ماتریسِ فقط‌خواندنی ---------------- */
-function CompaniesMatrix({ companies, plans, mp, query, t }) {
-  const planById = useMemo(() => { const m = {}; (plans || []).forEach((p) => { m[p.id] = p; }); return m; }, [plans]);
+function CompaniesMatrix({ companies, mp, query, t }) {
+  const [allCm, setAllCm] = useState(null);
+  useEffect(() => { loadAllCompanyModules().then(setAllCm); }, []);
+
   const list = (companies || []).filter((c) => !query || (c.name || "").indexOf(query) > -1);
-  const activeSet = (c) => {
-    const keys = Array.isArray(c.moduleOverrides) ? c.moduleOverrides : (planById[c.planId]?.features || []);
-    return new Set(keys);
-  };
+  const activeSet = (c) => new Set((allCm || []).filter((m) => m.companyId === c.id && m.isActive).map((m) => m.moduleKey));
   const stColor = (s) => (s === "active" ? THEME.ok : s === "disabled" ? THEME.text3 : s === "expired" ? THEME.danger : THEME.warn);
-  const avg = list.length ? Math.round(list.reduce((a, c) => a + activeSet(c).size, 0) / list.length) : 0;
-  const customN = list.filter((c) => Array.isArray(c.moduleOverrides)).length;
+  const avg = list.length && allCm ? Math.round(list.reduce((a, c) => a + activeSet(c).size, 0) / list.length) : 0;
+
+  if (allCm === null) return <p style={{ fontSize: 12, color: THEME.text3 }}>{t("commonLoading")}</p>;
 
   return (
     <>
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap", fontSize: 11.5, color: THEME.text2, marginBottom: 8 }}>
         <span><b style={{ color: THEME.text }}>{faInt(list.length)}</b> {t("pcSumCompanies")}</span>
         <span>{t("pcSumAvg")}: <b style={{ color: THEME.text }}>{faInt(avg)}</b></span>
-        <span><b style={{ color: THEME.text }}>{faInt(customN)}</b> {t("pcSumCustom")}</span>
       </div>
       <div style={{ overflowX: "auto" }}>
         <table className="pc-matrix pc-co">
@@ -500,16 +362,13 @@ function CompaniesMatrix({ companies, plans, mp, query, t }) {
           <tbody>
             {list.map((c) => {
               const set = activeSet(c);
-              const plan = planById[c.planId];
               return (
                 <tr key={c.id}>
                   <td className="pc-sticky">
                     <div style={{ fontWeight: 700, color: THEME.text, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                       {c.name}
-                      {Array.isArray(c.moduleOverrides) && <span style={{ fontSize: 8.5, fontWeight: 800, padding: "1px 6px", borderRadius: 999, background: THEME.warnBg, color: THEME.warn }}>{t("pcCustomTag")}</span>}
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
-                      <span style={{ fontSize: 9, fontWeight: 800, padding: "1px 7px", borderRadius: 999, background: THEME.tealSoft, color: THEME.tealDeep }}>{plan?.name || "—"}</span>
                       <span style={{ width: 7, height: 7, borderRadius: "50%", background: stColor(c.subscriptionStatus), display: "inline-block" }} />
                       <span style={{ fontSize: 10, fontFamily: "monospace", color: THEME.text3 }}>{faInt(set.size)}/{faInt(mp.length)}</span>
                     </div>
@@ -533,31 +392,8 @@ function shortLabel(s) {
   const parts = String(s).split(/\s|‌/).filter(Boolean);
   return parts.length > 2 ? parts.slice(0, 2).join(" ") : s;
 }
-function sumModulePrices(features, mp) {
-  if (!Array.isArray(features)) return 0;
-  const byKey = {};
-  (mp || []).forEach((m) => { byKey[m.moduleKey] = m; });
-  return features.reduce((a, k) => {
-    const m = byKey[k];
-    if (!m || m.isFree) return a;
-    return a + (Number(m.priceMonthly) || 0);
-  }, 0);
-}
-
-const PLAN_ROWS = [
-  { key: "priceMonthly", labelKey: "saMonthlyPriceToman", wide: true },
-  { key: "priceYearly", labelKey: "saYearlyPriceToman", wide: true },
-  { key: "priceTotal", labelKey: "saPfPriceTotal", wide: true },
-  { key: "minModules", labelKey: "mpMinModules" },
-  { key: "maxModules", labelKey: "mpMaxModules" },
-  { key: "maxUsers", labelKey: "saColUserCap" },
-  { key: "maxPersonnel", labelKey: "saColPersonnelCap" },
-  { key: "trialDays", labelKey: "saPfTrialDays" },
-];
 
 const cellIn = { width: 96, padding: "5px 7px", border: `1px solid ${THEME.border}`, borderRadius: 7, background: THEME.surface, color: THEME.text, fontSize: 11.5, fontFamily: "monospace", textAlign: "center", boxSizing: "border-box" };
-const mono = { fontFamily: "monospace", fontWeight: 700, color: THEME.text2 };
-
 const CSS = `
 .pc-actionbar{position:sticky;top:0;z-index:6;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
   background:var(--ihms-surface-2,#12313f);border:1px solid var(--ihms-border,#20404f);border-radius:10px;padding:9px 12px;margin-bottom:12px}

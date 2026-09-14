@@ -440,17 +440,15 @@ export function computeMonthlyRecurringAmount(plan, type) {
   return 0;
 }
 
-export async function assignPlanToCompany(companyId, planId, action, changedBy, note, subscriptionType, days, discountAmount, backupPeriod) {
-  const companyRows = await sb(`companies?id=eq.${companyId}&select=plan_id`, {}, "super_admin");
-  const previousPlanId = sbOk(companyRows) && companyRows.length > 0 ? companyRows[0].plan_id : null;
-
-  const plans = await loadPlans();
-  const plan = plans.find((p) => p.id === planId);
-  const bp = backupPeriod && backupPeriod !== "none" ? backupPeriod : null;
-  const backupAdd = backupPeriodPrice(plan, bp);
-  // قیمتِ افزودنیِ Backup هم به مبلغِ یک‌باره‌ی قرارداد اضافه می‌شود.
-  const contractAmount = computeContractAmount(plan, subscriptionType, days) + backupAdd;
-  const monthlyRecurringAmount = computeMonthlyRecurringAmount(plan, subscriptionType);
+// ---------- Module-Based: بازهٔ اشتراکِ کلیِ شرکت (Trial/Permanent/دوره‌ای) ----------
+// جایگزینِ assignPlanToCompany — دیگر planId نمی‌گیرد. moduleTotals همان
+// جمعِ قیمتِ ماژول‌های فعلاً فعالِ شرکت است (از خودِ پنل، بر پایه‌ی
+// company_modules محاسبه و به اینجا پاس داده می‌شود)؛ computeContractAmount/
+// computeMonthlyRecurringAmount عوض نشده‌اند — فقط به‌جای یک «پلن»، یک
+// آبجکتِ ساده‌ی { priceMonthly, priceYearly } می‌گیرند.
+export async function setCompanySubscriptionContract(companyId, moduleTotals, subscriptionType, days, discountAmount, changedBy, note) {
+  const contractAmount = computeContractAmount(moduleTotals, subscriptionType, days);
+  const monthlyRecurringAmount = computeMonthlyRecurringAmount(moduleTotals, subscriptionType);
   const discount = Number(discountAmount) || 0;
   // تخفیف فقط روی مبلغ یک‌باره اعمال می‌شود؛ مبلغ ماهانه‌ی مستمر مستقل و
   // دست‌نخورده می‌ماند، چون هرماه جدا محاسبه/اخذ می‌شود.
@@ -458,7 +456,6 @@ export async function assignPlanToCompany(companyId, planId, action, changedBy, 
   const endDate = computeSubscriptionEndDate(subscriptionType, days);
 
   const updatePayload = {
-    plan_id: planId,
     subscription_type: subscriptionType,
     subscription_days: subscriptionType === "daily" ? Number(days) || null : null,
     subscription_start_date: new Date().toISOString(),
@@ -466,19 +463,15 @@ export async function assignPlanToCompany(companyId, planId, action, changedBy, 
     discount_amount: discount,
     final_amount: finalAmount,
     monthly_recurring_amount: monthlyRecurringAmount,
-    // دوره‌ی Backup این شرکت — مبنای Job روزانه. اگر none/خالی، پاک می‌شود
-    // تا از سطحِ پلن ارث ببرد.
-    backup_frequency: bp,
   };
   if (endDate) updatePayload.subscription_end_date = endDate;
 
   const updateResult = await sb(`companies?id=eq.${companyId}`, { method: "PATCH", body: JSON.stringify(updatePayload) }, "super_admin");
   if (!sbOk(updateResult)) return { __error: true, message: tr("saErrChangeCompanyPlan") };
 
-  const bpNote = bp ? ` — Backup ${bp} (+${backupAdd.toLocaleString()})` : "";
   const historyPayload = {
-    company_id: companyId, plan_id: planId, previous_plan_id: previousPlanId,
-    action: action || "assigned", note: (note || "") + bpNote, changed_by: changedBy || "",
+    company_id: companyId, plan_id: null, previous_plan_id: null,
+    action: "assigned", note: note || "", changed_by: changedBy || "",
     contract_amount: contractAmount, discount_amount: discount, final_amount: finalAmount,
   };
   await sb("company_subscription_history", { method: "POST", body: JSON.stringify([historyPayload]), prefer: "return=minimal" }, "super_admin");
