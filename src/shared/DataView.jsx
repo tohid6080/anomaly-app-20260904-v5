@@ -231,8 +231,10 @@ export default function DataView({
               <div
                 style={{
                   position: "absolute", top: "calc(100% + 6px)", insetInlineEnd: 0, minWidth: 250, maxWidth: 300,
-                  background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 10,
-                  boxShadow: "0 10px 30px -8px rgba(15,42,63,0.25)", zIndex: 30, padding: 10,
+                  background: "linear-gradient(155deg, rgba(255,255,255,.035), rgba(255,255,255,0) 45%), rgba(14,38,52,0.9)",
+                  backdropFilter: "blur(16px) saturate(140%)", WebkitBackdropFilter: "blur(16px) saturate(140%)",
+                  border: `1px solid ${THEME.borderStrong}`, borderRadius: 10,
+                  boxShadow: "0 16px 36px -12px rgba(0,0,0,0.5)", zIndex: 30, padding: 10,
                 }}
               >
                 {savedViews.length === 0 && !namingView && (
@@ -400,7 +402,11 @@ function ListTable({ items, getId, columns, renderRowActions, expandedId, render
   // تعداد ستون‌های واقعی جدول — برای colSpan ردیفِ جزئیاتِ تمام‌عرض
   const totalCols = (hasBulk ? 1 : 0) + 1 /* # */ + columns.length + (renderRowActions ? 1 : 0);
   return (
-    <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 10, overflow: "hidden" }}>
+    <div style={{
+      background: "linear-gradient(155deg, rgba(255,255,255,.03), rgba(255,255,255,0) 40%), rgba(14,38,52,0.74)",
+      backdropFilter: "blur(16px) saturate(140%)", WebkitBackdropFilter: "blur(16px) saturate(140%)",
+      border: `1px solid ${THEME.borderStrong}`, borderRadius: 10, overflow: "hidden",
+    }}>
       {/* دسکتاپ: جدول واقعی. موبایل: همون ساختار با اسکرول افقی برای اطلاعات کم‌اهمیت */}
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5, minWidth: 480 }}>
@@ -493,7 +499,11 @@ function VirtualizedListTable({ items, getId, columns, renderRowActions, hasBulk
   const bottomPad = (items.length - endIdx) * VIRTUAL_ROW_H;
 
   return (
-    <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 10, overflow: "hidden" }}>
+    <div style={{
+      background: "linear-gradient(155deg, rgba(255,255,255,.03), rgba(255,255,255,0) 40%), rgba(14,38,52,0.74)",
+      backdropFilter: "blur(16px) saturate(140%)", WebkitBackdropFilter: "blur(16px) saturate(140%)",
+      border: `1px solid ${THEME.borderStrong}`, borderRadius: 10, overflow: "hidden",
+    }}>
       <div ref={scrollRef} style={{ overflow: "auto", maxHeight: 560 }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5, minWidth: 480 }}>
           <thead>

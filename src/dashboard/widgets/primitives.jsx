@@ -11,10 +11,15 @@ import { useLanguage } from "../../i18n/LanguageContext.jsx";
  * inline از THEME.
  */
 
+// همان ظاهرِ شیشه‌ایِ تیرهٔ تعمیم‌یافته به کلِ سامانه (شبیهِ styles.card در
+// shared.js) — نیمه‌شفاف + بلورِ پشتِ سطح، تا ویجت‌های داشبورد هم با بقیهٔ
+// اپ یک‌دست باشند.
 const cardStyle = {
-  background: THEME.widgetBg, border: `1px solid ${THEME.widgetBorder}`, borderRadius: THEME.radiusCard,
+  background: "linear-gradient(155deg, rgba(255,255,255,.035), rgba(255,255,255,0) 45%), rgba(14,38,52,0.74)",
+  backdropFilter: "blur(16px) saturate(140%)", WebkitBackdropFilter: "blur(16px) saturate(140%)",
+  border: `1px solid ${THEME.borderStrong}`, borderRadius: THEME.radiusCard,
   padding: "12px 13px", display: "flex", flexDirection: "column", gap: 9,
-  height: "100%", boxSizing: "border-box", boxShadow: THEME.elev1,
+  height: "100%", boxSizing: "border-box", boxShadow: "0 10px 26px -14px rgba(0,0,0,0.5)",
 };
 
 export function WidgetCard({ title, icon: Icon, tone, tools, children, style }) {

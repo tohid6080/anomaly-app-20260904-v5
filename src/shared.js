@@ -283,28 +283,39 @@ export const THEME = {
   elev3: "var(--ihms-elev-3, 0 2px 6px rgba(15,42,63,0.06), 0 20px 44px -16px rgba(15,42,63,0.22))",
 };
 
+// پس‌زمینهٔ شیشه‌ایِ تیره — همان فرمولِ تأییدشده‌ای که برای بومِ BowTie
+// ساخته شد (درخششِ فیروزه‌ای/آبیِ ملایم روی گرادیانِ سرمه‌ای)، حالا برای
+// کلِ پوستهٔ اپ (دشبورد + کارت‌ها) استفاده می‌شود تا ظاهرِ شیشه‌ای یک‌دست
+// در کل سامانه باشد، نه فقط BowTie.
+const GLASS_PAGE_BG = `radial-gradient(1100px 560px at 18% -10%, rgba(20,184,166,.10), transparent 60%), radial-gradient(820px 620px at 100% 15%, rgba(111,199,255,.06), transparent 55%), linear-gradient(175deg, ${THEME.navy}, #050c11 70%)`;
+// کارت‌ها/سطوحِ شیشه‌ای: پس‌زمینهٔ نیمه‌شفاف + بلور پشتِ سطح (backdrop-filter)
+// تا افتِ گرادیانِ پشتِ صفحه از زیرشان دیده شود. عمداً rgba (نه توکنِ
+// CSS var مثلِ THEME.surface) چون شفافیت نیاز به کانالِ آلفا دارد.
+const GLASS_CARD_BG = "linear-gradient(155deg, rgba(255,255,255,.035), rgba(255,255,255,0) 45%), rgba(14,38,52,0.74)";
+const GLASS_BLUR = { backdropFilter: "blur(16px) saturate(140%)", WebkitBackdropFilter: "blur(16px) saturate(140%)" };
+
 export const styles = {
   centerScreen: { display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: `radial-gradient(1100px 500px at 15% -10%, rgba(20,184,166,0.12) 0%, transparent 55%), linear-gradient(160deg, #0b1a24 0%, #081319 100%)`, fontFamily: THEME.font, padding: 20 },
   brandBadge: { width: 44, height: 44, borderRadius: 12, background: THEME.teal, display: "flex", alignItems: "center", justifyContent: "center" },
-  card: { background: THEME.surface, padding: "clamp(18px, 5vw, 30px)", borderRadius: 16, boxShadow: "0 1px 2px rgba(15,42,63,0.04), 0 12px 32px -12px rgba(15,42,63,0.14)", border: `1px solid ${THEME.border}`, width: 340, maxWidth: "100%", boxSizing: "border-box", marginBottom: 14 },
+  card: { background: GLASS_CARD_BG, ...GLASS_BLUR, padding: "clamp(18px, 5vw, 30px)", borderRadius: 16, boxShadow: "0 1px 2px rgba(0,0,0,0.18), 0 20px 44px -20px rgba(0,0,0,0.5)", border: `1px solid ${THEME.borderStrong}`, width: 340, maxWidth: "100%", boxSizing: "border-box", marginBottom: 14 },
   // کارتِ عریض برای صفحاتِ وب که باید از کلِ عرضِ ناحیهٔ محتوا استفاده کنند
   // (نه کادرِ باریکِ وسطِ صفحه). در موبایل تفاوتی ندارد چون عرض کم است.
-  cardWide: { background: THEME.surface, padding: "clamp(16px, 2.2vw, 24px)", borderRadius: 16, boxShadow: "0 1px 2px rgba(15,42,63,0.04), 0 14px 34px -16px rgba(15,42,63,0.16)", border: `1px solid ${THEME.border}`, width: "100%", maxWidth: "100%", boxSizing: "border-box", marginBottom: 16 },
+  cardWide: { background: GLASS_CARD_BG, ...GLASS_BLUR, padding: "clamp(16px, 2.2vw, 24px)", borderRadius: 16, boxShadow: "0 1px 2px rgba(0,0,0,0.18), 0 22px 48px -22px rgba(0,0,0,0.5)", border: `1px solid ${THEME.borderStrong}`, width: "100%", maxWidth: "100%", boxSizing: "border-box", marginBottom: 16 },
   label: { display: "block", marginBottom: 6, marginTop: 16, fontSize: 13, fontWeight: 600, color: THEME.text2, letterSpacing: "0.01em" },
-  input: { width: "100%", padding: "11px 13px", borderRadius: 9, border: `1.5px solid ${THEME.border}`, fontSize: 14.5, boxSizing: "border-box", fontFamily: THEME.font, color: THEME.text, background: THEME.surface, outline: "none", transition: "border-color .15s" },
+  input: { width: "100%", padding: "11px 13px", borderRadius: 9, border: `1.5px solid ${THEME.border}`, fontSize: 14.5, boxSizing: "border-box", fontFamily: THEME.font, color: THEME.text, background: "rgba(18,50,64,0.55)", outline: "none", transition: "border-color .15s, box-shadow .15s" },
   button: { width: "100%", marginTop: 24, padding: "13px", borderRadius: 10, border: "none", background: `linear-gradient(180deg, ${THEME.teal}, ${THEME.tealDeep})`, color: "#fff", fontSize: 15, fontWeight: 600, cursor: "pointer", boxShadow: "0 1px 2px rgba(0,0,0,0.06), 0 6px 16px -6px rgba(13,143,138,0.5)", fontFamily: THEME.font, letterSpacing: "0.01em" },
   smallButton: { padding: "9px 16px", borderRadius: THEME.radiusBtn, border: "none", background: THEME.navyMid, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font },
   error: { color: THEME.danger, fontSize: 13, marginTop: 12, marginBottom: 0, fontWeight: 500 },
   hint: { fontSize: 11.5, color: THEME.text3, marginTop: 18, textAlign: "center", direction: "ltr", letterSpacing: "0.02em" },
-  dashboardWrapper: { fontFamily: THEME.font, minHeight: "100vh", background: THEME.bg },
-  topBar: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, background: `linear-gradient(120deg, ${THEME.navy}, ${THEME.navyDeep})`, color: "#fff", padding: "14px clamp(12px, 4vw, 22px)", boxShadow: "0 4px 18px -6px rgba(10,31,48,0.45)", position: "sticky", top: 0, zIndex: 20 },
+  dashboardWrapper: { fontFamily: THEME.font, minHeight: "100vh", background: GLASS_PAGE_BG },
+  topBar: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, background: `linear-gradient(120deg, rgba(10,22,32,0.88), rgba(7,18,26,0.88))`, ...GLASS_BLUR, color: "#fff", padding: "14px clamp(12px, 4vw, 22px)", boxShadow: "0 4px 18px -6px rgba(0,0,0,0.45)", position: "sticky", top: 0, zIndex: 20 },
   appNameTag: { fontSize: 10.5, opacity: 0.7, marginBottom: 2, textAlign: "start", letterSpacing: "0.01em", fontWeight: 600 },
   logoutButton: { display: "flex", alignItems: "center", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.22)", color: "#fff", padding: "8px 16px", borderRadius: 9, cursor: "pointer", fontSize: 13, fontWeight: 600, fontFamily: THEME.font },
   menuList: { padding: "20px clamp(10px, 4vw, 18px) 32px", display: "flex", flexDirection: "column", gap: THEME.gap, maxWidth: 520, margin: "0 auto", boxSizing: "border-box" },
   menuList2: { display: "flex", flexDirection: "column", gap: THEME.gap },
-  menuCard: { background: THEME.cardBg, padding: "17px 18px", borderRadius: THEME.radiusCard, boxShadow: THEME.elev1, border: `1px solid ${THEME.cardBorder}`, cursor: "pointer", fontSize: THEME.fsMenu, fontWeight: 600, color: THEME.text, display: "flex", alignItems: "center" },
-  anomalyMenuCard: { borderInlineStart: `3px solid ${THEME.teal}`, background: THEME.tealSoft },
-  userRow: { background: THEME.cardBg, padding: "14px 18px", borderRadius: THEME.radiusCard, border: `1px solid ${THEME.cardBorder}`, display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 14.5 },
+  menuCard: { background: GLASS_CARD_BG, ...GLASS_BLUR, padding: "17px 18px", borderRadius: THEME.radiusCard, boxShadow: "0 10px 26px -14px rgba(0,0,0,0.5)", border: `1px solid ${THEME.borderStrong}`, cursor: "pointer", fontSize: THEME.fsMenu, fontWeight: 600, color: THEME.text, display: "flex", alignItems: "center" },
+  anomalyMenuCard: { borderInlineStart: `3px solid ${THEME.teal}`, background: "linear-gradient(155deg, rgba(20,184,166,.10), rgba(255,255,255,0) 45%), rgba(14,38,52,0.74)" },
+  userRow: { background: GLASS_CARD_BG, ...GLASS_BLUR, padding: "14px 18px", borderRadius: THEME.radiusCard, border: `1px solid ${THEME.borderStrong}`, display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 14.5 },
   backLink: { cursor: "pointer", color: THEME.text3, marginBottom: 12, fontSize: 12, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 },
   formGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))", gap: 12 },
   // نسخهٔ عریض برای فرم‌های وب: هر سطر تا ~۴ فیلد کنار هم تا صفحه جمع‌وجور
@@ -312,11 +323,11 @@ export const styles = {
   // تمام‌عرض می‌شوند.
   formGridWide: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(250px, 100%), 1fr))", gap: "12px 16px", alignItems: "start" },
   statsRow: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(78px, 1fr))", gap: 10, marginTop: 8 },
-  statBox: { background: THEME.cardBg, border: `1px solid ${THEME.cardBorder}`, borderRadius: THEME.radiusCard, padding: "14px 8px", textAlign: "center", boxShadow: "0 1px 2px rgba(15,42,63,0.03)" },
-  statNum: { fontSize: 21, fontWeight: 700, color: THEME.navy, fontFamily: THEME.font },
+  statBox: { background: GLASS_CARD_BG, ...GLASS_BLUR, border: `1px solid ${THEME.borderStrong}`, borderRadius: THEME.radiusCard, padding: "14px 8px", textAlign: "center", boxShadow: "0 1px 2px rgba(0,0,0,0.15)" },
+  statNum: { fontSize: 21, fontWeight: 700, color: THEME.teal, fontFamily: THEME.font },
   statLabel: { fontSize: 10.5, color: THEME.text3, marginTop: 3, fontWeight: 600 },
   filterBar: { display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" },
-  filterSelect: { padding: "9px 11px", borderRadius: THEME.radiusBtn, border: `1.5px solid ${THEME.border}`, fontSize: 13, background: THEME.surface, color: THEME.text, fontFamily: THEME.font },
+  filterSelect: { padding: "9px 11px", borderRadius: THEME.radiusBtn, border: `1.5px solid ${THEME.border}`, fontSize: 13, background: "rgba(18,50,64,0.55)", color: THEME.text, fontFamily: THEME.font },
   badge: { fontSize: 11, padding: "3px 10px", borderRadius: 999, background: THEME.surface2, color: THEME.text2, fontWeight: 600 },
   photoGrid: { display: "flex", flexWrap: "wrap", gap: 8, marginTop: 10 },
   photoThumbWrap: { position: "relative", width: 80, height: 80 },

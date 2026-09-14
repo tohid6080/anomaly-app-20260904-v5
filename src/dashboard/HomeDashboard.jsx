@@ -12,6 +12,8 @@ import {
   loadDashboardAnomalies, loadDashboardContractors, loadDashboardMachinery, loadDashboardScaffold, loadDashboardBowties,
   loadDashboardIncidents, loadDashboardCorrectiveActions, loadDashboardTripod, loadDashboardProactive,
 } from "./homeDashboardApi.js";
+import { loadDashboardData as loadBowtieDashboardData } from "../bowtie/dbeeEngine.js";
+import { loadPermits } from "../permit/permitApi.js";
 import { loadDashboardWidgetConfig } from "../systemConfigApi.js";
 import { mergeWidgetConfig, defaultWidgetConfig } from "./dashboardWidgets.js";
 import { INCIDENT_TYPES } from "../incidents/incidentsApi.js";
@@ -63,6 +65,8 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
   const [correctiveActions, setCorrectiveActions] = useState([]);
   const [tripod, setTripod] = useState([]);
   const [proactive, setProactive] = useState([]);
+  const [bowtieBarriers, setBowtieBarriers] = useState([]);
+  const [permits, setPermits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [widgetRows, setWidgetRows] = useState(null); // null = هنوز بارگذاری‌نشده => fail-open
 
@@ -71,13 +75,15 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
 
   useEffect(() => {
     (async () => {
-      const [p, a, c, m, s, b, inc, ca, tri, pro] = await Promise.all([
+      const [p, a, c, m, s, b, inc, ca, tri, pro, bowtieDash, per] = await Promise.all([
         loadPersonnelList(), loadDashboardAnomalies(), loadDashboardContractors(),
         loadDashboardMachinery(), loadDashboardScaffold(), loadDashboardBowties(),
         loadDashboardIncidents(), loadDashboardCorrectiveActions(), loadDashboardTripod(), loadDashboardProactive(),
+        loadBowtieDashboardData().catch(() => ({ barriers: [] })), loadPermits().catch(() => []),
       ]);
       setPersonnel(p); setAnomalies(a); setContractors(c); setMachinery(m); setScaffold(s); setBowties(b);
       setIncidents(inc); setCorrectiveActions(ca); setTripod(tri); setProactive(pro);
+      setBowtieBarriers(bowtieDash?.barriers || []); setPermits(per);
       setNotifications(await loadNotifications(isContractor ? "contractor" : "employer"));
       setLoading(false);
     })();
@@ -120,6 +126,16 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
     () => (isContractor ? correctiveActions.filter((r) => norm(r.responsible_contractor_name) === myName) : correctiveActions),
     [correctiveActions, isContractor, myName]
   );
+  // مجوزهای کار هنوز contractorId/contractorName ندارند (کل شرکت روی همان
+  // company_id مشترک است) — دقیقاً همان تفکیکِ استفاده‌شده در
+  // computePermitSmartItems (App.jsx): برای پیمانکار، مجوزهایی که خودش
+  // متقاضی/مجری بوده.
+  const scopedPermits = useMemo(
+    () => (isContractor && currentUser?.name
+      ? permits.filter((p) => norm(p.applicantName) === myName || norm(p.performerName) === myName)
+      : permits),
+    [permits, isContractor, myName, currentUser?.name]
+  );
 
   // ---------- ردیف بالا: خلاصه‌ی وضعیت پروژه ----------
   const oneYearAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
@@ -139,6 +155,14 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
     incidents12m: scopedIncidents.filter((i) => (i.occurred_at || i.created_at || "") >= oneYearAgo).length,
     openCA: scopedCorrectiveActions.filter(caIsOpen).length,
     overdueCA: scopedCorrectiveActions.filter(caIsOverdue).length,
+    // بریرهای ضعیف/ناموفقِ BowTie — company-wide برای هر دو نقش (بریرها
+    // اصلاً فیلدِ پیمانکار ندارند؛ دقیقاً همان رفتارِ summary.bowties موجود).
+    weakFailedBarriers: bowtieBarriers.filter((b) => b.status === "weak" || b.status === "failed").length,
+    expiringPermits: scopedPermits.filter((p) => {
+      if (p.status !== "active" || !p.validUntil) return false;
+      const d = daysUntil(p.validUntil);
+      return d !== null && d <= 7;
+    }).length,
   };
 
   // ---------- جدول وضعیت HSE پیمانکاران ----------
@@ -574,6 +598,8 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
             <MiniStat icon={Truck} label={t("kpiActiveMachinery")} value={summary.activeMachinery} onClick={() => onNavigate({ module: "machinery", approvalFilter: "approved" })} />
             <MiniStat icon={Tag} label={t("kpiActiveScaffold")} value={summary.activeScaffold} onClick={() => onNavigate({ module: "scaffold", statusFilter: "tag_issued" })} />
             <MiniStat icon={GitBranch} label={t("kpiBowtie")} value={summary.bowties} />
+            <MiniStat icon={Activity} label={t("kpiWeakBarriers")} value={summary.weakFailedBarriers} color={summary.weakFailedBarriers > 0 ? "#ef4444" : undefined} onClick={() => onNavigate({ module: "bowtieDashboard" })} />
+            <MiniStat icon={FileClock} label={t("kpiExpiringPermits")} value={summary.expiringPermits} color={summary.expiringPermits > 0 ? "#f59e0b" : undefined} onClick={() => onNavigate({ module: "permitToWork" })} />
             <MiniStat icon={FileClock} label={t("kpiPendingApproval")} value={summary.pendingDocs} color="#f59e0b" />
             <MiniStat icon={Bell} label={t("kpiImportantNotifications")} value={summary.notifications} color="#1d4ed8" />
           </div>

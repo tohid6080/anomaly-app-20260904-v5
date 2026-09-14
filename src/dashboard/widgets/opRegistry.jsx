@@ -1,11 +1,13 @@
 import React from "react";
-import { AlertTriangle, ClipboardCheck, FileWarning, TrendingUp, Grid3x3, Activity, Radar } from "lucide-react";
+import { AlertTriangle, ClipboardCheck, FileWarning, TrendingUp, Grid3x3, Activity, Radar, CalendarClock, Flame } from "lucide-react";
 import { CounterWidget } from "./primitives.jsx";
 import MyTaskQueueWidget from "./MyTaskQueueWidget.jsx";
 import AnomalyTrendWidget from "./AnomalyTrendWidget.jsx";
 import HcmsRiskMatrixWidget from "./HcmsRiskMatrixWidget.jsx";
 import BowtieBarrierHealthWidget from "./BowtieBarrierHealthWidget.jsx";
 import ProactiveIndicatorsWidget from "./ProactiveIndicatorsWidget.jsx";
+import HseCalendarWidget from "./HseCalendarWidget.jsx";
+import ContractorRiskHeatmapWidget from "./ContractorRiskHeatmapWidget.jsx";
 
 /**
  * رجیستریِ ویجت‌های «داشبورد کاری» — تنها منبعِ حقیقتِ «چه ویجتی هست، در
@@ -93,6 +95,18 @@ export const DASHBOARD_WIDGETS = [
     type: "proactiveIndicators", labelKey: "piwTitle", descKey: "dashDescProactiveIndicators",
     icon: Radar, category: "safety", defaultW: 6, defaultH: 8, minW: 4, minH: 5, defaultVisible: true,
     render: ({ onNavigate }) => <ProactiveIndicatorsWidget onNavigate={onNavigate} />,
+  },
+  {
+    type: "hseCalendar", labelKey: "hcalTitle", descKey: "dashDescHseCalendar",
+    icon: CalendarClock, category: "safety", defaultW: 6, defaultH: 11, minW: 4, minH: 6, defaultVisible: false,
+    render: ({ role, currentUser, onNavigate }) => (
+      <HseCalendarWidget role={role} currentUser={currentUser} onNavigate={onNavigate} />
+    ),
+  },
+  {
+    type: "contractorRiskHeatmap", labelKey: "crhTitle", descKey: "dashDescContractorRiskHeatmap",
+    icon: Flame, category: "risk", defaultW: 6, defaultH: 9, minW: 4, minH: 5, defaultVisible: false,
+    render: ({ role, onNavigate }) => <ContractorRiskHeatmapWidget role={role} onNavigate={onNavigate} />,
   },
 ];
 
