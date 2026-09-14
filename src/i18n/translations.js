@@ -6849,6 +6849,7 @@ export const translations = {
   "hlaNoExamYet": { "fa": "آزمونی برای این موضوع هنوز در سامانه فعال نشده — از بخش «نظرسنجی و آزمون HSE» می‌توانید یکی بسازید.", "en": "No active exam for this topic yet — you can create one from the \"HSE Survey & Exam\" module." },
   "hlaFallbackReply": { "fa": "این یک نسخهٔ اولیه بر پایهٔ قوانینِ محلی است — دربارهٔ «کار در ارتفاع»، «ایمنی برق»، «باربرداری»، «PPE» یا «داربست» بپرسید تا پاسخِ دقیق‌تری بدهم.", "en": "This early version runs on local rules — ask about \"work at height\", \"electrical safety\", \"lifting\", \"PPE\" or \"scaffolding\" for a more precise answer." },
   "hlaComposerPlaceholder": { "fa": "سؤال خود را دربارهٔ ایمنی، بهداشت یا محیط‌زیست بپرسید…", "en": "Ask a question about safety, health or environment…" },
+  "hlaTypingIndicator": { "fa": "در حال تایپ…", "en": "Typing…" },
   "dbSizeLabel": {
     "fa": "حجم دیتابیس: {size} از {limit} مگابایت ({percent}٪)",
     "en": "Database size: {size} of {limit} MB ({percent}%)"

@@ -1,4 +1,5 @@
-import { sb, sbOk, getCurrentCompanyId } from "../shared.js";
+import { sb, sbOk, getCurrentCompanyId, SUPABASE_URL, SUPABASE_ANON_KEY } from "../shared.js";
+import { getSessionToken } from "../sessionToken.js";
 
 /**
  * خواندنِ سبک و فقط-خواندنیِ آخرین آنومالی‌ها — فقط برای تشخیصِ موضوعِ
@@ -24,4 +25,26 @@ export async function loadRecentAnomalyBrief({ days = 30, contractorName } = {})
     contractor: r.contractor || "",
     date: r.date || "",
   }));
+}
+
+// ---------- دستیارِ هوش مصنوعیِ واقعی (DeepSeek، از طریقِ Edge Function) ----------
+// دقیقاً همان الگوی امنیتیِ callPaymentFunction در subscriptionApi.js: کلید
+// DeepSeek هرگز اینجا نیست، فقط با توکنِ نشستِ معتبر، Edge Function صدا زده
+// می‌شود. هرگز پرتاب نمی‌کند — فقط { __error: true } برمی‌گرداند تا فراخوان
+// (HseLearningAssistantThread) بتواند به موتورِ محلیِ answerQuestion سقوط کند.
+export async function askHseAssistant(question, history = []) {
+  const token = getSessionToken("customer");
+  if (!token) return { __error: true };
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/hse-assistant-ask`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, apikey: SUPABASE_ANON_KEY },
+      body: JSON.stringify({ question, history }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data?.answer) return { __error: true };
+    return { answer: data.answer };
+  } catch {
+    return { __error: true };
+  }
 }

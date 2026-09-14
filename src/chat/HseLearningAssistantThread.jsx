@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Sparkles, Send, Target } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
-import { loadRecentAnomalyBrief } from "./hseLearningApi.js";
+import { loadRecentAnomalyBrief, askHseAssistant } from "./hseLearningApi.js";
 import { loadSurveys, buildSurveyLink } from "../survey/surveyApi.js";
 import { pickRecommendedTopic, matchSurveyForTopic, answerQuestion } from "./hseLearningEngine.js";
 import { TOPICS_BY_KEY } from "./hseLearningContent.js";
@@ -12,10 +12,12 @@ function nowLabel() {
 }
 
 /**
- * «دستیار آموزشی HSE» — نسخهٔ اول، مبتنی بر قوانینِ محلی (نه یک مدلِ
- * زبانیِ واقعی؛ این تصمیمِ صریحِ کاربر برای شروع بود). گفتگو در حافظهٔ
- * همین کامپوننت می‌ماند و جایی ذخیره نمی‌شود — این یک مربیِ محاسبه‌شونده
- * است، نه یک مکالمهٔ واقعیِ چت که باید تاریخچه داشته باشد.
+ * «دستیار آموزشی HSE» — پاسخِ سؤالاتِ آزاد با یک مدلِ زبانیِ واقعی
+ * (DeepSeek، از طریقِ Edge Function «hse-assistant-ask») به‌همراه چند
+ * پیامِ اخیر به‌عنوان context. اگر این تماس به هر دلیلی شکست بخورد
+ * (کلید API تنظیم‌نشده، قطعیِ شبکه...)، به‌طور خودکار به موتورِ قانون‌محورِ
+ * محلیِ قدیمی (answerQuestion) سقوط می‌کند تا دستیار هرگز کاملاً از کار
+ * نیفتد. گفتگو در حافظهٔ همین کامپوننت می‌ماند و جایی ذخیره نمی‌شود.
  *
  * موضوعِ آموزشیِ پیشنهادی از روی متنِ آزادِ آنومالی‌های واقعیِ اخیر تشخیص
  * داده می‌شود (بدون هیچ جدول یا ستونِ جدید در دیتابیس). دکمهٔ «شرکت در
@@ -31,6 +33,7 @@ export default function HseLearningAssistantThread({ currentUser, onBack }) {
   const [recommendedSurvey, setRecommendedSurvey] = useState(null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const [pending, setPending] = useState(false);
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -55,14 +58,17 @@ export default function HseLearningAssistantThread({ currentUser, onBack }) {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleAsk = (question) => {
+  const handleAsk = async (question) => {
     const q = (question || "").trim();
-    if (!q) return;
-    const mine = { who: "mine", text: q, time: nowLabel() };
-    const { text: ruleText } = answerQuestion(q);
-    const reply = { who: "ai", text: ruleText || t("hlaFallbackReply"), time: nowLabel() };
-    setMessages((prev) => [...prev, mine, reply]);
+    if (!q || pending) return;
+    const history = messages.map((m) => ({ who: m.who, text: m.text })).filter((m) => m.text);
+    setMessages((prev) => [...prev, { who: "mine", text: q, time: nowLabel() }]);
     setInput("");
+    setPending(true);
+    const ai = await askHseAssistant(q, history);
+    const text = !ai.__error && ai.answer ? ai.answer : (answerQuestion(q).text || t("hlaFallbackReply"));
+    setPending(false);
+    setMessages((prev) => [...prev, { who: "ai", text, time: nowLabel() }]);
   };
 
   if (loading) {
@@ -89,14 +95,22 @@ export default function HseLearningAssistantThread({ currentUser, onBack }) {
         {messages.map((m, i) => (
           <MessageBubble key={i} m={m} t={t} onOpenExam={(survey) => window.open(buildSurveyLink(survey.publicToken), "_blank", "noopener")} onAsk={handleAsk} />
         ))}
+        {pending && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", marginBottom: 12 }}>
+            <span style={{ fontSize: 10.5, color: THEME.text3, marginBottom: 2, display: "flex", alignItems: "center", gap: 4 }}><Sparkles size={11} color={THEME.teal} /> {t("hlaAiSenderTag")}</span>
+            <div style={{ background: "#fff", color: THEME.text3, borderRadius: 12, padding: "10px 13px", border: `1px solid ${THEME.border}`, borderInlineStart: `3px solid ${THEME.teal}`, fontSize: 13 }}>
+              {t("hlaTypingIndicator")}
+            </div>
+          </div>
+        )}
         <div ref={bottomRef} />
       </div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
         {Object.values(TOPICS_BY_KEY).filter((tp) => tp.key !== "general").map((tp) => (
           <button
-            key={tp.key} type="button" onClick={() => handleAsk(tp.sampleQuestion)}
-            style={{ background: THEME.tealSoft, color: THEME.tealDeep, border: `1px solid ${THEME.teal}`, borderRadius: 999, padding: "5px 11px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font }}
+            key={tp.key} type="button" onClick={() => handleAsk(tp.sampleQuestion)} disabled={pending}
+            style={{ background: THEME.tealSoft, color: THEME.tealDeep, border: `1px solid ${THEME.teal}`, borderRadius: 999, padding: "5px 11px", fontSize: 11, fontWeight: 600, cursor: pending ? "default" : "pointer", opacity: pending ? 0.6 : 1, fontFamily: THEME.font }}
           >
             {tp.sampleQuestion}
           </button>
@@ -106,9 +120,9 @@ export default function HseLearningAssistantThread({ currentUser, onBack }) {
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
         <input
           style={{ ...styles.input, flex: 1 }} placeholder={t("hlaComposerPlaceholder")} value={input}
-          onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleAsk(input)} dir={dir}
+          onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleAsk(input)} dir={dir} disabled={pending}
         />
-        <button type="button" style={{ ...styles.smallButton, padding: "9px 14px" }} onClick={() => handleAsk(input)} disabled={!input.trim()}>
+        <button type="button" style={{ ...styles.smallButton, padding: "9px 14px" }} onClick={() => handleAsk(input)} disabled={!input.trim() || pending}>
           <Send size={15} />
         </button>
       </div>
