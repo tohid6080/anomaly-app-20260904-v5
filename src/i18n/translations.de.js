@@ -2692,7 +2692,7 @@ export const de = {
   "saScTabNotifications": "Benachrichtigungsverwaltung",
   "saScTabAppearance": "Darstellungseinstellungen",
   "saScTabAnnouncements": "Systemmitteilungen",
-  "saMmNote": "Reihenfolge und Name jedes Hauptmoduls. Der persische und der englische Name werden getrennt festgelegt: Im persischen Modus wird der persische Name angezeigt, im englischen der englische (Web und Mobil gleichermaßen). Ein leeres Feld = Standardname der jeweiligen Sprache. Diese Einstellungen wirken sich direkt auf die Seitenleiste aller Benutzer aus; Symbol und Zugriff jedes Moduls stammen aus den Tarif-/Berechtigungseinstellungen und werden hier nicht geändert.",
+  "saMmNote": "Reihenfolge und Name jedes Hauptmoduls. Der persische und der englische Name werden getrennt festgelegt: Im persischen Modus wird der persische Name angezeigt, im englischen der englische (Web und Mobil gleichermaßen). Ein leeres Feld = Standardname der jeweiligen Sprache. Diese Einstellungen wirken sich direkt auf die Seitenleiste aller Benutzer aus; Symbol und Zugriff jedes Moduls stammen aus den Tarif-/Berechtigungseinstellungen und werden hier nicht geändert. Jedes in „Modulpreise“ registrierte Modul wird hier automatisch hinzugefügt — kein manuelles Hinzufügen nötig.",
   "saMmDescPlaceholder": "Kurzbeschreibung (optional)",
   "saMmColFa": "Persischer Name",
   "saMmColEn": "Englischer Name",

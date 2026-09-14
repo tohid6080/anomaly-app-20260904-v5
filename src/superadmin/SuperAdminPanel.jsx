@@ -1483,29 +1483,47 @@ const DEFAULT_MODULE_CONFIG = [
 // پیش‌فرض». هنگام ساختِ اولیه‌ی ردیف‌ها نام‌ها خالی گذاشته می‌شوند تا اگر ادمین
 // چیزی تایپ نکند، همان ترجمه‌ی i18n استفاده شود.
 const buildDefaultModuleConfig = () => DEFAULT_MODULE_CONFIG.map((m) => ({ moduleKey: m.moduleKey, displayLabel: "", displayLabelEn: "", description: "" }));
-const moduleDefaultNames = (moduleKey) => {
-  const d = DEFAULT_MODULE_CONFIG.find((x) => x.moduleKey === moduleKey);
-  return d
-    ? { fa: translate("fa", d.labelKey), en: translate("en", d.labelKey) }
-    : { fa: moduleKey, en: moduleKey };
-};
 
 function ModuleManagementTab({ currentAdmin }) {
   const { t, dir } = useLanguage();
   const [list, setList] = useState(null);
+  // ردیف‌های خامِ «قیمت‌گذاری ماژول‌ها» (module_prices) — تنها منبعِ واقعیِ
+  // «کدام ماژول‌ها اصلاً وجود دارند»؛ برای placeholder/ترتیبِ پیش‌فرض وقتی
+  // ماژول در DEFAULT_MODULE_CONFIG نیست استفاده می‌شود.
+  const [priceRows, setPriceRows] = useState([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [msgErr, setMsgErr] = useState(false);
   const [dragIndex, setDragIndex] = useState(null);
 
+  const defaultNamesFor = (moduleKey) => {
+    const d = DEFAULT_MODULE_CONFIG.find((x) => x.moduleKey === moduleKey);
+    if (d) return { fa: translate("fa", d.labelKey), en: translate("en", d.labelKey) };
+    const fa = priceRows.find((mp) => mp.moduleKey === moduleKey)?.label || moduleKey;
+    return { fa, en: moduleKey };
+  };
+
   // نامِ فارسی (displayLabel) و انگلیسی (displayLabelEn) جداگانه‌اند. هرکدام
   // که خالی نباشد در همان زبان (وب و موبایل) نمایش داده می‌شود؛ خالی =
   // ترجمه‌ی i18n. اینجا مقدارِ واقعیِ دیتابیس نشان داده می‌شود و فیلدِ خالی
   // با placeholderِ نامِ پیش‌فرض همراه است.
-  const load = () => loadModuleConfig().then((rows) => {
-    setList(rows.length > 0
-      ? rows.map((r) => ({ moduleKey: r.moduleKey, displayLabel: r.displayLabel || "", displayLabelEn: r.displayLabelEn || "", description: r.description || "" }))
-      : buildDefaultModuleConfig());
+  //
+  // طبقِ خواسته‌ی صریح: هر ماژولی که در «قیمت‌گذاری ماژول‌ها» (module_prices)
+  // ثبت شده، باید همین‌جا هم دیده شود — بدونِ افزودنِ دستی. پس فهرست از
+  // اجتماعِ دو منبع ساخته می‌شود: ردیف‌های قبلاً پیکربندی‌شده‌ی
+  // system_module_config (با همان ترتیب/نام‌های ذخیره‌شده)، به‌علاوه‌ی هر
+  // moduleKeyِ تازه‌ای که در module_prices هست ولی هنوز اینجا پیکربندی
+  // نشده — این‌ها به‌ترتیبِ sort_order خودشان به انتهای لیست اضافه می‌شوند.
+  const load = () => Promise.all([loadModuleConfig(), loadModulePrices({ live: true })]).then(([configRows, mp]) => {
+    setPriceRows(mp);
+    const configuredKeys = new Set(configRows.map((r) => r.moduleKey));
+    const newOnes = mp
+      .filter((m) => !configuredKeys.has(m.moduleKey))
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+      .map((m) => ({ moduleKey: m.moduleKey, displayLabel: "", displayLabelEn: "", description: "" }));
+    const configured = configRows.map((r) => ({ moduleKey: r.moduleKey, displayLabel: r.displayLabel || "", displayLabelEn: r.displayLabelEn || "", description: r.description || "" }));
+    const merged = [...configured, ...newOnes];
+    setList(merged.length > 0 ? merged : buildDefaultModuleConfig());
   });
   useEffect(() => { load(); }, []);
 
@@ -1543,12 +1561,15 @@ function ModuleManagementTab({ currentAdmin }) {
     if (!result?.__error) await load();
   };
 
-  // «بازگردانی پیش‌فرض» = ترتیبِ کدِ پیش‌فرض + پُرکردنِ نام‌ها با مقادیرِ
-  // پیش‌فرضِ فارسی/انگلیسی (نه خالی‌کردن).
-  const handleReset = () => setList(DEFAULT_MODULE_CONFIG.map((d) => {
-    const n = moduleDefaultNames(d.moduleKey);
-    return { moduleKey: d.moduleKey, displayLabel: n.fa, displayLabelEn: n.en, description: "" };
-  }));
+  // «بازگردانی پیش‌فرض» = ترتیبِ sort_orderِ «قیمت‌گذاری ماژول‌ها» برای همه‌ی
+  // ماژول‌های موجود (نه فقط ۱۰تای اولیه) + پُرکردنِ نام‌ها با مقادیرِ
+  // پیش‌فرضِ فارسی/انگلیسیِ شناخته‌شده (نه خالی‌کردن).
+  const handleReset = () => setList(
+    [...priceRows].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)).map((mp) => {
+      const n = defaultNamesFor(mp.moduleKey);
+      return { moduleKey: mp.moduleKey, displayLabel: n.fa, displayLabelEn: n.en, description: "" };
+    })
+  );
 
   return (
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
@@ -1565,7 +1586,7 @@ function ModuleManagementTab({ currentAdmin }) {
         </div>
       </div>
       {list.map((m, idx) => {
-        const def = moduleDefaultNames(m.moduleKey);
+        const def = defaultNamesFor(m.moduleKey);
         return (
         <div
           key={m.moduleKey}
