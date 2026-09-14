@@ -4329,6 +4329,7 @@ const GATE_MODULE_TO_NAV_TARGET = {
   machineryManagement: { module: "machinery" },
   scaffoldManagement: { module: "scaffold" },
   riskAssessment: { module: "bowtie" },
+  liftingPlan: { module: "quickTools", toolId: "lifting-plan" },
 };
 const GATE_MODULE_LABEL_KEYS = {
   anomalyReport: "gateModAnomaly",
@@ -4336,6 +4337,7 @@ const GATE_MODULE_LABEL_KEYS = {
   machineryManagement: "gateModMachinery",
   scaffoldManagement: "gateModScaffold",
   riskAssessment: "gateModRiskAssessment",
+  liftingPlan: "gateModLifting",
 };
 
 function WelcomeScreen({ currentUser, setView, onNavigate, sidebarModules }) {
@@ -4936,6 +4938,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
     else if (target.module === "correctiveActions") setView("correctiveActionsList");
     else if (target.module === "incidents") setView("incidentsList");
     else if (target.module === "proactiveIndicators") setView("proactiveIndicators");
+    else if (target.module === "quickTools") setView("quickTools");
     else if (target.module === "hseGate") {
       const mk = target.moduleKey;
       if (mk === "anomalyReport") { setNavFilter({ module: "anomaly", recordId: target.targetRecordId }); setView("anomalyList"); }
@@ -5388,6 +5391,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
     else if (target.module === "correctiveActions") setView("correctiveActionsList");
     else if (target.module === "incidents") setView("incidentsList");
     else if (target.module === "proactiveIndicators") setView("proactiveIndicators");
+    else if (target.module === "quickTools") setView("quickTools");
     else if (target.module === "hseGate") {
       const mk = target.moduleKey;
       if (mk === "anomalyReport") { setNavFilter({ module: "anomaly", recordId: target.targetRecordId }); setView("anomalyList"); }

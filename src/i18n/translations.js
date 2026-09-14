@@ -10243,6 +10243,7 @@ export const translations = {
   "gateModMachinery": { "fa": "ماشین‌آلات", "en": "Machinery" },
   "gateModScaffold": { "fa": "داربست", "en": "Scaffolding" },
   "gateModRiskAssessment": { "fa": "ارزیابی ریسک", "en": "Risk Assessment" },
+  "gateModLifting": { "fa": "طراحی نقشه‌ی لیفتینگ", "en": "Lifting Plan Designer" },
   "subEffectivenessThresholds": { "fa": "Threshold اثربخشی Barrier", "en": "Barrier Effectiveness Threshold" },
   "welcomeGreetingLine": { "fa": "خوش آمدید، {name}", "en": "Welcome, {name}" },
 
