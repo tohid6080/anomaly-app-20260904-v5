@@ -22,11 +22,14 @@ const QT_CSS = `
 .qt-card:hover{transform:translateY(-2px);box-shadow:0 16px 32px -22px rgba(0,0,0,.4)}
 `;
 
-export default function QuickToolsDashboard({ currentUser, onBack, wide }) {
+export default function QuickToolsDashboard({ currentUser, onBack, wide, initialToolId, initialRecordId }) {
   const { lang, dir } = useLanguage();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("all");
-  const [active, setActive] = useState(null);
+  const [active, setActive] = useState(initialToolId || null);
+  // ورودِ مستقیم از یک ویجتِ داشبورد (مثلاً «کارتابل فوری من») با ابزار و
+  // رکوردِ مشخص — حتی اگر کاربر قبلاً روی ابزارِ دیگری بوده.
+  useEffect(() => { if (initialToolId) setActive(initialToolId); }, [initialToolId]);
   const [fav, setFav] = usePersistedState("ihms_quicktools_fav_" + (currentUser?.username || "anon"), []);
   // فیلترِ سطحِ پلن: کدام ابزار برای شرکتِ جاری فعال است. null یعنی «بدون
   // محدودیت» تا لحظه‌ی بارگذاری (fail-open، هم‌راستا با بقیه‌ی سامانه).
@@ -85,7 +88,7 @@ export default function QuickToolsDashboard({ currentUser, onBack, wide }) {
         <div style={{ direction: dir }}>
           <style>{QT_CSS}</style>
           {backBtn}
-          <Tool lang={lang} dir={dir} currentUser={currentUser} wide={wide} />
+          <Tool lang={lang} dir={dir} currentUser={currentUser} wide={wide} initialRecordId={initialRecordId} />
         </div>
       );
     }

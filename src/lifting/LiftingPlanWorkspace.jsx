@@ -144,7 +144,7 @@ function StatusBadge({ status, t }) {
   );
 }
 
-export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, readOnly = false }) {
+export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, readOnly = false, initialRecordId }) {
   const { t, dir } = useLanguage();
   const actor = currentUser?.name || currentUser?.username || "";
   const isSupervisor = currentUser?.role === "HSE_SUPERVISOR";
@@ -285,7 +285,13 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
     const list = await loadLiftingPlans({ includeArchived: true });
     setPlans(Array.isArray(list) ? list : []);
     setLoading(false);
-  }, []);
+    // ورودِ مستقیم از «کارتابل فوری من» / HSE Gate — همان نقشه‌ای که کاربر
+    // از آن‌جا کلیک کرده مستقیماً باز می‌شود، نه فقط لیستِ کلیِ نقشه‌ها.
+    if (initialRecordId) {
+      const p = list.find((x) => x.id === initialRecordId);
+      if (p) openEdit(p);
+    }
+  }, [initialRecordId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { refresh(); }, [refresh]);
 

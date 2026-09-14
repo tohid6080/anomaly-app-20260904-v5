@@ -730,10 +730,10 @@ function LiftRiskChecklistTool({ lang }) {
  * Trail). با flagِ full:true رجیستر می‌شود تا پنلِ ابزار بدونِ سقفِ عرض و
  * بدونِ کارتِ دورگیر نمایش دهد. lazy است تا در چانکِ خودِ ماژول بماند.       */
 const LiftingPlanWorkspace = lazy(() => import("../lifting/LiftingPlanWorkspace.jsx"));
-function LiftingPlanBridge({ currentUser, wide }) {
+function LiftingPlanBridge({ currentUser, wide, initialRecordId }) {
   return (
     <Suspense fallback={<div style={{ padding: 24, fontSize: 13, color: THEME.text3, fontFamily: THEME.font }}>…</div>}>
-      <LiftingPlanWorkspace currentUser={currentUser} role={currentUser?.role || "EMPLOYER"} wide={wide} />
+      <LiftingPlanWorkspace currentUser={currentUser} role={currentUser?.role || "EMPLOYER"} wide={wide} initialRecordId={initialRecordId} />
     </Suspense>
   );
 }

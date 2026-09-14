@@ -388,6 +388,7 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId, wid
 }
 
 function SuggestionChips({ items, onPick }) {
+  const { t } = useLanguage();
   if (!items || items.length === 0) return null;
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 6, marginBottom: 10 }}>

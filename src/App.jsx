@@ -4929,8 +4929,20 @@ function EmployerDashboard({ onLogout, currentUser }) {
     else if (target.module === "machinery") setView("machineryDashboard");
     else if (target.module === "scaffold") setView("scaffoldDashboard");
     else if (target.module === "bowtie") setView("bowtieDashboard");
+    else if (target.module === "bowtieDashboard") setView("bowtieDashboard");
     else if (target.module === "permitToWork") setView("permitToWork");
     else if (target.module === "pssr") setView("pssrList");
+    else if (target.module === "hcms") setView("hcmsDashboard");
+    else if (target.module === "correctiveActions") setView("correctiveActionsList");
+    else if (target.module === "incidents") setView("incidentsList");
+    else if (target.module === "proactiveIndicators") setView("proactiveIndicators");
+    else if (target.module === "hseGate") {
+      const mk = target.moduleKey;
+      if (mk === "anomalyReport") { setNavFilter({ module: "anomaly", recordId: target.targetRecordId }); setView("anomalyList"); }
+      else if (mk === "personnelAccess") { setNavFilter({ module: "personnel", recordId: target.targetRecordId }); setView("personnelDashboard"); }
+      else if (mk === "machineryManagement") { setView("machineryDashboard"); }
+      else if (mk === "liftingPlan") { setNavFilter({ module: "quickTools", toolId: "lifting-plan", recordId: target.targetRecordId }); setView("quickTools"); }
+    }
   };
 
   const anomalyMod = HSE_MODULES.find((m) => m.key === "anomalyReport");
@@ -5012,7 +5024,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
         initialStatusFilter={navFilter?.module === "personnel" ? navFilter.statusFilter : undefined}
         initialContractorFilter={navFilter?.module === "personnel" ? navFilter.contractorFilter : undefined}
         onNavigateToAssessment={(ctx) => { setAssessmentContext(ctx); setView("proactiveIndicators"); }}
-        initialSelectedPersonnelId={assessmentContext?.personnelId}
+        initialSelectedPersonnelId={assessmentContext?.personnelId || (navFilter?.module === "personnel" ? navFilter.recordId : undefined)}
       />
     </div>
   );
@@ -5221,7 +5233,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       {view === "hcmsDashboard" && <HcmsDashboard wide={isDesktop} onBack={() => setView("riskAssessment")} currentUser={currentUser} />}
       {view === "archiveManagement" && <LazyPanel><ArchiveManager wide={isDesktop} onBack={() => setView("menu")} currentUser={currentUser} /></LazyPanel>}
       {!isDesktop && view === "personnelForm" && <PersonnelForm onBack={() => setView("personnelAccess")} currentUser={currentUser} onSaved={() => setView("personnelAccess")} />}
-      {!isDesktop && view === "personnelDashboard" && <PersonnelDashboard onBack={() => setView("personnelAccess")} currentUser={currentUser} role="EMPLOYER" readOnly={!canEdit || getAccessLevel(permMap, "personnelAccess") === "view"} initialStatusFilter={navFilter?.module === "personnel" ? navFilter.statusFilter : undefined} initialContractorFilter={navFilter?.module === "personnel" ? navFilter.contractorFilter : undefined} onNavigateToAssessment={(ctx) => { setAssessmentContext(ctx); setView("proactiveIndicators"); }} initialSelectedPersonnelId={assessmentContext?.personnelId} />}
+      {!isDesktop && view === "personnelDashboard" && <PersonnelDashboard onBack={() => setView("personnelAccess")} currentUser={currentUser} role="EMPLOYER" readOnly={!canEdit || getAccessLevel(permMap, "personnelAccess") === "view"} initialStatusFilter={navFilter?.module === "personnel" ? navFilter.statusFilter : undefined} initialContractorFilter={navFilter?.module === "personnel" ? navFilter.contractorFilter : undefined} onNavigateToAssessment={(ctx) => { setAssessmentContext(ctx); setView("proactiveIndicators"); }} initialSelectedPersonnelId={assessmentContext?.personnelId || (navFilter?.module === "personnel" ? navFilter.recordId : undefined)} />}
       {view === "proactiveIndicators" && (
         <ProactiveIndicatorsDashboard
           wide={isDesktop}
@@ -5251,7 +5263,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       {view === "scaffoldDashboard" && <ScaffoldDashboard wide={isDesktop} onBack={() => setView("scaffoldManagement")} currentUser={currentUser} role="EMPLOYER" readOnly={!canEdit || getAccessLevel(permMap, "scaffoldManagement") === "view"} initialStatusFilter={navFilter?.module === "scaffold" ? navFilter.statusFilter : undefined} initialContractorFilter={navFilter?.module === "scaffold" ? navFilter.contractorFilter : undefined} />}
       {view === "managementDashboard" && <HomeDashboard role="EMPLOYER" currentUser={currentUser} onNavigate={handleHomeNavigate} onBack={() => setView("menu")} />}
       {view === "operationalDashboard" && <OperationalDashboard role={currentUser?.role || "EMPLOYER"} currentUser={currentUser} onNavigate={handleHomeNavigate} onBack={() => setView("menu")} />}
-      {view === "quickTools" && <QuickToolsDashboard wide={isDesktop} currentUser={currentUser} onBack={() => setView("menu")} />}
+      {view === "quickTools" && <QuickToolsDashboard wide={isDesktop} currentUser={currentUser} onBack={() => setView("menu")} initialToolId={navFilter?.module === "quickTools" ? navFilter.toolId : undefined} initialRecordId={navFilter?.module === "quickTools" ? navFilter.recordId : undefined} />}
     </ResponsiveDashboardShell>
   );
 }
@@ -5369,8 +5381,20 @@ function ContractorDashboard({ onLogout, currentUser }) {
     else if (target.module === "machinery") setView("machineryDashboard");
     else if (target.module === "scaffold") setView("scaffoldDashboard");
     else if (target.module === "bowtie") setView("bowtieDashboard");
+    else if (target.module === "bowtieDashboard") setView("bowtieDashboard");
     else if (target.module === "permitToWork") setView("permitToWork");
     else if (target.module === "pssr") setView("pssrList");
+    else if (target.module === "hcms") setView("hcmsDashboard");
+    else if (target.module === "correctiveActions") setView("correctiveActionsList");
+    else if (target.module === "incidents") setView("incidentsList");
+    else if (target.module === "proactiveIndicators") setView("proactiveIndicators");
+    else if (target.module === "hseGate") {
+      const mk = target.moduleKey;
+      if (mk === "anomalyReport") { setNavFilter({ module: "anomaly", recordId: target.targetRecordId }); setView("anomalyList"); }
+      else if (mk === "personnelAccess") { setNavFilter({ module: "personnel", recordId: target.targetRecordId }); setView("personnelDashboard"); }
+      else if (mk === "machineryManagement") { setView("machineryDashboard"); }
+      else if (mk === "liftingPlan") { setNavFilter({ module: "quickTools", toolId: "lifting-plan", recordId: target.targetRecordId }); setView("quickTools"); }
+    }
   };
 
   const anomalyMod = HSE_MODULES.find((m) => m.key === "anomalyReport");
@@ -5437,7 +5461,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
         readOnly={personnelReadOnly}
         initialStatusFilter={navFilter?.module === "personnel" ? navFilter.statusFilter : undefined}
         onNavigateToAssessment={(ctx) => { setAssessmentContext(ctx); setView("proactiveIndicators"); }}
-        initialSelectedPersonnelId={assessmentContext?.personnelId}
+        initialSelectedPersonnelId={assessmentContext?.personnelId || (navFilter?.module === "personnel" ? navFilter.recordId : undefined)}
       />
     </div>
   );
@@ -5578,7 +5602,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
       {!isDesktop && view === "anomalyList" && <AnomalyList onBack={() => setView("anomalyReport")} role="CONTRACTOR" currentUser={currentUser} readOnly={getAccessLevel(permMap, "anomalyReport") === "view"} initialStatusFilter={navFilter?.module === "anomaly" ? navFilter.statusFilter : undefined} initialRiskFilter={navFilter?.module === "anomaly" ? navFilter.riskFilter : undefined} />}
       {view === "correctiveActionsList" && <CorrectiveActionsDashboard wide={isDesktop} onBack={() => setView("anomalyReport")} currentUser={currentUser} />}
       {!isDesktop && view === "personnelForm" && getAccessLevel(permMap, "personnelAccess") !== "view" && <PersonnelForm onBack={() => setView("personnelAccess")} currentUser={currentUser} onSaved={() => setView("personnelAccess")} />}
-      {!isDesktop && view === "personnelDashboard" && <PersonnelDashboard onBack={() => setView("personnelAccess")} currentUser={currentUser} role="CONTRACTOR" readOnly={getAccessLevel(permMap, "personnelAccess") === "view"} initialStatusFilter={navFilter?.module === "personnel" ? navFilter.statusFilter : undefined} onNavigateToAssessment={(ctx) => { setAssessmentContext(ctx); setView("proactiveIndicators"); }} initialSelectedPersonnelId={assessmentContext?.personnelId} />}
+      {!isDesktop && view === "personnelDashboard" && <PersonnelDashboard onBack={() => setView("personnelAccess")} currentUser={currentUser} role="CONTRACTOR" readOnly={getAccessLevel(permMap, "personnelAccess") === "view"} initialStatusFilter={navFilter?.module === "personnel" ? navFilter.statusFilter : undefined} onNavigateToAssessment={(ctx) => { setAssessmentContext(ctx); setView("proactiveIndicators"); }} initialSelectedPersonnelId={assessmentContext?.personnelId || (navFilter?.module === "personnel" ? navFilter.recordId : undefined)} />}
       {view === "proactiveIndicators" && (
         <ProactiveIndicatorsDashboard
           wide={isDesktop}
@@ -5606,7 +5630,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
       {view === "scaffoldDashboard" && <ScaffoldDashboard wide={isDesktop} onBack={() => setView("scaffoldManagement")} currentUser={currentUser} role="CONTRACTOR" readOnly={getAccessLevel(permMap, "scaffoldManagement") === "view"} initialStatusFilter={navFilter?.module === "scaffold" ? navFilter.statusFilter : undefined} />}
       {view === "managementDashboard" && <HomeDashboard role="CONTRACTOR" currentUser={currentUser} onNavigate={handleHomeNavigate} onBack={() => setView("menu")} />}
       {view === "operationalDashboard" && <OperationalDashboard role="CONTRACTOR" currentUser={currentUser} onNavigate={handleHomeNavigate} onBack={() => setView("menu")} />}
-      {view === "quickTools" && <QuickToolsDashboard wide={isDesktop} currentUser={currentUser} onBack={() => setView("menu")} />}
+      {view === "quickTools" && <QuickToolsDashboard wide={isDesktop} currentUser={currentUser} onBack={() => setView("menu")} initialToolId={navFilter?.module === "quickTools" ? navFilter.toolId : undefined} initialRecordId={navFilter?.module === "quickTools" ? navFilter.recordId : undefined} />}
     </ResponsiveDashboardShell>
   );
 }
