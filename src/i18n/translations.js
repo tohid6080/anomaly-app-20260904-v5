@@ -2880,6 +2880,14 @@ export const translations = {
     "fa": "افزودنِ حسابِ پیمانکارِ زیرمجموعه",
     "en": "Add subsidiary contractor account"
   },
+  "saDeleteContractorCompanyTitle": {
+    "fa": "حذف از فهرست",
+    "en": "Remove from list"
+  },
+  "saDeleteContractorCompanyConfirm": {
+    "fa": "نامِ «{name}» از فهرست حذف شود؟ حساب‌های پیمانکاریِ قبلاً ساخته‌شده با این نام دست‌نخورده می‌مانند.",
+    "en": "Remove \"{name}\" from the list? Contractor accounts already created with this name are unaffected."
+  },
   "saNoAccountsYet": {
     "fa": "هنوز هیچ حساب کاربری برای این شرکت ساخته نشده — بدون حساب، هیچ‌کس نمی‌تواند وارد سایت اصلی شود.",
     "en": "No user account has been created for this company yet — without an account, no one can log in to the main site."

@@ -687,6 +687,15 @@ export async function setContractorCompanyActive(id, active) {
   return { ok: true };
 }
 
+// حذفِ واقعی — بی‌خطر است: contractors.name فقط یک رشته‌ی متنیِ کپی‌شده در
+// لحظه‌ی ساختِ حساب است، نه یک کلیدِ خارجی به این جدول؛ پس حذفِ یک ردیف از
+// این فهرست هیچ حسابِ پیمانکارِ قبلاً ساخته‌شده‌ای را دست‌نخورده نمی‌گذارد.
+export async function deleteContractorCompany(id) {
+  const result = await sb(`contractor_companies?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" }, "super_admin");
+  if (!sbOk(result)) return { __error: true, message: tr("saErrSave") };
+  return { ok: true };
+}
+
 // ---------- مدیریت حساب‌ها (Admin/Employer/Contractor) — فقط Super Admin ----------
 // این توابع مستقیم به دیتابیس نمی‌نویسند؛ همه از طریق Edge Function
 // manage-account رد می‌شوند که خودش امضای توکن فراخوان را بررسی می‌کند و

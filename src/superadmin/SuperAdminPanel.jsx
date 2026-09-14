@@ -16,7 +16,7 @@ import {
   loadCompanies, createCompany, updateCompany, deleteCompanySecure, setCompanyActive,
   loadCompanyPayments, addCompanyPayment, PAYMENT_TYPES,
   loadCompanyUserAccounts, createAccount,
-  loadContractorCompanies, createContractorCompany, setContractorCompanyActive,
+  loadContractorCompanies, createContractorCompany, setContractorCompanyActive, deleteContractorCompany,
   SUBSCRIPTION_TYPES, SUBSCRIPTION_STATUSES,
   loadPlans, createPlan, updatePlan, deactivatePlan, activatePlan, movePlan, deletePlan, assignPlanToCompany, loadCompanySubscriptionHistory, backupPeriodPrice,
   PLAN_FEATURES, computeContractAmount, computeMonthlyRecurringAmount,
@@ -3875,6 +3875,13 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
     await loadContractorCompaniesList();
   };
 
+  const handleDeleteContractorCompany = async (c) => {
+    if (!confirm(t("saDeleteContractorCompanyConfirm", { name: c.name }))) return;
+    const result = await deleteContractorCompany(c.id);
+    if (result?.__error) { alert(result.message); return; }
+    await loadContractorCompaniesList();
+  };
+
   const handleCreateContractor = async () => {
     if (!contractorForm.name.trim() || !contractorForm.username.trim() || contractorForm.password.length < 8) {
       setContractorError(t("amNameUsernamePasswordRequired"));
@@ -4182,15 +4189,23 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
         {contractorCompanies.map((c) => (
           <div key={c.id} style={{ fontSize: 11.5, color: THEME.text2, padding: "6px 0", borderBottom: `1px solid ${THEME.border}`, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
             <span style={{ fontWeight: 700, color: THEME.heading }}>{c.name}</span>
-            <button
-              type="button" onClick={() => handleToggleContractorCompanyActive(c)}
-              style={{
-                marginInlineStart: "auto", fontSize: 10, padding: "2px 8px", borderRadius: 999, fontWeight: 600, border: "none", cursor: "pointer",
-                background: c.isActive === false ? THEME.surface2 : THEME.okBg, color: c.isActive === false ? THEME.text3 : THEME.ok,
-              }}
-            >
-              {c.isActive === false ? t("commonInactive") : t("commonActive")}
-            </button>
+            <div style={{ marginInlineStart: "auto", display: "flex", gap: 6, alignItems: "center" }}>
+              <button
+                type="button" onClick={() => handleToggleContractorCompanyActive(c)}
+                style={{
+                  fontSize: 10, padding: "2px 8px", borderRadius: 999, fontWeight: 600, border: "none", cursor: "pointer",
+                  background: c.isActive === false ? THEME.surface2 : THEME.okBg, color: c.isActive === false ? THEME.text3 : THEME.ok,
+                }}
+              >
+                {c.isActive === false ? t("commonInactive") : t("commonActive")}
+              </button>
+              <button
+                type="button" onClick={() => handleDeleteContractorCompany(c)} title={t("saDeleteContractorCompanyTitle")}
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, border: "none", borderRadius: 6, background: THEME.dangerBg, color: THEME.danger, cursor: "pointer" }}
+              >
+                <Trash2 size={11} />
+              </button>
+            </div>
           </div>
         ))}
 
