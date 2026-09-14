@@ -3619,7 +3619,7 @@ export const de = {
   "gprCompanyName": "Firmen-/Organisationsname",
   "gprContactFullName": "Vollständiger Name des Antragstellers",
   "gprEmailOptional": "E-Mail (optional)",
-  "gprErrCompanyContactRequired": "Firmenname und Name des Antragstellers sind erforderlich",
+  "gprErrCompanyContactRequired": "Der Firmen-/Organisationsname ist erforderlich",
   "gprErrNoModulesSelected": "Wählen Sie mindestens ein Modul aus",
   "gprSubmit": "Kaufanfrage senden",
   "gprSubmittedTitle": "Ihre Anfrage wurde übermittelt",

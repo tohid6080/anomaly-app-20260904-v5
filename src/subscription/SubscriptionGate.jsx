@@ -329,8 +329,6 @@ function Row({ k, v }) {
 function PublicPurchaseForm({ selMods, selSvc, billingCycle, cart }) {
   const { t, lang, dir } = useLanguage();
   const [companyName, setCompanyName] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [payerName, setPayerName] = useState("");
   const [payerPhone, setPayerPhone] = useState("");
@@ -367,15 +365,16 @@ function PublicPurchaseForm({ selMods, selSvc, billingCycle, cart }) {
 
   const handleSubmit = async () => {
     setError("");
-    if (!companyName.trim() || !fullName.trim()) { setError(t("gprErrCompanyContactRequired")); return; }
-    if (!/^09\d{9}$/.test(phone.trim())) { setError(t("ctpErrPhoneFormat")); return; }
+    if (!companyName.trim()) { setError(t("gprErrCompanyContactRequired")); return; }
     if (!cart || cart.selReal.length === 0) { setError(t("gprErrNoModulesSelected")); return; }
     if (!payerName.trim()) { setError(t("subErrReceiptFieldsRequired")); return; }
     if (!/^09\d{9}$/.test(payerPhone.trim())) { setError(t("ctpErrPhoneFormat")); return; }
     if (!receiptImage) { setError(t("ctpErrReceiptRequired")); return; }
     setSaving(true);
+    // نامِ درخواست‌کننده/شماره‌موبایل جدا از واریزکننده پرسیده نمی‌شود — در
+    // اکثریتِ قریب‌به‌اتفاق موارد همان شخص است؛ همان مقادیر برای هر دو ارسال می‌شود.
     const result = await submitGuestPurchaseRequest({
-      fullName: fullName.trim(), phone: phone.trim(), companyName: companyName.trim(), email: email.trim(),
+      fullName: payerName.trim(), phone: payerPhone.trim(), companyName: companyName.trim(), email: email.trim(),
       selectedModules: selMods, selectedServices: selSvc, billingCycle, amount: cart.grandTotal,
       payerName: payerName.trim(), payerPhone: payerPhone.trim(), trackingNumber: trackingNumber.trim(), receiptImage,
     });
@@ -398,18 +397,9 @@ function PublicPurchaseForm({ selMods, selSvc, billingCycle, cart }) {
     <div style={{ marginTop: 6 }}>
       <p style={{ fontSize: 11.5, color: THEME.text2, margin: "0 0 10px", lineHeight: 1.9 }}>{t("gprIntro")}</p>
 
-      <label style={styles.label}>{t("gprCompanyName")}</label>
-      <input style={styles.input} value={companyName} onChange={(e) => setCompanyName(e.target.value)} dir={dir} />
-      <label style={styles.label}>{t("gprContactFullName")}</label>
-      <input style={styles.input} value={fullName} onChange={(e) => setFullName(e.target.value)} dir={dir} />
-      <label style={styles.label}>{t("ctpMobileNumber")}</label>
-      <input style={styles.input} value={phone} onChange={(e) => setPhone(e.target.value.replace(/[^\d]/g, "").slice(0, 11))} dir="ltr" inputMode="numeric" maxLength={11} placeholder="09xxxxxxxxx" />
-      <label style={styles.label}>{t("gprEmailOptional")}</label>
-      <input style={styles.input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} dir="ltr" />
-
       {settings === undefined && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 12 }}>{t("ctpLoadingPaymentInfo")}</p>}
       {settings && (
-        <div style={{ background: THEME.tealSoft, border: `1px solid ${THEME.teal}`, borderRadius: 12, padding: 14, margin: "12px 0" }}>
+        <div style={{ background: THEME.tealSoft, border: `1px solid ${THEME.teal}`, borderRadius: 12, padding: 14, marginBottom: 12 }}>
           <div style={{ marginBottom: 8 }}>
             <div style={{ fontSize: 11, color: THEME.text2, marginBottom: 4 }}>{t("ctpCardNumber")}</div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
@@ -434,7 +424,12 @@ function PublicPurchaseForm({ selMods, selSvc, billingCycle, cart }) {
         </div>
       )}
 
-      <p style={{ fontSize: 11.5, fontWeight: 700, color: THEME.heading, margin: "4px 0 8px" }}>{t("ctpEnterReceiptAfterTransfer")}</p>
+      <label style={styles.label}>{t("gprCompanyName")}</label>
+      <input style={styles.input} value={companyName} onChange={(e) => setCompanyName(e.target.value)} dir={dir} />
+      <label style={styles.label}>{t("gprEmailOptional")}</label>
+      <input style={styles.input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} dir="ltr" />
+
+      <p style={{ fontSize: 11.5, fontWeight: 700, color: THEME.heading, margin: "12px 0 8px" }}>{t("ctpEnterReceiptAfterTransfer")}</p>
       <label style={styles.label}>{t("ctpFullName")}</label>
       <input style={styles.input} value={payerName} onChange={(e) => setPayerName(e.target.value)} dir={dir} />
       <label style={styles.label}>{t("ctpMobileNumber")}</label>

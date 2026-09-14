@@ -9390,7 +9390,7 @@ export const translations = {
   "gprCompanyName": { "fa": "نامِ شرکت / سازمان", "en": "Company / organization name" },
   "gprContactFullName": { "fa": "نام و نام خانوادگیِ درخواست‌کننده", "en": "Applicant's full name" },
   "gprEmailOptional": { "fa": "ایمیل (اختیاری)", "en": "Email (optional)" },
-  "gprErrCompanyContactRequired": { "fa": "نامِ شرکت و نامِ درخواست‌کننده الزامی است", "en": "Company name and applicant name are required" },
+  "gprErrCompanyContactRequired": { "fa": "نامِ شرکت / سازمان الزامی است", "en": "Company / organization name is required" },
   "gprErrNoModulesSelected": { "fa": "حداقل یک ماژول را انتخاب کنید", "en": "Select at least one module" },
   "gprSubmit": { "fa": "ثبتِ درخواستِ خرید", "en": "Submit purchase request" },
   "gprSubmittedTitle": { "fa": "درخواستِ شما ثبت شد", "en": "Your request has been submitted" },
