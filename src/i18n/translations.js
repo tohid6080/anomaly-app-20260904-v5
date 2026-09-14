@@ -3032,6 +3032,26 @@ export const translations = {
     "fa": "بازنشانی رمز",
     "en": "Reset Password"
   },
+  "amTransferTitle": {
+    "fa": "انتقالِ رکوردها پیش از حذف",
+    "en": "Transfer records before deleting"
+  },
+  "amTransferBody": {
+    "fa": "پیمانکارِ «{name}» هنوز به رکوردهایی (پرسنل/ماشین‌آلات/اقدام اصلاحی) وصل است. یک همکارِ دیگر در همان شرکت را برای انتقالِ این رکوردها انتخاب کنید؛ سپس حساب حذف می‌شود.",
+    "en": "The contractor \"{name}\" still has linked records (personnel/machinery/corrective actions). Choose another colleague in the same company to transfer these records to; the account will then be deleted."
+  },
+  "amNoTransferTargets": {
+    "fa": "همکارِ فعالِ دیگری در همین شرکت برای انتقالِ رکوردها وجود ندارد — یک حسابِ پیمانکاریِ دیگر بسازید یا به‌جای حذف، این حساب را غیرفعال کنید.",
+    "en": "There is no other active colleague in this company to transfer the records to — create another contractor account, or deactivate this one instead of deleting it."
+  },
+  "amSelectTransferTarget": {
+    "fa": "انتخابِ همکارِ مقصد…",
+    "en": "Select destination colleague…"
+  },
+  "amTransferAndDelete": {
+    "fa": "انتقال و حذف",
+    "en": "Transfer & Delete"
+  },
   "amNoAccountsFound": {
     "fa": "حسابی یافت نشد",
     "en": "No accounts found"

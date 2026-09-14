@@ -750,7 +750,9 @@ async function callManageAccount(payload) {
       body: JSON.stringify(payload),
     });
     const data = await res.json();
-    if (!res.ok) return { __error: true, message: data?.error || tr("saErrGenericOp") };
+    // فیلدهای اضافیِ خطا (مثلِ needsTransfer) هم باید به تماس‌گیرنده برسند —
+    // نه فقط پیام — تا UI بتواند به‌جای یک alertِ صرف، اکشنِ مناسب را نشان دهد.
+    if (!res.ok) return { __error: true, message: data?.error || tr("saErrGenericOp"), ...data };
     return data;
   } catch {
     return { __error: true, message: tr("saErrServerConn") };
@@ -781,8 +783,8 @@ export async function setAccountActive(targetType, targetId, active) {
 export async function resetAccountPassword(targetType, targetId, newPassword) {
   return callManageAccount({ action: "reset_password", targetType, targetId, newPassword });
 }
-export async function deleteAccount(targetType, targetId) {
-  return callManageAccount({ action: "delete", targetType, targetId });
+export async function deleteAccount(targetType, targetId, transferToContractorId) {
+  return callManageAccount({ action: "delete", targetType, targetId, transferToContractorId });
 }
 
 export async function loadAuditLog(limit = 50) {

@@ -42,6 +42,7 @@ export default function AccountManagement({ currentAdmin }) {
   const [newPassword, setNewPassword] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [transferState, setTransferState] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -120,7 +121,24 @@ export default function AccountManagement({ currentAdmin }) {
   const handleDeleteAccount = async (a) => {
     if (!confirm(t("amDeleteAccountConfirm", { name: a.name, username: a.username }))) return;
     const result = await deleteAccount(tab, a.id);
+    if (result?.needsTransfer) {
+      const candidates = (await loadAccountsByType("contractor", a.company_id)).filter((c) => c.id !== a.id && c.is_active !== false);
+      setTransferState({ account: a, candidates, selectedId: "", busy: false, error: "" });
+      return;
+    }
     if (result?.__error || result?.error) { alert(result.message || result.error); return; }
+    await load();
+  };
+
+  const handleConfirmTransferDelete = async () => {
+    if (!transferState?.selectedId) return;
+    setTransferState((s) => ({ ...s, busy: true, error: "" }));
+    const result = await deleteAccount("contractor", transferState.account.id, transferState.selectedId);
+    if (result?.__error || result?.error) {
+      setTransferState((s) => ({ ...s, busy: false, error: result.message || result.error }));
+      return;
+    }
+    setTransferState(null);
     await load();
   };
 
@@ -237,6 +255,42 @@ export default function AccountManagement({ currentAdmin }) {
               )}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {transferState && (
+        <div
+          onClick={() => (transferState.busy ? null : setTransferState(null))}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 3000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+        >
+          <div onClick={(e) => e.stopPropagation()} style={{ background: THEME.surface, borderRadius: 14, padding: 20, maxWidth: 420, width: "100%", direction: dir }}>
+            <h4 style={{ fontSize: 14, fontWeight: 800, color: THEME.heading, margin: "0 0 8px" }}>{t("amTransferTitle")}</h4>
+            <p style={{ fontSize: 12, color: THEME.text2, lineHeight: 1.8, margin: "0 0 12px" }}>
+              {t("amTransferBody", { name: transferState.account.name })}
+            </p>
+            {transferState.candidates.length === 0 ? (
+              <p style={{ fontSize: 12, color: THEME.danger, margin: 0 }}>{t("amNoTransferTargets")}</p>
+            ) : (
+              <select
+                style={inputStyle} value={transferState.selectedId} dir={dir}
+                onChange={(e) => setTransferState((s) => ({ ...s, selectedId: e.target.value }))}
+              >
+                <option value="">{t("amSelectTransferTarget")}</option>
+                {transferState.candidates.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name} ({c.username})</option>
+                ))}
+              </select>
+            )}
+            {transferState.error && <p style={{ fontSize: 11.5, color: THEME.danger, marginTop: 8 }}>{transferState.error}</p>}
+            <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+              {transferState.candidates.length > 0 && (
+                <button type="button" style={btnStyle(THEME.danger)} disabled={!transferState.selectedId || transferState.busy} onClick={handleConfirmTransferDelete}>
+                  {transferState.busy ? t("saSavingEllipsis") : t("amTransferAndDelete")}
+                </button>
+              )}
+              <button type="button" style={btnStyle(THEME.text3)} disabled={transferState.busy} onClick={() => setTransferState(null)}>{t("commonCancel")}</button>
+            </div>
+          </div>
         </div>
       )}
     </div>
