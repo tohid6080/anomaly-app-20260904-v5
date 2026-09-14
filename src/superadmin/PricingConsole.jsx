@@ -95,7 +95,7 @@ export default function PricingConsole({ companies, currentAdmin, onChanged }) {
   // ---------- ویرایشِ ردیف‌ها ----------
   const setRow = (k, patch) => setMp((rows) => rows.map((r) => (r.moduleKey === k ? { ...r, ...patch } : r)));
   const setSvcRow = (r, patch) => setSvc((rows) => rows.map((y) => (y === r ? { ...y, ...patch } : y)));
-  const addSvc = () => setSvc((rows) => [...rows, { id: "", name: t("mpNewService"), description: "", priceMonthly: 0, priceYearly: 0, period: "monthly", sortOrder: (rows.length + 1) * 10, isActive: true, __new: true }]);
+  const addSvc = () => setSvc((rows) => [...rows, { id: "", name: t("mpNewService"), description: "", priceWeekly: 0, priceMonthly: 0, priceYearly: 0, period: "monthly", sortOrder: (rows.length + 1) * 10, isActive: true, __new: true }]);
   const removeSvc = async (r) => {
     if (r.__new) { setSvc((rows) => rows.filter((x) => x !== r)); return; }
     if (!window.confirm(t("mpConfirmDeleteService"))) return;
@@ -299,17 +299,19 @@ export default function PricingConsole({ companies, currentAdmin, onChanged }) {
         <div style={{ overflowX: "auto" }}>
           <table className="pc-matrix">
             <thead><tr>
-              <th className="pc-sticky">{t("mpSvcName")}</th><th>{t("mpColMonthly")}</th><th>{t("mpColYearly")}</th>
+              <th className="pc-sticky">{t("mpSvcName")}</th><th>{t("mpColWeekly")}</th><th>{t("mpColMonthly")}</th><th>{t("mpColYearly")}</th>
               <th>{t("mpSvcPeriod")}</th><th>{t("mpSvcDesc")}</th><th>{t("commonActive")}</th><th />
             </tr></thead>
             <tbody>
               {svc.map((r, i) => (
                 <tr key={r.id || "new" + i}>
                   <td className="pc-sticky"><input value={r.name} onChange={(e) => setSvcRow(r, { name: e.target.value })} style={{ ...cellIn, width: 150, fontFamily: THEME.font, textAlign: "start" }} /></td>
+                  <td><input type="number" step="100000" value={r.priceWeekly} onChange={(e) => setSvcRow(r, { priceWeekly: Number(e.target.value) || 0 })} style={cellIn} /></td>
                   <td><input type="number" step="100000" value={r.priceMonthly} onChange={(e) => setSvcRow(r, { priceMonthly: Number(e.target.value) || 0 })} style={cellIn} /></td>
                   <td><input type="number" step="100000" value={r.priceYearly} onChange={(e) => setSvcRow(r, { priceYearly: Number(e.target.value) || 0 })} style={cellIn} /></td>
                   <td>
                     <select value={r.period} onChange={(e) => setSvcRow(r, { period: e.target.value })} style={{ ...cellIn, width: 90 }}>
+                      <option value="weekly">{t("mpPeriodWeekly")}</option>
                       <option value="monthly">{t("mpPeriodMonthly")}</option>
                       <option value="yearly">{t("mpPeriodYearly")}</option>
                       <option value="once">{t("mpPeriodOnce")}</option>

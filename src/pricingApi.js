@@ -66,7 +66,7 @@ function mpFromSnap(m) {
 function svcFromSnap(s) {
   return {
     id: s.id, name: s.name || "", description: s.description || "",
-    priceMonthly: Number(s.priceMonthly) || 0, priceYearly: Number(s.priceYearly) || 0,
+    priceWeekly: Number(s.priceWeekly) || 0, priceMonthly: Number(s.priceMonthly) || 0, priceYearly: Number(s.priceYearly) || 0,
     period: s.period || "monthly", sortOrder: s.sortOrder ?? 0, isActive: true,
   };
 }
@@ -103,7 +103,7 @@ export async function publishPricingSnapshot({ modules, services }, publishedBy)
     })),
     services: (services || []).map((s) => ({
       id: s.id, name: s.name || "", description: s.description || "",
-      priceMonthly: Number(s.priceMonthly) || 0, priceYearly: Number(s.priceYearly) || 0,
+      priceWeekly: Number(s.priceWeekly) || 0, priceMonthly: Number(s.priceMonthly) || 0, priceYearly: Number(s.priceYearly) || 0,
       period: s.period || "monthly", sortOrder: s.sortOrder ?? 0,
     })),
   };
@@ -127,6 +127,7 @@ function svcFromRow(r) {
     id: r.id,
     name: r.name || "",
     description: r.description || "",
+    priceWeekly: Number(r.price_weekly) || 0,
     priceMonthly: Number(r.price_monthly) || 0,
     priceYearly: Number(r.price_yearly) || 0,
     period: r.period || "monthly",
@@ -163,9 +164,10 @@ export async function upsertService(rec, createdBy) {
   const body = {
     name: rec.name || "",
     description: rec.description || "",
+    price_weekly: Number(rec.priceWeekly) || 0,
     price_monthly: Number(rec.priceMonthly) || 0,
     price_yearly: Number(rec.priceYearly) || 0,
-    period: ["monthly", "yearly", "once"].includes(rec.period) ? rec.period : "monthly",
+    period: ["weekly", "monthly", "yearly", "once"].includes(rec.period) ? rec.period : "monthly",
     sort_order: Number(rec.sortOrder) || 0,
     is_active: rec.isActive !== false,
     updated_at: new Date().toISOString(),
@@ -198,6 +200,16 @@ export async function deleteService(id) {
  *  modulePrices, services : داده‌های خام (camelCase)
  *  billingCycle       : 'monthly' | 'yearly'
  */
+// قیمتِ واقعیِ یک خدمت — از دوره‌ی خودِ همان ردیف (weekly/monthly/yearly)
+// می‌آید، نه از تاگلِ کلیِ سبد. 'once' هم از همان priceMonthly (مبلغِ
+// یک‌بارهٔ ثبت‌شده) می‌خواند. هم در محاسبه‌ی سبد، هم در نمایشِ صفحه‌ی خرید استفاده می‌شود.
+export function servicePriceFor(s) {
+  if (!s) return 0;
+  if (s.period === "weekly") return s.priceWeekly || 0;
+  if (s.period === "yearly") return s.priceYearly || 0;
+  return s.priceMonthly || 0; // 'monthly' و 'once' هر دو از همین فیلد
+}
+
 export function computeCartTotal({ selectedModuleKeys, selectedServiceIds, modulePrices, services, billingCycle }) {
   billingCycle = billingCycle === "monthly" ? "monthly" : "yearly";
   const mpMap = {};
@@ -214,14 +226,16 @@ export function computeCartTotal({ selectedModuleKeys, selectedServiceIds, modul
   const selReal = (selectedModuleKeys || []).filter((k) => mpMap[k] && !mpMap[k].isFree);
   const sumAllModules = selReal.reduce((a, k) => a + priceOf(k), 0);
 
-  // خدمات
+  // خدمات — قیمتِ هر خدمت از دوره‌ی خودِ همان ردیف می‌آید (weekly/monthly/
+  // yearly/once)، نه از تاگلِ کلیِ ماهانه/سالانه‌ی سبد. یک خدمتِ هفتگی
+  // همیشه قیمتِ هفتگی‌اش را دارد، حتی اگر کاربر برای ماژول‌ها «سالانه» را انتخاب کرده باشد.
   const svcIds = (selectedServiceIds || []).filter((id) => svcMap[id]);
   const svcRecurring = svcIds.reduce((a, id) => {
     const s = svcMap[id];
     if (s.period === "once") return a;
-    return a + ((billingCycle === "monthly" ? s.priceMonthly : s.priceYearly) || s.priceMonthly || 0);
+    return a + servicePriceFor(s);
   }, 0);
-  const svcOnce = svcIds.reduce((a, id) => (svcMap[id].period === "once" ? a + (svcMap[id].priceMonthly || svcMap[id].priceYearly || 0) : a), 0);
+  const svcOnce = svcIds.reduce((a, id) => (svcMap[id].period === "once" ? a + servicePriceFor(svcMap[id]) : a), 0);
 
   const recurringTotal = sumAllModules + svcRecurring;
   const grandTotal = recurringTotal + svcOnce;

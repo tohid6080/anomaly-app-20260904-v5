@@ -3,7 +3,7 @@ import { CheckCircle2, XCircle, LogOut, Loader2, Clock, X, LogIn } from "lucide-
 import { styles, THEME } from "../shared.js";
 import { toJalaliDateTime } from "../personnel/jalaliDate.jsx";
 import { computeSubscriptionAccess, loadMySubscriptionInfo, verifyPayment } from "../subscriptionApi.js";
-import { loadModulePrices, loadServices, computeCartTotal, applyModuleDeps } from "../pricingApi.js";
+import { loadModulePrices, loadServices, computeCartTotal, applyModuleDeps, servicePriceFor } from "../pricingApi.js";
 import PaymentMethodsSection from "./CardTransferPayment.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { numLocale } from "../i18n/translations.js";
@@ -250,18 +250,19 @@ function ModulePickerBlock({ modulePrices, services, selMods, selSvc, setSelSvc,
             <b style={{ fontSize: 12.5, color: THEME.heading }}>{t("sgServicesTitle")}</b>
             {services.map((s) => {
               const on = selSvc.indexOf(s.id) > -1;
-              const p = billingCycle === "monthly" ? s.priceMonthly : s.priceYearly;
+              const p = servicePriceFor(s);
+              const periodLabelKey = s.period === "weekly" ? "mpPeriodWeekly" : s.period === "yearly" ? "mpPeriodYearly" : s.period === "once" ? "mpPeriodOnce" : "mpPeriodMonthly";
               return (
                 <label key={s.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", borderBottom: `1px solid ${THEME.borderSoft}`, cursor: "pointer" }}>
                   <input type="checkbox" checked={on} onChange={() => setSelSvc((c) => on ? c.filter((x) => x !== s.id) : [...c, s.id])} style={{ width: 16, height: 16, accentColor: THEME.teal }} />
                   <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: THEME.text }}>
                     {s.name}
                     <span style={{ fontSize: 9.5, fontWeight: 800, padding: "1px 6px", borderRadius: 999, background: THEME.tealSoft, color: THEME.tealDeep, marginInlineStart: 6 }}>
-                      {s.period === "once" ? t("mpPeriodOnce") : t("mpPeriodMonthly")}
+                      {t(periodLabelKey)}
                     </span>
                     {s.description ? <span style={{ display: "block", fontSize: 10, color: THEME.text3 }}>{s.description}</span> : null}
                   </span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: THEME.text2, fontFamily: "monospace" }}>+ {money(p || s.priceMonthly)}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: THEME.text2, fontFamily: "monospace" }}>+ {money(p)}</span>
                 </label>
               );
             })}
