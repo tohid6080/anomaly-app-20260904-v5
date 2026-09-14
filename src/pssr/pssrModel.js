@@ -57,3 +57,12 @@ export const ACTION_STATUS_META = {
   in_progress: { key: "pssrActionInProgress", tone: "teal" },
   closed: { key: "pssrActionClosed", tone: "ok" },
 };
+
+// متنِ دوزبانه‌ی Requirementها: چک‌لیست‌های مرجعِ PSSR اصالتاً انگلیسی‌اند
+// (از فایلِ اکسلِ رسمی)؛ اگر زبانِ سامانه فارسی باشد و ترجمه‌ی فارسی برای
+// همان ردیف موجود باشد، همان + جهتِ rtl نشان داده می‌شود؛ وگرنه متنِ
+// انگلیسیِ مرجع + ltr (هرگز خالی نمی‌ماند، چون متنِ مرجع همیشه هست).
+export function bilingualText(textEn, textFa, lang) {
+  if (lang === "fa" && textFa) return { text: textFa, dir: "rtl" };
+  return { text: textEn || "", dir: "ltr" };
+}
