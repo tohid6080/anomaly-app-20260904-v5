@@ -2,6 +2,8 @@
  * ثابت‌های خالصِ ماژولِ PSSR — بدونِ React/فراخوانیِ شبکه.
  * ============================================================================ */
 
+import { dirOf } from "../i18n/translations.js";
+
 // ۹ چک‌لیستِ تخصصیِ فایلِ مرجع + Leader/Coordinator که چک‌لیستِ خاصِ خود را
 // ندارند ولی عضوِ تیم‌اند.
 export const PSSR_DISCIPLINES = [
@@ -57,3 +59,16 @@ export const ACTION_STATUS_META = {
   in_progress: { key: "pssrActionInProgress", tone: "teal" },
   closed: { key: "pssrActionClosed", tone: "ok" },
 };
+
+// متنِ سه‌زبانه‌ی Requirementها: چک‌لیست‌های مرجعِ PSSR اصالتاً انگلیسی‌اند
+// (از فایلِ اکسلِ رسمی)؛ بر اساسِ زبانِ فعلیِ سامانه (fa/de/en — همان سه‌تایی
+// که LanguageContext پشتیبانی می‌کند)، ترجمه‌ی همان زبان نشان داده می‌شود.
+// اگر ترجمه‌ی زبانِ فعلی برای آن ردیف خالی باشد (هنوز ترجمه نشده)، به متنِ
+// انگلیسیِ مرجع سقوط می‌کند — هرگز خالی نمی‌ماند. جهتِ متن از همان dirOf
+// سراسریِ سامانه گرفته می‌شود (فقط فارسی rtl است).
+export function localizedText(textEn, textFa, textDe, lang) {
+  const dir = dirOf(lang);
+  if (lang === "fa" && textFa) return { text: textFa, dir };
+  if (lang === "de" && textDe) return { text: textDe, dir };
+  return { text: textEn || "", dir };
+}

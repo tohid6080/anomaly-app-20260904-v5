@@ -70,6 +70,7 @@ const ChatAccessManager = lazy(() => import("./chat/ChatAccessManager.jsx"));
 import { loadUnreadTotal } from "./chat/chatApi.js";
 import ChatThread from "./chat/ChatThread.jsx";
 import { findOrCreateLinkedConversation, resolveContractorUsername } from "./chat/chatApi.js";
+import { initPushNotifications } from "./chat/pushRegistration.js";
 import { trackLogin, trackLogout, trackPageView, trackFailedLogin } from "./admin/activityApi.js";
 const SuperAdminLogin = lazy(() => import("./superadmin/SuperAdminLogin.jsx"));
 const SuperAdminPanel = lazy(() => import("./superadmin/SuperAdminPanel.jsx"));
@@ -5706,6 +5707,14 @@ function AppInner() {
   // وقتی Super Admin حساب این کاربر را غیرفعال/حذف کند، این پرچم true
   // می‌شود و به‌جای داشبورد، صفحه‌ی «دسترسی قطع شد» نمایش داده می‌شود.
   const [accountDeactivated, setAccountDeactivated] = useState(false);
+
+  // ثبتِ دستگاه برای اعلانِ Push واقعیِ چت — فقط روی اپِ نیتیوِ اندروید
+  // کاری می‌کند (initPushNotifications خودش این را چک می‌کند)؛ با هر ورود
+  // تازه یا بازیابیِ نشست از localStorage دوباره اجرا می‌شود، چون توکنِ
+  // دستگاه ممکن است عوض شده باشد یا کاربر بین دو نشست فرق کرده باشد.
+  useEffect(() => {
+    if (currentUser) initPushNotifications(currentUser);
+  }, [currentUser?.username]);
 
   // «شرکت فعلی» باید قبل از رندرشدن هر فرزندی (مثل SubscriptionGate که
   // بلافاصله در اولین افکتش این مقدار را می‌خواند) درست باشد — برای

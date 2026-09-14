@@ -2872,6 +2872,42 @@ export const translations = {
     "fa": "ساخت حساب جدید فقط از منوی «حساب‌ها» انجام می‌شود — این‌جا صرفاً نمایش است.",
     "en": "New accounts can only be created from the \"Accounts\" menu — this is a view-only display."
   },
+  "saContractorSubsidiariesTitle": {
+    "fa": "شرکت‌های پیمانکاریِ زیرمجموعه",
+    "en": "Subsidiary Contractor Companies"
+  },
+  "saContractorSubsidiariesNote": {
+    "fa": "اول نامِ شرکت‌های پیمانکاریِ زیرمجموعه‌ی این شرکت (کارفرما) را همین‌جا تعریف کنید. بعد، هنگامِ ساختِ حسابِ پیمانکار، به‌جای تایپِ آزادِ نام، از همین فهرست انتخاب می‌شود — تا یک اشتباهِ تایپی باعثِ ثبتِ ناخواسته‌ی یک شرکتِ کاملاً متفاوت نشود.",
+    "en": "First define the names of this (employer) company's subsidiary contractor companies right here. Then, when creating a contractor account, the name is picked from this list instead of typed freely — so a typo can't accidentally register an entirely different company."
+  },
+  "saNoContractorSubsidiaries": {
+    "fa": "این شرکت هنوز هیچ شرکتِ پیمانکاریِ زیرمجموعه‌ای ندارد.",
+    "en": "This company has no subsidiary contractor companies yet."
+  },
+  "saContractorCompanyNamePlaceholder": {
+    "fa": "نامِ شرکتِ پیمانکاری را وارد کنید",
+    "en": "Enter the contractor company's name"
+  },
+  "saAddContractorCompany": {
+    "fa": "افزودن به فهرست",
+    "en": "Add to list"
+  },
+  "saErrContractorCompanyNameRequired": {
+    "fa": "نامِ شرکتِ پیمانکاری الزامی است",
+    "en": "Contractor company name is required"
+  },
+  "saAddContractorAccount": {
+    "fa": "افزودنِ حسابِ پیمانکارِ زیرمجموعه",
+    "en": "Add subsidiary contractor account"
+  },
+  "saDeleteContractorCompanyTitle": {
+    "fa": "حذف از فهرست",
+    "en": "Remove from list"
+  },
+  "saDeleteContractorCompanyConfirm": {
+    "fa": "نامِ «{name}» از فهرست حذف شود؟ حساب‌های پیمانکاریِ قبلاً ساخته‌شده با این نام دست‌نخورده می‌مانند.",
+    "en": "Remove \"{name}\" from the list? Contractor accounts already created with this name are unaffected."
+  },
   "saNoAccountsYet": {
     "fa": "هنوز هیچ حساب کاربری برای این شرکت ساخته نشده — بدون حساب، هیچ‌کس نمی‌تواند وارد سایت اصلی شود.",
     "en": "No user account has been created for this company yet — without an account, no one can log in to the main site."
@@ -6856,19 +6892,27 @@ export const translations = {
     "fa": "پیام بنویس...",
     "en": "Write a message..."
   },
-  "hlaTitle": { "fa": "دستیار آموزشی HSE", "en": "HSE Learning Assistant" },
-  "hlaPinnedConvTitle": { "fa": "دستیار آموزشی HSE", "en": "HSE Learning Assistant" },
-  "hlaPinnedConvSub": { "fa": "آمادهٔ پاسخ‌گویی به سؤالات ایمنی شماست", "en": "Ready to answer your safety questions" },
-  "hlaAiBadge": { "fa": "AI", "en": "AI" },
-  "hlaAiSenderTag": { "fa": "دستیار آموزشی HSE", "en": "HSE Learning Assistant" },
-  "hlaGreetingPersonal": { "fa": "سلام {name} 👋 من دستیار آموزشی HSE شما هستم. بر اساسِ {count} آنومالیِ اخیر با موضوعِ «{topic}» در سوابقِ شما، این آموزشِ کوتاه رو آماده کردم:", "en": "Hi {name} 👋 I'm your HSE Learning Assistant. Based on {count} recent anomaly report(s) about \"{topic}\" in your records, here's a short lesson:" },
-  "hlaGreetingPersonalNone": { "fa": "سلام {name} 👋 من دستیار آموزشی HSE شما هستم. فعلاً آنومالیِ خاصی که به یک موضوعِ مشخص اشاره کند در سوابقِ اخیرتان نیست، پس این نکتهٔ عمومی رو براتون آماده کردم:", "en": "Hi {name} 👋 I'm your HSE Learning Assistant. There's no specific recent anomaly pointing to one topic yet, so here's a general tip:" },
-  "hlaGreetingCompany": { "fa": "سلام {name} 👋 بر اساسِ {count} آنومالیِ اخیر با موضوعِ «{topic}» در کلِ مجموعه، این آموزشِ کوتاه رو آماده کردم:", "en": "Hi {name} 👋 Based on {count} recent anomaly report(s) about \"{topic}\" across the company, here's a short lesson:" },
-  "hlaGreetingCompanyNone": { "fa": "سلام {name} 👋 من دستیار آموزشی HSE هستم. فعلاً آنومالیِ خاصی که به یک موضوعِ مشخص اشاره کند در سوابقِ اخیر نیست، پس این نکتهٔ عمومی رو آماده کردم:", "en": "Hi {name} 👋 I'm the HSE Learning Assistant. There's no specific recent anomaly pointing to one topic yet, so here's a general tip:" },
-  "hlaCtaBtn": { "fa": "شرکت در آزمون: {title}", "en": "Take the exam: {title}" },
-  "hlaNoExamYet": { "fa": "آزمونی برای این موضوع هنوز در سامانه فعال نشده — از بخش «نظرسنجی و آزمون HSE» می‌توانید یکی بسازید.", "en": "No active exam for this topic yet — you can create one from the \"HSE Survey & Exam\" module." },
-  "hlaFallbackReply": { "fa": "این یک نسخهٔ اولیه بر پایهٔ قوانینِ محلی است — دربارهٔ «کار در ارتفاع»، «ایمنی برق»، «باربرداری»، «PPE» یا «داربست» بپرسید تا پاسخِ دقیق‌تری بدهم.", "en": "This early version runs on local rules — ask about \"work at height\", \"electrical safety\", \"lifting\", \"PPE\" or \"scaffolding\" for a more precise answer." },
-  "hlaComposerPlaceholder": { "fa": "سؤال خود را دربارهٔ ایمنی، بهداشت یا محیط‌زیست بپرسید…", "en": "Ask a question about safety, health or environment…" },
+  "chatReplyAction": { "fa": "پاسخ", "en": "Reply" },
+  "chatPinAction": { "fa": "پین کردن", "en": "Pin" },
+  "chatUnpinAction": { "fa": "برداشتنِ پین", "en": "Unpin" },
+  "chatPinnedBannerLabel": { "fa": "پیامِ پین‌شده", "en": "Pinned message" },
+  "chatManageGroupTitle": { "fa": "مدیریتِ گروه", "en": "Manage group" },
+  "chatGroupNameLabel": { "fa": "نامِ گروه", "en": "Group name" },
+  "chatMembersLabel": { "fa": "اعضا", "en": "Members" },
+  "chatAddMemberBtn": { "fa": "افزودنِ عضو", "en": "Add member" },
+  "chatNoOneToAdd": { "fa": "کسی برای افزودن نیست", "en": "No one left to add" },
+  "chatRemoveMemberAction": { "fa": "حذف از گروه", "en": "Remove from group" },
+  "confirmRemoveMember": { "fa": "{name} از گروه حذف شود؟", "en": "Remove {name} from the group?" },
+  "chatAddedMember": { "fa": "{actor} عضوِ «{target}» را به گروه اضافه کرد", "en": "{actor} added {target} to the group" },
+  "chatRemovedMember": { "fa": "{actor} عضوِ «{target}» را از گروه حذف کرد", "en": "{actor} removed {target} from the group" },
+  "chatRenamedGroup": { "fa": "{actor} نامِ گروه را به «{title}» تغییر داد", "en": "{actor} renamed the group to \"{title}\"" },
+  "chatPinnedMessage": { "fa": "{actor} یک پیام را پین کرد", "en": "{actor} pinned a message" },
+  "chatUnpinnedMessage": { "fa": "{actor} پینِ پیام را برداشت", "en": "{actor} unpinned the message" },
+  "chatErrRenameEmpty": { "fa": "نامِ گروه نمی‌تواند خالی باشد", "en": "Group name can't be empty" },
+  "chatErrRename": { "fa": "خطا در تغییرِ نامِ گروه: {detail}", "en": "Error renaming group: {detail}" },
+  "chatErrRemoveMember": { "fa": "خطا در حذفِ عضو: {detail}", "en": "Error removing member: {detail}" },
+  "chatErrPin": { "fa": "خطا در پین‌کردنِ پیام: {detail}", "en": "Error pinning message: {detail}" },
+  "chatErrUnpin": { "fa": "خطا در برداشتنِ پین: {detail}", "en": "Error unpinning: {detail}" },
   "dbSizeLabel": {
     "fa": "حجم دیتابیس: {size} از {limit} مگابایت ({percent}٪)",
     "en": "Database size: {size} of {limit} MB ({percent}%)"
@@ -10481,6 +10525,11 @@ export const translations = {
   "pssrPickChecklistHint": { "fa": "یک چک‌لیست را از فهرست انتخاب کنید.", "en": "Pick a checklist from the list." },
   "pssrAddRequirement": { "fa": "افزودن Requirement", "en": "Add requirement" },
   "pssrGroupTitle": { "fa": "سرتیتر بخش", "en": "Group title" },
+  "pssrGroupTitleFa": { "fa": "سرتیتر بخش (فارسی)", "en": "Group title (Persian)" },
+  "pssrRequirementTextEn": { "fa": "متن الزام (انگلیسی — مرجع)", "en": "Requirement text (English — reference)" },
+  "pssrRequirementTextFaHint": { "fa": "ترجمه‌ی فارسی (اختیاری — خالی بماند یعنی همان متن انگلیسی نمایش داده شود)", "en": "Persian translation (optional — leave empty to fall back to the English text)" },
+  "pssrGroupTitleDe": { "fa": "سرتیتر بخش (آلمانی)", "en": "Group title (German)" },
+  "pssrRequirementTextDeHint": { "fa": "ترجمه‌ی آلمانی (اختیاری — خالی بماند یعنی همان متن انگلیسی نمایش داده شود)", "en": "German translation (optional — leave empty to fall back to the English text)" },
   "pssrNoRequirementsYet": { "fa": "هنوز Requirementی در این چک‌لیست نیست.", "en": "This checklist has no requirements yet." },
   "pssrSaveAsNewVersion": { "fa": "ذخیره به‌عنوان نگارش جدید", "en": "Save as new version" },
   "pssrVersionSaved": { "fa": "نگارش {version} ذخیره شد.", "en": "Version {version} saved." },

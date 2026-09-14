@@ -1,4 +1,5 @@
-import { sb, sbOk, uid, getCurrentCompanyId } from "../shared.js";
+import { sb, sbOk, uid, getCurrentCompanyId, SUPABASE_URL, SUPABASE_ANON_KEY } from "../shared.js";
+import { getSessionToken } from "../sessionToken.js";
 import { uploadBase64ToStorage } from "../offline/storageUpload.js";
 import { translate, getCurrentLang } from "../i18n/translations.js";
 
@@ -23,6 +24,7 @@ function convFromRow(r) {
     linkedId: r.linked_id || "",
     linkedLabel: r.linked_label || "",
     createdBy: r.created_by || "",
+    pinnedMessageId: r.pinned_message_id || "",
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
@@ -38,6 +40,7 @@ function msgFromRow(r) {
     attachmentUrl: r.attachment_url || "",
     attachmentName: r.attachment_name || "",
     attachmentType: r.attachment_type || "",
+    replyToId: r.reply_to_id || "",
     isSystem: r.is_system === true,
     createdAt: r.created_at,
   };
@@ -176,6 +179,13 @@ export async function setVisibilityRule(roleA, jobPositionIdA, roleB, jobPositio
   await sb(`chat_visibility_rules?role_a=eq.${roleA}&${jobPosCondition("job_position_id_a", jobPositionIdA)}&role_b=eq.${roleB}&${jobPosCondition("job_position_id_b", jobPositionIdB)}`, { method: "DELETE", prefer: "return=minimal" });
   await sb(`chat_visibility_rules?role_a=eq.${roleB}&${jobPosCondition("job_position_id_a", jobPositionIdB)}&role_b=eq.${roleA}&${jobPosCondition("job_position_id_b", jobPositionIdA)}`, { method: "DELETE", prefer: "return=minimal" });
   return { ok: true };
+}
+
+// ---------- یک مکالمه‌ی مشخص (برای هدر/پین/مدیریتِ گروه در ChatThread) ----------
+
+export async function loadConversation(conversationId) {
+  const rows = await sb(`chat_conversations?id=eq.${conversationId}&select=*`);
+  return sbOk(rows) && rows[0] ? convFromRow(rows[0]) : null;
 }
 
 // ---------- مکالمات کاربر جاری ----------
@@ -326,8 +336,8 @@ export async function loadMessages(conversationId) {
   return sbOk(rows) ? rows.map(msgFromRow) : [];
 }
 
-export async function sendMessage(conversationId, me, body, attachment) {
-  console.log("[chat] sendMessage: شروع", { conversationId, sender: me.username, bodyLength: (body || "").length, hasAttachment: !!attachment });
+export async function sendMessage(conversationId, me, body, attachment, replyToId) {
+  console.log("[chat] sendMessage: شروع", { conversationId, sender: me.username, bodyLength: (body || "").length, hasAttachment: !!attachment, replyToId: replyToId || null });
   let attachmentUrl = "", attachmentName = "", attachmentType = "";
   if (attachment) {
     try {
@@ -351,6 +361,7 @@ export async function sendMessage(conversationId, me, body, attachment) {
     attachment_url: attachmentUrl || null,
     attachment_name: attachmentName || null,
     attachment_type: attachmentType || null,
+    reply_to_id: replyToId || null,
   };
   const rows = await sb("chat_messages", { method: "POST", body: JSON.stringify([payload]) });
   console.log("[chat] sendMessage: نتیجه‌ی INSERT روی chat_messages", rows);
@@ -370,13 +381,113 @@ export async function loadParticipants(conversationId) {
   return sbOk(rows) ? rows.map(participantFromRow) : [];
 }
 
-export async function addParticipant(conversationId, person) {
+export async function addParticipant(conversationId, person, actor) {
   const result = await sb("chat_participants", {
     method: "POST",
     body: JSON.stringify([{ conversation_id: conversationId, username: person.username, full_name: person.fullName || person.name || "", role: person.role || "" }]),
   });
   if (!sbOk(result)) return { __error: true, message: tr("chatErrAddMember", { detail: result?.message || tr("chatUnknown") }) };
+  if (actor) {
+    await sb("chat_messages", {
+      method: "POST", prefer: "return=minimal",
+      body: JSON.stringify([{
+        conversation_id: conversationId, sender_username: actor.username || "", sender_name: actor.name || "", sender_role: actor.role || "",
+        body: tr("chatAddedMember", { actor: actor.name || actor.username, target: person.name || person.fullName || person.username }), is_system: true,
+      }]),
+    });
+  }
   return { ok: true };
+}
+
+// ---------- حذفِ یک عضو از گروه (توسطِ مدیرِ گروه) ----------
+export async function removeParticipant(conversationId, targetUsername, targetName, actor) {
+  const result = await sb(`chat_participants?conversation_id=eq.${conversationId}&username=eq.${encodeURIComponent(targetUsername)}`, { method: "DELETE" });
+  if (!sbOk(result)) return { __error: true, message: tr("chatErrRemoveMember", { detail: result?.message || tr("chatUnknown") }) };
+  await sb("chat_messages", {
+    method: "POST", prefer: "return=minimal",
+    body: JSON.stringify([{
+      conversation_id: conversationId, sender_username: actor.username || "", sender_name: actor.name || "", sender_role: actor.role || "",
+      body: tr("chatRemovedMember", { actor: actor.name || actor.username, target: targetName || targetUsername }), is_system: true,
+    }]),
+  });
+  return { ok: true };
+}
+
+// ---------- تغییرِ نامِ گروه ----------
+export async function renameConversation(conversationId, newTitle, actor) {
+  const title = (newTitle || "").trim();
+  if (!title) return { __error: true, message: tr("chatErrRenameEmpty") };
+  const result = await sb(`chat_conversations?id=eq.${conversationId}`, { method: "PATCH", body: JSON.stringify({ title, updated_at: new Date().toISOString() }) });
+  if (!sbOk(result)) return { __error: true, message: tr("chatErrRename", { detail: result?.message || tr("chatUnknown") }) };
+  await sb("chat_messages", {
+    method: "POST", prefer: "return=minimal",
+    body: JSON.stringify([{
+      conversation_id: conversationId, sender_username: actor.username || "", sender_name: actor.name || "", sender_role: actor.role || "",
+      body: tr("chatRenamedGroup", { actor: actor.name || actor.username, title }), is_system: true,
+    }]),
+  });
+  return { ok: true };
+}
+
+// ---------- پین‌کردنِ یک پیامِ مهم در مکالمه (فقط یکی در هر لحظه — پین بعدی جایگزینِ قبلی می‌شود) ----------
+export async function pinMessage(conversationId, messageId, actor) {
+  const result = await sb(`chat_conversations?id=eq.${conversationId}`, { method: "PATCH", body: JSON.stringify({ pinned_message_id: messageId }) });
+  if (!sbOk(result)) return { __error: true, message: tr("chatErrPin", { detail: result?.message || tr("chatUnknown") }) };
+  await sb("chat_messages", {
+    method: "POST", prefer: "return=minimal",
+    body: JSON.stringify([{
+      conversation_id: conversationId, sender_username: actor.username || "", sender_name: actor.name || "", sender_role: actor.role || "",
+      body: tr("chatPinnedMessage", { actor: actor.name || actor.username }), is_system: true,
+    }]),
+  });
+  return { ok: true };
+}
+
+export async function unpinMessage(conversationId, actor) {
+  const result = await sb(`chat_conversations?id=eq.${conversationId}`, { method: "PATCH", body: JSON.stringify({ pinned_message_id: null }) });
+  if (!sbOk(result)) return { __error: true, message: tr("chatErrUnpin", { detail: result?.message || tr("chatUnknown") }) };
+  await sb("chat_messages", {
+    method: "POST", prefer: "return=minimal",
+    body: JSON.stringify([{
+      conversation_id: conversationId, sender_username: actor.username || "", sender_name: actor.name || "", sender_role: actor.role || "",
+      body: tr("chatUnpinnedMessage", { actor: actor.name || actor.username }), is_system: true,
+    }]),
+  });
+  return { ok: true };
+}
+
+// ---------- ثبتِ توکنِ دستگاه برای اعلانِ Push واقعی (FCM) ----------
+// upsert بر اساسِ token (ستونِ unique در چت_push_tokens) — نصبِ دوباره یا
+// ورودِ دوباره‌ی همان دستگاه فقط ردیفِ موجود را تازه می‌کند، ردیفِ تکراری
+// نمی‌سازد. خطا اینجا هرگز نباید جریانِ اصلیِ چت را متوقف کند — فقط یک
+// بهبودِ پس‌زمینه‌ای است.
+export async function registerPushToken(username, token, platform = "android") {
+  if (!username || !token) return { __error: true };
+  const result = await sb("chat_push_tokens?on_conflict=token", {
+    method: "POST",
+    prefer: "resolution=merge-duplicates,return=minimal",
+    body: JSON.stringify([{ company_id: getCurrentCompanyId(), username, token, platform, updated_at: new Date().toISOString() }]),
+  });
+  if (!sbOk(result)) return { __error: true };
+  return { ok: true };
+}
+
+// ---------- درخواستِ ارسالِ Push برای پیامِ تازه‌ارسال‌شده ----------
+// Fire-and-forget عمدی: پیام از قبل با موفقیت در chat_messages ثبت شده؛
+// اگر این تماس شکست بخورد (FCM تنظیم‌نشده، قطعیِ شبکه...) نباید جلوی
+// جریانِ اصلیِ ارسالِ پیام را بگیرد — Push فقط یک اعلانِ تکمیلی است.
+export async function notifyChatPush(conversationId, messageId) {
+  const token = getSessionToken("customer");
+  if (!token) return;
+  try {
+    await fetch(`${SUPABASE_URL}/functions/v1/send-chat-push`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, apikey: SUPABASE_ANON_KEY },
+      body: JSON.stringify({ conversationId, messageId }),
+    });
+  } catch {
+    // عمداً بی‌صدا — طبقِ توضیحِ بالا
+  }
 }
 
 // ---------- خروج از گفتگو (پیمانکار/کارفرما/ادمین — هرکسی می‌تواند خودش را از یک مکالمه خارج کند) ----------
