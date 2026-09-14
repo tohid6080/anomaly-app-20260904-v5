@@ -4589,4 +4589,10 @@ export const de = {
   "pssrSaveAsNewVersion": "Als neue Version speichern",
   "pssrVersionSaved": "Version {version} gespeichert.",
   "pssrErrRequirementTextRequired": "Alle Requirements müssen einen Text enthalten.",
+
+  // ---------- SuperAdmin: Nachunternehmer eines Unternehmens ----------
+  "saContractorSubsidiariesTitle": "Zugehörige Nachunternehmer",
+  "saContractorSubsidiariesNote": "Die Liste der Nachunternehmen, die diesem (Auftraggeber-)Unternehmen zugeordnet sind. Erstellen Sie hier ein neues Nachunternehmer-Konto für dieses Unternehmen — der zugehörige Auftraggeber wird automatisch dieses Unternehmen sein.",
+  "saNoContractorSubsidiaries": "Diesem Unternehmen sind noch keine Nachunternehmer zugeordnet.",
+  "saAddContractorAccount": "Nachunternehmer-Konto hinzufügen",
 };

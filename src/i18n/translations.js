@@ -2852,6 +2852,22 @@ export const translations = {
     "fa": "ساخت حساب جدید فقط از منوی «حساب‌ها» انجام می‌شود — این‌جا صرفاً نمایش است.",
     "en": "New accounts can only be created from the \"Accounts\" menu — this is a view-only display."
   },
+  "saContractorSubsidiariesTitle": {
+    "fa": "شرکت‌های پیمانکاریِ زیرمجموعه",
+    "en": "Subsidiary Contractor Companies"
+  },
+  "saContractorSubsidiariesNote": {
+    "fa": "فهرستِ شرکت‌های پیمانکاری که زیرمجموعه‌ی این شرکت (کارفرما) هستند. حسابِ پیمانکاریِ جدید برای همین شرکت را از همین‌جا بسازید — کارفرمایش به‌صورت خودکار همین شرکت خواهد بود.",
+    "en": "The list of contractor companies that are subsidiaries of this (employer) company. Create a new contractor account for this company right here — its employer will automatically be this company."
+  },
+  "saNoContractorSubsidiaries": {
+    "fa": "این شرکت هنوز هیچ شرکتِ پیمانکاریِ زیرمجموعه‌ای ندارد.",
+    "en": "This company has no subsidiary contractor companies yet."
+  },
+  "saAddContractorAccount": {
+    "fa": "افزودنِ حسابِ پیمانکارِ زیرمجموعه",
+    "en": "Add subsidiary contractor account"
+  },
   "saNoAccountsYet": {
     "fa": "هنوز هیچ حساب کاربری برای این شرکت ساخته نشده — بدون حساب، هیچ‌کس نمی‌تواند وارد سایت اصلی شود.",
     "en": "No user account has been created for this company yet — without an account, no one can log in to the main site."

@@ -25,7 +25,7 @@ function isValidMobileFormat(phone) {
   return /^09\d{9}$/.test(phone);
 }
 
-function emptyForm() {
+export function emptyForm() {
   return { name: "", username: "", password: "", companyId: "", jobPositionId: "", contactPersonName: "", startDate: "", contractDetails: "", phone: "", email: "" };
 }
 
@@ -243,7 +243,7 @@ export default function AccountManagement({ currentAdmin }) {
   );
 }
 
-function AccountForm({ tab, form, setForm, companies, onSave, saving, saveLabel, showPassword }) {
+export function AccountForm({ tab, form, setForm, companies, onSave, saving, saveLabel, showPassword, disableCompanySelect }) {
   const { t, dir } = useLanguage();
   const isContractor = tab === "contractor";
   const [jobPositions, setJobPositions] = useState([]);
@@ -283,7 +283,7 @@ function AccountForm({ tab, form, setForm, companies, onSave, saving, saveLabel,
         )}
         <div>
           <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{isContractor ? t("amEmployerCompanyWhichWorksUnder") : t("amColCompany")}</label>
-          <select style={inputStyle} value={form.companyId} onChange={(e) => setForm({ ...form, companyId: e.target.value, jobPositionId: "" })} dir={dir}>
+          <select style={inputStyle} value={form.companyId} onChange={(e) => setForm({ ...form, companyId: e.target.value, jobPositionId: "" })} dir={dir} disabled={disableCompanySelect}>
             <option value="">{t("amSelectPlaceholder")}</option>
             {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
