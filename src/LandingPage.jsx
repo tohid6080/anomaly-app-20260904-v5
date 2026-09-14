@@ -241,7 +241,7 @@ const TRUST_ICONS = [Zap, Layers, Database, FileBarChart, AlertTriangle, Trendin
 const L = {
   fa: {
     d1: "۱", d7: "۷", d3: "۳", d12: "۱۲", pct94: "۹۴٪", pct78: "۷۸٪",
-    nav: ["صفحه اصلی", "امکانات", "ماژول‌ها", "مزایا", "پلن‌ها", "درباره سامانه", "تماس با ما"],
+    nav: ["صفحه اصلی", "امکانات", "ماژول‌ها", "مزایا", "درباره سامانه", "تماس با ما"],
     heroEyebrow: "سامانه یکپارچه مدیریت HSE",
     heroH1a: "مدیریت هوشمند HSE", heroH1b: "از گزارش تا تصمیم‌گیری",
     heroLede: "IHMS یک سامانهٔ جامع و یکپارچه برای مدیریت ایمنی، بهداشت، محیط‌زیست و فرآیندهای HSE سازمان است؛ با استفاده از اطلاعات واقعی، فرآیندهای سازمان را یکپارچه کنید، ریسک‌ها را کنترل کنید و تصمیم‌های دقیق‌تری بگیرید.",
@@ -319,15 +319,6 @@ const L = {
     mbTag: "نسخهٔ اندروید سامانه",
     phHome: "خانه", phWelcome: "خوش آمدید 👋", phTasks: "وظایف امروز شما",
     phList: ["ثبت گزارش شرایط ناایمن", "بازرسی روزانه داربست", "پیگیری اقدام اصلاحی #۱۲"],
-    prEyebrow: "پلن‌ها", prH2: "پلن مناسب سازمان خود را انتخاب کنید",
-    prMonthly: "ماهانه", prYearly: "سالانه", prSave: "با پرداخت سالانه، دو ماه رایگان",
-    prBadge: "محبوب‌ترین انتخاب", prUnitM: "تومان / ماه", prUnitY: "تومان / سال", prCustom: "توافقی",
-    prNote: "شروع رایگان، بدون نیاز به تعهد اولیه",
-    plans: [
-      ["پلن پایه", "مناسب تیم‌های کوچک", "—", "—", ["ماژول‌های پایهٔ ایمنی", "ثبت حوادث و بازرسی", "اقدامات اصلاحی", "گزارش‌های استاندارد", "پشتیبانی ایمیلی"]],
-      ["پلن حرفه‌ای", "مناسب شرکت‌ها و سازمان‌های متوسط", "—", "—", ["همهٔ ماژول‌های سامانه", "ارزیابی ریسک و مجوز کار", "مدیریت پیمانکاران و آموزش", "داشبورد و KPI مدیریتی", "اپلیکیشن موبایل", "پشتیبانی اولویت‌دار"]],
-      ["پلن سازمانی", "مناسب سازمان‌های بزرگ", "توافقی", "توافقی", ["همهٔ امکانات پلن حرفه‌ای", "چند شرکت / چند سایت", "نقش‌ها و دسترسی‌های پیشرفته", "یکپارچه‌سازی و API", "استقرار اختصاصی", "مدیر پشتیبانی اختصاصی"]],
-    ],
     trEyebrow: "چرا سازمان‌ها IHMS را انتخاب می‌کنند", trH2: "یک سیستم؛ یک تصویر کامل از عملکرد HSE",
     trSub: "به‌جای فایل‌های پراکنده و پیگیری دستی، یک بستر منسجم برای کلِ چرخهٔ HSE.",
     trust: ["کاهش زمان ثبت و پیگیری", "شفافیت فرآیندها", "دسترسی سریع به اطلاعات", "گزارش‌گیری مدیریتی", "کنترل بهتر ریسک", "افزایش بهره‌وری تیم HSE"],
@@ -336,7 +327,7 @@ const L = {
     fSub: "راه‌اندازی سریع • محیط کاربری ساده • دسترسی تحت وب",
     ftBlurb: "سامانهٔ یکپارچهٔ مدیریت ایمنی، بهداشت و محیط‌زیست؛ برای مدیریت داده‌محور فرآیندهای HSE سازمان.",
     ftProduct: "محصول", ftCompany: "سازمان", ftStart: "شروع کنید",
-    ftLinks: ["امکانات", "ماژول‌ها", "پلن‌ها", "درباره سامانه", "تماس با ما", "قوانین و حریم خصوصی", "شروع رایگان", "ورود کاربران"],
+    ftLinks: ["امکانات", "ماژول‌ها", "درباره سامانه", "تماس با ما", "قوانین و حریم خصوصی", "شروع رایگان", "ورود کاربران"],
     rights: "همهٔ حقوق محفوظ است.",
     heroPh: "تصویر واقعی محیط صنعتی و کارشناس HSE در این بخش قرار می‌گیرد",
     kpiToday: "شاخص ایمنی امروز",
@@ -347,7 +338,7 @@ const L = {
 
   en: {
     d1: "1", d7: "7", d3: "3", d12: "12", pct94: "94%", pct78: "78%",
-    nav: ["Home", "Features", "Modules", "Benefits", "Pricing", "About", "Contact"],
+    nav: ["Home", "Features", "Modules", "Benefits", "About", "Contact"],
     heroEyebrow: "Integrated HSE Management System",
     heroH1a: "Smart HSE management", heroH1b: "from report to decision",
     heroLede: "IHMS is a complete, integrated platform for managing your organisation's safety, health, environment and HSE processes. Use real data to unify your workflows, control risk and make sharper decisions.",
@@ -425,15 +416,6 @@ const L = {
     mbTag: "Android app",
     phHome: "Home", phWelcome: "Welcome 👋", phTasks: "Your tasks today",
     phList: ["Report an unsafe condition", "Daily scaffold inspection", "Follow up corrective action #12"],
-    prEyebrow: "Pricing", prH2: "Choose the plan that fits your organisation",
-    prMonthly: "Monthly", prYearly: "Yearly", prSave: "Two months free with annual billing",
-    prBadge: "Most popular", prUnitM: "/ month", prUnitY: "/ year", prCustom: "Custom",
-    prNote: "Start free — no upfront commitment",
-    plans: [
-      ["Basic", "For small teams", "—", "—", ["Core safety modules", "Incident & inspection logging", "Corrective actions", "Standard reports", "Email support"]],
-      ["Professional", "For companies and mid-size organisations", "—", "—", ["All system modules", "Risk assessment & work permits", "Contractor management & training", "Management dashboard & KPI", "Mobile app", "Priority support"]],
-      ["Enterprise", "For large organisations", "Custom", "Custom", ["Everything in Professional", "Multi-company / multi-site", "Advanced roles & permissions", "Integration & API", "Dedicated deployment", "Dedicated support manager"]],
-    ],
     trEyebrow: "Why teams choose IHMS", trH2: "One system; one complete picture of HSE performance",
     trSub: "Instead of scattered files and manual chasing, one coherent platform for the whole HSE cycle.",
     trust: ["Less time to log and follow up", "Process transparency", "Fast access to information", "Management reporting", "Better risk control", "Higher HSE-team productivity"],
@@ -442,7 +424,7 @@ const L = {
     fSub: "Quick setup • Simple UI • Web access",
     ftBlurb: "Integrated management of safety, health and environment — for data-driven management of your organisation's HSE processes.",
     ftProduct: "Product", ftCompany: "Company", ftStart: "Get started",
-    ftLinks: ["Features", "Modules", "Pricing", "About", "Contact", "Terms & privacy", "Start free", "Sign in"],
+    ftLinks: ["Features", "Modules", "About", "Contact", "Terms & privacy", "Start free", "Sign in"],
     rights: "All rights reserved.",
     heroPh: "A real photo of an industrial site and an HSE officer goes here",
     kpiToday: "Today's safety index",
@@ -453,7 +435,7 @@ const L = {
 
   de: {
     d1: "1", d7: "7", d3: "3", d12: "12", pct94: "94 %", pct78: "78 %",
-    nav: ["Start", "Funktionen", "Module", "Vorteile", "Preise", "Über", "Kontakt"],
+    nav: ["Start", "Funktionen", "Module", "Vorteile", "Über", "Kontakt"],
     heroEyebrow: "Integriertes HSE-Managementsystem",
     heroH1a: "Intelligentes HSE-Management", heroH1b: "vom Bericht bis zur Entscheidung",
     heroLede: "IHMS ist eine vollständige, integrierte Plattform für das Management von Sicherheit, Gesundheit, Umwelt und HSE-Prozessen Ihrer Organisation. Nutzen Sie echte Daten, um Abläufe zu vereinheitlichen, Risiken zu steuern und fundiertere Entscheidungen zu treffen.",
@@ -531,15 +513,6 @@ const L = {
     mbTag: "Android-App",
     phHome: "Start", phWelcome: "Willkommen 👋", phTasks: "Ihre Aufgaben heute",
     phList: ["Unsicheren Zustand melden", "Tägliche Gerüstinspektion", "Korrekturmaßnahme #12 verfolgen"],
-    prEyebrow: "Preise", prH2: "Wählen Sie den passenden Plan für Ihre Organisation",
-    prMonthly: "Monatlich", prYearly: "Jährlich", prSave: "Zwei Monate gratis bei Jahresabrechnung",
-    prBadge: "Am beliebtesten", prUnitM: "/ Monat", prUnitY: "/ Jahr", prCustom: "Individuell",
-    prNote: "Kostenlos starten – ohne Vorabverpflichtung",
-    plans: [
-      ["Basis", "Für kleine Teams", "—", "—", ["Kern-Sicherheitsmodule", "Vorfall- & Inspektionserfassung", "Korrekturmaßnahmen", "Standardberichte", "E-Mail-Support"]],
-      ["Professional", "Für Unternehmen und mittlere Organisationen", "—", "—", ["Alle Systemmodule", "Risikobewertung & Arbeitserlaubnis", "Auftragnehmer-Management & Schulung", "Management-Dashboard & KPI", "Mobile App", "Priorisierter Support"]],
-      ["Enterprise", "Für große Organisationen", "Individuell", "Individuell", ["Alles aus Professional", "Mehrere Firmen / Standorte", "Erweiterte Rollen & Berechtigungen", "Integration & API", "Dedizierte Bereitstellung", "Dedizierter Support-Manager"]],
-    ],
     trEyebrow: "Warum Teams IHMS wählen", trH2: "Ein System; ein vollständiges Bild der HSE-Leistung",
     trSub: "Statt verstreuter Dateien und manuellem Nachfassen – eine kohärente Plattform für den gesamten HSE-Zyklus.",
     trust: ["Weniger Zeit für Erfassung und Nachverfolgung", "Prozesstransparenz", "Schneller Zugriff auf Informationen", "Management-Berichte", "Bessere Risikokontrolle", "Höhere Produktivität des HSE-Teams"],
@@ -548,7 +521,7 @@ const L = {
     fSub: "Schnelle Einrichtung • Einfache Oberfläche • Webzugriff",
     ftBlurb: "Integriertes Management von Sicherheit, Gesundheit und Umwelt – für ein datenbasiertes Management Ihrer HSE-Prozesse.",
     ftProduct: "Produkt", ftCompany: "Unternehmen", ftStart: "Loslegen",
-    ftLinks: ["Funktionen", "Module", "Preise", "Über", "Kontakt", "AGB & Datenschutz", "Kostenlos starten", "Anmelden"],
+    ftLinks: ["Funktionen", "Module", "Über", "Kontakt", "AGB & Datenschutz", "Kostenlos starten", "Anmelden"],
     rights: "Alle Rechte vorbehalten.",
     heroPh: "Hier steht ein echtes Foto einer Industrieanlage und einer HSE-Fachkraft",
     kpiToday: "Sicherheitsindex heute",
@@ -654,7 +627,6 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
 
   const [scrolled, setScrolled] = useState(false);
   const [mNav, setMNav] = useState(false);
-  const [yearly, setYearly] = useState(false);
   const [modCat, setModCat] = useState(0);
   const rootRef = useReveal();
 
@@ -679,7 +651,7 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
     const el = document.getElementById("lp-" + id);
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
-  const NAV_IDS = ["top", "features", "modules", "benefits", "pricing", "about", "contact"];
+  const NAV_IDS = ["top", "features", "modules", "benefits", "about", "contact"];
 
   const ann = Array.isArray(announcements) && announcements.length > 0 ? announcements[0] : null;
   const shownMods = (x.mods || []).filter((m) => modCat === 0 || CAT_INDEX[m.category] === modCat);
@@ -943,42 +915,6 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
         </div>
       </section>
 
-      {/* PRICING */}
-      <section className="showcase" id="lp-pricing">
-        <div className="wrap">
-          <div className="center" data-rv>
-            <span className="eyebrow">{x.prEyebrow}</span>
-            <h2 className="h2">{x.prH2}</h2>
-            <div className="toggle">
-              <button type="button" className={!yearly ? "on" : ""} onClick={() => setYearly(false)}>{x.prMonthly}</button>
-              <button type="button" className={yearly ? "on" : ""} onClick={() => setYearly(true)}>{x.prYearly}</button>
-            </div>
-            <div className="save">{x.prSave}</div>
-          </div>
-          <div className="price-grid">
-            {x.plans.map(([name, forWho, m, y, features], i) => {
-              const price = yearly ? y : m;
-              const showUnit = price !== x.prCustom && price !== "—";
-              return (
-                <div key={name} className={"card plan" + (i === 1 ? " pop" : "")} data-rv>
-                  {i === 1 && <span className="badge">{x.prBadge}</span>}
-                  <div className="pName">{name}</div>
-                  <div className="pFor">{forWho}</div>
-                  <div className="pPrice">{price}{showUnit && <small> {yearly ? x.prUnitY : x.prUnitM}</small>}</div>
-                  <ul>
-                    {features.map((f) => <li key={f}><Check size={14} /> {f}</li>)}
-                  </ul>
-                  <button type="button" className={"btn " + (i === 1 ? "btn-primary" : "btn-ghost")} style={{ marginTop: "auto" }} onClick={onStartFree}>
-                    {x.ctaPrimary}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-          <p className="center" style={{ fontSize: 12.5, color: C.ink3, marginTop: 22 }}>{x.prNote}</p>
-        </div>
-      </section>
-
       {/* TRUST */}
       <section id="lp-about">
         <div className="wrap">
@@ -1026,18 +962,17 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
               <h4>{x.ftProduct}</h4>
               <a href="#lp-features" onClick={(e) => { e.preventDefault(); go("features"); }}>{x.ftLinks[0]}</a>
               <a href="#lp-modules" onClick={(e) => { e.preventDefault(); go("modules"); }}>{x.ftLinks[1]}</a>
-              <a href="#lp-pricing" onClick={(e) => { e.preventDefault(); go("pricing"); }}>{x.ftLinks[2]}</a>
             </div>
             <div>
               <h4>{x.ftCompany}</h4>
-              <a href="#lp-about" onClick={(e) => { e.preventDefault(); go("about"); }}>{x.ftLinks[3]}</a>
-              <a href="#lp-contact" onClick={(e) => { e.preventDefault(); go("contact"); }}>{x.ftLinks[4]}</a>
-              <a href="#lp-about" onClick={(e) => { e.preventDefault(); go("about"); }}>{x.ftLinks[5]}</a>
+              <a href="#lp-about" onClick={(e) => { e.preventDefault(); go("about"); }}>{x.ftLinks[2]}</a>
+              <a href="#lp-contact" onClick={(e) => { e.preventDefault(); go("contact"); }}>{x.ftLinks[3]}</a>
+              <a href="#lp-about" onClick={(e) => { e.preventDefault(); go("about"); }}>{x.ftLinks[4]}</a>
             </div>
             <div>
               <h4>{x.ftStart}</h4>
-              <a href="#" onClick={(e) => { e.preventDefault(); onStartFree(); }}>{x.ftLinks[6]}</a>
-              <a href="#" onClick={(e) => { e.preventDefault(); onUserLogin(); }}>{x.ftLinks[7]}</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); onStartFree(); }}>{x.ftLinks[5]}</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); onUserLogin(); }}>{x.ftLinks[6]}</a>
             </div>
           </div>
           <div className="base">
