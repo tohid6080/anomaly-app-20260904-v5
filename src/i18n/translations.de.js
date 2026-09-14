@@ -4592,7 +4592,10 @@ export const de = {
 
   // ---------- SuperAdmin: Nachunternehmer eines Unternehmens ----------
   "saContractorSubsidiariesTitle": "Zugehörige Nachunternehmer",
-  "saContractorSubsidiariesNote": "Die Liste der Nachunternehmen, die diesem (Auftraggeber-)Unternehmen zugeordnet sind. Erstellen Sie hier ein neues Nachunternehmer-Konto für dieses Unternehmen — der zugehörige Auftraggeber wird automatisch dieses Unternehmen sein.",
+  "saContractorSubsidiariesNote": "Definieren Sie hier zuerst die Namen der Nachunternehmen dieses (Auftraggeber-)Unternehmens. Beim Anlegen eines Nachunternehmer-Kontos wird der Name dann aus dieser Liste ausgewählt statt frei eingegeben — so kann ein Tippfehler nicht versehentlich ein völlig anderes Unternehmen anlegen.",
   "saNoContractorSubsidiaries": "Diesem Unternehmen sind noch keine Nachunternehmer zugeordnet.",
+  "saContractorCompanyNamePlaceholder": "Namen des Nachunternehmens eingeben",
+  "saAddContractorCompany": "Zur Liste hinzufügen",
+  "saErrContractorCompanyNameRequired": "Der Name des Nachunternehmens ist erforderlich",
   "saAddContractorAccount": "Nachunternehmer-Konto hinzufügen",
 };

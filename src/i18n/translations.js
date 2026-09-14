@@ -2857,12 +2857,24 @@ export const translations = {
     "en": "Subsidiary Contractor Companies"
   },
   "saContractorSubsidiariesNote": {
-    "fa": "فهرستِ شرکت‌های پیمانکاری که زیرمجموعه‌ی این شرکت (کارفرما) هستند. حسابِ پیمانکاریِ جدید برای همین شرکت را از همین‌جا بسازید — کارفرمایش به‌صورت خودکار همین شرکت خواهد بود.",
-    "en": "The list of contractor companies that are subsidiaries of this (employer) company. Create a new contractor account for this company right here — its employer will automatically be this company."
+    "fa": "اول نامِ شرکت‌های پیمانکاریِ زیرمجموعه‌ی این شرکت (کارفرما) را همین‌جا تعریف کنید. بعد، هنگامِ ساختِ حسابِ پیمانکار، به‌جای تایپِ آزادِ نام، از همین فهرست انتخاب می‌شود — تا یک اشتباهِ تایپی باعثِ ثبتِ ناخواسته‌ی یک شرکتِ کاملاً متفاوت نشود.",
+    "en": "First define the names of this (employer) company's subsidiary contractor companies right here. Then, when creating a contractor account, the name is picked from this list instead of typed freely — so a typo can't accidentally register an entirely different company."
   },
   "saNoContractorSubsidiaries": {
     "fa": "این شرکت هنوز هیچ شرکتِ پیمانکاریِ زیرمجموعه‌ای ندارد.",
     "en": "This company has no subsidiary contractor companies yet."
+  },
+  "saContractorCompanyNamePlaceholder": {
+    "fa": "نامِ شرکتِ پیمانکاری را وارد کنید",
+    "en": "Enter the contractor company's name"
+  },
+  "saAddContractorCompany": {
+    "fa": "افزودن به فهرست",
+    "en": "Add to list"
+  },
+  "saErrContractorCompanyNameRequired": {
+    "fa": "نامِ شرکتِ پیمانکاری الزامی است",
+    "en": "Contractor company name is required"
   },
   "saAddContractorAccount": {
     "fa": "افزودنِ حسابِ پیمانکارِ زیرمجموعه",
