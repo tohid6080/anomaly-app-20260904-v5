@@ -10472,6 +10472,8 @@ export const translations = {
   "pssrGroupTitleFa": { "fa": "سرتیتر بخش (فارسی)", "en": "Group title (Persian)" },
   "pssrRequirementTextEn": { "fa": "متن الزام (انگلیسی — مرجع)", "en": "Requirement text (English — reference)" },
   "pssrRequirementTextFaHint": { "fa": "ترجمه‌ی فارسی (اختیاری — خالی بماند یعنی همان متن انگلیسی نمایش داده شود)", "en": "Persian translation (optional — leave empty to fall back to the English text)" },
+  "pssrGroupTitleDe": { "fa": "سرتیتر بخش (آلمانی)", "en": "Group title (German)" },
+  "pssrRequirementTextDeHint": { "fa": "ترجمه‌ی آلمانی (اختیاری — خالی بماند یعنی همان متن انگلیسی نمایش داده شود)", "en": "German translation (optional — leave empty to fall back to the English text)" },
   "pssrNoRequirementsYet": { "fa": "هنوز Requirementی در این چک‌لیست نیست.", "en": "This checklist has no requirements yet." },
   "pssrSaveAsNewVersion": { "fa": "ذخیره به‌عنوان نگارش جدید", "en": "Save as new version" },
   "pssrVersionSaved": { "fa": "نگارش {version} ذخیره شد.", "en": "Version {version} saved." },

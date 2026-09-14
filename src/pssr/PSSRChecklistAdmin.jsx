@@ -12,6 +12,7 @@ function toDraft(requirements) {
   return requirements.map((r) => ({
     reqNo: r.reqNo, groupTitle: r.groupTitle, requirementText: r.requirementText,
     groupTitleFa: r.groupTitleFa, requirementTextFa: r.requirementTextFa,
+    groupTitleDe: r.groupTitleDe, requirementTextDe: r.requirementTextDe,
   }));
 }
 
@@ -53,6 +54,7 @@ export default function PSSRChecklistAdmin({ currentUser, onBack }) {
   const addRow = () => setDraft((d) => [...d, {
     reqNo: "", groupTitle: d.length > 0 ? d[d.length - 1].groupTitle : "", requirementText: "",
     groupTitleFa: d.length > 0 ? d[d.length - 1].groupTitleFa : "", requirementTextFa: "",
+    groupTitleDe: d.length > 0 ? d[d.length - 1].groupTitleDe : "", requirementTextDe: "",
   }]);
 
   const handleSave = async () => {
@@ -102,14 +104,17 @@ export default function PSSRChecklistAdmin({ currentUser, onBack }) {
             <div>
               {draft.map((r, i) => (
                 <div key={i} style={{ padding: "10px 16px", borderBottom: `1px solid ${THEME.borderSoft}`, display: "flex", gap: 8, alignItems: "flex-start" }}>
+                  <input style={{ ...inputStyle, width: 44, flex: "none" }} value={r.reqNo} onChange={(e) => setRow(i, { reqNo: e.target.value })} dir="ltr" placeholder="#" />
                   <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <input style={{ ...inputStyle, width: 56, flex: "none" }} value={r.reqNo} onChange={(e) => setRow(i, { reqNo: e.target.value })} dir="ltr" placeholder="#" />
-                      <input style={{ ...inputStyle, flex: 1 }} value={r.groupTitle || ""} onChange={(e) => setRow(i, { groupTitle: e.target.value })} dir="ltr" placeholder={t("pssrGroupTitle")} />
-                      <input style={{ ...inputStyle, flex: 1 }} value={r.groupTitleFa || ""} onChange={(e) => setRow(i, { groupTitleFa: e.target.value })} dir="rtl" placeholder={t("pssrGroupTitleFa")} />
-                    </div>
-                    <textarea style={{ ...inputStyle, minHeight: 40, resize: "vertical" }} value={r.requirementText} onChange={(e) => setRow(i, { requirementText: e.target.value })} dir="ltr" placeholder={t("pssrRequirementTextEn")} />
-                    <textarea style={{ ...inputStyle, minHeight: 40, resize: "vertical" }} value={r.requirementTextFa || ""} onChange={(e) => setRow(i, { requirementTextFa: e.target.value })} dir="rtl" placeholder={t("pssrRequirementTextFaHint")} />
+                    <LangRow label="EN" group={r.groupTitle} text={r.requirementText} groupDir="ltr" textDir="ltr"
+                      groupPh={t("pssrGroupTitle")} textPh={t("pssrRequirementTextEn")}
+                      onGroup={(v) => setRow(i, { groupTitle: v })} onText={(v) => setRow(i, { requirementText: v })} />
+                    <LangRow label="FA" group={r.groupTitleFa} text={r.requirementTextFa} groupDir="rtl" textDir="rtl"
+                      groupPh={t("pssrGroupTitleFa")} textPh={t("pssrRequirementTextFaHint")}
+                      onGroup={(v) => setRow(i, { groupTitleFa: v })} onText={(v) => setRow(i, { requirementTextFa: v })} />
+                    <LangRow label="DE" group={r.groupTitleDe} text={r.requirementTextDe} groupDir="ltr" textDir="ltr"
+                      groupPh={t("pssrGroupTitleDe")} textPh={t("pssrRequirementTextDeHint")}
+                      onGroup={(v) => setRow(i, { groupTitleDe: v })} onText={(v) => setRow(i, { requirementTextDe: v })} />
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
                     <button type="button" onClick={() => moveRow(i, -1)} disabled={i === 0} style={iconBtn}><ArrowUp size={12} /></button>
@@ -135,3 +140,15 @@ export default function PSSRChecklistAdmin({ currentUser, onBack }) {
 }
 
 const iconBtn = { display: "flex", alignItems: "center", justifyContent: "center", width: 24, height: 22, border: `1px solid ${THEME.border}`, background: THEME.surface, borderRadius: 6, cursor: "pointer", color: THEME.text2 };
+
+// یک ردیفِ ویرایشِ یک زبان (سرتیترِ گروه + متنِ Requirement) — هر سه زبان
+// (EN/FA/DE) همین شکل را دارند، فقط جهت و placeholder فرق می‌کند.
+function LangRow({ label, group, text, groupDir, textDir, groupPh, textPh, onGroup, onText }) {
+  return (
+    <div style={{ display: "flex", gap: 6, alignItems: "flex-start" }}>
+      <span style={{ flex: "none", width: 22, marginTop: 8, fontSize: 9.5, fontWeight: 800, color: THEME.text3, textAlign: "center" }}>{label}</span>
+      <input style={{ ...inputStyle, flex: 1 }} value={group || ""} onChange={(e) => onGroup(e.target.value)} dir={groupDir} placeholder={groupPh} />
+      <textarea style={{ ...inputStyle, flex: 2, minHeight: 40, resize: "vertical" }} value={text || ""} onChange={(e) => onText(e.target.value)} dir={textDir} placeholder={textPh} />
+    </div>
+  );
+}

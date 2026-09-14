@@ -96,6 +96,7 @@ function requirementFromRow(r) {
     id: r.id, checklistTemplateId: r.checklist_template_id, reqNo: r.req_no || "",
     groupTitle: r.group_title || "", requirementText: r.requirement_text || "",
     groupTitleFa: r.group_title_fa || "", requirementTextFa: r.requirement_text_fa || "",
+    groupTitleDe: r.group_title_de || "", requirementTextDe: r.requirement_text_de || "",
     orderIndex: r.order_index || 0,
   };
 }
@@ -123,11 +124,11 @@ export async function loadCurrentChecklists() {
 // همان مواردِ کم‌شده را تکمیل می‌کند — هرگز ردیفِ موجودی را حذف نمی‌کند
 // (چون ممکن است همان‌ها قبلاً در یک جلسه‌ی واقعی پاسخ گرفته باشند)، پس
 // هربار اجرا با خیال راحت قابلِ تکرار است.
-// همین «خودترمیمی» برای ترجمه‌ی فارسی هم به کار می‌رود: اگر ردیفی از قبل
-// وارد شده ولی requirement_text_fa هنوز خالی است (مثلاً چون قبل از افزودنِ
-// دوزبانگی seed شده)، همین‌جا با PATCH پر می‌شود — یعنی شرکت‌هایی که قبلاً
-// این چک‌لیست‌ها را وارد کرده‌اند، فقط با زدنِ دوباره‌ی همین دکمه، ترجمه‌ی
-// فارسی را هم می‌گیرند، بدون درجِ ردیفِ تکراری.
+// همین «خودترمیمی» برای ترجمه‌ی فارسی/آلمانی هم به کار می‌رود: اگر ردیفی
+// از قبل وارد شده ولی requirement_text_fa/requirement_text_de هنوز خالی‌اند
+// (مثلاً چون قبل از افزودنِ آن زبان seed شده)، همین‌جا با PATCH پر می‌شوند —
+// یعنی شرکت‌هایی که قبلاً این چک‌لیست‌ها را وارد کرده‌اند، فقط با زدنِ
+// دوباره‌ی همین دکمه، ترجمه‌های تازه را هم می‌گیرند، بدون درجِ ردیفِ تکراری.
 export async function seedOfficialChecklists(createdBy) {
   const companyId = getCurrentCompanyId();
   const existing = await sb(`pssr_checklist_templates?is_current=eq.true&select=id,code&company_id=eq.${companyId}`);
@@ -155,20 +156,25 @@ export async function seedOfficialChecklists(createdBy) {
     }
 
     // تطبیق بر اساسِ order_index (۱ به ۱ با آرایه‌ی seed مطابقت دارد).
-    const existingReqs = await sb(`pssr_requirement_templates?checklist_template_id=eq.${templateId}&select=id,order_index,requirement_text_fa`);
+    const existingReqs = await sb(`pssr_requirement_templates?checklist_template_id=eq.${templateId}&select=id,order_index,requirement_text_fa,requirement_text_de`);
     const existingByOrder = {};
     (sbOk(existingReqs) ? existingReqs : []).forEach((r) => { existingByOrder[r.order_index] = r; });
 
     const missing = cl.requirements.filter((r) => !existingByOrder[r.order]);
-    const needsFaBackfill = cl.requirements.filter((r) => existingByOrder[r.order] && !existingByOrder[r.order].requirement_text_fa && r.textFa);
+    const needsBackfill = cl.requirements.filter((r) => {
+      const ex = existingByOrder[r.order];
+      if (!ex) return false;
+      return (!ex.requirement_text_fa && r.textFa) || (!ex.requirement_text_de && r.textDe);
+    });
 
     let touched = false;
 
     if (missing.length > 0) {
       const reqPayload = missing.map((r) => ({
         id: uid("psreq"), checklist_template_id: templateId, company_id: companyId,
-        req_no: r.reqNo, group_title: r.group, group_title_fa: r.groupFa, requirement_text: r.text,
-        requirement_text_fa: r.textFa || "", order_index: r.order,
+        req_no: r.reqNo, group_title: r.group, group_title_fa: r.groupFa, group_title_de: r.groupDe,
+        requirement_text: r.text, requirement_text_fa: r.textFa || "", requirement_text_de: r.textDe || "",
+        order_index: r.order,
       }));
       let allOk = true;
       for (let i = 0; i < reqPayload.length; i += 100) {
@@ -179,9 +185,12 @@ export async function seedOfficialChecklists(createdBy) {
       touched = true;
     }
 
-    for (const r of needsFaBackfill) {
+    for (const r of needsBackfill) {
       const patchResult = await sb(`pssr_requirement_templates?id=eq.${existingByOrder[r.order].id}`, {
-        method: "PATCH", body: JSON.stringify({ requirement_text_fa: r.textFa, group_title_fa: r.groupFa }),
+        method: "PATCH", body: JSON.stringify({
+          requirement_text_fa: r.textFa, group_title_fa: r.groupFa,
+          requirement_text_de: r.textDe, group_title_de: r.groupDe,
+        }),
       });
       if (!sbOk(patchResult)) { failedCodes.push(cl.code); touched = false; break; }
       touched = true;
@@ -216,8 +225,9 @@ export async function createChecklistVersion(checklistTemplateId, requirements, 
 
   const payload = requirements.map((r, i) => ({
     id: uid("psreq"), checklist_template_id: newId, company_id: old.company_id,
-    req_no: r.reqNo || "", group_title: r.groupTitle || null, group_title_fa: r.groupTitleFa || null,
-    requirement_text: r.requirementText || "", requirement_text_fa: r.requirementTextFa || "", order_index: i + 1,
+    req_no: r.reqNo || "", group_title: r.groupTitle || null, group_title_fa: r.groupTitleFa || null, group_title_de: r.groupTitleDe || null,
+    requirement_text: r.requirementText || "", requirement_text_fa: r.requirementTextFa || "", requirement_text_de: r.requirementTextDe || "",
+    order_index: i + 1,
   }));
   for (let i = 0; i < payload.length; i += 100) {
     const rows = await sb("pssr_requirement_templates", { method: "POST", body: JSON.stringify(payload.slice(i, i + 100)) });

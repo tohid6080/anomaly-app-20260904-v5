@@ -124,7 +124,7 @@ export async function submitMeetingResponses(pssrId, meetingId, entries, perform
           payload: {
             pssr_id: pssrId, requirement_template_id: e.requirementTemplateId, company_id: getCurrentCompanyId(),
             discipline: e.discipline, req_no: e.reqNo || "", requirement_text: e.requirementText || "",
-            requirement_text_fa: e.requirementTextFa || "",
+            requirement_text_fa: e.requirementTextFa || "", requirement_text_de: e.requirementTextDe || "",
             cat: e.cat || null, action_comment: e.comment || "",
             responsible_account_type: responsible?.accountType || null,
             responsible_contractor_id: responsible?.accountType === "contractor" ? responsible.contractorId : null,
@@ -183,7 +183,7 @@ function actionItemFromRow(r) {
   return {
     id: r.id, pssrId: r.pssr_id, requirementTemplateId: r.requirement_template_id,
     discipline: r.discipline, reqNo: r.req_no || "", requirementText: r.requirement_text || "",
-    requirementTextFa: r.requirement_text_fa || "",
+    requirementTextFa: r.requirement_text_fa || "", requirementTextDe: r.requirement_text_de || "",
     cat: r.cat || "", actionComment: r.action_comment || "",
     responsibleAccountType: r.responsible_account_type || "",
     responsibleName: r.responsible_account_type === "employer" ? (r.employer_accounts?.name || "") : (r.contractors?.contact_person_name || ""),

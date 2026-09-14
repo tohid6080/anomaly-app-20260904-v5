@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { styles, THEME } from "../shared.js";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
-import { PSSR_DISCIPLINES, CAT_TYPES, ACTION_STATUS_META, disciplineLabel, catLabel, bilingualText } from "./pssrModel.js";
+import { PSSR_DISCIPLINES, CAT_TYPES, ACTION_STATUS_META, disciplineLabel, catLabel, localizedText } from "./pssrModel.js";
 import { StatusBadge } from "./pssrUi.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
@@ -60,7 +60,7 @@ export default function PSSRActionPlanPanel({ actionItems }) {
         {filtered.map((a) => {
           const meta = ACTION_STATUS_META[a.status] || ACTION_STATUS_META.open;
           const overdue = isOverdue(a);
-          const reqDisplay = bilingualText(a.requirementText, a.requirementTextFa, lang);
+          const reqDisplay = localizedText(a.requirementText, a.requirementTextFa, a.requirementTextDe, lang);
           return (
             <div key={a.id} style={{ background: THEME.surface, border: `1px solid ${overdue ? THEME.danger : THEME.border}`, borderRadius: 14, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
               <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
