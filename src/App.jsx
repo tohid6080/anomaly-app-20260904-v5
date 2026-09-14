@@ -1890,7 +1890,7 @@ function ProfileView({ onBack, currentUser, roleLabel, mobileTabsProps }) {
           {apMsg && <p style={{ fontSize: 12, color: THEME.ok, marginTop: 8 }}>{apMsg}</p>}
         </div>
 
-        {currentUser?.role === "HSE_SUPERVISOR" && <ChangePasswordSection />}
+        <ChangePasswordSection />
 
         <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 14, marginTop: 14 }}>
           <p style={{ fontSize: 11, color: THEME.text3, fontWeight: 700, marginBottom: 10 }}>{t("contactInfoTitle")}</p>

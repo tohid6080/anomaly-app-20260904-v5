@@ -1,10 +1,11 @@
 // supabase/functions/change-password/index.ts
 //
-// تغییر رمز عبور شخصی — برای Admin یا Super Admin، هرکدام فقط برای حساب
-// خودشان (شناسه‌ی هدف از خودِ claims امن توکن گرفته می‌شود، نه از چیزی که
-// کلاینت در بدنه‌ی درخواست بفرستد — تا کسی نتواند با این مسیر رمز شخص
-// دیگری را عوض کند). نیازمند دانستن رمز عبور فعلی است؛ برای Reset رمز یک
-// Admin توسط Super Admin بدون دانستن رمز فعلی، از manage-account استفاده می‌شود.
+// تغییر رمز عبور شخصی — برای هر کاربرِ واردشده (کارفرما/سرپرست HSE/
+// پیمانکار/Super Admin)، هرکدام فقط برای حساب خودشان (شناسه‌ی هدف از خودِ
+// claims امن توکن گرفته می‌شود، نه از چیزی که کلاینت در بدنه‌ی درخواست
+// بفرستد — تا کسی نتواند با این مسیر رمز شخص دیگری را عوض کند). نیازمند
+// دانستن رمز عبور فعلی است؛ برای Reset رمز یک حساب توسط Super Admin بدون
+// دانستن رمز فعلی، از manage-account استفاده می‌شود.
 //
 // Deploy:
 //   supabase functions deploy change-password
@@ -45,6 +46,16 @@ Deno.serve(async (req) => {
       if (!match) return json({ error: "رمز عبور فعلی اشتباه است" }, 401);
       await callRpc("set_super_admin_password", { p_id: match.id, p_new_password: newPassword });
       await logAudit({ action: "change_own_password", target_type: "super_admin", target_id: match.id, target_username: username, performed_by: username, performed_by_role: "super_admin" });
+      return json({ ok: true });
+    }
+
+    // پیمانکار — جدول و توابع تأیید/تنظیمِ رمزِ جداگانه دارد
+    if (claims.app_role === "contractor") {
+      const verify = await callRpc("verify_contractor_password", { p_username: username, p_password: oldPassword });
+      const match = verify.ok && Array.isArray(verify.data) && verify.data.length > 0 ? verify.data[0] : null;
+      if (!match) return json({ error: "رمز عبور فعلی اشتباه است" }, 401);
+      await callRpc("set_contractor_password", { p_id: match.id, p_new_password: newPassword });
+      await logAudit({ action: "change_own_password", target_type: "contractor", target_id: match.id, target_username: username, performed_by: username, performed_by_role: "contractor" });
       return json({ ok: true });
     }
 
