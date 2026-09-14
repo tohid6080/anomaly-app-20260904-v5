@@ -5,7 +5,7 @@ import { JalaliDateInput, toJalaliSafe } from "../personnel/jalaliDate.jsx";
 import { loadCurrentChecklists, seedOfficialChecklists } from "./pssrApi.js";
 import { PSSR_CHECKLIST_SEED } from "./pssrChecklistSeedData.js";
 import { createMeeting, loadLatestResponsePerRequirement, loadActionHistory, submitMeetingResponses } from "./pssrMeetingsApi.js";
-import { disciplineLabel, catLabel, ACTION_STATUS_META, bilingualText } from "./pssrModel.js";
+import { disciplineLabel, catLabel, ACTION_STATUS_META } from "./pssrModel.js";
 import { Field, YnaToggle, CatPicker, StatusBadge } from "./pssrUi.jsx";
 import { createMeetingChannel, subscribeMeetingChannel, sendDraftChange, sendFloorControl, leaveMeetingChannel } from "./pssrRealtime.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
@@ -13,7 +13,7 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
 const inputStyle = styles.input;
 
 export default function PSSRMeetingsPanel({ pssrId, meetings, teamMembers, actionItems, currentUser, role, readOnly, onChanged }) {
-  const { t, dir, lang } = useLanguage();
+  const { t, dir } = useLanguage();
   const [checklists, setChecklists] = useState(null); // null = در حال بارگذاری
   const [seeding, setSeeding] = useState(false);
   const [seedMsg, setSeedMsg] = useState("");
@@ -107,8 +107,8 @@ export default function PSSRMeetingsPanel({ pssrId, meetings, teamMembers, actio
     setSelectedMeetingId(m.id);
   };
 
-  const openHistory = async (reqId, textEn, textFa) => {
-    setHistoryFor({ reqId, textEn, textFa });
+  const openHistory = async (reqId, text) => {
+    setHistoryFor({ reqId, text });
     const action = actionItems.find((a) => a.requirementTemplateId === reqId);
     setHistoryRows(action ? await loadActionHistory(action.id) : []);
   };
@@ -119,8 +119,7 @@ export default function PSSRMeetingsPanel({ pssrId, meetings, teamMembers, actio
       .map(([reqId, v]) => {
         const req = findRequirement(checklists, reqId);
         return {
-          requirementTemplateId: reqId, discipline: req?.discipline, reqNo: req?.reqNo,
-          requirementText: req?.requirementText, requirementTextFa: req?.requirementTextFa,
+          requirementTemplateId: reqId, discipline: req?.discipline, reqNo: req?.reqNo, requirementText: req?.requirementText,
           status: v.status, comment: v.comment || "", actionByText: v.actionByText || "", cat: v.cat || "", deadline: v.deadline || "",
         };
       });
@@ -235,20 +234,18 @@ export default function PSSRMeetingsPanel({ pssrId, meetings, teamMembers, actio
                   const entry = draft[r.id] || {};
                   const latestForReq = latest[r.id];
                   const showHistoryHint = latestForReq && latestForReq.meetingNo && latestForReq.meetingNo !== selectedMeeting.meetingNo;
-                  const reqDisplay = bilingualText(r.requirementText, r.requirementTextFa, lang);
-                const groupDisplay = bilingualText(r.groupTitle, r.groupTitleFa, lang).text;
-                return (
+                  return (
                     <div key={r.id}>
                       {r.groupTitle && r.groupTitle !== prevGroup && (
-                        <div style={{ padding: "8px 16px", background: THEME.surface2, fontSize: 10.5, fontWeight: 800, color: THEME.teal }}>{groupDisplay}</div>
+                        <div style={{ padding: "8px 16px", background: THEME.surface2, fontSize: 10.5, fontWeight: 800, color: THEME.teal }}>{r.groupTitle}</div>
                       )}
                       <div style={{ padding: "12px 16px", borderBottom: `1px solid ${THEME.borderSoft}`, display: "flex", flexDirection: "column", gap: 8 }}>
                         <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
                           <span style={{ flex: "0 0 auto", width: 24, height: 24, borderRadius: 7, background: THEME.surface2, color: THEME.text2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800 }}>{r.reqNo}</span>
                           <div style={{ flex: 1 }}>
-                            <span style={{ fontSize: 13 }} dir={reqDisplay.dir}>{reqDisplay.text}</span>
+                            <span style={{ fontSize: 13 }} dir="ltr">{r.requirementText}</span>
                             {showHistoryHint && (
-                              <div onClick={() => openHistory(r.id, r.requirementText, r.requirementTextFa)} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10.5, color: THEME.warn, background: THEME.warnBg, borderRadius: 7, padding: "2px 7px", marginTop: 5, cursor: "pointer", fontWeight: 700 }}>
+                              <div onClick={() => openHistory(r.id, r.requirementText)} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10.5, color: THEME.warn, background: THEME.warnBg, borderRadius: 7, padding: "2px 7px", marginTop: 5, cursor: "pointer", fontWeight: 700 }}>
                                 <History size={11} /> {t("pssrPreviouslyAnswered", { no: latestForReq.meetingNo, status: t(latestForReq.status === "no" ? "pssrNo" : latestForReq.status === "yes" ? "pssrYes" : "pssrNa") })}
                               </div>
                             )}
@@ -289,7 +286,7 @@ export default function PSSRMeetingsPanel({ pssrId, meetings, teamMembers, actio
       </div>
 
       {historyFor && (
-        <ActionHistoryModal reqInfo={historyFor} rows={historyRows} onClose={() => setHistoryFor(null)} t={t} lang={lang} />
+        <ActionHistoryModal reqInfo={historyFor} rows={historyRows} onClose={() => setHistoryFor(null)} t={t} />
       )}
     </div>
   );
@@ -303,14 +300,13 @@ function findRequirement(checklists, reqId) {
   return null;
 }
 
-function ActionHistoryModal({ reqInfo, rows, onClose, t, lang }) {
-  const reqDisplay = bilingualText(reqInfo.textEn, reqInfo.textFa, lang);
+function ActionHistoryModal({ reqInfo, rows, onClose, t }) {
   return (
     <div onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       style={{ position: "fixed", inset: 0, background: "rgba(7,15,22,.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 16 }}>
       <div style={{ background: THEME.surface, borderRadius: 16, maxWidth: 460, width: "100%", padding: 18, maxHeight: "80vh", overflow: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10, gap: 8 }}>
-          <b style={{ fontSize: 13 }} dir={reqDisplay.dir}>{reqDisplay.text}</b>
+          <b style={{ fontSize: 13 }} dir="ltr">{reqInfo.text}</b>
           <X size={16} style={{ cursor: "pointer", flex: "0 0 auto" }} onClick={onClose} />
         </div>
         {rows.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("pssrHistoryEmpty")}</p>}
