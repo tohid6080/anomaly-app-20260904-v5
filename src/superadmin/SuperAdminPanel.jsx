@@ -10,7 +10,7 @@ import { uploadBase64ToStorage, deleteFromStorage, parseStorageUrl } from "../of
 import AccountManagement, { AccountForm, emptyForm as emptyAccountForm } from "./AccountManagement.jsx";
 import PricingConsole from "./PricingConsole.jsx";
 import { loadCompanyModules, addCompanyModule, updateCompanyModule, removeCompanyModule } from "./companyModulesApi.js";
-import { loadModulePrices } from "../pricingApi.js";
+import { loadModulePrices, loadServices } from "../pricingApi.js";
 import AdminAnalytics from "../admin/AdminAnalytics.jsx";
 import LandingPageManagementTab from "./LandingPageManagementTab.jsx";
 import { toJalaliSafe, toJalaliDateTime, JalaliDateInput } from "../personnel/jalaliDate.jsx";
@@ -32,6 +32,7 @@ import {
   copyBowtiesToCompany, copyRiskKnowledgeToCompany,
   loadCardTransferPayments, approveCardTransferPayment, rejectCardTransferPayment, saveCardTransferSettings,
   loadTrialRequests, approveTrialRequest, rejectTrialRequest,
+  loadGuestPurchaseRequests, approveGuestPurchaseRequest, rejectGuestPurchaseRequest,
 } from "./superAdminApi.js";
 import { computeSubscriptionAccess, loadOnlinePaymentsForCompany, loadCardTransferSettings } from "../subscriptionApi.js";
 import { loadErrorReports, updateErrorReportStatus } from "../errorReportsApi.js";
@@ -57,7 +58,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
   // صفحه بمانیم، نه اینکه به «نمای کلی» برگردیم.
   const [page, setPage] = usePersistedState("ihms_sa_page", "overview");
   useEffect(() => {
-    const VALID = ["overview", "companies", "accounts", "plans", "monitoring", "storage", "auditLog", "errorReports", "systemConfig", "cardTransferPayments", "trialRequests"];
+    const VALID = ["overview", "companies", "accounts", "plans", "monitoring", "storage", "auditLog", "errorReports", "systemConfig", "cardTransferPayments", "trialRequests", "guestPurchases"];
     if (!VALID.includes(page)) setPage("overview");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -155,6 +156,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
     { labelKey: "saNavGroupBilling", items: [
       { key: "cardTransferPayments", labelKey: "saNavCardPayments", icon: CreditCard },
       { key: "trialRequests", labelKey: "saNavTrialRequests", icon: ClipboardList },
+      { key: "guestPurchases", labelKey: "saNavGuestPurchases", icon: Send },
     ] },
   ];
 
@@ -234,6 +236,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
           {page === "errorReports" && <ErrorReportsPage currentAdmin={currentAdmin} />}
           {page === "cardTransferPayments" && <CardTransferPaymentsPage currentAdmin={currentAdmin} />}
           {page === "trialRequests" && <TrialRequestsPage currentAdmin={currentAdmin} />}
+          {page === "guestPurchases" && <GuestPurchaseRequestsPage currentAdmin={currentAdmin} />}
         </div>
       </div>
     </div>
@@ -247,12 +250,14 @@ function DashboardOverview({ companies, summary, usageStats, onNavigate }) {
   const [paymentAlertCount, setPaymentAlertCount] = useState(null);
   const [openErrorCount, setOpenErrorCount] = useState(null);
   const [pendingTrialCount, setPendingTrialCount] = useState(null);
+  const [pendingGuestPurchaseCount, setPendingGuestPurchaseCount] = useState(null);
   const [recentActivity, setRecentActivity] = useState(null);
 
   useEffect(() => {
     // این‌ها به companies وابسته نیستند — یک بار در mount.
     loadErrorReports("open").then((r) => setOpenErrorCount(Array.isArray(r) ? r.length : 0)).catch(() => setOpenErrorCount(0));
     loadTrialRequests("pending").then((r) => setPendingTrialCount(Array.isArray(r) ? r.length : 0)).catch(() => setPendingTrialCount(0));
+    loadGuestPurchaseRequests("pending").then((r) => setPendingGuestPurchaseCount(Array.isArray(r) ? r.length : 0)).catch(() => setPendingGuestPurchaseCount(0));
     loadAuditLog(6).then((r) => setRecentActivity(Array.isArray(r) ? r : [])).catch(() => setRecentActivity([]));
   }, []);
 
@@ -330,6 +335,11 @@ function DashboardOverview({ companies, summary, usageStats, onNavigate }) {
           icon={ClipboardList} color={THEME.warn} bg={THEME.warnBg}
           label={t("saPendingTrialsLabel")} value={pendingTrialCount}
           onClick={() => onNavigate("trialRequests")}
+        />
+        <AttentionCard
+          icon={Send} color={THEME.warn} bg={THEME.warnBg}
+          label={t("saPendingGuestPurchasesLabel")} value={pendingGuestPurchaseCount}
+          onClick={() => onNavigate("guestPurchases")}
         />
       </div>
 
@@ -3274,6 +3284,165 @@ function TrialRequestsPage({ currentAdmin }) {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------- درخواست‌های «خرید مستقیمِ بازدیدکننده» ----------
+// از صفحه‌ی عمومیِ «مشاهده پلن‌ها برای خرید» (پیش از ورود، PublicPurchaseForm
+// در SubscriptionGate.jsx → Edge Function submit-guest-purchase-request)
+// می‌آید — شاملِ ماژول/خدماتِ انتخابی و رسیدِ کارت‌به‌کارت. دقیقاً همان
+// فلسفه‌ی TrialRequestsPage بالا: تأیید اینجا فقط تصمیم را ثبت می‌کند؛ ساختِ
+// واقعیِ شرکت/حساب و تأییدِ نهاییِ رسید همچنان از مسیرهای موجود («شرکت‌ها» +
+// «پرداخت‌های کارت‌به‌کارت») به‌صورت دستی انجام می‌شود.
+function GuestPurchaseRequestsPage({ currentAdmin }) {
+  const { t, dir } = useLanguage();
+  const [statusFilter, setStatusFilter] = useState("pending");
+  const [rows, setRows] = useState(null);
+  const [moduleLabels, setModuleLabels] = useState({});
+  const [serviceLabels, setServiceLabels] = useState({});
+  const [expandedId, setExpandedId] = useState(null);
+  const [noteDraft, setNoteDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [viewerSrc, setViewerSrc] = useState(null);
+
+  const load = () => loadGuestPurchaseRequests(statusFilter).then(setRows);
+  useEffect(() => { setRows(null); load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [statusFilter]);
+  useEffect(() => {
+    Promise.all([loadModulePrices(), loadServices()]).then(([mods, svcs]) => {
+      setModuleLabels(Object.fromEntries(mods.map((m) => [m.moduleKey, m.label || m.moduleKey])));
+      setServiceLabels(Object.fromEntries(svcs.map((s) => [s.id, s.name || s.id])));
+    });
+  }, []);
+
+  const openRow = (r) => {
+    if (expandedId === r.id) { setExpandedId(null); return; }
+    setExpandedId(r.id);
+    setNoteDraft("");
+  };
+
+  const handleApprove = async (r) => {
+    setSaving(true);
+    const result = await approveGuestPurchaseRequest(r.id, currentAdmin?.fullName || currentAdmin?.username, noteDraft);
+    setSaving(false);
+    if (result?.__error) { alert(result.message); return; }
+    setExpandedId(null);
+    load();
+  };
+
+  const handleReject = async (r) => {
+    setSaving(true);
+    const result = await rejectGuestPurchaseRequest(r.id, currentAdmin?.fullName || currentAdmin?.username, noteDraft);
+    setSaving(false);
+    if (result?.__error) { alert(result.message); return; }
+    setExpandedId(null);
+    load();
+  };
+
+  const pendingCount = statusFilter === "pending" ? (rows || []).length : null;
+
+  return (
+    <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
+        <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+          <ClipboardList size={14} color={THEME.teal} /> {t("saNavGuestPurchases")}
+          {pendingCount > 0 && (
+            <span style={{ background: THEME.danger, color: "#fff", fontSize: 10.5, fontWeight: 700, borderRadius: 999, minWidth: 19, height: 19, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>
+              {pendingCount}
+            </span>
+          )}
+        </h3>
+        <select style={{ ...inputStyle, width: "auto" }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir={dir}>
+          <option value="all">{t("saAllStatuses")}</option>
+          <option value="pending">{t("saTrStatusPending")}</option>
+          <option value="approved">{t("saTrStatusApproved")}</option>
+          <option value="rejected">{t("saTrStatusRejected")}</option>
+        </select>
+      </div>
+      <p style={{ fontSize: 11, color: THEME.text3, marginBottom: 12 }}>{t("saGprNote")}</p>
+
+      {rows === null && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("commonLoading")}</p>}
+      {rows !== null && rows.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("saTrNoneFound")}</p>}
+
+      {rows && rows.length > 0 && (
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+            <thead>
+              <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
+                <th style={{ textAlign: "start", padding: "6px 8px" }}>{t("saTrColCompany")}</th>
+                <th style={{ textAlign: "start", padding: "6px 8px" }}>{t("saTrColApplicant")}</th>
+                <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saGprColAmount")}</th>
+                <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColTime")}</th>
+                <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("commonStatus")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => {
+                const sm = TRIAL_REQUEST_STATUS_META[r.status] || TRIAL_REQUEST_STATUS_META.pending;
+                return (
+                  <React.Fragment key={r.id}>
+                    <tr style={{ borderBottom: `1px solid ${THEME.border}`, cursor: "pointer" }} onClick={() => openRow(r)}>
+                      <td style={{ padding: "8px", fontWeight: 600 }}>{r.companyName}</td>
+                      <td style={{ padding: "8px" }}>
+                        {r.fullName}
+                        <div style={{ fontSize: 10.5, color: THEME.text3, direction: "ltr", textAlign: "start" }}>{r.phone}</div>
+                      </td>
+                      <td style={{ padding: "8px", textAlign: "center", fontFamily: "monospace", fontWeight: 700 }}>{r.amount.toLocaleString(numLocale())}</td>
+                      <td style={{ padding: "8px", textAlign: "center", color: THEME.text3, whiteSpace: "nowrap" }}>{toJalaliDateTime(r.createdAt)}</td>
+                      <td style={{ padding: "8px", textAlign: "center" }}>
+                        <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: sm.bg, color: sm.color, fontWeight: 700 }}>{t(sm.labelKey)}</span>
+                      </td>
+                    </tr>
+                    {expandedId === r.id && (
+                      <tr>
+                        <td colSpan={5} style={{ padding: "10px 12px", background: THEME.bg }}>
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 6, marginBottom: 10, fontSize: 12, color: THEME.text2 }}>
+                            <p style={{ margin: 0 }}>{t("saTrEmailLabel")}<b style={{ direction: "ltr", display: "inline-block" }}>{r.email || "—"}</b></p>
+                            <p style={{ margin: 0 }}>{t("saGprBillingCycleLabel")}<b>{r.billingCycle === "monthly" ? t("subTypeMonthly") : t("subTypeYearly")}</b></p>
+                            <p style={{ margin: 0 }}>{t("saGprPayerLabel")}<b>{r.payerName}</b> <span style={{ direction: "ltr", display: "inline-block" }}>({r.payerPhone})</span></p>
+                            <p style={{ margin: 0 }}>{t("saGprTrackingLabel")}<b style={{ direction: "ltr", display: "inline-block" }}>{r.trackingNumber || "—"}</b></p>
+                            <p style={{ margin: 0, gridColumn: "1 / -1" }}>
+                              {t("saGprColModules")}<b>{r.selectedModules.length > 0 ? r.selectedModules.map((k) => moduleLabels[k] || k).join(listSep(getCurrentLang())) : "—"}</b>
+                            </p>
+                            {r.selectedServices.length > 0 && (
+                              <p style={{ margin: 0, gridColumn: "1 / -1" }}>
+                                {t("saGprColServices")}<b>{r.selectedServices.map((k) => serviceLabels[k] || k).join(listSep(getCurrentLang()))}</b>
+                              </p>
+                            )}
+                          </div>
+                          {r.receiptImage && (
+                            <button type="button" onClick={() => setViewerSrc(r.receiptImage)} style={{ ...btnStyle(THEME.navyMid), marginBottom: 10 }}>
+                              {t("saGprViewReceipt")}
+                            </button>
+                          )}
+                          {r.adminNote && <p style={{ fontSize: 11.5, color: THEME.text3, margin: "0 0 8px" }}>{t("saTrReviewNote", { note: r.adminNote })}</p>}
+                          {r.reviewedAt && <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 8px" }}>{t("saTrReviewedBy", { by: r.reviewedBy || "—", at: toJalaliDateTime(r.reviewedAt) })}</p>}
+
+                          {r.status === "pending" && (
+                            <div>
+                              <textarea style={{ ...inputStyle, minHeight: 45, marginBottom: 8 }} placeholder={t("saTrNotePlaceholder")} value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} dir={dir} />
+                              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                                <button type="button" style={btnStyle(THEME.ok)} disabled={saving} onClick={() => handleApprove(r)}>{t("saTrApprove")}</button>
+                                <button type="button" style={btnStyle(THEME.danger)} disabled={saving || !noteDraft.trim()} onClick={() => handleReject(r)}>{t("saTrReject")}</button>
+                              </div>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {viewerSrc && (
+        <div onClick={() => setViewerSrc(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 4000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <img src={viewerSrc} alt="" style={{ maxWidth: "92vw", maxHeight: "92vh", borderRadius: 10 }} />
         </div>
       )}
     </div>

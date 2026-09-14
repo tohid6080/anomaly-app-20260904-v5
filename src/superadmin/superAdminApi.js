@@ -637,6 +637,51 @@ export async function rejectTrialRequest(id, reviewedBy, note) {
   return { ok: true };
 }
 
+// درخواست‌های «خرید مستقیمِ بازدیدکننده» — از صفحه‌ی عمومیِ «مشاهده پلن‌ها
+// برای خرید» (پیش از ورود)، شاملِ ماژول/خدماتِ انتخابی و رسیدِ کارت‌به‌کارت.
+// همان فلسفه‌ی trial_requests: صرفاً ثبت/بررسیِ سرنخ + رسید است — ساختِ
+// خودِ شرکت/حساب و تأییدِ نهاییِ پرداخت همچنان از همان مسیرهای موجود
+// («شرکت‌ها» + «پرداخت‌های کارت‌به‌کارت») به‌صورت دستی انجام می‌شود.
+function guestPurchaseRequestFromRow(r) {
+  return {
+    id: r.id, fullName: r.full_name, phone: r.phone, companyName: r.company_name, email: r.email || "",
+    selectedModules: Array.isArray(r.selected_modules) ? r.selected_modules : [],
+    selectedServices: Array.isArray(r.selected_services) ? r.selected_services : [],
+    billingCycle: r.billing_cycle || "yearly", amount: Number(r.amount) || 0,
+    payerName: r.payer_name || "", payerPhone: r.payer_phone || "",
+    trackingNumber: r.tracking_number || "", receiptImage: r.receipt_image || "",
+    status: r.status || "pending", adminNote: r.admin_note || "",
+    reviewedBy: r.reviewed_by || "", reviewedAt: r.reviewed_at || "", createdAt: r.created_at,
+  };
+}
+
+export async function loadGuestPurchaseRequests(statusFilter) {
+  const filter = statusFilter && statusFilter !== "all" ? `&status=eq.${statusFilter}` : "";
+  const rows = await sb(`guest_purchase_requests?select=*&order=created_at.desc${filter}`, {}, "super_admin");
+  return sbOk(rows) ? rows.map(guestPurchaseRequestFromRow) : [];
+}
+
+export async function approveGuestPurchaseRequest(id, reviewedBy, note) {
+  const rows = await sb(`guest_purchase_requests?id=eq.${id}&status=eq.pending`, {
+    method: "PATCH",
+    body: JSON.stringify({ status: "approved", admin_note: note || "", reviewed_by: reviewedBy || "", reviewed_at: new Date().toISOString() }),
+  }, "super_admin");
+  if (!sbOk(rows)) return { __error: true, message: tr("saErrApproveRequest") };
+  if (rows.length === 0) return { __error: true, message: tr("saRequestAlreadyReviewed") };
+  return { ok: true };
+}
+
+export async function rejectGuestPurchaseRequest(id, reviewedBy, note) {
+  if (!note || !note.trim()) return { __error: true, message: tr("saTrialRejectReasonRequired") };
+  const rows = await sb(`guest_purchase_requests?id=eq.${id}&status=eq.pending`, {
+    method: "PATCH",
+    body: JSON.stringify({ status: "rejected", admin_note: note.trim(), reviewed_by: reviewedBy || "", reviewed_at: new Date().toISOString() }),
+  }, "super_admin");
+  if (!sbOk(rows)) return { __error: true, message: tr("saErrRejectRequest") };
+  if (rows.length === 0) return { __error: true, message: tr("saRequestAlreadyReviewed") };
+  return { ok: true };
+}
+
 // عناوین شغلی یک شرکت خاص — برخلاف loadActiveJobPositions در ماژول عادی
 // (که به company_id همان کاربر واردشده وابسته است)، اینجا سوپرادمین باید
 // بتواند عناوین شغلی هر شرکتی که در فرم انتخاب کرده را ببیند.

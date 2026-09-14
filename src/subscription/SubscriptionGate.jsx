@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { CheckCircle2, XCircle, LogOut, Loader2, Clock, X, LogIn } from "lucide-react";
-import { styles, THEME } from "../shared.js";
+import { CheckCircle2, XCircle, LogOut, Loader2, Clock, X, ImagePlus, Copy, Check } from "lucide-react";
+import { styles, THEME, resizeImageFile } from "../shared.js";
 import { toJalaliDateTime } from "../personnel/jalaliDate.jsx";
-import { computeSubscriptionAccess, loadMySubscriptionInfo, verifyPayment } from "../subscriptionApi.js";
+import { computeSubscriptionAccess, loadMySubscriptionInfo, verifyPayment, loadCardTransferSettings } from "../subscriptionApi.js";
 import { loadModulePrices, loadServices, computeCartTotal, applyModuleDeps, servicePriceFor } from "../pricingApi.js";
+import { submitGuestPurchaseRequest } from "../guestPurchaseApi.js";
 import PaymentMethodsSection from "./CardTransferPayment.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { numLocale } from "../i18n/translations.js";
@@ -144,7 +145,7 @@ function PaymentResultScreen({ result, onContinue, onLogout }) {
   );
 }
 
-export function PlanSelectionScreen({ currentUser, company, access, onLogout, publicMode, onLogin, onStartFree }) {
+export function PlanSelectionScreen({ currentUser, company, access, onLogout, publicMode }) {
   const { t, lang } = useLanguage();
   const [billingCycle, setBillingCycle] = useState("yearly");
   // انتخابِ ماژول به ماژول — تنها روشِ خرید (Module-Based)
@@ -206,7 +207,7 @@ export function PlanSelectionScreen({ currentUser, company, access, onLogout, pu
           setSelSvc={setSelSvc} toggleMod={toggleMod} priceOfMod={priceOfMod}
           billingCycle={billingCycle} setBillingCycle={setBillingCycle}
           cart={cart} currentUser={currentUser} lang={lang} t={t}
-          publicMode={publicMode} onLogin={onLogin} onStartFree={onStartFree}
+          publicMode={publicMode}
         />
       </div>
     </div>
@@ -214,7 +215,7 @@ export function PlanSelectionScreen({ currentUser, company, access, onLogout, pu
 }
 
 /* ---------------- انتخابِ ماژول به ماژول ---------------- */
-function ModulePickerBlock({ modulePrices, services, selMods, selSvc, setSelSvc, toggleMod, priceOfMod, billingCycle, setBillingCycle, cart, currentUser, lang, t, publicMode, onLogin, onStartFree }) {
+function ModulePickerBlock({ modulePrices, services, selMods, selSvc, setSelSvc, toggleMod, priceOfMod, billingCycle, setBillingCycle, cart, currentUser, lang, t, publicMode }) {
   if (modulePrices === null) return <p style={{ textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</p>;
   const money = (n) => (n || 0).toLocaleString(numLocale(lang));
   const paidMods = modulePrices.filter((m) => !m.isFree);
@@ -290,7 +291,7 @@ function ModulePickerBlock({ modulePrices, services, selMods, selSvc, setSelSvc,
         </div>
         <p style={{ fontSize: 10, color: THEME.text3, margin: "8px 0 0", lineHeight: 1.8 }}>{t("sgModulesDisclaimer")}</p>
         {publicMode
-          ? <PublicBuyCta onLogin={onLogin} onStartFree={onStartFree} />
+          ? <PublicPurchaseForm selMods={selMods} selSvc={selSvc} billingCycle={billingCycle} cart={cart} />
           : (cart && cart.selReal.length > 0 && (
             <PaymentMethodsSection
               currentUser={currentUser}
@@ -317,24 +318,151 @@ function Row({ k, v }) {
   );
 }
 
-/* در نمای عمومی (بازدیدکننده‌ی صفحه‌ی اصلی)، جای فرمِ پرداخت دکمه‌ی
- * «ورود برای خرید» / «شروعِ رایگان» نشان داده می‌شود. */
-function PublicBuyCta({ onLogin, onStartFree }) {
-  const { t } = useLanguage();
+/* در نمای عمومی (بازدیدکننده‌ی صفحه‌ی اصلی)، جای دکمه‌ی «ورود برای خرید»/
+ * «شروعِ رایگان»، همان تجربه‌ی واقعیِ صفحه‌ی «اشتراک شما به پایان رسیده»
+ * نشان داده می‌شود: فرمِ واقعیِ پرداختِ کارت‌به‌کارت (دقیقاً همان UI/فیلدهای
+ * CardTransferPayment.jsx) به‌علاوه‌ی اطلاعاتِ شرکت/تماس — چون هنوز هیچ
+ * شرکتی وجود ندارد و submitCardTransferReceipt به company_id نیاز دارد.
+ * ثبت از طریق Edge Function عمومیِ submit-guest-purchase-request می‌رود؛
+ * SuperAdmin («خرید مستقیمِ بازدیدکنندگان») شرکت/حساب را می‌سازد و رسید را
+ * تأیید می‌کند. */
+function PublicPurchaseForm({ selMods, selSvc, billingCycle, cart }) {
+  const { t, lang, dir } = useLanguage();
+  const [companyName, setCompanyName] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [payerName, setPayerName] = useState("");
+  const [payerPhone, setPayerPhone] = useState("");
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [receiptImage, setReceiptImage] = useState("");
+  const [imageBusy, setImageBusy] = useState(false);
+  const [settings, setSettings] = useState(undefined);
+  const [copied, setCopied] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [done, setDone] = useState(false);
+
+  useEffect(() => { loadCardTransferSettings().then(setSettings); }, []);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(settings?.cardNumber || "");
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch { /* بی‌اهمیت — کاربر می‌تواند دستی انتخاب/کپی کند */ }
+  };
+
+  const handlePickReceipt = async (file) => {
+    if (!file) return;
+    setImageBusy(true);
+    setError("");
+    try {
+      setReceiptImage(await resizeImageFile(file));
+    } catch {
+      setError(t("ctpErrReceiptImage"));
+    }
+    setImageBusy(false);
+  };
+
+  const handleSubmit = async () => {
+    setError("");
+    if (!companyName.trim() || !fullName.trim()) { setError(t("gprErrCompanyContactRequired")); return; }
+    if (!/^09\d{9}$/.test(phone.trim())) { setError(t("ctpErrPhoneFormat")); return; }
+    if (!cart || cart.selReal.length === 0) { setError(t("gprErrNoModulesSelected")); return; }
+    if (!payerName.trim()) { setError(t("subErrReceiptFieldsRequired")); return; }
+    if (!/^09\d{9}$/.test(payerPhone.trim())) { setError(t("ctpErrPhoneFormat")); return; }
+    if (!receiptImage) { setError(t("ctpErrReceiptRequired")); return; }
+    setSaving(true);
+    const result = await submitGuestPurchaseRequest({
+      fullName: fullName.trim(), phone: phone.trim(), companyName: companyName.trim(), email: email.trim(),
+      selectedModules: selMods, selectedServices: selSvc, billingCycle, amount: cart.grandTotal,
+      payerName: payerName.trim(), payerPhone: payerPhone.trim(), trackingNumber: trackingNumber.trim(), receiptImage,
+    });
+    setSaving(false);
+    if (result?.__error) { setError(result.message); return; }
+    setDone(true);
+  };
+
+  if (done) {
+    return (
+      <div style={{ marginTop: 6, textAlign: "center", padding: "14px 2px" }}>
+        <Clock size={32} color={THEME.warn} style={{ marginBottom: 10 }} />
+        <h4 style={{ fontSize: 13.5, fontWeight: 800, color: THEME.heading, margin: "0 0 8px" }}>{t("gprSubmittedTitle")}</h4>
+        <p style={{ fontSize: 12, color: THEME.text2, lineHeight: 1.9 }}>{t("gprSubmittedBody")}</p>
+      </div>
+    );
+  }
+
   return (
     <div style={{ marginTop: 6 }}>
-      <p style={{ fontSize: 12, color: THEME.text2, margin: "0 0 10px", lineHeight: 1.9 }}>{t("ppsBuyNote")}</p>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <button type="button" onClick={onLogin} style={{ ...styles.button, width: "auto", padding: "10px 20px", display: "inline-flex", alignItems: "center", gap: 6 }}>
-          <LogIn size={14} /> {t("ppsSignInToBuy")}
-        </button>
-        {onStartFree && (
-          <button type="button" onClick={onStartFree}
-            style={{ padding: "10px 18px", borderRadius: 10, border: `1.5px solid ${THEME.teal}`, background: "transparent", color: THEME.tealDeep, fontFamily: THEME.font, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-            {t("ppsStartFree")}
+      <p style={{ fontSize: 11.5, color: THEME.text2, margin: "0 0 10px", lineHeight: 1.9 }}>{t("gprIntro")}</p>
+
+      <label style={styles.label}>{t("gprCompanyName")}</label>
+      <input style={styles.input} value={companyName} onChange={(e) => setCompanyName(e.target.value)} dir={dir} />
+      <label style={styles.label}>{t("gprContactFullName")}</label>
+      <input style={styles.input} value={fullName} onChange={(e) => setFullName(e.target.value)} dir={dir} />
+      <label style={styles.label}>{t("ctpMobileNumber")}</label>
+      <input style={styles.input} value={phone} onChange={(e) => setPhone(e.target.value.replace(/[^\d]/g, "").slice(0, 11))} dir="ltr" inputMode="numeric" maxLength={11} placeholder="09xxxxxxxxx" />
+      <label style={styles.label}>{t("gprEmailOptional")}</label>
+      <input style={styles.input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} dir="ltr" />
+
+      {settings === undefined && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 12 }}>{t("ctpLoadingPaymentInfo")}</p>}
+      {settings && (
+        <div style={{ background: THEME.tealSoft, border: `1px solid ${THEME.teal}`, borderRadius: 12, padding: 14, margin: "12px 0" }}>
+          <div style={{ marginBottom: 8 }}>
+            <div style={{ fontSize: 11, color: THEME.text2, marginBottom: 4 }}>{t("ctpCardNumber")}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 15, fontWeight: 800, color: THEME.heading, letterSpacing: 1, direction: "ltr" }}>{settings.cardNumber || "—"}</span>
+              {settings.cardNumber && (
+                <button type="button" onClick={handleCopy}
+                  style={{ display: "flex", alignItems: "center", gap: 5, padding: "4px 9px", borderRadius: 7, border: "none", cursor: "pointer", fontFamily: THEME.font, fontSize: 10.5, fontWeight: 700, background: copied ? THEME.ok : THEME.teal, color: "#fff" }}>
+                  {copied ? <Check size={11} /> : <Copy size={11} />} {copied ? t("ctpCopied") : t("ctpCopyCardNumber")}
+                </button>
+              )}
+            </div>
+          </div>
+          {settings.holderName && (
+            <div style={{ marginBottom: 8 }}>
+              <div style={{ fontSize: 11, color: THEME.text2, marginBottom: 2 }}>{t("ctpToTheNameOf")}</div>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: THEME.heading }}>{settings.holderName}</div>
+            </div>
+          )}
+          <div style={{ fontSize: 13.5, fontWeight: 800, color: THEME.teal }}>
+            {t("saTomanAmount", { amount: (cart?.grandTotal || 0).toLocaleString(numLocale(lang)) })}
+          </div>
+        </div>
+      )}
+
+      <p style={{ fontSize: 11.5, fontWeight: 700, color: THEME.heading, margin: "4px 0 8px" }}>{t("ctpEnterReceiptAfterTransfer")}</p>
+      <label style={styles.label}>{t("ctpFullName")}</label>
+      <input style={styles.input} value={payerName} onChange={(e) => setPayerName(e.target.value)} dir={dir} />
+      <label style={styles.label}>{t("ctpMobileNumber")}</label>
+      <input style={styles.input} value={payerPhone} onChange={(e) => setPayerPhone(e.target.value.replace(/[^\d]/g, "").slice(0, 11))} dir="ltr" inputMode="numeric" maxLength={11} placeholder="09xxxxxxxxx" />
+      <label style={styles.label}>{t("ctpTransactionTrackingNumberOptional")}</label>
+      <input style={styles.input} value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} dir="ltr" />
+
+      <label style={styles.label}>{t("ctpReceiptImageRequired")}</label>
+      {!receiptImage ? (
+        <label style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "12px", borderRadius: 9, border: `1.5px dashed ${THEME.border}`, cursor: "pointer", fontSize: 12, color: THEME.text2, fontFamily: THEME.font }}>
+          <ImagePlus size={15} /> {imageBusy ? t("commonLoading") : t("ctpAddReceiptImage")}
+          <input type="file" accept="image/*" style={{ display: "none" }} disabled={imageBusy} onChange={(e) => handlePickReceipt(e.target.files?.[0])} />
+        </label>
+      ) : (
+        <div style={{ position: "relative", display: "inline-block", marginTop: 4 }}>
+          <img src={receiptImage} alt={t("ctpReceiptImageAlt")} style={{ maxWidth: 140, maxHeight: 140, borderRadius: 9, border: `1px solid ${THEME.border}`, display: "block" }} />
+          <button type="button" onClick={() => setReceiptImage("")}
+            style={{ position: "absolute", top: -8, insetInlineEnd: -8, width: 22, height: 22, borderRadius: "50%", border: "none", background: THEME.danger, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <X size={12} />
           </button>
-        )}
-      </div>
+        </div>
+      )}
+
+      {error && <p style={styles.error}>{error}</p>}
+
+      <button type="button" style={{ ...styles.button, marginTop: 12 }} onClick={handleSubmit} disabled={saving}>
+        {saving ? t("saSubmittingEllipsis") : t("gprSubmit")}
+      </button>
     </div>
   );
 }

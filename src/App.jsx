@@ -1388,8 +1388,6 @@ function LoginScreen({ onLogin }) {
             company={null}
             access={{ status: "browse" }}
             onLogout={() => setShowPlans(false)}
-            onLogin={() => { setShowPlans(false); setShowLogin(true); }}
-            onStartFree={() => { setShowPlans(false); setShowTrialRequest(true); }}
           />
         </div>
       )}
