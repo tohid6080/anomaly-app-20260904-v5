@@ -90,12 +90,23 @@ export default function PSSRMeetingsPanel({ pssrId, meetings, teamMembers, actio
     setSeedMsg(t("pssrSeedResult", { imported: res.imported, repaired: res.repaired }));
   };
 
-  // چک‌لیستی که تعدادِ Requirementهایش کمتر از تعدادِ واقعیِ فایلِ مرجع است —
-  // مثلاً به‌خاطرِ قطعیِ شبکه وسطِ یک بارگذاریِ قبلی ناقص مانده.
+  // چک‌لیستی که یا تعدادِ Requirementهایش کمتر از فایلِ مرجع است (مثلاً
+  // به‌خاطرِ قطعیِ شبکه وسطِ یک بارگذاریِ قبلی)، یا همه‌ی ردیف‌ها هستند ولی
+  // ترجمه‌ی فارسی/آلمانیِ موجود در فایلِ مرجع هنوز به دیتابیس نرسیده
+  // (مثلاً چون این چک‌لیست قبل از افزوده‌شدنِ آن زبان seed شده بود) — در
+  // هر دو حالت باید دکمه‌ی «ترمیم» نشان داده شود تا seedOfficialChecklists
+  // خودترمیمی (شاملِ PATCH ترجمه‌های جامانده) را انجام دهد.
   const incompleteCodes = (checklists || [])
     .filter((c) => {
       const seed = PSSR_CHECKLIST_SEED.find((s) => s.code === c.code);
-      return seed && c.requirements.length < seed.requirements.length;
+      if (!seed) return false;
+      const byOrder = {};
+      c.requirements.forEach((r) => { byOrder[r.orderIndex] = r; });
+      return seed.requirements.some((sr) => {
+        const dbReq = byOrder[sr.order];
+        if (!dbReq) return true;
+        return (sr.textFa && !dbReq.requirementTextFa) || (sr.textDe && !dbReq.requirementTextDe);
+      });
     })
     .map((c) => c.code);
 
