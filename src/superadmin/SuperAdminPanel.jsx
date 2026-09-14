@@ -7,7 +7,7 @@ import { changeMyPassword } from "../sessionToken.js";
 import { loadModuleConfig, saveModuleConfig, loadNotificationTypes, saveNotificationType, syncNotificationTypesWithPlans, loadAppearanceConfig, saveAppearanceConfig, resolveAppearanceTokens, loadAllAnnouncements, createAnnouncement, updateAnnouncement, setAnnouncementActive, deleteAnnouncement, loadDashboardWidgetConfig, saveDashboardWidgetsBulk, notificationTypeLabel, notificationTypeDescription } from "../systemConfigApi.js";
 import { DASHBOARD_WIDGET_GROUPS, mergeWidgetConfig, defaultWidgetConfig } from "../dashboard/dashboardWidgets.js";
 import { uploadBase64ToStorage, deleteFromStorage, parseStorageUrl } from "../offline/storageUpload.js";
-import AccountManagement from "./AccountManagement.jsx";
+import AccountManagement, { AccountForm, emptyForm as emptyAccountForm } from "./AccountManagement.jsx";
 import PricingConsole from "./PricingConsole.jsx";
 import AdminAnalytics from "../admin/AdminAnalytics.jsx";
 import LandingPageManagementTab from "./LandingPageManagementTab.jsx";
@@ -15,7 +15,7 @@ import { toJalaliSafe, toJalaliDateTime, JalaliDateInput } from "../personnel/ja
 import {
   loadCompanies, createCompany, updateCompany, deleteCompanySecure, setCompanyActive,
   loadCompanyPayments, addCompanyPayment, PAYMENT_TYPES,
-  loadCompanyUserAccounts,
+  loadCompanyUserAccounts, loadAccountsByType, createAccount,
   SUBSCRIPTION_TYPES, SUBSCRIPTION_STATUSES,
   loadPlans, createPlan, updatePlan, deactivatePlan, activatePlan, movePlan, deletePlan, assignPlanToCompany, loadCompanySubscriptionHistory, backupPeriodPrice,
   PLAN_FEATURES, computeContractAmount, computeMonthlyRecurringAmount,
@@ -3824,6 +3824,11 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
   const [onlinePayments, setOnlinePayments] = useState([]);
   const [payAmount, setPayAmount] = useState("");
   const [accounts, setAccounts] = useState([]);
+  const [contractors, setContractors] = useState([]);
+  const [showAddContractor, setShowAddContractor] = useState(false);
+  const [contractorForm, setContractorForm] = useState({ ...emptyAccountForm(), companyId: company.id });
+  const [contractorSaving, setContractorSaving] = useState(false);
+  const [contractorError, setContractorError] = useState("");
   const [selectedPlanId, setSelectedPlanId] = useState(company.planId || "");
   const [planNote, setPlanNote] = useState("");
   const [planSaving, setPlanSaving] = useState(false);
@@ -3846,6 +3851,24 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
 
   const loadAccounts = () => loadCompanyUserAccounts(company.id).then(setAccounts);
   useEffect(() => { loadAccounts(); }, [company.id]);
+
+  const loadContractors = () => loadAccountsByType("contractor", company.id).then(setContractors);
+  useEffect(() => { loadContractors(); }, [company.id]);
+
+  const handleCreateContractor = async () => {
+    if (!contractorForm.name.trim() || !contractorForm.username.trim() || contractorForm.password.length < 8) {
+      setContractorError(t("amNameUsernamePasswordRequired"));
+      return;
+    }
+    setContractorSaving(true);
+    setContractorError("");
+    const result = await createAccount("contractor", contractorForm);
+    setContractorSaving(false);
+    if (result?.__error || result?.error) { setContractorError(result.message || result.error); return; }
+    setShowAddContractor(false);
+    setContractorForm({ ...emptyAccountForm(), companyId: company.id });
+    await Promise.all([loadContractors(), loadAccounts()]);
+  };
 
   useEffect(() => {
     if (paymentsPromise) paymentsPromise.then(setPaymentsList);
@@ -4126,6 +4149,53 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
             </span>
           </div>
         ))}
+      </div>
+
+      <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 12, marginBottom: 16 }}>
+        <h4 style={{ fontSize: 12.5, color: THEME.heading, fontWeight: 700, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 6 }}>
+          <Building2 size={13} /> {t("saContractorSubsidiariesTitle")}
+        </h4>
+        <p style={{ fontSize: 10.5, color: THEME.text3, marginBottom: 8, lineHeight: 1.8 }}>
+          {t("saContractorSubsidiariesNote")}
+        </p>
+        {contractors.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saNoContractorSubsidiaries")}</p>}
+        {contractors.map((c) => (
+          <div key={c.id} style={{ fontSize: 11.5, color: THEME.text2, padding: "6px 0", borderBottom: `1px solid ${THEME.border}`, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            <span style={{ fontWeight: 700, color: THEME.heading }}>{c.name}</span>
+            {c.contact_person_name && <span>{c.contact_person_name}</span>}
+            <span style={{ direction: "ltr" }}>({c.username})</span>
+            {c.phone && <span style={{ direction: "ltr", color: THEME.text3 }}>{c.phone}</span>}
+            <span style={{
+              marginInlineStart: "auto", fontSize: 10, padding: "2px 8px", borderRadius: 999, fontWeight: 600,
+              background: c.is_active === false ? THEME.surface2 : THEME.okBg, color: c.is_active === false ? THEME.text3 : THEME.ok,
+            }}>
+              {c.is_active === false ? t("commonInactive") : t("commonActive")}
+            </span>
+          </div>
+        ))}
+
+        <button
+          type="button"
+          onClick={() => { setShowAddContractor((v) => !v); setContractorForm({ ...emptyAccountForm(), companyId: company.id }); setContractorError(""); }}
+          style={{ ...btnStyle(THEME.navyMid), display: "flex", alignItems: "center", gap: 6, marginTop: 10 }}
+        >
+          <UserPlus size={13} /> {t("saAddContractorAccount")}
+        </button>
+
+        {showAddContractor && (
+          <AccountForm
+            tab="contractor"
+            form={contractorForm}
+            setForm={setContractorForm}
+            companies={[company]}
+            onSave={handleCreateContractor}
+            saving={contractorSaving}
+            saveLabel={t("amCreateAccount")}
+            showPassword
+            disableCompanySelect
+          />
+        )}
+        {contractorError && <p style={{ color: THEME.danger, fontSize: 12, marginTop: 8 }}>{contractorError}</p>}
       </div>
 
       <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 12 }}>
