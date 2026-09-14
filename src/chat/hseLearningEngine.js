@@ -42,7 +42,7 @@ export function matchSurveyForTopic(topic, surveys) {
 }
 
 // موتورِ پاسخ‌دهیِ مبتنی بر قوانینِ محلی — دیگر مسیرِ اصلی نیست؛ فقط
-// fallback آفلاین/خطا برای askHseAssistant (پاسخِ واقعیِ DeepSeek) است،
+// fallback آفلاین/خطا برای askHseAssistant (پاسخِ واقعیِ Gemini) است،
 // برای وقتی کلید API تنظیم نشده یا شبکه در دسترس نیست. نگاشتِ کلیدواژه در
 // سؤالِ کاربر → موضوعِ مرتبط. افزودنِ قانونِ جدید یعنی یک سطرِ دیگر به این آرایه.
 const RULES = [

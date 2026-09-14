@@ -27,9 +27,9 @@ export async function loadRecentAnomalyBrief({ days = 30, contractorName } = {})
   }));
 }
 
-// ---------- دستیارِ هوش مصنوعیِ واقعی (DeepSeek، از طریقِ Edge Function) ----------
+// ---------- دستیارِ هوش مصنوعیِ واقعی (Google Gemini، از طریقِ Edge Function) ----------
 // دقیقاً همان الگوی امنیتیِ callPaymentFunction در subscriptionApi.js: کلید
-// DeepSeek هرگز اینجا نیست، فقط با توکنِ نشستِ معتبر، Edge Function صدا زده
+// Gemini هرگز اینجا نیست، فقط با توکنِ نشستِ معتبر، Edge Function صدا زده
 // می‌شود. هرگز پرتاب نمی‌کند — فقط { __error: true } برمی‌گرداند تا فراخوان
 // (HseLearningAssistantThread) بتواند به موتورِ محلیِ answerQuestion سقوط کند.
 export async function askHseAssistant(question, history = []) {
