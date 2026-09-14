@@ -142,6 +142,21 @@ export default function AccountManagement({ currentAdmin }) {
     await load();
   };
 
+  // وقتی هیچ همکارِ فعالِ دیگری برای انتقال نیست، به‌جای بن‌بست، خودِ
+  // سوپرادمین صریحاً تأیید می‌کند که رکوردها بدونِ پیمانکار (contractor_id
+  // خالی) باقی بمانند و حساب حذف شود.
+  const handleConfirmForceDelete = async () => {
+    if (!confirm(t("amForceDeleteConfirm", { name: transferState.account.name }))) return;
+    setTransferState((s) => ({ ...s, busy: true, error: "" }));
+    const result = await deleteAccount("contractor", transferState.account.id, undefined, true);
+    if (result?.__error || result?.error) {
+      setTransferState((s) => ({ ...s, busy: false, error: result.message || result.error }));
+      return;
+    }
+    setTransferState(null);
+    await load();
+  };
+
   return (
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16, marginBottom: 16 }}>
       <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
@@ -282,10 +297,14 @@ export default function AccountManagement({ currentAdmin }) {
               </select>
             )}
             {transferState.error && <p style={{ fontSize: 11.5, color: THEME.danger, marginTop: 8 }}>{transferState.error}</p>}
-            <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-              {transferState.candidates.length > 0 && (
+            <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
+              {transferState.candidates.length > 0 ? (
                 <button type="button" style={btnStyle(THEME.danger)} disabled={!transferState.selectedId || transferState.busy} onClick={handleConfirmTransferDelete}>
                   {transferState.busy ? t("saSavingEllipsis") : t("amTransferAndDelete")}
+                </button>
+              ) : (
+                <button type="button" style={btnStyle(THEME.danger)} disabled={transferState.busy} onClick={handleConfirmForceDelete}>
+                  {transferState.busy ? t("saSavingEllipsis") : t("amForceDeleteBtn")}
                 </button>
               )}
               <button type="button" style={btnStyle(THEME.text3)} disabled={transferState.busy} onClick={() => setTransferState(null)}>{t("commonCancel")}</button>

@@ -3052,6 +3052,14 @@ export const translations = {
     "fa": "انتقال و حذف",
     "en": "Transfer & Delete"
   },
+  "amForceDeleteBtn": {
+    "fa": "حذفِ کاربر بدونِ انتقال",
+    "en": "Delete user without transfer"
+  },
+  "amForceDeleteConfirm": {
+    "fa": "آیا مطمئن هستید کاربر «{name}» را حذف کنید؟ همکارِ دیگری برای انتقالِ رکوردها وجود ندارد — پرسنل/ماشین‌آلات/اقدام اصلاحیِ مرتبط، بدونِ پیمانکارِ مشخص باقی می‌مانند (خودِ رکوردها حذف نمی‌شوند).",
+    "en": "Are you sure you want to delete the user \"{name}\"? No other colleague exists to transfer the records to — related personnel/machinery/corrective actions will be left without an assigned contractor (the records themselves are not deleted)."
+  },
   "amNoAccountsFound": {
     "fa": "حسابی یافت نشد",
     "en": "No accounts found"

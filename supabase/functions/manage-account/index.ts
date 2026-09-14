@@ -205,11 +205,14 @@ Deno.serve(async (req) => {
         const hasCorrective = correctiveCheck.ok && Array.isArray(correctiveCheck.data) && correctiveCheck.data.length > 0;
         if (hasPersonnel || hasMachinery || hasCorrective) {
           // اگر کلاینت یک پیمانکارِ مقصد برای انتقال فرستاده، رکوردها را به
-          // آن‌جا منتقل می‌کنیم و ادامه می‌دهیم؛ وگرنه با needsTransfer:true
-          // برمی‌گردیم تا کلاینت لیستِ همکاران را نشان دهد و دوباره با
-          // transferToContractorId صدا بزند.
+          // آن‌جا منتقل می‌کنیم؛ اگر همکاری وجود نداشت و کلاینت صریحاً
+          // forceUnassign فرستاده، فقط contractor_id/responsible_contractor_id
+          // را خالی می‌کنیم (contractor_name متنی به‌عنوان یادگارِ تاریخی
+          // باقی می‌ماند)؛ وگرنه با needsTransfer:true برمی‌گردیم تا کلاینت
+          // لیستِ همکاران (یا نبودِ همکار) را نشان دهد.
           const transferToId = String(body?.transferToContractorId || "").trim();
-          if (!transferToId) {
+          const forceUnassign = body?.forceUnassign === true;
+          if (!transferToId && !forceUnassign) {
             const parts = [];
             if (hasPersonnel) parts.push("پرسنل");
             if (hasMachinery) parts.push("ماشین‌آلات");
@@ -219,38 +222,60 @@ Deno.serve(async (req) => {
               needsTransfer: true,
             }, 409);
           }
-          if (transferToId === targetId) {
-            return json({ error: "پیمانکارِ مقصد نمی‌تواند همان پیمانکارِ حذف‌شونده باشد" }, 400);
+          if (transferToId) {
+            if (transferToId === targetId) {
+              return json({ error: "پیمانکارِ مقصد نمی‌تواند همان پیمانکارِ حذف‌شونده باشد" }, 400);
+            }
+            const [srcRes, destRes] = await Promise.all([
+              restFetch(`contractors?id=eq.${targetId}&select=company_id`),
+              restFetch(`contractors?id=eq.${transferToId}&select=id,name,company_id`),
+            ]);
+            const src = srcRes.ok && Array.isArray(srcRes.data) ? srcRes.data[0] : null;
+            const dest = destRes.ok && Array.isArray(destRes.data) ? destRes.data[0] : null;
+            if (!dest) return json({ error: "پیمانکارِ مقصد یافت نشد" }, 404);
+            if (!src || dest.company_id !== src.company_id) {
+              return json({ error: "پیمانکارِ مقصد باید در همان شرکت باشد" }, 400);
+            }
+            const [pRes, mRes, cRes] = await Promise.all([
+              hasPersonnel
+                ? restFetch(`personnel?contractor_id=eq.${targetId}`, { method: "PATCH", body: JSON.stringify({ contractor_id: transferToId, contractor_name: dest.name }) })
+                : Promise.resolve({ ok: true }),
+              hasMachinery
+                ? restFetch(`machinery?contractor_id=eq.${targetId}`, { method: "PATCH", body: JSON.stringify({ contractor_id: transferToId, contractor_name: dest.name }) })
+                : Promise.resolve({ ok: true }),
+              hasCorrective
+                ? restFetch(`corrective_actions?responsible_contractor_id=eq.${targetId}`, { method: "PATCH", body: JSON.stringify({ responsible_contractor_id: transferToId, responsible_contractor_name: dest.name }) })
+                : Promise.resolve({ ok: true }),
+            ]);
+            if (!pRes.ok || !mRes.ok || !cRes.ok) {
+              return json({ error: "خطا در انتقالِ رکوردها به پیمانکارِ مقصد" }, 500);
+            }
+            await logAudit({
+              action: "transfer_contractor_records", target_type: "contractor", target_id: targetId,
+              performed_by: performedBy, performed_by_role: "super_admin",
+              note: auditNote(`انتقالِ رکوردها به پیمانکارِ «${dest.name}» پیش از حذف`),
+            });
+          } else {
+            const [pRes, mRes, cRes] = await Promise.all([
+              hasPersonnel
+                ? restFetch(`personnel?contractor_id=eq.${targetId}`, { method: "PATCH", body: JSON.stringify({ contractor_id: null }) })
+                : Promise.resolve({ ok: true }),
+              hasMachinery
+                ? restFetch(`machinery?contractor_id=eq.${targetId}`, { method: "PATCH", body: JSON.stringify({ contractor_id: null }) })
+                : Promise.resolve({ ok: true }),
+              hasCorrective
+                ? restFetch(`corrective_actions?responsible_contractor_id=eq.${targetId}`, { method: "PATCH", body: JSON.stringify({ responsible_contractor_id: null }) })
+                : Promise.resolve({ ok: true }),
+            ]);
+            if (!pRes.ok || !mRes.ok || !cRes.ok) {
+              return json({ error: "خطا در آزادسازیِ رکوردها" }, 500);
+            }
+            await logAudit({
+              action: "unassign_contractor_records", target_type: "contractor", target_id: targetId,
+              performed_by: performedBy, performed_by_role: "super_admin",
+              note: auditNote("آزادسازیِ رکوردها (بدونِ پیمانکارِ مقصد) پیش از حذف"),
+            });
           }
-          const [srcRes, destRes] = await Promise.all([
-            restFetch(`contractors?id=eq.${targetId}&select=company_id`),
-            restFetch(`contractors?id=eq.${transferToId}&select=id,name,company_id`),
-          ]);
-          const src = srcRes.ok && Array.isArray(srcRes.data) ? srcRes.data[0] : null;
-          const dest = destRes.ok && Array.isArray(destRes.data) ? destRes.data[0] : null;
-          if (!dest) return json({ error: "پیمانکارِ مقصد یافت نشد" }, 404);
-          if (!src || dest.company_id !== src.company_id) {
-            return json({ error: "پیمانکارِ مقصد باید در همان شرکت باشد" }, 400);
-          }
-          const [pRes, mRes, cRes] = await Promise.all([
-            hasPersonnel
-              ? restFetch(`personnel?contractor_id=eq.${targetId}`, { method: "PATCH", body: JSON.stringify({ contractor_id: transferToId, contractor_name: dest.name }) })
-              : Promise.resolve({ ok: true }),
-            hasMachinery
-              ? restFetch(`machinery?contractor_id=eq.${targetId}`, { method: "PATCH", body: JSON.stringify({ contractor_id: transferToId, contractor_name: dest.name }) })
-              : Promise.resolve({ ok: true }),
-            hasCorrective
-              ? restFetch(`corrective_actions?responsible_contractor_id=eq.${targetId}`, { method: "PATCH", body: JSON.stringify({ responsible_contractor_id: transferToId, responsible_contractor_name: dest.name }) })
-              : Promise.resolve({ ok: true }),
-          ]);
-          if (!pRes.ok || !mRes.ok || !cRes.ok) {
-            return json({ error: "خطا در انتقالِ رکوردها به پیمانکارِ مقصد" }, 500);
-          }
-          await logAudit({
-            action: "transfer_contractor_records", target_type: "contractor", target_id: targetId,
-            performed_by: performedBy, performed_by_role: "super_admin",
-            note: auditNote(`انتقالِ رکوردها به پیمانکارِ «${dest.name}» پیش از حذف`),
-          });
         }
       }
 

@@ -1294,6 +1294,8 @@ export const de = {
   "amNoTransferTargets": "Es gibt keinen anderen aktiven Kollegen in diesem Unternehmen, an den die Datensätze übertragen werden können — legen Sie ein weiteres Auftragnehmerkonto an oder deaktivieren Sie dieses Konto, anstatt es zu löschen.",
   "amSelectTransferTarget": "Ziel-Kollegen auswählen…",
   "amTransferAndDelete": "Übertragen & Löschen",
+  "amForceDeleteBtn": "Benutzer ohne Übertragung löschen",
+  "amForceDeleteConfirm": "Sind Sie sicher, dass Sie den Benutzer „{name}“ löschen möchten? Es gibt keinen anderen Kollegen, an den die Datensätze übertragen werden können — zugehöriges Personal/Maschinen/Korrekturmaßnahmen bleiben ohne zugewiesenen Auftragnehmer (die Datensätze selbst werden nicht gelöscht).",
   "amNoAccountsFound": "Keine Konten gefunden",
   "amContractorCompanyName": "Name des Auftragnehmerunternehmens",
   "amEmployerCompanyWhichWorksUnder": "Auftraggeberunternehmen (unter welchem Auftraggeber dieser Auftragnehmer tätig ist)",

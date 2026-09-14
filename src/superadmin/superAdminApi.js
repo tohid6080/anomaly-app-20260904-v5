@@ -783,8 +783,8 @@ export async function setAccountActive(targetType, targetId, active) {
 export async function resetAccountPassword(targetType, targetId, newPassword) {
   return callManageAccount({ action: "reset_password", targetType, targetId, newPassword });
 }
-export async function deleteAccount(targetType, targetId, transferToContractorId) {
-  return callManageAccount({ action: "delete", targetType, targetId, transferToContractorId });
+export async function deleteAccount(targetType, targetId, transferToContractorId, forceUnassign) {
+  return callManageAccount({ action: "delete", targetType, targetId, transferToContractorId, forceUnassign });
 }
 
 export async function loadAuditLog(limit = 50) {
