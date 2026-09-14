@@ -4598,4 +4598,6 @@ export const de = {
   "saAddContractorCompany": "Zur Liste hinzufügen",
   "saErrContractorCompanyNameRequired": "Der Name des Nachunternehmens ist erforderlich",
   "saAddContractorAccount": "Nachunternehmer-Konto hinzufügen",
+  "saDeleteContractorCompanyTitle": "Aus der Liste entfernen",
+  "saDeleteContractorCompanyConfirm": "„{name}“ aus der Liste entfernen? Bereits erstellte Nachunternehmer-Konten mit diesem Namen bleiben unverändert.",
 };
