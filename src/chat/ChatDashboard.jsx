@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { MessageCircle, Plus, Users, Paperclip, Trash2, Sparkles } from "lucide-react";
+import { MessageCircle, Plus, Users, Paperclip, Trash2 } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { toJalaliDateTime } from "../personnel/jalaliDate.jsx";
 import { loadMyConversations, loadChatDirectory, findOrCreateDirectConversation, createConversation, deleteConversationForMe } from "./chatApi.js";
 import ChatThread from "./ChatThread.jsx";
-import HseLearningAssistantThread from "./HseLearningAssistantThread.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 const ROLE_LABEL_KEY = { ADMIN: "roleLabelAdmin", EMPLOYER: "roleLabelEmployer", CONTRACTOR: "roleLabelContractor" };
@@ -15,7 +14,6 @@ export default function ChatDashboard({ onBack, currentUser }) {
   const [loading, setLoading] = useState(true);
   const [openConvId, setOpenConvId] = useState(null);
   const [showNew, setShowNew] = useState(false);
-  const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
   const [directory, setDirectory] = useState([]);
   const [newMode, setNewMode] = useState("direct"); // 'direct' | 'group'
   const [groupTitle, setGroupTitle] = useState("");
@@ -90,10 +88,6 @@ export default function ChatDashboard({ onBack, currentUser }) {
     await load();
   };
 
-  if (aiAssistantOpen) {
-    return <HseLearningAssistantThread currentUser={currentUser} onBack={() => setAiAssistantOpen(false)} />;
-  }
-
   if (openConvId) {
     return (
       <ChatThread
@@ -161,24 +155,6 @@ export default function ChatDashboard({ onBack, currentUser }) {
           )}
 
           <div style={styles.backLink} onClick={() => setShowNew(false)}>{t("commonCancel")}</div>
-        </div>
-      )}
-
-      {!showNew && (
-        <div
-          onClick={() => setAiAssistantOpen(true)}
-          style={{ ...styles.card, width: "auto", marginBottom: 10, cursor: "pointer", display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", border: `1px solid ${THEME.teal}` }}
-        >
-          <div style={{ width: 38, height: 38, borderRadius: "50%", background: `linear-gradient(140deg, ${THEME.teal}, #7c6cf0)`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <Sparkles size={17} color="#fff" />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ fontWeight: 700, fontSize: 13.5, color: THEME.heading }}>{t("hlaPinnedConvTitle")}</span>
-              <span style={{ fontSize: 9, fontWeight: 800, color: "#fff", background: `linear-gradient(90deg, ${THEME.teal}, #7c6cf0)`, padding: "1px 7px", borderRadius: 999 }}>{t("hlaAiBadge")}</span>
-            </div>
-            <span style={{ fontSize: 11.5, color: THEME.text3 }}>{t("hlaPinnedConvSub")}</span>
-          </div>
         </div>
       )}
 
