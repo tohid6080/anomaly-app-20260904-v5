@@ -1884,7 +1884,59 @@ const APPEARANCE_PRESETS = {
     colorText: "#eef1fb", colorText2: "#a5add0", colorText3: "#6d769e",
     colorOk: "#34d399", colorWarn: "#fbbf24", colorDanger: "#fb7185",
   },
+  // هفت پریستِ تازه — الهام‌گرفته از تنوعِ رایجِ داشبوردهای حرفه‌ای (آبی/
+  // اقیانوسی برایِ تحلیل، سبز برایِ رشد/مالی، خاکستریِ خنثی برایِ کمینه‌گرا،
+  // قرمز/کهربایی برایِ برندهایِ جسورتر، و دو گزینه‌ی روشنِ سرد/گرم) — هرکدام
+  // به‌عمد رنگِ اصلیِ متفاوتی از سه پریستِ بالا دارد تا واقعاً «تنوع» باشد.
+  oceanic: {
+    themeMode: "dark", colorPrimary: "#061826", colorAccent: "#22b8ea",
+    colorBg: "#061826", colorSurface: "#0d2438", colorSurface2: "#123049", colorBorder: "#1c4562",
+    colorText: "#e8f3fb", colorText2: "#9dc2dc", colorText3: "#6690ad",
+    colorOk: "#2dd4bf", colorWarn: "#fbbf24", colorDanger: "#f87171",
+  },
+  emerald: {
+    themeMode: "dark", colorPrimary: "#071a14", colorAccent: "#22c55e",
+    colorBg: "#071a14", colorSurface: "#0e2a21", colorSurface2: "#133627", colorBorder: "#1f4a38",
+    colorText: "#e7f8ef", colorText2: "#9ecdb0", colorText3: "#649779",
+    colorOk: "#4ade80", colorWarn: "#fbbf24", colorDanger: "#f87171",
+  },
+  graphite: {
+    themeMode: "dark", colorPrimary: "#16181c", colorAccent: "#38bdf8",
+    colorBg: "#16181c", colorSurface: "#1e2126", colorSurface2: "#272b31", colorBorder: "#3a3f47",
+    colorText: "#eef0f2", colorText2: "#aab1ba", colorText3: "#6f7680",
+    colorOk: "#4ade80", colorWarn: "#fbbf24", colorDanger: "#f87171",
+  },
+  ruby: {
+    themeMode: "dark", colorPrimary: "#1a0c10", colorAccent: "#f43f5e",
+    colorBg: "#1a0c10", colorSurface: "#291319", colorSurface2: "#351822", colorBorder: "#4f2431",
+    colorText: "#fbecf0", colorText2: "#d9a7b7", colorText3: "#a06f80",
+    colorOk: "#34d399", colorWarn: "#fbbf24", colorDanger: "#ef4444",
+  },
+  amberSunset: {
+    themeMode: "dark", colorPrimary: "#1a1109", colorAccent: "#fb923c",
+    colorBg: "#1a1109", colorSurface: "#291b0e", colorSurface2: "#352412", colorBorder: "#4f3720",
+    colorText: "#fbf0e4", colorText2: "#d9b896", colorText3: "#a08363",
+    colorOk: "#4ade80", colorWarn: "#fbbf24", colorDanger: "#f87171",
+  },
+  arcticIce: {
+    themeMode: "light", colorPrimary: "#0d3a52", colorAccent: "#0ea5e9",
+    colorBg: "#f2f7fb", colorSurface: "#ffffff", colorSurface2: "#e7f0f7", colorBorder: "#cfe0ea",
+    colorText: "#10222c", colorText2: "#47616e", colorText3: "#7c93a0",
+    colorOk: "#16a34a", colorWarn: "#d97706", colorDanger: "#dc2626",
+  },
+  warmCream: {
+    themeMode: "light", colorPrimary: "#3d2f1c", colorAccent: "#d97706",
+    colorBg: "#faf6ee", colorSurface: "#ffffff", colorSurface2: "#f3e9d8", colorBorder: "#e2d2b3",
+    colorText: "#2b2318", colorText2: "#6b5c44", colorText3: "#998766",
+    colorOk: "#16a34a", colorWarn: "#ca8a04", colorDanger: "#dc2626",
+  },
 };
+const APPEARANCE_PRESET_LIST = [
+  ["darkNeon", "saApPresetDarkNeon"], ["light", "saApPresetLight"], ["midnight", "saApPresetMidnight"],
+  ["oceanic", "saApPresetOceanic"], ["emerald", "saApPresetEmerald"], ["graphite", "saApPresetGraphite"],
+  ["ruby", "saApPresetRuby"], ["amberSunset", "saApPresetAmberSunset"],
+  ["arcticIce", "saApPresetArcticIce"], ["warmCream", "saApPresetWarmCream"],
+];
 
 // نگاشتِ فیلدِ config ↔ متغیرِ CSS ↔ کلیدِ ترجمه — ترتیبِ همین‌جا ترتیبِ
 // نمایش در پنل است.
@@ -2283,15 +2335,23 @@ function AppearanceManagementTab({ currentAdmin }) {
       {/* ===== ۱. پایه: پریست، تم، حالتِ بصری، مقیاسِ UI ===== */}
       <SectionHead onReset={() => APPEARANCE_SECTION_RESETS.base(update)} resetLabel={t("saApResetSection")} help={APPEARANCE_HELP.saApBasePreset}>{t("saApBasePreset")}</SectionHead>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
-        {[["darkNeon", "saApPresetDarkNeon"], ["light", "saApPresetLight"], ["midnight", "saApPresetMidnight"]].map(([key, lk]) => (
-          <button
-            key={key} type="button"
-            onClick={() => Object.entries(APPEARANCE_PRESETS[key]).forEach(([f, v]) => update(f, v))}
-            style={{ flex: "1 1 130px", padding: "9px 10px", borderRadius: 9, border: `1px solid ${THEME.border}`, background: THEME.surface2, color: THEME.text2, fontFamily: THEME.font, fontSize: 12, fontWeight: 600, cursor: "pointer" }}
-          >
-            {t(lk)}
-          </button>
-        ))}
+        {APPEARANCE_PRESET_LIST.map(([key, lk]) => {
+          const p = APPEARANCE_PRESETS[key];
+          const swatchBg = p.colorBg || (p.themeMode === "light" ? "#f5f9fb" : "#0b1a24");
+          const swatchBorder = p.colorBorder || THEME.border;
+          return (
+            <button
+              key={key} type="button"
+              onClick={() => Object.entries(p).forEach(([f, v]) => update(f, v))}
+              style={{ flex: "1 1 130px", display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 9, border: `1px solid ${THEME.border}`, background: THEME.surface2, color: THEME.text2, fontFamily: THEME.font, fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+            >
+              <span style={{ width: 20, height: 20, borderRadius: 6, background: swatchBg, border: `1px solid ${swatchBorder}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <span style={{ width: 9, height: 9, borderRadius: "50%", background: p.colorAccent }} />
+              </span>
+              {t(lk)}
+            </button>
+          );
+        })}
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14, marginBottom: 18 }}>
         <div>
