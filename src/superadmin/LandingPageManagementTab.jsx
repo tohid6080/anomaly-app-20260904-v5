@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Plus, Trash2, ExternalLink } from "lucide-react";
+import { Plus, Trash2, ExternalLink, Eye, EyeOff } from "lucide-react";
 import { THEME, styles, PUBLIC_APP_URL } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { loadLandingPageContent, saveLandingPageContent } from "../systemConfigApi.js";
-import { LANDING_DEFAULTS } from "../LandingPage.jsx";
+import { LANDING_DEFAULTS, LANDING_BUTTON_KEYS, LANDING_BUTTONS_DEFAULT } from "../LandingPage.jsx";
 
 const CATS = ["safety", "health", "env", "management", "report"];
 const FOOTER_LINK_HINTS = ["امکانات", "ماژول‌ها", "پلن‌ها", "درباره سامانه", "تماس با ما", "قوانین و حریم خصوصی", "شروع رایگان", "ورود کاربران"];
@@ -31,6 +31,7 @@ export default function LandingPageManagementTab({ currentAdmin }) {
       fa: { ...LANDING_DEFAULTS.fa, ...(saved?.fa || {}) },
       en: { ...LANDING_DEFAULTS.en, ...(saved?.en || {}) },
       de: { ...LANDING_DEFAULTS.de, ...(saved?.de || {}) },
+      buttons: { ...LANDING_BUTTONS_DEFAULT, ...(saved?.buttons || {}) },
     };
     setBaseline(merged);
     setDraft(JSON.parse(JSON.stringify(merged)));
@@ -47,6 +48,7 @@ export default function LandingPageManagementTab({ currentAdmin }) {
   const setItem = (key, idx, value) => setField({ [key]: d[key].map((x, i) => (i === idx ? value : x)) });
   const removeItem = (key, idx) => setField({ [key]: d[key].filter((_, i) => i !== idx) });
   const addItem = (key, blank) => setField({ [key]: [...d[key], blank] });
+  const toggleButton = (key) => setDraft((prev) => ({ ...prev, buttons: { ...prev.buttons, [key]: !prev.buttons[key] } }));
 
   const isDirty = JSON.stringify(baseline) !== JSON.stringify(draft);
 
@@ -68,6 +70,19 @@ export default function LandingPageManagementTab({ currentAdmin }) {
           <ExternalLink size={13} /> {t("lpPreviewLive")}
         </a>
       </div>
+
+      <Section title={t("lpSecButtons")}>
+        <p style={{ fontSize: 11, color: THEME.text3, marginBottom: 10, lineHeight: 1.8 }}>{t("lpButtonsNote")}</p>
+        {LANDING_BUTTON_KEYS.map((key) => (
+          <div key={key} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 2px", borderBottom: `1px solid ${THEME.borderSoft}` }}>
+            <span style={{ flex: 1, fontSize: 12.5, color: THEME.text, fontWeight: 600 }}>{t("lpBtn_" + key)}</span>
+            <button type="button" onClick={() => toggleButton(key)}
+              style={{ display: "flex", alignItems: "center", gap: 5, background: draft.buttons[key] ? THEME.okBg : THEME.surface2, color: draft.buttons[key] ? THEME.ok : THEME.text3, border: "none", borderRadius: 999, padding: "5px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font }}>
+              {draft.buttons[key] ? <Eye size={13} /> : <EyeOff size={13} />} {draft.buttons[key] ? t("saVisibleShown") : t("saHidden")}
+            </button>
+          </div>
+        ))}
+      </Section>
 
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
         <div style={{ display: "inline-flex", background: THEME.surface2, border: `1px solid ${THEME.border}`, borderRadius: 9, padding: 3, gap: 3 }}>
