@@ -3,7 +3,7 @@ import { Plus, Trash2, ExternalLink, Eye, EyeOff } from "lucide-react";
 import { THEME, styles, PUBLIC_APP_URL } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { loadLandingPageContent, saveLandingPageContent } from "../systemConfigApi.js";
-import { LANDING_DEFAULTS, LANDING_BUTTON_KEYS, LANDING_BUTTONS_DEFAULT } from "../LandingPage.jsx";
+import { LANDING_DEFAULTS, LANDING_BUTTON_KEYS, LANDING_BUTTONS_DEFAULT, LANDING_DISPLAY_MODE_DEFAULT } from "../LandingPage.jsx";
 
 const CATS = ["safety", "health", "env", "management", "report"];
 const FOOTER_LINK_HINTS = ["امکانات", "ماژول‌ها", "پلن‌ها", "درباره سامانه", "تماس با ما", "قوانین و حریم خصوصی", "شروع رایگان", "ورود کاربران"];
@@ -32,6 +32,7 @@ export default function LandingPageManagementTab({ currentAdmin }) {
       en: { ...LANDING_DEFAULTS.en, ...(saved?.en || {}) },
       de: { ...LANDING_DEFAULTS.de, ...(saved?.de || {}) },
       buttons: { ...LANDING_BUTTONS_DEFAULT, ...(saved?.buttons || {}) },
+      displayMode: saved?.displayMode === "loginOnly" ? "loginOnly" : LANDING_DISPLAY_MODE_DEFAULT,
     };
     setBaseline(merged);
     setDraft(JSON.parse(JSON.stringify(merged)));
@@ -49,6 +50,7 @@ export default function LandingPageManagementTab({ currentAdmin }) {
   const removeItem = (key, idx) => setField({ [key]: d[key].filter((_, i) => i !== idx) });
   const addItem = (key, blank) => setField({ [key]: [...d[key], blank] });
   const toggleButton = (key) => setDraft((prev) => ({ ...prev, buttons: { ...prev.buttons, [key]: !prev.buttons[key] } }));
+  const setDisplayMode = (mode) => setDraft((prev) => ({ ...prev, displayMode: mode }));
 
   const isDirty = JSON.stringify(baseline) !== JSON.stringify(draft);
 
@@ -70,6 +72,19 @@ export default function LandingPageManagementTab({ currentAdmin }) {
           <ExternalLink size={13} /> {t("lpPreviewLive")}
         </a>
       </div>
+
+      <Section title={t("lpSecDisplayMode")}>
+        <p style={{ fontSize: 11, color: THEME.text3, marginBottom: 10, lineHeight: 1.8 }}>{t("lpDisplayModeNote")}</p>
+        <div style={{ display: "inline-flex", background: THEME.surface2, border: `1px solid ${THEME.border}`, borderRadius: 9, padding: 3, gap: 3 }}>
+          {["full", "loginOnly"].map((m) => (
+            <button key={m} type="button" onClick={() => setDisplayMode(m)}
+              style={{ border: "none", borderRadius: 7, padding: "7px 18px", fontFamily: THEME.font, fontSize: 12, fontWeight: 800, cursor: "pointer",
+                background: draft.displayMode === m ? THEME.teal : "transparent", color: draft.displayMode === m ? "#fff" : THEME.text2 }}>
+              {t(m === "full" ? "lpModeFull" : "lpModeLoginOnly")}
+            </button>
+          ))}
+        </div>
+      </Section>
 
       <Section title={t("lpSecButtons")}>
         <p style={{ fontSize: 11, color: THEME.text3, marginBottom: 10, lineHeight: 1.8 }}>{t("lpButtonsNote")}</p>

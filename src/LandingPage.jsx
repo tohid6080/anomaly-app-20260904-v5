@@ -542,6 +542,11 @@ export const LANDING_DEFAULTS = { fa: L.fa, en: L.en, de: L.de };
 // کلید همه‌ی نمونه‌هایِ آن دکمه را با هم روشن/خاموش می‌کند. اگر سوپرادمین
 // چیزی ذخیره نکرده باشد یا کلیدی در آن نباشد، پیش‌فرض روشن است — بدونِ
 // رگرسیون برایِ پیکربندی‌هایِ قدیمی که اصلاً buttons ندارند.
+// حالتِ نمایشِ صفحه‌ی پیش‌از‌ورود: «full» (پیش‌فرض، همین صفحه‌ی فرودِ
+// عمومی) یا «loginOnly» (فقط فرمِ ورود، بدونِ این صفحه — نگاه کن به
+// LoginScreen در App.jsx که واقعاً بینِ این دو انتخاب می‌کند).
+export const LANDING_DISPLAY_MODE_DEFAULT = "full";
+
 export const LANDING_BUTTON_KEYS = ["ctaPrimary", "ctaPlans", "ctaSecondary", "login", "annBtn", "scBtn", "loginTrialRequest"];
 export const LANDING_BUTTONS_DEFAULT = Object.fromEntries(LANDING_BUTTON_KEYS.map((k) => [k, true]));
 // صادر می‌شود چون «دکمهٔ درخواست ارزیابی و پلن آزمایشی» داخلِ پنجرهٔ

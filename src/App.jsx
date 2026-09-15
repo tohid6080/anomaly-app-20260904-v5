@@ -1304,87 +1304,47 @@ function LoginScreen({ onLogin }) {
     ? [{ title: ann0.title, body: ann0.message, dateLabel: toJalaliSafe(ann0.createdAt || "") }]
     : [];
 
+  // «فقط صفحه‌ی ورود» (SuperAdmin → پیکربندی سامانه → مدیریتِ صفحه اصلی
+  // → «حالتِ نمایشِ صفحه اصلی») یعنی صفحه‌ی فرودِ عمومی اصلاً رندر نشود؛
+  // فرمِ ورود به‌جایِ Modal روی آن، خودش تکِ محتوایِ صفحه می‌شود.
+  const loginOnly = landingOverride?.displayMode === "loginOnly";
+  const loginCardProps = {
+    t, dir, appearance,
+    username, setUsername, password, setPassword,
+    error, warning, loading, handleSubmit,
+    bioAvailable, bioChecking, handleBiometricLogin,
+    showTrialRequestBtn: landingButtons.loginTrialRequest,
+    onTrialRequest: () => { setShowLogin(false); setShowTrialRequest(true); },
+  };
+
   return (
     <>
-      <LandingPage
-        onStartFree={() => setShowTrialRequest(true)}
-        onViewPlans={() => setShowPlans(true)}
-        onUserLogin={() => setShowLogin(true)}
-        announcements={landingAnnouncements}
-        logoUrl={appearance?.logoUrl}
-        systemName={appearance?.systemName || ""}
-        heroImageUrl={ann0?.loginImageUrl || appearance?.loginImageUrl || ""}
-        landingOverride={landingOverride}
-      />
-
-      {showLogin && (
-        <div
-          onClick={() => setShowLogin(false)}
-          style={{ position: "fixed", inset: 0, zIndex: 2000, background: "rgba(6,18,27,0.62)", display: "flex", alignItems: "center", justifyContent: "center", padding: 10, direction: dir }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{ width: 360, maxWidth: "100%", background: THEME.surface, borderRadius: 18, border: `1px solid ${THEME.border}`, boxShadow: "0 40px 90px -40px rgba(0,0,0,0.55)", padding: "16px 22px 14px", maxHeight: "calc(100vh - 20px)", overflowY: "auto", display: "flex", flexDirection: "column" }}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2 }}>
-              <LanguageSelect align="start" />
-              <button type="button" onClick={() => setShowLogin(false)} aria-label={t("commonCancel")} style={{ background: "none", border: "none", cursor: "pointer", color: THEME.text3, padding: 2 }}>
-                <X size={18} />
-              </button>
-            </div>
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: 2 }}>
-              <IhmsLogo size={56} src={appearance?.logoUrl} />
-            </div>
-            <h2 style={{ textAlign: "center", marginBottom: 1, fontSize: 15.5, color: THEME.heading, fontWeight: 800, fontFamily: THEME.font }}>{t("loginButton")}</h2>
-            <p style={{ textAlign: "center", color: THEME.text3, fontSize: 11, marginTop: 2, marginBottom: 8, fontFamily: THEME.font, fontWeight: 600 }}>{t("loginTagline")}</p>
-
-            <label style={{ ...styles.label, textAlign: dir === "rtl" ? "right" : "left", marginTop: 8, marginBottom: 3, fontFamily: THEME.font }}>{t("username")}</label>
-            <input style={{ ...styles.input, padding: "9px 12px" }} value={username} onChange={(e) => setUsername(e.target.value)} dir={dir} autoFocus />
-
-            <label style={{ ...styles.label, textAlign: dir === "rtl" ? "right" : "left", marginTop: 8, marginBottom: 3, fontFamily: THEME.font }}>{t("password")}</label>
-            <input
-              style={{ ...styles.input, padding: "9px 12px" }}
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
-              dir={dir}
-            />
-
-            {error && <p style={{ ...styles.error, marginTop: 6, fontFamily: THEME.font }}>{error}</p>}
-            {!error && warning && <p style={{ fontSize: 11, color: THEME.warn, marginTop: 4, marginBottom: 0, lineHeight: 1.6, fontFamily: THEME.font }}>{warning}</p>}
-
-            <button type="button" style={{ ...styles.button, marginTop: 12, padding: "10px", opacity: loading ? 0.75 : 1 }} onClick={handleSubmit} disabled={loading}>
-              {loading ? t("loggingIn") : t("loginButton")}
-            </button>
-
-            {bioAvailable && (
-              <button
-                type="button"
-                onClick={handleBiometricLogin}
-                disabled={bioChecking}
-                style={{ ...styles.button, background: THEME.tealDeep, marginTop: 8, padding: "10px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: bioChecking ? 0.75 : 1 }}
-              >
-                <Fingerprint size={16} /> {bioChecking ? t("biometricGateChecking") : t("biometricQuickLogin")}
-              </button>
-            )}
-
-            {landingButtons.loginTrialRequest && (
-              <button
-                type="button"
-                onClick={() => { setShowLogin(false); setShowTrialRequest(true); }}
-                style={{
-                  width: "100%", marginTop: 8, padding: "9px", borderRadius: 9, cursor: "pointer", fontFamily: THEME.font,
-                  fontSize: 12.5, fontWeight: 600, background: "transparent", border: `1.5px solid ${THEME.teal}`, color: THEME.tealDeep,
-                }}
-              >
-                {t("loginTrialRequestBtn")}
-              </button>
-            )}
-
-            <p style={{ ...styles.hint, marginTop: 8, marginBottom: 0, fontFamily: THEME.font, fontWeight: 700 }}>{t("designedBy")}</p>
-          </div>
+      {loginOnly ? (
+        <div style={{ ...styles.centerScreen, direction: dir }}>
+          <LoginFormCard {...loginCardProps} />
         </div>
+      ) : (
+        <>
+          <LandingPage
+            onStartFree={() => setShowTrialRequest(true)}
+            onViewPlans={() => setShowPlans(true)}
+            onUserLogin={() => setShowLogin(true)}
+            announcements={landingAnnouncements}
+            logoUrl={appearance?.logoUrl}
+            systemName={appearance?.systemName || ""}
+            heroImageUrl={ann0?.loginImageUrl || appearance?.loginImageUrl || ""}
+            landingOverride={landingOverride}
+          />
+
+          {showLogin && (
+            <div
+              onClick={() => setShowLogin(false)}
+              style={{ position: "fixed", inset: 0, zIndex: 2000, background: "rgba(6,18,27,0.62)", display: "flex", alignItems: "center", justifyContent: "center", padding: 10, direction: dir }}
+            >
+              <LoginFormCard {...loginCardProps} onClose={() => setShowLogin(false)} onClick={(e) => e.stopPropagation()} />
+            </div>
+          )}
+        </>
       )}
 
       {showTrialRequest && <TrialRequestModal onClose={() => setShowTrialRequest(false)} />}
@@ -1401,6 +1361,86 @@ function LoginScreen({ onLogin }) {
         </div>
       )}
     </>
+  );
+}
+
+// کارتِ فرمِ ورود — هم داخلِ Modal (حالتِ «نمایشِ کامل»، رویِ صفحه اصلی باز
+// می‌شود، با دکمه‌ی X و onClick برایِ stopPropagation) هم به‌عنوانِ تکِ
+// محتوایِ صفحه (حالتِ «فقط صفحه‌ی ورود») استفاده می‌شود، تا فیلدها/منطقِ
+// ورود دوبار نوشته نشوند — نگاه کن به LoginScreen و «حالتِ نمایشِ صفحه
+// اصلی» در SuperAdmin.
+function LoginFormCard({
+  t, dir, appearance,
+  username, setUsername, password, setPassword,
+  error, warning, loading, handleSubmit,
+  bioAvailable, bioChecking, handleBiometricLogin,
+  showTrialRequestBtn, onTrialRequest, onClose, onClick,
+}) {
+  return (
+    <div
+      onClick={onClick}
+      style={{ width: 360, maxWidth: "100%", background: THEME.surface, borderRadius: 18, border: `1px solid ${THEME.border}`, boxShadow: "0 40px 90px -40px rgba(0,0,0,0.55)", padding: "16px 22px 14px", maxHeight: "calc(100vh - 20px)", overflowY: "auto", display: "flex", flexDirection: "column" }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2 }}>
+        <LanguageSelect align="start" />
+        {onClose && (
+          <button type="button" onClick={onClose} aria-label={t("commonCancel")} style={{ background: "none", border: "none", cursor: "pointer", color: THEME.text3, padding: 2 }}>
+            <X size={18} />
+          </button>
+        )}
+      </div>
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 2 }}>
+        <IhmsLogo size={56} src={appearance?.logoUrl} />
+      </div>
+      <h2 style={{ textAlign: "center", marginBottom: 1, fontSize: 15.5, color: THEME.heading, fontWeight: 800, fontFamily: THEME.font }}>{t("loginButton")}</h2>
+      <p style={{ textAlign: "center", color: THEME.text3, fontSize: 11, marginTop: 2, marginBottom: 8, fontFamily: THEME.font, fontWeight: 600 }}>{t("loginTagline")}</p>
+
+      <label style={{ ...styles.label, textAlign: dir === "rtl" ? "right" : "left", marginTop: 8, marginBottom: 3, fontFamily: THEME.font }}>{t("username")}</label>
+      <input style={{ ...styles.input, padding: "9px 12px" }} value={username} onChange={(e) => setUsername(e.target.value)} dir={dir} autoFocus />
+
+      <label style={{ ...styles.label, textAlign: dir === "rtl" ? "right" : "left", marginTop: 8, marginBottom: 3, fontFamily: THEME.font }}>{t("password")}</label>
+      <input
+        style={{ ...styles.input, padding: "9px 12px" }}
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
+        dir={dir}
+      />
+
+      {error && <p style={{ ...styles.error, marginTop: 6, fontFamily: THEME.font }}>{error}</p>}
+      {!error && warning && <p style={{ fontSize: 11, color: THEME.warn, marginTop: 4, marginBottom: 0, lineHeight: 1.6, fontFamily: THEME.font }}>{warning}</p>}
+
+      <button type="button" style={{ ...styles.button, marginTop: 12, padding: "10px", opacity: loading ? 0.75 : 1 }} onClick={handleSubmit} disabled={loading}>
+        {loading ? t("loggingIn") : t("loginButton")}
+      </button>
+
+      {bioAvailable && (
+        <button
+          type="button"
+          onClick={handleBiometricLogin}
+          disabled={bioChecking}
+          style={{ ...styles.button, background: THEME.tealDeep, marginTop: 8, padding: "10px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: bioChecking ? 0.75 : 1 }}
+        >
+          <Fingerprint size={16} /> {bioChecking ? t("biometricGateChecking") : t("biometricQuickLogin")}
+        </button>
+      )}
+
+      {showTrialRequestBtn && (
+        <button
+          type="button"
+          onClick={onTrialRequest}
+          style={{
+            width: "100%", marginTop: 8, padding: "9px", borderRadius: 9, cursor: "pointer", fontFamily: THEME.font,
+            fontSize: 12.5, fontWeight: 600, background: "transparent", border: `1.5px solid ${THEME.teal}`, color: THEME.tealDeep,
+          }}
+        >
+          {t("loginTrialRequestBtn")}
+        </button>
+      )}
+
+      <p style={{ ...styles.hint, marginTop: 8, marginBottom: 0, fontFamily: THEME.font, fontWeight: 700 }}>{t("designedBy")}</p>
+    </div>
   );
 }
 
