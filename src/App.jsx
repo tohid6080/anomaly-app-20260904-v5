@@ -21,7 +21,7 @@ const IncidentsListPage = lazy(() => import("./incidents/IncidentsListPage.jsx")
 const PSSRListPage = lazy(() => import("./pssr/PSSRListPage.jsx"));
 import { loadOpenActionsForResponsible } from "./pssr/pssrMeetingsApi.js";
 import { loadHomeKpiSummary } from "./dashboard/homeKpiApi.js";
-import { loadModuleConfig, loadDashboardConfig, loadNotificationTypes, loadAppearanceConfig, applyAppearanceToDom, effectiveAppearance, cacheAppearanceConfig, readCachedAppearanceConfig, syncAppearanceNow, loadActiveAnnouncements, loadDashboardWidgetConfig, loadLandingPageContent } from "./systemConfigApi.js";
+import { loadModuleConfig, loadDashboardConfig, loadNotificationTypes, loadAppearanceConfig, applyAppearanceToDom, effectiveAppearance, cacheAppearanceConfig, readCachedAppearanceConfig, syncAppearanceNow, loadActiveAnnouncements, loadDashboardWidgetConfig, loadLandingPageContent, readCachedLandingPageContent } from "./systemConfigApi.js";
 import { mergeWidgetConfig, defaultWidgetConfig } from "./dashboard/dashboardWidgets.js";
 import { submitToGate, loadPendingGateItems, loadAssignedGateItems, loadAssignedReviewItemsForModule, deleteGateItemsForRecord, loadCompanyStaffOptions, assignForReview, submitReview, approveGateItem, rejectGateItem, GATE_STATUS_LABELS, gateStatusLabel } from "./hseGateApi.js";
 import SubscriptionGate, { PlanSelectionScreen } from "./subscription/SubscriptionGate.jsx";
@@ -1192,9 +1192,13 @@ function LoginScreen({ onLogin }) {
   const [bioChecking, setBioChecking] = useState(false);
   const [showTrialRequest, setShowTrialRequest] = useState(false);
   // یک‌بار اینجا خوانده می‌شود و هم به LandingPage (buttons/متنِ چندزبانه)
-  // هم به دکمهٔ «درخواست ارزیابی» پایینِ همین کامپوننت (داخلِ پنجرهٔ ورود)
-  // داده می‌شود — نگاه کن به «مدیریتِ دکمه‌هایِ صفحه اصلی» در SuperAdmin.
-  const [landingOverride, setLandingOverride] = useState(null);
+  // هم به دکمهٔ «درخواست ارزیابی» و هم به displayMode («فقط صفحه‌ی ورود»)
+  // پایینِ همین کامپوننت داده می‌شود — نگاه کن به «مدیریتِ صفحه اصلی» در
+  // SuperAdmin. مقدارِ اولیه از کشِ محلی می‌آید (نه null) تا هربار رفرش،
+  // یک لحظه حالتِ پیش‌فرض («نمایشِ کامل») فلاش نزند و دوباره به حالتِ
+  // واقعیِ ذخیره‌شده (مثلاً «فقط صفحه‌ی ورود») نپرد — fetch فقط آن را در
+  // پس‌زمینه تازه نگه می‌دارد.
+  const [landingOverride, setLandingOverride] = useState(() => readCachedLandingPageContent());
   useEffect(() => { loadLandingPageContent().then(setLandingOverride).catch(() => setLandingOverride(null)); }, []);
   const landingButtons = useMemo(() => mergeLandingButtons(landingOverride?.buttons), [landingOverride]);
   const [showLogin, setShowLogin] = useState(false);
