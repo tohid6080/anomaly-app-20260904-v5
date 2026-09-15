@@ -692,6 +692,24 @@ export async function deleteAnnouncement(id) {
 // ذخیره می‌شود — همان الگویی که مدل‌های JSONBِ سایرِ ماژول‌ها (schema در
 // survey/permit) هم دنبال می‌کنند.
 const LANDING_CONTENT_KEY = "landing_page_content";
+export const LANDING_CONTENT_CACHE_KEY = "ihms_landing_content_cache";
+
+// همان کشِ استارتِ سردِ بدونِ‌فلشِ appearance (بالاتر در همین فایل)، اینجا
+// برای محتوایِ صفحه اصلی: بدونِ این کش، تا وقتی fetch شبکه تمام نشود
+// landingOverride خالی می‌ماند و LoginScreen (App.jsx) یک لحظه با حالتِ
+// پیش‌فرض («نمایشِ کامل») رندر می‌شود — حتی اگر سوپرادمین «فقط صفحه‌ی
+// ورود» را انتخاب کرده باشد — و بعد به حالتِ درست می‌پرد (فلاش). با این
+// کش، مقدارِ ذخیره‌شده‌ی همان جلسه‌ی قبلی بلافاصله و هم‌زمان با اولین
+// رندر استفاده می‌شود؛ fetch فقط آن را در پس‌زمینه تازه نگه می‌دارد.
+export function cacheLandingPageContent(content) {
+  try { localStorage.setItem(LANDING_CONTENT_CACHE_KEY, JSON.stringify({ v: 1, content })); } catch { /* بی‌اهمیت */ }
+}
+export function readCachedLandingPageContent() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(LANDING_CONTENT_CACHE_KEY) || "null");
+    return parsed && parsed.v === 1 && parsed.content ? parsed.content : null;
+  } catch { return null; }
+}
 
 export async function loadLandingPageContent() {
   let rows = null;
@@ -699,7 +717,11 @@ export async function loadLandingPageContent() {
     rows = await sb(`system_settings?key=eq.${LANDING_CONTENT_KEY}&select=value_text`);
   } catch { rows = null; }
   if (!sbOk(rows) || rows.length === 0 || !rows[0].value_text) return null;
-  try { return JSON.parse(rows[0].value_text); } catch { return null; }
+  try {
+    const parsed = JSON.parse(rows[0].value_text);
+    cacheLandingPageContent(parsed);
+    return parsed;
+  } catch { return null; }
 }
 
 export async function saveLandingPageContent(content, updatedBy) {
