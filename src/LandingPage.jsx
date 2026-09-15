@@ -537,6 +537,21 @@ const L = {
 // در دو فایل. هر سه زبان (fa/en/de) قابلِ مدیریت‌اند.
 export const LANDING_DEFAULTS = { fa: L.fa, en: L.en, de: L.de };
 
+// دکمه‌هایِ فراخوان‌به‌اقدامِ قابل‌مدیریت از «مدیریتِ صفحه اصلی سامانه» —
+// کلیدها ثابت و مستقل از زبان‌اند (نه بر اساسِ متن)، چون همان دکمه در چند
+// نقطه از صفحه (هدر/موبایل‌نو/هیرو/فوتر...) با یک اکشن تکرار می‌شود؛ یک
+// کلید همه‌ی نمونه‌هایِ آن دکمه را با هم روشن/خاموش می‌کند. اگر سوپرادمین
+// چیزی ذخیره نکرده باشد یا کلیدی در آن نباشد، پیش‌فرض روشن است — بدونِ
+// رگرسیون برایِ پیکربندی‌هایِ قدیمی که اصلاً buttons ندارند.
+export const LANDING_BUTTON_KEYS = ["ctaPrimary", "ctaPlans", "ctaSecondary", "login", "annBtn", "scBtn"];
+export const LANDING_BUTTONS_DEFAULT = Object.fromEntries(LANDING_BUTTON_KEYS.map((k) => [k, true]));
+function mergeLandingButtons(ov) {
+  const b = ov && typeof ov === "object" ? ov : {};
+  const out = {};
+  LANDING_BUTTON_KEYS.forEach((k) => { out[k] = b[k] !== false; });
+  return out;
+}
+
 const LANG_OPTIONS = [
   { code: "fa", label: "فارسی" },
   { code: "en", label: "English" },
@@ -638,6 +653,7 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
   const base = L[lang] || L.fa;
   const ov = landingOverride?.[lang] || null;
   const x = useMemo(() => mergeLandingContent(base, ov), [base, ov]);
+  const btn = useMemo(() => mergeLandingButtons(landingOverride?.buttons), [landingOverride]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -685,12 +701,16 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
             </nav>
             <span className="spacer" />
             {langSwitch}
-            <button type="button" className="btn btn-primary" style={{ padding: "10px 16px", fontSize: 13 }} onClick={viewPlans}>
-              {x.ctaPlans}
-            </button>
-            <button type="button" className="btn btn-primary hide-sm" style={{ padding: "10px 16px", fontSize: 13 }} onClick={onUserLogin}>
-              {x.login}
-            </button>
+            {btn.ctaPlans && (
+              <button type="button" className="btn btn-primary" style={{ padding: "10px 16px", fontSize: 13 }} onClick={viewPlans}>
+                {x.ctaPlans}
+              </button>
+            )}
+            {btn.login && (
+              <button type="button" className="btn btn-primary hide-sm" style={{ padding: "10px 16px", fontSize: 13 }} onClick={onUserLogin}>
+                {x.login}
+              </button>
+            )}
             <button type="button" className="hamb" aria-label="menu" onClick={() => setMNav((v) => !v)}>
               {mNav ? <X size={18} /> : <Menu size={18} />}
             </button>
@@ -702,8 +722,8 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
               <a key={i} href={"#lp-" + NAV_IDS[i]} onClick={(e) => { e.preventDefault(); go(NAV_IDS[i]); }}>{label}</a>
             ))}
             <div style={{ marginTop: 10 }}>{langSwitch}</div>
-            <button type="button" className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => { setMNav(false); viewPlans(); }}>{x.ctaPlans}</button>
-            <button type="button" className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => { setMNav(false); onUserLogin(); }}>{x.login}</button>
+            {btn.ctaPlans && <button type="button" className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => { setMNav(false); viewPlans(); }}>{x.ctaPlans}</button>}
+            {btn.login && <button type="button" className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => { setMNav(false); onUserLogin(); }}>{x.login}</button>}
           </div>
         </div>
       </header>
@@ -717,9 +737,9 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
               <h1>{x.heroH1a}<span className="accent">{x.heroH1b}</span></h1>
               <p className="lede">{x.heroLede}</p>
               <div className="cta">
-                <button type="button" className="btn btn-primary btn-lg" onClick={onStartFree}>{x.ctaPrimary}</button>
-                <button type="button" className="btn btn-ghost btn-lg" onClick={viewPlans}>{x.ctaPlans}</button>
-                <button type="button" className="btn btn-ghost btn-lg" onClick={() => go("features")}>{x.ctaSecondary}</button>
+                {btn.ctaPrimary && <button type="button" className="btn btn-primary btn-lg" onClick={onStartFree}>{x.ctaPrimary}</button>}
+                {btn.ctaPlans && <button type="button" className="btn btn-ghost btn-lg" onClick={viewPlans}>{x.ctaPlans}</button>}
+                {btn.ctaSecondary && <button type="button" className="btn btn-ghost btn-lg" onClick={() => go("features")}>{x.ctaSecondary}</button>}
               </div>
               <div className="ticks">
                 {x.ticks.map((tk) => <span key={tk}><Check size={15} color={C.tealDeep} /> {tk}</span>)}
@@ -743,7 +763,7 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
               <b>{ann?.title || x.annTitle}</b>{"  "}— {ann?.body || x.annBody}
             </div>
             <span className="date">{ann?.dateLabel || x.annDate}</span>
-            <button type="button" className="btn btn-primary" style={{ padding: "8px 16px", fontSize: 12.5 }} onClick={onStartFree}>{x.annBtn}</button>
+            {btn.annBtn && <button type="button" className="btn btn-primary" style={{ padding: "8px 16px", fontSize: 12.5 }} onClick={onStartFree}>{x.annBtn}</button>}
             <a href="#lp-top" onClick={(e) => { e.preventDefault(); go("top"); }} style={{ fontSize: 12, fontWeight: 800, color: C.tealDeep, display: "inline-flex", alignItems: "center", gap: 4 }}>
               {x.annAll} <Arrow size={13} />
             </a>
@@ -856,7 +876,7 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
                   </div>
                 ))}
               </div>
-              <button type="button" className="btn btn-primary btn-lg" style={{ marginTop: 20 }} onClick={onStartFree}>{x.scBtn}</button>
+              {btn.scBtn && <button type="button" className="btn btn-primary btn-lg" style={{ marginTop: 20 }} onClick={onStartFree}>{x.scBtn}</button>}
             </div>
             <div className="bigmock" data-rv>
               <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
@@ -941,7 +961,7 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
             <div className="grid-lines" />
             <h2>{x.fH2}</h2>
             <p>{x.fP}</p>
-            <button type="button" className="btn btn-primary btn-lg" style={{ marginTop: 24, position: "relative" }} onClick={onStartFree}>{x.ctaPrimary}</button>
+            {btn.ctaPrimary && <button type="button" className="btn btn-primary btn-lg" style={{ marginTop: 24, position: "relative" }} onClick={onStartFree}>{x.ctaPrimary}</button>}
             <div style={{ marginTop: 14, fontSize: 12, color: "rgba(255,255,255,.7)", position: "relative" }}>{x.fSub}</div>
           </div>
         </div>
@@ -971,8 +991,8 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
             </div>
             <div>
               <h4>{x.ftStart}</h4>
-              <a href="#" onClick={(e) => { e.preventDefault(); onStartFree(); }}>{x.ftLinks[5]}</a>
-              <a href="#" onClick={(e) => { e.preventDefault(); onUserLogin(); }}>{x.ftLinks[6]}</a>
+              {btn.ctaPrimary && <a href="#" onClick={(e) => { e.preventDefault(); onStartFree(); }}>{x.ftLinks[5]}</a>}
+              {btn.login && <a href="#" onClick={(e) => { e.preventDefault(); onUserLogin(); }}>{x.ftLinks[6]}</a>}
             </div>
           </div>
           <div className="base">
