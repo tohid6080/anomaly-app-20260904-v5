@@ -1335,13 +1335,13 @@ function LoginScreen({ onLogin }) {
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 2 }}>
               <IhmsLogo size={56} src={appearance?.logoUrl} />
             </div>
-            <h2 style={{ textAlign: "center", marginBottom: 1, fontSize: 15.5, color: THEME.heading, fontWeight: 800 }}>{t("loginButton")}</h2>
-            <p style={{ textAlign: "center", color: THEME.text3, fontSize: 11, marginTop: 2, marginBottom: 8 }}>{t("loginTagline")}</p>
+            <h2 style={{ textAlign: "center", marginBottom: 1, fontSize: 15.5, color: THEME.heading, fontWeight: 800, fontFamily: THEME.font }}>{t("loginButton")}</h2>
+            <p style={{ textAlign: "center", color: THEME.text3, fontSize: 11, marginTop: 2, marginBottom: 8, fontFamily: THEME.font, fontWeight: 600 }}>{t("loginTagline")}</p>
 
-            <label style={{ ...styles.label, textAlign: dir === "rtl" ? "right" : "left", marginTop: 8, marginBottom: 3 }}>{t("username")}</label>
+            <label style={{ ...styles.label, textAlign: dir === "rtl" ? "right" : "left", marginTop: 8, marginBottom: 3, fontFamily: THEME.font }}>{t("username")}</label>
             <input style={{ ...styles.input, padding: "9px 12px" }} value={username} onChange={(e) => setUsername(e.target.value)} dir={dir} autoFocus />
 
-            <label style={{ ...styles.label, textAlign: dir === "rtl" ? "right" : "left", marginTop: 8, marginBottom: 3 }}>{t("password")}</label>
+            <label style={{ ...styles.label, textAlign: dir === "rtl" ? "right" : "left", marginTop: 8, marginBottom: 3, fontFamily: THEME.font }}>{t("password")}</label>
             <input
               style={{ ...styles.input, padding: "9px 12px" }}
               type="password"
@@ -1351,8 +1351,8 @@ function LoginScreen({ onLogin }) {
               dir={dir}
             />
 
-            {error && <p style={{ ...styles.error, marginTop: 6 }}>{error}</p>}
-            {!error && warning && <p style={{ fontSize: 11, color: THEME.warn, marginTop: 4, marginBottom: 0, lineHeight: 1.6 }}>{warning}</p>}
+            {error && <p style={{ ...styles.error, marginTop: 6, fontFamily: THEME.font }}>{error}</p>}
+            {!error && warning && <p style={{ fontSize: 11, color: THEME.warn, marginTop: 4, marginBottom: 0, lineHeight: 1.6, fontFamily: THEME.font }}>{warning}</p>}
 
             <button type="button" style={{ ...styles.button, marginTop: 12, padding: "10px", opacity: loading ? 0.75 : 1 }} onClick={handleSubmit} disabled={loading}>
               {loading ? t("loggingIn") : t("loginButton")}
@@ -1382,7 +1382,7 @@ function LoginScreen({ onLogin }) {
               </button>
             )}
 
-            <p style={{ ...styles.hint, marginTop: 8, marginBottom: 0 }}>{t("designedBy")}</p>
+            <p style={{ ...styles.hint, marginTop: 8, marginBottom: 0, fontFamily: THEME.font, fontWeight: 700 }}>{t("designedBy")}</p>
           </div>
         </div>
       )}
