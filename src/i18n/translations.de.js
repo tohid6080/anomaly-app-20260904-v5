@@ -4627,4 +4627,23 @@ export const de = {
   "saAddContractorAccount": "Nachunternehmer-Konto hinzufügen",
   "saDeleteContractorCompanyTitle": "Aus der Liste entfernen",
   "saDeleteContractorCompanyConfirm": "„{name}“ aus der Liste entfernen? Bereits erstellte Nachunternehmer-Konten mit diesem Namen bleiben unverändert.",
+
+  // ---------- Survey: Genehmigungsworkflow für Nachunternehmer-Anfragen ----------
+  "svStatus_pending_approval": "Wartet auf Genehmigung des Auftraggebers",
+  "svStatus_rejected": "Abgelehnt",
+  "svErrRejectReasonRequired": "Zum Ablehnen der Anfrage ist eine Begründung erforderlich.",
+  "svRequestNewSurvey": "Neue Umfrage anfragen",
+  "svRequestNewExam": "Neue Prüfung anfragen",
+  "svContractorRequestNote": "Eine von Ihnen erstellte Umfrage/Prüfung wird zunächst an den Auftraggeber gesendet; erst nach dessen Genehmigung wird sie für Ihr Unternehmen aktiv.",
+  "svPendingRequestsTitle": "Anfragen, die auf Genehmigung warten ({n})",
+  "svRequestedByMeta": "Angefragt von {name} · {n} Fragen · {date}",
+  "svReview": "Prüfen",
+  "svApproveAndPublish": "Genehmigen & veröffentlichen",
+  "svReject": "Anfrage ablehnen",
+  "svRejectReasonPlaceholder": "Grund der Ablehnung eingeben...",
+  "svConfirmReject": "Ablehnung bestätigen",
+  "svMyRequestsTitle": "Meine Anfragen",
+  "svRejectReasonLabel": "Ablehnungsgrund: {note}",
+  "svResubmit": "Erneut einreichen",
+  "svSubmitForApproval": "Zur Genehmigung des Auftraggebers einreichen",
 };
