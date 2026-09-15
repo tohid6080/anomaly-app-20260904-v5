@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Plus, Copy, QrCode, Lock, Unlock, Trash2, Pencil, BarChart3, ClipboardList, Send } from "lucide-react";
+import { Plus, Copy, QrCode, Lock, Unlock, Trash2, Pencil, BarChart3, ClipboardList, Send, CheckCircle2, XCircle, Hourglass } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import {
   loadSurveys, createSurvey, duplicateSurvey, deleteSurvey, setSurveyStatus,
+  submitSurveyForApproval, approveSurvey, rejectSurveyRequest,
   buildSurveyLink, surveyQrUrl,
 } from "./surveyApi.js";
 import SurveyBuilder from "./SurveyBuilder.jsx";
@@ -14,6 +15,7 @@ import { SURVEY_TEMPLATES, buildFromTemplate } from "./surveyTemplates.js";
 
 export default function SurveyDashboard({ currentUser, role, onBack, wide, readOnly }) {
   const { t, dir } = useLanguage();
+  const isContractor = role === "CONTRACTOR";
   const [surveys, setSurveys] = useState([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState("list");        // list | build | results
@@ -22,9 +24,22 @@ export default function SurveyDashboard({ currentUser, role, onBack, wide, readO
   const [newKind, setNewKind] = useState(null); // null | "survey" | "exam"
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [rejectingId, setRejectingId] = useState(null);
+  const [rejectNote, setRejectNote] = useState("");
 
   const load = async () => { setLoading(true); setSurveys(await loadSurveys()); setLoading(false); };
   useEffect(() => { load(); }, []);
+
+  // پیمانکار: فقط آن‌چه کارفرما فعال/بسته کرده می‌بیند — نه پیش‌نویس‌ها و
+  // نه درخواست‌های در انتظار (که ممکن است اصلاً هیچ‌وقت تایید نشوند).
+  // درخواست‌های خودِ همین پیمانکار در بخشِ جداگانه‌ی «درخواست‌های من» است.
+  const myRequests = isContractor
+    ? surveys.filter((s) => s.origin === "contractor" && (s.createdBy || "") === (currentUser?.name || "") && s.status !== "active" && s.status !== "closed")
+    : [];
+  const pendingForEmployer = !isContractor ? surveys.filter((s) => s.status === "pending_approval") : [];
+  const mainList = isContractor
+    ? surveys.filter((s) => s.status === "active" || s.status === "closed")
+    : surveys.filter((s) => s.status !== "pending_approval");
 
   const openBuild = (s) => { setActive(s); setView("build"); };
   const openResults = (s) => { setActive(s); setView("results"); };
@@ -37,18 +52,39 @@ export default function SurveyDashboard({ currentUser, role, onBack, wide, readO
     const payload = templateId
       ? buildFromTemplate(templateId)
       : (kind === "exam" ? { title: "", settings: { ...BLANK_EXAM_SETTINGS } } : { title: "" });
-    const res = await createSurvey(payload || { title: "" }, currentUser?.name);
+    const res = await createSurvey({ ...(payload || { title: "" }), origin: isContractor ? "contractor" : "employer" }, currentUser?.name);
     setBusy(false);
     if (res?.__error) { setErr(res.message); return; }
     await load();
     openBuild(res);
   };
 
+  // فعال‌سازی همیشه از یک مسیر می‌رود — چه پیش‌نویسِ خودِ کارفرما باشد چه
+  // تاییدِ درخواستِ پیمانکار — تا reviewed_by/reviewed_at همه‌جا یکسان ثبت شود.
   const toggleStatus = async (s) => {
-    const next = s.status === "active" ? "closed" : "active";
-    if (next === "active" && (!s.questions || s.questions.length === 0)) { setErr(t("svErrNeedQuestions")); return; }
-    const res = await setSurveyStatus(s.id, next);
+    if (s.status === "active") {
+      const res = await setSurveyStatus(s.id, "closed");
+      if (res?.__error) { setErr(res.message); return; }
+      await load();
+      return;
+    }
+    if (!s.questions || s.questions.length === 0) { setErr(t("svErrNeedQuestions")); return; }
+    const res = await approveSurvey(s.id, currentUser?.name);
     if (res?.__error) { setErr(res.message); return; }
+    await load();
+  };
+
+  const handleSubmitForApproval = async (s) => {
+    if (!s.questions || s.questions.length === 0) { setErr(t("svErrNeedQuestions")); return; }
+    const res = await submitSurveyForApproval(s.id);
+    if (res?.__error) { setErr(res.message); return; }
+    await load();
+  };
+
+  const handleReject = async (s) => {
+    const res = await rejectSurveyRequest(s.id, currentUser?.name, rejectNote);
+    if (res?.__error) { setErr(res.message); return; }
+    setRejectingId(null); setRejectNote("");
     await load();
   };
 
@@ -88,20 +124,21 @@ export default function SurveyDashboard({ currentUser, role, onBack, wide, readO
       <p style={{ color: THEME.text3, fontSize: 12, margin: "2px 0 14px", lineHeight: 1.8 }}>{t("svIntro")}</p>
       {err && <p style={styles.error}>{err}</p>}
 
-      {!readOnly && (
+      {(!readOnly || isContractor) && (
         <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
           <button type="button" onClick={() => setNewKind((v) => (v === "survey" ? null : "survey"))} disabled={busy}
             style={{ ...styles.smallButton, display: "inline-flex", alignItems: "center", gap: 6 }}>
-            <Plus size={13} /> {t("svNewSurvey")}
+            <Plus size={13} /> {isContractor ? t("svRequestNewSurvey") : t("svNewSurvey")}
           </button>
           <button type="button" onClick={() => setNewKind((v) => (v === "exam" ? null : "exam"))} disabled={busy}
             style={{ ...styles.smallButton, background: THEME.warn, display: "inline-flex", alignItems: "center", gap: 6 }}>
-            <Plus size={13} /> {t("svNewExam")}
+            <Plus size={13} /> {isContractor ? t("svRequestNewExam") : t("svNewExam")}
           </button>
         </div>
       )}
+      {isContractor && <p style={{ fontSize: 11, color: THEME.text3, margin: "-8px 0 14px", lineHeight: 1.8 }}>{t("svContractorRequestNote")}</p>}
 
-      {newKind && !readOnly && (
+      {newKind && (!readOnly || isContractor) && (
         <div style={{ ...styles.cardWide, marginBottom: 16 }}>
           <b style={{ fontSize: 12.5, color: THEME.heading }}>{newKind === "exam" ? t("svNewExamFrom") : t("svNewFrom")}</b>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 8, marginTop: 10 }}>
@@ -131,10 +168,75 @@ export default function SurveyDashboard({ currentUser, role, onBack, wide, readO
         </div>
       )}
 
-      {loading && <p style={{ color: THEME.text3, textAlign: "center", padding: 20 }}>{t("commonLoading")}</p>}
-      {!loading && surveys.length === 0 && <p style={{ color: THEME.text3, textAlign: "center", padding: 20 }}>{t("svNoSurveys")}</p>}
+      {!isContractor && pendingForEmployer.length > 0 && (
+        <div style={{ marginBottom: 18 }}>
+          <b style={{ fontSize: 12.5, color: THEME.heading, display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+            <Hourglass size={13} color={THEME.warn} /> {t("svPendingRequestsTitle", { n: pendingForEmployer.length })}
+          </b>
+          {pendingForEmployer.map((s) => (
+            <div key={s.id} style={{ ...styles.card, width: "auto", marginBottom: 8, border: `1.5px solid ${THEME.warn}` }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, color: THEME.heading, fontSize: 13 }}>{s.title || t("svUntitled")}</div>
+                  <div style={{ fontSize: 11, color: THEME.text3, marginTop: 3 }}>
+                    {t("svRequestedByMeta", { name: s.createdBy || "—", n: (s.questions || []).length, date: toJalaliSafe(s.updatedAt || s.createdAt) })}
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+                  <button type="button" style={iconBtn(THEME.navyMid)} onClick={() => openBuild(s)}><Pencil size={11} /> {t("svReview")}</button>
+                  <button type="button" style={iconBtn(THEME.ok)} onClick={() => toggleStatus(s)}><CheckCircle2 size={11} /> {t("svApproveAndPublish")}</button>
+                  <button type="button" style={iconBtn(THEME.danger)} onClick={() => { setRejectingId(rejectingId === s.id ? null : s.id); setRejectNote(""); }}><XCircle size={11} /> {t("svReject")}</button>
+                </div>
+              </div>
+              {rejectingId === s.id && (
+                <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${THEME.border}` }}>
+                  <textarea style={{ ...styles.input, minHeight: 50, resize: "vertical" }} placeholder={t("svRejectReasonPlaceholder")}
+                    value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} dir={dir} />
+                  <button type="button" style={{ ...styles.smallButton, background: THEME.danger, marginTop: 6 }} disabled={!rejectNote.trim()} onClick={() => handleReject(s)}>{t("svConfirmReject")}</button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
-      {surveys.map((s) => (
+      {isContractor && myRequests.length > 0 && (
+        <div style={{ marginBottom: 18 }}>
+          <b style={{ fontSize: 12.5, color: THEME.heading, display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+            <Hourglass size={13} color={THEME.warn} /> {t("svMyRequestsTitle")}
+          </b>
+          {myRequests.map((s) => (
+            <div key={s.id} style={{ ...styles.card, width: "auto", marginBottom: 8, border: `1.5px solid ${s.status === "rejected" ? THEME.danger : THEME.warn}` }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, color: THEME.heading, fontSize: 13 }}>{s.title || t("svUntitled")}</div>
+                  <div style={{ fontSize: 11, color: THEME.text3, marginTop: 3 }}>
+                    {t("svRowMeta", { n: (s.questions || []).length, r: s.responseCount, date: toJalaliSafe(s.updatedAt || s.createdAt) })}
+                  </div>
+                  {s.status === "rejected" && s.reviewNote && (
+                    <div style={{ fontSize: 11, color: THEME.danger, marginTop: 5 }}>{t("svRejectReasonLabel", { note: s.reviewNote })}</div>
+                  )}
+                </div>
+                <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, fontWeight: 700,
+                    background: s.status === "rejected" ? THEME.dangerBg : THEME.warnBg, color: s.status === "rejected" ? THEME.danger : THEME.warn }}>
+                    {t("svStatus_" + s.status)}
+                  </span>
+                  {s.status !== "pending_approval" && <button type="button" style={iconBtn(THEME.navyMid)} onClick={() => openBuild(s)}><Pencil size={11} /> {t("svEdit")}</button>}
+                  {s.status !== "pending_approval" && <button type="button" style={iconBtn(THEME.ok)} onClick={() => handleSubmitForApproval(s)}>
+                    <Send size={11} /> {s.status === "rejected" ? t("svResubmit") : t("svSubmitForApproval")}
+                  </button>}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {loading && <p style={{ color: THEME.text3, textAlign: "center", padding: 20 }}>{t("commonLoading")}</p>}
+      {!loading && mainList.length === 0 && <p style={{ color: THEME.text3, textAlign: "center", padding: 20 }}>{t("svNoSurveys")}</p>}
+
+      {mainList.map((s) => (
         <div key={s.id} style={{ ...styles.card, width: "auto", marginBottom: 10 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
             <div style={{ minWidth: 0 }}>
@@ -150,8 +252,8 @@ export default function SurveyDashboard({ currentUser, role, onBack, wide, readO
                 {s.settings?.mode === "exam" ? t("svModeExam") : t("svModeSurvey")}
               </span>
               <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, fontWeight: 700,
-                background: s.status === "active" ? THEME.okBg : s.status === "closed" ? THEME.surface2 : THEME.warnBg,
-                color: s.status === "active" ? THEME.ok : s.status === "closed" ? THEME.text3 : THEME.warn }}>
+                background: s.status === "active" ? THEME.okBg : s.status === "closed" ? THEME.surface2 : s.status === "rejected" ? THEME.dangerBg : THEME.warnBg,
+                color: s.status === "active" ? THEME.ok : s.status === "closed" ? THEME.text3 : s.status === "rejected" ? THEME.danger : THEME.warn }}>
                 {t("svStatus_" + s.status)}
               </span>
               {!readOnly && <button type="button" style={iconBtn(THEME.navyMid)} onClick={() => openBuild(s)}><Pencil size={11} /> {t("svEdit")}</button>}

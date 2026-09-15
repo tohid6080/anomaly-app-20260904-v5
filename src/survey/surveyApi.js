@@ -21,6 +21,13 @@ export function surveyFromRow(r) {
     resultsToken: r.results_token,
     responseCount: Number(r.response_count) || 0,
     createdBy: r.created_by || "",
+    // پیمانکار (origin=contractor) در وضعیتِ pending_approval یعنی «درخواست،
+    // هنوز تاییدِ کارفرما نخورده» — نگاه کنید به submitSurveyForApproval/
+    // approveSurvey/rejectSurveyRequest پایینِ همین فایل.
+    origin: r.origin === "contractor" ? "contractor" : "employer",
+    reviewNote: r.review_note || "",
+    reviewedBy: r.reviewed_by || "",
+    reviewedAt: r.reviewed_at || "",
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
@@ -30,10 +37,11 @@ function surveyToDb(rec) {
     company_id: rec.companyId || getCurrentCompanyId(),
     title: (rec.title || "").trim(),
     description: (rec.description || "").trim(),
-    status: ["draft", "active", "closed"].includes(rec.status) ? rec.status : "draft",
+    status: ["draft", "pending_approval", "active", "closed", "rejected"].includes(rec.status) ? rec.status : "draft",
     questions: Array.isArray(rec.questions) ? rec.questions : [],
     settings: { schemaVersion: SCHEMA_VERSION, ...(rec.settings || {}) },
     created_by: rec.createdBy || "",
+    origin: rec.origin === "contractor" ? "contractor" : "employer",
     updated_at: new Date().toISOString(),
   };
 }
@@ -100,6 +108,46 @@ export async function setSurveyStatus(id, status) {
   const res = await offlineWrite({
     module: MODULE, table: TABLE, action: "update", id,
     payload: { status, updated_at: new Date().toISOString() },
+  });
+  if (!res?.ok) return { __error: true, message: res?.error || tr("svErrSave") };
+  return { ok: true };
+}
+
+/* ---------------- گردشِ کارِ درخواست/تاییدِ پیمانکار ----------------
+ * پیمانکار با createSurvey({ ...payload, origin: "contractor" }) یک
+ * پیش‌نویس می‌سازد (دقیقاً مثلِ مسیرِ کارفرما)، آن را در همان Builder
+ * ویرایش می‌کند، و وقتی آماده بود submitSurveyForApproval صدا زده
+ * می‌شود تا به صفِ «در انتظارِ تاییدِ کارفرما» برود. رد‌شده هم از همین
+ * تابع دوباره قابلِ ارسال است (بدونِ نیاز به ساختِ درخواستِ تازه).
+ */
+export async function submitSurveyForApproval(id) {
+  const res = await offlineWrite({
+    module: MODULE, table: TABLE, action: "update", id,
+    payload: { status: "pending_approval", review_note: "", updated_at: new Date().toISOString() },
+  });
+  if (!res?.ok) return { __error: true, message: res?.error || tr("svErrSave") };
+  return { ok: true };
+}
+
+// تاییدِ نهایی — چه برایِ نظرسنجیِ خودِ کارفرما (پیش‌نویس → فعال) چه برایِ
+// تاییدِ درخواستِ پیمانکار (در انتظار → فعال)، یک مسیرِ واحد است؛ در هر دو
+// حالت reviewed_by/reviewed_at هم ثبت می‌شود.
+export async function approveSurvey(id, reviewedBy) {
+  const res = await offlineWrite({
+    module: MODULE, table: TABLE, action: "update", id,
+    payload: { status: "active", reviewed_by: reviewedBy || "", reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+  });
+  if (!res?.ok) return { __error: true, message: res?.error || tr("svErrSave") };
+  return { ok: true };
+}
+
+// رد — طبقِ همان قاعده‌ی رایجِ سامانه (hse_gate_items/trial_requests)، یادداشتِ
+// دلیل اجباری است.
+export async function rejectSurveyRequest(id, reviewedBy, note) {
+  if (!note || !note.trim()) return { __error: true, message: tr("svErrRejectReasonRequired") };
+  const res = await offlineWrite({
+    module: MODULE, table: TABLE, action: "update", id,
+    payload: { status: "rejected", review_note: note.trim(), reviewed_by: reviewedBy || "", reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString() },
   });
   if (!res?.ok) return { __error: true, message: res?.error || tr("svErrSave") };
   return { ok: true };
