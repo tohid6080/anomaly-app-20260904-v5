@@ -2382,7 +2382,10 @@ function AnomalyForm({ onBack, currentUser, onSaved, embedded }) {
   useEffect(() => {
     (async () => {
       const records = await loadContractors();
-      setContractorNames(records.map((r) => r.name));
+      // یک شرکتِ پیمانکاری می‌تواند چند حسابِ کاربری جدا داشته باشد — همه‌شان
+      // record.name یکسان (نامِ شرکت) دارند، پس بدونِ این dedupe نامِ شرکت به
+      // تعدادِ حساب‌هایش در این dropdown تکرار می‌شد.
+      setContractorNames([...new Set(records.map((r) => r.name))]);
     })();
   }, []);
 
