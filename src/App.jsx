@@ -21,7 +21,7 @@ const IncidentsListPage = lazy(() => import("./incidents/IncidentsListPage.jsx")
 const PSSRListPage = lazy(() => import("./pssr/PSSRListPage.jsx"));
 import { loadOpenActionsForResponsible } from "./pssr/pssrMeetingsApi.js";
 import { loadHomeKpiSummary } from "./dashboard/homeKpiApi.js";
-import { loadModuleConfig, loadDashboardConfig, loadNotificationTypes, loadAppearanceConfig, applyAppearanceToDom, effectiveAppearance, cacheAppearanceConfig, readCachedAppearanceConfig, syncAppearanceNow, loadActiveAnnouncements, loadDashboardWidgetConfig } from "./systemConfigApi.js";
+import { loadModuleConfig, loadDashboardConfig, loadNotificationTypes, loadAppearanceConfig, applyAppearanceToDom, effectiveAppearance, cacheAppearanceConfig, readCachedAppearanceConfig, syncAppearanceNow, loadActiveAnnouncements, loadDashboardWidgetConfig, loadLandingPageContent } from "./systemConfigApi.js";
 import { mergeWidgetConfig, defaultWidgetConfig } from "./dashboard/dashboardWidgets.js";
 import { submitToGate, loadPendingGateItems, loadAssignedGateItems, loadAssignedReviewItemsForModule, deleteGateItemsForRecord, loadCompanyStaffOptions, assignForReview, submitReview, approveGateItem, rejectGateItem, GATE_STATUS_LABELS, gateStatusLabel } from "./hseGateApi.js";
 import SubscriptionGate, { PlanSelectionScreen } from "./subscription/SubscriptionGate.jsx";
@@ -93,7 +93,7 @@ import { retryItemNow } from "./offline/syncEngine.js";
 import { exportWorkbookNativeAware, exportHtmlReportNativeAware } from "./offline/nativeFile.js";
 import { saveBlobNativeAware } from "./offline/archiveZip.js";
 import { toJalaliDateTime, toJalaliSafe } from "./personnel/jalaliDate.jsx";
-import LandingPage from "./LandingPage.jsx";
+import LandingPage, { mergeLandingButtons } from "./LandingPage.jsx";
 import { APP_NAME, sb, sbOk, sbErrMsg, uid, todayISO, THEME, styles, usePersistedState, setCurrentCompanyId, getCurrentCompanyId, loadCurrentCompanyPlanFeatures, isModuleInPlan, resizeImageFile } from "./shared.js";
 
 /**
@@ -1191,6 +1191,12 @@ function LoginScreen({ onLogin }) {
   const [bioAvailable, setBioAvailable] = useState(false);
   const [bioChecking, setBioChecking] = useState(false);
   const [showTrialRequest, setShowTrialRequest] = useState(false);
+  // یک‌بار اینجا خوانده می‌شود و هم به LandingPage (buttons/متنِ چندزبانه)
+  // هم به دکمهٔ «درخواست ارزیابی» پایینِ همین کامپوننت (داخلِ پنجرهٔ ورود)
+  // داده می‌شود — نگاه کن به «مدیریتِ دکمه‌هایِ صفحه اصلی» در SuperAdmin.
+  const [landingOverride, setLandingOverride] = useState(null);
+  useEffect(() => { loadLandingPageContent().then(setLandingOverride).catch(() => setLandingOverride(null)); }, []);
+  const landingButtons = useMemo(() => mergeLandingButtons(landingOverride?.buttons), [landingOverride]);
   const [showLogin, setShowLogin] = useState(false);
   const [showPlans, setShowPlans] = useState(false);
   const isDesktop = useIsDesktop();
@@ -1308,6 +1314,7 @@ function LoginScreen({ onLogin }) {
         logoUrl={appearance?.logoUrl}
         systemName={appearance?.systemName || ""}
         heroImageUrl={ann0?.loginImageUrl || appearance?.loginImageUrl || ""}
+        landingOverride={landingOverride}
       />
 
       {showLogin && (
@@ -1362,16 +1369,18 @@ function LoginScreen({ onLogin }) {
               </button>
             )}
 
-            <button
-              type="button"
-              onClick={() => { setShowLogin(false); setShowTrialRequest(true); }}
-              style={{
-                width: "100%", marginTop: 8, padding: "9px", borderRadius: 9, cursor: "pointer", fontFamily: THEME.font,
-                fontSize: 12.5, fontWeight: 600, background: "transparent", border: `1.5px solid ${THEME.teal}`, color: THEME.tealDeep,
-              }}
-            >
-              {t("loginTrialRequestBtn")}
-            </button>
+            {landingButtons.loginTrialRequest && (
+              <button
+                type="button"
+                onClick={() => { setShowLogin(false); setShowTrialRequest(true); }}
+                style={{
+                  width: "100%", marginTop: 8, padding: "9px", borderRadius: 9, cursor: "pointer", fontFamily: THEME.font,
+                  fontSize: 12.5, fontWeight: 600, background: "transparent", border: `1.5px solid ${THEME.teal}`, color: THEME.tealDeep,
+                }}
+              >
+                {t("loginTrialRequestBtn")}
+              </button>
+            )}
 
             <p style={{ ...styles.hint, marginTop: 8, marginBottom: 0 }}>{t("designedBy")}</p>
           </div>

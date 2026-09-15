@@ -6,7 +6,6 @@ import {
   Zap, Database, FileBarChart, Recycle, Layers, TrendingUp, Bell, Globe, Tag,
 } from "lucide-react";
 import { useLanguage } from "./i18n/LanguageContext.jsx";
-import { loadLandingPageContent } from "./systemConfigApi.js";
 
 /* ------------------------------------------------------------------ *
  * صفحهٔ فرودِ عمومیِ IHMS — Enterprise SaaS، سه‌زبانه (فا/EN/DE)، تمِ
@@ -543,9 +542,12 @@ export const LANDING_DEFAULTS = { fa: L.fa, en: L.en, de: L.de };
 // کلید همه‌ی نمونه‌هایِ آن دکمه را با هم روشن/خاموش می‌کند. اگر سوپرادمین
 // چیزی ذخیره نکرده باشد یا کلیدی در آن نباشد، پیش‌فرض روشن است — بدونِ
 // رگرسیون برایِ پیکربندی‌هایِ قدیمی که اصلاً buttons ندارند.
-export const LANDING_BUTTON_KEYS = ["ctaPrimary", "ctaPlans", "ctaSecondary", "login", "annBtn", "scBtn"];
+export const LANDING_BUTTON_KEYS = ["ctaPrimary", "ctaPlans", "ctaSecondary", "login", "annBtn", "scBtn", "loginTrialRequest"];
 export const LANDING_BUTTONS_DEFAULT = Object.fromEntries(LANDING_BUTTON_KEYS.map((k) => [k, true]));
-function mergeLandingButtons(ov) {
+// صادر می‌شود چون «دکمهٔ درخواست ارزیابی و پلن آزمایشی» داخلِ پنجرهٔ
+// ورود (App.jsx، نه این فایل) رندر می‌شود ولی باید همان buttons map را
+// به اشتراک بگذارد — نگاه کن به LoginScreen در App.jsx.
+export function mergeLandingButtons(ov) {
   const b = ov && typeof ov === "object" ? ov : {};
   const out = {};
   LANDING_BUTTON_KEYS.forEach((k) => { out[k] = b[k] !== false; });
@@ -634,7 +636,7 @@ function useReveal() {
   return ref;
 }
 
-export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, announcements, logoUrl, systemName, heroImageUrl }) {
+export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, announcements, logoUrl, systemName, heroImageUrl, landingOverride }) {
   const viewPlans = onViewPlans || onStartFree;
   const { lang, setLang } = useLanguage();
   const dir = lang === "fa" ? "rtl" : "ltr";
@@ -645,11 +647,13 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
   const [modCat, setModCat] = useState(0);
   const rootRef = useReveal();
 
-  // متنِ سفارشی‌شده از «مدیریتِ صفحه اصلی سامانه» — اگر سوپرادمین چیزی
-  // ذخیره نکرده باشد (یا شبکه در دسترس نباشد)، override=null می‌ماند و
-  // mergeLandingContent همان پیش‌فرضِ ثابتِ کد را برمی‌گرداند.
-  const [landingOverride, setLandingOverride] = useState(null);
-  useEffect(() => { loadLandingPageContent().then(setLandingOverride).catch(() => setLandingOverride(null)); }, []);
+  // متنِ سفارشی‌شده از «مدیریتِ صفحه اصلی سامانه» — از LoginScreen (App.jsx)
+  // به‌عنوانِ prop می‌آید (نه fetch مستقل اینجا)، چون همین داده (به‌خصوص
+  // buttons) را دکمهٔ «درخواست ارزیابی» داخلِ پنجرهٔ ورود هم لازم دارد؛
+  // یک‌بار در LoginScreen خوانده و بینِ هر دو به اشتراک گذاشته می‌شود. اگر
+  // سوپرادمین چیزی ذخیره نکرده باشد (یا شبکه در دسترس نباشد)، prop=null
+  // می‌ماند و mergeLandingContent/mergeLandingButtons همان پیش‌فرضِ ثابتِ
+  // کد را برمی‌گردانند.
   const base = L[lang] || L.fa;
   const ov = landingOverride?.[lang] || null;
   const x = useMemo(() => mergeLandingContent(base, ov), [base, ov]);
