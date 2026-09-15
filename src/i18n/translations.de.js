@@ -4238,6 +4238,7 @@ export const de = {
   "anomStatusOpen": "Offen",
   "smartAnomOpenSelf": "Sie haben {count} offene Abweichungen",
   "smartAnomOpenCompany": "{name}: hat {count} offene Abweichungen",
+  "smartAnomPendingApprovalCompany": "{name}: hat {count} Abweichungen, die auf Ihre Genehmigung warten",
   "smartVisitSelf": "{count} Personen benötigen eine arbeitsmedizinische Untersuchung",
   "smartVisitCompany": "{name}: {count} Personen benötigen eine arbeitsmedizinische Untersuchung",
   "smartResultSelf": "{count} Personen haben ihr arbeitsmedizinisches Ergebnis / ihre Dokumente noch nicht hochgeladen",

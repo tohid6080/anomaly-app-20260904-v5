@@ -561,7 +561,14 @@ function computeSmartNotifications(personnelList, anomaliesList, scopeContractor
 
   const items = [];
   for (const { norm: name, display } of contractorNames) {
-    const openAnomalies = anomaliesList.filter((a) => norm(a.contractor) === name && a.status !== "Closed").length;
+    // «باز» (open) یعنی هنوز دستِ پیمانکار است — او باید اقدامِ اصلاحی
+    // بفرستد. «در انتظارِ بررسی» (pending_review) یعنی پیمانکار فرستاده و
+    // توپ الان دستِ کارفرماست. قبلاً این دو با هم جمع می‌شدند («N باز») و
+    // پیامِ کارفرما هیچ نشانه‌ای نداشت که خودش باید تصمیم بگیرد؛ حالا هرکدام
+    // جداگانه شمرده می‌شود — دقیقاً مثلِ pending_health_visit/result پایین‌تر
+    // که با هم جمع نمی‌شوند.
+    const openAnomalies = anomaliesList.filter((a) => norm(a.contractor) === name && a.status === "open").length;
+    const pendingApprovalAnomalies = anomaliesList.filter((a) => norm(a.contractor) === name && a.status === "pending_review").length;
     const contractorPersonnel = personnelList.filter((p) => norm(p.contractorName) === name);
     const needVisit = contractorPersonnel.filter((p) => p.status === "pending_health_visit").length;
     const needResult = contractorPersonnel.filter((p) => p.status === "pending_health_result").length;
@@ -571,9 +578,18 @@ function computeSmartNotifications(personnelList, anomaliesList, scopeContractor
 
     if (openAnomalies > 0) {
       items.push({
-        key: `smart-${name}-anomaly`,
+        key: `smart-${name}-anomaly-open`,
         label: scopeContractorName ? tr("smartAnomOpenSelf", { count: openAnomalies }) : tr("smartAnomOpenCompany", { name: display, count: openAnomalies }),
-        target: { module: "anomaly", statusFilter: "not_closed", contractorFilter: display },
+        target: { module: "anomaly", statusFilter: "open", contractorFilter: display },
+      });
+    }
+    // «در انتظارِ تاییدِ شما» فقط برایِ کارفرما معنا دارد — خودِ پیمانکار که
+    // همین را فرستاده چیزِ تازه‌ای برایِ انجام‌دادن ندارد.
+    if (pendingApprovalAnomalies > 0 && !scopeContractorName) {
+      items.push({
+        key: `smart-${name}-anomaly-pending`,
+        label: tr("smartAnomPendingApprovalCompany", { name: display, count: pendingApprovalAnomalies }),
+        target: { module: "anomaly", statusFilter: "pending_review", contractorFilter: display },
       });
     }
     if (needVisit > 0) {
@@ -4406,8 +4422,27 @@ function WelcomeScreen({ currentUser, setView, onNavigate, sidebarModules }) {
   useEffect(() => {
     loadActiveAnnouncements("home").then(setAnnouncements).catch(() => setAnnouncements([]));
     loadDashboardWidgetConfig().then((rows) => setHomeWidgetRows(rows || [])).catch(() => setHomeWidgetRows([]));
-    // پیمانکار نه گیرنده‌ی واگذاری است، نه گیت‌کیپر — این کارت برایش خالی می‌ماند
-    if (currentUser?.role === "CONTRACTOR") { setTasks([]); return; }
+    // پیمانکار نه گیرنده‌ی واگذاریِ داخلیِ کارفرماست نه گیت‌کیپر، پس
+    // hse_gate_items چیزی برایش ندارد — ولی این به‌این‌معنا نیست که هیچ
+    // کارِ در دستِ اقدامی ندارد: آنومالی‌هایی که کارفرما برایش ثبت کرده و
+    // هنوز باز است (status="open") دقیقاً همان «کارِ در دست اقدامِ من»
+    // اوست. قبلاً این کارت برایِ هر پیمانکاری همیشه خالی می‌ماند.
+    if (currentUser?.role === "CONTRACTOR") {
+      const myName = (currentUser?.name || "").trim().toLowerCase();
+      loadAnomaliesOfflineFirst()
+        .then((rows) => {
+          const mine = rows
+            .filter((a) => a.status === "open" && (a.contractor || "").trim().toLowerCase() === myName)
+            .map((a) => ({
+              id: a.id, moduleKey: "anomalyReport", recordId: a.id,
+              recordLabel: a.trackingNumber ? `${a.trackingNumber} — ${a.area}` : a.area,
+              kind: "assigned", createdAt: a.createdAt,
+            }));
+          setTasks(mine);
+        })
+        .catch(() => setTasks([]));
+      return;
+    }
 
     const isGatekeeper = currentUser?.role === "HSE_SUPERVISOR";
     Promise.all([

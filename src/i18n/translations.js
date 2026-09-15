@@ -10149,6 +10149,7 @@ export const translations = {
   "anomStatusOpen": { "fa": "باز", "en": "Open" },
   "smartAnomOpenSelf": { "fa": "{count} آنومالی باز دارید", "en": "You have {count} open anomalies" },
   "smartAnomOpenCompany": { "fa": "شرکت {name}: {count} آنومالی باز دارد", "en": "{name}: has {count} open anomalies" },
+  "smartAnomPendingApprovalCompany": { "fa": "شرکت {name}: {count} آنومالی در انتظار تایید شما دارد", "en": "{name}: has {count} anomalies awaiting your approval" },
   "smartVisitSelf": { "fa": "{count} نفر نیاز به مراجعه به طب کار دارند", "en": "{count} people need an occupational-health visit" },
   "smartVisitCompany": { "fa": "شرکت {name}: {count} نفر نیاز به مراجعه به طب کار دارند", "en": "{name}: {count} people need an occupational-health visit" },
   "smartResultSelf": { "fa": "{count} نفر نتیجه/مدارک طب کار را هنوز بارگذاری نکرده‌اند", "en": "{count} people haven't uploaded their occupational-health result/documents yet" },
