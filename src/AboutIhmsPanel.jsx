@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Wifi, WifiOff, RefreshCw, Info, X, Download, AlertTriangle, RotateCcw } from "lucide-react";
 import { THEME, styles, APP_NAME, APP_VERSION, APP_VERSION_CODE, usePersistedState } from "./shared.js";
 import { useLanguage } from "./i18n/LanguageContext.jsx";
@@ -193,10 +194,16 @@ export function AboutIhmsModal({ onClose, latestRelease, online, queueItems = []
     </div>
   );
 
-  return (
+  // با createPortal مستقیم روی document.body رندر می‌شود (نه در جایِ
+  // فراخوانی‌اش، داخلِ هدرِ چسبان). چون هدر backdropFilter دارد (GLASS_BLUR
+  // در styles.topBar)، هر توضیحِ position:fixed داخلِ آن، به‌جایِ کلِ
+  // viewport، محدود به کادرِ کوچکِ هدر می‌ماند — دقیقاً همان چیزی که باعث
+  // می‌شد این پنل پشتِ کارت‌های صفحه‌ی «خانه» بیفتد (چون اصلاً تا آنجا
+  // ادامه پیدا نمی‌کرد، نه اینکه واقعاً «پشتِ» چیزی رندر شود).
+  return createPortal(
     <div
       onClick={onClose}
-      style={{ position: "fixed", inset: 0, zIndex: 4000, background: "rgba(6,17,26,0.55)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "40px 16px", overflowY: "auto", direction: dir }}
+      style={{ position: "fixed", inset: 0, zIndex: 4000, background: "rgba(6,17,26,0.55)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "40px 16px", overflowY: "auto", direction: dir, fontFamily: THEME.font }}
     >
       <div onClick={(e) => e.stopPropagation()} style={{ ...styles.card, width: "100%", maxWidth: 440, margin: 0, textAlign: "center", position: "relative", direction: dir }}>
         <button type="button" onClick={onClose} style={{ position: "absolute", top: 10, insetInlineEnd: 10, background: "none", border: "none", cursor: "pointer", color: THEME.text3 }}>
@@ -325,6 +332,7 @@ export function AboutIhmsModal({ onClose, latestRelease, online, queueItems = []
 
         <p style={{ textAlign: "center", color: "#aaa", fontSize: 11, marginTop: 18 }}>{t("aboutCopyright")}</p>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

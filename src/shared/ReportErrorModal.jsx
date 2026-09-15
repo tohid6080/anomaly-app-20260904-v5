@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { X, AlertTriangle, Send, CheckCircle2 } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { submitErrorReport } from "../errorReportsApi.js";
@@ -30,9 +31,14 @@ export default function ReportErrorModal({ currentUser, moduleKey, pageLabel, te
     setDone(true);
   };
 
-  return (
+  // با createPortal مستقیم روی document.body رندر می‌شود (نه در جایِ
+  // فراخوانی‌اش، مثلاً داخلِ هدرِ چسبانِ داشبورد). چون آن هدر backdropFilter
+  // دارد (GLASS_BLUR در styles.topBar)، position:fixed داخلِ آن به‌جایِ
+  // کلِ viewport، محدود به کادرِ کوچکِ هدر می‌شود — یعنی وسط‌چینیِ این کادر
+  // نسبت به همان نوارِ باریکِ بالای صفحه حساب می‌شد، نه کلِ صفحه.
+  return createPortal(
     <div
-      style={{ position: "fixed", inset: 0, background: "rgba(10,20,30,0.55)", zIndex: 3000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+      style={{ position: "fixed", inset: 0, background: "rgba(10,20,30,0.55)", zIndex: 3000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, fontFamily: THEME.font }}
       onClick={onClose}
     >
       <div style={{ background: THEME.surface, borderRadius: 14, padding: 20, maxWidth: 440, width: "100%", direction: dir, maxHeight: "90vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
@@ -77,6 +83,7 @@ export default function ReportErrorModal({ currentUser, moduleKey, pageLabel, te
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
