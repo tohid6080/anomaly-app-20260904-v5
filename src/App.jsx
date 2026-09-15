@@ -4408,6 +4408,14 @@ function WelcomeCard({ currentUser }) {
   // روی موبایل کارت جمع‌وجورتر می‌شود (ارتفاع و فاصله‌های کمتر) تا فضای
   // خالیِ بالای صفحهٔ «خانه» کم شود؛ متن‌ها همگی سرِ جایشان می‌مانند.
   const compact = !isDesktop;
+  // برای پیمانکار، currentUser.name نامِ شرکتِ پیمانکاری است نه نامِ شخص
+  // (همان تمایزی که در نوارِ بالای صفحه هم رعایت شده) — پس اینجا هم باید
+  // contactPersonName را اولویت داد، وگرنه به‌جای «خوش آمدید، [نام شخص]»
+  // نامِ شرکت نمایش داده می‌شود.
+  const isContractorUser = currentUser?.role === "CONTRACTOR";
+  const personName = isContractorUser
+    ? (currentUser?.contactPersonName || currentUser?.name || "")
+    : (currentUser?.name || "");
   return (
     <div style={{
       background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 16,
@@ -4417,7 +4425,7 @@ function WelcomeCard({ currentUser }) {
     }}>
       <span style={{ fontSize: compact ? 22 : 30, marginBottom: compact ? 4 : 10 }}>👋</span>
       <h2 style={{ fontSize: compact ? 15.5 : 18, fontWeight: 800, color: THEME.heading, margin: compact ? "0 0 4px" : "0 0 8px" }}>
-        {t("welcomeGreetingLine", { name: currentUser?.name || "" })}
+        {t("welcomeGreetingLine", { name: personName })}
       </h2>
       <p style={{ fontSize: compact ? 11.5 : 12.5, color: THEME.text2, lineHeight: compact ? 1.7 : 1.9, margin: compact ? "0 0 8px" : "0 0 16px", maxWidth: compact ? 260 : 220 }}>
         {t("welcomeIntroText")}
