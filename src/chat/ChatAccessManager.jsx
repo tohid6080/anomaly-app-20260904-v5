@@ -4,7 +4,7 @@ import { styles, THEME } from "../shared.js";
 import { loadActiveJobPositions } from "../jobpositions/jobPositionsApi.js";
 import {
   loadVisibilityRules, setVisibilityRule, loadUsedJobPositionsByRole,
-  loadExtraIdentities, addExtraIdentity, removeExtraIdentity,
+  loadExtraIdentities, addExtraIdentity, removeExtraIdentity, loadJobPositionHolderNames,
 } from "./chatApi.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
@@ -39,18 +39,20 @@ export default function ChatAccessManager({ onBack, wide }) {
   const [saving, setSaving] = useState(false);
   const [usedByRole, setUsedByRole] = useState({ employerJobPositionIds: new Set(), contractorJobPositionIds: new Set() });
   const [extraIdentities, setExtraIdentities] = useState([]);
+  const [holderNames, setHolderNames] = useState({});
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [addPositionId, setAddPositionId] = useState("");
   const [addRole, setAddRole] = useState("EMPLOYER");
 
   const load = async () => {
-    const [p, r, used, extra] = await Promise.all([loadActiveJobPositions(), loadVisibilityRules(), loadUsedJobPositionsByRole(), loadExtraIdentities()]);
+    const [p, r, used, extra, holders] = await Promise.all([loadActiveJobPositions(), loadVisibilityRules(), loadUsedJobPositionsByRole(), loadExtraIdentities(), loadJobPositionHolderNames()]);
     setPositions(p);
     setRules(r);
     setDraftRules(r);
     setUsedByRole(used);
     setExtraIdentities(extra);
+    setHolderNames(holders);
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
@@ -75,6 +77,16 @@ export default function ChatAccessManager({ onBack, wide }) {
   });
 
   const sameIdentity = (a, b) => a.role === b.role && a.jobPositionId === b.jobPositionId;
+
+  // «نامِ نمایشی» هر هویت: وقتی دقیقاً یک حسابِ واقعی صاحبِ آن (نقش+عنوانِ
+  // شغلی) است، «نامِ شخص — عنوانِ شغلی» نشان داده می‌شود؛ وگرنه (چند نفرِ
+  // مشترک، یا عنوانی که فقط دستی به ماتریس اضافه شده) فقط عنوانِ شغلی —
+  // چون این ستون/ردیف یک دسته را نمایندگی می‌کند، نه لزوماً یک نفر را.
+  const identityLabel = (id) => {
+    const holder = id.role !== "ADMIN" ? holderNames[`${id.role}::${id.jobPositionId}`] : null;
+    const base = holder ? `${holder} — ${id.title}` : id.title;
+    return `${base}${id.role !== "ADMIN" ? ` (${t(ROLE_LABEL_KEY[id.role])})` : ""}`;
+  };
 
   const isBlockedIn = (list, a, b) => list.some((r) =>
     (r.roleA === a.role && r.jobPositionIdA === a.jobPositionId && r.roleB === b.role && r.jobPositionIdB === b.jobPositionId) ||
@@ -189,7 +201,7 @@ export default function ChatAccessManager({ onBack, wide }) {
                 {identities.map((id) => (
                   <th key={`${id.role}-${id.jobPositionId}`} style={{ padding: "6px 8px", borderBottom: `1.5px solid ${THEME.border}`, minWidth: 70 }}>
                     <div style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", fontSize: 10, color: THEME.text2, whiteSpace: "nowrap", margin: "0 auto", height: 110 }}>
-                      {id.title} {id.role !== "ADMIN" ? `(${t(ROLE_LABEL_KEY[id.role])})` : ""}
+                      {identityLabel(id)}
                     </div>
                   </th>
                 ))}
@@ -199,7 +211,7 @@ export default function ChatAccessManager({ onBack, wide }) {
               {identities.map((rowId) => (
                 <tr key={`${rowId.role}-${rowId.jobPositionId}`} style={{ borderBottom: `1px solid ${THEME.border}` }}>
                   <td style={{ position: "sticky", insetInlineStart: 0, background: THEME.surface, padding: "6px 10px", fontWeight: 600, whiteSpace: "nowrap" }}>
-                    {rowId.title} {rowId.role !== "ADMIN" ? `(${t(ROLE_LABEL_KEY[rowId.role])})` : ""}
+                    {identityLabel(rowId)}
                     {isExtra(rowId) && (
                       <button type="button" onClick={() => handleRemoveExtra(rowId.jobPositionId, rowId.role)} title={t("camRemoveFromMatrix")} style={{ background: "none", border: "none", cursor: "pointer", marginRight: 6, color: THEME.text3 }}>
                         <X size={11} />

@@ -130,8 +130,11 @@ function personnelFromRow(r) {
 export async function loadContractorOptions() {
   const companyId = getCurrentCompanyId();
   const filter = companyId ? `&company_id=eq.${companyId}` : "";
-  const rows = await sb(`contractors?select=id,name&order=name.asc${filter}`);
-  return sbOk(rows) ? rows.map((r) => ({ id: r.id, name: r.name })) : [];
+  const rows = await sb(`contractors?select=id,name,contact_person_name&order=name.asc${filter}`);
+  // contactPersonName اضافه شد تا مصرف‌کننده‌هایی که باید هر حساب را (نه هر
+  // شرکت را) نشان بدهند بتوانند «نام شخص — نام شرکت» بسازند، بدون این‌که
+  // معنای name (که مصرف‌کننده‌های دیگر همچنان به‌عنوان نام شرکت می‌خواهند) تغییر کند.
+  return sbOk(rows) ? rows.map((r) => ({ id: r.id, name: r.name, contactPersonName: r.contact_person_name || "" })) : [];
 }
 
 export async function loadPersonnelList() {

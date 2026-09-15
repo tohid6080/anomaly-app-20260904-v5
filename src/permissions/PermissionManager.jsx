@@ -40,6 +40,11 @@ export default function PermissionManager({ onBack, wide }) {
   }, []);
 
   const accounts = accountType === "employer" ? employerAccounts : contractorAccounts;
+  // حساب‌های پیمانکاری با name=نام شرکت برمی‌گردند — چون یک شرکت می‌تواند چند
+  // حساب داشته باشد، این‌جا (برخلاف فیلترهای دیگر) باید هر حساب را جدا و
+  // قابل‌تشخیص نشان داد: «نام شخص — نام شرکت». حساب‌های کارفرما همین‌طوری هم
+  // با نام خودِ شخص برمی‌گردند، نیازی به تغییر ندارند.
+  const accountLabel = (a) => (accountType === "contractor" ? [a.contactPersonName, a.name].filter(Boolean).join(" — ") : a.name);
 
   useEffect(() => {
     setSelectedAccountId("");
@@ -83,7 +88,8 @@ export default function PermissionManager({ onBack, wide }) {
     setDraftAccess(Object.fromEntries(PERMISSION_MODULES.map((m) => [m.key, "edit"])));
   };
 
-  const selectedAccountLabel = accounts.find((a) => a.id === selectedAccountId)?.name || "";
+  const selectedAccount = accounts.find((a) => a.id === selectedAccountId);
+  const selectedAccountLabel = selectedAccount ? accountLabel(selectedAccount) : "";
   const hasAnyExplicitRow = Object.keys(permMap).length > 0;
 
   return (
@@ -117,7 +123,7 @@ export default function PermissionManager({ onBack, wide }) {
         ) : (
           <select style={styles.input} value={selectedAccountId} onChange={(e) => setSelectedAccountId(e.target.value)} dir={dir}>
             <option value="">{t("permissionsSelectPlaceholder")}</option>
-            {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+            {accounts.map((a) => <option key={a.id} value={a.id}>{accountLabel(a)}</option>)}
           </select>
         )}
       </div>

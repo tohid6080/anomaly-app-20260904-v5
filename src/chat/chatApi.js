@@ -89,12 +89,15 @@ export async function loadChatDirectory(myRole, myJobPositionId) {
   const filter = companyId ? `&company_id=eq.${companyId}` : "";
   const [employers, contractors, rules] = await Promise.all([
     sb(`employer_accounts?select=username,name,role,job_position_id${filter}`),
-    sb(`contractors?select=username,name,job_position_id${filter}`),
+    sb(`contractors?select=username,name,contact_person_name,job_position_id${filter}`),
     sb(`chat_visibility_rules?select=*${filter}`),
   ]);
   const people = [];
   if (sbOk(employers)) employers.forEach((e) => { if (e.username) people.push({ username: e.username, name: e.name, role: e.role === "admin" ? "ADMIN" : "EMPLOYER", jobPositionId: e.job_position_id || "" }); });
-  if (sbOk(contractors)) contractors.forEach((c) => { if (c.username) people.push({ username: c.username, name: c.name, role: "CONTRACTOR", jobPositionId: c.job_position_id || "" }); });
+  // c.name نامِ شرکتِ پیمانکاری است، نه نامِ شخص — چون یک شرکت می‌تواند چند
+  // حساب داشته باشد، فقط نامِ شرکت باعثِ نمایشِ چند ردیفِ هم‌نام و غیرقابل‌تشخیص
+  // در فهرستِ «گفتگوی جدید» می‌شد. نامِ نمایشی این‌جا «نامِ شخص — نامِ شرکت» است.
+  if (sbOk(contractors)) contractors.forEach((c) => { if (c.username) people.push({ username: c.username, name: [c.contact_person_name, c.name].filter(Boolean).join(" — "), role: "CONTRACTOR", jobPositionId: c.job_position_id || "" }); });
 
   // نکته: قبلاً ادمین همیشه از این فیلتر معاف بود. طبق خواسته‌ی کاربر این
   // معافیت حذف شده — ادمین هم مثل هر نقش دیگری، اگر در ماتریس دسترسی چت
@@ -130,6 +133,32 @@ export async function loadUsedJobPositionsByRole() {
   const employerIds = new Set((sbOk(employers) ? employers : []).map((r) => r.job_position_id).filter(Boolean));
   const contractorIds = new Set((sbOk(contractors) ? contractors : []).map((r) => r.job_position_id).filter(Boolean));
   return { employerJobPositionIds: employerIds, contractorJobPositionIds: contractorIds };
+}
+
+// ---------- نامِ صاحبِ فعلیِ هر (نقش+عنوانِ شغلی)، برایِ نمایشِ ماتریسِ دسترسیِ چت ----------
+// یک (نقش+عنوانِ شغلی) در این ماتریس یک دسته است، نه یک نفر — می‌تواند صفر،
+// یک، یا چند حسابِ واقعی داشته باشد. فقط وقتی دقیقاً یک حساب آن دسته را
+// دارد نامش برگردانده می‌شود؛ وقتی چند نفر مشترکند، نشان‌دادنِ نامِ یکی از
+// آن‌ها گمراه‌کننده است (انگار قانونِ بلاک فقط دربارهٔ همان یک نفر است)، پس
+// آن حالت را روی undefined می‌گذاریم تا مصرف‌کننده فقط عنوانِ شغلی را نشان دهد.
+export async function loadJobPositionHolderNames() {
+  const companyId = getCurrentCompanyId();
+  const filter = companyId ? `&company_id=eq.${companyId}` : "";
+  const [employers, contractors] = await Promise.all([
+    sb(`employer_accounts?select=name,role,job_position_id${filter}`),
+    sb(`contractors?select=contact_person_name,job_position_id${filter}`),
+  ]);
+  const namesByKey = {};
+  const push = (role, jobPositionId, name) => {
+    if (!jobPositionId || !name) return;
+    const key = identityKey(role, jobPositionId);
+    (namesByKey[key] || (namesByKey[key] = [])).push(name);
+  };
+  if (sbOk(employers)) employers.forEach((e) => push(e.role === "admin" ? "ADMIN" : "EMPLOYER", e.job_position_id, e.name));
+  if (sbOk(contractors)) contractors.forEach((c) => push("CONTRACTOR", c.job_position_id, c.contact_person_name));
+  const result = {};
+  Object.keys(namesByKey).forEach((key) => { if (namesByKey[key].length === 1) result[key] = namesByKey[key][0]; });
+  return result;
 }
 
 // ---------- افزودن دستی هویت به ماتریس (برای عناوینی که هنوز حسابی باهاشون نیست) ----------
