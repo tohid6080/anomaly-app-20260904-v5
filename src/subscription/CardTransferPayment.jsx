@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { CreditCard, Copy, Check, Clock, Globe, ImagePlus, X } from "lucide-react";
-import { styles, THEME, resizeImageFile } from "../shared.js";
+import { styles, THEME, resizeImageFile, isValidMobile } from "../shared.js";
 import { loadCardTransferSettings, submitCardTransferReceipt } from "../subscriptionApi.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { numLocale } from "../i18n/translations.js";
@@ -57,7 +57,7 @@ export default function PaymentMethodsSection({ currentUser, selectedPlan, billi
     setError("");
     // همه‌ی موارد الزامی‌اند به‌جز «شماره‌ی پیگیریِ تراکنش».
     if (!payerName.trim()) { setError(t("subErrReceiptFieldsRequired")); return; }
-    if (!/^09\d{9}$/.test(payerPhone.trim())) { setError(t("ctpErrPhoneFormat")); return; }
+    if (!isValidMobile(payerPhone)) { setError(t("ctpErrPhoneFormat")); return; }
     if (!receiptImage) { setError(t("ctpErrReceiptRequired")); return; }
     setSaving(true);
     const result = await submitCardTransferReceipt(

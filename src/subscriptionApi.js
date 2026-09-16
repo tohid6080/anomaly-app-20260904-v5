@@ -1,4 +1,4 @@
-import { sb, sbOk, uid, SUPABASE_URL, SUPABASE_ANON_KEY, getCurrentCompanyId } from "./shared.js";
+import { sb, sbOk, uid, SUPABASE_URL, SUPABASE_ANON_KEY, getCurrentCompanyId, isValidMobile } from "./shared.js";
 import { getSessionToken } from "./sessionToken.js";
 import { translate, getCurrentLang, numLocale } from "./i18n/translations.js";
 
@@ -212,7 +212,7 @@ export async function submitCardTransferReceipt({ planId, billingCycle, amount, 
   const hasModules = Array.isArray(selectedModules) && selectedModules.length > 0;
   if ((!planId && !hasModules) || !billingCycle) return { __error: true, message: tr("subErrPlanCycleInvalid") };
   // «شماره‌ی پیگیریِ تراکنش» اختیاری است؛ بقیه الزامی.
-  if (!payerName?.trim() || !/^09\d{9}$/.test((payerPhone || "").trim())) {
+  if (!payerName?.trim() || !isValidMobile(payerPhone)) {
     return { __error: true, message: tr("subErrReceiptFieldsRequired") };
   }
   if (!receiptImage) return { __error: true, message: tr("ctpErrReceiptRequired") };

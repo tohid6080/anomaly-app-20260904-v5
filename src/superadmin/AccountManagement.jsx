@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { UserPlus, KeyRound, Power, Pencil, Users, Trash2 } from "lucide-react";
-import { THEME } from "../shared.js";
+import { THEME, isValidMobile } from "../shared.js";
 import {
   loadCompanies, loadAccountsByType, createAccount, updateAccount, setAccountActive, resetAccountPassword, deleteAccount,
   loadJobPositionsForCompany, loadContractorCompanies,
@@ -20,9 +20,6 @@ const TABS = [
 // ایرانی ۱۱ رقمی با ۰۹ شروع می‌شود
 function isValidEmailFormat(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-function isValidMobileFormat(phone) {
-  return /^09\d{9}$/.test(phone);
 }
 
 export function emptyForm() {
@@ -57,7 +54,7 @@ export default function AccountManagement({ currentAdmin }) {
 
   const validateContactFields = () => {
     if (form.email && !isValidEmailFormat(form.email)) return t("amInvalidEmail");
-    if (form.phone && !isValidMobileFormat(form.phone)) return t("amInvalidMobile");
+    if (form.phone && !isValidMobile(form.phone)) return t("amInvalidMobile");
     return "";
   };
 

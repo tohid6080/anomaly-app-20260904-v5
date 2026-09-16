@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { AlertTriangle } from "lucide-react";
-import { styles, THEME } from "../shared.js";
+import { styles, THEME, isValidMobile } from "../shared.js";
 import { JalaliDateInput } from "./jalaliDate.jsx";
 import DocUploadField from "./DocUploadField.jsx";
 import DocumentViewerModal from "./DocumentViewerModal.jsx";
@@ -20,9 +20,6 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
 // اعتبارسنجی کد ملی ایران (الگوریتم استاندارد رقم کنترلی)
 function isValidNationalCode(code) {
   return /^\d{10}$/.test(code);
-}
-function isValidMobile(phone) {
-  return /^09\d{9}$/.test((phone || "").trim());
 }
 
 export default function PersonnelForm({ onBack, onSaved, currentUser, wide, embedded }) {

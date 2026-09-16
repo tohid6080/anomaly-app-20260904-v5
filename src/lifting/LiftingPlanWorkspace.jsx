@@ -447,19 +447,6 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
     }
   };
 
-  const changeStatus = async (p, status) => {
-    setBusyId(p.id);
-    const res = await setLiftingPlanStatus(p.id, status, actor, p.status);
-    setBusyId("");
-    if (res?.__error) { setErr(res.message); return; }
-    await refresh();
-    if (mode === "edit" && editId === p.id) {
-      set("status", status);
-      setBaseline((b) => ({ ...b, status }));
-      setAudit(await loadLiftingAudit(p.id));
-    }
-  };
-
   const doDuplicate = async (p) => {
     setBusyId(p.id);
     const res = await duplicateLiftingPlan(p.id, actor);

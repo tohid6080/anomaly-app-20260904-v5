@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { CheckCircle2, XCircle, LogOut, Loader2, Clock, X, ImagePlus, Copy, Check } from "lucide-react";
-import { styles, THEME, resizeImageFile } from "../shared.js";
+import { styles, THEME, resizeImageFile, isValidMobile } from "../shared.js";
 import { toJalaliDateTime } from "../personnel/jalaliDate.jsx";
 import { computeSubscriptionAccess, loadMySubscriptionInfo, verifyPayment, loadCardTransferSettings } from "../subscriptionApi.js";
 import { loadModulePrices, loadServices, computeCartTotal, applyModuleDeps, servicePriceFor } from "../pricingApi.js";
@@ -368,7 +368,7 @@ function PublicPurchaseForm({ selMods, selSvc, billingCycle, cart }) {
     if (!companyName.trim()) { setError(t("gprErrCompanyContactRequired")); return; }
     if (!cart || cart.selReal.length === 0) { setError(t("gprErrNoModulesSelected")); return; }
     if (!payerName.trim()) { setError(t("subErrReceiptFieldsRequired")); return; }
-    if (!/^09\d{9}$/.test(payerPhone.trim())) { setError(t("ctpErrPhoneFormat")); return; }
+    if (!isValidMobile(payerPhone)) { setError(t("ctpErrPhoneFormat")); return; }
     if (!receiptImage) { setError(t("ctpErrReceiptRequired")); return; }
     setSaving(true);
     // نامِ درخواست‌کننده/شماره‌موبایل جدا از واریزکننده پرسیده نمی‌شود — در

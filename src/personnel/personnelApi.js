@@ -351,11 +351,6 @@ export async function insertAuditLog(personnelId, action, detail, performedBy) {
     prefer: "return=minimal",
   });
 }
-export async function loadAuditLog(personnelId) {
-  const rows = await sb(`personnel_audit_log?personnel_id=eq.${personnelId}&select=*&order=created_at.desc`);
-  return sbOk(rows) ? rows : [];
-}
-
 // ---------- Occupational health workflow helpers ----------
 // Called once employer approves initial documents for a "no certificate" person.
 // مهلت‌ها از تاریخ واقعی شروع به کار محاسبه می‌شوند، نه تاریخ ثبت توی سیستم —

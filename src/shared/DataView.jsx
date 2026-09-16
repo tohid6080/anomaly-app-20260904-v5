@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { List, LayoutGrid, ArrowUpDown, Search, Bookmark, Plus, Trash2 } from "lucide-react";
-import { styles, THEME } from "../shared.js";
+import { styles, THEME, getCurrentCompanyId } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 const VIEW_MODE_KEY = "ihms_view_mode";
@@ -105,7 +105,10 @@ export default function DataView({
   // searchQuery/sortValue/فیلترهای خودِ ماژول که بعداً با یک کلیک بازیابی
   // می‌شود. کاملاً محلی (localStorage)، هیچ تماسِ بک‌اندی ندارد.
   const savedViewsEnabled = !!savedViewsKey && !!onApplyFilterState;
-  const savedViewsStorageKey = `ihms_saved_views_${savedViewsKey}`;
+  // به ازای هر شرکت جدا ذخیره می‌شود — وگرنه روی مرورگرِ مشترک، ویوهایِ
+  // ذخیره‌شده‌ی یک شرکت (که می‌توانند مقادیرِ فیلترِ اختصاصیِ آن شرکت را
+  // در خود داشته باشند) برایِ کاربرِ شرکتِ دیگری هم قابل‌مشاهده می‌شد.
+  const savedViewsStorageKey = `ihms_saved_views_${savedViewsKey}_${getCurrentCompanyId() || "none"}`;
   const [savedViews, setSavedViews] = useState([]);
   const [viewsOpen, setViewsOpen] = useState(false);
   const [namingView, setNamingView] = useState(false);

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useId, useContext, createContext } from "re
 import { ShieldAlert, Plus, LogOut, Send, CreditCard, AlertTriangle, UserPlus, KeyRound, Layers, Trash2, History, Activity, TrendingDown, Clock, LogIn, ShieldX, LayoutDashboard, Building2, Users, FileClock, ChevronLeft, HardDrive, RefreshCw, Settings2, Copy, GripVertical, ArrowUp, ArrowDown, RotateCcw, Eye, EyeOff, LayoutGrid, PanelsTopLeft, Bell, Palette, Megaphone, Sparkles, Gift, Info, ImagePlus, X, ClipboardList, Smartphone, UploadCloud, CheckCircle2, Download, Globe } from "lucide-react";
 import { loadAppReleases, createAppRelease, setReleasePublished, deleteAppRelease, loadLatestPublishedRelease, nextPatchVersion, triggerMobileBuild } from "./appReleaseApi.js";
 import { APP_VERSION, APP_VERSION_CODE } from "../shared.js";
-import { THEME, usePersistedState, GATED_MODULE_SUBS, SUB_KEY_TO_PARENT_MODULE } from "../shared.js";
+import { THEME, usePersistedState, GATED_MODULE_SUBS, SUB_KEY_TO_PARENT_MODULE, resizeImageFile } from "../shared.js";
 import { changeMyPassword } from "../sessionToken.js";
 import { loadModuleConfig, saveModuleConfig, loadNotificationTypes, saveNotificationType, syncNotificationTypesWithModules, loadAppearanceConfig, saveAppearanceConfig, resolveAppearanceTokens, loadAllAnnouncements, createAnnouncement, updateAnnouncement, setAnnouncementActive, deleteAnnouncement, loadDashboardWidgetConfig, saveDashboardWidgetsBulk, notificationTypeLabel, notificationTypeDescription } from "../systemConfigApi.js";
 import { DASHBOARD_WIDGET_GROUPS, mergeWidgetConfig, defaultWidgetConfig } from "../dashboard/dashboardWidgets.js";
@@ -2619,14 +2619,12 @@ function AnnouncementManagementTab({ currentAdmin, companies }) {
     setMessage("");
     setUploadingImage(field);
     try {
-      const reader = new FileReader();
-      const base64 = await new Promise((resolve, reject) => {
-        reader.onloadend = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-      const ext = (file.type.split("/")[1] || "jpg").replace("jpeg", "jpg");
-      const url = await uploadBase64ToStorage("announcement-images", `${field}-${Date.now()}.${ext}`, base64, file.type || "image/jpeg");
+      // این تصویر روی صفحه‌ی ورودِ عمومی (بدون لاگین) به هر بازدیدکننده
+      // سرو می‌شود — مثل هر مسیرِ دیگرِ آپلودِ عکس در اپ، حتماً باید
+      // فشرده شود، نه فایلِ خامِ دوربین (که می‌تواند چند مگابایت باشد).
+      const base64 = await resizeImageFile(file);
+      const ext = "jpg";
+      const url = await uploadBase64ToStorage("announcement-images", `${field}-${Date.now()}.${ext}`, base64, "image/jpeg");
       if (form[field]) {
         const old = parseStorageUrl(form[field]);
         if (old) deleteFromStorage(old.bucket, old.path).catch(() => {});
@@ -3521,11 +3519,7 @@ function GuestPurchaseRequestsPage({ currentAdmin }) {
         </div>
       )}
 
-      {viewerSrc && (
-        <div onClick={() => setViewerSrc(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 4000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-          <img src={viewerSrc} alt="" style={{ maxWidth: "92vw", maxHeight: "92vh", borderRadius: 10 }} />
-        </div>
-      )}
+      {viewerSrc && <DocumentViewerModal src={viewerSrc} onClose={() => setViewerSrc(null)} />}
     </div>
   );
 }
