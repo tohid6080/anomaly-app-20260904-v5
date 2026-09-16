@@ -55,6 +55,7 @@ export const MODULE_TABLE_MAP = {
   pssrActionItems: { table: "pssr_action_items", idField: "id" },
   pssrActionHistory: { table: "pssr_action_history", idField: "id" },
   pssrNotifications: { table: "pssr_notifications", idField: "id" },
+  correctiveActions: { table: "corrective_actions", idField: "id" },
   // future modules register here once built
 };
 
@@ -111,11 +112,22 @@ async function applyQueueItem(item) {
     }
     const rows = await sb(`${table}?${idField}=eq.${item.recordId}`, { method: "PATCH", body: JSON.stringify(item.payload) });
     if (!sbOk(rows)) return { ok: false, error: rows?.message || tr("owErrUpdate") };
+    // PostgREST یک PATCH که هیچ ردیفی را تطبیق نداده را هم با ۲۰۰/[] پاسخ
+    // می‌دهد (نه خطا) — یعنی رکورد سمتِ سرور در همین فاصله حذف شده. بدونِ
+    // این چک، این حالت به‌اشتباه «موفق» تلقی می‌شد: آیتم از صف حذف می‌شد و
+    // ویرایشِ کاربر با وضعیتِ «همگام‌شده» کش می‌شد، درحالی‌که هیچ‌جا واقعاً
+    // ذخیره نشده بود.
+    if (rows.length === 0) return { ok: false, conflict: true, error: tr("syncErrRecordDeleted") };
     return { ok: true, serverRow: rows[0] };
   }
 
   if (item.action === "delete") {
-    await sb(`${table}?${idField}=eq.${item.recordId}`, { method: "DELETE", prefer: "return=minimal" });
+    const result = await sb(`${table}?${idField}=eq.${item.recordId}`, { method: "DELETE", prefer: "return=minimal" });
+    // قبلاً نتیجه‌ی واقعیِ DELETE هیچ‌وقت چک نمی‌شد و همیشه {ok:true}
+    // برمی‌گشت — اگر سرور رد می‌کرد (RLS، محدودیتِ کلید خارجی، یا خطایِ
+    // شبکه‌ای که به‌صورتِ خطای واقعی برگشته)، آیتمِ صف حذف می‌شد و رکورد
+    // رویِ دستگاه «حذف‌شده» نشان داده می‌شد درحالی‌که هنوز رویِ سرور بود.
+    if (!sbOk(result)) return { ok: false, error: result?.message || tr("owErrDelete") };
     return { ok: true };
   }
 

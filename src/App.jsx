@@ -21,7 +21,7 @@ const IncidentsListPage = lazy(() => import("./incidents/IncidentsListPage.jsx")
 const PSSRListPage = lazy(() => import("./pssr/PSSRListPage.jsx"));
 import { loadOpenActionsForResponsible } from "./pssr/pssrMeetingsApi.js";
 import { loadHomeKpiSummary } from "./dashboard/homeKpiApi.js";
-import { loadModuleConfig, loadDashboardConfig, loadNotificationTypes, loadAppearanceConfig, applyAppearanceToDom, effectiveAppearance, cacheAppearanceConfig, readCachedAppearanceConfig, syncAppearanceNow, loadActiveAnnouncements, loadDashboardWidgetConfig, loadLandingPageContent, readCachedLandingPageContent } from "./systemConfigApi.js";
+import { loadModuleConfig, loadNotificationTypes, loadAppearanceConfig, applyAppearanceToDom, effectiveAppearance, cacheAppearanceConfig, readCachedAppearanceConfig, syncAppearanceNow, loadActiveAnnouncements, loadDashboardWidgetConfig, loadLandingPageContent, readCachedLandingPageContent } from "./systemConfigApi.js";
 import { mergeWidgetConfig, defaultWidgetConfig } from "./dashboard/dashboardWidgets.js";
 import { submitToGate, loadPendingGateItems, loadAssignedGateItems, loadAssignedReviewItemsForModule, deleteGateItemsForRecord, loadCompanyStaffOptions, assignForReview, submitReview, approveGateItem, rejectGateItem, GATE_STATUS_LABELS, gateStatusLabel } from "./hseGateApi.js";
 import SubscriptionGate, { PlanSelectionScreen } from "./subscription/SubscriptionGate.jsx";
@@ -2774,17 +2774,25 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
 
   useEffect(() => { loadGateData(); }, [isContractor, isReviewer, currentUser?.username]);
 
-  const scoped = (isContractor && myContractorName
+  // useMemo روی این ۵ محاسبه — طبقِ یافته‌ی ممیزیِ Performance: بدونِ این،
+  // با هر keystroke در جستجو یا باز/بستنِ هر ردیف (که expandedId را عوض
+  // می‌کند و باعثِ رندرِ مجددِ کل کامپوننت می‌شود)، کل آرایه‌ی anomalies
+  // دوباره ۹ بار پیمایش می‌شد — با چند هزار رکورد این تأخیرِ محسوسی داشت.
+  const scoped = useMemo(() => (isContractor && myContractorName
     ? anomalies.filter((a) => (a.contractor || "").trim().toLowerCase() === myContractorName)
     : anomalies
-  ).filter((a) => !isContractor || !pendingGateRecordIds || !pendingGateRecordIds.has(a.id));
+  ).filter((a) => !isContractor || !pendingGateRecordIds || !pendingGateRecordIds.has(a.id)),
+  [anomalies, isContractor, myContractorName, pendingGateRecordIds]);
 
   // برای پرکردن dropdown فیلتر پیمانکار (فقط ادمین/کارفرما می‌بینند) — از
   // کل لیست بارگذاری‌شده مشتق می‌شود، نه از نتیجه‌ی فیلترشده، تا با انتخاب
   // یک فیلتر دیگر، گزینه‌های این dropdown خودش کوچک نشود
-  const contractorNamesInList = [...new Set(anomalies.map((a) => (a.contractor || "").trim()).filter(Boolean))].sort();
+  const contractorNamesInList = useMemo(
+    () => [...new Set(anomalies.map((a) => (a.contractor || "").trim()).filter(Boolean))].sort(),
+    [anomalies]
+  );
 
-  const filtered = scoped.filter((a) => {
+  const filtered = useMemo(() => scoped.filter((a) => {
     if (statusFilter === "not_closed" && a.status === "Closed") return false;
     else if (statusFilter !== "all" && statusFilter !== "not_closed" && a.status !== statusFilter) return false;
     if (riskFilter !== "all" && a.riskLevel !== riskFilter) return false;
@@ -2795,17 +2803,17 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
       if (!hay.includes(q)) return false;
     }
     return true;
-  });
+  }), [scoped, statusFilter, riskFilter, isContractor, contractorFilter, search]);
 
-  const counts = {
+  const counts = useMemo(() => ({
     total: scoped.length,
     open: scoped.filter((a) => a.status === "open").length,
     review: scoped.filter((a) => a.status === "pending_review").length,
     closed: scoped.filter((a) => a.status === "Closed").length,
     high: scoped.filter((a) => a.riskLevel === "High" && a.status !== "Closed").length,
-  };
+  }), [scoped]);
 
-  const sorted = [...filtered].sort((a, b) => {
+  const sorted = useMemo(() => [...filtered].sort((a, b) => {
     if (sort === "risk") {
       const order = { High: 0, Med: 1, Low: 2 };
       return (order[a.riskLevel] ?? 1) - (order[b.riskLevel] ?? 1);
@@ -2818,7 +2826,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
     // Personnel/Machinery/Scaffold از قبل درست پیاده‌سازی شده بود.
     const at = a.createdAt || a.date || "", bt = b.createdAt || b.date || "";
     return sort === "oldest" ? at.localeCompare(bt) : bt.localeCompare(at);
-  });
+  }), [filtered, sort]);
 
   const handleBulkDelete = async (ids) => {
     if (readOnly) { alert(t("errNoDeletePermission")); return; }
@@ -4332,7 +4340,7 @@ const GATE_MODULE_LABEL_KEYS = {
   machineryManagement: "gateModMachinery",
   scaffoldManagement: "gateModScaffold",
   riskAssessment: "gateModRiskAssessment",
-  liftingPlan: "gateModLifting",
+  liftingPlan: "saDmcLabelLifting",
 };
 
 function WelcomeScreen({ currentUser, setView, onNavigate, sidebarModules }) {
@@ -4836,6 +4844,36 @@ function MobileAnnouncementBanner({ setView }) {
   );
 }
 
+// دیسپچرِ مشترکِ ناوبریِ داشبورد — قبلاً عیناً در EmployerDashboard و
+// ContractorDashboard کپی شده بود (ریسکِ Drift: هر موجودِ گیتِ جدید باید
+// دستی در هر دو جا اضافه می‌شد). حالا یک نسخه، با همان دو setter محلیِ
+// هر پنل به‌عنوانِ closure.
+function buildHomeNavigateHandler(setNavFilter, setView) {
+  return (target) => {
+    setNavFilter(target);
+    if (target.module === "personnel") setView("personnelDashboard");
+    else if (target.module === "anomaly") setView("anomalyList");
+    else if (target.module === "machinery") setView("machineryDashboard");
+    else if (target.module === "scaffold") setView("scaffoldDashboard");
+    else if (target.module === "bowtie") setView("bowtieDashboard");
+    else if (target.module === "bowtieDashboard") setView("bowtieDashboard");
+    else if (target.module === "permitToWork") setView("permitToWork");
+    else if (target.module === "pssr") setView("pssrList");
+    else if (target.module === "hcms") setView("hcmsDashboard");
+    else if (target.module === "correctiveActions") setView("correctiveActionsList");
+    else if (target.module === "incidents") setView("incidentsList");
+    else if (target.module === "proactiveIndicators") setView("proactiveIndicators");
+    else if (target.module === "quickTools") setView("quickTools");
+    else if (target.module === "hseGate") {
+      const mk = target.moduleKey;
+      if (mk === "anomalyReport") { setNavFilter({ module: "anomaly", recordId: target.targetRecordId }); setView("anomalyList"); }
+      else if (mk === "personnelAccess") { setNavFilter({ module: "personnel", recordId: target.targetRecordId }); setView("personnelDashboard"); }
+      else if (mk === "machineryManagement") { setView("machineryDashboard"); }
+      else if (mk === "liftingPlan") { setNavFilter({ module: "quickTools", toolId: "lifting-plan", recordId: target.targetRecordId }); setView("quickTools"); }
+    }
+  };
+}
+
 // ---------- پنل کارفرما ----------
 function EmployerDashboard({ onLogout, currentUser }) {
   const { t, dir, lang } = useLanguage();
@@ -4946,29 +4984,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
     alert(t("moduleComingSoon", { name: mt(mod) }));
   };
 
-  const handleHomeNavigate = (target) => {
-    setNavFilter(target);
-    if (target.module === "personnel") setView("personnelDashboard");
-    else if (target.module === "anomaly") setView("anomalyList");
-    else if (target.module === "machinery") setView("machineryDashboard");
-    else if (target.module === "scaffold") setView("scaffoldDashboard");
-    else if (target.module === "bowtie") setView("bowtieDashboard");
-    else if (target.module === "bowtieDashboard") setView("bowtieDashboard");
-    else if (target.module === "permitToWork") setView("permitToWork");
-    else if (target.module === "pssr") setView("pssrList");
-    else if (target.module === "hcms") setView("hcmsDashboard");
-    else if (target.module === "correctiveActions") setView("correctiveActionsList");
-    else if (target.module === "incidents") setView("incidentsList");
-    else if (target.module === "proactiveIndicators") setView("proactiveIndicators");
-    else if (target.module === "quickTools") setView("quickTools");
-    else if (target.module === "hseGate") {
-      const mk = target.moduleKey;
-      if (mk === "anomalyReport") { setNavFilter({ module: "anomaly", recordId: target.targetRecordId }); setView("anomalyList"); }
-      else if (mk === "personnelAccess") { setNavFilter({ module: "personnel", recordId: target.targetRecordId }); setView("personnelDashboard"); }
-      else if (mk === "machineryManagement") { setView("machineryDashboard"); }
-      else if (mk === "liftingPlan") { setNavFilter({ module: "quickTools", toolId: "lifting-plan", recordId: target.targetRecordId }); setView("quickTools"); }
-    }
-  };
+  const handleHomeNavigate = buildHomeNavigateHandler(setNavFilter, setView);
 
   const anomalyMod = HSE_MODULES.find((m) => m.key === "anomalyReport");
   const anomalyCanEdit = canEdit && getAccessLevel(permMap, "anomalyReport") !== "view";
@@ -5399,29 +5415,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
     alert(t("moduleComingSoon", { name: mt(mod) }));
   };
 
-  const handleHomeNavigate = (target) => {
-    setNavFilter(target);
-    if (target.module === "personnel") setView("personnelDashboard");
-    else if (target.module === "anomaly") setView("anomalyList");
-    else if (target.module === "machinery") setView("machineryDashboard");
-    else if (target.module === "scaffold") setView("scaffoldDashboard");
-    else if (target.module === "bowtie") setView("bowtieDashboard");
-    else if (target.module === "bowtieDashboard") setView("bowtieDashboard");
-    else if (target.module === "permitToWork") setView("permitToWork");
-    else if (target.module === "pssr") setView("pssrList");
-    else if (target.module === "hcms") setView("hcmsDashboard");
-    else if (target.module === "correctiveActions") setView("correctiveActionsList");
-    else if (target.module === "incidents") setView("incidentsList");
-    else if (target.module === "proactiveIndicators") setView("proactiveIndicators");
-    else if (target.module === "quickTools") setView("quickTools");
-    else if (target.module === "hseGate") {
-      const mk = target.moduleKey;
-      if (mk === "anomalyReport") { setNavFilter({ module: "anomaly", recordId: target.targetRecordId }); setView("anomalyList"); }
-      else if (mk === "personnelAccess") { setNavFilter({ module: "personnel", recordId: target.targetRecordId }); setView("personnelDashboard"); }
-      else if (mk === "machineryManagement") { setView("machineryDashboard"); }
-      else if (mk === "liftingPlan") { setNavFilter({ module: "quickTools", toolId: "lifting-plan", recordId: target.targetRecordId }); setView("quickTools"); }
-    }
-  };
+  const handleHomeNavigate = buildHomeNavigateHandler(setNavFilter, setView);
 
   const anomalyMod = HSE_MODULES.find((m) => m.key === "anomalyReport");
   const anomalySub = anomalyMod.sub.filter((s) => !s.employerOnly && isModuleInPlan(planFeatures, s.key));

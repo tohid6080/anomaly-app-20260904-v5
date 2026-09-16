@@ -36,23 +36,6 @@ export async function saveModuleConfig(list, updatedBy) {
   return { ok: true };
 }
 
-// ---------- مدیریت داشبورد ----------
-
-export async function loadDashboardConfig() {
-  const rows = await sb("system_dashboard_config?select=*&order=sort_order.asc");
-  return sbOk(rows) ? rows.map((r) => ({ kpiKey: r.kpi_key, sortOrder: r.sort_order, isVisible: r.is_visible !== false })) : [];
-}
-
-export async function saveDashboardConfig(list, updatedBy) {
-  const payload = list.map((k, idx) => ({
-    kpi_key: k.kpiKey, sort_order: idx + 1, is_visible: k.isVisible !== false,
-    updated_at: new Date().toISOString(), updated_by: updatedBy || "",
-  }));
-  const rows = await sb("system_dashboard_config?on_conflict=kpi_key", { method: "POST", body: JSON.stringify(payload), prefer: "resolution=merge-duplicates,return=representation" }, "super_admin");
-  if (!sbOk(rows)) return { __error: true, message: tr("scErrSaveDashboard") };
-  return { ok: true };
-}
-
 // ---------- ویجت‌های داشبورد مدیریتی (پنل‌های داخل HomeDashboard.jsx) ----------
 // مستقل از KPIهای بالا — این‌ها پنل‌های داخل خودِ ماژول «داشبورد مدیریتی» هستند.
 

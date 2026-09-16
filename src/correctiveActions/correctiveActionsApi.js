@@ -1,5 +1,6 @@
-import { sb, sbOk, getCurrentCompanyId, THEME } from "../shared.js";
+import { sb, sbOk, getCurrentCompanyId, THEME, uid } from "../shared.js";
 import { uploadBase64ToStorage } from "../offline/storageUpload.js";
+import { offlineWrite } from "../offline/offlineWrite.js";
 import { translate, getCurrentLang } from "../i18n/translations.js";
 
 // ---------- ثابت‌ها ----------
@@ -149,23 +150,30 @@ export async function createCorrectiveAction(rec, createdBy, explicitCompanyId) 
     const nextSeq = (sbOk(countRows) ? countRows.length : 0) + 1;
     actionNumber = `CA-${String(nextSeq).padStart(4, "0")}`;
   }
+  // طبقِ ممیزیِ فنی: این سه تابع قبلاً مستقیم sb() صدا می‌زدند، بدونِ صفِ
+  // آفلاین — یک HSE Supervisor بدونِ آنتن نمی‌توانست اقدامِ اصلاحی ثبت/
+  // ویرایش کند، بدونِ Retry و بدونِ نمایشِ حالتِ «در انتظارِ همگام‌سازی».
+  // حالا مثلِ همه‌ی ماژول‌هایِ دیگر (طبقِ قراردادِ CLAUDE.md) از
+  // offlineWrite عبور می‌کند.
+  const id = uid("ca");
   const payload = { ...toDb({ ...rec, actionNumber }), company_id: companyId, created_by: createdBy || "" };
-  const rows = await sb("corrective_actions", { method: "POST", body: JSON.stringify([payload]) });
-  if (!sbOk(rows)) return { __error: true, message: translate(getCurrentLang(), "errCaCreate", { reason: rows?.message || translate(getCurrentLang(), "commonErrorUnknown") }) };
-  return fromRow(rows[0]);
+  const result = await offlineWrite({ module: "correctiveActions", table: "corrective_actions", action: "insert", id, payload });
+  if (!result.ok) return { __error: true, message: translate(getCurrentLang(), "errCaCreate", { reason: result.error || translate(getCurrentLang(), "commonErrorUnknown") }) };
+  if (!result.record) return { __error: true, message: translate(getCurrentLang(), "errServerInvalidResponse") };
+  return { ...fromRow(result.record), syncStatus: result.offline ? "pending" : "synced" };
 }
 
 export async function updateCorrectiveAction(id, rec) {
-  const payload = toDb(rec);
-  payload.updated_at = new Date().toISOString();
-  const rows = await sb(`corrective_actions?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(payload) });
-  if (!sbOk(rows)) return { __error: true, message: translate(getCurrentLang(), "errCaSave", { reason: rows?.message || translate(getCurrentLang(), "commonErrorUnknown") }) };
-  return fromRow(rows[0]);
+  const payload = { ...toDb(rec), updated_at: new Date().toISOString() };
+  const result = await offlineWrite({ module: "correctiveActions", table: "corrective_actions", action: "update", id, payload });
+  if (!result.ok) return { __error: true, message: translate(getCurrentLang(), "errCaSave", { reason: result.error || translate(getCurrentLang(), "commonErrorUnknown") }) };
+  if (!result.record) return { __error: true, message: translate(getCurrentLang(), "errServerInvalidResponse") };
+  return { ...fromRow(result.record), syncStatus: result.offline ? "pending" : "synced" };
 }
 
 export async function deleteCorrectiveAction(id) {
-  const result = await sb(`corrective_actions?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" });
-  if (!sbOk(result)) return { __error: true, message: translate(getCurrentLang(), "commonErrorDelete") };
+  const result = await offlineWrite({ module: "correctiveActions", table: "corrective_actions", action: "delete", id, payload: {} });
+  if (!result.ok) return { __error: true, message: result.error || translate(getCurrentLang(), "commonErrorDelete") };
   return { ok: true };
 }
 

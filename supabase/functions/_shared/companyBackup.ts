@@ -17,7 +17,7 @@
 //   - app_releases, login_attempts, super_admins
 //   - جداولِ مرجعِ سراسری: plans, sbs_ref_*, tripod_ref_*,
 //     proactive_indicator_definitions / proactive_indicator_questions
-//   - پیکربندیِ سراسریِ سیستم: system_dashboard_config / _widgets /
+//   - پیکربندیِ سراسریِ سیستم: system_dashboard_widgets /
 //     system_module_config / system_notification_types / system_settings
 //
 // تنها جدولِ «وابستگیِ غیرمستقیم» anomaly_notifications است؛ بقیه‌ی جداولِ

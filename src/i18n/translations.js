@@ -8900,7 +8900,6 @@ export const translations = {
 
   // --- systemConfigApi.js error messages (batch 14) ---
   "scErrSaveModules": { "fa": "خطا در ذخیره‌ی تنظیمات ماژول‌ها", "en": "Error saving module settings" },
-  "scErrSaveDashboard": { "fa": "خطا در ذخیره‌ی تنظیمات داشبورد", "en": "Error saving dashboard settings" },
   "scErrSaveDashboardWidgets": { "fa": "خطا در ذخیره‌ی تنظیمات پنل‌های داشبورد", "en": "Error saving dashboard panel settings" },
   "scErrSaveNotification": { "fa": "خطا در ذخیره‌ی تنظیمات اعلان", "en": "Error saving notification settings" },
   "scErrSaveAppearance": { "fa": "خطا در ذخیره‌ی تنظیمات ظاهری", "en": "Error saving appearance settings" },
@@ -10135,6 +10134,7 @@ export const translations = {
   "owErrInsertDoc": { "fa": "خطای درج مدرک", "en": "Document insert error" },
   "owErrUploadFile": { "fa": "خطا در آپلود فایل", "en": "File upload error" },
   "syncErrConflict": { "fa": "این رکورد در این‌بین از جای دیگری تغییر کرده است", "en": "This record has been changed elsewhere in the meantime" },
+  "syncErrRecordDeleted": { "fa": "این رکورد در این‌بین از سرور حذف شده است — ویرایشِ شما ذخیره نشد", "en": "This record has been deleted from the server in the meantime — your edit was not saved" },
   "syncErrUnknownOp": { "fa": "نوع عملیات ناشناخته", "en": "Unknown operation type" },
   "syncErrUnknown": { "fa": "خطای نامشخص", "en": "Unknown error" },
 
@@ -10321,7 +10321,6 @@ export const translations = {
   "gateModMachinery": { "fa": "ماشین‌آلات", "en": "Machinery" },
   "gateModScaffold": { "fa": "داربست", "en": "Scaffolding" },
   "gateModRiskAssessment": { "fa": "ارزیابی ریسک", "en": "Risk Assessment" },
-  "gateModLifting": { "fa": "طراحی نقشه‌ی لیفتینگ", "en": "Lifting Plan Designer" },
   "subEffectivenessThresholds": { "fa": "Threshold اثربخشی Barrier", "en": "Barrier Effectiveness Threshold" },
   "welcomeGreetingLine": { "fa": "خوش آمدید، {name}", "en": "Welcome, {name}" },
 
