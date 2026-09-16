@@ -6644,6 +6644,14 @@ export const translations = {
     "fa": "تأیید برچیده‌شدن",
     "en": "Confirm Removal"
   },
+  "scaffDeleteIssuedTag": {
+    "fa": "حذف تگ",
+    "en": "Delete Tag"
+  },
+  "confirmDeleteIssuedTag": {
+    "fa": "این تگ صادرشده برای همیشه حذف شود؟ این عملیات قابل بازگشت نیست.",
+    "en": "Permanently delete this issued tag? This action cannot be undone."
+  },
   "scaffModuleTitle": {
     "fa": "مدیریت داربست — لیست تگ داربست",
     "en": "Scaffolding Management — Tag List"

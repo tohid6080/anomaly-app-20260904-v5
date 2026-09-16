@@ -109,9 +109,9 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
         .sort((a, b) => a.name.localeCompare(b.name, "fa"))
     : [];
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, confirmKey = "confirmDeleteTagRequest") => {
     if (readOnly) { alert(t("errNoDeletePermission")); return; }
-    if (!confirm(t("confirmDeleteTagRequest"))) return;
+    if (!confirm(t(confirmKey))) return;
     await deleteScaffoldTagDB(id);
     await load();
   };
@@ -241,6 +241,11 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
       )}
       {!isContractor && !readOnly && t.status === "removal_requested" && (
         <button type="button" style={{ ...styles.smallButton, background: THEME.ok }} onClick={() => handleConfirmRemoved(t)} disabled={saving}>{t2("scaffConfirmRemoval")}</button>
+      )}
+      {!isContractor && !readOnly && t.status === "tag_issued" && (
+        <button type="button" style={{ ...styles.smallButton, background: THEME.danger, display: "inline-flex", alignItems: "center", gap: 4 }} onClick={() => handleDelete(t.id, "confirmDeleteIssuedTag")}>
+          <Trash2 size={12} /> {t2("scaffDeleteIssuedTag")}
+        </button>
       )}
     </>
   );
