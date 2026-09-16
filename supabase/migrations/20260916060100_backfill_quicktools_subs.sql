@@ -52,7 +52,7 @@ begin
   -- سریع» در سایدبار/موبایل ظاهر می‌شود (HSE_MODULES هم مثلِ همه‌جا اول
   -- خودِ «quickTools» را چک می‌کند).
   insert into public.company_modules (company_id, module_key, is_active, starts_at, ends_at, price_monthly, price_yearly, source, created_by)
-  select distinct cm.company_id, 'quickTools', true, now(), null, 0, 0, 'admin_grant', 'backfill_sub_modules'
+  select distinct cm.company_id, 'quickTools', true, now(), null::timestamptz, 0, 0, 'admin_grant', 'backfill_sub_modules'
   from public.company_modules cm
   where cm.is_active = true
     and cm.module_key = any (qt_subs)
