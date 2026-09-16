@@ -4050,7 +4050,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
                       return (
                         <label key={s.key} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10.5, fontWeight: 600, color: subActive ? THEME.heading : THEME.text3, cursor: "pointer", background: THEME.surface2, borderRadius: 6, padding: "3px 8px" }}>
                           <input type="checkbox" checked={subActive} onChange={() => handleToggleSubModule(s.key, subRow)} style={{ margin: 0 }} />
-                          {t(s.labelKey)}
+                          {s.labelKey ? t(s.labelKey) : s.label}
                         </label>
                       );
                     })}

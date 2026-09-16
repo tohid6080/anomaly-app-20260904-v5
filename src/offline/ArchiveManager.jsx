@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Archive, FileSpreadsheet, Trash2, Users, AlertTriangle, GitBranch, History, Truck, Tag, ShieldAlert, Activity, ClipboardList, TrendingUp } from "lucide-react";
 import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
-import { sb, sbOk, styles, THEME, getCurrentCompanyId } from "../shared.js";
+import { sb, sbOk, styles, THEME, getCurrentCompanyId, loadCurrentCompanyPlanFeatures, isModuleInPlan } from "../shared.js";
 import { exportWorkbookNativeAware } from "./nativeFile.js";
 import { loadHseClimateHistory, loadAllAssessments, accidentPronenessLevel } from "../proactiveIndicators/proactiveIndicatorsApi.js";
 import { loadSbsObservations, loadSbsCategories, seasonLabel } from "../proactiveIndicators/sbsApi.js";
@@ -990,6 +990,14 @@ const TABS = [
   { key: "hcms", label: "HCMS", icon: ShieldAlert },
 ];
 
+// نگاشتِ کلیدِ محلیِ هر تب به کلیدِ زیرماژولی که در GATED_MODULE_SUBS.archiveManagement
+// (shared.js) ثبت شده — تا «بخشِ شرکت‌ها» بتواند هرکدام از این ۶ دسته را
+// جدا برایِ یک شرکت فعال/غیرفعال کند.
+const TAB_TO_MODULE_KEY = {
+  personnel: "archivePersonnel", anomaly: "archiveAnomaly", bowtie: "archiveBowtie",
+  machinery: "archiveMachinery", scaffold: "archiveScaffold", hcms: "archiveHcms",
+};
+
 export default function ArchiveManager({ onBack, currentUser, wide }) {
   const { t, dir } = useLanguage();
   const moduleLabelFor = (key) => {
@@ -1010,6 +1018,18 @@ export default function ArchiveManager({ onBack, currentUser, wide }) {
   const [diagramUrls, setDiagramUrls] = useState({});
   const [lastLogs, setLastLogs] = useState([]);
   const [reportBusy, setReportBusy] = useState(null);
+  const [planFeatures, setPlanFeatures] = useState(null);
+  useEffect(() => { loadCurrentCompanyPlanFeatures().then(setPlanFeatures); }, []);
+  // فقط دسته‌هایی که این شرکت برایشان زیرماژول را جداگانه دارد (یا اصلاً
+  // محدودیتی ثبت نشده — planFeatures=null یعنی بدون‌محدودیت) نشان داده
+  // می‌شوند. اگر تبِ فعلاً انتخاب‌شده («personnel» پیش‌فرض) دیگر در این
+  // فهرست نبود، به اولین تبِ واقعاً قابل‌مشاهده سوییچ می‌کنیم — وگرنه
+  // دکمه‌ها و محتوا هماهنگ نمی‌ماندند.
+  const visibleTabs = TABS.filter((tabDef) => isModuleInPlan(planFeatures, TAB_TO_MODULE_KEY[tabDef.key]));
+  useEffect(() => {
+    if (visibleTabs.length > 0 && !visibleTabs.some((tabDef) => tabDef.key === tab)) setTab(visibleTabs[0].key);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [planFeatures]);
 
   const load = async () => {
     setLoading(true);
@@ -1115,7 +1135,7 @@ export default function ArchiveManager({ onBack, currentUser, wide }) {
       </p>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
-        {TABS.map((tabDef) => (
+        {visibleTabs.map((tabDef) => (
           <button
             key={tabDef.key}
             type="button"
