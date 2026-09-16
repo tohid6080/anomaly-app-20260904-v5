@@ -2431,10 +2431,14 @@ function AnomalyForm({ onBack, currentUser, onSaved, embedded }) {
     setSaving(true);
     setError("");
     try {
-      const existing = await loadAnomaliesOfflineFirst();
     const record = {
       id: uid("anomaly"),
-      trackingNumber: trackingNumber.trim() || `A-${String(existing.length + 1).padStart(4, "0")}`,
+      // شماره‌ی پیگیری اگر خالی بماند دیگر این‌جا حدس زده نمی‌شود — trigger
+      // سمتِ دیتابیس (anomalies_assign_tracking_number، ر.ک. migration
+      // 20260916033000_anomalies_atomic_tracking_number.sql) آن را اتمیک
+      // تعیین می‌کند، دقیقاً همان دلیلی که تگ داربست اصلاح شد: دو ثبتِ
+      // هم‌زمان دیگر نمی‌توانند یک شماره را حدس بزنند.
+      trackingNumber: trackingNumber.trim(),
       project: project.trim(),
       contractor: contractor.trim(),
       subContractor: subContractor.trim(),
