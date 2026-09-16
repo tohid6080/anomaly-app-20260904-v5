@@ -30,8 +30,49 @@
 -- خودشان را دارند، ردیفِ شرکتِ دمو دست‌نخورده می‌ماند، و trigger برایِ هر
 -- دو شرکت جداگانه درست کار می‌کند.
 
-alter table public.scaffold_tags
-  drop constraint scaffold_tags_tag_number_key;
+-- روی دیتابیسِ واقعی، محدودیتِ یکتاییِ قدیمیِ tag_number با نامِ
+-- scaffold_tags_tag_number_key وجود نداشت (drop مستقیم با خطای ۴۲۷۰۴
+-- شکست خورد) — احتمالاً یا اصلاً constraint نبوده (فقط یک unique index)،
+-- یا با نامِ دیگری ساخته شده. برای اینکه این migration مستقل از نامِ
+-- واقعیِ آن روی هر محیطی کار کند، هر unique constraint/index که دقیقاً
+-- روی ستونِ tag_number (تنها) است را پویا پیدا و حذف می‌کنیم؛ بعد
+-- constraintِ جدید را فقط اگر از قبل نبود اضافه می‌کنیم.
+do $$
+declare
+  r record;
+begin
+  for r in
+    select con.conname
+    from pg_constraint con
+    where con.conrelid = 'public.scaffold_tags'::regclass
+      and con.contype = 'u'
+      and (
+        select array_agg(attname::text order by attnum)
+        from pg_attribute
+        where attrelid = con.conrelid and attnum = any(con.conkey)
+      ) = array['tag_number']::text[]
+  loop
+    execute format('alter table public.scaffold_tags drop constraint %I', r.conname);
+  end loop;
 
-alter table public.scaffold_tags
-  add constraint scaffold_tags_company_tag_number_key unique (company_id, tag_number);
+  for r in
+    select indexname
+    from pg_indexes
+    where schemaname = 'public' and tablename = 'scaffold_tags'
+      and indexdef ilike '%UNIQUE%' and indexdef ilike '%(tag_number)%'
+      and indexname not in (
+        select conname from pg_constraint where conrelid = 'public.scaffold_tags'::regclass
+      )
+  loop
+    execute format('drop index if exists public.%I', r.indexname);
+  end loop;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.scaffold_tags'::regclass
+      and conname = 'scaffold_tags_company_tag_number_key'
+  ) then
+    alter table public.scaffold_tags
+      add constraint scaffold_tags_company_tag_number_key unique (company_id, tag_number);
+  end if;
+end $$;
