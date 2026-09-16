@@ -1399,7 +1399,7 @@ function LoginFormCard({
   return (
     <div
       onClick={onClick}
-      style={{ width: 360, maxWidth: "100%", background: THEME.surface, borderRadius: 18, border: `1px solid ${THEME.border}`, boxShadow: "0 40px 90px -40px rgba(0,0,0,0.55)", padding: "16px 22px 14px", maxHeight: "calc(100vh - 20px)", overflowY: "auto", display: "flex", flexDirection: "column" }}
+      style={{ width: 360, maxWidth: "100%", background: THEME.surface, borderRadius: 18, border: `1px solid ${THEME.border}`, boxShadow: "0 40px 90px -40px rgba(0,0,0,0.55)", padding: "44px 26px 32px", maxHeight: "calc(100vh - 20px)", overflowY: "auto", display: "flex", flexDirection: "column" }}
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2 }}>
         <LanguageSelect align="start" />
@@ -1409,8 +1409,8 @@ function LoginFormCard({
           </button>
         )}
       </div>
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: 2 }}>
-        <IhmsLogo size={56} src={appearance?.logoUrl} />
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+        <IhmsLogo size={168} src={appearance?.logoUrl} />
       </div>
       <h2 style={{ textAlign: "center", marginBottom: 1, fontSize: 15.5, color: THEME.heading, fontWeight: 800, fontFamily: THEME.font }}>{t("loginButton")}</h2>
       <p style={{ textAlign: "center", color: THEME.text3, fontSize: 11, marginTop: 2, marginBottom: 8, fontFamily: THEME.font, fontWeight: 600 }}>{t("loginTagline")}</p>
