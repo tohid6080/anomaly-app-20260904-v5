@@ -94,7 +94,7 @@ import { exportWorkbookNativeAware, exportHtmlReportNativeAware } from "./offlin
 import { saveBlobNativeAware } from "./offline/archiveZip.js";
 import { toJalaliDateTime, toJalaliSafe } from "./personnel/jalaliDate.jsx";
 import LandingPage, { mergeLandingButtons } from "./LandingPage.jsx";
-import { APP_NAME, sb, sbOk, sbErrMsg, uid, todayISO, THEME, styles, usePersistedState, setCurrentCompanyId, getCurrentCompanyId, loadCurrentCompanyPlanFeatures, isModuleInPlan, resizeImageFile } from "./shared.js";
+import { APP_NAME, sb, sbOk, sbErrMsg, uid, todayISO, THEME, styles, usePersistedState, setCurrentCompanyId, getCurrentCompanyId, loadCurrentCompanyPlanFeatures, isModuleInPlan, filterSubByPlan, resizeImageFile } from "./shared.js";
 
 /**
  * اپلیکیشن کارفرما / پیمانکار / ادمین + ماژول ثبت و پیگیری آنومالی HSE
@@ -5051,7 +5051,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
 
   const anomalyMod = HSE_MODULES.find((m) => m.key === "anomalyReport");
   const anomalyCanEdit = canEdit && getAccessLevel(permMap, "anomalyReport") !== "view";
-  const anomalySub = anomalyMod.sub.filter((s) => (anomalyCanEdit || !s.employerOnly) && !(s.hideWhenEditable && anomalyCanEdit));
+  const anomalySub = anomalyMod.sub.filter((s) => (anomalyCanEdit || !s.employerOnly) && !(s.hideWhenEditable && anomalyCanEdit) && isModuleInPlan(planFeatures, s.key));
   const riskMod = HSE_MODULES.find((m) => m.key === "riskAssessment");
   const personnelMod = HSE_MODULES.find((m) => m.key === "personnelAccess");
   const machineryMod = HSE_MODULES.find((m) => m.key === "machineryManagement");
@@ -5163,7 +5163,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       label: mt(mod),
       badge: mod.key === "chat" ? chatUnread : undefined,
       muted: mod.employerOnly && !canEdit,
-      sub: mod.sub ? mod.sub.filter((s) => (canEdit || !s.employerOnly) && !(s.hideWhenEditable && canEdit) && subViewOnlyOk(s, mod, permMap)).map((s) => ({ key: s.key, label: mt(s) })) : undefined,
+      sub: mod.sub ? mod.sub.filter((s) => (canEdit || !s.employerOnly) && !(s.hideWhenEditable && canEdit) && subViewOnlyOk(s, mod, permMap) && isModuleInPlan(planFeatures, s.key)).map((s) => ({ key: s.key, label: mt(s) })) : undefined,
     })),
     systemManagementEntry,
   ].filter(Boolean), moduleConfig);
@@ -5209,7 +5209,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
               onClick: () => openModule(mod),
               accent: !!mod.icon,
               muted: mod.employerOnly && !canEdit,
-              sub: !!mod.sub,
+              sub: filterSubByPlan(mod.sub, planFeatures).length > 0,
               badge: mod.key === "chat" ? chatUnread : undefined,
             })),
             ...(systemManagementEntry ? [{
@@ -5268,7 +5268,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(riskMod)}</h3>
           <div style={styles.menuList2}>
-            {riskMod.sub.map((s) => (
+            {filterSubByPlan(riskMod.sub, planFeatures).map((s) => (
               <MenuRow key={s.key} icon={ShieldCheck} label={mt(s)} onClick={() => setView(s.key)} accent />
             ))}
           </div>
@@ -5282,7 +5282,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(personnelMod)}</h3>
           <div style={styles.menuList2}>
-            {personnelMod.sub.filter((s) => subViewOnlyOk(s, personnelMod, permMap)).map((s) => (
+            {personnelMod.sub.filter((s) => subViewOnlyOk(s, personnelMod, permMap) && isModuleInPlan(planFeatures, s.key)).map((s) => (
               <MenuRow key={s.key} icon={Users} label={mt(s)} onClick={() => setView(s.key)} accent />
             ))}
           </div>
@@ -5296,7 +5296,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(machineryMod)}</h3>
           <div style={styles.menuList2}>
-            {machineryMod.sub.map((s) => (
+            {filterSubByPlan(machineryMod.sub, planFeatures).map((s) => (
               <MenuRow key={s.key} icon={Truck} label={mt(s)} onClick={() => setView(s.key)} accent />
             ))}
           </div>
@@ -5308,7 +5308,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(scaffoldMod)}</h3>
           <div style={styles.menuList2}>
-            {scaffoldMod.sub.map((s) => (
+            {filterSubByPlan(scaffoldMod.sub, planFeatures).map((s) => (
               <MenuRow key={s.key} icon={Tag} label={mt(s)} onClick={() => setView(s.key)} accent />
             ))}
           </div>
@@ -5320,7 +5320,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(incidentMod)}</h3>
           <div style={styles.menuList2}>
-            {incidentMod.sub.map((s) => (
+            {filterSubByPlan(incidentMod.sub, planFeatures).map((s) => (
               <MenuRow key={s.key} icon={ShieldAlert} label={mt(s)} onClick={() => setView(s.key)} accent />
             ))}
           </div>
@@ -5503,7 +5503,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
   };
 
   const anomalyMod = HSE_MODULES.find((m) => m.key === "anomalyReport");
-  const anomalySub = anomalyMod.sub.filter((s) => !s.employerOnly);
+  const anomalySub = anomalyMod.sub.filter((s) => !s.employerOnly && isModuleInPlan(planFeatures, s.key));
   const personnelMod = HSE_MODULES.find((m) => m.key === "personnelAccess");
   const machineryMod = HSE_MODULES.find((m) => m.key === "machineryManagement");
   const scaffoldMod = HSE_MODULES.find((m) => m.key === "scaffoldManagement");
@@ -5577,7 +5577,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
     label: mt(mod),
     badge: mod.key === "chat" ? chatUnread : undefined,
     muted: !!mod.employerOnly,
-    sub: mod.sub ? mod.sub.filter((s) => !s.employerOnly && subViewOnlyOk(s, mod, permMap)).map((s) => ({ key: s.key, label: mt(s) })) : undefined,
+    sub: mod.sub ? mod.sub.filter((s) => !s.employerOnly && subViewOnlyOk(s, mod, permMap) && isModuleInPlan(planFeatures, s.key)).map((s) => ({ key: s.key, label: mt(s) })) : undefined,
   })), moduleConfig);
 
   const bottomNavCandidates = (() => {
@@ -5616,7 +5616,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
             onClick: () => openModule(mod),
             accent: !!mod.icon,
             muted: !!mod.employerOnly,
-            sub: !!mod.sub,
+            sub: filterSubByPlan(mod.sub, planFeatures).length > 0,
             badge: mod.key === "chat" ? chatUnread : undefined,
           }))}
           setView={setView}
@@ -5643,7 +5643,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(personnelMod)}</h3>
           <div style={styles.menuList2}>
-            {personnelMod.sub.filter((s) => subViewOnlyOk(s, personnelMod, permMap)).map((s) => (
+            {personnelMod.sub.filter((s) => subViewOnlyOk(s, personnelMod, permMap) && isModuleInPlan(planFeatures, s.key)).map((s) => (
               <MenuRow key={s.key} icon={Users} label={mt(s)} onClick={() => setView(s.key)} accent />
             ))}
           </div>
@@ -5656,7 +5656,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(machineryMod)}</h3>
           <div style={styles.menuList2}>
-            {machineryMod.sub.map((s) => (
+            {filterSubByPlan(machineryMod.sub, planFeatures).map((s) => (
               <MenuRow key={s.key} icon={Truck} label={mt(s)} onClick={() => setView(s.key)} accent />
             ))}
           </div>
@@ -5668,7 +5668,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(scaffoldMod)}</h3>
           <div style={styles.menuList2}>
-            {scaffoldMod.sub.map((s) => (
+            {filterSubByPlan(scaffoldMod.sub, planFeatures).map((s) => (
               <MenuRow key={s.key} icon={Tag} label={mt(s)} onClick={() => setView(s.key)} accent />
             ))}
           </div>
@@ -5680,7 +5680,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(incidentMod)}</h3>
           <div style={styles.menuList2}>
-            {incidentMod.sub.map((s) => (
+            {filterSubByPlan(incidentMod.sub, planFeatures).map((s) => (
               <MenuRow key={s.key} icon={ShieldAlert} label={mt(s)} onClick={() => setView(s.key)} accent />
             ))}
           </div>
@@ -5692,7 +5692,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
           <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(riskMod)}</h3>
           <div style={styles.menuList2}>
-            {riskMod.sub.filter((s) => !s.employerOnly).map((s) => (
+            {riskMod.sub.filter((s) => !s.employerOnly && isModuleInPlan(planFeatures, s.key)).map((s) => (
               <MenuRow key={s.key} icon={ShieldCheck} label={mt(s)} onClick={() => setView(s.key)} accent />
             ))}
           </div>

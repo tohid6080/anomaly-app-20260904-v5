@@ -2,7 +2,7 @@ import React, { useState, useEffect, useId, useContext, createContext } from "re
 import { ShieldAlert, Plus, LogOut, Send, CreditCard, AlertTriangle, UserPlus, KeyRound, Layers, Trash2, History, Activity, TrendingDown, Clock, LogIn, ShieldX, LayoutDashboard, Building2, Users, FileClock, ChevronLeft, HardDrive, RefreshCw, Settings2, Copy, GripVertical, ArrowUp, ArrowDown, RotateCcw, Eye, EyeOff, LayoutGrid, PanelsTopLeft, Bell, Palette, Megaphone, Sparkles, Gift, Info, ImagePlus, X, ClipboardList, Smartphone, UploadCloud, CheckCircle2, Download, Globe } from "lucide-react";
 import { loadAppReleases, createAppRelease, setReleasePublished, deleteAppRelease, loadLatestPublishedRelease, nextPatchVersion, triggerMobileBuild } from "./appReleaseApi.js";
 import { APP_VERSION, APP_VERSION_CODE } from "../shared.js";
-import { THEME, usePersistedState } from "../shared.js";
+import { THEME, usePersistedState, GATED_MODULE_SUBS, SUB_KEY_TO_PARENT_MODULE } from "../shared.js";
 import { changeMyPassword } from "../sessionToken.js";
 import { loadModuleConfig, saveModuleConfig, loadNotificationTypes, saveNotificationType, syncNotificationTypesWithPlans, loadAppearanceConfig, saveAppearanceConfig, resolveAppearanceTokens, loadAllAnnouncements, createAnnouncement, updateAnnouncement, setAnnouncementActive, deleteAnnouncement, loadDashboardWidgetConfig, saveDashboardWidgetsBulk, notificationTypeLabel, notificationTypeDescription } from "../systemConfigApi.js";
 import { DASHBOARD_WIDGET_GROUPS, mergeWidgetConfig, defaultWidgetConfig } from "../dashboard/dashboardWidgets.js";
@@ -3868,19 +3868,47 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
     if (!newModuleKey) return;
     setModuleBusy(true); setModuleError("");
     const catalogEntry = modulePricesCatalog.find((m) => m.moduleKey === newModuleKey);
+    const startsAt = newModuleStart ? new Date(newModuleStart).toISOString() : undefined;
+    const endsAt = newModuleEnd ? new Date(newModuleEnd).toISOString() : null;
     const result = await addCompanyModule(company.id, newModuleKey, {
-      startsAt: newModuleStart ? new Date(newModuleStart).toISOString() : undefined,
-      endsAt: newModuleEnd ? new Date(newModuleEnd).toISOString() : null,
+      startsAt, endsAt,
       priceMonthly: catalogEntry?.priceMonthly || 0,
       priceYearly: catalogEntry?.priceYearly || 0,
       source: "admin_grant",
     }, currentAdmin?.fullName);
+    if (result?.__error) { setModuleBusy(false); setModuleError(result.message); return; }
+    // زیرماژول‌هایِ این ماژول (اگر داشت) پیش‌فرض همه فعال می‌شوند — ادمین
+    // بعداً می‌تواند هرکدام را جدا از چک‌باکسِ زیرِ همین ردیف خاموش کند.
+    const subs = GATED_MODULE_SUBS[newModuleKey] || [];
+    await Promise.all(subs.map((s) => {
+      const subCatalogEntry = modulePricesCatalog.find((mp) => mp.moduleKey === s.key);
+      return addCompanyModule(company.id, s.key, {
+        startsAt, endsAt,
+        priceMonthly: subCatalogEntry?.priceMonthly || 0,
+        priceYearly: subCatalogEntry?.priceYearly || 0,
+        source: "admin_grant",
+      }, currentAdmin?.fullName);
+    }));
     setModuleBusy(false);
-    if (result?.__error) { setModuleError(result.message); return; }
     setNewModuleKey(""); setNewModuleEnd(""); setShowAddModule(false);
     await loadCompanyModulesList();
   };
   const handleToggleModuleActive = async (m) => { await updateCompanyModule(m.id, { isActive: !m.isActive }); await loadCompanyModulesList(); };
+  // زیرماژول: اگر ردیفش از قبل هست فقط active/inactive toggle می‌شود؛ اولین
+  // بار (مثلاً ماژولی که قبل از این قابلیت اضافه شده) یک ردیفِ تازه می‌سازد.
+  const handleToggleSubModule = async (subKey, existingRow) => {
+    if (existingRow) {
+      await updateCompanyModule(existingRow.id, { isActive: !existingRow.isActive });
+    } else {
+      const subCatalogEntry = modulePricesCatalog.find((mp) => mp.moduleKey === subKey);
+      await addCompanyModule(company.id, subKey, {
+        priceMonthly: subCatalogEntry?.priceMonthly || 0,
+        priceYearly: subCatalogEntry?.priceYearly || 0,
+        source: "admin_grant",
+      }, currentAdmin?.fullName);
+    }
+    await loadCompanyModulesList();
+  };
   const handleModuleDateChange = async (m, field, value) => {
     await updateCompanyModule(m.id, { [field]: value ? new Date(value).toISOString() : (field === "endsAt" ? null : undefined) });
     await loadCompanyModulesList();
@@ -3891,7 +3919,12 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
     await loadCompanyModulesList();
   };
   const moduleLabel = (key) => modulePricesCatalog.find((m) => m.moduleKey === key)?.label || key;
-  const unassignedModules = modulePricesCatalog.filter((m) => !companyModules.some((cm) => cm.moduleKey === m.moduleKey));
+  // زیرماژول‌ها (anomalyForm، hcmsDashboard و...) دیگر در این دراپ‌داونِ
+  // تخت پیشنهاد نمی‌شوند — فقط زیرِ چک‌باکسِ ماژولِ والدشان مدیریت می‌شوند.
+  const unassignedModules = modulePricesCatalog.filter((m) => !companyModules.some((cm) => cm.moduleKey === m.moduleKey) && !SUB_KEY_TO_PARENT_MODULE[m.moduleKey]);
+  // ردیف‌هایِ زیرماژول از لیستِ اصلیِ «ماژول‌هایِ فعال» جدا می‌شوند — آن‌ها
+  // را فقط زیرِ ردیفِ والدشان (در همان لیست) با چک‌باکس نشان می‌دهیم.
+  const topLevelCompanyModules = companyModules.filter((m) => !SUB_KEY_TO_PARENT_MODULE[m.moduleKey]);
 
   const toggleHistory = async () => {
     if (!showHistory) setHistory(await loadCompanySubscriptionHistory(company.id));
@@ -3990,23 +4023,42 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
         {/* ---------- ماژول‌های فعالِ این شرکت ---------- */}
         {moduleError && <p style={{ color: THEME.danger, fontSize: 11.5, marginBottom: 6 }}>{moduleError}</p>}
         <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
-          {companyModules.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saNoCompanyModulesYet")}</p>}
-          {companyModules.map((m) => (
-            <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", background: THEME.bg, border: `1px solid ${THEME.border}`, borderRadius: 8, padding: "7px 10px" }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: THEME.heading, minWidth: 150 }}>{moduleLabel(m.moduleKey)}</span>
-              <span style={{ fontSize: 9.5, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: m.isActive ? THEME.okBg : THEME.surface2, color: m.isActive ? THEME.ok : THEME.text3 }}>
-                {m.isActive ? t("commonActive") : t("commonInactive")}
-              </span>
-              <input type="datetime-local" style={{ ...inputStyle, width: 168, fontSize: 10.5 }} defaultValue={m.startsAt ? m.startsAt.slice(0, 16) : ""} onBlur={(e) => handleModuleDateChange(m, "startsAt", e.target.value)} title={t("saModuleStartsAt")} />
-              <input type="datetime-local" style={{ ...inputStyle, width: 168, fontSize: 10.5 }} defaultValue={m.endsAt ? m.endsAt.slice(0, 16) : ""} onBlur={(e) => handleModuleDateChange(m, "endsAt", e.target.value)} title={t("saModuleEndsAtNoExpiry")} />
-              <button type="button" onClick={() => handleToggleModuleActive(m)} style={{ ...btnStyle(m.isActive ? THEME.warn : THEME.ok), fontSize: 10.5, padding: "4px 9px" }}>
-                {m.isActive ? t("commonDeactivate") : t("commonActivate")}
-              </button>
-              <button type="button" onClick={() => handleRemoveModule(m)} style={{ ...btnStyle(THEME.danger), fontSize: 10.5, padding: "4px 9px", marginInlineStart: "auto" }}>
-                <Trash2 size={11} />
-              </button>
-            </div>
-          ))}
+          {topLevelCompanyModules.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saNoCompanyModulesYet")}</p>}
+          {topLevelCompanyModules.map((m) => {
+            const subs = GATED_MODULE_SUBS[m.moduleKey];
+            return (
+              <div key={m.id} style={{ display: "flex", flexDirection: "column", gap: 6, background: THEME.bg, border: `1px solid ${THEME.border}`, borderRadius: 8, padding: "7px 10px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: THEME.heading, minWidth: 150 }}>{moduleLabel(m.moduleKey)}</span>
+                  <span style={{ fontSize: 9.5, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: m.isActive ? THEME.okBg : THEME.surface2, color: m.isActive ? THEME.ok : THEME.text3 }}>
+                    {m.isActive ? t("commonActive") : t("commonInactive")}
+                  </span>
+                  <input type="datetime-local" style={{ ...inputStyle, width: 168, fontSize: 10.5 }} defaultValue={m.startsAt ? m.startsAt.slice(0, 16) : ""} onBlur={(e) => handleModuleDateChange(m, "startsAt", e.target.value)} title={t("saModuleStartsAt")} />
+                  <input type="datetime-local" style={{ ...inputStyle, width: 168, fontSize: 10.5 }} defaultValue={m.endsAt ? m.endsAt.slice(0, 16) : ""} onBlur={(e) => handleModuleDateChange(m, "endsAt", e.target.value)} title={t("saModuleEndsAtNoExpiry")} />
+                  <button type="button" onClick={() => handleToggleModuleActive(m)} style={{ ...btnStyle(m.isActive ? THEME.warn : THEME.ok), fontSize: 10.5, padding: "4px 9px" }}>
+                    {m.isActive ? t("commonDeactivate") : t("commonActivate")}
+                  </button>
+                  <button type="button" onClick={() => handleRemoveModule(m)} style={{ ...btnStyle(THEME.danger), fontSize: 10.5, padding: "4px 9px", marginInlineStart: "auto" }}>
+                    <Trash2 size={11} />
+                  </button>
+                </div>
+                {subs && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, paddingInlineStart: 14 }}>
+                    {subs.map((s) => {
+                      const subRow = companyModules.find((cm) => cm.moduleKey === s.key);
+                      const subActive = !!subRow?.isActive;
+                      return (
+                        <label key={s.key} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10.5, fontWeight: 600, color: subActive ? THEME.heading : THEME.text3, cursor: "pointer", background: THEME.surface2, borderRadius: 6, padding: "3px 8px" }}>
+                          <input type="checkbox" checked={subActive} onChange={() => handleToggleSubModule(s.key, subRow)} style={{ margin: 0 }} />
+                          {t(s.labelKey)}
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {!showAddModule ? (

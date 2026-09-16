@@ -400,3 +400,44 @@ export function isModuleInPlan(planFeatures, moduleKey) {
   }
   return planFeatures.includes(moduleKey);
 }
+
+// نسخه‌ی isModuleInPlan برای آرایه‌ی sub یک ماژولِ HSE_MODULES — همان چک،
+// تک‌تک روی هر زیرماژول، تا در همه‌جایی که یک ماژولِ والد زیرمنو دارد
+// (آنومالی/ریسک/پرسنل/ماشین‌آلات/داربست/حوادث/PSSR) تکرار نشود.
+export function filterSubByPlan(sub, planFeatures) {
+  return (sub || []).filter((s) => isModuleInPlan(planFeatures, s.key));
+}
+
+// نگاشتِ ماژولِ والد → زیرماژول‌هایی که واقعاً در ناوبری (سایدبار/منویِ
+// موبایل، در App.jsx) تک‌به‌تک با filterSubByPlan گیت می‌شوند — دقیقاً
+// همان کلیدهایِ HSE_MODULES[key].sub، نه PLAN_FEATURES (که یک زیرماژولِ
+// اضافه‌ی بدونِ‌گیتِ واقعی هم دارد: tripodBetaAnalysis). «بخشِ شرکت‌ها»یِ
+// SuperAdmin از همین برایِ ساختِ چک‌باکس‌هایِ «زیرماژول‌ها» زیرِ هر ماژولِ
+// والد استفاده می‌کند، تا هیچ toggle ای که اثرِ واقعی ندارد نشان داده نشود.
+export const GATED_MODULE_SUBS = {
+  anomalyReport: [
+    { key: "anomalyForm", labelKey: "subAnomalyForm" },
+    { key: "anomalyList", labelKey: "subAnomalyList" },
+    { key: "correctiveActionsList", labelKey: "subCorrectiveActionsList" },
+  ],
+  riskAssessment: [
+    { key: "bowtieDashboard", labelKey: "subBowtie" },
+    { key: "hcmsDashboard", labelKey: "subHcms" },
+    { key: "riskKnowledgeManagement", labelKey: "subRiskKnowledge" },
+  ],
+  personnelAccess: [
+    { key: "personnelForm", labelKey: "subPersonnelForm" },
+    { key: "personnelDashboard", labelKey: "subPersonnelList" },
+  ],
+  machineryManagement: [{ key: "machineryDashboard", labelKey: "subMachineryList" }],
+  scaffoldManagement: [{ key: "scaffoldDashboard", labelKey: "subScaffoldList" }],
+  incidentManagement: [{ key: "incidentsList", labelKey: "subIncidentsList" }],
+  pssrManagement: [{ key: "pssrList", labelKey: "subPssrList" }],
+};
+
+// جهتِ معکوس: کلیدِ زیرماژول → کلیدِ والدش — برایِ «بخشِ شرکت‌ها» تا
+// ردیف‌هایِ company_modules متعلق به یک زیرماژول را از لیستِ اصلیِ
+// «ماژول‌هایِ فعال» جدا کند (چون آن‌ها فقط زیرِ چک‌باکسِ والدشان نشان داده می‌شوند).
+export const SUB_KEY_TO_PARENT_MODULE = Object.fromEntries(
+  Object.entries(GATED_MODULE_SUBS).flatMap(([parentKey, subs]) => subs.map((s) => [s.key, parentKey]))
+);
