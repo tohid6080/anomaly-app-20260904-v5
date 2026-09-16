@@ -1598,6 +1598,7 @@ export const de = {
   "statusClosedParenthetical": "Geschlossen",
   "fieldCloseDate": "Abschlussdatum",
   "fieldEffectiveness": "Wirksamkeit",
+  "errManualCloseRequiresAction": "Um die Anomalie zu schließen, müssen „Korrekturmaßnahme“ und „Wirksamkeit“ ausgefüllt werden.",
   "saveChangesBtn": "Änderungen speichern",
   "deleteAnomalyBtn": "Abweichung löschen",
   "viewOnlyAccess": "Nur-Ansicht-Zugriff",

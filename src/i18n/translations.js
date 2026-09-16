@@ -4272,6 +4272,7 @@ export const translations = {
     "fa": "ذخیره تغییرات",
     "en": "Save Changes"
   },
+  "errManualCloseRequiresAction": { "fa": "برای بستنِ آنومالی، پرکردنِ «اقدام اصلاحی» و «اثربخشی» الزامی است.", "en": "To close the anomaly, \"Corrective Action\" and \"Effectiveness\" must be filled in." },
   "deleteAnomalyBtn": {
     "fa": "حذف آنومالی",
     "en": "Delete Anomaly"

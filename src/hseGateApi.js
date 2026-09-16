@@ -112,6 +112,12 @@ export async function deleteGateItemsForRecord(moduleKey, recordId) {
 // سرپرست/مدیر HSE یک مورد را برای بررسی به یک کارشناس ارجاع می‌دهد —
 // طبق تصمیم تأییدشده، این جایگزین تأیید مستقیم نیست، یک گزینه‌ی موازی
 // است (سرپرست همچنان می‌تواند مستقیم approveGateItem را هم صدا بزند).
+// status="assigned_review" — این تابع را صفحه‌ی خودِ هر ماژول (آنومالی در
+// App.jsx، MachineryDashboard، LiftingPlanWorkspace، PersonnelDetail) صدا
+// می‌زند. پایین‌تر assignGateItem یک تابعِ جدا با status="assigned" است که
+// فقط توسط کارتابلِ عمومیِ HseGateInbox.jsx صدا زده می‌شود — دو مسیرِ UI
+// واقعاً متفاوت، نه یک تکرارِ تصادفی؛ هر دو در loadAssignedGateItems با
+// status=in.(assigned,assigned_review) پوشش داده می‌شوند.
 export async function assignForReview(id, assignedTo, reviewedBy) {
   if (!assignedTo) return { __error: true, message: tr("gateErrAssignReviewerRequired") };
   const rows = await sb(`hse_gate_items?id=eq.${id}`, {

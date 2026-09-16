@@ -2884,6 +2884,14 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
   };
 
   const saveDraft = async (id) => {
+    // طبقِ ممیزیِ فنی + تأییدِ صریحِ شما: این مسیرِ «ویرایشِ دستی» قبلاً
+    // می‌توانست یک آنومالیِ پرریسک را بدونِ هیچ اقدامِ اصلاحیِ ثبت‌شده و
+    // بدونِ اثربخشی ببندد. حالا دقیقاً مثلِ مسیرِ رسمیِ گیت، این دو فیلد
+    // برایِ status="Closed" الزامی‌اند.
+    if (draft.status === "Closed" && (!draft.correctiveAction?.trim() || !draft.effectiveness?.trim())) {
+      alert(t("errManualCloseRequiresAction"));
+      return;
+    }
     const patch = {
       ...draft,
       closeDate: draft.status === "Closed" ? (draft.closeDate || todayISO()) : "",
@@ -5808,7 +5816,12 @@ function AppInner() {
       // مسیرِ «نشستِ تمام‌شده» است: کاربر ذخیره‌شده پاک و به صفحه‌ی ورود
       // برگردانده می‌شود (بدون پیام «حساب غیرفعال شد»، چون ممکن است صرفاً
       // منقضی‌شدن عادی باشد، نه لزوماً غیرفعال‌سازی).
-      if (!result.active && result.reason === "no_token") {
+      // هر دلیلِ دیگرِ !active که صریحاً بالا مدیریت نشده (فعلاً فقط
+      // invalid_token — مثلاً بعدِ چرخشِ کلیدِ JWT یا اختلافِ ساعتِ
+      // کلاینت/سرور) هم مثلِ no_token رفتار می‌کند: خروجِ بی‌صدا، نه
+      // بی‌اثر ماندن. طبقِ ممیزیِ فنی: قبلاً این حالت نه Logout می‌کرد نه
+      // پیامی نشان می‌داد.
+      if (!result.active && result.reason !== "deactivated" && result.reason !== "not_found") {
         setCurrentUser(null);
       }
     };
