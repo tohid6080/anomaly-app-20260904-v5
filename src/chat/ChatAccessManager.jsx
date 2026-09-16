@@ -79,13 +79,15 @@ export default function ChatAccessManager({ onBack, wide }) {
   const sameIdentity = (a, b) => a.role === b.role && a.jobPositionId === b.jobPositionId;
 
   // «نامِ نمایشی» هر هویت: وقتی دقیقاً یک حسابِ واقعی صاحبِ آن (نقش+عنوانِ
-  // شغلی) است، «نامِ شخص — عنوانِ شغلی» نشان داده می‌شود؛ وگرنه (چند نفرِ
-  // مشترک، یا عنوانی که فقط دستی به ماتریس اضافه شده) فقط عنوانِ شغلی —
-  // چون این ستون/ردیف یک دسته را نمایندگی می‌کند، نه لزوماً یک نفر را.
+  // شغلی) است، نامِ شخص در یک خط و عنوانِ شغلی در خطِ زیرش نشان داده می‌شود؛
+  // وگرنه (چند نفرِ مشترک، یا عنوانی که فقط دستی به ماتریس اضافه شده) فقط
+  // عنوانِ شغلی — چون این ستون/ردیف یک دسته را نمایندگی می‌کند، نه لزوماً
+  // یک نفر را. whiteSpace: "pre-line" روی هر دو محلِ رندر لازم است تا \n
+  // واقعاً خطِ جدید بسازد.
   const identityLabel = (id) => {
     const holder = id.role !== "ADMIN" ? holderNames[`${id.role}::${id.jobPositionId}`] : null;
-    const base = holder ? `${holder} — ${id.title}` : id.title;
-    return `${base}${id.role !== "ADMIN" ? ` (${t(ROLE_LABEL_KEY[id.role])})` : ""}`;
+    const titleLine = `${id.title}${id.role !== "ADMIN" ? ` (${t(ROLE_LABEL_KEY[id.role])})` : ""}`;
+    return holder ? `${holder}\n${titleLine}` : titleLine;
   };
 
   const isBlockedIn = (list, a, b) => list.some((r) =>
@@ -200,7 +202,7 @@ export default function ChatAccessManager({ onBack, wide }) {
                 <th style={{ position: "sticky", insetInlineStart: 0, background: THEME.surface, padding: "6px 10px", textAlign: dir === "rtl" ? "right" : "left", borderBottom: `1.5px solid ${THEME.border}`, whiteSpace: "nowrap" }} />
                 {identities.map((id) => (
                   <th key={`${id.role}-${id.jobPositionId}`} style={{ padding: "6px 8px", borderBottom: `1.5px solid ${THEME.border}`, minWidth: 70 }}>
-                    <div style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", fontSize: 10, color: THEME.text2, whiteSpace: "nowrap", margin: "0 auto", height: 110 }}>
+                    <div style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", fontSize: 10, color: THEME.text2, whiteSpace: "pre-line", margin: "0 auto", height: 110 }}>
                       {identityLabel(id)}
                     </div>
                   </th>
@@ -210,7 +212,7 @@ export default function ChatAccessManager({ onBack, wide }) {
             <tbody>
               {identities.map((rowId) => (
                 <tr key={`${rowId.role}-${rowId.jobPositionId}`} style={{ borderBottom: `1px solid ${THEME.border}` }}>
-                  <td style={{ position: "sticky", insetInlineStart: 0, background: THEME.surface, padding: "6px 10px", fontWeight: 600, whiteSpace: "nowrap" }}>
+                  <td style={{ position: "sticky", insetInlineStart: 0, background: THEME.surface, padding: "6px 10px", fontWeight: 600, whiteSpace: "pre-line" }}>
                     {identityLabel(rowId)}
                     {isExtra(rowId) && (
                       <button type="button" onClick={() => handleRemoveExtra(rowId.jobPositionId, rowId.role)} title={t("camRemoveFromMatrix")} style={{ background: "none", border: "none", cursor: "pointer", marginRight: 6, color: THEME.text3 }}>

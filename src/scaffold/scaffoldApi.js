@@ -109,21 +109,18 @@ export async function setContractorScaffoldCode(contractorId, code) {
 // دارد) — طبق داده‌ی واقعی فایل «آمار تگ داربست»: اولین تگ پیمانکار AG
 // شماره‌ی ۱۷ گرفت (نه ۰۱)، دقیقاً چون پیمانکار NN از قبل شماره‌های ۰۱ تا ۱۶
 // را مصرف کرده بود — این رفتار فقط باید داخل یک شرکت صادق باشد.
-async function generateNextTagNumber(contractorId, contractorCode) {
-  const companyId = getCurrentCompanyId();
-  const filter = companyId ? `&company_id=eq.${companyId}` : "";
-  const rows = await sb(`scaffold_tags?select=tag_number${filter}`);
-  let maxSeq = 0;
-  if (sbOk(rows)) {
-    for (const r of rows) {
-      const match = /-SC-(\d+)$/.exec(r.tag_number || "");
-      if (match) {
-        const seqNum = parseInt(match[1], 10);
-        if (!isNaN(seqNum) && seqNum > maxSeq) maxSeq = seqNum;
-      }
-    }
-  }
-  return `Md1-${contractorCode}-SC-${String(maxSeq + 1).padStart(2, "0")}`;
+// شماره‌ی سریالِ واقعی دیگر این‌جا حدس زده نمی‌شود — قبلاً یک SELECT جدا
+// بیشترین شماره‌ی موجود را می‌خواند و +۱ می‌کرد، که یک race condition
+// واقعی بود: دو درخواستِ هم‌زمان می‌توانستند دقیقاً یک عدد را حدس بزنند و
+// INSERT دومی با «duplicate key value violates unique constraint
+// scaffold_tags_tag_number_key» رد می‌شد. «۰۰» یک سنتینل است به‌معنایِ
+// «شماره‌ی واقعی را خودِ trigger سمتِ دیتابیس تعیین کند»
+// (scaffold_tags_assign_sequence، ر.ک. migration
+// 20260916030000_scaffold_tags_atomic_sequence.sql) — تخصیصِ واقعی زیرِ یک
+// قفلِ advisory و داخلِ خودِ تراکنشِ INSERT انجام می‌شود، پس دو درخواستِ
+// هم‌زمان سریالایز می‌شوند، نه این‌که هر دو یک عدد را حدس بزنند.
+function buildPlaceholderTagNumber(contractorCode) {
+  return `Md1-${contractorCode}-SC-00`;
 }
 
 // ---------- درخواست تگ جدید (پیمانکار) ----------
@@ -132,7 +129,7 @@ export async function requestNewScaffoldTag(rec) {
   if (!rec.contractorCode) {
     return { __error: true, message: translate(getCurrentLang(), "errScaffNoContractorCode") };
   }
-  const tagNumber = await generateNextTagNumber(rec.contractorId, rec.contractorCode);
+  const tagNumber = buildPlaceholderTagNumber(rec.contractorCode);
   const id = uid("scaffold");
   const payload = {
     tag_number: tagNumber,
