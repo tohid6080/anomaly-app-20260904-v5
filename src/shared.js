@@ -414,6 +414,18 @@ export function filterSubByPlan(sub, planFeatures) {
 // اضافه‌ی بدونِ‌گیتِ واقعی هم دارد: tripodBetaAnalysis). «بخشِ شرکت‌ها»یِ
 // SuperAdmin از همین برایِ ساختِ چک‌باکس‌هایِ «زیرماژول‌ها» زیرِ هر ماژولِ
 // والد استفاده می‌کند، تا هیچ toggle ای که اثرِ واقعی ندارد نشان داده نشود.
+//
+// ⚠️ برایِ ماژول‌هایِ آینده: این لیست خودکار به‌روز نمی‌شود — اگر ماژولِ
+// جدیدی (یا زیرمنویِ داخلیِ جدیدی، مثلِ TABS در ArchiveManager.jsx) چند
+// بخشِ مستقل دارد که ممکن است یک شرکت فقط بعضی‌هاشان را بخواهد، سه قدم
+// لازم است: ۱) کلید+labelKey (یا label، اگر متنِ ثابت/نامِ محصول است، نه
+// ترجمه‌شدنی) آن زیرماژول را این‌جا زیرِ کلیدِ والدش اضافه کنید. ۲) هرجا آن
+// زیرماژول واقعاً رندر/فیلتر می‌شود، isModuleInPlan یا filterSubByPlan را
+// صدا بزنید — بدونِ این، خودِ چک‌باکسِ «بخشِ شرکت‌ها» ظاهر می‌شود ولی هیچ
+// اثری روی چیزی که کاربر واقعاً می‌بیند ندارد. ۳) یک migration backfill
+// بنویسید که هرجا ماژولِ والد از قبل فعال است، همه‌ی زیرماژول‌هایِ تازه را
+// هم فعال کند (وگرنه هر شرکتِ موجود همان لحظه دسترسی‌اش را از دست می‌دهد —
+// ر.ک. 20260916051500_backfill_content_module_subs.sql برایِ الگو).
 export const GATED_MODULE_SUBS = {
   anomalyReport: [
     { key: "anomalyForm", labelKey: "subAnomalyForm" },
@@ -433,6 +445,19 @@ export const GATED_MODULE_SUBS = {
   scaffoldManagement: [{ key: "scaffoldDashboard", labelKey: "subScaffoldList" }],
   incidentManagement: [{ key: "incidentsList", labelKey: "subIncidentsList" }],
   pssrManagement: [{ key: "pssrList", labelKey: "subPssrList" }],
+  // زیرماژول‌هایِ آرشیو، برخلافِ بقیه، در HSE_MODULES تعریف نشده‌اند — آرشیو
+  // اصلاً زیرمنو ندارد، دسته‌بندیِ ۶‌تایی‌اش (TABS) کاملاً داخلِ خودِ
+  // ArchiveManager.jsx است. «BowTie»/«HCMS» عمداً labelKey ندارند، چون
+  // خودِ ArchiveManager هم برایِ همین دو، متنِ ثابت (نامِ محصول) نشان
+  // می‌دهد نه ترجمه — ر.ک. moduleLabelFor در همان فایل.
+  archiveManagement: [
+    { key: "archivePersonnel", labelKey: "amModulePersonnel" },
+    { key: "archiveAnomaly", labelKey: "amModuleAnomaly" },
+    { key: "archiveBowtie", label: "BowTie" },
+    { key: "archiveMachinery", labelKey: "amModuleMachinery" },
+    { key: "archiveScaffold", labelKey: "amModuleScaffold" },
+    { key: "archiveHcms", label: "HCMS" },
+  ],
 };
 
 // جهتِ معکوس: کلیدِ زیرماژول → کلیدِ والدش — برایِ «بخشِ شرکت‌ها» تا
