@@ -3,8 +3,20 @@ import { TrendingUp } from "lucide-react";
 import { THEME } from "../../shared.js";
 import { useLanguage } from "../../i18n/LanguageContext.jsx";
 import { numLocale } from "../../i18n/translations.js";
+import { JALALI_MONTHS, EN_MONTHS, jalaliToGregorian } from "../../personnel/jalaliDate.jsx";
 import { WidgetCard, WidgetSkeleton, WidgetEmpty, WidgetError } from "./primitives.jsx";
 import { loadAnomalyTrend } from "./anomalyTrendApi.js";
+
+// سطل‌ها همیشه بر اساسِ ماهِ جلالی‌اند (ر.ک. anomalyTrendApi.js) — فقط
+// نامِ نمایشی بین شمسی/میلادی سوییچ می‌شود؛ برایِ انگلیسی، اولین روزِ
+// همان ماهِ جلالی به میلادی تبدیل می‌شود تا نامِ ماهِ میلادیِ معادل به‌دست
+// آید (نه ترجمه‌ی آوایی — همان روشِ تبدیلِ واقعیِ به‌کاررفته در بقیه‌ی برنامه).
+function bucketLabel(key, lang) {
+  const [jy, jm] = key.split("-").map(Number);
+  if (lang === "fa") return JALALI_MONTHS[jm - 1];
+  const [, gm] = jalaliToGregorian(jy, jm, 1);
+  return EN_MONTHS[gm - 1];
+}
 
 /**
  * ویجت «روند آنومالی» (طرح D-005) — میله‌های افقی، یکی برای هر ماهِ جلالی،
@@ -46,7 +58,7 @@ export default function AnomalyTrendWidget({ role, currentUser, onNavigate, wind
               return state.data.series.map((b) => (
                 <div key={b.key} style={{ marginBottom: 6 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9.5, color: THEME.text2, marginBottom: 2 }}>
-                    <span>{b.label}</span>
+                    <span>{bucketLabel(b.key, lang)}</span>
                     <span style={{ fontWeight: 700, fontFamily: THEME.font }}>{fmt(b.registered)}</span>
                   </div>
                   <div style={{ background: THEME.borderSoft, borderRadius: 4, height: 5, overflow: "hidden" }}>

@@ -2,13 +2,15 @@ import React, { useState, useEffect, useRef } from "react";
 import { Sparkles, Send, Target } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { getCurrentLang } from "../i18n/translations.js";
 import { loadRecentAnomalyBrief } from "./hseLearningApi.js";
 import { loadSurveys, buildSurveyLink } from "../survey/surveyApi.js";
 import { pickRecommendedTopic, matchSurveyForTopic, answerQuestion } from "./hseLearningEngine.js";
 import { TOPICS_BY_KEY } from "./hseLearningContent.js";
 
 function nowLabel() {
-  return new Date().toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" });
+  const locale = getCurrentLang() === "fa" ? "fa-IR" : "en-US";
+  return new Date().toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
 }
 
 /**

@@ -3,6 +3,7 @@ import { AlertTriangle, BarChart3 } from "lucide-react";
 import { THEME } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { loadPublicSurveyResults } from "./surveyApi.js";
+import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
 
 const MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
 const wrap = { minHeight: "100vh", background: THEME.bg, fontFamily: THEME.font };
@@ -59,11 +60,11 @@ export default function PublicSurveyResults({ resultsToken }) {
           <Card title={t("svResponseTrend")}>
             <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 90 }}>
               {d.trend.map((x) => (
-                <div key={x.day} title={`${x.day}: ${x.count}`} style={{ flex: 1, background: THEME.teal, borderRadius: "3px 3px 0 0", height: `${Math.max(6, (x.count / maxTrend) * 100)}%` }} />
+                <div key={x.day} title={`${toJalaliSafe(x.day)}: ${x.count}`} style={{ flex: 1, background: THEME.teal, borderRadius: "3px 3px 0 0", height: `${Math.max(6, (x.count / maxTrend) * 100)}%` }} />
               ))}
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9.5, color: THEME.text3, marginTop: 4 }}>
-              <span>{d.trend[0].day}</span><span>{d.trend[d.trend.length - 1].day}</span>
+              <span>{toJalaliSafe(d.trend[0].day)}</span><span>{toJalaliSafe(d.trend[d.trend.length - 1].day)}</span>
             </div>
           </Card>
         )}

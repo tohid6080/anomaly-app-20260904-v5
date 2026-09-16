@@ -1,6 +1,7 @@
 import { bowtieStatusMeta } from "./bowtieApi.js";
 import { isNativeApp, writeAndShare, exportWorkbookNativeAware, exportHtmlReportNativeAware } from "../offline/nativeFile.js";
 import { translate, getCurrentLang } from "../i18n/translations.js";
+import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
 
 /**
  * Export helpers for the BowTie canvas.
@@ -125,7 +126,7 @@ export async function exportBowtieExcel(bowtie, threats, consequences, barriers,
     [translate(lang, "bxColCriticality")]: b.criticality,
     [translate(lang, "bxColStatus")]: statusLabel(bowtieStatusMeta(b.status)) || b.status,
     [translate(lang, "bxColCriticalControl")]: b.isCriticalControl ? translate(lang, "commonYes") : translate(lang, "commonNo"),
-    [translate(lang, "bxColVerificationDate")]: b.verificationDate || "",
+    [translate(lang, "bxColVerificationDate")]: toJalaliSafe(b.verificationDate),
   }));
 
   const escalationRows = [];

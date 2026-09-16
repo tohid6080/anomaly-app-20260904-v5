@@ -160,11 +160,11 @@ export default function SurveyResults({ survey, onBack, wide, onChanged }) {
           <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 64 }}>
             {trend.map((x) => {
               const mx = Math.max(...trend.map((y) => y.count));
-              return <div key={x.day} title={`${x.day}: ${x.count}`} style={{ flex: 1, background: THEME.teal, borderRadius: "3px 3px 0 0", height: `${Math.max(6, (x.count / mx) * 100)}%` }} />;
+              return <div key={x.day} title={`${toJalaliSafe(x.day)}: ${x.count}`} style={{ flex: 1, background: THEME.teal, borderRadius: "3px 3px 0 0", height: `${Math.max(6, (x.count / mx) * 100)}%` }} />;
             })}
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9.5, color: THEME.text3, marginTop: 3 }}>
-            <span>{trend[0].day}</span><span>{trend[trend.length - 1].day}</span>
+            <span>{toJalaliSafe(trend[0].day)}</span><span>{toJalaliSafe(trend[trend.length - 1].day)}</span>
           </div>
         </div>
       )}

@@ -3,6 +3,7 @@ import { Star } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { isAnswerable } from "./surveyModel.js";
+import { JalaliDateInput } from "../personnel/jalaliDate.jsx";
 
 /**
  * اجرای فرمِ نظرسنجی — مشترک بینِ پیش‌نمایشِ سازنده و صفحهٔ عمومی.
@@ -59,7 +60,7 @@ function QuestionInput({ q, value, onChange, readOnly, dir, t }) {
     return <input type="number" style={styles.input} value={value ?? ""} disabled={readOnly} dir="ltr" onChange={(e) => onChange(e.target.value === "" ? "" : Number(e.target.value))} />;
   }
   if (q.type === "date") {
-    return <input type="date" style={styles.input} value={value || ""} disabled={readOnly} dir="ltr" onChange={(e) => onChange(e.target.value)} />;
+    return <JalaliDateInput value={value || ""} onChange={onChange} allowEmpty disabled={readOnly} />;
   }
   if (q.type === "dropdown") {
     return (
