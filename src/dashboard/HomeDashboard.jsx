@@ -20,6 +20,7 @@ import { INCIDENT_TYPES } from "../incidents/incidentsApi.js";
 import { TRIPOD_STATUS_LABELS } from "../tripodBeta/tripodAnalysesApi.js";
 import { accidentPronenessLevel } from "../proactiveIndicators/proactiveIndicatorsApi.js";
 import { numLocale } from "../i18n/translations.js";
+import { isoToJalali, JALALI_MONTHS, EN_MONTHS } from "../personnel/jalaliDate.jsx";
 
 /**
  * Executive / management dashboard — a dense, single-screen overview for a
@@ -43,6 +44,22 @@ function daysUntil(iso) {
   return Math.ceil((new Date(iso) - new Date()) / (1000 * 60 * 60 * 24));
 }
 const monthKey = (iso) => (iso || "").slice(0, 7);
+// کلیدِ سطلِ ماهانه بر اساسِ زبانِ فعلی — شمسی برایِ fa (هم‌خوان با
+// anomalyTrendApi.js)، میلادی برایِ en؛ چون «ماه» در این دو تقویم مرزهایِ
+// متفاوتی دارد، نه فقط برچسب، خودِ سطل‌بندی هم عوض می‌شود.
+function monthBucketKey(iso, lang) {
+  if (!iso) return null;
+  if (lang === "fa") {
+    const p = isoToJalali(String(iso).slice(0, 10));
+    return p ? `${p[0]}-${String(p[1]).padStart(2, "0")}` : null;
+  }
+  return monthKey(iso) || null;
+}
+function monthBucketLabel(key, lang) {
+  const mm = Number((key || "").split("-")[1]);
+  if (!mm) return key || "";
+  return lang === "fa" ? JALALI_MONTHS[mm - 1] : (EN_MONTHS[mm - 1] || key);
+}
 // اقدام اصلاحی «سررسیدشده»: مهلت گذشته و هنوز بسته/منقضی نشده — همان
 // تعریفِ isOverdue در correctiveActionsApi.js، ولی روی ردیفِ خام snake_case.
 function caIsOverdue(r) {
@@ -265,12 +282,12 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
   const monthlyAnomalyTrend = useMemo(() => {
     const map = {};
     scopedAnomalies.forEach((a) => {
-      const k = monthKey(a.date || a.createdAt);
+      const k = monthBucketKey(a.date || a.createdAt, lang);
       if (!k) return;
       map[k] = (map[k] || 0) + 1;
     });
     return Object.entries(map).sort(([a], [b]) => a.localeCompare(b)).slice(-6);
-  }, [scopedAnomalies]);
+  }, [scopedAnomalies, lang]);
 
   const healthStatusData = [
     { label: t("chartActive"), value: scopedPersonnel.filter((p) => p.status === "active").length, color: "#22c55e" },
@@ -298,12 +315,12 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
   const incidentTrend = useMemo(() => {
     const map = {};
     scopedIncidents.forEach((i) => {
-      const k = monthKey(i.occurred_at || i.created_at);
+      const k = monthBucketKey(i.occurred_at || i.created_at, lang);
       if (!k) return;
       map[k] = (map[k] || 0) + 1;
     });
     return Object.entries(map).sort(([a], [b]) => a.localeCompare(b)).slice(-6);
-  }, [scopedIncidents]);
+  }, [scopedIncidents, lang]);
   const totalLostDays = scopedIncidents.reduce((s, i) => s + (Number(i.lost_days) || 0), 0);
 
   // --- وضعیت تحلیل ریشه‌ای (Tripod Beta) ---
@@ -324,7 +341,7 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
     const apAvg = ap.length ? Math.round(ap.reduce((s, r) => s + Number(r.final_score), 0) / ap.length) : null;
     const climateTrend = (() => {
       const map = {};
-      climate.forEach((r) => { const k = monthKey(r.assessment_date || r.created_at); if (k) (map[k] = map[k] || []).push(Number(r.final_score)); });
+      climate.forEach((r) => { const k = monthBucketKey(r.assessment_date || r.created_at, lang); if (k) (map[k] = map[k] || []).push(Number(r.final_score)); });
       return Object.entries(map).sort(([a], [b]) => a.localeCompare(b)).slice(-6)
         .map(([m, arr]) => [m, Math.round(arr.reduce((s, v) => s + v, 0) / arr.length)]);
     })();
@@ -335,7 +352,7 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
       climateTrend,
       count: proactive.length,
     };
-  }, [proactive]);
+  }, [proactive, lang]);
 
   // --- عملکرد اقدامات اصلاحی به تفکیک پیمانکار ---
   const caPerfRows = useMemo(() => {
@@ -479,7 +496,7 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
                   <span>{t("dashLostDays")}</span>
                   <span style={{ fontWeight: 700 }}>{totalLostDays.toLocaleString(numLocale(lang))}</span>
                 </div>
-                <MiniBarChart data={incidentTrend.map(([m, c]) => ({ label: m.slice(5), value: c, color: "#ef4444" }))} />
+                <MiniBarChart data={incidentTrend.map(([m, c]) => ({ label: monthBucketLabel(m, lang), value: c, color: "#ef4444" }))} />
               </>
             )}
           </Panel>
@@ -523,7 +540,7 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
                   <span style={{ fontWeight: 700 }}>{proactiveSummary.count.toLocaleString(numLocale(lang))}</span>
                 </div>
                 {proactiveSummary.climateTrend.length > 1 && (
-                  <MiniBarChart data={proactiveSummary.climateTrend.map(([m, v]) => ({ label: m.slice(5), value: v, color: THEME.teal }))} />
+                  <MiniBarChart data={proactiveSummary.climateTrend.map(([m, v]) => ({ label: monthBucketLabel(m, lang), value: v, color: THEME.teal }))} />
                 )}
               </>
             )}
@@ -532,7 +549,7 @@ export default function HomeDashboard({ role, currentUser, onNavigate, onBack })
       case "anomalyTrend":
         return (
           <Panel key={key} title={t("panelAnomalyTrend")} icon={TrendingUp} compact>
-            <MiniBarChart data={monthlyAnomalyTrend.map(([m, c]) => ({ label: m.slice(5), value: c, color: THEME.heading }))} />
+            <MiniBarChart data={monthlyAnomalyTrend.map(([m, c]) => ({ label: monthBucketLabel(m, lang), value: c, color: THEME.heading }))} />
           </Panel>
         );
       case "healthStatus":

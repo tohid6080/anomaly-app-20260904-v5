@@ -927,10 +927,11 @@ function isoToJalali(iso) {
   return gregorianToJalali(gy, gm, gd);
 }
 
+// در انگلیسی باید میلادی نشان دهد نه شمسی — toJalaliSafe (از
+// personnel/jalaliDate.jsx) این تفکیک را انجام می‌دهد و تایم‌استمپ کامل
+// (نه فقط تاریخ خام) را هم پشتیبانی می‌کند.
 function isoToJalaliDisplay(iso) {
-  const p = isoToJalali(iso);
-  if (!p) return "";
-  return `${p[0]}/${String(p[1]).padStart(2, "0")}/${String(p[2]).padStart(2, "0")}`;
+  return toJalaliSafe(iso);
 }
 
 const JALALI_MONTHS = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"];

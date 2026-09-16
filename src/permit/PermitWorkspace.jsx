@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Capacitor } from "@capacitor/core";
 import { Save, Send, ShieldCheck, XCircle, FileCheck2, PlayCircle, PauseCircle, CheckCircle2, RotateCcw, Printer, History } from "lucide-react";
 import { THEME, styles } from "../shared.js";
-import { toJalaliDateTime, toJalaliSafe } from "../personnel/jalaliDate.jsx";
+import { toJalaliDateTime, toJalaliSafe, JalaliDateTimeInput } from "../personnel/jalaliDate.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import PermitRuntime from "./PermitRuntime.jsx";
 import { STATUS_META, validateForm, collectBinds, canPerformStep, getStepApproval } from "./permitModel.js";
@@ -208,9 +208,9 @@ export default function PermitWorkspace({ permitId, currentUser, readOnly, onBac
           <div><label style={styles.label}>{t("pmPerformer")}</label>
             <input style={styles.input} value={draft.performerName} disabled={!editable} dir={dir} onChange={(e) => setF({ performerName: e.target.value })} /></div>
           <div><label style={styles.label}>{t("pmStart")}</label>
-            <input type="datetime-local" style={styles.input} value={draft.startAt} disabled={!editable} dir="ltr" onChange={(e) => setF({ startAt: e.target.value })} /></div>
+            <JalaliDateTimeInput value={draft.startAt} onChange={(v) => setF({ startAt: v })} disabled={!editable} /></div>
           <div><label style={styles.label}>{t("pmPlannedEnd")}</label>
-            <input type="datetime-local" style={styles.input} value={draft.endAt} disabled={!editable} dir="ltr" onChange={(e) => setF({ endAt: e.target.value })} /></div>
+            <JalaliDateTimeInput value={draft.endAt} onChange={(v) => setF({ endAt: v })} disabled={!editable} /></div>
           {permit.issuerName && <div><label style={styles.label}>{t("pmIssuer")}</label><input style={styles.input} value={permit.issuerName} disabled /></div>}
           {permit.validUntil && <div><label style={styles.label}>{t("pmValidUntil")}</label><input style={styles.input} value={toJalaliSafe(permit.validUntil)} disabled dir="ltr" /></div>}
         </div>

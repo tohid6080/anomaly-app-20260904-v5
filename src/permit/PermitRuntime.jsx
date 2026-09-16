@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Plus, Trash2, PenLine, Fingerprint } from "lucide-react";
 import { THEME, styles } from "../shared.js";
-import { toJalaliDateTime } from "../personnel/jalaliDate.jsx";
+import { toJalaliDateTime, JalaliDateInput } from "../personnel/jalaliDate.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { verifyBiometricForSigning } from "../biometricAuth.js";
 
@@ -116,14 +116,14 @@ function Field({ f, value, onChange, error, readOnly, dir, t, riskOptions, perso
     return box(<input type="number" style={styles.input} value={value ?? ""} disabled={readOnly} dir="ltr" onChange={(e) => onChange(e.target.value === "" ? "" : Number(e.target.value))} />);
   }
   if (f.type === "date") {
-    return box(<input type="date" style={styles.input} value={value || ""} disabled={readOnly} dir="ltr" onChange={(e) => onChange(e.target.value)} />);
+    return box(<JalaliDateInput value={value || ""} onChange={(v) => onChange(v)} allowEmpty disabled={readOnly} />);
   }
   if (f.type === "daterange") {
     const d = value && typeof value === "object" ? value : { from: "", to: "" };
     return box(
-      <div style={{ display: "flex", gap: 6 }}>
-        <input type="date" style={styles.input} value={d.from || ""} disabled={readOnly} dir="ltr" onChange={(e) => onChange({ ...d, from: e.target.value })} />
-        <input type="date" style={styles.input} value={d.to || ""} disabled={readOnly} dir="ltr" onChange={(e) => onChange({ ...d, to: e.target.value })} />
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        <JalaliDateInput value={d.from || ""} onChange={(v) => onChange({ ...d, from: v })} allowEmpty disabled={readOnly} />
+        <JalaliDateInput value={d.to || ""} onChange={(v) => onChange({ ...d, to: v })} allowEmpty disabled={readOnly} />
       </div>,
     );
   }

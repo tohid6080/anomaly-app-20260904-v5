@@ -10,7 +10,7 @@ import { getCurrentLang } from "../i18n/translations.js";
 // ("YYYY-MM-DD") است — این هرگز تغییر نمی‌کند. فقط نمایش برای کاربر
 // بین شمسی (فارسی) و میلادی (انگلیسی) سوییچ می‌شود.
 
-const EN_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+export const EN_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 function isLeapJalaliYear(jy) {
   return (((jy - (jy > 0 ? 474 : 473)) % 2820 + 474 + 38) * 682) % 2816 < 682;
@@ -35,7 +35,7 @@ function gregorianToJalali(gy, gm, gd) {
   const jd = 1 + (days < 186 ? days % 31 : (days - 186) % 30);
   return [jy, jm, jd];
 }
-function jalaliToGregorian(jy, jm, jd) {
+export function jalaliToGregorian(jy, jm, jd) {
   let gy = jy <= 979 ? 621 : 1600;
   const jy2 = jy <= 979 ? jy : jy - 979;
   let days = 365 * jy2 + Math.floor(jy2 / 33) * 8 + Math.floor(((jy2 % 33) + 3) / 4) + 78 + jd + (jm < 7 ? (jm - 1) * 31 : (jm - 7) * 30 + 186);
@@ -173,6 +173,23 @@ export function JalaliDateInput({ value, onChange, allowEmpty, disabled, style }
       <select style={{ ...styles.input, flex: 1 }} value={jd} onChange={(e) => emit(jy, jm, Number(e.target.value))} disabled={disabled}>
         {days.map((d) => <option key={d} value={d}>{d}</option>)}
       </select>
+    </div>
+  );
+}
+
+/**
+ * تاریخ+ساعتِ شمسی — برای فیلدهایی که تا امروز از یک <input
+ * type="datetime-local"> خام استفاده می‌کردند (همیشه میلادی، صرف‌نظر از
+ * زبانِ سایت). مقدارِ ورودی/خروجی همان قراردادِ datetime-local می‌ماند
+ * ("YYYY-MM-DDTHH:mm") — فقط بخشِ انتخابِ تاریخ (نه ساعت، چون
+ * JalaliDateInput ساعت را پشتیبانی نمی‌کند) بینِ شمسی/میلادی سوییچ می‌شود.
+ */
+export function JalaliDateTimeInput({ value, onChange, disabled, style }) {
+  const [datePart, timePart] = (value || "").split("T");
+  return (
+    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", ...style }}>
+      <JalaliDateInput value={datePart || ""} onChange={(d) => onChange(`${d}T${timePart || "00:00"}`)} allowEmpty disabled={disabled} />
+      <input type="time" style={styles.input} value={timePart || ""} disabled={disabled} dir="ltr" onChange={(e) => onChange(`${datePart || ""}T${e.target.value}`)} />
     </div>
   );
 }

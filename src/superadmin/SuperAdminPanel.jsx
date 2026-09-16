@@ -13,7 +13,7 @@ import { loadCompanyModules, addCompanyModule, updateCompanyModule, removeCompan
 import { loadModulePrices, loadServices } from "../pricingApi.js";
 import AdminAnalytics from "../admin/AdminAnalytics.jsx";
 import LandingPageManagementTab from "./LandingPageManagementTab.jsx";
-import { toJalaliSafe, toJalaliDateTime, JalaliDateInput } from "../personnel/jalaliDate.jsx";
+import { toJalaliSafe, toJalaliDateTime, JalaliDateInput, JalaliDateTimeInput } from "../personnel/jalaliDate.jsx";
 import {
   loadCompanies, createCompany, updateCompany, deleteCompanySecure, setCompanyActive,
   loadCompanyPayments, addCompanyPayment, PAYMENT_TYPES,
@@ -2731,11 +2731,11 @@ function AnnouncementManagementTab({ currentAdmin, companies }) {
             </div>
             <div>
               <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saAnStartsAt")}</label>
-              <input type="datetime-local" style={inputStyle} value={form.startsAt} onChange={(e) => setForm({ ...form, startsAt: e.target.value })} />
+              <JalaliDateTimeInput value={form.startsAt} onChange={(v) => setForm({ ...form, startsAt: v })} />
             </div>
             <div>
               <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saAnEndsAt")}</label>
-              <input type="datetime-local" style={inputStyle} value={form.endsAt} onChange={(e) => setForm({ ...form, endsAt: e.target.value })} />
+              <JalaliDateTimeInput value={form.endsAt} onChange={(v) => setForm({ ...form, endsAt: v })} />
             </div>
             <div>
               <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("saAnButtonLabel")}</label>
@@ -4071,8 +4071,8 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
               <option value="">{t("saSelectModulePlaceholder")}</option>
               {unassignedModules.map((m) => <option key={m.moduleKey} value={m.moduleKey}>{m.label || m.moduleKey}</option>)}
             </select>
-            <input type="datetime-local" style={inputStyle} value={newModuleStart} onChange={(e) => setNewModuleStart(e.target.value)} title={t("saModuleStartsAt")} />
-            <input type="datetime-local" style={inputStyle} value={newModuleEnd} onChange={(e) => setNewModuleEnd(e.target.value)} title={t("saModuleEndsAtNoExpiry")} placeholder={t("saModuleEndsAtNoExpiry")} />
+            <JalaliDateTimeInput value={newModuleStart} onChange={setNewModuleStart} />
+            <JalaliDateTimeInput value={newModuleEnd} onChange={setNewModuleEnd} />
             <div style={{ display: "flex", gap: 6 }}>
               <button type="button" onClick={handleAddModule} disabled={moduleBusy || !newModuleKey} style={btnStyle()}>{moduleBusy ? t("saSubmittingEllipsis") : t("commonAdd")}</button>
               <button type="button" onClick={() => { setShowAddModule(false); setModuleError(""); }} style={btnStyle(THEME.text3)}>{t("commonCancel")}</button>

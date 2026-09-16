@@ -7,6 +7,7 @@ import { THEME, styles } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { QUESTION_TYPES, CHOICE_TYPES, SCORABLE_TYPES, newQuestion, newOption, examHasScorable } from "./surveyModel.js";
 import { saveSurvey } from "./surveyApi.js";
+import { JalaliDateInput } from "../personnel/jalaliDate.jsx";
 import SurveyRuntime from "./SurveyRuntime.jsx";
 
 const ICONS = { Type, AlignLeft, CircleDot, ListChecks, ChevronDown, ToggleLeft, Star, SlidersHorizontal, Hash, Calendar, Heading };
@@ -324,8 +325,8 @@ function SettingsPanel({ draft, setDraft, t, dir }) {
         <label style={ckRow}><input type="checkbox" checked={!!s.onePerDevice} onChange={(e) => set({ onePerDevice: e.target.checked })} /> {t("svOnePerDevice")}</label>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10, marginTop: 10 }}>
-        <div><label style={styles.label}>{t("svStartAt")}</label><input type="date" style={styles.input} value={s.startAt || ""} onChange={(e) => set({ startAt: e.target.value })} dir="ltr" /></div>
-        <div><label style={styles.label}>{t("svEndAt")}</label><input type="date" style={styles.input} value={s.endAt || ""} onChange={(e) => set({ endAt: e.target.value })} dir="ltr" /></div>
+        <div><label style={styles.label}>{t("svStartAt")}</label><JalaliDateInput value={s.startAt || ""} onChange={(v) => set({ startAt: v })} allowEmpty /></div>
+        <div><label style={styles.label}>{t("svEndAt")}</label><JalaliDateInput value={s.endAt || ""} onChange={(v) => set({ endAt: v })} allowEmpty /></div>
         <div><label style={styles.label}>{t("svMaxResponses")}</label><input type="number" style={styles.input} value={s.maxResponses ?? ""} onChange={(e) => set({ maxResponses: e.target.value === "" ? null : Number(e.target.value) })} dir="ltr" /></div>
       </div>
       <label style={styles.label}>{t("svThankYouText")}</label>
