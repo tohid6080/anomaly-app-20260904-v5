@@ -1606,7 +1606,6 @@ export const de = {
   "obstaclesLabel": "Hindernisse & Probleme:",
   "followerPersonLabel": "Verantwortliche Person für die Nachverfolgung:",
   "returnNoteLabel": "Rücksendehinweis:",
-  "largeViewAlt": "Vergrößerte Ansicht",
   "notifOpenAnomaliesYou": "Sie haben {count} offene Abweichungen",
   "notifOpenAnomaliesCompany": "{company}: {count} offene Abweichungen",
   "notifNeedHealthVisitYou": "{count} Personen benötigen eine arbeitsmedizinische Untersuchung",

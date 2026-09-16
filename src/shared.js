@@ -339,9 +339,6 @@ export const styles = {
   photoThumbWrap: { position: "relative", width: 80, height: 80 },
   photoThumb: { width: 80, height: 80, objectFit: "cover", borderRadius: 10, border: `1px solid ${THEME.border}`, cursor: "pointer" },
   photoRemoveBtn: { position: "absolute", top: -6, right: -6, width: 22, height: 22, borderRadius: "50%", background: THEME.danger, border: "2px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" },
-  photoViewerOverlay: { position: "fixed", inset: 0, background: "rgba(10,20,30,0.9)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 20 },
-  photoViewerImg: { maxWidth: "100%", maxHeight: "90vh", borderRadius: 10 },
-  photoViewerClose: { position: "absolute", top: 20, left: 20, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: "50%", width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" },
 };
 
 /**

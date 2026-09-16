@@ -93,6 +93,7 @@ import { retryItemNow } from "./offline/syncEngine.js";
 import { exportWorkbookNativeAware, exportHtmlReportNativeAware } from "./offline/nativeFile.js";
 import { saveBlobNativeAware } from "./offline/archiveZip.js";
 import { toJalaliDateTime, toJalaliSafe } from "./personnel/jalaliDate.jsx";
+import DocumentViewerModal from "./personnel/DocumentViewerModal.jsx";
 import LandingPage, { mergeLandingButtons } from "./LandingPage.jsx";
 import { APP_NAME, sb, sbOk, sbErrMsg, uid, todayISO, THEME, styles, usePersistedState, setCurrentCompanyId, getCurrentCompanyId, loadCurrentCompanyPlanFeatures, isModuleInPlan, filterSubByPlan, resizeImageFile } from "./shared.js";
 
@@ -3588,14 +3589,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
         }}
       />
 
-      {viewerSrc && (
-        <div style={styles.photoViewerOverlay} onClick={() => setViewerSrc(null)}>
-          <button type="button" style={styles.photoViewerClose} onClick={() => setViewerSrc(null)}>
-            <X size={20} color="#fff" />
-          </button>
-          <img src={viewerSrc} alt={t("largeViewAlt")} style={styles.photoViewerImg} onClick={(e) => e.stopPropagation()} />
-        </div>
-      )}
+      {viewerSrc && <DocumentViewerModal src={viewerSrc} onClose={() => setViewerSrc(null)} />}
     </div>
   );
 }

@@ -4297,10 +4297,6 @@ export const translations = {
     "fa": "یادداشت بازگشت:",
     "en": "Return note:"
   },
-  "largeViewAlt": {
-    "fa": "نمای بزرگ",
-    "en": "Enlarged view"
-  },
   "notifOpenAnomaliesYou": {
     "fa": "{count} آنومالی باز دارید",
     "en": "You have {count} open anomalies"
