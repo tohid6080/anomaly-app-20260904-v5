@@ -458,6 +458,42 @@ export const GATED_MODULE_SUBS = {
     { key: "archiveScaffold", labelKey: "amModuleScaffold" },
     { key: "archiveHcms", label: "HCMS" },
   ],
+  // این دو ماژول برخلافِ ۸‌تایِ بالا، از قبل زیرماژول‌به‌زیرماژول گیت
+  // می‌شدند (proactiveIndicatorsApi.js/loadActiveIndicators و
+  // QuickToolsDashboard.jsx هرکدام isModuleInPlan را با کلیدِ خودِ
+  // هر آیتم صدا می‌زنند) — فقط چک‌باکسِ «بخشِ شرکت‌ها» کم بود. labelKeyها
+  // عیناً از PLAN_FEATURES (planFeatureCatalog.js) وام گرفته شده تا دوباره
+  // تعریف نشوند.
+  proactiveIndicators: [
+    { key: "accidentProneness", labelKey: "pfAccidentProneness" },
+    { key: "hseClimate", labelKey: "pfHseClimate" },
+    { key: "sbs", labelKey: "pfSbs" },
+  ],
+  quickTools: [
+    { key: "unit-converter", labelKey: "pfQtUnitConverter" },
+    { key: "ltifr", labelKey: "pfQtLtifr" },
+    { key: "trir", labelKey: "pfQtTrir" },
+    { key: "noise", labelKey: "pfQtNoise" },
+    { key: "crane-load", labelKey: "pfQtCraneLoad" },
+    { key: "sling-angle", labelKey: "pfQtSlingAngle" },
+    { key: "sling-angle-geo", labelKey: "pfQtSlingAngleGeo" },
+    { key: "sling-tension", labelKey: "pfQtSlingTension" },
+    { key: "shackle-load", labelKey: "pfQtShackleLoad" },
+    { key: "load-weight", labelKey: "pfQtLoadWeight" },
+    { key: "load-cg", labelKey: "pfQtLoadCg" },
+    { key: "crane-radius-capacity", labelKey: "pfQtCraneRadiusCapacity" },
+    { key: "ground-pressure", labelKey: "pfQtGroundPressure" },
+    { key: "jack-load", labelKey: "pfQtJackLoad" },
+    { key: "lift-point-load", labelKey: "pfQtLiftPointLoad" },
+    { key: "rigging-wll-util", labelKey: "pfQtRiggingWllUtil" },
+    { key: "lift-risk-checklist", labelKey: "pfQtLiftRiskChecklist" },
+    { key: "rad-zones", labelKey: "pfQtRadZones" },
+    { key: "rad-distance", labelKey: "pfQtRadDistance" },
+    { key: "lifting-plan", labelKey: "pfLiftingPlan" },
+    { key: "excavation-calculator", labelKey: "pfQtExcavation" },
+    { key: "energy-calculator", labelKey: "pfQtEnergy" },
+    { key: "fleet-fuel-calculator", labelKey: "pfQtFleetFuel" },
+  ],
 };
 
 // جهتِ معکوس: کلیدِ زیرماژول → کلیدِ والدش — برایِ «بخشِ شرکت‌ها» تا
