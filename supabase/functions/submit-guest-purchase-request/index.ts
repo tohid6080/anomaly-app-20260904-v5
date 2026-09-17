@@ -33,6 +33,7 @@ Deno.serve(async (req) => {
   const selectedServices = Array.isArray(body?.selectedServices) ? body.selectedServices.map((s: unknown) => String(s)) : [];
   const billingCycle = body?.billingCycle === "monthly" ? "monthly" : "yearly";
   const amount = Number(body?.amount) || 0;
+  const currency = body?.currency === "usd" || body?.currency === "eur" ? body.currency : "irr";
 
   if (!fullName || !phone || !companyName) {
     return json({ error: "نام و نام خانوادگی، موبایل و نام شرکت/سازمان الزامی است" }, 400);
@@ -52,6 +53,7 @@ Deno.serve(async (req) => {
     selected_services: selectedServices,
     billing_cycle: billingCycle,
     amount,
+    currency,
     payer_name: payerName,
     payer_phone: payerPhone,
     tracking_number: String(body?.trackingNumber || "").trim(),
