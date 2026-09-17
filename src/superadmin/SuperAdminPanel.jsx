@@ -90,18 +90,25 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
 
   // شمارشِ موارد در انتظار — سطحِ همین کامپوننت (نه فقط داخلِ DashboardOverview)
   // چون نوارِ کناری همیشه دیده می‌شود، نه فقط وقتی page==="overview" است.
-  // گزارش‌های خطا/درخواست‌های آزمایشی/رسیدها هرکدوم یک‌بار در mount خوانده
-  // می‌شوند (دقیقاً همان الگویِ بقیه‌ی شمارنده‌های DashboardOverview — بدونِ
-  // رفرشِ زنده، چون آن‌ها هم همین‌طورند).
+  // هر ۴ ثانیه poll می‌شوند (دقیقاً همان BADGE_POLL_MS که LiveChatAdminDock
+  // برای فهرستِ گفتگوها استفاده می‌کند) تا وقتی درخواست/رسید/گزارشِ تازه‌ای
+  // می‌آید، ادمین مجبور به رفرشِ دستیِ صفحه نباشد.
+  const BADGE_POLL_MS = 4000;
   const [openErrorCount, setOpenErrorCount] = useState(null);
   const [pendingTrialCount, setPendingTrialCount] = useState(null);
   const [pendingReceiptsCount, setPendingReceiptsCount] = useState(null);
   useEffect(() => {
-    loadErrorReports("open").then((r) => setOpenErrorCount(Array.isArray(r) ? r.length : 0)).catch(() => setOpenErrorCount(0));
-    loadTrialRequests("pending").then((r) => setPendingTrialCount(Array.isArray(r) ? r.length : 0)).catch(() => setPendingTrialCount(0));
-    Promise.all([loadCardTransferPayments("awaiting_review"), loadGuestPurchaseRequests("pending")])
-      .then(([a, b]) => setPendingReceiptsCount((Array.isArray(a) ? a.length : 0) + (Array.isArray(b) ? b.length : 0)))
-      .catch(() => setPendingReceiptsCount(0));
+    let cancelled = false;
+    const load = () => {
+      loadErrorReports("open").then((r) => { if (!cancelled) setOpenErrorCount(Array.isArray(r) ? r.length : 0); }).catch(() => { if (!cancelled) setOpenErrorCount(0); });
+      loadTrialRequests("pending").then((r) => { if (!cancelled) setPendingTrialCount(Array.isArray(r) ? r.length : 0); }).catch(() => { if (!cancelled) setPendingTrialCount(0); });
+      Promise.all([loadCardTransferPayments("awaiting_review"), loadGuestPurchaseRequests("pending")])
+        .then(([a, b]) => { if (!cancelled) setPendingReceiptsCount((Array.isArray(a) ? a.length : 0) + (Array.isArray(b) ? b.length : 0)); })
+        .catch(() => { if (!cancelled) setPendingReceiptsCount(0); });
+    };
+    load();
+    const timer = setInterval(load, BADGE_POLL_MS);
+    return () => { cancelled = true; clearInterval(timer); };
   }, []);
   const NAV_BADGE_COUNTS = { errorReports: openErrorCount, trialRequests: pendingTrialCount, cardTransferPayments: pendingReceiptsCount };
 

@@ -80,3 +80,12 @@ export async function pollLiveChatMessages(session) {
   if (result?.__error) return result;
   return { ok: true, messages: (result.messages || []).map(msgFromApi) };
 }
+
+// سبک — فقط شمارشِ خوانده‌نشده، بدونِ علامت‌زدنِ «دیده‌شده». برای وقتی که
+// ویجت بسته است (نشانگرِ قرمزِ روی دکمه‌ی شناور زنده بماند، بدونِ اینکه با
+// همین چک‌کردن، پیام‌ها زودتر از دیدنِ واقعی «خوانده‌شده» حساب شوند).
+export async function checkLiveChatStatus(session) {
+  const result = await callChatVisitor("status", { conversationId: session.conversationId, visitorToken: session.visitorToken });
+  if (result?.__error) return result;
+  return { ok: true, unreadCount: Number(result.unreadCount) || 0 };
+}
