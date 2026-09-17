@@ -4,6 +4,7 @@ import {
   FileCheck, HardHat, Boxes, MessagesSquare, FolderOpen, UserCog, LayoutDashboard,
   ArrowLeft, ArrowRight, Check, Menu, X, BarChart3, LineChart, Gauge, Smartphone,
   Zap, Database, FileBarChart, Recycle, Layers, TrendingUp, Bell, Globe, Tag,
+  Instagram, Linkedin,
 } from "lucide-react";
 import { useLanguage } from "./i18n/LanguageContext.jsx";
 
@@ -23,6 +24,13 @@ const C = {
   amber: "#e8a13a", good: "#1e9e6a",
 };
 const FONT = 'var(--ihms-font, "Vazirmatn", "IRANSans", Tahoma, system-ui, sans-serif)';
+
+// لینک‌های شبکه‌های اجتماعیِ رسمیِ IHMS — ثابت، مثل الگویِ PUBLIC_APP_URL در
+// shared.js (بدونِ نیاز به مدیریتِ سوپرادمین، چون به‌ندرت تغییر می‌کنند)
+const SOCIAL_LINKS = [
+  { key: "instagram", href: "https://www.instagram.com/ihmsapp?stkn=ZGpmcmd1d3BhYWRn", Icon: Instagram, label: "Instagram" },
+  { key: "linkedin", href: "https://www.linkedin.com/in/integrated-hse-management-system-health-safety-environment-852870437", Icon: Linkedin, label: "LinkedIn" },
+];
 
 const LP_CSS = `
 .ihms-lp *{box-sizing:border-box}
@@ -69,6 +77,9 @@ const LP_CSS = `
   background:${C.bgSoft};border:1px solid ${C.line};border-radius:999px;padding:8px 30px 8px 30px;cursor:pointer;transition:border-color .15s ease}
 .ihms-lp .langsw select:hover{border-color:${C.teal}}
 .ihms-lp .langsw .cv{position:absolute;inset-inline-end:9px;pointer-events:none;color:${C.ink3}}
+.ihms-lp .social{display:flex;align-items:center;gap:8px}
+.ihms-lp .social a{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;color:${C.ink2};border:1px solid ${C.line};transition:color .15s ease,border-color .15s ease,background .15s ease}
+.ihms-lp .social a:hover{color:${C.tealDeep};border-color:${C.teal};background:${C.tealSoft}}
 .ihms-lp .hamb{display:none;background:none;border:1px solid ${C.line};border-radius:10px;padding:8px;cursor:pointer;color:${C.navy}}
 .ihms-lp .mnav{display:none}
 @media (max-width:980px){
@@ -691,6 +702,16 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
     </label>
   );
 
+  const socialLinks = (
+    <div className="social">
+      {SOCIAL_LINKS.map(({ key, href, Icon, label }) => (
+        <a key={key} href={href} target="_blank" rel="noopener noreferrer" aria-label={label}>
+          <Icon size={15} />
+        </a>
+      ))}
+    </div>
+  );
+
   return (
     <div className="ihms-lp" dir={dir} ref={rootRef}>
       <style>{LP_CSS}</style>
@@ -709,6 +730,7 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
               ))}
             </nav>
             <span className="spacer" />
+            {socialLinks}
             {langSwitch}
             {btn.ctaPlans && (
               <button type="button" className="btn btn-primary" style={{ padding: "10px 16px", fontSize: 13 }} onClick={viewPlans}>
@@ -730,7 +752,7 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
             {x.nav.map((label, i) => (
               <a key={i} href={"#lp-" + NAV_IDS[i]} onClick={(e) => { e.preventDefault(); go(NAV_IDS[i]); }}>{label}</a>
             ))}
-            <div style={{ marginTop: 10 }}>{langSwitch}</div>
+            <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 12 }}>{langSwitch}{socialLinks}</div>
             {btn.ctaPlans && <button type="button" className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => { setMNav(false); viewPlans(); }}>{x.ctaPlans}</button>}
             {btn.login && <button type="button" className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => { setMNav(false); onUserLogin(); }}>{x.login}</button>}
           </div>
