@@ -4220,7 +4220,7 @@ export const de = {
   "owErrInsertDoc": "Fehler beim Einfügen des Dokuments",
   "owErrUploadFile": "Fehler beim Hochladen der Datei",
   "syncErrConflict": "Dieser Datensatz wurde zwischenzeitlich an anderer Stelle geändert",
-  "syncErrRecordDeleted": "Dieser Datensatz wurde zwischenzeitlich auf dem Server gelöscht — Ihre Änderung wurde nicht gespeichert",
+  "syncErrRecordDeleted": "Dieser Datensatz wurde entweder zwischenzeitlich gelöscht oder ist für Sie nicht mehr zugänglich — Ihre Änderung wurde nicht gespeichert",
   "syncErrUnknownOp": "Unbekannter Vorgangstyp",
   "syncErrUnknown": "Unbekannter Fehler",
   "anomFormatInspection": "Begehung",

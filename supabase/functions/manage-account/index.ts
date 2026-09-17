@@ -256,15 +256,19 @@ Deno.serve(async (req) => {
               note: auditNote(`انتقالِ رکوردها به پیمانکارِ «${dest.name}» پیش از حذف`),
             });
           } else {
+            // طبقِ ممیزیِ QA: قبلاً فقط contractor_id به null تنظیم می‌شد،
+            // ستونِ متنیِ contractor_name/responsible_contractor_name دست‌نخورده
+            // می‌ماند — یعنی نامِ پیمانکارِ حذف‌شده برایِ همیشه در UI باقی
+            // می‌ماند (چون آن فیلد مستقیم رندر می‌شود، نه از id مشتق).
             const [pRes, mRes, cRes] = await Promise.all([
               hasPersonnel
-                ? restFetch(`personnel?contractor_id=eq.${targetId}`, { method: "PATCH", body: JSON.stringify({ contractor_id: null }) })
+                ? restFetch(`personnel?contractor_id=eq.${targetId}`, { method: "PATCH", body: JSON.stringify({ contractor_id: null, contractor_name: null }) })
                 : Promise.resolve({ ok: true }),
               hasMachinery
-                ? restFetch(`machinery?contractor_id=eq.${targetId}`, { method: "PATCH", body: JSON.stringify({ contractor_id: null }) })
+                ? restFetch(`machinery?contractor_id=eq.${targetId}`, { method: "PATCH", body: JSON.stringify({ contractor_id: null, contractor_name: null }) })
                 : Promise.resolve({ ok: true }),
               hasCorrective
-                ? restFetch(`corrective_actions?responsible_contractor_id=eq.${targetId}`, { method: "PATCH", body: JSON.stringify({ responsible_contractor_id: null }) })
+                ? restFetch(`corrective_actions?responsible_contractor_id=eq.${targetId}`, { method: "PATCH", body: JSON.stringify({ responsible_contractor_id: null, responsible_contractor_name: null }) })
                 : Promise.resolve({ ok: true }),
             ]);
             if (!pRes.ok || !mRes.ok || !cRes.ok) {

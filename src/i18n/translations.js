@@ -10131,7 +10131,7 @@ export const translations = {
   "owErrInsertDoc": { "fa": "خطای درج مدرک", "en": "Document insert error" },
   "owErrUploadFile": { "fa": "خطا در آپلود فایل", "en": "File upload error" },
   "syncErrConflict": { "fa": "این رکورد در این‌بین از جای دیگری تغییر کرده است", "en": "This record has been changed elsewhere in the meantime" },
-  "syncErrRecordDeleted": { "fa": "این رکورد در این‌بین از سرور حذف شده است — ویرایشِ شما ذخیره نشد", "en": "This record has been deleted from the server in the meantime — your edit was not saved" },
+  "syncErrRecordDeleted": { "fa": "این رکورد یا در این‌بین حذف شده یا دیگر در دسترسِ شما نیست — ویرایشِ شما ذخیره نشد", "en": "This record was either deleted or is no longer accessible to you — your edit was not saved" },
   "syncErrUnknownOp": { "fa": "نوع عملیات ناشناخته", "en": "Unknown operation type" },
   "syncErrUnknown": { "fa": "خطای نامشخص", "en": "Unknown error" },
 

@@ -1,6 +1,8 @@
 import { sb, sbOk, getCurrentCompanyId, THEME, uid } from "../shared.js";
 import { uploadBase64ToStorage } from "../offline/storageUpload.js";
 import { offlineWrite } from "../offline/offlineWrite.js";
+import { isOnline } from "../offline/networkStatus.js";
+import { getRecordsByModule, putRecord } from "../offline/offlineDb.js";
 import { translate, getCurrentLang } from "../i18n/translations.js";
 
 // ---------- ثابت‌ها ----------
@@ -77,6 +79,7 @@ function fromRow(r) {
     createdBy: r.created_by || "",
     createdAt: r.created_at,
     updatedAt: r.updated_at,
+    syncStatus: r.__syncStatus || "synced",
   };
 }
 
@@ -110,11 +113,34 @@ function toDb(rec) {
 
 // ---------- CRUD ----------
 
+// طبقِ ممیزیِ QA: امروز create/update به offlineWrite وصل شدند، ولی این
+// تابع (که هر دو Dashboard/Widget برایِ نمایشِ لیست صدا می‌زنند) هنوز
+// مستقیم sb() می‌زد — یعنی یک اقدامِ اصلاحیِ تازه‌ساخته‌شده در حالتِ
+// آفلاین، بلافاصله بعدِ ساخت از لیست ناپدید می‌شد (چون sb() آفلاین شکست
+// می‌خورد و [] برمی‌گرداند). حالا دقیقاً مثلِ loadMachineryListOfflineFirst.
 export async function loadCorrectiveActions() {
   const companyId = getCurrentCompanyId();
   const filter = companyId ? `&company_id=eq.${companyId}` : "";
-  const rows = await sb(`corrective_actions?select=*&order=created_at.desc${filter}`);
-  return (sbOk(rows) ? rows : []).map(fromRow);
+  if (isOnline()) {
+    const rows = await sb(`corrective_actions?select=*&order=created_at.desc${filter}`);
+    if (sbOk(rows)) {
+      try {
+        for (const r of rows) await putRecord("correctiveActions", r.id, r, "synced");
+        const cached = await getRecordsByModule("correctiveActions");
+        const serverIds = new Set(rows.map((r) => r.id));
+        const localOnly = cached.filter((c) => c.syncStatus !== "synced" && !serverIds.has(c.id) && !c.data?.deleted);
+        return [
+          ...localOnly.map((c) => fromRow({ ...c.data, __syncStatus: c.syncStatus })),
+          ...rows.map((r) => fromRow({ ...r, __syncStatus: "synced" })),
+        ];
+      } catch (e) {
+        console.error("همگام‌سازی کش محلی اقدامات اصلاحی ناموفق بود", e);
+        return rows.map((r) => fromRow({ ...r, __syncStatus: "synced" }));
+      }
+    }
+  }
+  const cached = await getRecordsByModule("correctiveActions");
+  return cached.filter((c) => !c.data?.deleted).map((c) => fromRow({ ...c.data, __syncStatus: c.syncStatus }));
 }
 
 // جلوگیری از تکرار: آیا برای این ارزیابی از قبل یک اقدام اصلاحی صادر شده؟

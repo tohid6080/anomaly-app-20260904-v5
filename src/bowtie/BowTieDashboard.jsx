@@ -13,6 +13,8 @@ import {
 } from "./bowtieApi.js";
 import { isOnline } from "../offline/networkStatus.js";
 import SyncStatusBadge from "../offline/SyncStatusBadge.jsx";
+import { getQueue } from "../offline/offlineDb.js";
+import { retryItemNow } from "../offline/syncEngine.js";
 import BowTieEditor from "./BowTieEditor.jsx";
 import BarrierEffectivenessDashboard from "./BarrierEffectivenessDashboard.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
@@ -68,6 +70,15 @@ export default function BowTieDashboard({ onBack, currentUser, readOnly, role, w
   };
 
   useEffect(() => { load(); }, []);
+
+  // طبقِ ممیزیِ QA: قبلاً onRetry فقط load() (Reload) بود؛ retryItemNow
+  // هرگز صدا زده نمی‌شد.
+  const retrySync = async (recordId) => {
+    const queue = await getQueue();
+    const item = queue.find((q) => q.module === "bowties" && q.recordId === recordId);
+    if (item) await retryItemNow(item.queueId);
+    load();
+  };
 
   const filtered = bowties.filter((b) => {
     if (statusFilter !== "all" && b.status !== statusFilter) return false;
@@ -276,7 +287,7 @@ export default function BowTieDashboard({ onBack, currentUser, readOnly, role, w
                 <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                   <span style={{ fontWeight: 700, color: THEME.heading, fontSize: 14.5 }}>{b.title}</span>
                   <span style={{ ...styles.badge, color: sm.color, background: sm.bg }}>{t(sm.labelKey)}</span>
-                  {b.syncStatus && b.syncStatus !== "synced" && <SyncStatusBadge status={b.syncStatus} onRetry={() => load()} />}
+                  {b.syncStatus && b.syncStatus !== "synced" && <SyncStatusBadge status={b.syncStatus} onRetry={() => retrySync(b.id)} />}
                 </div>
                 <div style={{ fontSize: 13, marginTop: 8, color: THEME.text }}>
                   <b style={{ color: THEME.text2 }}>{t("bowtieHazardColon")}</b> {b.hazard} &nbsp;·&nbsp; <b style={{ color: THEME.text2 }}>{t("bowtieTopEventColon")}</b> {b.topEvent}

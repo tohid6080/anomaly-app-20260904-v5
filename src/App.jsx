@@ -45,6 +45,7 @@ import { HeaderAboutButton } from "./AboutIhmsPanel.jsx";
 import UpdateAvailableBanner from "./UpdateAvailableBanner.jsx";
 import { isOnline, subscribeNetworkStatus } from "./offline/networkStatus.js";
 import { offlineWrite, offlineWriteFile } from "./offline/offlineWrite.js";
+import { parseStorageUrl, deleteFromStorage } from "./offline/storageUpload.js";
 import DbSizeWarningBanner from "./offline/DbSizeWarningBanner.jsx";
 import { checkUploadAllowed } from "./offline/dbSizeMonitor.js";
 const ArchiveManager = lazy(() => import("./offline/ArchiveManager.jsx"));
@@ -2734,6 +2735,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
   const [showRejectBox, setShowRejectBox] = useState(false);
   const [rejectNote, setRejectNote] = useState("");
   const [reviewSaving, setReviewSaving] = useState(false);
+  const [draftSaving, setDraftSaving] = useState(false);
 
   const load = async () => {
     // طبق گزارش صریح: اگر بارگذاری با خطا مواجه شود، صفحه نباید برای
@@ -2833,11 +2835,16 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
     if (readOnly) { alert(t("errNoDeletePermission")); return; }
     if (!confirm(t("confirmDeleteCount", { count: ids.length }))) return;
     for (const id of ids) {
+      const photos = await loadAnomalyPhotos(id).catch(() => []);
       await offlineWrite({ module: "anomalies", table: "anomalies", action: "delete", id, payload: {} });
       // طبق گزارش صریح: بعد از حذف خودِ رکورد، رکورد گیت (در انتظار
       // تأیید/ارجاع‌شده) مربوطه هم پاک شود — وگرنه یتیم می‌ماند و برای
       // همیشه در «کارهای در دست اقدام من» باقی می‌ماند.
       deleteGateItemsForRecord("anomalyReport", id).catch(() => {});
+      for (const p of photos) {
+        const parsed = p.photo ? parseStorageUrl(p.photo) : null;
+        if (parsed) deleteFromStorage(parsed.bucket, parsed.path).catch(() => {});
+      }
     }
     setAnomalies(anomalies.filter((a) => !ids.includes(a.id)));
   };
@@ -2877,9 +2884,14 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
 
   const removeExistingPhoto = async (anomalyId, photoId) => {
     const current = photosMap[anomalyId] || [];
+    const removed = current.find((p) => p.id === photoId);
     const updated = current.filter((p) => p.id !== photoId);
     setPhotosMap((prev) => ({ ...prev, [anomalyId]: updated }));
     await offlineWrite({ module: "anomalyPhotos", table: "anomaly_photos", action: "delete", id: photoId, payload: {} });
+    // طبقِ ممیزیِ QA: قبلاً فقط ردیفِ DB حذف می‌شد، فایلِ واقعی برایِ همیشه
+    // در Storage یتیم می‌ماند.
+    const parsed = removed?.photo ? parseStorageUrl(removed.photo) : null;
+    if (parsed) deleteFromStorage(parsed.bucket, parsed.path).catch(() => {});
     await offlineWrite({ module: "anomalies", table: "anomalies", action: "update", id: anomalyId, payload: { photo_count: updated.length } });
     setAnomalies(anomalies.map((a) => (a.id === anomalyId ? { ...a, photoCount: updated.length, syncStatus: "pending" } : a)));
   };
@@ -2893,23 +2905,33 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
       alert(t("errManualCloseRequiresAction"));
       return;
     }
+    setDraftSaving(true);
     const patch = {
       ...draft,
       closeDate: draft.status === "Closed" ? (draft.closeDate || todayISO()) : "",
     };
     await offlineWrite({ module: "anomalies", table: "anomalies", action: "update", id, payload: anomalyPatchToDb(patch) });
     setAnomalies(anomalies.map((a) => (a.id === id ? { ...a, ...patch, syncStatus: isOnline() ? "synced" : "pending" } : a)));
+    setDraftSaving(false);
     setExpandedId(null);
   };
 
   const handleDelete = async (id, trackingNumber) => {
     if (readOnly) { alert(t("errNoDeletePermission")); return; }
     if (confirm(t("confirmDeleteAnomaly", { num: trackingNumber }))) {
+      // طبقِ ممیزیِ QA: قبل از حذفِ خودِ رکورد، عکس‌هایش گرفته می‌شوند تا
+      // بعد بتوان فایل‌هایِ واقعیِ Storage را هم پاک کرد — وگرنه برایِ
+      // همیشه یتیم می‌مانند.
+      const photos = await loadAnomalyPhotos(id).catch(() => []);
       await offlineWrite({ module: "anomalies", table: "anomalies", action: "delete", id, payload: {} });
       // طبق گزارش صریح: بعد از حذف خودِ رکورد، رکورد گیت مربوطه هم پاک
       // شود — وگرنه یتیم می‌ماند و برای همیشه در «کارهای در دست اقدام
       // من» باقی می‌ماند (دقیقاً همان گزارش کمپکتور حذف‌شده).
       deleteGateItemsForRecord("anomalyReport", id).catch(() => {});
+      for (const p of photos) {
+        const parsed = p.photo ? parseStorageUrl(p.photo) : null;
+        if (parsed) deleteFromStorage(parsed.bucket, parsed.path).catch(() => {});
+      }
       setAnomalies(anomalies.filter((a) => a.id !== id));
     }
   };
@@ -3561,7 +3583,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
                     )}
 
                     <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-                      <button type="button" style={styles.button} onClick={() => saveDraft(a.id)}>{t("saveChangesBtn")}</button>
+                      <button type="button" style={styles.button} onClick={() => saveDraft(a.id)} disabled={draftSaving}>{t("saveChangesBtn")}</button>
                     </div>
                   </>
                 )}

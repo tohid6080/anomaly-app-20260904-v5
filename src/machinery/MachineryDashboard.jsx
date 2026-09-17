@@ -6,6 +6,8 @@ import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
 import { isPdfDataUrl } from "../personnel/fileHelpers.js";
 import DocumentViewerModal from "../personnel/DocumentViewerModal.jsx";
 import SyncStatusBadge from "../offline/SyncStatusBadge.jsx";
+import { getQueue } from "../offline/offlineDb.js";
+import { retryItemNow } from "../offline/syncEngine.js";
 import {
   MACHINE_TYPES, APPROVAL_STATUSES, MACHINERY_DOC_TYPES, approvalStatusMeta,
   loadMachineryListOfflineFirst, deleteMachineryDB, setMachineryApproval,
@@ -129,6 +131,15 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
     }
   };
   useEffect(() => { load(); }, []);
+
+  // طبقِ ممیزیِ QA: قبلاً onRetry فقط load() (Reload) بود؛ retryItemNow
+  // هرگز صدا زده نمی‌شد.
+  const retrySync = async (recordId) => {
+    const queue = await getQueue();
+    const item = queue.find((q) => q.module === "machinery" && q.recordId === recordId);
+    if (item) await retryItemNow(item.queueId);
+    load();
+  };
 
   const myName = (currentUser?.name || "").trim().toLowerCase();
   const scoped = isContractor ? list.filter((m) => (m.contractorName || "").trim().toLowerCase() === myName) : list;
@@ -548,7 +559,7 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
                   {m.deleteRequestedBy && (
                     <span style={{ fontSize: 10.5, color: THEME.danger, fontWeight: 600 }}>{t("mdStatusDeleteRequestPending")}</span>
                   )}
-                  {m.syncStatus && m.syncStatus !== "synced" && <SyncStatusBadge status={m.syncStatus} onRetry={() => load()} />}
+                  {m.syncStatus && m.syncStatus !== "synced" && <SyncStatusBadge status={m.syncStatus} onRetry={() => retrySync(m.id)} />}
                 </div>
               );
             },
@@ -578,7 +589,7 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <StatusPill label={t(sm.labelKey)} color={sm.color} bg={sm.bg} />
-                    {m.syncStatus && m.syncStatus !== "synced" && <SyncStatusBadge status={m.syncStatus} onRetry={() => load()} />}
+                    {m.syncStatus && m.syncStatus !== "synced" && <SyncStatusBadge status={m.syncStatus} onRetry={() => retrySync(m.id)} />}
                   </div>
                   {assignedExpertNameCard && (
                     <span style={{ fontSize: 10.5, color: "#1d4ed8", fontWeight: 600 }}>{t("gateAssignedToExpert", { name: assignedExpertNameCard })}</span>

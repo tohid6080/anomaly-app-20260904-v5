@@ -7,6 +7,8 @@ import { exportPersonnelPdf, exportPersonnelExcel } from "./personnelExport.js";
 import PersonnelForm from "./PersonnelForm.jsx";
 import PersonnelDetail from "./PersonnelDetail.jsx";
 import SyncStatusBadge from "../offline/SyncStatusBadge.jsx";
+import { getQueue } from "../offline/offlineDb.js";
+import { retryItemNow } from "../offline/syncEngine.js";
 import { loadPendingGateItems, loadAssignedGateItems, loadAssignedReviewItemsForModule, loadCompanyStaffOptions } from "../hseGateApi.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
@@ -91,6 +93,16 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
     }
   };
   useEffect(() => { load(); }, []);
+
+  // طبقِ ممیزیِ QA: قبلاً onRetry فقط load() (Reload) را صدا می‌زد، بدونِ
+  // فراخوانیِ واقعیِ retryItemNow — یک رکوردِ Conflict/Failed هیچ‌وقت واقعاً
+  // دوباره تلاش نمی‌شد. الگو از App.jsx (anomalies) کپی شده.
+  const retrySync = async (recordId) => {
+    const queue = await getQueue();
+    const item = queue.find((q) => q.module === "personnel" && q.recordId === recordId);
+    if (item) await retryItemNow(item.queueId);
+    load();
+  };
 
   const scoped = isContractor && currentUser?.name
     ? list.filter((p) => (p.contractorName || "").trim().toLowerCase() === (currentUser.name || "").trim().toLowerCase())
@@ -294,7 +306,7 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
                   {assignedExpertName && (
                     <span style={{ fontSize: 10.5, color: "#1d4ed8", fontWeight: 600 }}>{t("gateAssignedToExpert", { name: assignedExpertName })}</span>
                   )}
-                  {p.syncStatus && p.syncStatus !== "synced" && <SyncStatusBadge status={p.syncStatus} onRetry={() => load()} />}
+                  {p.syncStatus && p.syncStatus !== "synced" && <SyncStatusBadge status={p.syncStatus} onRetry={() => retrySync(p.id)} />}
                 </div>
               );
             },
@@ -320,7 +332,7 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
                       <StatusPill label={t(employmentStatusMeta(p.employmentStatus).labelKey)} color={employmentStatusMeta(p.employmentStatus).color} bg={employmentStatusMeta(p.employmentStatus).bg} />
                     )}
                     <StatusPill label={t(sm.labelKey)} color={sm.color} bg={sm.bg} />
-                    {p.syncStatus && p.syncStatus !== "synced" && <SyncStatusBadge status={p.syncStatus} onRetry={() => load()} />}
+                    {p.syncStatus && p.syncStatus !== "synced" && <SyncStatusBadge status={p.syncStatus} onRetry={() => retrySync(p.id)} />}
                   </div>
                   {assignedExpertNameCard && (
                     <span style={{ fontSize: 10.5, color: "#1d4ed8", fontWeight: 600 }}>{t("gateAssignedToExpert", { name: assignedExpertNameCard })}</span>

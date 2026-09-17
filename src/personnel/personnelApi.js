@@ -3,13 +3,16 @@ import { offlineWrite, offlineWriteFile } from "../offline/offlineWrite.js";
 import { isOnline } from "../offline/networkStatus.js";
 import { checkUploadAllowed } from "../offline/dbSizeMonitor.js";
 import { getRecordsByModule, putRecord } from "../offline/offlineDb.js";
+import { parseStorageUrl, deleteFromStorage } from "../offline/storageUpload.js";
 import { deleteGateItemsForRecord } from "../hseGateApi.js";
 import { translate, getCurrentLang } from "../i18n/translations.js";
 
 /**
  * Personnel Access Management — data access layer.
- * Files (documents) are stored as base64 in Postgres, matching the existing
- * anomaly_photos pattern in this project (no Supabase Storage bucket needed).
+ * Documents are uploaded via offlineWriteFile, which stores the actual file
+ * in Supabase Storage and keeps only the resulting URL in file_data — the
+ * comment here previously said base64-in-Postgres, which is no longer
+ * accurate (confirmed by the QA audit's Storage-orphan-cleanup finding).
  * Deadline/expiry checks run client-side on dashboard load (no cron/Edge
  * Function in this stack) — see checkAndUpdateDeadlines().
  */
@@ -223,6 +226,16 @@ export async function updatePersonnelDB(id, patch, performedBy) {
 }
 
 export async function deletePersonnelDB(id, performedBy) {
+  // طبقِ ممیزیِ QA: قبلاً مدارکِ آپلودی (personnel_documents، که فایلِ
+  // واقعی‌شان در Storage است — نه base64 در DB، برخلافِ کامنتِ قدیمیِ بالایِ
+  // این فایل) هیچ‌وقت پاک نمی‌شدند و برایِ همیشه یتیم می‌ماندند. حالا دقیقاً
+  // مثلِ الگویِ deleteMachineryDB.
+  const docs = await loadPersonnelDocuments(id);
+  for (const doc of docs) {
+    const parsed = doc.fileData ? parseStorageUrl(doc.fileData) : null;
+    if (parsed) { try { await deleteFromStorage(parsed.bucket, parsed.path); } catch { /* ادامه بده */ } }
+    await offlineWrite({ module: "personnelDocuments", table: "personnel_documents", action: "delete", id: doc.id, payload: {} });
+  }
   await offlineWrite({ module: "personnel", table: "personnel", action: "delete", id, payload: {} });
   if (performedBy) insertAuditLog(id, "deleted", "حذف پرسنل", performedBy);
   // طبق همان رفعِ Machinery/Anomaly: رکورد گیت مربوطه هم پاک شود — وگرنه

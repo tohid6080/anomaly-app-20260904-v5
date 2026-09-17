@@ -5,6 +5,8 @@ import DataView, { StatusPill } from "../shared/DataView.jsx";
 import { JalaliDateInput, toJalaliSafe, toJalaliDateTime } from "../personnel/jalaliDate.jsx";
 import { exportHtmlReportNativeAware } from "../offline/nativeFile.js";
 import SyncStatusBadge from "../offline/SyncStatusBadge.jsx";
+import { getQueue } from "../offline/offlineDb.js";
+import { retryItemNow } from "../offline/syncEngine.js";
 import {
   SCAFFOLD_STATUSES, scaffoldStatusMeta, loadScaffoldTagsOfflineFirst, loadContractorsWithScaffoldCode,
   deleteScaffoldTagDB, approveInitialRequest, issueScaffoldTag, markNeedsCorrection,
@@ -58,6 +60,15 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
     }
   };
   useEffect(() => { load(); }, []);
+
+  // طبقِ ممیزیِ QA: قبلاً onRetry فقط load() (Reload) بود؛ retryItemNow
+  // هرگز صدا زده نمی‌شد.
+  const retrySync = async (recordId) => {
+    const queue = await getQueue();
+    const item = queue.find((q) => q.module === "scaffoldTags" && q.recordId === recordId);
+    if (item) await retryItemNow(item.queueId);
+    load();
+  };
 
   // پنل جزئیات (درخواست برچیدن / ثبت اصلاح) حالا از طریق renderExpanded
   // دقیقاً زیر همان ردیف انتخاب‌شده باز می‌شود، نه انتهای کل لیست — پس
@@ -370,7 +381,7 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
               return (
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                   <StatusPill label={t2(sm.labelKey)} color={sm.color} bg={sm.bg} />
-                  {row.syncStatus && row.syncStatus !== "synced" && <SyncStatusBadge status={row.syncStatus} onRetry={() => load()} />}
+                  {row.syncStatus && row.syncStatus !== "synced" && <SyncStatusBadge status={row.syncStatus} onRetry={() => retrySync(row.id)} />}
                 </div>
               );
             },
@@ -390,7 +401,7 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <StatusPill label={t2(sm.labelKey)} color={sm.color} bg={sm.bg} />
-                  {card.syncStatus && card.syncStatus !== "synced" && <SyncStatusBadge status={card.syncStatus} onRetry={() => load()} />}
+                  {card.syncStatus && card.syncStatus !== "synced" && <SyncStatusBadge status={card.syncStatus} onRetry={() => retrySync(card.id)} />}
                 </div>
               </div>
 

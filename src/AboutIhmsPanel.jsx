@@ -28,6 +28,7 @@ const QUEUE_MODULE_LABEL_KEYS = {
   excavationAssessments: "moduleQuickTools", excavationAudit: "moduleQuickTools", excavationStandardProfiles: "moduleQuickTools",
   energyAssessments: "moduleQuickTools", energyAudit: "moduleQuickTools",
   fleetFuelAssessments: "moduleQuickTools", fleetFuelAudit: "moduleQuickTools",
+  correctiveActions: "subCorrectiveActionsList",
 };
 const QUEUE_ACTION_LABEL_KEYS = { insert: "onlineIndActionInsert", update: "onlineIndActionUpdate", delete: "onlineIndActionDelete" };
 
