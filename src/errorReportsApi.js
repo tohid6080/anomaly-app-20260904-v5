@@ -87,3 +87,9 @@ export async function updateErrorReportStatus(id, status, adminNote, resolvedBy)
   if (!sbOk(rows)) return { __error: true, message: tr("erpErrUpdateStatus") };
   return { ok: true };
 }
+
+export async function deleteErrorReport(id) {
+  const rows = await sb(`error_reports?id=eq.${id}`, { method: "DELETE" }, "super_admin");
+  if (!sbOk(rows)) return { __error: true, message: tr("erpErrDelete") };
+  return { ok: true };
+}

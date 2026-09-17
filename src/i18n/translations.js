@@ -2448,6 +2448,7 @@ export const translations = {
     "fa": "فعالیت کاربران",
     "en": "User Activity"
   },
+  "saErrDeleteAuditEntry": { "fa": "خطا در حذف رویداد", "en": "Error deleting the event" },
   "saAuditLogNote": {
     "fa": "هر تغییر حساب کاربری (ایجاد، ویرایش، فعال/غیرفعال، بازنشانی رمز) اینجا ثبت می‌شود — هرگز خودِ رمز عبور ثبت نمی‌شود.",
     "en": "Every account change (create, edit, activate/deactivate, password reset) is recorded here — the password itself is never recorded."
@@ -8856,12 +8857,14 @@ export const translations = {
   "saReceiptAlreadyReviewed": { "fa": "این رسید قبلاً تأیید/رد شده یا پیدا نشد", "en": "This receipt was already approved/rejected, or was not found" },
   "saRejectReasonRequired": { "fa": "برای رد یک رسید، ذکر دلیل الزامی است", "en": "A reason is required to reject a receipt" },
   "saErrRejectPayment": { "fa": "خطا در رد پرداخت", "en": "Error rejecting the payment" },
+  "saErrDeleteReceipt": { "fa": "خطا در حذف رسید", "en": "Error deleting the receipt" },
   "saErrSavePaymentSettings": { "fa": "خطا در ذخیره‌ی تنظیمات پرداخت", "en": "Error saving payment settings" },
   "saInvalidTrialDuration": { "fa": "مدت پلن آزمایشی نامعتبر است", "en": "The trial-plan duration is invalid" },
   "saErrApproveRequest": { "fa": "خطا در تأیید درخواست", "en": "Error approving the request" },
   "saRequestAlreadyReviewed": { "fa": "این درخواست قبلاً تأیید/رد شده یا پیدا نشد", "en": "This request was already approved/rejected, or was not found" },
   "saTrialRejectReasonRequired": { "fa": "برای رد یک درخواست، ذکر دلیل الزامی است", "en": "A reason is required to reject a request" },
   "saErrRejectRequest": { "fa": "خطا در رد درخواست", "en": "Error rejecting the request" },
+  "saErrDeleteRequest": { "fa": "خطا در حذف درخواست", "en": "Error deleting the request" },
   "saErrGenericOp": { "fa": "خطا در انجام عملیات", "en": "Error performing the operation" },
   "saErrStorageInfo": { "fa": "خطا در دریافت اطلاعات Storage", "en": "Error retrieving Storage information" },
   "saErrReadSourceKnowledge": { "fa": "خطا در خواندن بانک دانش ریسک مبدأ", "en": "Error reading the source risk knowledge base" },
@@ -10105,6 +10108,7 @@ export const translations = {
   "erpErrCompanyUnknown": { "fa": "شرکت جاری مشخص نیست — لطفاً دوباره وارد شوید.", "en": "The current company is unknown — please sign in again." },
   "erpErrSubmit": { "fa": "خطا در ارسال گزارش خطا: {detail}", "en": "Error submitting the error report: {detail}" },
   "erpErrUpdateStatus": { "fa": "خطا در به‌روزرسانی وضعیت گزارش", "en": "Error updating the report status" },
+  "erpErrDelete": { "fa": "خطا در حذف گزارش", "en": "Error deleting the report" },
   "erpUnknown": { "fa": "نامشخص", "en": "unknown" },
   "erpDescRequired": { "fa": "شرح خطا الزامی است", "en": "The error description is required" },
   "erpDoneTitle": { "fa": "گزارش شما ثبت شد", "en": "Your report has been submitted" },
