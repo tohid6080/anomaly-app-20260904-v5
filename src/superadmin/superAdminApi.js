@@ -1262,3 +1262,69 @@ export function backupStatusMeta(status) {
     default:          return { color: THEME.danger, bg: THEME.dangerBg, labelKey: "backupStatusFailed" };
   }
 }
+
+// ---------- ویجتِ گفتگویِ زنده با بازدیدکنندگانِ سایت ----------
+// طرفِ بازدیدکننده (بدونِ حساب) از src/livechat/livechatApi.js و Edge
+// Function عمومیِ chat-visitor می‌گذرد (دقیقاً همان الگویِ deny-all RLS +
+// service_role که trial_requests/guest_purchase_requests دارند)؛ این‌جا
+// فقط طرفِ سوپرادمین است — همان الگویِ sb(..., "super_admin") بقیه‌ی این
+// فایل. شمارشِ خوانده‌نشده از ویوِ chat_visitor_conversations_with_stats
+// (محاسبه‌شده از admin_last_read_at) می‌آید، نه یک ستونِ افزایشی — پس نیازی
+// به عملیاتِ اتمیکِ جداگانه نیست.
+
+function liveChatConvFromRow(r) {
+  return {
+    id: r.id,
+    visitorName: r.visitor_name,
+    visitorEmail: r.visitor_email || "",
+    visitorPhone: r.visitor_phone || "",
+    lastMessageAt: r.last_message_at,
+    lastMessagePreview: r.last_message_preview || "",
+    unreadCount: Number(r.admin_unread_count) || 0,
+    createdAt: r.created_at,
+  };
+}
+function liveChatMsgFromRow(r) {
+  return {
+    id: r.id,
+    conversationId: r.conversation_id,
+    sender: r.sender,
+    senderName: r.sender_name || "",
+    body: r.body,
+    createdAt: r.created_at,
+  };
+}
+
+export async function loadLiveChatConversations() {
+  const rows = await sb(`chat_visitor_conversations_with_stats?select=*&order=last_message_at.desc`, {}, "super_admin");
+  return sbOk(rows) ? rows.map(liveChatConvFromRow) : [];
+}
+
+export async function loadLiveChatMessages(conversationId) {
+  const rows = await sb(`chat_visitor_messages?conversation_id=eq.${conversationId}&select=*&order=created_at.asc`, {}, "super_admin");
+  return sbOk(rows) ? rows.map(liveChatMsgFromRow) : [];
+}
+
+export async function sendLiveChatAdminMessage(conversationId, body, senderName) {
+  const text = (body || "").trim();
+  if (!text) return { __error: true, message: tr("saLcErrEmptyMessage") };
+  const rows = await sb(`chat_visitor_messages`, {
+    method: "POST",
+    body: JSON.stringify([{ conversation_id: conversationId, sender: "admin", sender_name: senderName || "", body: text }]),
+  }, "super_admin");
+  if (!sbOk(rows) || rows.length === 0) return { __error: true, message: tr("saLcErrSend") };
+  await sb(`chat_visitor_conversations?id=eq.${conversationId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ last_message_at: new Date().toISOString() }),
+    prefer: "return=minimal",
+  }, "super_admin");
+  return { ok: true, message: liveChatMsgFromRow(rows[0]) };
+}
+
+export async function markLiveChatConversationRead(conversationId) {
+  await sb(`chat_visitor_conversations?id=eq.${conversationId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ admin_last_read_at: new Date().toISOString() }),
+    prefer: "return=minimal",
+  }, "super_admin");
+}
