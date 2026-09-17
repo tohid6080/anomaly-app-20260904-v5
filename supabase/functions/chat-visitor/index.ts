@@ -4,7 +4,7 @@
 // chat_visitor_conversations/chat_visitor_messages (که RLSشان عمداً هیچ
 // policy ای برای anon/authenticated ندارد، دقیقاً همان الگویِ
 // submit-trial-request). ویجتِ گفتگویِ زنده (LiveChatWidget.jsx) این تابع
-// را با یکی از سه action زیر صدا می‌زند. مالکیتِ هر گفتگو با visitor_token
+// را با یکی از چهار action زیر صدا می‌زند. مالکیتِ هر گفتگو با visitor_token
 // (تصادفی، بازگردانده‌شده در action=start و از آن پس در localStorage
 // مرورگرِ بازدیدکننده نگه‌داشته‌شده) تأیید می‌شود — نه با هیچ نشستِ
 // احرازهویت‌شده‌ای.
@@ -27,10 +27,12 @@ function msgOut(r: any) {
   return { id: r.id, sender: r.sender, senderName: r.sender_name || "", body: r.body, createdAt: r.created_at };
 }
 
-// گفتگو را با شناسه+توکن پیدا می‌کند — اگر تطبیق نکرد null، یعنی «مجاز نیست»
+// گفتگو را با شناسه+توکن پیدا می‌کند — اگر تطبیق نکرد null، یعنی «مجاز نیست».
+// visitor_last_read_at هم برمی‌گردد چون هم poll (بعد از دیدن) و هم status
+// (بدون دیدن) به آن نیاز دارند.
 async function findOwnedConversation(conversationId: string, visitorToken: string) {
   const res = await restFetch(
-    `chat_visitor_conversations?id=eq.${conversationId}&visitor_token=eq.${encodeURIComponent(visitorToken)}&select=id`
+    `chat_visitor_conversations?id=eq.${conversationId}&visitor_token=eq.${encodeURIComponent(visitorToken)}&select=id,visitor_last_read_at`
   );
   if (!res.ok || !Array.isArray(res.data) || res.data.length === 0) return null;
   return res.data[0];
@@ -108,7 +110,9 @@ Deno.serve(async (req) => {
     return json({ message: msgOut(msgRes.data[0]) });
   }
 
-  // ---------- دریافتِ پیام‌ها (برای poll دوره‌ای) ----------
+  // ---------- دریافتِ پیام‌ها (برای poll دوره‌ای وقتی پنل باز است) ----------
+  // چون بازدیدکننده واقعاً دارد ترد را می‌بیند، visitor_last_read_at هم
+  // به‌روز می‌شود — یعنی پیام‌های ادمین از این پس «خوانده‌شده» حساب می‌شوند.
   if (action === "poll") {
     const conversationId = String(body?.conversationId || "");
     const visitorToken = String(body?.visitorToken || "");
@@ -119,7 +123,31 @@ Deno.serve(async (req) => {
 
     const res = await restFetch(`chat_visitor_messages?conversation_id=eq.${conversationId}&select=*&order=created_at.asc`);
     const messages = res.ok && Array.isArray(res.data) ? res.data.map(msgOut) : [];
+    await restFetch(`chat_visitor_conversations?id=eq.${conversationId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ visitor_last_read_at: new Date().toISOString() }),
+      headers: { Prefer: "return=minimal" },
+    });
     return json({ messages });
+  }
+
+  // ---------- شمارشِ خوانده‌نشده (برای poll سبک وقتی پنل بسته است) ----------
+  // بدونِ اثرِ جانبی — visitor_last_read_at را دست نمی‌زند، وگرنه پیام‌ها
+  // بدونِ اینکه واقعاً دیده شوند «خوانده‌شده» می‌شدند.
+  if (action === "status") {
+    const conversationId = String(body?.conversationId || "");
+    const visitorToken = String(body?.visitorToken || "");
+    if (!conversationId || !visitorToken) return json({ error: "نشستِ گفتگو نامعتبر است" }, 403);
+
+    const owned = await findOwnedConversation(conversationId, visitorToken);
+    if (!owned) return json({ error: "نشستِ گفتگو نامعتبر است" }, 403);
+
+    const since = owned.visitor_last_read_at || "-infinity";
+    const res = await restFetch(
+      `chat_visitor_messages?conversation_id=eq.${conversationId}&sender=eq.admin&created_at=gt.${encodeURIComponent(since)}&select=id`
+    );
+    const unreadCount = res.ok && Array.isArray(res.data) ? res.data.length : 0;
+    return json({ unreadCount });
   }
 
   return json({ error: "عملیات نامعتبر است" }, 400);

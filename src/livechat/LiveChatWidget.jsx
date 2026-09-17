@@ -3,7 +3,7 @@ import { MessageCircle, X, Send } from "lucide-react";
 import { THEME, isValidMobile } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { toJalaliDateTime } from "../personnel/jalaliDate.jsx";
-import { loadLiveChatSession, clearLiveChatSession, startLiveChat, sendLiveChatVisitorMessage, pollLiveChatMessages } from "./livechatApi.js";
+import { loadLiveChatSession, clearLiveChatSession, startLiveChat, sendLiveChatVisitorMessage, pollLiveChatMessages, checkLiveChatStatus } from "./livechatApi.js";
 
 const POLL_MS = 4000;
 
@@ -31,6 +31,7 @@ export default function LiveChatWidget() {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
+  const [unreadCount, setUnreadCount] = useState(0);
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -64,12 +65,32 @@ export default function LiveChatWidget() {
     return () => { cancelled = true; clearInterval(timer); };
   }, [open, step, session]);
 
+  // نشانگرِ قرمزِ زنده روی دکمه‌ی شناور وقتی پنل بسته است — سبک (بدونِ
+  // گرفتنِ کلِ پیام‌ها) و بدونِ علامت‌زدنِ «دیده‌شده» (آن فقط وقتی اتفاق
+  // می‌افتد که بازدیدکننده واقعاً پنل را باز کند، همان useEffect بالا).
+  useEffect(() => {
+    if (open || step !== "chat" || !session) return;
+    let cancelled = false;
+    const check = () => {
+      checkLiveChatStatus(session).then((r) => {
+        if (!cancelled && r?.ok) setUnreadCount(r.unreadCount);
+      });
+    };
+    check();
+    const timer = setInterval(check, POLL_MS);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [open, step, session]);
+
   useEffect(() => {
     if (open) bottomRef.current?.scrollIntoView({ block: "end" });
   }, [messages, open]);
 
   const toggleWidget = () => {
-    setOpen((v) => !v);
+    setOpen((v) => {
+      const next = !v;
+      if (next) setUnreadCount(0);
+      return next;
+    });
     setEverOpened(true);
   };
 
@@ -113,7 +134,8 @@ export default function LiveChatWidget() {
     if (e.key === "Enter") { e.preventDefault(); handleSend(); }
   };
 
-  const showEnticement = !everOpened;
+  const showUnreadBadge = !!session && unreadCount > 0;
+  const showEnticement = !showUnreadBadge && !everOpened;
 
   return (
     <div style={{ position: "fixed", bottom: 20, right: 20, zIndex: 4000, direction: dir, fontFamily: THEME.font }}>
@@ -206,6 +228,9 @@ export default function LiveChatWidget() {
             style={{ width: 56, height: 56, borderRadius: "50%", border: "none", background: `linear-gradient(180deg, ${THEME.teal}, ${THEME.tealDeep})`, boxShadow: "0 8px 22px rgba(13,143,138,0.5)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <MessageCircle size={25} />
           </button>
+          {showUnreadBadge && (
+            <span style={{ position: "absolute", top: -3, right: -3, minWidth: 20, height: 20, padding: "0 4px", borderRadius: 10, background: THEME.danger, color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: `2px solid ${THEME.surface}`, boxSizing: "border-box" }}>{unreadCount}</span>
+          )}
           {showEnticement && (
             <span style={{ position: "absolute", top: -3, right: -3, width: 20, height: 20, borderRadius: "50%", background: THEME.danger, color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: `2px solid ${THEME.surface}` }}>1</span>
           )}

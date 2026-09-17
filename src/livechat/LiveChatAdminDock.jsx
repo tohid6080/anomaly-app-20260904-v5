@@ -50,7 +50,10 @@ export default function LiveChatAdminDock({ currentAdmin }) {
     if (open && selectedId) bottomRef.current?.scrollIntoView({ block: "end" });
   }, [messages, open, selectedId]);
 
-  const totalUnread = conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
+  // تعدادِ «مخاطبانی که پیام فرستادن» (تعدادِ گفتگوهایِ دارایِ خوانده‌نشده)،
+  // نه مجموعِ تک‌تکِ پیام‌های خوانده‌نشده — یک بازدیدکننده با ۳ پیام هم فقط
+  // یک نفر است.
+  const unreadContactsCount = conversations.filter((c) => (c.unreadCount || 0) > 0).length;
 
   const selectConversation = (conv) => {
     setSelectedId(conv.id);
@@ -172,9 +175,9 @@ export default function LiveChatAdminDock({ currentAdmin }) {
             style={{ width: 56, height: 56, borderRadius: "50%", border: `1px solid ${THEME.borderStrong}`, background: THEME.navyDeep, boxShadow: "0 8px 22px rgba(0,0,0,0.5)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Headset size={24} />
           </button>
-          {totalUnread > 0 && (
+          {unreadContactsCount > 0 && (
             <span style={{ position: "absolute", top: -3, right: -3, minWidth: 20, height: 20, padding: "0 4px", borderRadius: 10, background: THEME.danger, color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: `2px solid ${THEME.surface}`, boxSizing: "border-box" }}>
-              {totalUnread}
+              {unreadContactsCount}
             </span>
           )}
         </div>
