@@ -97,6 +97,7 @@ import { toJalaliDateTime, toJalaliSafe } from "./personnel/jalaliDate.jsx";
 import DocumentViewerModal from "./personnel/DocumentViewerModal.jsx";
 import LandingPage, { mergeLandingButtons } from "./LandingPage.jsx";
 import LiveChatWidget from "./livechat/LiveChatWidget.jsx";
+import PlatformSurveyPrompt from "./platformSurvey/PlatformSurveyPrompt.jsx";
 import { APP_NAME, sb, sbOk, sbErrMsg, uid, todayISO, THEME, styles, usePersistedState, setCurrentCompanyId, getCurrentCompanyId, loadCurrentCompanyPlanFeatures, isModuleInPlan, filterSubByPlan, resizeImageFile } from "./shared.js";
 
 /**
@@ -1391,6 +1392,8 @@ function LoginScreen({ onLogin }) {
       {/* روی هر حالتی از این صفحه دیده می‌شود (فرود/فرمِ ورود/مشاهده‌ی پلن‌ها) —
           zIndex بالاتر از پوششِ تمام‌صفحه‌ی PlanSelectionScreen (۳۰۰۰) */}
       <LiveChatWidget />
+      {/* سمتِ چپ — فیزیکی، نه منطقی — تا با ویجتِ گفتگو (سمتِ راست) تداخل نکند */}
+      <PlatformSurveyPrompt kind="public" corner="left" />
     </>
   );
 }
@@ -4449,7 +4452,12 @@ function WelcomeScreen({ currentUser, setView, onNavigate, sidebarModules }) {
     return null;
   };
 
-  return <div>{homeBlocks.map(renderHomeBlock)}</div>;
+  return (
+    <div>
+      {homeBlocks.map(renderHomeBlock)}
+      <PlatformSurveyPrompt kind="welcome" currentUser={currentUser} />
+    </div>
+  );
 }
 
 // بنر اصلی — پیام کلی سامانه + ۴ نکته‌ی برجسته (متن ثابت محصول، نه داده‌ی

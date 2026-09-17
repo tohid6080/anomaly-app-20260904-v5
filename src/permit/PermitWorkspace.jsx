@@ -15,6 +15,8 @@ import { printPermit } from "./permitPrint.js";
 import { loadJobPositionTitle } from "../jobpositions/jobPositionsApi.js";
 import { loadBowtiesOfflineFirst } from "../bowtie/bowtieApi.js";
 import { loadPersonnelListOfflineFirst } from "../personnel/personnelApi.js";
+import { checkEventSurvey } from "../platformSurvey/platformSurveyApi.js";
+import PlatformSurveyPrompt from "../platformSurvey/PlatformSurveyPrompt.jsx";
 
 const clone = (v) => JSON.parse(JSON.stringify(v ?? null));
 const chip = (tone) => ({
@@ -44,6 +46,7 @@ export default function PermitWorkspace({ permitId, currentUser, readOnly, onBac
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
   const [showAudit, setShowAudit] = useState(false);
+  const [eventSurvey, setEventSurvey] = useState(null);
 
   const load = async () => {
     const p = await loadPermit(permitId);
@@ -145,6 +148,11 @@ export default function PermitWorkspace({ permitId, currentUser, readOnly, onBac
     setBusy(false);
     if (res?.__error) { setErr(res.message); return; }
     setOk(t("pmStatusChanged")); load();
+    // نظرسنجیِ رضایتِ رویدادمحور — فقط بعدِ بستنِ موفقِ مجوز، بی‌اثر روی
+    // بقیه‌ی گذارها. اگر نظرسنجیِ فعالِ منطبقی نباشد، checkEventSurvey فقط null برمی‌گرداند.
+    if (to === "closed") {
+      checkEventSurvey("permit_closed", currentUser).then((s) => { if (s) setEventSurvey(s); });
+    }
   };
 
   const doRenew = async () => {
@@ -273,6 +281,7 @@ export default function PermitWorkspace({ permitId, currentUser, readOnly, onBac
           })}
         </div>
       )}
+      {eventSurvey && <PlatformSurveyPrompt kind="event" survey={eventSurvey} currentUser={currentUser} onDismiss={() => setEventSurvey(null)} />}
     </div>
   );
 }

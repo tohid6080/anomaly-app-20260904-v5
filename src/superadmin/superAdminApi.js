@@ -1362,3 +1362,103 @@ export async function markLiveChatConversationRead(conversationId) {
     prefer: "return=minimal",
   }, "super_admin");
 }
+
+// ---------- ماژولِ «مدیریتِ نظرسنجی‌ها» — سمتِ SuperAdmin ----------
+// کاملاً مستقل و موازیِ ماژولِ موجودِ survey/ (کلیدِ hseSurvey، مختصِ هر
+// شرکت) — این‌جا SuperAdmin نظرسنجی‌ای می‌سازد که سراسریِ پلتفرم پخش
+// می‌شود، در سه kind: public (بازدیدکننده‌ی ناشناسِ پیش از ورود)،
+// welcome (بلافاصله بعدِ لاگین)، event (بعدِ یک اقدامِ واقعیِ کاربر —
+// نگاه کن به src/platformSurvey/platformSurveyApi.js برایِ سمتِ کاربر و
+// نقاطِ فراخوانیِ رویداد در permitApi.js/correctiveActionsApi.js caller ها).
+
+function platformSurveyFromRow(r) {
+  return {
+    id: r.id,
+    kind: r.kind,
+    title: r.title,
+    description: r.description || "",
+    status: r.status,
+    questions: Array.isArray(r.questions) ? r.questions : [],
+    triggerModule: r.trigger_module || "",
+    triggerEvent: r.trigger_event || "",
+    displayDelaySeconds: Number(r.display_delay_seconds) || 0,
+    maxDisplayCount: Number(r.max_display_count) || 1,
+    targetRoles: Array.isArray(r.target_roles) ? r.target_roles : [],
+    targetJobPositionIds: Array.isArray(r.target_job_position_ids) ? r.target_job_position_ids : [],
+    startDate: r.start_date || "",
+    endDate: r.end_date || "",
+    createdBy: r.created_by || "",
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export async function loadPlatformSurveys(kind) {
+  const filter = kind ? `&kind=eq.${kind}` : "";
+  const rows = await sb(`platform_surveys?select=*&order=created_at.desc${filter}`, {}, "super_admin");
+  return sbOk(rows) ? rows.map(platformSurveyFromRow) : [];
+}
+
+export async function createPlatformSurvey(rec) {
+  const payload = {
+    kind: rec.kind,
+    title: rec.title || "",
+    description: rec.description || "",
+    status: rec.status || "draft",
+    questions: rec.questions || [],
+    trigger_module: rec.triggerModule || null,
+    trigger_event: rec.triggerEvent || null,
+    display_delay_seconds: rec.displayDelaySeconds || 0,
+    max_display_count: rec.maxDisplayCount || 1,
+    target_roles: rec.targetRoles || [],
+    target_job_position_ids: rec.targetJobPositionIds || [],
+    start_date: rec.startDate || null,
+    end_date: rec.endDate || null,
+    created_by: rec.createdBy || "",
+  };
+  const rows = await sb("platform_surveys", { method: "POST", body: JSON.stringify([payload]) }, "super_admin");
+  if (!sbOk(rows) || rows.length === 0) return { __error: true, message: tr("psErrSave") };
+  return { ok: true, survey: platformSurveyFromRow(rows[0]) };
+}
+
+export async function updatePlatformSurvey(id, patch) {
+  const dbPatch = { updated_at: new Date().toISOString() };
+  if ("title" in patch) dbPatch.title = patch.title;
+  if ("description" in patch) dbPatch.description = patch.description;
+  if ("status" in patch) dbPatch.status = patch.status;
+  if ("questions" in patch) dbPatch.questions = patch.questions;
+  if ("triggerModule" in patch) dbPatch.trigger_module = patch.triggerModule || null;
+  if ("triggerEvent" in patch) dbPatch.trigger_event = patch.triggerEvent || null;
+  if ("displayDelaySeconds" in patch) dbPatch.display_delay_seconds = patch.displayDelaySeconds;
+  if ("maxDisplayCount" in patch) dbPatch.max_display_count = patch.maxDisplayCount;
+  if ("targetRoles" in patch) dbPatch.target_roles = patch.targetRoles;
+  if ("targetJobPositionIds" in patch) dbPatch.target_job_position_ids = patch.targetJobPositionIds;
+  if ("startDate" in patch) dbPatch.start_date = patch.startDate || null;
+  if ("endDate" in patch) dbPatch.end_date = patch.endDate || null;
+  const rows = await sb(`platform_surveys?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(dbPatch) }, "super_admin");
+  if (!sbOk(rows) || rows.length === 0) return { __error: true, message: tr("psErrSave") };
+  return { ok: true, survey: platformSurveyFromRow(rows[0]) };
+}
+
+export async function deletePlatformSurvey(id) {
+  const rows = await sb(`platform_surveys?id=eq.${id}`, { method: "DELETE" }, "super_admin");
+  if (!sbOk(rows)) return { __error: true, message: tr("psErrDelete") };
+  return { ok: true };
+}
+
+function platformSurveyResponseFromRow(r) {
+  return {
+    id: r.id,
+    surveyId: r.survey_id,
+    respondentUsername: r.respondent_username || "",
+    respondentRole: r.respondent_role || "",
+    respondentCompanyId: r.respondent_company_id || "",
+    answers: r.answers || {},
+    submittedAt: r.submitted_at,
+  };
+}
+
+export async function loadPlatformSurveyResponses(surveyId) {
+  const rows = await sb(`platform_survey_responses?survey_id=eq.${surveyId}&select=*&order=submitted_at.desc`, {}, "super_admin");
+  return sbOk(rows) ? rows.map(platformSurveyResponseFromRow) : [];
+}
