@@ -8,6 +8,7 @@ import { loadModuleConfig, saveModuleConfig, loadNotificationTypes, saveNotifica
 import { DASHBOARD_WIDGET_GROUPS, mergeWidgetConfig, defaultWidgetConfig } from "../dashboard/dashboardWidgets.js";
 import { uploadBase64ToStorage, deleteFromStorage, parseStorageUrl } from "../offline/storageUpload.js";
 import AccountManagement, { AccountForm, emptyForm as emptyAccountForm } from "./AccountManagement.jsx";
+import WelcomeMessageModal from "./WelcomeMessageModal.jsx";
 import PricingConsole from "./PricingConsole.jsx";
 import { loadCompanyModules, addCompanyModule, updateCompanyModule, removeCompanyModule } from "./companyModulesApi.js";
 import { loadModulePrices, loadServices } from "../pricingApi.js";
@@ -3759,6 +3760,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
   const [newModuleEnd, setNewModuleEnd] = useState("");
   const [moduleBusy, setModuleBusy] = useState(false);
   const [moduleError, setModuleError] = useState("");
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   const loadCompanyModulesList = () => loadCompanyModules(company.id).then(setCompanyModules);
   useEffect(() => { loadCompanyModulesList(); loadModulePrices({ live: true }).then(setModulePricesCatalog); }, [company.id]);
@@ -3858,22 +3860,22 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
     onPlanChanged();
   };
 
-  const handleAddModule = async () => {
-    if (!newModuleKey) return;
-    setModuleBusy(true); setModuleError("");
-    const catalogEntry = modulePricesCatalog.find((m) => m.moduleKey === newModuleKey);
+  // یک ماژولِ سطحِ‌بالا + زیرماژول‌هایش (اگر داشت) را با بازه‌ی تاریخِ فرم
+  // اضافه می‌کند — هم از افزودنِ تکی و هم از «افزودنِ همه» صدا زده می‌شود.
+  const addModuleAndSubs = async (moduleKey) => {
+    const catalogEntry = modulePricesCatalog.find((m) => m.moduleKey === moduleKey);
     const startsAt = newModuleStart ? new Date(newModuleStart).toISOString() : undefined;
     const endsAt = newModuleEnd ? new Date(newModuleEnd).toISOString() : null;
-    const result = await addCompanyModule(company.id, newModuleKey, {
+    const result = await addCompanyModule(company.id, moduleKey, {
       startsAt, endsAt,
       priceMonthly: catalogEntry?.priceMonthly || 0,
       priceYearly: catalogEntry?.priceYearly || 0,
       source: "admin_grant",
     }, currentAdmin?.fullName);
-    if (result?.__error) { setModuleBusy(false); setModuleError(result.message); return; }
+    if (result?.__error) return result;
     // زیرماژول‌هایِ این ماژول (اگر داشت) پیش‌فرض همه فعال می‌شوند — ادمین
     // بعداً می‌تواند هرکدام را جدا از چک‌باکسِ زیرِ همین ردیف خاموش کند.
-    const subs = GATED_MODULE_SUBS[newModuleKey] || [];
+    const subs = GATED_MODULE_SUBS[moduleKey] || [];
     await Promise.all(subs.map((s) => {
       const subCatalogEntry = modulePricesCatalog.find((mp) => mp.moduleKey === s.key);
       return addCompanyModule(company.id, s.key, {
@@ -3883,6 +3885,28 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
         source: "admin_grant",
       }, currentAdmin?.fullName);
     }));
+    return null;
+  };
+  const handleAddModule = async () => {
+    if (!newModuleKey) return;
+    setModuleBusy(true); setModuleError("");
+    const result = await addModuleAndSubs(newModuleKey);
+    if (result?.__error) { setModuleBusy(false); setModuleError(result.message); return; }
+    setModuleBusy(false);
+    setNewModuleKey(""); setNewModuleEnd(""); setShowAddModule(false);
+    await loadCompanyModulesList();
+  };
+  // افزودنِ یک‌جای همه‌ی ماژول‌هایِ هنوز-تخصیص‌نیافته — به‌جایِ تکرارِ
+  // «افزودن» برایِ هرکدام جداگانه، طبقِ خواسته‌ی صریحِ کاربر. به‌ترتیب
+  // (نه موازی) اضافه می‌شوند تا فشارِ درخواست به دیتابیس یک‌باره زیاد نشود.
+  const handleAddAllModules = async () => {
+    if (unassignedModules.length === 0) return;
+    if (!confirm(t("saAddAllModulesConfirm", { count: unassignedModules.length }))) return;
+    setModuleBusy(true); setModuleError("");
+    for (const m of unassignedModules) {
+      const result = await addModuleAndSubs(m.moduleKey);
+      if (result?.__error) { setModuleBusy(false); setModuleError(result.message); await loadCompanyModulesList(); return; }
+    }
     setModuleBusy(false);
     setNewModuleKey(""); setNewModuleEnd(""); setShowAddModule(false);
     await loadCompanyModulesList();
@@ -4067,8 +4091,11 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
             </select>
             <JalaliDateTimeInput value={newModuleStart} onChange={setNewModuleStart} />
             <JalaliDateTimeInput value={newModuleEnd} onChange={setNewModuleEnd} />
-            <div style={{ display: "flex", gap: 6 }}>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               <button type="button" onClick={handleAddModule} disabled={moduleBusy || !newModuleKey} style={btnStyle()}>{moduleBusy ? t("saSubmittingEllipsis") : t("commonAdd")}</button>
+              {unassignedModules.length > 1 && (
+                <button type="button" onClick={handleAddAllModules} disabled={moduleBusy} style={btnStyle(THEME.teal)}>{moduleBusy ? t("saSubmittingEllipsis") : t("saAddAllModules")}</button>
+              )}
               <button type="button" onClick={() => { setShowAddModule(false); setModuleError(""); }} style={btnStyle(THEME.text3)}>{t("commonCancel")}</button>
             </div>
           </div>
@@ -4207,7 +4234,16 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
             </span>
           </div>
         ))}
+        {accounts.length > 0 && (
+          <button type="button" onClick={() => setShowWelcomeModal(true)} style={{ ...btnStyle(THEME.navyMid), display: "inline-flex", alignItems: "center", gap: 6, marginTop: 10 }}>
+            <Gift size={13} /> {t("saWelcomeMessageBtn")}
+          </button>
+        )}
       </div>
+
+      {showWelcomeModal && (
+        <WelcomeMessageModal company={company} accounts={accounts} onClose={() => setShowWelcomeModal(false)} onPasswordsChanged={loadAccounts} />
+      )}
 
       <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 12, marginBottom: 16 }}>
         <h4 style={{ fontSize: 12.5, color: THEME.heading, fontWeight: 700, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 6 }}>

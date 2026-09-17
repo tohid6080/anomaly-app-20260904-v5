@@ -77,12 +77,22 @@ export async function loadCompanies() {
 }
 
 export async function createCompany(rec) {
+  const subscriptionType = rec.subscriptionType || "trial";
   const payload = {
-    name: rec.name, subscription_type: rec.subscriptionType || "trial",
+    name: rec.name, subscription_type: subscriptionType,
     subscription_status: rec.subscriptionStatus || "active", subscription_start_date: rec.subscriptionStartDate || null,
     subscription_end_date: rec.subscriptionEndDate || null,
     storage_quota_mb: rec.storageQuotaMb || 500,
   };
+  // computeSubscriptionAccess (subscriptionApi.js) برایِ subscriptionType==="trial"
+  // فقط trial_start/trial_end را می‌خواند، نه subscription_start_date/end_date —
+  // بدونِ این دو خط، شرکتِ تازه‌ساخته‌شده با نوعِ «آزمایشی» با همان بازه‌ی
+  // تاریخی که تویِ فرم انتخاب شده هم «دوره‌ی آزمایشی تنظیم نشده است» نشان
+  // می‌داد، چون این دو ستونِ اختصاصی هرگز پر نمی‌شدند.
+  if (subscriptionType === "trial") {
+    payload.trial_start = rec.subscriptionStartDate || null;
+    payload.trial_end = rec.subscriptionEndDate || null;
+  }
   const rows = await sb("companies", { method: "POST", body: JSON.stringify([payload]) }, "super_admin");
   if (!sbOk(rows)) return { __error: true, message: tr("saErrCreateCompany") };
   return companyFromRow(rows[0]);
@@ -249,8 +259,8 @@ export async function createCompanyUserAccount(companyId, { name, username, pass
 
 export async function loadCompanyUserAccounts(companyId) {
   const [employers, contractorRows] = await Promise.all([
-    sb(`employer_accounts?company_id=eq.${companyId}&select=id,name,username,role&order=name.asc`, {}, "super_admin"),
-    sb(`contractors?company_id=eq.${companyId}&select=id,name,username&order=name.asc`, {}, "super_admin"),
+    sb(`employer_accounts?company_id=eq.${companyId}&select=id,name,username,role,email&order=name.asc`, {}, "super_admin"),
+    sb(`contractors?company_id=eq.${companyId}&select=id,name,username,email&order=name.asc`, {}, "super_admin"),
   ]);
   const emp = (sbOk(employers) ? employers : []).map((a) => ({ ...a, type: "employer" }));
   const con = (sbOk(contractorRows) ? contractorRows : []).map((a) => ({ ...a, type: "contractor" }));
