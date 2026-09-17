@@ -25,6 +25,19 @@ import { loadAllCompanyModules } from "./companyModulesApi.js";
 const clone = (v) => JSON.parse(JSON.stringify(v ?? null));
 const faInt = (n) => Number(n || 0).toLocaleString("fa-IR");
 
+// نگاشتِ تبِ ارزِ فعال (تومان/دلار/یورو) به نامِ فیلدهایِ ماهانه/سالانه‌ی
+// همان ارز روی هر ردیفِ mp — خودِ isFree/requires/... بینِ ارزها مشترک‌اند.
+const CURRENCY_FIELD = {
+  irr: { monthly: "priceMonthly", yearly: "priceYearly" },
+  usd: { monthly: "priceMonthlyUsd", yearly: "priceYearlyUsd" },
+  eur: { monthly: "priceMonthlyEur", yearly: "priceYearlyEur" },
+};
+const CURRENCY_TABS = [
+  { key: "irr", labelKey: "pcCurrencyIrr" },
+  { key: "usd", labelKey: "pcCurrencyUsd" },
+  { key: "eur", labelKey: "pcCurrencyEur" },
+];
+
 export default function PricingConsole({ companies, currentAdmin, onChanged }) {
   const { t, dir } = useLanguage();
   const actor = currentAdmin?.fullName || currentAdmin?.username || "";
@@ -45,6 +58,7 @@ export default function PricingConsole({ companies, currentAdmin, onChanged }) {
   const [collapsed, setCollapsed] = useState({});
   const [modQuery, setModQuery] = useState("");
   const [coQuery, setCoQuery] = useState("");
+  const [priceCurrency, setPriceCurrency] = useState("irr");
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -208,6 +222,22 @@ export default function PricingConsole({ companies, currentAdmin, onChanged }) {
           </div>
         </div>
 
+        {/* تبِ ارز — ستون‌هایِ ماهانه/سالانه‌ی همین جدول را بین قیمتِ
+            تومان/دلار/یورویِ هر ماژول سوییچ می‌کند (isFree/requires/... مشترکند) */}
+        <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+          {CURRENCY_TABS.map((c) => (
+            <button
+              key={c.key} type="button" onClick={() => setPriceCurrency(c.key)}
+              style={{
+                ...styles.smallButton, background: priceCurrency === c.key ? THEME.teal : THEME.surface2,
+                color: priceCurrency === c.key ? "#fff" : THEME.text2,
+              }}
+            >
+              {t(c.labelKey)}
+            </button>
+          ))}
+        </div>
+
         <div style={{ overflowX: "auto" }}>
           <table className="pc-matrix">
             <thead>
@@ -240,7 +270,10 @@ export default function PricingConsole({ companies, currentAdmin, onChanged }) {
                         )}
                       </td>
                     </tr>
-                    {!collapsed[g.id] && rows.map((r) => (
+                    {!collapsed[g.id] && rows.map((r) => {
+                      const fields = CURRENCY_FIELD[priceCurrency];
+                      const step = priceCurrency === "irr" ? "100000" : "1";
+                      return (
                       <tr key={r.moduleKey}>
                         <td className="pc-sticky">
                           <div style={{ fontWeight: 600, color: THEME.text }}>{r.label || r.moduleKey}</div>
@@ -252,22 +285,23 @@ export default function PricingConsole({ companies, currentAdmin, onChanged }) {
                           </div>
                         </td>
                         <td>
-                          <input type="number" step="100000" disabled={r.isFree} value={r.priceMonthly}
-                            onChange={(e) => setRow(r.moduleKey, { priceMonthly: e.target.value === "" ? "" : Number(e.target.value) })} style={cellIn} />
+                          <input type="number" step={step} disabled={r.isFree} value={r[fields.monthly]}
+                            onChange={(e) => setRow(r.moduleKey, { [fields.monthly]: e.target.value === "" ? "" : Number(e.target.value) })} style={cellIn} />
                         </td>
                         <td>
-                          <input type="number" step="100000" disabled={r.isFree} value={r.priceYearly}
-                            onChange={(e) => setRow(r.moduleKey, { priceYearly: e.target.value === "" ? "" : Number(e.target.value) })} style={cellIn} />
+                          <input type="number" step={step} disabled={r.isFree} value={r[fields.yearly]}
+                            onChange={(e) => setRow(r.moduleKey, { [fields.yearly]: e.target.value === "" ? "" : Number(e.target.value) })} style={cellIn} />
                         </td>
                         <td>
                           <label className="pc-toggle">
                             <input type="checkbox" checked={!!r.isFree}
-                              onChange={(e) => setRow(r.moduleKey, { isFree: e.target.checked, ...(e.target.checked ? { priceMonthly: 0, priceYearly: 0 } : {}) })} />
+                              onChange={(e) => setRow(r.moduleKey, { isFree: e.target.checked, ...(e.target.checked ? { priceMonthly: 0, priceYearly: 0, priceMonthlyUsd: 0, priceYearlyUsd: 0, priceMonthlyEur: 0, priceYearlyEur: 0 } : {}) })} />
                             <span className="pc-track"><span className="pc-knob" /></span>
                           </label>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </React.Fragment>
                 );
               })}

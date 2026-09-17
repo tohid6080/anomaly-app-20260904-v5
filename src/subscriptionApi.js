@@ -189,7 +189,15 @@ export async function activateTrialForCompany(companyId, planId, changedBy, star
 // system_settings موجود (با پیشوند payment_cardtransfer_*)، دقیقاً همان
 // الگوی appearance config در systemConfigApi.js. customer scope چون
 // همین صفحه‌ی قفل (SubscriptionGate) بعد از لاگین عادی خوانده می‌شود.
-const CARD_TRANSFER_KEYS = ["payment_cardtransfer_card_number", "payment_cardtransfer_holder_name", "payment_cardtransfer_description"];
+const CARD_TRANSFER_KEYS = [
+  "payment_cardtransfer_card_number", "payment_cardtransfer_holder_name", "payment_cardtransfer_description",
+  // حسابِ ارزی (دلار/یورو) — جدا از کارتِ ریالیِ بالا، فقط وقتی کاربر ارزِ
+  // غیرِ ریال را برای پرداخت انتخاب کند نشان داده می‌شود.
+  "payment_forex_account_number", "payment_forex_holder_name", "payment_forex_description",
+  // آدرسِ ارزِ دیجیتال — اختیاری، در کنارِ حسابِ ارزی به‌عنوانِ راهِ دیگرِ
+  // واریز نشان داده می‌شود (فقط اگر ادمین آدرسی ثبت کرده باشد).
+  "payment_crypto_network", "payment_crypto_address", "payment_crypto_description",
+];
 
 export async function loadCardTransferSettings() {
   const rows = await sb(`system_settings?key=in.(${CARD_TRANSFER_KEYS.map((k) => `"${k}"`).join(",")})&select=key,value_text`);
@@ -199,6 +207,12 @@ export async function loadCardTransferSettings() {
     cardNumber: map.payment_cardtransfer_card_number || "",
     holderName: map.payment_cardtransfer_holder_name || "",
     description: map.payment_cardtransfer_description || "",
+    forexAccountNumber: map.payment_forex_account_number || "",
+    forexHolderName: map.payment_forex_holder_name || "",
+    forexDescription: map.payment_forex_description || "",
+    cryptoNetwork: map.payment_crypto_network || "",
+    cryptoAddress: map.payment_crypto_address || "",
+    cryptoDescription: map.payment_crypto_description || "",
   };
 }
 

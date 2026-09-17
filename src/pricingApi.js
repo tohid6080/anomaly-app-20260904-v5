@@ -1,4 +1,14 @@
 import { sb, sbOk } from "./shared.js";
+import { translate, numLocale } from "./i18n/translations.js";
+
+// نمایشِ یک مبلغ همراه با واحدِ ارزش — تومان/دلار/یورو — در هر سه‌جا که
+// مبلغِ قابل‌پرداخت نشان داده می‌شود (خلاصه‌ی خرید، کارت‌به‌کارت، فرمِ
+// عمومی). lang صریح می‌گیرد (نه هوکِ useLanguage) تا از توابعِ خالص هم
+// صدا زده شود.
+export function formatCurrencyAmount(amount, currency, lang) {
+  const key = currency === "usd" ? "saUsdAmount" : currency === "eur" ? "saEurAmount" : "saTomanAmount";
+  return translate(lang, key, { amount: Number(amount || 0).toLocaleString(numLocale(lang)) });
+}
 
 /* ============================================================================ *
  * Module pricing & services — لایه‌ی داده + محاسبه‌ی خالصِ سبدِ خرید.
@@ -59,6 +69,8 @@ function mpFromSnap(m) {
   return {
     moduleKey: m.moduleKey, label: m.label || "",
     priceMonthly: Number(m.priceMonthly) || 0, priceYearly: Number(m.priceYearly) || 0,
+    priceMonthlyUsd: Number(m.priceMonthlyUsd) || 0, priceYearlyUsd: Number(m.priceYearlyUsd) || 0,
+    priceMonthlyEur: Number(m.priceMonthlyEur) || 0, priceYearlyEur: Number(m.priceYearlyEur) || 0,
     isFree: !!m.isFree, requires: Array.isArray(m.requires) ? m.requires : [],
     sortOrder: m.sortOrder ?? 0, isActive: true,
   };
@@ -99,6 +111,8 @@ export async function publishPricingSnapshot({ modules, services }, publishedBy)
     modules: (modules || []).map((m) => ({
       moduleKey: m.moduleKey, label: m.label || "",
       priceMonthly: Number(m.priceMonthly) || 0, priceYearly: Number(m.priceYearly) || 0,
+      priceMonthlyUsd: Number(m.priceMonthlyUsd) || 0, priceYearlyUsd: Number(m.priceYearlyUsd) || 0,
+      priceMonthlyEur: Number(m.priceMonthlyEur) || 0, priceYearlyEur: Number(m.priceYearlyEur) || 0,
       isFree: !!m.isFree, requires: Array.isArray(m.requires) ? m.requires : [], sortOrder: m.sortOrder ?? 0,
     })),
     services: (services || []).map((s) => ({
@@ -116,6 +130,10 @@ function mpFromRow(r) {
     label: r.label || "",
     priceMonthly: Number(r.price_monthly) || 0,
     priceYearly: Number(r.price_yearly) || 0,
+    priceMonthlyUsd: Number(r.price_monthly_usd) || 0,
+    priceYearlyUsd: Number(r.price_yearly_usd) || 0,
+    priceMonthlyEur: Number(r.price_monthly_eur) || 0,
+    priceYearlyEur: Number(r.price_yearly_eur) || 0,
     isFree: !!r.is_free,
     requires: Array.isArray(r.requires) ? r.requires : [],
     sortOrder: r.sort_order ?? 0,
@@ -142,6 +160,10 @@ export async function saveModulePrice(rec, updatedBy) {
     label: rec.label || "",
     price_monthly: Number(rec.priceMonthly) || 0,
     price_yearly: Number(rec.priceYearly) || 0,
+    price_monthly_usd: Number(rec.priceMonthlyUsd) || 0,
+    price_yearly_usd: Number(rec.priceYearlyUsd) || 0,
+    price_monthly_eur: Number(rec.priceMonthlyEur) || 0,
+    price_yearly_eur: Number(rec.priceYearlyEur) || 0,
     is_free: !!rec.isFree,
     requires: Array.isArray(rec.requires) ? rec.requires : [],
     sort_order: Number(rec.sortOrder) || 0,
@@ -210,17 +232,26 @@ export function servicePriceFor(s) {
   return s.priceMonthly || 0; // 'monthly' و 'once' هر دو از همین فیلد
 }
 
-export function computeCartTotal({ selectedModuleKeys, selectedServiceIds, modulePrices, services, billingCycle }) {
+// currency: 'irr' (پیش‌فرض) | 'usd' | 'eur' — فقط قیمتِ ماژول‌ها را عوض
+// می‌کند (requires: پیش‌شرط بودنِ سایرِ ماژول‌ها). خدمات (services) قیمتِ
+// ارزی ندارند (فقط تومان)، پس در ارزِ غیرِ تومان از جمعِ کل کنار می‌مانند —
+// grandTotal فقط شاملِ ماژول‌ها می‌شود و servicesExcluded=true برمی‌گردد تا
+// UI در صورتِ لزوم توضیح بدهد.
+export function computeCartTotal({ selectedModuleKeys, selectedServiceIds, modulePrices, services, billingCycle, currency }) {
   billingCycle = billingCycle === "monthly" ? "monthly" : "yearly";
+  currency = currency === "usd" || currency === "eur" ? currency : "irr";
   const mpMap = {};
   (modulePrices || []).forEach((m) => { mpMap[m.moduleKey] = m; });
   const svcMap = {};
   (services || []).forEach((s) => { svcMap[s.id] = s; });
 
+  const fieldSuffix = currency === "usd" ? "Usd" : currency === "eur" ? "Eur" : "";
   const priceOf = (k) => {
     const m = mpMap[k];
     if (!m || m.isFree) return 0;
-    return (billingCycle === "monthly" ? m.priceMonthly : m.priceYearly) || m.priceMonthly || 0;
+    const monthlyField = "priceMonthly" + fieldSuffix;
+    const yearlyField = "priceYearly" + fieldSuffix;
+    return (billingCycle === "monthly" ? m[monthlyField] : m[yearlyField]) || m[monthlyField] || 0;
   };
 
   const selReal = (selectedModuleKeys || []).filter((k) => mpMap[k] && !mpMap[k].isFree);
@@ -229,7 +260,8 @@ export function computeCartTotal({ selectedModuleKeys, selectedServiceIds, modul
   // خدمات — قیمتِ هر خدمت از دوره‌ی خودِ همان ردیف می‌آید (weekly/monthly/
   // yearly/once)، نه از تاگلِ کلیِ ماهانه/سالانه‌ی سبد. یک خدمتِ هفتگی
   // همیشه قیمتِ هفتگی‌اش را دارد، حتی اگر کاربر برای ماژول‌ها «سالانه» را انتخاب کرده باشد.
-  const svcIds = (selectedServiceIds || []).filter((id) => svcMap[id]);
+  const svcIds = currency === "irr" ? (selectedServiceIds || []).filter((id) => svcMap[id]) : [];
+  const servicesExcluded = currency !== "irr" && (selectedServiceIds || []).some((id) => svcMap[id]);
   const svcRecurring = svcIds.reduce((a, id) => {
     const s = svcMap[id];
     if (s.period === "once") return a;
@@ -241,10 +273,10 @@ export function computeCartTotal({ selectedModuleKeys, selectedServiceIds, modul
   const grandTotal = recurringTotal + svcOnce;
 
   return {
-    billingCycle,
+    billingCycle, currency,
     selReal,
     sumAllModules,
-    svcRecurring, svcOnce, serviceIds: svcIds,
+    svcRecurring, svcOnce, serviceIds: svcIds, servicesExcluded,
     recurringTotal, grandTotal,
   };
 }

@@ -3083,6 +3083,37 @@ function CardTransferSettingsForm({ currentAdmin }) {
       </div>
       <label style={smallLabelStyle}>{t("saCtDescription")}</label>
       <textarea style={{ ...inputStyle, minHeight: 60 }} value={settings.description} onChange={(e) => setSettings({ ...settings, description: e.target.value })} dir={dir} />
+
+      <h4 style={{ fontSize: 12.5, fontWeight: 700, color: THEME.heading, margin: "16px 0 4px", paddingTop: 12, borderTop: `1px solid ${THEME.border}` }}>{t("saCtForexTitle")}</h4>
+      <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 8px" }}>{t("saCtForexNote")}</p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
+        <div>
+          <label style={smallLabelStyle}>{t("saCtForexAccountNumber")}</label>
+          <input style={{ ...inputStyle, direction: "ltr", textAlign: "left" }} value={settings.forexAccountNumber} onChange={(e) => setSettings({ ...settings, forexAccountNumber: e.target.value })} placeholder="IBAN / Account No." />
+        </div>
+        <div>
+          <label style={smallLabelStyle}>{t("saCtAccountHolderName")}</label>
+          <input style={inputStyle} value={settings.forexHolderName} onChange={(e) => setSettings({ ...settings, forexHolderName: e.target.value })} dir={dir} />
+        </div>
+      </div>
+      <label style={smallLabelStyle}>{t("saCtDescription")}</label>
+      <textarea style={{ ...inputStyle, minHeight: 50 }} value={settings.forexDescription} onChange={(e) => setSettings({ ...settings, forexDescription: e.target.value })} dir={dir} placeholder={t("saCtForexDescPlaceholder")} />
+
+      <h4 style={{ fontSize: 12.5, fontWeight: 700, color: THEME.heading, margin: "16px 0 4px", paddingTop: 12, borderTop: `1px solid ${THEME.border}` }}>{t("saCtCryptoTitle")}</h4>
+      <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 8px" }}>{t("saCtCryptoNote")}</p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
+        <div>
+          <label style={smallLabelStyle}>{t("saCtCryptoNetwork")}</label>
+          <input style={inputStyle} value={settings.cryptoNetwork} onChange={(e) => setSettings({ ...settings, cryptoNetwork: e.target.value })} dir="ltr" placeholder="USDT (TRC20)" />
+        </div>
+        <div>
+          <label style={smallLabelStyle}>{t("saCtCryptoAddress")}</label>
+          <input style={{ ...inputStyle, direction: "ltr", textAlign: "left", fontFamily: "monospace" }} value={settings.cryptoAddress} onChange={(e) => setSettings({ ...settings, cryptoAddress: e.target.value })} dir="ltr" />
+        </div>
+      </div>
+      <label style={smallLabelStyle}>{t("saCtDescription")}</label>
+      <textarea style={{ ...inputStyle, minHeight: 50 }} value={settings.cryptoDescription} onChange={(e) => setSettings({ ...settings, cryptoDescription: e.target.value })} dir={dir} />
+
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
         <button type="button" style={btnStyle()} onClick={handleSave} disabled={saving}>{saving ? t("saSavingEllipsis") : t("saCtSaveSettings")}</button>
         {message && <span style={{ fontSize: 11.5, color: THEME.text3 }}>{message}</span>}

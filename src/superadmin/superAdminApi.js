@@ -582,11 +582,17 @@ export async function rejectCardTransferPayment(paymentId, reviewedBy, note) {
 // ---------- تنظیمات نمایشی پرداخت کارت‌به‌کارت (شماره کارت/نام/توضیحات) ----------
 // روی همان system_settings موجود، دقیقاً همان الگوی saveAppearanceConfig
 // در systemConfigApi.js — تا «از ساختارهای موجود استفاده کن» رعایت شود.
-export async function saveCardTransferSettings({ cardNumber, holderName, description }, updatedBy) {
+export async function saveCardTransferSettings({ cardNumber, holderName, description, forexAccountNumber, forexHolderName, forexDescription, cryptoNetwork, cryptoAddress, cryptoDescription }, updatedBy) {
   const entries = [
     ["payment_cardtransfer_card_number", cardNumber || ""],
     ["payment_cardtransfer_holder_name", holderName || ""],
     ["payment_cardtransfer_description", description || ""],
+    ["payment_forex_account_number", forexAccountNumber || ""],
+    ["payment_forex_holder_name", forexHolderName || ""],
+    ["payment_forex_description", forexDescription || ""],
+    ["payment_crypto_network", cryptoNetwork || ""],
+    ["payment_crypto_address", cryptoAddress || ""],
+    ["payment_crypto_description", cryptoDescription || ""],
   ];
   const payload = entries.map(([key, value]) => ({ key, value_text: value, updated_at: new Date().toISOString(), updated_by: updatedBy || "" }));
   const rows = await sb("system_settings?on_conflict=key", { method: "POST", body: JSON.stringify(payload), prefer: "resolution=merge-duplicates,return=representation" }, "super_admin");

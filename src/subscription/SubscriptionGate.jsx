@@ -3,7 +3,7 @@ import { CheckCircle2, XCircle, LogOut, Loader2, Clock, X, ImagePlus, Copy, Chec
 import { styles, THEME, resizeImageFile, isValidMobile } from "../shared.js";
 import { toJalaliDateTime } from "../personnel/jalaliDate.jsx";
 import { computeSubscriptionAccess, loadMySubscriptionInfo, verifyPayment, loadCardTransferSettings } from "../subscriptionApi.js";
-import { loadModulePrices, loadServices, computeCartTotal, applyModuleDeps, servicePriceFor } from "../pricingApi.js";
+import { loadModulePrices, loadServices, computeCartTotal, applyModuleDeps, servicePriceFor, formatCurrencyAmount } from "../pricingApi.js";
 import { submitGuestPurchaseRequest } from "../guestPurchaseApi.js";
 import PaymentMethodsSection from "./CardTransferPayment.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
@@ -145,9 +145,16 @@ function PaymentResultScreen({ result, onContinue, onLogout }) {
   );
 }
 
+const CURRENCY_FIELD = {
+  irr: ["priceMonthly", "priceYearly"],
+  usd: ["priceMonthlyUsd", "priceYearlyUsd"],
+  eur: ["priceMonthlyEur", "priceYearlyEur"],
+};
+
 export function PlanSelectionScreen({ currentUser, company, access, onLogout, publicMode }) {
   const { t, lang } = useLanguage();
   const [billingCycle, setBillingCycle] = useState("yearly");
+  const [currency, setCurrency] = useState("irr");
   // انتخابِ ماژول به ماژول — تنها روشِ خرید (Module-Based)
   const [modulePrices, setModulePrices] = useState(null);
   const [services, setServices] = useState([]);
@@ -165,7 +172,7 @@ export function PlanSelectionScreen({ currentUser, company, access, onLogout, pu
   const ctx = purchaseContext(access, company, t);
 
   const cart = modulePrices
-    ? computeCartTotal({ selectedModuleKeys: selMods, selectedServiceIds: selSvc, modulePrices, services, billingCycle })
+    ? computeCartTotal({ selectedModuleKeys: selMods, selectedServiceIds: selSvc, modulePrices, services, billingCycle, currency })
     : null;
   const toggleMod = (k) => setSelMods((cur) => {
     const has = cur.indexOf(k) > -1;
@@ -173,7 +180,10 @@ export function PlanSelectionScreen({ currentUser, company, access, onLogout, pu
     if (!has) next = applyModuleDeps(next, modulePrices);
     return next;
   });
-  const priceOfMod = (m) => (billingCycle === "monthly" ? m.priceMonthly : m.priceYearly) || m.priceMonthly || 0;
+  const priceOfMod = (m) => {
+    const [monthlyField, yearlyField] = CURRENCY_FIELD[currency];
+    return (billingCycle === "monthly" ? m[monthlyField] : m[yearlyField]) || m[monthlyField] || 0;
+  };
 
   return (
     <div style={{ minHeight: "100vh", background: THEME.bg, padding: "40px 20px", fontFamily: THEME.font }}>
@@ -206,6 +216,7 @@ export function PlanSelectionScreen({ currentUser, company, access, onLogout, pu
           modulePrices={modulePrices} services={services} selMods={selMods} selSvc={selSvc}
           setSelSvc={setSelSvc} toggleMod={toggleMod} priceOfMod={priceOfMod}
           billingCycle={billingCycle} setBillingCycle={setBillingCycle}
+          currency={currency} setCurrency={setCurrency}
           cart={cart} currentUser={currentUser} lang={lang} t={t}
           publicMode={publicMode}
         />
@@ -215,7 +226,7 @@ export function PlanSelectionScreen({ currentUser, company, access, onLogout, pu
 }
 
 /* ---------------- انتخابِ ماژول به ماژول ---------------- */
-function ModulePickerBlock({ modulePrices, services, selMods, selSvc, setSelSvc, toggleMod, priceOfMod, billingCycle, setBillingCycle, cart, currentUser, lang, t, publicMode }) {
+function ModulePickerBlock({ modulePrices, services, selMods, selSvc, setSelSvc, toggleMod, priceOfMod, billingCycle, setBillingCycle, currency, setCurrency, cart, currentUser, lang, t, publicMode }) {
   if (modulePrices === null) return <p style={{ textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</p>;
   const money = (n) => (n || 0).toLocaleString(numLocale(lang));
   const paidMods = modulePrices.filter((m) => !m.isFree);
@@ -274,7 +285,7 @@ function ModulePickerBlock({ modulePrices, services, selMods, selSvc, setSelSvc,
       {/* خلاصه */}
       <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 14, padding: 18, position: "sticky", top: 16 }}>
         <h4 style={{ fontSize: 13, fontWeight: 700, color: THEME.heading, margin: "0 0 10px" }}>{t("sgPurchaseSummary")}</h4>
-        <div style={{ display: "flex", gap: 4, marginBottom: 10 }}>
+        <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
           {[["yearly", t("subTypeYearly")], ["monthly", t("subTypeMonthly")]].map(([c, lbl]) => (
             <button key={c} type="button" onClick={() => setBillingCycle(c)}
               style={{ flex: 1, border: `1px solid ${billingCycle === c ? THEME.teal : THEME.border}`, background: billingCycle === c ? THEME.tealSoft : "transparent", color: billingCycle === c ? THEME.tealDeep : THEME.text2, borderRadius: 8, padding: "6px 4px", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: THEME.font }}>
@@ -282,22 +293,32 @@ function ModulePickerBlock({ modulePrices, services, selMods, selSvc, setSelSvc,
             </button>
           ))}
         </div>
+        <div style={{ display: "flex", gap: 4, marginBottom: 10 }}>
+          {[["irr", t("sgCurrencyIrr")], ["usd", t("sgCurrencyUsd")], ["eur", t("sgCurrencyEur")]].map(([c, lbl]) => (
+            <button key={c} type="button" onClick={() => setCurrency(c)}
+              style={{ flex: 1, border: `1px solid ${currency === c ? THEME.teal : THEME.border}`, background: currency === c ? THEME.tealSoft : "transparent", color: currency === c ? THEME.tealDeep : THEME.text2, borderRadius: 8, padding: "6px 4px", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: THEME.font }}>
+              {lbl}
+            </button>
+          ))}
+        </div>
         <Row k={t("sgSumModules")} v={cart ? cart.selReal.length.toLocaleString(numLocale(lang)) : "0"} />
         <Row k={t("sgSumModulesPrice")} v={cart ? money(cart.sumAllModules) : "0"} />
-        <Row k={t("sgSumServices")} v={cart ? money(cart.svcRecurring + cart.svcOnce) : "0"} />
+        {currency === "irr" && <Row k={t("sgSumServices")} v={cart ? money(cart.svcRecurring + cart.svcOnce) : "0"} />}
         <div style={{ borderTop: `2px solid ${THEME.border}`, marginTop: 8, paddingTop: 8, display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
           <span style={{ fontSize: 12, color: THEME.text3 }}>{billingCycle === "monthly" ? t("sgFinalMonthly") : t("sgFinalYearly")}</span>
-          <span style={{ fontSize: 17, fontWeight: 800, color: THEME.teal, fontFamily: "monospace" }}>{cart ? money(cart.grandTotal) : "0"}</span>
+          <span style={{ fontSize: 17, fontWeight: 800, color: THEME.teal, fontFamily: "monospace" }}>{cart ? formatCurrencyAmount(cart.grandTotal, currency, lang) : "0"}</span>
         </div>
+        {cart && cart.servicesExcluded && <p style={{ fontSize: 10, color: THEME.warn, margin: "8px 0 0", lineHeight: 1.8 }}>{t("sgServicesExcludedNote")}</p>}
         <p style={{ fontSize: 10, color: THEME.text3, margin: "8px 0 0", lineHeight: 1.8 }}>{t("sgModulesDisclaimer")}</p>
         {publicMode
-          ? <PublicPurchaseForm selMods={selMods} selSvc={selSvc} billingCycle={billingCycle} cart={cart} />
+          ? <PublicPurchaseForm selMods={selMods} selSvc={selSvc} billingCycle={billingCycle} currency={currency} cart={cart} />
           : (cart && cart.selReal.length > 0 && (
             <PaymentMethodsSection
               currentUser={currentUser}
               selectedPlan={null}
               billingCycle={billingCycle}
               amount={cart.grandTotal}
+              currency={currency}
               backupPeriod="none"
               selectedModules={selMods}
               selectedServices={selSvc}
@@ -326,8 +347,9 @@ function Row({ k, v }) {
  * ثبت از طریق Edge Function عمومیِ submit-guest-purchase-request می‌رود؛
  * SuperAdmin («خرید مستقیمِ بازدیدکنندگان») شرکت/حساب را می‌سازد و رسید را
  * تأیید می‌کند. */
-function PublicPurchaseForm({ selMods, selSvc, billingCycle, cart }) {
+function PublicPurchaseForm({ selMods, selSvc, billingCycle, currency, cart }) {
   const { t, lang, dir } = useLanguage();
+  const cur = currency === "usd" || currency === "eur" ? currency : "irr";
   const [companyName, setCompanyName] = useState("");
   const [email, setEmail] = useState("");
   const [payerName, setPayerName] = useState("");
@@ -336,18 +358,18 @@ function PublicPurchaseForm({ selMods, selSvc, billingCycle, cart }) {
   const [receiptImage, setReceiptImage] = useState("");
   const [imageBusy, setImageBusy] = useState(false);
   const [settings, setSettings] = useState(undefined);
-  const [copied, setCopied] = useState(false);
+  const [copiedField, setCopiedField] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
 
   useEffect(() => { loadCardTransferSettings().then(setSettings); }, []);
 
-  const handleCopy = async () => {
+  const handleCopy = async (field, text) => {
     try {
-      await navigator.clipboard.writeText(settings?.cardNumber || "");
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(text || "");
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(""), 2000);
     } catch { /* بی‌اهمیت — کاربر می‌تواند دستی انتخاب/کپی کند */ }
   };
 
@@ -398,16 +420,16 @@ function PublicPurchaseForm({ selMods, selSvc, billingCycle, cart }) {
       <p style={{ fontSize: 11.5, color: THEME.text2, margin: "0 0 10px", lineHeight: 1.9 }}>{t("gprIntro")}</p>
 
       {settings === undefined && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 12 }}>{t("ctpLoadingPaymentInfo")}</p>}
-      {settings && (
+      {settings && cur === "irr" && (
         <div style={{ background: THEME.tealSoft, border: `1px solid ${THEME.teal}`, borderRadius: 12, padding: 14, marginBottom: 12 }}>
           <div style={{ marginBottom: 8 }}>
             <div style={{ fontSize: 11, color: THEME.text2, marginBottom: 4 }}>{t("ctpCardNumber")}</div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               <span style={{ fontSize: 15, fontWeight: 800, color: THEME.heading, letterSpacing: 1, direction: "ltr" }}>{settings.cardNumber || "—"}</span>
               {settings.cardNumber && (
-                <button type="button" onClick={handleCopy}
-                  style={{ display: "flex", alignItems: "center", gap: 5, padding: "4px 9px", borderRadius: 7, border: "none", cursor: "pointer", fontFamily: THEME.font, fontSize: 10.5, fontWeight: 700, background: copied ? THEME.ok : THEME.teal, color: "#fff" }}>
-                  {copied ? <Check size={11} /> : <Copy size={11} />} {copied ? t("ctpCopied") : t("ctpCopyCardNumber")}
+                <button type="button" onClick={() => handleCopy("card", settings.cardNumber)}
+                  style={{ display: "flex", alignItems: "center", gap: 5, padding: "4px 9px", borderRadius: 7, border: "none", cursor: "pointer", fontFamily: THEME.font, fontSize: 10.5, fontWeight: 700, background: copiedField === "card" ? THEME.ok : THEME.teal, color: "#fff" }}>
+                  {copiedField === "card" ? <Check size={11} /> : <Copy size={11} />} {copiedField === "card" ? t("ctpCopied") : t("ctpCopyCardNumber")}
                 </button>
               )}
             </div>
@@ -419,8 +441,50 @@ function PublicPurchaseForm({ selMods, selSvc, billingCycle, cart }) {
             </div>
           )}
           <div style={{ fontSize: 13.5, fontWeight: 800, color: THEME.teal }}>
-            {t("saTomanAmount", { amount: (cart?.grandTotal || 0).toLocaleString(numLocale(lang)) })}
+            {formatCurrencyAmount(cart?.grandTotal, cur, lang)}
           </div>
+        </div>
+      )}
+      {settings && cur !== "irr" && (
+        <div style={{ background: THEME.tealSoft, border: `1px solid ${THEME.teal}`, borderRadius: 12, padding: 14, marginBottom: 12 }}>
+          <div style={{ marginBottom: 8 }}>
+            <div style={{ fontSize: 11, color: THEME.text2, marginBottom: 4 }}>{t("ctpForexAccountNumber")}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 14, fontWeight: 800, color: THEME.heading, letterSpacing: 0.5, direction: "ltr", wordBreak: "break-all" }}>{settings.forexAccountNumber || "—"}</span>
+              {settings.forexAccountNumber && (
+                <button type="button" onClick={() => handleCopy("forex", settings.forexAccountNumber)}
+                  style={{ display: "flex", alignItems: "center", gap: 5, padding: "4px 9px", borderRadius: 7, border: "none", cursor: "pointer", fontFamily: THEME.font, fontSize: 10.5, fontWeight: 700, background: copiedField === "forex" ? THEME.ok : THEME.teal, color: "#fff" }}>
+                  {copiedField === "forex" ? <Check size={11} /> : <Copy size={11} />} {copiedField === "forex" ? t("ctpCopied") : t("ctpCopyAccountNumber")}
+                </button>
+              )}
+            </div>
+          </div>
+          {settings.forexHolderName && (
+            <div style={{ marginBottom: 8 }}>
+              <div style={{ fontSize: 11, color: THEME.text2, marginBottom: 2 }}>{t("ctpToTheNameOf")}</div>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: THEME.heading }}>{settings.forexHolderName}</div>
+            </div>
+          )}
+          <div style={{ fontSize: 13.5, fontWeight: 800, color: THEME.teal }}>
+            {formatCurrencyAmount(cart?.grandTotal, cur, lang)}
+          </div>
+          {settings.forexDescription && (
+            <p style={{ fontSize: 11, color: THEME.text2, lineHeight: 1.9, margin: "8px 0 0", whiteSpace: "pre-wrap" }}>{settings.forexDescription}</p>
+          )}
+          {settings.cryptoAddress && (
+            <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px dashed ${THEME.teal}` }}>
+              <div style={{ fontSize: 11, color: THEME.text2, marginBottom: 4 }}>
+                {t("ctpCryptoAlternative")} {settings.cryptoNetwork && <span style={{ fontWeight: 700, color: THEME.heading }}>({settings.cryptoNetwork})</span>}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 11.5, fontWeight: 700, color: THEME.heading, direction: "ltr", fontFamily: "monospace", wordBreak: "break-all" }}>{settings.cryptoAddress}</span>
+                <button type="button" onClick={() => handleCopy("crypto", settings.cryptoAddress)}
+                  style={{ display: "flex", alignItems: "center", gap: 5, padding: "4px 9px", borderRadius: 7, border: "none", cursor: "pointer", fontFamily: THEME.font, fontSize: 10.5, fontWeight: 700, background: copiedField === "crypto" ? THEME.ok : THEME.teal, color: "#fff" }}>
+                  {copiedField === "crypto" ? <Check size={11} /> : <Copy size={11} />} {copiedField === "crypto" ? t("ctpCopied") : t("ctpCopyAddress")}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
