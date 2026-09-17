@@ -28,8 +28,8 @@ const FONT = 'var(--ihms-font, "Vazirmatn", "IRANSans", Tahoma, system-ui, sans-
 // لینک‌های شبکه‌های اجتماعیِ رسمیِ IHMS — ثابت، مثل الگویِ PUBLIC_APP_URL در
 // shared.js (بدونِ نیاز به مدیریتِ سوپرادمین، چون به‌ندرت تغییر می‌کنند)
 const SOCIAL_LINKS = [
-  { key: "instagram", href: "https://www.instagram.com/ihmsapp?stkn=ZGpmcmd1d3BhYWRn", Icon: Instagram, label: "Instagram" },
-  { key: "linkedin", href: "https://www.linkedin.com/in/integrated-hse-management-system-health-safety-environment-852870437", Icon: Linkedin, label: "LinkedIn" },
+  { key: "instagram", href: "https://www.instagram.com/ihmsapp?stkn=ZGpmcmd1d3BhYWRn", Icon: Instagram, label: "Instagram", color: "#E4405F" },
+  { key: "linkedin", href: "https://www.linkedin.com/in/integrated-hse-management-system-health-safety-environment-852870437", Icon: Linkedin, label: "LinkedIn", color: "#0A66C2" },
 ];
 
 const LP_CSS = `
@@ -78,8 +78,8 @@ const LP_CSS = `
 .ihms-lp .langsw select:hover{border-color:${C.teal}}
 .ihms-lp .langsw .cv{position:absolute;inset-inline-end:9px;pointer-events:none;color:${C.ink3}}
 .ihms-lp .social{display:flex;align-items:center;gap:8px}
-.ihms-lp .social a{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;color:${C.ink2};border:1px solid ${C.line};transition:color .15s ease,border-color .15s ease,background .15s ease}
-.ihms-lp .social a:hover{color:${C.tealDeep};border-color:${C.teal};background:${C.tealSoft}}
+.ihms-lp .social a{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;border:1px solid ${C.line};transition:border-color .15s ease,background .15s ease,opacity .15s ease}
+.ihms-lp .social a:hover{border-color:currentColor;background:${C.bgSoft};opacity:.85}
 .ihms-lp .hamb{display:none;background:none;border:1px solid ${C.line};border-radius:10px;padding:8px;cursor:pointer;color:${C.navy}}
 .ihms-lp .mnav{display:none}
 @media (max-width:980px){
@@ -704,8 +704,8 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
 
   const socialLinks = (
     <div className="social">
-      {SOCIAL_LINKS.map(({ key, href, Icon, label }) => (
-        <a key={key} href={href} target="_blank" rel="noopener noreferrer" aria-label={label}>
+      {SOCIAL_LINKS.map(({ key, href, Icon, label, color }) => (
+        <a key={key} href={href} target="_blank" rel="noopener noreferrer" aria-label={label} style={{ color }}>
           <Icon size={15} />
         </a>
       ))}
