@@ -103,6 +103,9 @@ export async function updateCompany(id, patch) {
   if ("subscriptionType" in patch) dbPatch.subscription_type = patch.subscriptionType;
   if ("subscriptionStatus" in patch) dbPatch.subscription_status = patch.subscriptionStatus;
   if ("subscriptionEndDate" in patch) dbPatch.subscription_end_date = patch.subscriptionEndDate || null;
+  // برای تمدید/کوتاه‌کردنِ دستیِ دوره‌ی آزمایشی (trial_start عمداً دست‌نخورده
+  // می‌ماند — فقط پایانِ دوره جابه‌جا می‌شود، نه شروعش)
+  if ("trialEnd" in patch) dbPatch.trial_end = patch.trialEnd || null;
   if ("storageQuotaMb" in patch) dbPatch.storage_quota_mb = patch.storageQuotaMb;
   if ("notes" in patch) dbPatch.notes = patch.notes;
   // "" / null → از سطحِ پلن ارث می‌برد
