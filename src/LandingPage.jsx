@@ -4,7 +4,6 @@ import {
   FileCheck, HardHat, Boxes, MessagesSquare, FolderOpen, UserCog, LayoutDashboard,
   ArrowLeft, ArrowRight, Check, Menu, X, BarChart3, LineChart, Gauge, Smartphone,
   Zap, Database, FileBarChart, Recycle, Layers, TrendingUp, Bell, Globe, Tag,
-  Instagram, Linkedin,
 } from "lucide-react";
 import { useLanguage } from "./i18n/LanguageContext.jsx";
 
@@ -25,11 +24,44 @@ const C = {
 };
 const FONT = 'var(--ihms-font, "Vazirmatn", "IRANSans", Tahoma, system-ui, sans-serif)';
 
+// آرمِ رسمیِ دو شبکه (نه آیکونِ تک‌رنگِ lucide) — چون رنگ/گرادیانِ برند بخشی
+// از خودِ لوگوست، نه یک currentColor قابل‌تعویض؛ SVG inline با رنگ‌های
+// واقعیِ برند ساخته شده، نه یک پکیجِ npm جدید فقط برایِ دو آیکون.
+function InstagramIcon({ size }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <defs>
+        <radialGradient id="ihms-ig-grad" cx="30%" cy="107%" r="150%">
+          <stop offset="0%" stopColor="#FDF497" />
+          <stop offset="5%" stopColor="#FDF497" />
+          <stop offset="45%" stopColor="#FD5949" />
+          <stop offset="60%" stopColor="#D6249F" />
+          <stop offset="90%" stopColor="#285AEB" />
+        </radialGradient>
+      </defs>
+      <rect x="1" y="1" width="22" height="22" rx="6" fill="url(#ihms-ig-grad)" />
+      <rect x="6.2" y="6.2" width="11.6" height="11.6" rx="3.6" fill="none" stroke="#fff" strokeWidth="1.6" />
+      <circle cx="12" cy="12" r="3.4" fill="none" stroke="#fff" strokeWidth="1.6" />
+      <circle cx="16.4" cy="7.6" r="1" fill="#fff" />
+    </svg>
+  );
+}
+function LinkedinIcon({ size }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="1" y="1" width="22" height="22" rx="6" fill="#0A66C2" />
+      <circle cx="7.2" cy="7.6" r="1.6" fill="#fff" />
+      <rect x="5.8" y="10.4" width="2.8" height="8" rx="0.4" fill="#fff" />
+      <path d="M11 10.4h2.7v1.2c.5-.8 1.4-1.4 2.7-1.4 2 0 3.3 1.3 3.3 3.9v4.3h-2.8v-3.9c0-1.1-.4-1.9-1.5-1.9-.8 0-1.3.6-1.5 1.1-.1.2-.1.5-.1.8v3.9H11v-8z" fill="#fff" />
+    </svg>
+  );
+}
+
 // لینک‌های شبکه‌های اجتماعیِ رسمیِ IHMS — ثابت، مثل الگویِ PUBLIC_APP_URL در
 // shared.js (بدونِ نیاز به مدیریتِ سوپرادمین، چون به‌ندرت تغییر می‌کنند)
 const SOCIAL_LINKS = [
-  { key: "instagram", href: "https://www.instagram.com/ihmsapp?stkn=ZGpmcmd1d3BhYWRn", Icon: Instagram, label: "Instagram", color: "#E4405F" },
-  { key: "linkedin", href: "https://www.linkedin.com/in/integrated-hse-management-system-health-safety-environment-852870437", Icon: Linkedin, label: "LinkedIn", color: "#0A66C2" },
+  { key: "instagram", href: "https://www.instagram.com/ihmsapp?stkn=ZGpmcmd1d3BhYWRn", Icon: InstagramIcon, label: "Instagram" },
+  { key: "linkedin", href: "https://www.linkedin.com/in/integrated-hse-management-system-health-safety-environment-852870437", Icon: LinkedinIcon, label: "LinkedIn" },
 ];
 
 const LP_CSS = `
@@ -78,8 +110,8 @@ const LP_CSS = `
 .ihms-lp .langsw select:hover{border-color:${C.teal}}
 .ihms-lp .langsw .cv{position:absolute;inset-inline-end:9px;pointer-events:none;color:${C.ink3}}
 .ihms-lp .social{display:flex;align-items:center;gap:8px}
-.ihms-lp .social a{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;border:1px solid ${C.line};transition:border-color .15s ease,background .15s ease,opacity .15s ease}
-.ihms-lp .social a:hover{border-color:currentColor;background:${C.bgSoft};opacity:.85}
+.ihms-lp .social a{display:flex;align-items:center;justify-content:center;width:30px;height:30px;transition:transform .15s ease,opacity .15s ease}
+.ihms-lp .social a:hover{transform:translateY(-1px);opacity:.85}
 .ihms-lp .hamb{display:none;background:none;border:1px solid ${C.line};border-radius:10px;padding:8px;cursor:pointer;color:${C.navy}}
 .ihms-lp .mnav{display:none}
 @media (max-width:980px){
@@ -704,9 +736,9 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
 
   const socialLinks = (
     <div className="social">
-      {SOCIAL_LINKS.map(({ key, href, Icon, label, color }) => (
-        <a key={key} href={href} target="_blank" rel="noopener noreferrer" aria-label={label} style={{ color }}>
-          <Icon size={15} />
+      {SOCIAL_LINKS.map(({ key, href, Icon, label }) => (
+        <a key={key} href={href} target="_blank" rel="noopener noreferrer" aria-label={label}>
+          <Icon size={30} />
         </a>
       ))}
     </div>
