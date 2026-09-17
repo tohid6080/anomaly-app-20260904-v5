@@ -10,6 +10,26 @@ export function formatCurrencyAmount(amount, currency, lang) {
   return translate(lang, key, { amount: Number(amount || 0).toLocaleString(numLocale(lang)) });
 }
 
+// زنجیره‌ی بازگشتِ محتوایِ چندزبانه (نامِ ماژول/خدمت، توضیحاتِ خدمت):
+// زبانِ خواسته‌شده → انگلیسی → فارسی — همان الگویِ translate() در
+// translations.js، برای فیلدهایی که ادمین آزادانه تایپ می‌کند (نه یک
+// کلیدِ ثابتِ i18n). fa همیشه پر است (الزامی هنگامِ ساختِ ردیف)، پس
+// زنجیره هیچ‌وقت به رشته‌ی خالی نمی‌رسد.
+function localizedField(faVal, enVal, deVal, lang) {
+  if (lang === "de") return deVal || enVal || faVal || "";
+  if (lang === "en") return enVal || faVal || "";
+  return faVal || "";
+}
+export function moduleLabelFor(m, lang) {
+  return localizedField(m?.label, m?.labelEn, m?.labelDe, lang) || m?.moduleKey || "";
+}
+export function serviceNameFor(s, lang) {
+  return localizedField(s?.name, s?.nameEn, s?.nameDe, lang);
+}
+export function serviceDescriptionFor(s, lang) {
+  return localizedField(s?.description, s?.descriptionEn, s?.descriptionDe, lang);
+}
+
 /* ============================================================================ *
  * Module pricing & services — لایه‌ی داده + محاسبه‌ی خالصِ سبدِ خرید.
  *
@@ -67,7 +87,7 @@ export async function loadServices(opts) {
 
 function mpFromSnap(m) {
   return {
-    moduleKey: m.moduleKey, label: m.label || "",
+    moduleKey: m.moduleKey, label: m.label || "", labelEn: m.labelEn || "", labelDe: m.labelDe || "",
     priceMonthly: Number(m.priceMonthly) || 0, priceYearly: Number(m.priceYearly) || 0,
     priceMonthlyUsd: Number(m.priceMonthlyUsd) || 0, priceYearlyUsd: Number(m.priceYearlyUsd) || 0,
     priceMonthlyEur: Number(m.priceMonthlyEur) || 0, priceYearlyEur: Number(m.priceYearlyEur) || 0,
@@ -77,7 +97,8 @@ function mpFromSnap(m) {
 }
 function svcFromSnap(s) {
   return {
-    id: s.id, name: s.name || "", description: s.description || "",
+    id: s.id, name: s.name || "", nameEn: s.nameEn || "", nameDe: s.nameDe || "",
+    description: s.description || "", descriptionEn: s.descriptionEn || "", descriptionDe: s.descriptionDe || "",
     priceWeekly: Number(s.priceWeekly) || 0, priceMonthly: Number(s.priceMonthly) || 0, priceYearly: Number(s.priceYearly) || 0,
     period: s.period || "monthly", sortOrder: s.sortOrder ?? 0, isActive: true,
   };
@@ -109,14 +130,15 @@ export async function publishPricingSnapshot({ modules, services }, publishedBy)
   const snap = {
     v: 1, publishedAt: new Date().toISOString(), publishedBy: publishedBy || "",
     modules: (modules || []).map((m) => ({
-      moduleKey: m.moduleKey, label: m.label || "",
+      moduleKey: m.moduleKey, label: m.label || "", labelEn: m.labelEn || "", labelDe: m.labelDe || "",
       priceMonthly: Number(m.priceMonthly) || 0, priceYearly: Number(m.priceYearly) || 0,
       priceMonthlyUsd: Number(m.priceMonthlyUsd) || 0, priceYearlyUsd: Number(m.priceYearlyUsd) || 0,
       priceMonthlyEur: Number(m.priceMonthlyEur) || 0, priceYearlyEur: Number(m.priceYearlyEur) || 0,
       isFree: !!m.isFree, requires: Array.isArray(m.requires) ? m.requires : [], sortOrder: m.sortOrder ?? 0,
     })),
     services: (services || []).map((s) => ({
-      id: s.id, name: s.name || "", description: s.description || "",
+      id: s.id, name: s.name || "", nameEn: s.nameEn || "", nameDe: s.nameDe || "",
+      description: s.description || "", descriptionEn: s.descriptionEn || "", descriptionDe: s.descriptionDe || "",
       priceWeekly: Number(s.priceWeekly) || 0, priceMonthly: Number(s.priceMonthly) || 0, priceYearly: Number(s.priceYearly) || 0,
       period: s.period || "monthly", sortOrder: s.sortOrder ?? 0,
     })),
@@ -128,6 +150,8 @@ function mpFromRow(r) {
   return {
     moduleKey: r.module_key,
     label: r.label || "",
+    labelEn: r.label_en || "",
+    labelDe: r.label_de || "",
     priceMonthly: Number(r.price_monthly) || 0,
     priceYearly: Number(r.price_yearly) || 0,
     priceMonthlyUsd: Number(r.price_monthly_usd) || 0,
@@ -144,7 +168,11 @@ function svcFromRow(r) {
   return {
     id: r.id,
     name: r.name || "",
+    nameEn: r.name_en || "",
+    nameDe: r.name_de || "",
     description: r.description || "",
+    descriptionEn: r.description_en || "",
+    descriptionDe: r.description_de || "",
     priceWeekly: Number(r.price_weekly) || 0,
     priceMonthly: Number(r.price_monthly) || 0,
     priceYearly: Number(r.price_yearly) || 0,
@@ -158,6 +186,8 @@ function svcFromRow(r) {
 export async function saveModulePrice(rec, updatedBy) {
   const body = {
     label: rec.label || "",
+    label_en: rec.labelEn || "",
+    label_de: rec.labelDe || "",
     price_monthly: Number(rec.priceMonthly) || 0,
     price_yearly: Number(rec.priceYearly) || 0,
     price_monthly_usd: Number(rec.priceMonthlyUsd) || 0,
@@ -185,7 +215,11 @@ export async function saveModulePrice(rec, updatedBy) {
 export async function upsertService(rec, createdBy) {
   const body = {
     name: rec.name || "",
+    name_en: rec.nameEn || "",
+    name_de: rec.nameDe || "",
     description: rec.description || "",
+    description_en: rec.descriptionEn || "",
+    description_de: rec.descriptionDe || "",
     price_weekly: Number(rec.priceWeekly) || 0,
     price_monthly: Number(rec.priceMonthly) || 0,
     price_yearly: Number(rec.priceYearly) || 0,

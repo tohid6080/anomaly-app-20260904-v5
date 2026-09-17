@@ -11,7 +11,7 @@ import AccountManagement, { AccountForm, emptyForm as emptyAccountForm } from ".
 import WelcomeMessageModal from "./WelcomeMessageModal.jsx";
 import PricingConsole from "./PricingConsole.jsx";
 import { loadCompanyModules, addCompanyModule, updateCompanyModule, removeCompanyModule } from "./companyModulesApi.js";
-import { loadModulePrices, loadServices } from "../pricingApi.js";
+import { loadModulePrices, loadServices, formatCurrencyAmount } from "../pricingApi.js";
 import AdminAnalytics from "../admin/AdminAnalytics.jsx";
 import LandingPageManagementTab from "./LandingPageManagementTab.jsx";
 import { toJalaliSafe, toJalaliDateTime, JalaliDateInput, JalaliDateTimeInput } from "../personnel/jalaliDate.jsx";
@@ -3123,7 +3123,7 @@ function CardTransferSettingsForm({ currentAdmin }) {
 }
 
 function CardTransferPaymentsPage({ currentAdmin }) {
-  const { t, dir } = useLanguage();
+  const { t, lang, dir } = useLanguage();
   const [statusFilter, setStatusFilter] = useState("awaiting_review");
   const [rows, setRows] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
@@ -3201,7 +3201,7 @@ function CardTransferPaymentsPage({ currentAdmin }) {
                       <tr style={{ borderBottom: `1px solid ${THEME.border}`, cursor: "pointer" }} onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}>
                         <td style={{ padding: "8px", fontWeight: 600 }}>{r.companyName || "—"}</td>
                         <td style={{ padding: "8px" }}>{r.planName || "—"} — {r.billingCycle === "monthly" ? t("saBillingMonthly") : t("saBillingYearly")}</td>
-                        <td style={{ padding: "8px", textAlign: "center", fontWeight: 700, color: THEME.heading }}>{r.amount.toLocaleString(numLocale())}</td>
+                        <td style={{ padding: "8px", textAlign: "center", fontWeight: 700, color: THEME.heading }}>{formatCurrencyAmount(r.amount, r.currency, lang)}</td>
                         <td style={{ padding: "8px" }}>{r.payerName} <span style={{ color: THEME.text3, fontSize: 10.5, direction: "ltr", display: "inline-block" }}>({r.payerPhone})</span></td>
                         <td style={{ padding: "8px", textAlign: "center", color: THEME.text3, whiteSpace: "nowrap" }}>{toJalaliDateTime(r.createdAt)}</td>
                         <td style={{ padding: "8px", textAlign: "center" }}>
@@ -3213,6 +3213,8 @@ function CardTransferPaymentsPage({ currentAdmin }) {
                           <td colSpan={6} style={{ padding: "10px 12px", background: THEME.bg }}>
                             <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 10 }}>
                               <p style={{ fontSize: 12, color: THEME.text2, margin: 0 }}>{t("saCtTrackingNo", { num: r.trackingNumber || "—" })}</p>
+                              {r.payerEmail && <p style={{ fontSize: 12, color: THEME.text2, margin: 0, direction: "ltr" }}>{r.payerEmail}</p>}
+                              {r.payerCompanyName && <p style={{ fontSize: 12, color: THEME.text2, margin: 0 }}>{t("saCtPayerCompanyName", { name: r.payerCompanyName })}</p>}
                               {r.receiptImage && (
                                 <button type="button" style={btnStyle(THEME.navyMid)} onClick={() => setViewerSrc(r.receiptImage)}>{t("saCtViewReceipt")}</button>
                               )}
@@ -3409,7 +3411,7 @@ function TrialRequestsPage({ currentAdmin }) {
 // واقعیِ شرکت/حساب و تأییدِ نهاییِ رسید همچنان از مسیرهای موجود («شرکت‌ها» +
 // «پرداخت‌های کارت‌به‌کارت») به‌صورت دستی انجام می‌شود.
 function GuestPurchaseRequestsPage({ currentAdmin }) {
-  const { t, dir } = useLanguage();
+  const { t, lang, dir } = useLanguage();
   const [statusFilter, setStatusFilter] = useState("pending");
   const [rows, setRows] = useState(null);
   const [moduleLabels, setModuleLabels] = useState({});
@@ -3500,7 +3502,7 @@ function GuestPurchaseRequestsPage({ currentAdmin }) {
                         {r.fullName}
                         <div style={{ fontSize: 10.5, color: THEME.text3, direction: "ltr", textAlign: "start" }}>{r.phone}</div>
                       </td>
-                      <td style={{ padding: "8px", textAlign: "center", fontFamily: "monospace", fontWeight: 700 }}>{r.amount.toLocaleString(numLocale())}</td>
+                      <td style={{ padding: "8px", textAlign: "center", fontFamily: "monospace", fontWeight: 700 }}>{formatCurrencyAmount(r.amount, r.currency, lang)}</td>
                       <td style={{ padding: "8px", textAlign: "center", color: THEME.text3, whiteSpace: "nowrap" }}>{toJalaliDateTime(r.createdAt)}</td>
                       <td style={{ padding: "8px", textAlign: "center" }}>
                         <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: sm.bg, color: sm.color, fontWeight: 700 }}>{t(sm.labelKey)}</span>

@@ -109,7 +109,7 @@ export default function PricingConsole({ companies, currentAdmin, onChanged }) {
   // ---------- ویرایشِ ردیف‌ها ----------
   const setRow = (k, patch) => setMp((rows) => rows.map((r) => (r.moduleKey === k ? { ...r, ...patch } : r)));
   const setSvcRow = (r, patch) => setSvc((rows) => rows.map((y) => (y === r ? { ...y, ...patch } : y)));
-  const addSvc = () => setSvc((rows) => [...rows, { id: "", name: t("mpNewService"), description: "", priceWeekly: 0, priceMonthly: 0, priceYearly: 0, period: "monthly", sortOrder: (rows.length + 1) * 10, isActive: true, __new: true }]);
+  const addSvc = () => setSvc((rows) => [...rows, { id: "", name: t("mpNewService"), nameEn: "", nameDe: "", description: "", descriptionEn: "", descriptionDe: "", priceWeekly: 0, priceMonthly: 0, priceYearly: 0, period: "monthly", sortOrder: (rows.length + 1) * 10, isActive: true, __new: true }]);
   const removeSvc = async (r) => {
     if (r.__new) { setSvc((rows) => rows.filter((x) => x !== r)); return; }
     if (!window.confirm(t("mpConfirmDeleteService"))) return;
@@ -276,8 +276,15 @@ export default function PricingConsole({ companies, currentAdmin, onChanged }) {
                       return (
                       <tr key={r.moduleKey}>
                         <td className="pc-sticky">
-                          <div style={{ fontWeight: 600, color: THEME.text }}>{r.label || r.moduleKey}</div>
-                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+                          <input value={r.label} onChange={(e) => setRow(r.moduleKey, { label: e.target.value })}
+                            style={{ ...labelIn, fontWeight: 700 }} placeholder={t("pcLabelFa")} dir="rtl" />
+                          <div style={{ display: "flex", gap: 4, marginTop: 3 }}>
+                            <input value={r.labelEn} onChange={(e) => setRow(r.moduleKey, { labelEn: e.target.value })}
+                              style={labelIn} placeholder={t("pcLabelEn")} dir="ltr" />
+                            <input value={r.labelDe} onChange={(e) => setRow(r.moduleKey, { labelDe: e.target.value })}
+                              style={labelIn} placeholder={t("pcLabelDe")} dir="ltr" />
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
                             <span style={{ fontFamily: "monospace", fontSize: 9.5, color: THEME.text3 }}>{r.moduleKey}</span>
                             <select className="pc-grpsel" value={groupOf(r.moduleKey)} onChange={(e) => setModuleGroup(r.moduleKey, e.target.value)}>
                               {(grp.groups.length ? grp.groups : groupList).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
@@ -339,7 +346,13 @@ export default function PricingConsole({ companies, currentAdmin, onChanged }) {
             <tbody>
               {svc.map((r, i) => (
                 <tr key={r.id || "new" + i}>
-                  <td className="pc-sticky"><input value={r.name} onChange={(e) => setSvcRow(r, { name: e.target.value })} style={{ ...cellIn, width: 150, fontFamily: THEME.font, textAlign: "start" }} /></td>
+                  <td className="pc-sticky">
+                    <input value={r.name} onChange={(e) => setSvcRow(r, { name: e.target.value })} style={{ ...cellIn, width: 150, fontFamily: THEME.font, textAlign: "start" }} dir="rtl" />
+                    <div style={{ display: "flex", gap: 4, marginTop: 3 }}>
+                      <input value={r.nameEn} onChange={(e) => setSvcRow(r, { nameEn: e.target.value })} style={{ ...labelIn, width: 73 }} placeholder={t("pcLabelEn")} dir="ltr" />
+                      <input value={r.nameDe} onChange={(e) => setSvcRow(r, { nameDe: e.target.value })} style={{ ...labelIn, width: 73 }} placeholder={t("pcLabelDe")} dir="ltr" />
+                    </div>
+                  </td>
                   <td><input type="number" step="100000" value={r.priceWeekly} onChange={(e) => setSvcRow(r, { priceWeekly: Number(e.target.value) || 0 })} style={cellIn} /></td>
                   <td><input type="number" step="100000" value={r.priceMonthly} onChange={(e) => setSvcRow(r, { priceMonthly: Number(e.target.value) || 0 })} style={cellIn} /></td>
                   <td><input type="number" step="100000" value={r.priceYearly} onChange={(e) => setSvcRow(r, { priceYearly: Number(e.target.value) || 0 })} style={cellIn} /></td>
@@ -351,7 +364,13 @@ export default function PricingConsole({ companies, currentAdmin, onChanged }) {
                       <option value="once">{t("mpPeriodOnce")}</option>
                     </select>
                   </td>
-                  <td><input value={r.description} onChange={(e) => setSvcRow(r, { description: e.target.value })} style={{ ...cellIn, width: 180, fontFamily: THEME.font, textAlign: "start" }} /></td>
+                  <td>
+                    <input value={r.description} onChange={(e) => setSvcRow(r, { description: e.target.value })} style={{ ...cellIn, width: 180, fontFamily: THEME.font, textAlign: "start" }} dir="rtl" />
+                    <div style={{ display: "flex", gap: 4, marginTop: 3 }}>
+                      <input value={r.descriptionEn} onChange={(e) => setSvcRow(r, { descriptionEn: e.target.value })} style={{ ...labelIn, width: 87 }} placeholder={t("pcLabelEn")} dir="ltr" />
+                      <input value={r.descriptionDe} onChange={(e) => setSvcRow(r, { descriptionDe: e.target.value })} style={{ ...labelIn, width: 87 }} placeholder={t("pcLabelDe")} dir="ltr" />
+                    </div>
+                  </td>
                   <td>
                     <label className="pc-toggle">
                       <input type="checkbox" checked={r.isActive !== false} onChange={(e) => setSvcRow(r, { isActive: e.target.checked })} />
@@ -430,6 +449,7 @@ function shortLabel(s) {
 }
 
 const cellIn = { width: 96, padding: "5px 7px", border: `1px solid ${THEME.border}`, borderRadius: 7, background: THEME.surface, color: THEME.text, fontSize: 11.5, fontFamily: "monospace", textAlign: "center", boxSizing: "border-box" };
+const labelIn = { width: "100%", padding: "4px 7px", border: `1px solid ${THEME.border}`, borderRadius: 6, background: THEME.surface, color: THEME.text, fontSize: 11, boxSizing: "border-box" };
 const CSS = `
 .pc-actionbar{position:sticky;top:0;z-index:6;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
   background:var(--ihms-surface-2,#12313f);border:1px solid var(--ihms-border,#20404f);border-radius:10px;padding:9px 12px;margin-bottom:12px}

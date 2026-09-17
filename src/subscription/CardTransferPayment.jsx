@@ -21,8 +21,14 @@ export default function PaymentMethodsSection({ currentUser, selectedPlan, billi
   const [settings, setSettings] = useState(undefined); // undefined = در حال بارگذاری
   const [copiedField, setCopiedField] = useState("");
 
-  const [payerName, setPayerName] = useState(currentUser?.name || "");
+  // عمداً از currentUser?.name پیش‌فرض گرفته نمی‌شود (برخلافِ payerPhone
+  // زیرِ همین خط) — این پیش‌فرض بود که باعث می‌شد فیلدِ نام برایِ برخی
+  // حساب‌ها (مثلاً حساب‌هایی که از مسیرِ آزمایشی ساخته شده‌اند) از قبل با
+  // مقداری نامرتبط پر شده باشد؛ کاربر همیشه خودش تایپ می‌کند.
+  const [payerName, setPayerName] = useState("");
   const [payerPhone, setPayerPhone] = useState(currentUser?.phone || "");
+  const [payerEmail, setPayerEmail] = useState("");
+  const [payerCompanyName, setPayerCompanyName] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
   const [receiptImage, setReceiptImage] = useState("");
   const [imageBusy, setImageBusy] = useState(false);
@@ -63,8 +69,8 @@ export default function PaymentMethodsSection({ currentUser, selectedPlan, billi
     setSaving(true);
     const result = await submitCardTransferReceipt(
       {
-        planId: selectedPlan?.id || "", billingCycle, amount, backupPeriod,
-        payerName, payerPhone, trackingNumber, receiptImage,
+        planId: selectedPlan?.id || "", billingCycle, amount, currency: cur, backupPeriod,
+        payerName, payerPhone, payerEmail, payerCompanyName, trackingNumber, receiptImage,
         selectedModules: Array.isArray(selectedModules) ? selectedModules : undefined,
         selectedServices: Array.isArray(selectedServices) ? selectedServices : undefined,
         resolvedPlanId: resolvedPlanId || undefined,
@@ -220,6 +226,12 @@ export default function PaymentMethodsSection({ currentUser, selectedPlan, billi
 
           <label style={styles.label}>{t("ctpMobileNumber")}</label>
           <input style={styles.input} value={payerPhone} onChange={(e) => setPayerPhone(e.target.value.replace(/[^\d]/g, "").slice(0, 11))} dir="ltr" inputMode="numeric" maxLength={11} placeholder="09xxxxxxxxx" />
+
+          <label style={styles.label}>{t("ctpEmailOptional")}</label>
+          <input style={styles.input} type="email" value={payerEmail} onChange={(e) => setPayerEmail(e.target.value)} dir="ltr" />
+
+          <label style={styles.label}>{t("ctpCompanyNameOptional")}</label>
+          <input style={styles.input} value={payerCompanyName} onChange={(e) => setPayerCompanyName(e.target.value)} dir={dir} />
 
           <label style={styles.label}>{t("ctpTransactionTrackingNumberOptional")}</label>
           <input style={styles.input} value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} dir="ltr" />
