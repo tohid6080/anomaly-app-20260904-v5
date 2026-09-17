@@ -2048,6 +2048,10 @@ export const translations = {
     "fa": "درخواست آزمایشیِ در انتظار",
     "en": "Pending trial requests"
   },
+  "saPendingReceiptsLabel": {
+    "fa": "رسید/درخواست خریدِ در انتظار بررسی",
+    "en": "Receipts/purchase requests pending review"
+  },
   "saRecentActivity": {
     "fa": "فعالیت اخیر",
     "en": "Recent Activity"
@@ -8691,6 +8695,9 @@ export const translations = {
   "saCtRejectReceipt": { "fa": "رد رسید", "en": "Reject Receipt" },
   "saCtRejectReasonPlaceholder": { "fa": "دلیل رد (الزامی)", "en": "Rejection reason (required)" },
   "saCtSubmitReject": { "fa": "ثبت رد رسید", "en": "Submit Rejection" },
+  "saCtMergedNote": { "fa": "این فهرست، رسیدهای پرداختِ شرکت‌های فعال و درخواست‌های خریدِ مستقیمِ بازدیدکنندگان (بدون حساب) را با هم نشان می‌دهد. برای شرکت‌های فعال، تأیید بلافاصله اشتراک را فعال می‌کند؛ برای درخواست‌های بازدیدکننده، تأیید فقط تصمیم را ثبت می‌کند و ساختِ شرکت/حساب کاربری همچنان از بخش «شرکت‌ها» به‌صورت دستی انجام می‌شود.", "en": "This list shows payment receipts from existing companies together with direct purchase requests from visitors who have no account yet. For existing companies, approving activates the subscription immediately; for visitor requests, approving only records the decision — creating the company/account is still done manually from the \"Companies\" section." },
+  "saCtSourceCompany": { "fa": "شرکتِ فعال", "en": "Existing company" },
+  "saCtSourceGuest": { "fa": "بازدیدکننده", "en": "Visitor" },
 
   // SuperAdmin › Trial Requests
   "saTrStatusPending": { "fa": "در انتظار بررسی", "en": "Pending review" },
@@ -8713,16 +8720,8 @@ export const translations = {
   "saTrNotePlaceholder": { "fa": "یادداشت (اختیاری برای تأیید، الزامی برای رد)", "en": "Note (optional for approval, required for rejection)" },
   "saTrApprove": { "fa": "تأیید درخواست", "en": "Approve Request" },
   "saTrReject": { "fa": "رد درخواست", "en": "Reject Request" },
-  "saNavGuestPurchases": { "fa": "خرید مستقیمِ بازدیدکنندگان", "en": "Guest Purchase Requests" },
-  "saPendingGuestPurchasesLabel": { "fa": "خریدِ بازدیدکننده در انتظار بررسی", "en": "Guest purchases pending review" },
-  "saGprNote": { "fa": "این درخواست‌ها از صفحه‌ی عمومیِ «مشاهده پلن‌ها برای خرید» می‌آیند — بازدیدکننده هنوز حساب ندارد. تأیید اینجا فقط تصمیم را ثبت می‌کند؛ ساختِ شرکت/حساب کاربری از بخش «شرکت‌ها» و تأییدِ نهاییِ رسید از بخش «پرداخت‌های کارت‌به‌کارت» همچنان به‌صورت دستی انجام می‌شود.", "en": "These requests come from the public \"View plans to buy\" page — the visitor has no account yet. Approving here only records the decision; creating the company/account from \"Companies\" and the final receipt approval from \"Card-transfer payments\" are still done manually." },
-  "saGprColAmount": { "fa": "مبلغ", "en": "Amount" },
-  "saGprBillingCycleLabel": { "fa": "دوره: ", "en": "Cycle: " },
-  "saGprPayerLabel": { "fa": "واریزکننده: ", "en": "Payer: " },
-  "saGprTrackingLabel": { "fa": "شماره پیگیری: ", "en": "Tracking number: " },
   "saGprColModules": { "fa": "ماژول‌های انتخابی: ", "en": "Selected modules: " },
   "saGprColServices": { "fa": "خدماتِ انتخابی: ", "en": "Selected services: " },
-  "saGprViewReceipt": { "fa": "مشاهده‌ی رسید", "en": "View receipt" },
 
   // SuperAdmin › Change own password
   "saCpBothRequired": { "fa": "رمز فعلی و رمز جدید هر دو الزامی است", "en": "Both the current and new password are required" },
