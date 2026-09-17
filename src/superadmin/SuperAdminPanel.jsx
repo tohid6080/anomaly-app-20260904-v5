@@ -23,20 +23,20 @@ import {
   SUBSCRIPTION_TYPES, SUBSCRIPTION_STATUSES,
   loadPlans, setCompanySubscriptionContract, loadCompanySubscriptionHistory,
   computeContractAmount, computeMonthlyRecurringAmount,
-  computePaymentStatus, isPaymentOverdue, computeMonthlyPaymentAlarm, computeSubscriptionAlertTier,
+  computePaymentStatus, isPaymentOverdue, computeMonthlyPaymentAlarm, computeSubscriptionAlertTier, effectiveExpiryDate,
   loadCompanyUsageStats, loadRecentLogins, loadRecentFailedLogins, computeInactiveCompanies,
-  loadAuditLog, loadStorageUsage, setStorageCapacity, storageUsageStatus,
+  loadAuditLog, deleteAuditLogEntry, loadStorageUsage, setStorageCapacity, storageUsageStatus,
   loadCompanyBackups, loadBackupStorageUsage, triggerCompanyBackup, getBackupDownloadUrl,
   deleteCompanyBackup, restoreCompanyBackup, backupStatusMeta, BACKUP_TIERS,
   createBackupImportUpload, uploadBackupImport, validateBackupImport, restoreBackupImport, deleteBackupImport,
   BACKUP_MODULES, BACKUP_MODULE_KEYS, SHAREABLE_MODULES,
   copyBowtiesToCompany, copyRiskKnowledgeToCompany,
-  loadCardTransferPayments, approveCardTransferPayment, rejectCardTransferPayment, saveCardTransferSettings,
-  loadTrialRequests, approveTrialRequest, rejectTrialRequest,
-  loadGuestPurchaseRequests, approveGuestPurchaseRequest, rejectGuestPurchaseRequest,
+  loadCardTransferPayments, approveCardTransferPayment, rejectCardTransferPayment, deleteCardTransferPayment, saveCardTransferSettings,
+  loadTrialRequests, approveTrialRequest, rejectTrialRequest, deleteTrialRequest,
+  loadGuestPurchaseRequests, approveGuestPurchaseRequest, rejectGuestPurchaseRequest, deleteGuestPurchaseRequest,
 } from "./superAdminApi.js";
 import { computeSubscriptionAccess, loadOnlinePaymentsForCompany, loadCardTransferSettings } from "../subscriptionApi.js";
-import { loadErrorReports, updateErrorReportStatus } from "../errorReportsApi.js";
+import { loadErrorReports, updateErrorReportStatus, deleteErrorReport } from "../errorReportsApi.js";
 import DocumentViewerModal from "../personnel/DocumentViewerModal.jsx";
 import LiveChatAdminDock from "../livechat/LiveChatAdminDock.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
@@ -314,7 +314,7 @@ function DashboardOverview({ companies, summary, usageStats, onNavigate, openErr
   };
 
   // هشدار پایان اشتراک — پلکان دقیق (۳۰/۱۵/۷/۳/امروز/منقضی)، نه فقط یک بازه‌ی ساده
-  const subscriptionAlertCount = companies.filter((c) => computeSubscriptionAlertTier(c.subscriptionEndDate)).length;
+  const subscriptionAlertCount = companies.filter((c) => computeSubscriptionAlertTier(effectiveExpiryDate(c))).length;
   const totalPersonnel = Object.values(usageStats?.personnelByCompany || {}).reduce((a, b) => a + b, 0);
   const totalAnomalies = Object.values(usageStats?.anomalyByCompany || {}).reduce((a, b) => a + b, 0);
 
@@ -2891,7 +2891,18 @@ function ChangeLogPage({ companies }) {
 function AuditLogPage({ companies }) {
   const { t } = useLanguage();
   const [rows, setRows] = useState(null);
-  useEffect(() => { loadAuditLog(100).then(setRows); }, []);
+  const [deletingId, setDeletingId] = useState(null);
+  const load = () => loadAuditLog(100).then(setRows);
+  useEffect(() => { load(); }, []);
+
+  const handleDelete = async (r) => {
+    if (!confirm(t("commonConfirmDeleteGeneric"))) return;
+    setDeletingId(r.id);
+    const result = await deleteAuditLogEntry(r.id);
+    setDeletingId(null);
+    if (result?.__error) { alert(result.message); return; }
+    load();
+  };
 
   const ACTION_LABELS = {
     create_account: t("saActionCreateAccount"), update_account: t("saActionUpdateAccount"), deactivate_account: t("saActionDeactivateAccount"),
@@ -2919,6 +2930,7 @@ function AuditLogPage({ companies }) {
                 <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColTargetUsername")}</th>
                 <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColPerformedBy")}</th>
                 <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColTime")}</th>
+                <th style={{ textAlign: "center", padding: "6px 8px" }}></th>
               </tr>
             </thead>
             <tbody>
@@ -2929,6 +2941,12 @@ function AuditLogPage({ companies }) {
                   <td style={{ padding: "8px", textAlign: "center", direction: "ltr" }}>{r.target_username || "—"}</td>
                   <td style={{ padding: "8px", textAlign: "center" }}>{r.performed_by} ({TARGET_LABELS[r.performed_by_role] || r.performed_by_role})</td>
                   <td style={{ padding: "8px", textAlign: "center", color: THEME.text3 }}>{toJalaliSafe(r.created_at)}</td>
+                  <td style={{ padding: "8px", textAlign: "center" }}>
+                    <button type="button" onClick={() => handleDelete(r)} disabled={deletingId === r.id} aria-label={t("commonDelete")}
+                      style={{ background: "transparent", border: "none", color: THEME.danger, cursor: "pointer", padding: 4, display: "inline-flex" }}>
+                      <Trash2 size={13} />
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -2971,6 +2989,16 @@ function ErrorReportsPage({ currentAdmin }) {
   const handleSetStatus = async (r, status) => {
     setSaving(true);
     const result = await updateErrorReportStatus(r.id, status, noteDraft, currentAdmin?.fullName || currentAdmin?.username);
+    setSaving(false);
+    if (result?.__error) { alert(result.message); return; }
+    setExpandedId(null);
+    load();
+  };
+
+  const handleDelete = async (r) => {
+    if (!confirm(t("commonConfirmDeleteGeneric"))) return;
+    setSaving(true);
+    const result = await deleteErrorReport(r.id);
     setSaving(false);
     if (result?.__error) { alert(result.message); return; }
     setExpandedId(null);
@@ -3051,6 +3079,7 @@ function ErrorReportsPage({ currentAdmin }) {
                             <button type="button" style={btnStyle("#1d4ed8")} disabled={saving} onClick={() => handleSetStatus(r, "reviewed")}>{t("saErMarkReviewed")}</button>
                             <button type="button" style={btnStyle(THEME.ok)} disabled={saving} onClick={() => handleSetStatus(r, "resolved")}>{t("saErMarkResolved")}</button>
                             {r.status !== "open" && <button type="button" style={btnStyle(THEME.text3)} disabled={saving} onClick={() => handleSetStatus(r, "open")}>{t("saErReopen")}</button>}
+                            <button type="button" style={btnStyle(THEME.danger)} disabled={saving} onClick={() => handleDelete(r)}>{t("commonDelete")}</button>
                           </div>
                         </td>
                       </tr>
@@ -3240,6 +3269,15 @@ function CardTransferPaymentsPage({ currentAdmin }) {
     setExpandedId(null);
     load();
   };
+  const handleDelete = async (r) => {
+    if (!confirm(t("commonConfirmDeleteGeneric"))) return;
+    setSaving(true);
+    const result = r.source === "company" ? await deleteCardTransferPayment(r.id) : await deleteGuestPurchaseRequest(r.id);
+    setSaving(false);
+    if (result?.__error) { alert(result.message); return; }
+    setExpandedId(null);
+    load();
+  };
 
   const statusMetaFor = (r) => (r.source === "company"
     ? (CARD_PAYMENT_STATUS_META[r.status] || CARD_PAYMENT_STATUS_META.awaiting_review)
@@ -3362,6 +3400,9 @@ function CardTransferPaymentsPage({ currentAdmin }) {
                                 </div>
                               </div>
                             )}
+                            <div style={{ marginTop: 10 }}>
+                              <button type="button" style={btnStyle(THEME.danger)} disabled={saving} onClick={() => handleDelete(r)}>{t("commonDelete")}</button>
+                            </div>
                           </td>
                         </tr>
                       )}
@@ -3426,6 +3467,16 @@ function TrialRequestsPage({ currentAdmin }) {
     setSaving(false);
     if (result?.__error) { alert(result.message); return; }
     setShowRejectFor(null); setExpandedId(null);
+    load();
+  };
+
+  const handleDelete = async (r) => {
+    if (!confirm(t("commonConfirmDeleteGeneric"))) return;
+    setSaving(true);
+    const result = await deleteTrialRequest(r.id);
+    setSaving(false);
+    if (result?.__error) { alert(result.message); return; }
+    setExpandedId(null);
     load();
   };
 
@@ -3515,6 +3566,9 @@ function TrialRequestsPage({ currentAdmin }) {
                               </div>
                             </div>
                           )}
+                          <div style={{ marginTop: 10 }}>
+                            <button type="button" style={btnStyle(THEME.danger)} disabled={saving} onClick={() => handleDelete(r)}>{t("commonDelete")}</button>
+                          </div>
                         </td>
                       </tr>
                     )}
@@ -3612,7 +3666,7 @@ function SystemInsights({ companies }) {
   const companyName = (id) => companies.find((c) => c.id === id)?.name || "—";
 
   const subscriptionAlerts = companies
-    .map((c) => ({ company: c, tier: computeSubscriptionAlertTier(c.subscriptionEndDate) }))
+    .map((c) => ({ company: c, tier: computeSubscriptionAlertTier(effectiveExpiryDate(c)) }))
     .filter((x) => x.tier);
 
   const paymentAlerts = companies
@@ -3642,7 +3696,7 @@ function SystemInsights({ companies }) {
             {subscriptionAlerts.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saNoneFound")}</p>}
             {subscriptionAlerts.map(({ company: c, tier }) => (
               <div key={c.id} style={{ fontSize: 12, padding: "5px 0", borderBottom: `1px solid ${THEME.border}`, display: "flex", justifyContent: "space-between" }}>
-                <span>{c.name}{t("saExpiryLabel", { date: toJalaliSafe(c.subscriptionEndDate) })}</span>
+                <span>{c.name}{t("saExpiryLabel", { date: toJalaliSafe(effectiveExpiryDate(c)) })}</span>
                 <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: tier.bg, color: tier.color, fontWeight: 600 }}>{tier.labelKey ? t(tier.labelKey) : tier.label}</span>
               </div>
             ))}

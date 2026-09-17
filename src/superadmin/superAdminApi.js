@@ -220,6 +220,16 @@ export function isPaymentOverdue(company, paymentStatus) {
 }
 
 // ---------- هشدار پایان اشتراک — پلکان دقیق درخواست‌شده ----------
+// شرکتِ آزمایشی مبنایِ واقعیِ انقضا (دسترسی‌گیت‌کردن در computeSubscriptionAccess
+// هم دقیقاً همین‌طور) trial_end است، نه subscription_end_date — تمدید/کوتاه‌کردنِ
+// دوره‌ی آزمایشی (handleAdjustTrial) فقط trialEnd را عوض می‌کند. اگر
+// جایی مستقیم subscriptionEndDate بخواند (مثلِ قبلِ این تابع در
+// SystemInsights/DashboardOverview)، بعد از تمدید/کوتاه‌کردن هنوز تاریخِ
+// کهنه را نشان می‌دهد — این تابع همان‌جایی است که باید به‌جایش صدا زده شود.
+export function effectiveExpiryDate(c) {
+  return c.subscriptionType === "trial" ? (c.trialEnd || c.subscriptionEndDate) : c.subscriptionEndDate;
+}
+
 export function computeSubscriptionAlertTier(endDate) {
   if (!endDate) return null;
   const now = new Date(); now.setHours(0, 0, 0, 0);
@@ -580,6 +590,12 @@ export async function rejectCardTransferPayment(paymentId, reviewedBy, note) {
   return { ok: true };
 }
 
+export async function deleteCardTransferPayment(id) {
+  const rows = await sb(`payments?id=eq.${id}`, { method: "DELETE" }, "super_admin");
+  if (!sbOk(rows)) return { __error: true, message: tr("saErrDeleteReceipt") };
+  return { ok: true };
+}
+
 // ---------- تنظیمات نمایشی پرداخت کارت‌به‌کارت (شماره کارت/نام/توضیحات) ----------
 // روی همان system_settings موجود، دقیقاً همان الگوی saveAppearanceConfig
 // در systemConfigApi.js — تا «از ساختارهای موجود استفاده کن» رعایت شود.
@@ -657,6 +673,12 @@ export async function rejectTrialRequest(id, reviewedBy, note) {
   return { ok: true };
 }
 
+export async function deleteTrialRequest(id) {
+  const rows = await sb(`trial_requests?id=eq.${id}`, { method: "DELETE" }, "super_admin");
+  if (!sbOk(rows)) return { __error: true, message: tr("saErrDeleteRequest") };
+  return { ok: true };
+}
+
 // درخواست‌های «خرید مستقیمِ بازدیدکننده» — از صفحه‌ی عمومیِ «مشاهده پلن‌ها
 // برای خرید» (پیش از ورود)، شاملِ ماژول/خدماتِ انتخابی و رسیدِ کارت‌به‌کارت.
 // همان فلسفه‌ی trial_requests: صرفاً ثبت/بررسیِ سرنخ + رسید است — ساختِ
@@ -699,6 +721,12 @@ export async function rejectGuestPurchaseRequest(id, reviewedBy, note) {
   }, "super_admin");
   if (!sbOk(rows)) return { __error: true, message: tr("saErrRejectRequest") };
   if (rows.length === 0) return { __error: true, message: tr("saRequestAlreadyReviewed") };
+  return { ok: true };
+}
+
+export async function deleteGuestPurchaseRequest(id) {
+  const rows = await sb(`guest_purchase_requests?id=eq.${id}`, { method: "DELETE" }, "super_admin");
+  if (!sbOk(rows)) return { __error: true, message: tr("saErrDeleteRequest") };
   return { ok: true };
 }
 
@@ -819,6 +847,12 @@ export async function loadAuditLog(limit = 50) {
   } catch {
     return [];
   }
+}
+
+export async function deleteAuditLogEntry(id) {
+  const rows = await sb(`admin_audit_log?id=eq.${id}`, { method: "DELETE" }, "super_admin");
+  if (!sbOk(rows)) return { __error: true, message: tr("saErrDeleteAuditEntry") };
+  return { ok: true };
 }
 
 // ---------- آمار مصرف واقعی هر شرکت — بعد از تکمیل مهاجرت company_id ----------
