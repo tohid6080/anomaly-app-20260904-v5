@@ -59,7 +59,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
   // صفحه بمانیم، نه اینکه به «نمای کلی» برگردیم.
   const [page, setPage] = usePersistedState("ihms_sa_page", "overview");
   useEffect(() => {
-    const VALID = ["overview", "companies", "accounts", "plans", "monitoring", "storage", "auditLog", "errorReports", "systemConfig", "cardTransferPayments", "trialRequests", "guestPurchases"];
+    const VALID = ["overview", "companies", "accounts", "plans", "monitoring", "storage", "auditLog", "errorReports", "systemConfig", "cardTransferPayments", "trialRequests"];
     if (!VALID.includes(page)) setPage("overview");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -86,6 +86,23 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
+
+  // شمارشِ موارد در انتظار — سطحِ همین کامپوننت (نه فقط داخلِ DashboardOverview)
+  // چون نوارِ کناری همیشه دیده می‌شود، نه فقط وقتی page==="overview" است.
+  // گزارش‌های خطا/درخواست‌های آزمایشی/رسیدها هرکدوم یک‌بار در mount خوانده
+  // می‌شوند (دقیقاً همان الگویِ بقیه‌ی شمارنده‌های DashboardOverview — بدونِ
+  // رفرشِ زنده، چون آن‌ها هم همین‌طورند).
+  const [openErrorCount, setOpenErrorCount] = useState(null);
+  const [pendingTrialCount, setPendingTrialCount] = useState(null);
+  const [pendingReceiptsCount, setPendingReceiptsCount] = useState(null);
+  useEffect(() => {
+    loadErrorReports("open").then((r) => setOpenErrorCount(Array.isArray(r) ? r.length : 0)).catch(() => setOpenErrorCount(0));
+    loadTrialRequests("pending").then((r) => setPendingTrialCount(Array.isArray(r) ? r.length : 0)).catch(() => setPendingTrialCount(0));
+    Promise.all([loadCardTransferPayments("awaiting_review"), loadGuestPurchaseRequests("pending")])
+      .then(([a, b]) => setPendingReceiptsCount((Array.isArray(a) ? a.length : 0) + (Array.isArray(b) ? b.length : 0)))
+      .catch(() => setPendingReceiptsCount(0));
+  }, []);
+  const NAV_BADGE_COUNTS = { errorReports: openErrorCount, trialRequests: pendingTrialCount, cardTransferPayments: pendingReceiptsCount };
 
   const handleCreate = async () => {
     if (!newName.trim()) return;
@@ -157,7 +174,6 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
     { labelKey: "saNavGroupBilling", items: [
       { key: "cardTransferPayments", labelKey: "saNavCardPayments", icon: CreditCard },
       { key: "trialRequests", labelKey: "saNavTrialRequests", icon: ClipboardList },
-      { key: "guestPurchases", labelKey: "saNavGuestPurchases", icon: Send },
     ] },
   ];
 
@@ -191,6 +207,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
               {grp.items.map((item) => {
                 const Icon = item.icon;
                 const active = page === item.key;
+                const badgeCount = NAV_BADGE_COUNTS[item.key];
                 return (
                   <button
                     key={item.key} type="button" onClick={() => setPage(item.key)}
@@ -202,6 +219,14 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
                     }}
                   >
                     <Icon size={14} /> {t(item.labelKey)}
+                    {badgeCount > 0 && (
+                      <span style={{
+                        marginInlineStart: "auto", background: THEME.danger, color: "#fff", fontSize: 10, fontWeight: 700,
+                        borderRadius: 999, minWidth: 17, height: 17, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px",
+                      }}>
+                        {badgeCount}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -214,6 +239,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
             <DashboardOverview
               companies={companies} summary={summary} usageStats={usageStats}
               onNavigate={setPage}
+              openErrorCount={openErrorCount} pendingTrialCount={pendingTrialCount} pendingReceiptsCount={pendingReceiptsCount}
             />
           )}
           {page === "companies" && (
@@ -237,28 +263,20 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
           {page === "errorReports" && <ErrorReportsPage currentAdmin={currentAdmin} />}
           {page === "cardTransferPayments" && <CardTransferPaymentsPage currentAdmin={currentAdmin} />}
           {page === "trialRequests" && <TrialRequestsPage currentAdmin={currentAdmin} />}
-          {page === "guestPurchases" && <GuestPurchaseRequestsPage currentAdmin={currentAdmin} />}
         </div>
       </div>
     </div>
   );
 }
 
-function DashboardOverview({ companies, summary, usageStats, onNavigate }) {
+function DashboardOverview({ companies, summary, usageStats, onNavigate, openErrorCount, pendingTrialCount, pendingReceiptsCount }) {
   const { t } = useLanguage();
   const [failedLoginCount, setFailedLoginCount] = useState(null);
   const [inactiveCount, setInactiveCount] = useState(null);
   const [paymentAlertCount, setPaymentAlertCount] = useState(null);
-  const [openErrorCount, setOpenErrorCount] = useState(null);
-  const [pendingTrialCount, setPendingTrialCount] = useState(null);
-  const [pendingGuestPurchaseCount, setPendingGuestPurchaseCount] = useState(null);
   const [recentActivity, setRecentActivity] = useState(null);
 
   useEffect(() => {
-    // این‌ها به companies وابسته نیستند — یک بار در mount.
-    loadErrorReports("open").then((r) => setOpenErrorCount(Array.isArray(r) ? r.length : 0)).catch(() => setOpenErrorCount(0));
-    loadTrialRequests("pending").then((r) => setPendingTrialCount(Array.isArray(r) ? r.length : 0)).catch(() => setPendingTrialCount(0));
-    loadGuestPurchaseRequests("pending").then((r) => setPendingGuestPurchaseCount(Array.isArray(r) ? r.length : 0)).catch(() => setPendingGuestPurchaseCount(0));
     loadAuditLog(6).then((r) => setRecentActivity(Array.isArray(r) ? r : [])).catch(() => setRecentActivity([]));
   }, []);
 
@@ -339,8 +357,8 @@ function DashboardOverview({ companies, summary, usageStats, onNavigate }) {
         />
         <AttentionCard
           icon={Send} color={THEME.warn} bg={THEME.warnBg}
-          label={t("saPendingGuestPurchasesLabel")} value={pendingGuestPurchaseCount}
-          onClick={() => onNavigate("guestPurchases")}
+          label={t("saPendingReceiptsLabel")} value={pendingReceiptsCount}
+          onClick={() => onNavigate("cardTransferPayments")}
         />
       </div>
 
@@ -3122,20 +3140,64 @@ function CardTransferSettingsForm({ currentAdmin }) {
   );
 }
 
+// فیلترِ وضعیتِ یکپارچه — دو منبعِ زیرین واژگانِ وضعیتِ متفاوتی دارند
+// (payments: awaiting_review/paid/rejected — guest_purchase_requests:
+// pending/approved/rejected)، پس مقدارِ فیلترِ این صفحه به هردو واژگان
+// نگاشت می‌شود.
+const RECEIPT_STATUS_GROUPS = {
+  all: { company: "all", guest: "all" },
+  pending: { company: "awaiting_review", guest: "pending" },
+  paid: { company: "paid", guest: "approved" },
+  rejected: { company: "rejected", guest: "rejected" },
+};
+
+// «رسیدهای پرداخت» — طبقِ خواسته‌ی صریح، لیستِ رسیدهای شرکت‌های موجود
+// (payments، method='card_transfer') با درخواست‌هایِ «خرید مستقیمِ
+// بازدیدکنندگان» (guest_purchase_requests) در یک جدولِ واحد ادغام
+// می‌شوند، چون کارِ ادمین رویِ هردو یکی است (بررسی/تأیید/رد). منطقِ
+// تأیید/رد اما عمداً جدا می‌ماند: یک ردیفِ «شرکتِ موجود» با تأیید بلافاصله
+// اشتراک را فعال می‌کند (approveCardTransferPayment)، ولی یک ردیفِ
+// «بازدیدکننده» با تأیید فقط تصمیم را ثبت می‌کند — ساختِ شرکت/حساب همچنان
+// باید از بخشِ «شرکت‌ها» به‌صورت دستی انجام شود (approveGuestPurchaseRequest،
+// دقیقاً همان‌طور که پیش از ادغام هم بود).
 function CardTransferPaymentsPage({ currentAdmin }) {
   const { t, lang, dir } = useLanguage();
-  const [statusFilter, setStatusFilter] = useState("awaiting_review");
+  const [statusFilter, setStatusFilter] = useState("pending");
   const [rows, setRows] = useState(null);
+  const [moduleLabels, setModuleLabels] = useState({});
+  const [serviceLabels, setServiceLabels] = useState({});
   const [expandedId, setExpandedId] = useState(null);
   const [rejectNote, setRejectNote] = useState("");
   const [showRejectFor, setShowRejectFor] = useState(null);
+  const [noteDraft, setNoteDraft] = useState("");
   const [saving, setSaving] = useState(false);
   const [viewerSrc, setViewerSrc] = useState(null);
 
-  const load = () => loadCardTransferPayments(statusFilter).then(setRows);
+  const load = () => {
+    const g = RECEIPT_STATUS_GROUPS[statusFilter] || RECEIPT_STATUS_GROUPS.all;
+    Promise.all([loadCardTransferPayments(g.company), loadGuestPurchaseRequests(g.guest)]).then(([companyRows, guestRows]) => {
+      const merged = [
+        ...companyRows.map((r) => ({ ...r, source: "company" })),
+        ...guestRows.map((r) => ({ ...r, source: "guest" })),
+      ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setRows(merged);
+    });
+  };
   useEffect(() => { setRows(null); load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [statusFilter]);
+  useEffect(() => {
+    Promise.all([loadModulePrices(), loadServices()]).then(([mods, svcs]) => {
+      setModuleLabels(Object.fromEntries(mods.map((m) => [m.moduleKey, m.label || m.moduleKey])));
+      setServiceLabels(Object.fromEntries(svcs.map((s) => [s.id, s.name || s.id])));
+    });
+  }, []);
 
-  const handleApprove = async (r) => {
+  const openRow = (r) => {
+    if (expandedId === r.id) { setExpandedId(null); return; }
+    setExpandedId(r.id);
+    setRejectNote(""); setShowRejectFor(null); setNoteDraft("");
+  };
+
+  const handleApproveCompany = async (r) => {
     if (!confirm(t("saCtApproveConfirm", { company: r.companyName }))) return;
     setSaving(true);
     const result = await approveCardTransferPayment(r.id, currentAdmin?.fullName || currentAdmin?.username);
@@ -3144,8 +3206,7 @@ function CardTransferPaymentsPage({ currentAdmin }) {
     setExpandedId(null);
     load();
   };
-
-  const handleReject = async (r) => {
+  const handleRejectCompany = async (r) => {
     setSaving(true);
     const result = await rejectCardTransferPayment(r.id, currentAdmin?.fullName || currentAdmin?.username, rejectNote);
     setSaving(false);
@@ -3153,8 +3214,28 @@ function CardTransferPaymentsPage({ currentAdmin }) {
     setShowRejectFor(null); setRejectNote(""); setExpandedId(null);
     load();
   };
+  const handleApproveGuest = async (r) => {
+    setSaving(true);
+    const result = await approveGuestPurchaseRequest(r.id, currentAdmin?.fullName || currentAdmin?.username, noteDraft);
+    setSaving(false);
+    if (result?.__error) { alert(result.message); return; }
+    setExpandedId(null);
+    load();
+  };
+  const handleRejectGuest = async (r) => {
+    setSaving(true);
+    const result = await rejectGuestPurchaseRequest(r.id, currentAdmin?.fullName || currentAdmin?.username, noteDraft);
+    setSaving(false);
+    if (result?.__error) { alert(result.message); return; }
+    setExpandedId(null);
+    load();
+  };
 
-  const awaitingCount = statusFilter === "awaiting_review" ? (rows || []).length : null;
+  const statusMetaFor = (r) => (r.source === "company"
+    ? (CARD_PAYMENT_STATUS_META[r.status] || CARD_PAYMENT_STATUS_META.awaiting_review)
+    : (TRIAL_REQUEST_STATUS_META[r.status] || TRIAL_REQUEST_STATUS_META.pending));
+
+  const pendingCount = statusFilter === "pending" ? (rows || []).length : null;
 
   return (
     <div>
@@ -3163,19 +3244,20 @@ function CardTransferPaymentsPage({ currentAdmin }) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
           <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
             <CreditCard size={14} color={THEME.teal} /> {t("saCtTitle")}
-            {awaitingCount > 0 && (
+            {pendingCount > 0 && (
               <span style={{ background: THEME.danger, color: "#fff", fontSize: 10.5, fontWeight: 700, borderRadius: 999, minWidth: 19, height: 19, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>
-                {awaitingCount}
+                {pendingCount}
               </span>
             )}
           </h3>
           <select style={{ ...inputStyle, width: "auto" }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir={dir}>
             <option value="all">{t("saAllStatuses")}</option>
-            <option value="awaiting_review">{t("saCtStatusAwaiting")}</option>
+            <option value="pending">{t("saTrStatusPending")}</option>
             <option value="paid">{t("saCtStatusPaid")}</option>
             <option value="rejected">{t("saCtStatusRejected")}</option>
           </select>
         </div>
+        <p style={{ fontSize: 11, color: THEME.text3, marginBottom: 12, lineHeight: 1.8 }}>{t("saCtMergedNote")}</p>
 
         {rows === null && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("commonLoading")}</p>}
         {rows !== null && rows.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("saCtNoneFound")}</p>}
@@ -3195,12 +3277,24 @@ function CardTransferPaymentsPage({ currentAdmin }) {
               </thead>
               <tbody>
                 {rows.map((r) => {
-                  const sm = CARD_PAYMENT_STATUS_META[r.status] || CARD_PAYMENT_STATUS_META.awaiting_review;
+                  const sm = statusMetaFor(r);
+                  const rowKey = `${r.source}-${r.id}`;
+                  const isCompany = r.source === "company";
                   return (
-                    <React.Fragment key={r.id}>
-                      <tr style={{ borderBottom: `1px solid ${THEME.border}`, cursor: "pointer" }} onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}>
-                        <td style={{ padding: "8px", fontWeight: 600 }}>{r.companyName || "—"}</td>
-                        <td style={{ padding: "8px" }}>{r.planName || "—"} — {r.billingCycle === "monthly" ? t("saBillingMonthly") : t("saBillingYearly")}</td>
+                    <React.Fragment key={rowKey}>
+                      <tr style={{ borderBottom: `1px solid ${THEME.border}`, cursor: "pointer" }} onClick={() => openRow(r)}>
+                        <td style={{ padding: "8px", fontWeight: 600 }}>
+                          {r.companyName || "—"}
+                          <span style={{
+                            marginInlineStart: 6, fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 999,
+                            background: isCompany ? THEME.okBg : "#e0e7ff", color: isCompany ? THEME.ok : "#3730a3",
+                          }}>
+                            {isCompany ? t("saCtSourceCompany") : t("saCtSourceGuest")}
+                          </span>
+                        </td>
+                        <td style={{ padding: "8px" }}>
+                          {isCompany && (r.planName || "—") + " — "}{r.billingCycle === "monthly" ? t("saBillingMonthly") : t("saBillingYearly")}
+                        </td>
                         <td style={{ padding: "8px", textAlign: "center", fontWeight: 700, color: THEME.heading }}>{formatCurrencyAmount(r.amount, r.currency, lang)}</td>
                         <td style={{ padding: "8px" }}>{r.payerName} <span style={{ color: THEME.text3, fontSize: 10.5, direction: "ltr", display: "inline-block" }}>({r.payerPhone})</span></td>
                         <td style={{ padding: "8px", textAlign: "center", color: THEME.text3, whiteSpace: "nowrap" }}>{toJalaliDateTime(r.createdAt)}</td>
@@ -3213,27 +3307,49 @@ function CardTransferPaymentsPage({ currentAdmin }) {
                           <td colSpan={6} style={{ padding: "10px 12px", background: THEME.bg }}>
                             <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 10 }}>
                               <p style={{ fontSize: 12, color: THEME.text2, margin: 0 }}>{t("saCtTrackingNo", { num: r.trackingNumber || "—" })}</p>
-                              {r.payerEmail && <p style={{ fontSize: 12, color: THEME.text2, margin: 0, direction: "ltr" }}>{r.payerEmail}</p>}
-                              {r.payerCompanyName && <p style={{ fontSize: 12, color: THEME.text2, margin: 0 }}>{t("saCtPayerCompanyName", { name: r.payerCompanyName })}</p>}
+                              {isCompany && r.payerEmail && <p style={{ fontSize: 12, color: THEME.text2, margin: 0, direction: "ltr" }}>{r.payerEmail}</p>}
+                              {isCompany && r.payerCompanyName && <p style={{ fontSize: 12, color: THEME.text2, margin: 0 }}>{t("saCtPayerCompanyName", { name: r.payerCompanyName })}</p>}
+                              {!isCompany && r.email && <p style={{ fontSize: 12, color: THEME.text2, margin: 0, direction: "ltr" }}>{r.email}</p>}
                               {r.receiptImage && (
                                 <button type="button" style={btnStyle(THEME.navyMid)} onClick={() => setViewerSrc(r.receiptImage)}>{t("saCtViewReceipt")}</button>
                               )}
                             </div>
+                            {!isCompany && (
+                              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 6, marginBottom: 10, fontSize: 12, color: THEME.text2 }}>
+                                <p style={{ margin: 0, gridColumn: "1 / -1" }}>
+                                  {t("saGprColModules")}<b>{r.selectedModules.length > 0 ? r.selectedModules.map((k) => moduleLabels[k] || k).join(listSep(getCurrentLang())) : "—"}</b>
+                                </p>
+                                {r.selectedServices.length > 0 && (
+                                  <p style={{ margin: 0, gridColumn: "1 / -1" }}>
+                                    {t("saGprColServices")}<b>{r.selectedServices.map((k) => serviceLabels[k] || k).join(listSep(getCurrentLang()))}</b>
+                                  </p>
+                                )}
+                              </div>
+                            )}
                             {r.adminNote && <p style={{ fontSize: 11.5, color: THEME.danger, margin: "0 0 8px" }}>{t("saCtRejectReason", { note: r.adminNote })}</p>}
                             {r.reviewedAt && <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 8px" }}>{t("saCtReviewedBy", { by: r.reviewedBy || "—", at: toJalaliDateTime(r.reviewedAt) })}</p>}
 
-                            {r.status === "awaiting_review" && (
+                            {isCompany && r.status === "awaiting_review" && (
                               <div>
                                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                                  <button type="button" style={btnStyle(THEME.ok)} disabled={saving} onClick={() => handleApprove(r)}>{t("saCtApproveActivate")}</button>
+                                  <button type="button" style={btnStyle(THEME.ok)} disabled={saving} onClick={() => handleApproveCompany(r)}>{t("saCtApproveActivate")}</button>
                                   <button type="button" style={btnStyle(THEME.danger)} disabled={saving} onClick={() => setShowRejectFor(showRejectFor === r.id ? null : r.id)}>{t("saCtRejectReceipt")}</button>
                                 </div>
                                 {showRejectFor === r.id && (
                                   <div style={{ marginTop: 8 }}>
                                     <textarea style={{ ...inputStyle, minHeight: 50 }} placeholder={t("saCtRejectReasonPlaceholder")} value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} dir={dir} />
-                                    <button type="button" style={{ ...btnStyle(THEME.danger), marginTop: 6 }} disabled={saving || !rejectNote.trim()} onClick={() => handleReject(r)}>{t("saCtSubmitReject")}</button>
+                                    <button type="button" style={{ ...btnStyle(THEME.danger), marginTop: 6 }} disabled={saving || !rejectNote.trim()} onClick={() => handleRejectCompany(r)}>{t("saCtSubmitReject")}</button>
                                   </div>
                                 )}
+                              </div>
+                            )}
+                            {!isCompany && r.status === "pending" && (
+                              <div>
+                                <textarea style={{ ...inputStyle, minHeight: 45, marginBottom: 8 }} placeholder={t("saTrNotePlaceholder")} value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} dir={dir} />
+                                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                                  <button type="button" style={btnStyle(THEME.ok)} disabled={saving} onClick={() => handleApproveGuest(r)}>{t("saTrApprove")}</button>
+                                  <button type="button" style={btnStyle(THEME.danger)} disabled={saving || !noteDraft.trim()} onClick={() => handleRejectGuest(r)}>{t("saTrReject")}</button>
+                                </div>
                               </div>
                             )}
                           </td>
@@ -3399,161 +3515,6 @@ function TrialRequestsPage({ currentAdmin }) {
           </table>
         </div>
       )}
-    </div>
-  );
-}
-
-// ---------- درخواست‌های «خرید مستقیمِ بازدیدکننده» ----------
-// از صفحه‌ی عمومیِ «مشاهده پلن‌ها برای خرید» (پیش از ورود، PublicPurchaseForm
-// در SubscriptionGate.jsx → Edge Function submit-guest-purchase-request)
-// می‌آید — شاملِ ماژول/خدماتِ انتخابی و رسیدِ کارت‌به‌کارت. دقیقاً همان
-// فلسفه‌ی TrialRequestsPage بالا: تأیید اینجا فقط تصمیم را ثبت می‌کند؛ ساختِ
-// واقعیِ شرکت/حساب و تأییدِ نهاییِ رسید همچنان از مسیرهای موجود («شرکت‌ها» +
-// «پرداخت‌های کارت‌به‌کارت») به‌صورت دستی انجام می‌شود.
-function GuestPurchaseRequestsPage({ currentAdmin }) {
-  const { t, lang, dir } = useLanguage();
-  const [statusFilter, setStatusFilter] = useState("pending");
-  const [rows, setRows] = useState(null);
-  const [moduleLabels, setModuleLabels] = useState({});
-  const [serviceLabels, setServiceLabels] = useState({});
-  const [expandedId, setExpandedId] = useState(null);
-  const [noteDraft, setNoteDraft] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [viewerSrc, setViewerSrc] = useState(null);
-
-  const load = () => loadGuestPurchaseRequests(statusFilter).then(setRows);
-  useEffect(() => { setRows(null); load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [statusFilter]);
-  useEffect(() => {
-    Promise.all([loadModulePrices(), loadServices()]).then(([mods, svcs]) => {
-      setModuleLabels(Object.fromEntries(mods.map((m) => [m.moduleKey, m.label || m.moduleKey])));
-      setServiceLabels(Object.fromEntries(svcs.map((s) => [s.id, s.name || s.id])));
-    });
-  }, []);
-
-  const openRow = (r) => {
-    if (expandedId === r.id) { setExpandedId(null); return; }
-    setExpandedId(r.id);
-    setNoteDraft("");
-  };
-
-  const handleApprove = async (r) => {
-    setSaving(true);
-    const result = await approveGuestPurchaseRequest(r.id, currentAdmin?.fullName || currentAdmin?.username, noteDraft);
-    setSaving(false);
-    if (result?.__error) { alert(result.message); return; }
-    setExpandedId(null);
-    load();
-  };
-
-  const handleReject = async (r) => {
-    setSaving(true);
-    const result = await rejectGuestPurchaseRequest(r.id, currentAdmin?.fullName || currentAdmin?.username, noteDraft);
-    setSaving(false);
-    if (result?.__error) { alert(result.message); return; }
-    setExpandedId(null);
-    load();
-  };
-
-  const pendingCount = statusFilter === "pending" ? (rows || []).length : null;
-
-  return (
-    <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
-        <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
-          <ClipboardList size={14} color={THEME.teal} /> {t("saNavGuestPurchases")}
-          {pendingCount > 0 && (
-            <span style={{ background: THEME.danger, color: "#fff", fontSize: 10.5, fontWeight: 700, borderRadius: 999, minWidth: 19, height: 19, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>
-              {pendingCount}
-            </span>
-          )}
-        </h3>
-        <select style={{ ...inputStyle, width: "auto" }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir={dir}>
-          <option value="all">{t("saAllStatuses")}</option>
-          <option value="pending">{t("saTrStatusPending")}</option>
-          <option value="approved">{t("saTrStatusApproved")}</option>
-          <option value="rejected">{t("saTrStatusRejected")}</option>
-        </select>
-      </div>
-      <p style={{ fontSize: 11, color: THEME.text3, marginBottom: 12 }}>{t("saGprNote")}</p>
-
-      {rows === null && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("commonLoading")}</p>}
-      {rows !== null && rows.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("saTrNoneFound")}</p>}
-
-      {rows && rows.length > 0 && (
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-            <thead>
-              <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
-                <th style={{ textAlign: "start", padding: "6px 8px" }}>{t("saTrColCompany")}</th>
-                <th style={{ textAlign: "start", padding: "6px 8px" }}>{t("saTrColApplicant")}</th>
-                <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saGprColAmount")}</th>
-                <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColTime")}</th>
-                <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("commonStatus")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => {
-                const sm = TRIAL_REQUEST_STATUS_META[r.status] || TRIAL_REQUEST_STATUS_META.pending;
-                return (
-                  <React.Fragment key={r.id}>
-                    <tr style={{ borderBottom: `1px solid ${THEME.border}`, cursor: "pointer" }} onClick={() => openRow(r)}>
-                      <td style={{ padding: "8px", fontWeight: 600 }}>{r.companyName}</td>
-                      <td style={{ padding: "8px" }}>
-                        {r.fullName}
-                        <div style={{ fontSize: 10.5, color: THEME.text3, direction: "ltr", textAlign: "start" }}>{r.phone}</div>
-                      </td>
-                      <td style={{ padding: "8px", textAlign: "center", fontFamily: "monospace", fontWeight: 700 }}>{formatCurrencyAmount(r.amount, r.currency, lang)}</td>
-                      <td style={{ padding: "8px", textAlign: "center", color: THEME.text3, whiteSpace: "nowrap" }}>{toJalaliDateTime(r.createdAt)}</td>
-                      <td style={{ padding: "8px", textAlign: "center" }}>
-                        <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: sm.bg, color: sm.color, fontWeight: 700 }}>{t(sm.labelKey)}</span>
-                      </td>
-                    </tr>
-                    {expandedId === r.id && (
-                      <tr>
-                        <td colSpan={5} style={{ padding: "10px 12px", background: THEME.bg }}>
-                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 6, marginBottom: 10, fontSize: 12, color: THEME.text2 }}>
-                            <p style={{ margin: 0 }}>{t("saTrEmailLabel")}<b style={{ direction: "ltr", display: "inline-block" }}>{r.email || "—"}</b></p>
-                            <p style={{ margin: 0 }}>{t("saGprBillingCycleLabel")}<b>{r.billingCycle === "monthly" ? t("subTypeMonthly") : t("subTypeYearly")}</b></p>
-                            <p style={{ margin: 0 }}>{t("saGprPayerLabel")}<b>{r.payerName}</b> <span style={{ direction: "ltr", display: "inline-block" }}>({r.payerPhone})</span></p>
-                            <p style={{ margin: 0 }}>{t("saGprTrackingLabel")}<b style={{ direction: "ltr", display: "inline-block" }}>{r.trackingNumber || "—"}</b></p>
-                            <p style={{ margin: 0, gridColumn: "1 / -1" }}>
-                              {t("saGprColModules")}<b>{r.selectedModules.length > 0 ? r.selectedModules.map((k) => moduleLabels[k] || k).join(listSep(getCurrentLang())) : "—"}</b>
-                            </p>
-                            {r.selectedServices.length > 0 && (
-                              <p style={{ margin: 0, gridColumn: "1 / -1" }}>
-                                {t("saGprColServices")}<b>{r.selectedServices.map((k) => serviceLabels[k] || k).join(listSep(getCurrentLang()))}</b>
-                              </p>
-                            )}
-                          </div>
-                          {r.receiptImage && (
-                            <button type="button" onClick={() => setViewerSrc(r.receiptImage)} style={{ ...btnStyle(THEME.navyMid), marginBottom: 10 }}>
-                              {t("saGprViewReceipt")}
-                            </button>
-                          )}
-                          {r.adminNote && <p style={{ fontSize: 11.5, color: THEME.text3, margin: "0 0 8px" }}>{t("saTrReviewNote", { note: r.adminNote })}</p>}
-                          {r.reviewedAt && <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 8px" }}>{t("saTrReviewedBy", { by: r.reviewedBy || "—", at: toJalaliDateTime(r.reviewedAt) })}</p>}
-
-                          {r.status === "pending" && (
-                            <div>
-                              <textarea style={{ ...inputStyle, minHeight: 45, marginBottom: 8 }} placeholder={t("saTrNotePlaceholder")} value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} dir={dir} />
-                              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                                <button type="button" style={btnStyle(THEME.ok)} disabled={saving} onClick={() => handleApprove(r)}>{t("saTrApprove")}</button>
-                                <button type="button" style={btnStyle(THEME.danger)} disabled={saving || !noteDraft.trim()} onClick={() => handleReject(r)}>{t("saTrReject")}</button>
-                              </div>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {viewerSrc && <DocumentViewerModal src={viewerSrc} onClose={() => setViewerSrc(null)} />}
     </div>
   );
 }
