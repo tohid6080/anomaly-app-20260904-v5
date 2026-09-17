@@ -259,8 +259,8 @@ export async function createCompanyUserAccount(companyId, { name, username, pass
 
 export async function loadCompanyUserAccounts(companyId) {
   const [employers, contractorRows] = await Promise.all([
-    sb(`employer_accounts?company_id=eq.${companyId}&select=id,name,username,role&order=name.asc`, {}, "super_admin"),
-    sb(`contractors?company_id=eq.${companyId}&select=id,name,username&order=name.asc`, {}, "super_admin"),
+    sb(`employer_accounts?company_id=eq.${companyId}&select=id,name,username,role,email&order=name.asc`, {}, "super_admin"),
+    sb(`contractors?company_id=eq.${companyId}&select=id,name,username,email&order=name.asc`, {}, "super_admin"),
   ]);
   const emp = (sbOk(employers) ? employers : []).map((a) => ({ ...a, type: "employer" }));
   const con = (sbOk(contractorRows) ? contractorRows : []).map((a) => ({ ...a, type: "contractor" }));

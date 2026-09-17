@@ -8,6 +8,7 @@ import { loadModuleConfig, saveModuleConfig, loadNotificationTypes, saveNotifica
 import { DASHBOARD_WIDGET_GROUPS, mergeWidgetConfig, defaultWidgetConfig } from "../dashboard/dashboardWidgets.js";
 import { uploadBase64ToStorage, deleteFromStorage, parseStorageUrl } from "../offline/storageUpload.js";
 import AccountManagement, { AccountForm, emptyForm as emptyAccountForm } from "./AccountManagement.jsx";
+import WelcomeMessageModal from "./WelcomeMessageModal.jsx";
 import PricingConsole from "./PricingConsole.jsx";
 import { loadCompanyModules, addCompanyModule, updateCompanyModule, removeCompanyModule } from "./companyModulesApi.js";
 import { loadModulePrices, loadServices } from "../pricingApi.js";
@@ -3759,6 +3760,7 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
   const [newModuleEnd, setNewModuleEnd] = useState("");
   const [moduleBusy, setModuleBusy] = useState(false);
   const [moduleError, setModuleError] = useState("");
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   const loadCompanyModulesList = () => loadCompanyModules(company.id).then(setCompanyModules);
   useEffect(() => { loadCompanyModulesList(); loadModulePrices({ live: true }).then(setModulePricesCatalog); }, [company.id]);
@@ -4232,7 +4234,16 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
             </span>
           </div>
         ))}
+        {accounts.length > 0 && (
+          <button type="button" onClick={() => setShowWelcomeModal(true)} style={{ ...btnStyle(THEME.navyMid), display: "inline-flex", alignItems: "center", gap: 6, marginTop: 10 }}>
+            <Gift size={13} /> {t("saWelcomeMessageBtn")}
+          </button>
+        )}
       </div>
+
+      {showWelcomeModal && (
+        <WelcomeMessageModal company={company} accounts={accounts} onClose={() => setShowWelcomeModal(false)} onPasswordsChanged={loadAccounts} />
+      )}
 
       <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 12, marginBottom: 16 }}>
         <h4 style={{ fontSize: 12.5, color: THEME.heading, fontWeight: 700, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 6 }}>
