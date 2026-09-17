@@ -38,6 +38,7 @@ import {
 import { computeSubscriptionAccess, loadOnlinePaymentsForCompany, loadCardTransferSettings } from "../subscriptionApi.js";
 import { loadErrorReports, updateErrorReportStatus } from "../errorReportsApi.js";
 import DocumentViewerModal from "../personnel/DocumentViewerModal.jsx";
+import LiveChatAdminDock from "../livechat/LiveChatAdminDock.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import LanguageSelect from "../i18n/LanguageSelect.jsx";
 import { trialModuleLabel } from "../trialRequestApi.js";
@@ -196,6 +197,8 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
       </div>
 
       {showChangePassword && <SuperAdminChangePassword onClose={() => setShowChangePassword(false)} />}
+
+      <LiveChatAdminDock currentAdmin={currentAdmin} />
 
       <div style={{ display: "flex", alignItems: "flex-start", maxWidth: 1400, margin: "0 auto" }}>
         <nav style={{ width: 200, flexShrink: 0, background: THEME.surface, borderInlineStart: `1px solid ${THEME.border}`, minHeight: "calc(100vh - 53px)", padding: "12px 10px" }}>

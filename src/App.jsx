@@ -96,6 +96,7 @@ import { saveBlobNativeAware } from "./offline/archiveZip.js";
 import { toJalaliDateTime, toJalaliSafe } from "./personnel/jalaliDate.jsx";
 import DocumentViewerModal from "./personnel/DocumentViewerModal.jsx";
 import LandingPage, { mergeLandingButtons } from "./LandingPage.jsx";
+import LiveChatWidget from "./livechat/LiveChatWidget.jsx";
 import { APP_NAME, sb, sbOk, sbErrMsg, uid, todayISO, THEME, styles, usePersistedState, setCurrentCompanyId, getCurrentCompanyId, loadCurrentCompanyPlanFeatures, isModuleInPlan, filterSubByPlan, resizeImageFile } from "./shared.js";
 
 /**
@@ -1386,6 +1387,10 @@ function LoginScreen({ onLogin }) {
           />
         </div>
       )}
+
+      {/* روی هر حالتی از این صفحه دیده می‌شود (فرود/فرمِ ورود/مشاهده‌ی پلن‌ها) —
+          zIndex بالاتر از پوششِ تمام‌صفحه‌ی PlanSelectionScreen (۳۰۰۰) */}
+      <LiveChatWidget />
     </>
   );
 }
