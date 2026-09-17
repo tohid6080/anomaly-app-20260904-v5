@@ -262,7 +262,7 @@ function ModulePickerBlock({ modulePrices, services, selMods, selSvc, setSelSvc,
             <b style={{ fontSize: 12.5, color: THEME.heading }}>{t("sgServicesTitle")}</b>
             {services.map((s) => {
               const on = selSvc.indexOf(s.id) > -1;
-              const p = servicePriceFor(s);
+              const p = servicePriceFor(s, currency);
               const periodLabelKey = s.period === "weekly" ? "mpPeriodWeekly" : s.period === "yearly" ? "mpPeriodYearly" : s.period === "once" ? "mpPeriodOnce" : "mpPeriodMonthly";
               return (
                 <label key={s.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", borderBottom: `1px solid ${THEME.borderSoft}`, cursor: "pointer" }}>
@@ -303,12 +303,11 @@ function ModulePickerBlock({ modulePrices, services, selMods, selSvc, setSelSvc,
         </div>
         <Row k={t("sgSumModules")} v={cart ? cart.selReal.length.toLocaleString(numLocale(lang)) : "0"} />
         <Row k={t("sgSumModulesPrice")} v={cart ? money(cart.sumAllModules) : "0"} />
-        {currency === "irr" && <Row k={t("sgSumServices")} v={cart ? money(cart.svcRecurring + cart.svcOnce) : "0"} />}
+        <Row k={t("sgSumServices")} v={cart ? money(cart.svcRecurring + cart.svcOnce) : "0"} />
         <div style={{ borderTop: `2px solid ${THEME.border}`, marginTop: 8, paddingTop: 8, display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
           <span style={{ fontSize: 12, color: THEME.text3 }}>{billingCycle === "monthly" ? t("sgFinalMonthly") : t("sgFinalYearly")}</span>
           <span style={{ fontSize: 17, fontWeight: 800, color: THEME.teal, fontFamily: "monospace" }}>{cart ? formatCurrencyAmount(cart.grandTotal, currency, lang) : "0"}</span>
         </div>
-        {cart && cart.servicesExcluded && <p style={{ fontSize: 10, color: THEME.warn, margin: "8px 0 0", lineHeight: 1.8 }}>{t("sgServicesExcludedNote")}</p>}
         <p style={{ fontSize: 10, color: THEME.text3, margin: "8px 0 0", lineHeight: 1.8 }}>{t("sgModulesDisclaimer")}</p>
         {publicMode
           ? <PublicPurchaseForm selMods={selMods} selSvc={selSvc} billingCycle={billingCycle} currency={currency} cart={cart} />

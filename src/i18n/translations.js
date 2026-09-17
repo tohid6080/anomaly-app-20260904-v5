@@ -9371,7 +9371,6 @@ export const translations = {
   "sgCurrencyIrr": { "fa": "ریال", "en": "Rial" },
   "sgCurrencyUsd": { "fa": "دلار", "en": "USD" },
   "sgCurrencyEur": { "fa": "یورو", "en": "EUR" },
-  "sgServicesExcludedNote": { "fa": "خدماتِ انتخابی فقط به تومان قیمت‌گذاری شده‌اند و در این مبلغ نیامده‌اند — برایِ آن‌ها جداگانه با شما هماهنگ می‌شود.", "en": "The selected services are only priced in Toman and are not included in this amount — you'll be contacted about them separately." },
   "saNavModulePricing": { "fa": "قیمتِ ماژول‌ها و خدمات", "en": "Module & service pricing" },
   "mpIntro": { "fa": "قیمتِ مستقلِ هر ماژول برای «انتخابِ ماژول به ماژول» در صفحه‌ی خرید. کلیدِ هر ردیف دقیقاً همان کلیدی است که برای گیت‌کردنِ دسترسی به‌کار می‌رود. تغییرِ قیمت اشتراکِ فعالِ شرکت‌ها را عوض نمی‌کند.", "en": "Independent price per module for the “pick modules” checkout. Each row's key is exactly the key used for access gating. Changing a price does not affect companies' active subscriptions." },
   "mpSavedN": { "fa": "{n} مورد ذخیره شد.", "en": "{n} item(s) saved." },

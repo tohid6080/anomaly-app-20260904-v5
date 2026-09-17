@@ -100,6 +100,8 @@ function svcFromSnap(s) {
     id: s.id, name: s.name || "", nameEn: s.nameEn || "", nameDe: s.nameDe || "",
     description: s.description || "", descriptionEn: s.descriptionEn || "", descriptionDe: s.descriptionDe || "",
     priceWeekly: Number(s.priceWeekly) || 0, priceMonthly: Number(s.priceMonthly) || 0, priceYearly: Number(s.priceYearly) || 0,
+    priceWeeklyUsd: Number(s.priceWeeklyUsd) || 0, priceMonthlyUsd: Number(s.priceMonthlyUsd) || 0, priceYearlyUsd: Number(s.priceYearlyUsd) || 0,
+    priceWeeklyEur: Number(s.priceWeeklyEur) || 0, priceMonthlyEur: Number(s.priceMonthlyEur) || 0, priceYearlyEur: Number(s.priceYearlyEur) || 0,
     period: s.period || "monthly", sortOrder: s.sortOrder ?? 0, isActive: true,
   };
 }
@@ -140,6 +142,8 @@ export async function publishPricingSnapshot({ modules, services }, publishedBy)
       id: s.id, name: s.name || "", nameEn: s.nameEn || "", nameDe: s.nameDe || "",
       description: s.description || "", descriptionEn: s.descriptionEn || "", descriptionDe: s.descriptionDe || "",
       priceWeekly: Number(s.priceWeekly) || 0, priceMonthly: Number(s.priceMonthly) || 0, priceYearly: Number(s.priceYearly) || 0,
+      priceWeeklyUsd: Number(s.priceWeeklyUsd) || 0, priceMonthlyUsd: Number(s.priceMonthlyUsd) || 0, priceYearlyUsd: Number(s.priceYearlyUsd) || 0,
+      priceWeeklyEur: Number(s.priceWeeklyEur) || 0, priceMonthlyEur: Number(s.priceMonthlyEur) || 0, priceYearlyEur: Number(s.priceYearlyEur) || 0,
       period: s.period || "monthly", sortOrder: s.sortOrder ?? 0,
     })),
   };
@@ -176,6 +180,12 @@ function svcFromRow(r) {
     priceWeekly: Number(r.price_weekly) || 0,
     priceMonthly: Number(r.price_monthly) || 0,
     priceYearly: Number(r.price_yearly) || 0,
+    priceWeeklyUsd: Number(r.price_weekly_usd) || 0,
+    priceMonthlyUsd: Number(r.price_monthly_usd) || 0,
+    priceYearlyUsd: Number(r.price_yearly_usd) || 0,
+    priceWeeklyEur: Number(r.price_weekly_eur) || 0,
+    priceMonthlyEur: Number(r.price_monthly_eur) || 0,
+    priceYearlyEur: Number(r.price_yearly_eur) || 0,
     period: r.period || "monthly",
     sortOrder: r.sort_order ?? 0,
     isActive: r.is_active !== false,
@@ -223,6 +233,12 @@ export async function upsertService(rec, createdBy) {
     price_weekly: Number(rec.priceWeekly) || 0,
     price_monthly: Number(rec.priceMonthly) || 0,
     price_yearly: Number(rec.priceYearly) || 0,
+    price_weekly_usd: Number(rec.priceWeeklyUsd) || 0,
+    price_monthly_usd: Number(rec.priceMonthlyUsd) || 0,
+    price_yearly_usd: Number(rec.priceYearlyUsd) || 0,
+    price_weekly_eur: Number(rec.priceWeeklyEur) || 0,
+    price_monthly_eur: Number(rec.priceMonthlyEur) || 0,
+    price_yearly_eur: Number(rec.priceYearlyEur) || 0,
     period: ["weekly", "monthly", "yearly", "once"].includes(rec.period) ? rec.period : "monthly",
     sort_order: Number(rec.sortOrder) || 0,
     is_active: rec.isActive !== false,
@@ -259,18 +275,18 @@ export async function deleteService(id) {
 // قیمتِ واقعیِ یک خدمت — از دوره‌ی خودِ همان ردیف (weekly/monthly/yearly)
 // می‌آید، نه از تاگلِ کلیِ سبد. 'once' هم از همان priceMonthly (مبلغِ
 // یک‌بارهٔ ثبت‌شده) می‌خواند. هم در محاسبه‌ی سبد، هم در نمایشِ صفحه‌ی خرید استفاده می‌شود.
-export function servicePriceFor(s) {
+// currency: 'irr' (پیش‌فرض) | 'usd' | 'eur'
+export function servicePriceFor(s, currency) {
   if (!s) return 0;
-  if (s.period === "weekly") return s.priceWeekly || 0;
-  if (s.period === "yearly") return s.priceYearly || 0;
-  return s.priceMonthly || 0; // 'monthly' و 'once' هر دو از همین فیلد
+  const suffix = currency === "usd" ? "Usd" : currency === "eur" ? "Eur" : "";
+  if (s.period === "weekly") return s["priceWeekly" + suffix] || 0;
+  if (s.period === "yearly") return s["priceYearly" + suffix] || 0;
+  return s["priceMonthly" + suffix] || 0; // 'monthly' و 'once' هر دو از همین فیلد
 }
 
-// currency: 'irr' (پیش‌فرض) | 'usd' | 'eur' — فقط قیمتِ ماژول‌ها را عوض
-// می‌کند (requires: پیش‌شرط بودنِ سایرِ ماژول‌ها). خدمات (services) قیمتِ
-// ارزی ندارند (فقط تومان)، پس در ارزِ غیرِ تومان از جمعِ کل کنار می‌مانند —
-// grandTotal فقط شاملِ ماژول‌ها می‌شود و servicesExcluded=true برمی‌گردد تا
-// UI در صورتِ لزوم توضیح بدهد.
+// currency: 'irr' (پیش‌فرض) | 'usd' | 'eur' — هم قیمتِ ماژول‌ها هم خدمات
+// را عوض می‌کند (requires: پیش‌شرط بودنِ سایرِ ماژول‌ها بین ارزها مشترک
+// است).
 export function computeCartTotal({ selectedModuleKeys, selectedServiceIds, modulePrices, services, billingCycle, currency }) {
   billingCycle = billingCycle === "monthly" ? "monthly" : "yearly";
   currency = currency === "usd" || currency === "eur" ? currency : "irr";
@@ -294,14 +310,13 @@ export function computeCartTotal({ selectedModuleKeys, selectedServiceIds, modul
   // خدمات — قیمتِ هر خدمت از دوره‌ی خودِ همان ردیف می‌آید (weekly/monthly/
   // yearly/once)، نه از تاگلِ کلیِ ماهانه/سالانه‌ی سبد. یک خدمتِ هفتگی
   // همیشه قیمتِ هفتگی‌اش را دارد، حتی اگر کاربر برای ماژول‌ها «سالانه» را انتخاب کرده باشد.
-  const svcIds = currency === "irr" ? (selectedServiceIds || []).filter((id) => svcMap[id]) : [];
-  const servicesExcluded = currency !== "irr" && (selectedServiceIds || []).some((id) => svcMap[id]);
+  const svcIds = (selectedServiceIds || []).filter((id) => svcMap[id]);
   const svcRecurring = svcIds.reduce((a, id) => {
     const s = svcMap[id];
     if (s.period === "once") return a;
-    return a + servicePriceFor(s);
+    return a + servicePriceFor(s, currency);
   }, 0);
-  const svcOnce = svcIds.reduce((a, id) => (svcMap[id].period === "once" ? a + servicePriceFor(svcMap[id]) : a), 0);
+  const svcOnce = svcIds.reduce((a, id) => (svcMap[id].period === "once" ? a + servicePriceFor(svcMap[id], currency) : a), 0);
 
   const recurringTotal = sumAllModules + svcRecurring;
   const grandTotal = recurringTotal + svcOnce;
@@ -310,7 +325,7 @@ export function computeCartTotal({ selectedModuleKeys, selectedServiceIds, modul
     billingCycle, currency,
     selReal,
     sumAllModules,
-    svcRecurring, svcOnce, serviceIds: svcIds, servicesExcluded,
+    svcRecurring, svcOnce, serviceIds: svcIds,
     recurringTotal, grandTotal,
   };
 }

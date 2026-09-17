@@ -32,6 +32,11 @@ const CURRENCY_FIELD = {
   usd: { monthly: "priceMonthlyUsd", yearly: "priceYearlyUsd" },
   eur: { monthly: "priceMonthlyEur", yearly: "priceYearlyEur" },
 };
+const SVC_CURRENCY_FIELD = {
+  irr: { weekly: "priceWeekly", monthly: "priceMonthly", yearly: "priceYearly" },
+  usd: { weekly: "priceWeeklyUsd", monthly: "priceMonthlyUsd", yearly: "priceYearlyUsd" },
+  eur: { weekly: "priceWeeklyEur", monthly: "priceMonthlyEur", yearly: "priceYearlyEur" },
+};
 const CURRENCY_TABS = [
   { key: "irr", labelKey: "pcCurrencyIrr" },
   { key: "usd", labelKey: "pcCurrencyUsd" },
@@ -109,7 +114,12 @@ export default function PricingConsole({ companies, currentAdmin, onChanged }) {
   // ---------- ویرایشِ ردیف‌ها ----------
   const setRow = (k, patch) => setMp((rows) => rows.map((r) => (r.moduleKey === k ? { ...r, ...patch } : r)));
   const setSvcRow = (r, patch) => setSvc((rows) => rows.map((y) => (y === r ? { ...y, ...patch } : y)));
-  const addSvc = () => setSvc((rows) => [...rows, { id: "", name: t("mpNewService"), nameEn: "", nameDe: "", description: "", descriptionEn: "", descriptionDe: "", priceWeekly: 0, priceMonthly: 0, priceYearly: 0, period: "monthly", sortOrder: (rows.length + 1) * 10, isActive: true, __new: true }]);
+  const addSvc = () => setSvc((rows) => [...rows, {
+    id: "", name: t("mpNewService"), nameEn: "", nameDe: "", description: "", descriptionEn: "", descriptionDe: "",
+    priceWeekly: 0, priceMonthly: 0, priceYearly: 0,
+    priceWeeklyUsd: 0, priceMonthlyUsd: 0, priceYearlyUsd: 0, priceWeeklyEur: 0, priceMonthlyEur: 0, priceYearlyEur: 0,
+    period: "monthly", sortOrder: (rows.length + 1) * 10, isActive: true, __new: true,
+  }]);
   const removeSvc = async (r) => {
     if (r.__new) { setSvc((rows) => rows.filter((x) => x !== r)); return; }
     if (!window.confirm(t("mpConfirmDeleteService"))) return;
@@ -209,6 +219,23 @@ export default function PricingConsole({ companies, currentAdmin, onChanged }) {
       {err && <p style={styles.error}>{err}</p>}
       {ok && <p style={{ ...styles.error, color: THEME.ok }}>{ok}</p>}
 
+      {/* تبِ ارز — سطحِ کلِ صفحه: هم ستون‌هایِ ماتریسِ ماژول‌ها، هم ستون‌هایِ
+          هفتگی/ماهانه/سالانه‌ی جدولِ خدماتِ زیرش را بین قیمتِ تومان/دلار/یورو
+          سوییچ می‌کند (isFree/requires/period/... بینِ ارزها مشترک‌اند) */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+        {CURRENCY_TABS.map((c) => (
+          <button
+            key={c.key} type="button" onClick={() => setPriceCurrency(c.key)}
+            style={{
+              ...styles.smallButton, background: priceCurrency === c.key ? THEME.teal : THEME.surface2,
+              color: priceCurrency === c.key ? "#fff" : THEME.text2,
+            }}
+          >
+            {t(c.labelKey)}
+          </button>
+        ))}
+      </div>
+
       {/* ---------- ۱) ماتریسِ ماژول × پلن ---------- */}
       <div style={{ ...styles.cardWide, marginBottom: 16 }}>
         <div className="pc-panelhead">
@@ -220,22 +247,6 @@ export default function PricingConsole({ companies, currentAdmin, onChanged }) {
               <Plus size={12} /> {t("pcAddGroup")}
             </button>
           </div>
-        </div>
-
-        {/* تبِ ارز — ستون‌هایِ ماهانه/سالانه‌ی همین جدول را بین قیمتِ
-            تومان/دلار/یورویِ هر ماژول سوییچ می‌کند (isFree/requires/... مشترکند) */}
-        <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
-          {CURRENCY_TABS.map((c) => (
-            <button
-              key={c.key} type="button" onClick={() => setPriceCurrency(c.key)}
-              style={{
-                ...styles.smallButton, background: priceCurrency === c.key ? THEME.teal : THEME.surface2,
-                color: priceCurrency === c.key ? "#fff" : THEME.text2,
-              }}
-            >
-              {t(c.labelKey)}
-            </button>
-          ))}
         </div>
 
         <div style={{ overflowX: "auto" }}>
@@ -344,7 +355,10 @@ export default function PricingConsole({ companies, currentAdmin, onChanged }) {
               <th>{t("mpSvcPeriod")}</th><th>{t("mpSvcDesc")}</th><th>{t("commonActive")}</th><th />
             </tr></thead>
             <tbody>
-              {svc.map((r, i) => (
+              {svc.map((r, i) => {
+                const svcFields = SVC_CURRENCY_FIELD[priceCurrency];
+                const svcStep = priceCurrency === "irr" ? "100000" : "1";
+                return (
                 <tr key={r.id || "new" + i}>
                   <td className="pc-sticky">
                     <input value={r.name} onChange={(e) => setSvcRow(r, { name: e.target.value })} style={{ ...cellIn, width: 150, fontFamily: THEME.font, textAlign: "start" }} dir="rtl" />
@@ -353,9 +367,9 @@ export default function PricingConsole({ companies, currentAdmin, onChanged }) {
                       <input value={r.nameDe} onChange={(e) => setSvcRow(r, { nameDe: e.target.value })} style={{ ...labelIn, width: 73 }} placeholder={t("pcLabelDe")} dir="ltr" />
                     </div>
                   </td>
-                  <td><input type="number" step="100000" value={r.priceWeekly} onChange={(e) => setSvcRow(r, { priceWeekly: Number(e.target.value) || 0 })} style={cellIn} /></td>
-                  <td><input type="number" step="100000" value={r.priceMonthly} onChange={(e) => setSvcRow(r, { priceMonthly: Number(e.target.value) || 0 })} style={cellIn} /></td>
-                  <td><input type="number" step="100000" value={r.priceYearly} onChange={(e) => setSvcRow(r, { priceYearly: Number(e.target.value) || 0 })} style={cellIn} /></td>
+                  <td><input type="number" step={svcStep} value={r[svcFields.weekly]} onChange={(e) => setSvcRow(r, { [svcFields.weekly]: Number(e.target.value) || 0 })} style={cellIn} /></td>
+                  <td><input type="number" step={svcStep} value={r[svcFields.monthly]} onChange={(e) => setSvcRow(r, { [svcFields.monthly]: Number(e.target.value) || 0 })} style={cellIn} /></td>
+                  <td><input type="number" step={svcStep} value={r[svcFields.yearly]} onChange={(e) => setSvcRow(r, { [svcFields.yearly]: Number(e.target.value) || 0 })} style={cellIn} /></td>
                   <td>
                     <select value={r.period} onChange={(e) => setSvcRow(r, { period: e.target.value })} style={{ ...cellIn, width: 90 }}>
                       <option value="weekly">{t("mpPeriodWeekly")}</option>
@@ -379,7 +393,8 @@ export default function PricingConsole({ companies, currentAdmin, onChanged }) {
                   </td>
                   <td><button type="button" onClick={() => removeSvc(r)} style={{ border: "none", background: "transparent", color: THEME.danger, cursor: "pointer" }}><Trash2 size={14} /></button></td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
