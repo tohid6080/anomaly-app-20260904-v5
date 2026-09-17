@@ -8738,6 +8738,8 @@ export const translations = {
   "saModuleStartsAt": { "fa": "تاریخ و ساعتِ شروع", "en": "Start date & time" },
   "saModuleEndsAtNoExpiry": { "fa": "تاریخ و ساعتِ پایان (خالی = بدون انقضا)", "en": "End date & time (empty = no expiry)" },
   "saAddCompanyModule": { "fa": "افزودن ماژول", "en": "Add module" },
+  "saAddAllModules": { "fa": "افزودنِ همه‌ی ماژول‌ها", "en": "Add all modules" },
+  "saAddAllModulesConfirm": { "fa": "همه‌ی {count} ماژولِ تخصیص‌نیافته با بازه‌ی تاریخِ انتخاب‌شده افزوده شود؟", "en": "Add all {count} unassigned modules with the selected date range?" },
   "saSelectModulePlaceholder": { "fa": "انتخابِ ماژول…", "en": "Select a module…" },
   "saRemoveCompanyModuleConfirm": { "fa": "ماژولِ «{name}» از این شرکت حذف شود؟", "en": "Remove the \"{name}\" module from this company?" },
   "commonActivate": { "fa": "فعال‌سازی", "en": "Activate" },
