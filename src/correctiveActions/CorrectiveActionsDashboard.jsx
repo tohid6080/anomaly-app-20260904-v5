@@ -17,6 +17,8 @@ import {
   updateTripodCorrectiveActionStatus, CA_STATUS_LABELS,
 } from "../tripodBeta/tripodAnalysesApi.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { checkEventSurvey } from "../platformSurvey/platformSurveyApi.js";
+import PlatformSurveyPrompt from "../platformSurvey/PlatformSurveyPrompt.jsx";
 
 // نگاشت وضعیت‌های Tripod Beta (OPEN/IN_PROGRESS/DONE/CANCELLED) به واژگان
 // همین لیست، فقط برای نمایش یکدست بج وضعیت — چیزی در دیتابیس تغییر نمی‌کند
@@ -77,6 +79,7 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser, wide }
   const [showFilters, setShowFilters] = useState(false);
   const [kpiFilter, setKpiFilter] = useState(""); // کلیک روی یک کارت KPI، لیست را فیلتر می‌کند
   const [assignTripodAction, setAssignTripodAction] = useState(null); // اقدام Tripod Beta در حال ارجاع به پیمانکار
+  const [eventSurvey, setEventSurvey] = useState(null);
 
   const isContractor = currentUser?.role === "CONTRACTOR";
 
@@ -160,6 +163,8 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser, wide }
     if (result?.__error) { setError(result.message); return; }
     setShowForm(false);
     await load();
+    // نظرسنجیِ رضایتِ رویدادمحور — بعدِ تأییدِ موفقِ اقدامِ اصلاحی
+    checkEventSurvey("corrective_action_approved", currentUser).then((s) => { if (s) setEventSurvey(s); });
   };
 
   const handleFileUpload = async (file) => {
@@ -444,6 +449,7 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser, wide }
           onSaved={async () => { setAssignTripodAction(null); await load(); }}
         />
       )}
+      {eventSurvey && <PlatformSurveyPrompt kind="event" survey={eventSurvey} currentUser={currentUser} onDismiss={() => setEventSurvey(null)} />}
     </div>
   );
 }

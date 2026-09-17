@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useId, useContext, createContext } from "react";
-import { ShieldAlert, Plus, LogOut, Send, CreditCard, AlertTriangle, UserPlus, KeyRound, Layers, Trash2, History, Activity, TrendingDown, Clock, LogIn, ShieldX, LayoutDashboard, Building2, Users, FileClock, ChevronLeft, HardDrive, RefreshCw, Settings2, Copy, GripVertical, ArrowUp, ArrowDown, RotateCcw, Eye, EyeOff, LayoutGrid, PanelsTopLeft, Bell, Palette, Megaphone, Sparkles, Gift, Info, ImagePlus, X, ClipboardList, Smartphone, UploadCloud, CheckCircle2, Download, Globe } from "lucide-react";
+import { ShieldAlert, Plus, LogOut, Send, CreditCard, AlertTriangle, UserPlus, KeyRound, Layers, Trash2, History, Activity, TrendingDown, Clock, LogIn, ShieldX, LayoutDashboard, Building2, Users, FileClock, ChevronLeft, HardDrive, RefreshCw, Settings2, Copy, GripVertical, ArrowUp, ArrowDown, RotateCcw, Eye, EyeOff, LayoutGrid, PanelsTopLeft, Bell, Palette, Megaphone, Sparkles, Gift, Info, ImagePlus, X, ClipboardList, Smartphone, UploadCloud, CheckCircle2, Download, Globe, ListChecks } from "lucide-react";
 import { loadAppReleases, createAppRelease, setReleasePublished, deleteAppRelease, loadLatestPublishedRelease, nextPatchVersion, triggerMobileBuild } from "./appReleaseApi.js";
 import { APP_VERSION, APP_VERSION_CODE } from "../shared.js";
 import { THEME, usePersistedState, GATED_MODULE_SUBS, SUB_KEY_TO_PARENT_MODULE, resizeImageFile } from "../shared.js";
@@ -14,6 +14,7 @@ import { loadCompanyModules, addCompanyModule, updateCompanyModule, removeCompan
 import { loadModulePrices, loadServices, formatCurrencyAmount } from "../pricingApi.js";
 import AdminAnalytics from "../admin/AdminAnalytics.jsx";
 import LandingPageManagementTab from "./LandingPageManagementTab.jsx";
+import PlatformSurveysPage from "./PlatformSurveysPage.jsx";
 import { toJalaliSafe, toJalaliDateTime, JalaliDateInput, JalaliDateTimeInput } from "../personnel/jalaliDate.jsx";
 import {
   loadCompanies, createCompany, updateCompany, deleteCompanySecure, setCompanyActive,
@@ -60,7 +61,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
   // صفحه بمانیم، نه اینکه به «نمای کلی» برگردیم.
   const [page, setPage] = usePersistedState("ihms_sa_page", "overview");
   useEffect(() => {
-    const VALID = ["overview", "companies", "accounts", "plans", "monitoring", "storage", "auditLog", "errorReports", "systemConfig", "cardTransferPayments", "trialRequests"];
+    const VALID = ["overview", "companies", "accounts", "plans", "monitoring", "storage", "auditLog", "errorReports", "systemConfig", "cardTransferPayments", "trialRequests", "platformSurveys"];
     if (!VALID.includes(page)) setPage("overview");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -178,6 +179,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
     ] },
     { labelKey: "saNavGroupConfig", items: [
       { key: "systemConfig", labelKey: "saNavSystemConfig", icon: Settings2 },
+      { key: "platformSurveys", labelKey: "saNavPlatformSurveys", icon: ListChecks },
     ] },
     { labelKey: "saNavGroupBilling", items: [
       { key: "cardTransferPayments", labelKey: "saNavCardPayments", icon: CreditCard },
@@ -273,6 +275,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
           {page === "errorReports" && <ErrorReportsPage currentAdmin={currentAdmin} />}
           {page === "cardTransferPayments" && <CardTransferPaymentsPage currentAdmin={currentAdmin} />}
           {page === "trialRequests" && <TrialRequestsPage currentAdmin={currentAdmin} />}
+          {page === "platformSurveys" && <PlatformSurveysPage currentAdmin={currentAdmin} />}
         </div>
       </div>
     </div>
