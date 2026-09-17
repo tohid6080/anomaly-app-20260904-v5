@@ -3761,6 +3761,9 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
   const [moduleBusy, setModuleBusy] = useState(false);
   const [moduleError, setModuleError] = useState("");
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [trialAdjustDays, setTrialAdjustDays] = useState(1);
+  const [trialAdjustBusy, setTrialAdjustBusy] = useState(false);
+  const [trialAdjustError, setTrialAdjustError] = useState("");
 
   const loadCompanyModulesList = () => loadCompanyModules(company.id).then(setCompanyModules);
   useEffect(() => { loadCompanyModulesList(); loadModulePrices({ live: true }).then(setModulePricesCatalog); }, [company.id]);
@@ -3857,6 +3860,22 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
     const result = await setCompanySubscriptionContract(company.id, moduleTotals, assignType, assignDays, discountInput, currentAdmin?.fullName, planNote);
     setPlanSaving(false);
     if (result?.__error) { alert(result.message); return; }
+    onPlanChanged();
+  };
+
+  // تمدید/کوتاه‌کردنِ دوره‌ی آزمایشی به‌اندازه‌ی N روز — فقط trial_end
+  // جابه‌جا می‌شود (نسبت به پایانِ فعلی، یا اگر هنوز تنظیم نشده بود نسبت به
+  // شروعِ دوره یا همین الان)، trial_start دست‌نخورده می‌ماند.
+  const handleAdjustTrial = async (sign) => {
+    const n = Number(trialAdjustDays);
+    if (!n || n <= 0) return;
+    setTrialAdjustBusy(true);
+    setTrialAdjustError("");
+    const base = company.trialEnd || company.trialStart || new Date().toISOString();
+    const newEnd = new Date(new Date(base).getTime() + sign * n * 86400000).toISOString();
+    const result = await updateCompany(company.id, { trialEnd: newEnd });
+    setTrialAdjustBusy(false);
+    if (result?.__error) { setTrialAdjustError(result.message); return; }
     onPlanChanged();
   };
 
@@ -4036,6 +4055,22 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
               <>{t("saSubStartLabel")}<b>{liveAccess.subscriptionStartDate ? toJalaliDateTime(liveAccess.subscriptionStartDate) : t("saNotRecorded")}</b>{t("saEndLabelSep")}<b>{liveAccess.subscriptionEndDate ? toJalaliDateTime(liveAccess.subscriptionEndDate) : "—"}</b></>
             )}
           </p>
+        )}
+        {company.subscriptionType === "trial" && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 10 }}>
+            <input
+              type="number" min="1" style={{ ...inputStyle, width: 80 }} value={trialAdjustDays}
+              onChange={(e) => setTrialAdjustDays(e.target.value)} dir="ltr"
+            />
+            <span style={{ fontSize: 11, color: THEME.text2 }}>{t("saTrialAdjustDaysLabel")}</span>
+            <button type="button" onClick={() => handleAdjustTrial(1)} disabled={trialAdjustBusy} style={btnStyle(THEME.ok)}>
+              {trialAdjustBusy ? t("saSubmittingEllipsis") : t("saTrialExtendBtn")}
+            </button>
+            <button type="button" onClick={() => handleAdjustTrial(-1)} disabled={trialAdjustBusy} style={btnStyle(THEME.warn)}>
+              {trialAdjustBusy ? t("saSubmittingEllipsis") : t("saTrialShortenBtn")}
+            </button>
+            {trialAdjustError && <span style={{ fontSize: 10.5, color: THEME.danger }}>{trialAdjustError}</span>}
+          </div>
         )}
 
         {/* ---------- ماژول‌های فعالِ این شرکت ---------- */}
