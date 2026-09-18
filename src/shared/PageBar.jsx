@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useRef, useCallback, useEffect } from "react";
-import { ChevronRight, ChevronLeft } from "lucide-react";
 import { THEME } from "../shared.js";
-import { useLanguage } from "../i18n/LanguageContext.jsx";
+import BackLink from "./BackLink.jsx";
 
 /**
  * PageBar — نوارِ ثابتِ زیرِ هدر که در هر ماژول یک ردیفِ مرتب و یک‌دست
@@ -36,8 +35,6 @@ export function usePageBar({ title, crumb, actions, onBack, icon } = {}) {
 }
 
 export default function PageBar({ icon: Icon, title, crumb, onBack, backLabel, actions }) {
-  const { dir } = useLanguage();
-  const BackIcon = dir === "rtl" ? ChevronRight : ChevronLeft;
   return (
     <div
       style={{
@@ -56,27 +53,9 @@ export default function PageBar({ icon: Icon, title, crumb, onBack, backLabel, a
       }}
     >
       {onBack && (
-        <button
-          type="button"
-          onClick={onBack}
-          title={backLabel}
-          aria-label={backLabel}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 30,
-            height: 30,
-            borderRadius: 9,
-            flexShrink: 0,
-            border: `1px solid ${THEME.border}`,
-            background: THEME.surface,
-            color: THEME.text2,
-            cursor: "pointer",
-          }}
-        >
-          <BackIcon size={16} />
-        </button>
+        <BackLink onClick={onBack} style={{ marginBottom: 0, flexShrink: 0 }}>
+          {backLabel}
+        </BackLink>
       )}
 
       <div style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0, flex: "1 1 auto" }}>

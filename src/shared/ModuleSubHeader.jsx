@@ -1,7 +1,7 @@
 import React from "react";
-import { ChevronRight, ChevronLeft } from "lucide-react";
 import { THEME } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import BackLink from "./BackLink.jsx";
 
 /**
  * Sub Headerِ کوچکِ زیرِ Header برای صفحاتِ وب — یک دکمهٔ «بازگشت»، عنوانِ
@@ -10,33 +10,13 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
  */
 export default function ModuleSubHeader({ icon: Icon, title, note, onBack, backLabel, actions }) {
   const { dir } = useLanguage();
-  const BackIcon = dir === "rtl" ? ChevronRight : ChevronLeft;
   return (
     <div style={{ direction: dir, margin: "0 0 16px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
       <div style={{ display: "flex", alignItems: "flex-start", gap: 10, minWidth: 0 }}>
         {onBack && (
-          <button
-            type="button"
-            onClick={onBack}
-            title={backLabel}
-            aria-label={backLabel}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 30,
-              height: 30,
-              marginTop: 1,
-              borderRadius: 9,
-              flexShrink: 0,
-              border: `1px solid ${THEME.border}`,
-              background: THEME.surface,
-              color: THEME.text2,
-              cursor: "pointer",
-            }}
-          >
-            <BackIcon size={16} />
-          </button>
+          <BackLink onClick={onBack} style={{ marginBottom: 0, marginTop: 1, flexShrink: 0 }}>
+            {backLabel}
+          </BackLink>
         )}
         {Icon && (
           <span
