@@ -4744,4 +4744,7 @@ export const de = {
   "psNoResponses": "Für diese Umfrage wurden noch keine Antworten übermittelt.",
   "psNoAnswersYet": "Noch keine Antworten",
   "psOptionStat": "{count} Antworten ({pct}%)",
+  "psAnsweredCount": "{count} haben geantwortet",
+  "psPercentValue": "{pct}%",
+  "psOptionCount": "{count} Antworten",
 };

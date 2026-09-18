@@ -10788,7 +10788,10 @@ export const translations = {
   "psFilterAllRoles": { "fa": "همه‌ی نقش‌ها", "en": "All Roles" },
   "psNoResponses": { "fa": "هنوز پاسخی برای این نظرسنجی ثبت نشده است.", "en": "No responses have been submitted for this survey yet." },
   "psNoAnswersYet": { "fa": "پاسخی ثبت نشده است", "en": "No answers yet" },
-  "psOptionStat": { "fa": "{count} پاسخ (٪{pct})", "en": "{count} responses ({pct}%)" }
+  "psOptionStat": { "fa": "{count} پاسخ (٪{pct})", "en": "{count} responses ({pct}%)" },
+  "psAnsweredCount": { "fa": "{count} نفر پاسخ داده‌اند", "en": "{count} answered" },
+  "psPercentValue": { "fa": "٪{pct}", "en": "{pct}%" },
+  "psOptionCount": { "fa": "{count} پاسخ", "en": "{count} responses" }
 };
 
 // ---------- تزریقِ تنبلِ ترجمهٔ آلمانی ----------
