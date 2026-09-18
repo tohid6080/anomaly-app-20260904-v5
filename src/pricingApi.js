@@ -71,6 +71,50 @@ function svcFromSnap(s) {
   };
 }
 
+// module_prices.label فقط فارسی است (یک ستونِ متنیِ ساده در دیتابیس، بدونِ
+// چندزبانگی) — صفحه‌ی خریدِ ماژول‌ها و صفحه‌ی «اشتراکِ شما به پایان رسیده
+// است» هر دو مستقیم همین label خام را نشان می‌دادند، حتی در زبانِ en/de.
+// این نگاشت هر moduleKey را به یک کلیدِ i18n وصل می‌کند تا نامِ ماژول با
+// زبانِ فعلیِ سایت هماهنگ باشد؛ اگر moduleKey ای در آینده اضافه شود و اینجا
+// ثبت نشود، به همان label خامِ فارسیِ دیتابیس برمی‌گردد (نه خالی/خطا).
+export const MODULE_PRICE_LABEL_KEYS = {
+  chat: "mpLabelChat",
+  notifications: "mpLabelNotifications",
+  profile: "mpLabelProfile",
+  quickTools: "mpLabelQuickTools",
+  anomalyReport: "mpLabelAnomalyReport",
+  incidentManagement: "mpLabelIncidentManagement",
+  proactiveIndicators: "mpLabelProactiveIndicators",
+  scaffoldManagement: "mpLabelScaffoldManagement",
+  personnelAccess: "mpLabelPersonnelAccess",
+  riskAssessment: "mpLabelRiskAssessment",
+  hcmsDashboard: "mpLabelHcmsDashboard",
+  riskKnowledgeManagement: "mpLabelRiskKnowledgeManagement",
+  operationalDashboard: "mpLabelOperationalDashboard",
+  managementDashboard: "mpLabelManagementDashboard",
+  machineryManagement: "mpLabelMachineryManagement",
+  liftingPlan: "mpLabelLiftingPlan",
+  "energy-calculator": "mpLabelEnergyCalculator",
+  "fleet-fuel-calculator": "mpLabelFleetFuelCalculator",
+  "excavation-calculator": "mpLabelExcavationCalculator",
+  archiveManagement: "mpLabelArchiveManagement",
+  trainingManagement: "mpLabelTrainingManagement",
+  permissionManagement: "mpLabelPermissionManagement",
+  jobPositionManagement: "mpLabelJobPositionManagement",
+  effectivenessThresholds: "mpLabelEffectivenessThresholds",
+  hcmsMatrixManagement: "mpLabelHcmsMatrixManagement",
+  chatAccessManagement: "mpLabelChatAccessManagement",
+  scaffoldCodeManagement: "mpLabelScaffoldCodeManagement",
+  anomalyCategoryManagement: "mpLabelAnomalyCategoryManagement",
+  hseSurvey: "mpLabelHseSurvey",
+  permitToWork: "mpLabelPermitToWork",
+  pssr: "mpLabelPssr",
+};
+export function moduleDisplayLabel(m, t) {
+  const key = MODULE_PRICE_LABEL_KEYS[m?.moduleKey];
+  return key ? t(key) : (m?.label || m?.moduleKey || "");
+}
+
 // گروه‌بندیِ دلخواه — { groups: [{id,name}], byModule: { moduleKey: groupId } }
 export async function loadPricingGroups() {
   const g = await readSystemSettingJson(SS_GROUPS_KEY);

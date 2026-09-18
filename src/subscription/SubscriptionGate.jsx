@@ -3,11 +3,11 @@ import { CheckCircle2, XCircle, LogOut, Loader2, Clock, X, ImagePlus, Copy, Chec
 import { styles, THEME, resizeImageFile, isValidMobile } from "../shared.js";
 import { toJalaliDateTime } from "../personnel/jalaliDate.jsx";
 import { computeSubscriptionAccess, loadMySubscriptionInfo, verifyPayment, loadCardTransferSettings } from "../subscriptionApi.js";
-import { loadModulePrices, loadServices, computeCartTotal, applyModuleDeps, servicePriceFor } from "../pricingApi.js";
+import { loadModulePrices, loadServices, computeCartTotal, applyModuleDeps, servicePriceFor, moduleDisplayLabel } from "../pricingApi.js";
 import { submitGuestPurchaseRequest } from "../guestPurchaseApi.js";
 import PaymentMethodsSection from "./CardTransferPayment.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
-import { numLocale } from "../i18n/translations.js";
+import { numLocale, listSep } from "../i18n/translations.js";
 
 // عنوان/زیرعنوانِ صفحه‌ی خرید بر پایه‌ی این‌که «چطور به این صفحه رسیده»:
 // خریدِ اولِ بدونِ آزمایشی / پایانِ آزمایشی / پایانِ اشتراکِ پولی / در انتظارِ
@@ -232,7 +232,7 @@ function ModulePickerBlock({ modulePrices, services, selMods, selSvc, setSelSvc,
             return (
               <label key={m.moduleKey} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", borderBottom: `1px solid ${THEME.borderSoft}`, cursor: "pointer" }}>
                 <input type="checkbox" checked={on} onChange={() => toggleMod(m.moduleKey)} style={{ width: 16, height: 16, accentColor: THEME.teal }} />
-                <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: THEME.text }}>{m.label || m.moduleKey}</span>
+                <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: THEME.text }}>{moduleDisplayLabel(m, t)}</span>
                 <span style={{ fontSize: 12, fontWeight: 700, color: THEME.text2, fontFamily: "monospace" }}>
                   {priceOfMod(m) > 0 ? `+ ${money(priceOfMod(m))}` : "—"}
                 </span>
@@ -241,7 +241,7 @@ function ModulePickerBlock({ modulePrices, services, selMods, selSvc, setSelSvc,
           })}
           {freeMods.length > 0 && (
             <p style={{ fontSize: 10.5, color: THEME.text3, marginTop: 8 }}>
-              {t("sgFreeModulesLine", { list: freeMods.map((m) => m.label || m.moduleKey).join("، ") })}
+              {t("sgFreeModulesLine", { list: freeMods.map((m) => moduleDisplayLabel(m, t)).join(listSep(lang)) })}
             </p>
           )}
         </div>
