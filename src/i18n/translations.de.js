@@ -4747,4 +4747,12 @@ export const de = {
   "psAnsweredCount": "{count} haben geantwortet",
   "psPercentValue": "{pct}%",
   "psOptionCount": "{count} Antworten",
+  "psEventAnomalyClosed": "Abweichung geschlossen",
+  "psEventMachineryApproved": "Maschine genehmigt",
+  "psEventScaffoldTagIssued": "Gerüst-Kennzeichnung ausgestellt",
+  "psEventScaffoldRemoved": "Gerüstabbau bestätigt",
+  "psEventIncidentInvestigationApproved": "Vorfalluntersuchung genehmigt",
+  "psEventHcmsAssessmentApproved": "HCMS-Risikobewertung genehmigt",
+  "psEventAccidentPronenessSubmitted": "Unfallneigungs-Fragebogen eingereicht",
+  "psEventHseClimateSubmitted": "HSE-Klima-Fragebogen eingereicht",
 };

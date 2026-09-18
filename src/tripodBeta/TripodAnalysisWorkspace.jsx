@@ -14,6 +14,8 @@ import TogglePicker from "./ChecklistPicker.jsx";
 import TripodTree from "./TripodTree.jsx";
 import BarrierMappingPicker from "../bowtie/BarrierMappingPicker.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { checkEventSurvey } from "../platformSurvey/platformSurveyApi.js";
+import PlatformSurveyPrompt from "../platformSurvey/PlatformSurveyPrompt.jsx";
 
 const TABS = [
   { key: "summary", labelKey: "twTabSummary" },
@@ -36,6 +38,7 @@ export default function TripodAnalysisWorkspace({ analysisId, incident, currentU
   const [tab, setTab] = useState("summary");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [eventSurvey, setEventSurvey] = useState(null);
 
   const refresh = async () => {
     const [a, tg, br, rc, ca, hist] = await Promise.all([
@@ -63,6 +66,9 @@ export default function TripodAnalysisWorkspace({ analysisId, incident, currentU
     setBusy(false);
     if (result?.__error) { setError(result.message); return; }
     await refresh();
+    if (action === "approve") {
+      checkEventSurvey("incident_investigation_approved", currentUser).then((s) => { if (s) setEventSurvey(s); });
+    }
   };
 
   return (
@@ -120,6 +126,7 @@ export default function TripodAnalysisWorkspace({ analysisId, incident, currentU
         </div>
       )}
       {tab === "history" && <HistoryTab history={history} />}
+      {eventSurvey && <PlatformSurveyPrompt kind="event" survey={eventSurvey} currentUser={currentUser} onDismiss={() => setEventSurvey(null)} />}
     </div>
   );
 }

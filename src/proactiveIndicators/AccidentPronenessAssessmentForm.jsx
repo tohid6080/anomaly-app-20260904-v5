@@ -3,6 +3,8 @@ import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { loadIndicatorQuestions, computeIndicatorScore, submitAssessment } from "./proactiveIndicatorsApi.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { checkEventSurvey } from "../platformSurvey/platformSurveyApi.js";
+import PlatformSurveyPrompt from "../platformSurvey/PlatformSurveyPrompt.jsx";
 
 // دقیقاً همان مقیاس فایل مرجع — هر ۵ گزینه، همیشه به همین ترتیب و همین
 // امتیازِ خام (قبل از اعمال reverse scoring که در محاسبه‌ی نهایی انجام می‌شود)
@@ -24,6 +26,7 @@ export default function AccidentPronenessAssessmentForm({ personnelId, jobTitle,
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(null); // بعد از ثبت، امتیاز نهایی اینجا نمایش داده می‌شود
+  const [eventSurvey, setEventSurvey] = useState(null);
 
   useEffect(() => {
     loadIndicatorQuestions("accident_proneness").then((rows) => { setQuestions(rows); setLoading(false); });
@@ -47,6 +50,7 @@ export default function AccidentPronenessAssessmentForm({ personnelId, jobTitle,
     setSaving(false);
     if (result?.__error) { setError(result.message); return; }
     setDone(result.finalScore);
+    checkEventSurvey("accident_proneness_assessment_submitted", currentUser).then((s) => { if (s) setEventSurvey(s); });
   };
 
   if (loading) return <div style={{ padding: 40, textAlign: "center", color: THEME.text3 }}>{t("apLoadingQuestions")}</div>;
@@ -59,6 +63,7 @@ export default function AccidentPronenessAssessmentForm({ personnelId, jobTitle,
         <p style={{ color: THEME.text3, fontSize: 13, marginBottom: 16 }}>{t("apFinalScoreNote")}</p>
         <div style={{ fontSize: 40, fontWeight: 800, color: THEME.teal, marginBottom: 20 }}>{done}</div>
         <button type="button" style={styles.button} onClick={onSaved}>{t("commonBack")}</button>
+        {eventSurvey && <PlatformSurveyPrompt kind="event" survey={eventSurvey} currentUser={currentUser} onDismiss={() => setEventSurvey(null)} />}
       </div>
     );
   }

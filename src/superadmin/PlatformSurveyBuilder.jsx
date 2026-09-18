@@ -2,38 +2,56 @@ import React, { useState } from "react";
 import { Plus, Trash2, ArrowUp, ArrowDown, Save, X } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { JalaliDateInput } from "../personnel/jalaliDate.jsx";
 import { createPlatformSurvey, updatePlatformSurvey } from "./superAdminApi.js";
 
-// آینه‌ی محدودِ کلیدهای بالادستیِ HSE_MODULES (App.jsx) — همان کلیدها/
-// labelKeyها، نه اختراعی؛ import مستقیم از App.jsx نمی‌شود تا وابستگیِ
-// حلقوی پیش نیاید (دقیقاً همان دلیلِ وجودِ GATED_MODULE_SUBS در shared.js).
-// فقط برایِ برچسبِ سازمانی/نمایشیِ trigger_module؛ منطقِ واقعیِ نمایش با
-// trigger_event تعیین می‌شود، نه این فیلد.
-const MODULE_OPTIONS = [
-  { key: "chat", labelKey: "moduleChat" },
-  { key: "archiveManagement", labelKey: "moduleArchive" },
-  { key: "anomalyReport", labelKey: "moduleAnomalyReport" },
-  { key: "riskAssessment", labelKey: "moduleRiskAssessment" },
-  { key: "personnelAccess", labelKey: "modulePersonnelAccess" },
-  { key: "proactiveIndicators", labelKey: "moduleProactiveIndicators" },
-  { key: "hseSurvey", labelKey: "moduleHseSurvey" },
-  { key: "permitToWork", labelKey: "modulePermitToWork" },
-  { key: "incidentManagement", labelKey: "moduleIncidentManagement" },
-  { key: "pssrManagement", labelKey: "modulePssr" },
-  { key: "machineryManagement", labelKey: "moduleMachinery" },
-  { key: "scaffoldManagement", labelKey: "moduleScaffold" },
-  { key: "managementDashboard", labelKey: "moduleManagementDashboard" },
-  { key: "operationalDashboard", labelKey: "moduleOperationalDashboard" },
-  { key: "quickTools", labelKey: "moduleQuickTools" },
-];
+// کلیدهای بالادستیِ HSE_MODULES (App.jsx) — همان کلیدها/labelKeyها، نه
+// اختراعی؛ import مستقیم از App.jsx نمی‌شود تا وابستگیِ حلقوی پیش نیاید
+// (دقیقاً همان دلیلِ وجودِ GATED_MODULE_SUBS در shared.js).
+const MODULE_LABEL_KEYS = {
+  anomalyReport: "moduleAnomalyReport",
+  riskAssessment: "moduleRiskAssessment",
+  proactiveIndicators: "moduleProactiveIndicators",
+  permitToWork: "modulePermitToWork",
+  incidentManagement: "moduleIncidentManagement",
+  machineryManagement: "moduleMachinery",
+  scaffoldManagement: "moduleScaffold",
+};
 
-// فقط دو Eventِ واقعاً متصل‌شده (طبقِ تحقیقِ کد، نه فهرستِ فریبنده) —
-// افزودنِ Eventِ بعدی: یک entry اینجا + یک فراخوانیِ checkEventSurvey در
-// نقطهٔ اتصالِ جدید.
-const EVENT_OPTIONS = [
-  { value: "permit_closed", labelKey: "psEventPermitClosed" },
-  { value: "corrective_action_approved", labelKey: "psEventCorrectiveActionApproved" },
-];
+// هر ماژول فقط Eventهای واقعاً متصل‌شده‌ی خودش را دارد (طبقِ تحقیقِ کد، نه
+// فهرستِ فریبنده) — دراپ‌داونِ «رویداد» با انتخابِ «ماژول» فیلتر می‌شود.
+// افزودنِ Eventِ بعدی: یک entry اینجا (زیرِ ماژولِ درست) + یک فراخوانیِ
+// checkEventSurvey در نقطهٔ اتصالِ جدید. ماژول‌هایی که هنوز هیچ Event
+// واقعی‌ای ندارند (pssrManagement، personnelAccess، hseSurvey، ...) عمداً
+// در این فهرست نیستند — تا دراپ‌داونِ «ماژول» هیچ‌وقت به یک دراپ‌داونِ
+// «رویداد»ِ خالی/گمراه‌کننده ختم نشود.
+const EVENTS_BY_MODULE = {
+  permitToWork: [
+    { value: "permit_closed", labelKey: "psEventPermitClosed" },
+  ],
+  anomalyReport: [
+    { value: "anomaly_closed", labelKey: "psEventAnomalyClosed" },
+    { value: "corrective_action_approved", labelKey: "psEventCorrectiveActionApproved" },
+  ],
+  machineryManagement: [
+    { value: "machinery_approved", labelKey: "psEventMachineryApproved" },
+  ],
+  scaffoldManagement: [
+    { value: "scaffold_tag_issued", labelKey: "psEventScaffoldTagIssued" },
+    { value: "scaffold_removed", labelKey: "psEventScaffoldRemoved" },
+  ],
+  incidentManagement: [
+    { value: "incident_investigation_approved", labelKey: "psEventIncidentInvestigationApproved" },
+  ],
+  riskAssessment: [
+    { value: "hcms_assessment_approved", labelKey: "psEventHcmsAssessmentApproved" },
+  ],
+  proactiveIndicators: [
+    { value: "accident_proneness_assessment_submitted", labelKey: "psEventAccidentPronenessSubmitted" },
+    { value: "hse_climate_assessment_submitted", labelKey: "psEventHseClimateSubmitted" },
+  ],
+};
+const MODULE_OPTIONS = Object.keys(EVENTS_BY_MODULE).map((key) => ({ key, labelKey: MODULE_LABEL_KEYS[key] }));
 
 const QUESTION_TYPES = [
   { value: "single_choice", labelKey: "psQTypeSingleChoice", hasOptions: true },
@@ -149,16 +167,16 @@ export default function PlatformSurveyBuilder({ kind, survey, currentAdmin, onSa
           <>
             <div>
               <label style={styles.label}>{t("psFieldModule")}</label>
-              <select style={styles.filterSelect} value={triggerModule} onChange={(e) => setTriggerModule(e.target.value)} dir={dir}>
+              <select style={styles.filterSelect} value={triggerModule} onChange={(e) => { setTriggerModule(e.target.value); setTriggerEvent(""); }} dir={dir}>
                 <option value="">{t("psSelectPlaceholder")}</option>
                 {MODULE_OPTIONS.map((m) => <option key={m.key} value={m.key}>{t(m.labelKey)}</option>)}
               </select>
             </div>
             <div>
               <label style={styles.label}>{t("psFieldEvent")}</label>
-              <select style={styles.filterSelect} value={triggerEvent} onChange={(e) => setTriggerEvent(e.target.value)} dir={dir}>
+              <select style={styles.filterSelect} value={triggerEvent} onChange={(e) => setTriggerEvent(e.target.value)} dir={dir} disabled={!triggerModule}>
                 <option value="">{t("psSelectPlaceholder")}</option>
-                {EVENT_OPTIONS.map((ev) => <option key={ev.value} value={ev.value}>{t(ev.labelKey)}</option>)}
+                {(EVENTS_BY_MODULE[triggerModule] || []).map((ev) => <option key={ev.value} value={ev.value}>{t(ev.labelKey)}</option>)}
               </select>
             </div>
             <div>
@@ -194,11 +212,11 @@ export default function PlatformSurveyBuilder({ kind, survey, currentAdmin, onSa
 
         <div>
           <label style={styles.label}>{t("psFieldStartDate")}</label>
-          <input type="date" style={styles.input} value={startDate} onChange={(e) => setStartDate(e.target.value)} dir="ltr" />
+          <JalaliDateInput value={startDate} onChange={setStartDate} allowEmpty />
         </div>
         <div>
           <label style={styles.label}>{t("psFieldEndDate")}</label>
-          <input type="date" style={styles.input} value={endDate} onChange={(e) => setEndDate(e.target.value)} dir="ltr" />
+          <JalaliDateInput value={endDate} onChange={setEndDate} allowEmpty />
         </div>
       </div>
 

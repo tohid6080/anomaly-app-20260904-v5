@@ -15,6 +15,8 @@ import {
 import ScaffoldRequestForm from "./ScaffoldRequestForm.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { translate as i18nTranslate, getCurrentLang } from "../i18n/translations.js";
+import { checkEventSurvey } from "../platformSurvey/platformSurveyApi.js";
+import PlatformSurveyPrompt from "../platformSurvey/PlatformSurveyPrompt.jsx";
 
 const SORT_OPTIONS_KEYS = [
   { value: "newest", labelKey: "sortNewest" },
@@ -26,6 +28,7 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
   const { t, dir } = useLanguage();
   const SORT_OPTIONS = SORT_OPTIONS_KEYS.map((o) => ({ value: o.value, label: t(o.labelKey) }));
   const isContractor = role === "CONTRACTOR";
+  const [eventSurvey, setEventSurvey] = useState(null);
   const [list, setList] = useState([]);
   const [myContractorCode, setMyContractorCode] = useState("");
   const [loading, setLoading] = useState(true);
@@ -139,6 +142,7 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
     await issueScaffoldTag(t.id, currentUser?.name || "");
     setSaving(false);
     await load();
+    checkEventSurvey("scaffold_tag_issued", currentUser).then((s) => { if (s) setEventSurvey(s); });
   };
 
   const startCorrection = (t) => { setExpandedId(t.id); setCorrectionNote(""); setCorrectionDeadline(""); setCorrectionDeadlineTime("18:00"); };
@@ -179,6 +183,7 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
     await confirmScaffoldRemoved(t.id, currentUser?.name || "");
     setSaving(false);
     await load();
+    checkEventSurvey("scaffold_removed", currentUser).then((s) => { if (s) setEventSurvey(s); });
   };
 
   const handlePrintTag = async (t) => {
@@ -421,6 +426,7 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
           );
         }}
       />
+      {eventSurvey && <PlatformSurveyPrompt kind="event" survey={eventSurvey} currentUser={currentUser} onDismiss={() => setEventSurvey(null)} />}
     </div>
   );
 }
