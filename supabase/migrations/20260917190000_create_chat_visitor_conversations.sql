@@ -57,7 +57,16 @@ create policy "super admin insert chat visitor messages" on public.chat_visitor_
 -- همین‌جا محاسبه می‌کند تا LiveChatAdminDock مجبور به کوئریِ جداگانه به‌ازایِ
 -- هر ردیف نباشد. security_invoker یعنی همان RLS بالا (نه صاحبِ ویو) اعمال
 -- می‌شود — دقیقاً همان دسترسیِ جدول‌هایِ زیرین.
-create or replace view public.chat_visitor_conversations_with_stats
+--
+-- drop قبل از create (نه create or replace): این migration روی محیطِ
+-- واقعی یک‌بار تا همین‌جا با موفقیت اجرا و سپس (به‌خاطرِ یک migration
+-- بعدیِ ناموفق) rollback نشده باقی مانده بود — یعنی ویویی با شکلِ ستونیِ
+-- کمی متفاوت از قبل روی دیتابیس بود، و create or replace با خطای
+-- «cannot change name of view column» (۴۲P16) شکست می‌خورد چون Postgres
+-- اجازه‌ی تغییرِ نام/ترتیبِ ستون‌هایِ یک ویویِ موجود را با replace نمی‌دهد.
+-- drop+create مستقل از شکلِ قبلی همیشه موفق می‌شود.
+drop view if exists public.chat_visitor_conversations_with_stats;
+create view public.chat_visitor_conversations_with_stats
 with (security_invoker = true) as
 select
   c.*,
