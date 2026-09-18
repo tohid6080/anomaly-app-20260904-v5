@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { Grid3x3 } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { loadFullMatrix, setMatrixCell, RISK_LEVEL_META, SEVERITY_CODES, PROBABILITY_LETTERS } from "./hcmsApi.js";
@@ -43,7 +44,7 @@ export default function HcmsMatrixManager({ onBack, wide }) {
 
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 800, margin: "0 auto", padding: 24, direction: dir }}>
-      {!wide && onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>}
+      {!wide && onBack && <BackLink onClick={onBack}>{t("commonBack")}</BackLink>}
       {!wide && (
         <>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>

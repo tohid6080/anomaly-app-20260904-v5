@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { loadIndicatorQuestions, computeIndicatorScore, submitAssessment } from "./proactiveIndicatorsApi.js";
@@ -70,7 +71,7 @@ export default function AccidentPronenessAssessmentForm({ personnelId, jobTitle,
 
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 720, margin: "0 auto", padding: 24, direction: dir }}>
-      <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>
+      <BackLink onClick={onBack}>{t("commonBack")}</BackLink>
       <h3 style={{ marginBottom: 4, color: THEME.heading }}>{t("apAssessmentTitle")}</h3>
       {personnelName && <p style={{ color: THEME.text3, fontSize: 13, marginTop: 0, marginBottom: 4 }}>{t("apPersonnelInline")} <b>{personnelName}</b>{jobTitle && ` — ${jobTitle}`}</p>}
       <p style={{ color: THEME.text3, fontSize: 12, marginTop: 0, marginBottom: 16 }}>

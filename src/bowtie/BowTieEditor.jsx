@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { THEME, styles } from "../shared.js";
 import { loadBowtieCanvas } from "./bowtieApi.js";
 import { BARRIER_STATUS, EFFECTIVENESS_STATUS } from "./bowtieApi.js";
@@ -21,7 +22,7 @@ export default function BowTieEditor({ bowtie, onBack, readOnly }) {
 
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto", padding: 20, direction: dir }}>
-      <div style={styles.backLink} onClick={onBack}>{t("bowtieBackToList")}</div>
+      <BackLink onClick={onBack}>{t("bowtieBackToList")}</BackLink>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 4 }}>
         <div>
           <h3 style={{ margin: "0 0 4px", color: THEME.heading, fontSize: 17, fontWeight: 700 }}>{bowtie.title}</h3>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import * as XLSX from "xlsx";
 import { Database, Plus, Search, Upload, Download, GitMerge, Trash2 } from "lucide-react";
 import { styles, THEME } from "../shared.js";
@@ -148,7 +149,7 @@ export default function RiskKnowledgeManager({ onBack, currentUser, wide }) {
   if (showForm) {
     return (
       <div style={wide ? { direction: dir } : { maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
-        <div style={styles.backLink} onClick={() => setShowForm(false)}>{t("rkCancel")}</div>
+        <BackLink onClick={() => setShowForm(false)}>{t("rkCancel")}</BackLink>
         <h2 style={{ fontSize: 17, color: THEME.heading, fontWeight: 700, marginBottom: 14 }}>{editingId ? t("rkEditRecord") : t("rkNewRecord")}</h2>
         <label style={styles.label}>{t("rkFieldActivity")}</label>
         <input style={styles.input} value={form.activity} onChange={(e) => setForm({ ...form, activity: e.target.value })} dir={dir} />
@@ -172,7 +173,7 @@ export default function RiskKnowledgeManager({ onBack, currentUser, wide }) {
 
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 1000, margin: "0 auto", padding: 24, direction: dir }}>
-      {!wide && onBack && <div style={styles.backLink} onClick={onBack}>{t("rkBackToSystemManagement")}</div>}
+      {!wide && onBack && <BackLink onClick={onBack}>{t("rkBackToSystemManagement")}</BackLink>}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 6, flexWrap: "wrap" }}>
         {!wide && (
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>

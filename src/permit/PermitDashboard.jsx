@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { Capacitor } from "@capacitor/core";
 import { Plus, FileSpreadsheet, Trash2, Layers, PenSquare, ShieldCheck } from "lucide-react";
 import { THEME, styles } from "../shared.js";
@@ -114,7 +115,7 @@ export default function PermitDashboard({ currentUser, role, readOnly, onBack, w
 
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>}
+      {onBack && <BackLink onClick={onBack}>{t("commonBack")}</BackLink>}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
         <FileSpreadsheet size={17} color={THEME.tealDeep} />
         <h3 style={{ margin: 0, color: THEME.heading, fontSize: 15, fontWeight: 800 }}>{t("modulePermitToWork")}</h3>

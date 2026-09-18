@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { AlertTriangle, GitBranch, Send } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
@@ -69,7 +70,7 @@ export default function IncidentDetailPage({ incidentId, currentUser, role, read
 
   return (
     <div>
-      <div style={styles.backLink} onClick={onBack}>{t("commonBackPlain")}</div>
+      <BackLink onClick={onBack}>{t("commonBackPlain")}</BackLink>
       <h2 style={{ fontSize: 18, color: THEME.heading, fontWeight: 800, margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}>
         <AlertTriangle size={20} color={THEME.teal} /> {t("incDetailHeading", { no: incident.incidentNo })}
       </h2>

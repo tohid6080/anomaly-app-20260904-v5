@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { GitBranch, Target as TargetIcon, History as HistoryIcon, Send, Play, CheckCircle2, XCircle, RotateCcw, Trash2 } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { toJalaliSafe, JalaliDateInput } from "../personnel/jalaliDate.jsx";
@@ -73,7 +74,7 @@ export default function TripodAnalysisWorkspace({ analysisId, incident, currentU
 
   return (
     <div>
-      <div style={styles.backLink} onClick={onBack}>{t("commonBackPlain")}</div>
+      <BackLink onClick={onBack}>{t("commonBackPlain")}</BackLink>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
         <div>
           <h2 style={{ fontSize: 17, color: THEME.heading, fontWeight: 800, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>

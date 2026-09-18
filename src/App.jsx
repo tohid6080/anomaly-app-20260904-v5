@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, Suspense, lazy } from "react";
+import BackLink from "./shared/BackLink.jsx";
 import { AlertTriangle, Plus, X, ChevronRight, ChevronLeft, ChevronDown, ChevronsRight, ChevronsLeft, LogOut, CheckCircle2, Clock, Camera, ImagePlus, Trash2, FileSpreadsheet, FileText, User, Users, ShieldCheck, LayoutGrid, BarChart3, Briefcase, Settings, Archive, Truck, Tag, MessageCircle, GraduationCap, ShieldOff, ShieldAlert, Database, Fingerprint, Info, Sliders, TrendingUp, Search, Home, Megaphone, Sparkles, Gift, Bell, ArrowUpRight, ClipboardList, MoreVertical, RefreshCw, GripVertical, Zap } from "lucide-react";
 // بارگذاری تنبلِ صفحه‌های ماژول — هرکدام چانکِ جدای خودش، فقط با باز شدنِ
 // آن ماژول بارگذاری می‌شود؛ از باندلِ اولیه‌ی سنگینِ App.jsx بیرون می‌مانند.
@@ -1787,7 +1788,7 @@ function ProfileView({ onBack, currentUser, roleLabel, mobileTabsProps }) {
 
   return (
     <div style={{ maxWidth: 460, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("backToMenu")}</div>}
+      {onBack && <BackLink onClick={onBack}>{t("backToMenu")}</BackLink>}
       <div style={{ ...styles.card, width: "auto" }}>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: (!isDesktop ? 8 : 14) }}>
           <Avatar name={currentUser?.name} size={64} src={(!isDesktop && profilePhoto) || undefined} />
@@ -1988,7 +1989,7 @@ function ContractorManager({ onBack }) {
 
   return (
     <div style={{ maxWidth: 560, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("cmBackToMenu")}</div>}
+      {onBack && <BackLink onClick={onBack}>{t("cmBackToMenu")}</BackLink>}
 
       <div style={{ ...styles.menuCard, background: "#0d8f8a", color: "#fff", textAlign: "center" }} onClick={() => setShowForm((v) => !v)}>
         {showForm ? t("cmCloseForm") : t("cmAddContractor")}
@@ -2138,7 +2139,7 @@ function EmployerAccountManager({ onBack }) {
 
   return (
     <div style={{ maxWidth: 560, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("cmBackToMenu")}</div>}
+      {onBack && <BackLink onClick={onBack}>{t("cmBackToMenu")}</BackLink>}
       <p style={{ color: "#93a1b0", fontSize: 13 }}>{t("eamIntro")}</p>
 
       <div style={{ ...styles.menuCard, background: "#0d8f8a", color: "#fff", textAlign: "center" }} onClick={() => setShowForm((v) => !v)}>
@@ -2462,7 +2463,7 @@ function AnomalyForm({ onBack, currentUser, onSaved, embedded }) {
   const afPair = embedded ? { display: "contents" } : styles.formGrid;
   return (
     <div style={embedded ? { direction: dir } : { maxWidth: 620, margin: "0 auto", padding: 24 }}>
-      {!embedded && onBack && <div style={styles.backLink} onClick={onBack}>{t("cmBackToMenu")}</div>}
+      {!embedded && onBack && <BackLink onClick={onBack}>{t("cmBackToMenu")}</BackLink>}
 
       <div style={embedded ? {} : { ...styles.card, width: "auto" }}>
         {hasDraft && draftBannerVisible && (
@@ -3148,7 +3149,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
 
   return (
     <div style={embedded ? { direction: dir } : { maxWidth: 900, margin: "0 auto", padding: 24 }}>
-      {!embedded && onBack && <div style={styles.backLink} onClick={onBack}>{t("cmBackToMenu")}</div>}
+      {!embedded && onBack && <BackLink onClick={onBack}>{t("cmBackToMenu")}</BackLink>}
 
       <div style={styles.statsRow}>
         <div style={styles.statBox}>
@@ -5202,7 +5203,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
 
       {view === "systemManagement" && systemManagementEntry && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
-          <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
+          <BackLink onClick={() => setView("menu")}>{t("backToMenu")}</BackLink>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{t("moduleSystemManagement")}</h3>
           <div style={styles.menuList2}>
             {isModuleInPlan(planFeatures, "permissionManagement") && <MenuRow icon={ShieldCheck} label={t("subPermissions")} onClick={() => setView("permissionManagement")} />}
@@ -5231,7 +5232,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
 
       {!isDesktop && view === "anomalyReport" && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
-          <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
+          <BackLink onClick={() => setView("menu")}>{t("backToMenu")}</BackLink>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(anomalyMod)}</h3>
           <div style={styles.menuList2}>
             {anomalySub.map((s) => (
@@ -5243,7 +5244,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
 
       {view === "riskAssessment" && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
-          <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
+          <BackLink onClick={() => setView("menu")}>{t("backToMenu")}</BackLink>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(riskMod)}</h3>
           <div style={styles.menuList2}>
             {filterSubByPlan(riskMod.sub, planFeatures).map((s) => (
@@ -5257,7 +5258,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
 
       {!isDesktop && view === "personnelAccess" && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
-          <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
+          <BackLink onClick={() => setView("menu")}>{t("backToMenu")}</BackLink>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(personnelMod)}</h3>
           <div style={styles.menuList2}>
             {personnelMod.sub.filter((s) => subViewOnlyOk(s, personnelMod, permMap) && isModuleInPlan(planFeatures, s.key)).map((s) => (
@@ -5271,7 +5272,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
 
       {!isDesktop && view === "machineryManagement" && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
-          <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
+          <BackLink onClick={() => setView("menu")}>{t("backToMenu")}</BackLink>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(machineryMod)}</h3>
           <div style={styles.menuList2}>
             {filterSubByPlan(machineryMod.sub, planFeatures).map((s) => (
@@ -5283,7 +5284,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
 
       {view === "scaffoldManagement" && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
-          <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
+          <BackLink onClick={() => setView("menu")}>{t("backToMenu")}</BackLink>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(scaffoldMod)}</h3>
           <div style={styles.menuList2}>
             {filterSubByPlan(scaffoldMod.sub, planFeatures).map((s) => (
@@ -5295,7 +5296,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
 
       {view === "incidentManagement" && incidentMod && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
-          <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
+          <BackLink onClick={() => setView("menu")}>{t("backToMenu")}</BackLink>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(incidentMod)}</h3>
           <div style={styles.menuList2}>
             {filterSubByPlan(incidentMod.sub, planFeatures).map((s) => (
@@ -5583,7 +5584,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
       {isDesktop && (view === "anomalyReport" || view === "anomalyList") && anomalyWebCombined}
       {!isDesktop && view === "anomalyReport" && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
-          <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
+          <BackLink onClick={() => setView("menu")}>{t("backToMenu")}</BackLink>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(anomalyMod)}</h3>
           <div style={styles.menuList2}>
             {anomalySub.map((s) => (
@@ -5596,7 +5597,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
       {isDesktop && (view === "personnelAccess" || view === "personnelDashboard" || view === "personnelForm") && personnelWebCombined}
       {!isDesktop && view === "personnelAccess" && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
-          <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
+          <BackLink onClick={() => setView("menu")}>{t("backToMenu")}</BackLink>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(personnelMod)}</h3>
           <div style={styles.menuList2}>
             {personnelMod.sub.filter((s) => subViewOnlyOk(s, personnelMod, permMap) && isModuleInPlan(planFeatures, s.key)).map((s) => (
@@ -5609,7 +5610,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
       {isDesktop && (view === "machineryManagement" || view === "machineryDashboard") && machineryWebCombined}
       {!isDesktop && view === "machineryManagement" && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
-          <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
+          <BackLink onClick={() => setView("menu")}>{t("backToMenu")}</BackLink>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(machineryMod)}</h3>
           <div style={styles.menuList2}>
             {filterSubByPlan(machineryMod.sub, planFeatures).map((s) => (
@@ -5621,7 +5622,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
 
       {view === "scaffoldManagement" && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
-          <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
+          <BackLink onClick={() => setView("menu")}>{t("backToMenu")}</BackLink>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(scaffoldMod)}</h3>
           <div style={styles.menuList2}>
             {filterSubByPlan(scaffoldMod.sub, planFeatures).map((s) => (
@@ -5633,7 +5634,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
 
       {view === "incidentManagement" && incidentMod && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
-          <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
+          <BackLink onClick={() => setView("menu")}>{t("backToMenu")}</BackLink>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(incidentMod)}</h3>
           <div style={styles.menuList2}>
             {filterSubByPlan(incidentMod.sub, planFeatures).map((s) => (
@@ -5645,7 +5646,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
 
       {view === "riskAssessment" && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
-          <div style={styles.backLink} onClick={() => setView("menu")}>{t("backToMenu")}</div>
+          <BackLink onClick={() => setView("menu")}>{t("backToMenu")}</BackLink>
           <h3 style={{ marginBottom: 12, color: THEME.heading }}>{mt(riskMod)}</h3>
           <div style={styles.menuList2}>
             {riskMod.sub.filter((s) => !s.employerOnly && isModuleInPlan(planFeatures, s.key)).map((s) => (

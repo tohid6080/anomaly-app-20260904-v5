@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { AlertTriangle } from "lucide-react";
 import { styles, THEME, isValidMobile } from "../shared.js";
 import { JalaliDateInput } from "./jalaliDate.jsx";
@@ -129,7 +130,7 @@ export default function PersonnelForm({ onBack, onSaved, currentUser, wide, embe
   const pairStyle = bare ? { display: "contents" } : styles.formGrid;
   return (
     <div style={bare ? { direction: dir } : wide ? { maxWidth: 820, direction: dir } : { maxWidth: 560, margin: "0 auto", padding: 24, direction: dir }}>
-      {!bare && onBack && <div style={styles.backLink} onClick={onBack}>{t("pfBack")}</div>}
+      {!bare && onBack && <BackLink onClick={onBack}>{t("pfBack")}</BackLink>}
       {!bare && (
         <>
           <h2 style={{ margin: "0 0 4px", color: THEME.heading, fontSize: 18, fontWeight: 700 }}>{t("pfRegisterNewPersonnel")}</h2>

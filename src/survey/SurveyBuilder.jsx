@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import {
   Plus, Trash2, Copy, ChevronUp, ChevronDown, Save, Eye, EyeOff, Settings2,
   Type, AlignLeft, CircleDot, ListChecks, Hash, Calendar, Star, SlidersHorizontal, Heading, ToggleLeft, GripVertical,
@@ -84,7 +85,7 @@ export default function SurveyBuilder({ survey, onBack, onSaved, currentUser, wi
 
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 960, margin: "0 auto", padding: 20, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>}
+      {onBack && <BackLink onClick={onBack}>{t("commonBack")}</BackLink>}
 
       {/* header */}
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 12 }}>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { Sparkles, Send, Target } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
@@ -78,7 +79,7 @@ export default function HseLearningAssistantThread({ currentUser, onBack }) {
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: 24, display: "flex", flexDirection: "column", height: "calc(100vh - 48px)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-        <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>
+        <BackLink onClick={onBack}>{t("commonBack")}</BackLink>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginRight: "auto" }}>
           <div style={{ width: 26, height: 26, borderRadius: 8, background: `linear-gradient(140deg, ${THEME.teal}, #7c6cf0)`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <Sparkles size={13} color="#fff" />

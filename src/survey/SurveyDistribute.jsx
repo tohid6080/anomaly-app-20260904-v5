@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { Copy, Check, Search, Send } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
@@ -55,7 +56,7 @@ export default function SurveyDistribute({ survey, onBack, wide, onSaved }) {
 
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 780, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>}
+      {onBack && <BackLink onClick={onBack}>{t("commonBack")}</BackLink>}
       <h3 style={{ margin: "0 0 4px", color: THEME.heading, fontSize: 15, fontWeight: 800 }}>{t("svDistTitle")}</h3>
       <p style={{ fontSize: 12, color: THEME.text3, margin: "0 0 12px", lineHeight: 1.8 }}>{t("svDistIntro")}</p>
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { Plus, Trash2, Search, ShieldCheck, GitBranch, WifiOff, MessageCircle } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { findOrCreateLinkedConversation } from "../chat/chatApi.js";
@@ -177,7 +178,7 @@ export default function BowTieDashboard({ onBack, currentUser, readOnly, role, w
 
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 720, margin: "0 auto", padding: 24, direction: dir }}>
-      {!wide && onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
+      {!wide && onBack && <BackLink onClick={onBack}>{t("commonBackToMenu")}</BackLink>}
 
       {!wide && (
         <>
