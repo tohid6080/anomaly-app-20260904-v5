@@ -9675,6 +9675,7 @@ export const translations = {
   "tpHistAutoForward": { "fa": "ارجاع خودکار جهت بازبینی کارفرما", "en": "Auto-forwarded for employer review" },
   "tpHistAutoFinalize": { "fa": "نهایی‌سازی و قفل شدن تحلیل", "en": "Analysis finalized and locked" },
   "commonBackPlain": { "fa": "بازگشت", "en": "Back" },
+  "commonBackToHome": { "fa": "بازگشت به صفحه اصلی", "en": "Back to Home" },
 
   // --- Tripod Beta workspace / tree / checklist picker (batch 16) ---
   "twTabSummary": { "fa": "خلاصه", "en": "Summary" },

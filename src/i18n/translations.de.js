@@ -3764,6 +3764,7 @@ export const de = {
   "tpHistAutoForward": "Automatisch zur Prüfung durch den Auftraggeber weitergeleitet",
   "tpHistAutoFinalize": "Analyse finalisiert und gesperrt",
   "commonBackPlain": "Zurück",
+  "commonBackToHome": "Zurück zur Startseite",
   "twTabSummary": "Zusammenfassung",
   "twTabBuild": "Pfade & verborgene Versagen",
   "twTabTree": "Baum",

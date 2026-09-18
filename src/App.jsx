@@ -4346,7 +4346,7 @@ function ResponsiveDashboardShell({ panelLabelKey, currentUser, onLogout, onOpen
       <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
         <Sidebar modules={sidebarModules} view={view} setView={setView} collapsed={collapsed} onToggleCollapse={() => setCollapsed((v) => !v)} />
         <main style={{ flex: 1, minWidth: 0, overflowY: "auto", display: "flex", flexDirection: "column" }}>
-          {barProps && <PageBar {...barProps} backLabel={t("commonBackPlain")} />}
+          {barProps && <PageBar {...barProps} backLabel={t("commonBackToHome")} />}
           <div style={{ flex: 1, padding: wide ? "16px clamp(12px, 2vw, 24px)" : "20px clamp(16px, 2.4vw, 32px)" }}>
             <div style={{ maxWidth: wide ? 1760 : 1600, margin: "0 auto" }}><LazyPanel>{mainContent}</LazyPanel></div>
           </div>
@@ -5043,7 +5043,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
   // Sidebar مستقیم به anomalyForm/anomalyList می‌رود نه به هابِ anomalyReport.
   const anomalyWebCombined = (
     <div style={{ direction: dir }}>
-      <ModuleSubHeader icon={AlertTriangle} title={t("webAnomalyPageTitle")} note={t("webAnomalyPageNote")} onBack={() => setView("menu")} backLabel={t("commonBackPlain")} />
+      <ModuleSubHeader icon={AlertTriangle} title={t("webAnomalyPageTitle")} note={t("webAnomalyPageNote")} onBack={() => setView("menu")} backLabel={t("commonBackToHome")} />
       {anomalyCanEdit && (
         <div style={styles.cardWide}>
           <AnomalyForm key={`anomaly-form-${webListRefresh}`} embedded currentUser={currentUser} onSaved={() => setWebListRefresh((n) => n + 1)} />
@@ -5071,7 +5071,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
   const machineryReadOnly = !canEdit || getAccessLevel(permMap, "machineryManagement") === "view";
   const machineryWebCombined = (
     <div style={{ direction: dir }}>
-      <ModuleSubHeader icon={Truck} title={mt(machineryMod)} note={t("webMachineryPageNote")} onBack={() => setView("menu")} backLabel={t("commonBackPlain")} />
+      <ModuleSubHeader icon={Truck} title={mt(machineryMod)} note={t("webMachineryPageNote")} onBack={() => setView("menu")} backLabel={t("commonBackToHome")} />
       {!machineryReadOnly && (
         <MachineryForm key={`machinery-form-${webListRefresh}`} embedded currentUser={currentUser} onSaved={() => setWebListRefresh((n) => n + 1)} />
       )}
@@ -5093,7 +5093,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
   const personnelReadOnly = !canEdit || getAccessLevel(permMap, "personnelAccess") === "view";
   const personnelWebCombined = (
     <div style={{ direction: dir }}>
-      <ModuleSubHeader icon={Users} title={mt(personnelMod)} note={t("webPersonnelPageNote")} onBack={() => setView("menu")} backLabel={t("commonBackPlain")} />
+      <ModuleSubHeader icon={Users} title={mt(personnelMod)} note={t("webPersonnelPageNote")} onBack={() => setView("menu")} backLabel={t("commonBackToHome")} />
       {!personnelReadOnly && (
         <PersonnelForm key={`personnel-form-${webListRefresh}`} embedded currentUser={currentUser} onSaved={() => setWebListRefresh((n) => n + 1)} />
       )}
@@ -5475,7 +5475,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
   // آنومالی: پیمانکار فرمِ ثبت ندارد — فقط «لیستِ آنومالی‌ها».
   const anomalyWebCombined = (
     <div style={{ direction: dir }}>
-      <ModuleSubHeader icon={AlertTriangle} title={t("webAnomalyPageTitle")} note={t("webAnomalyPageNoteContractor")} onBack={() => setView("menu")} backLabel={t("commonBackPlain")} />
+      <ModuleSubHeader icon={AlertTriangle} title={t("webAnomalyPageTitle")} note={t("webAnomalyPageNoteContractor")} onBack={() => setView("menu")} backLabel={t("commonBackToHome")} />
       <div style={styles.cardWide}>
         <AnomalyList
           key={`anomaly-web-${webListRefresh}`}
@@ -5492,7 +5492,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
 
   const machineryWebCombined = (
     <div style={{ direction: dir }}>
-      <ModuleSubHeader icon={Truck} title={mt(machineryMod)} note={t("webMachineryPageNote")} onBack={() => setView("menu")} backLabel={t("commonBackPlain")} />
+      <ModuleSubHeader icon={Truck} title={mt(machineryMod)} note={t("webMachineryPageNote")} onBack={() => setView("menu")} backLabel={t("commonBackToHome")} />
       {!machineryReadOnly && (
         <MachineryForm key={`machinery-form-${webListRefresh}`} embedded currentUser={currentUser} onSaved={() => setWebListRefresh((n) => n + 1)} />
       )}
@@ -5510,7 +5510,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
 
   const personnelWebCombined = (
     <div style={{ direction: dir }}>
-      <ModuleSubHeader icon={Users} title={mt(personnelMod)} note={t("webPersonnelPageNote")} onBack={() => setView("menu")} backLabel={t("commonBackPlain")} />
+      <ModuleSubHeader icon={Users} title={mt(personnelMod)} note={t("webPersonnelPageNote")} onBack={() => setView("menu")} backLabel={t("commonBackToHome")} />
       {!personnelReadOnly && (
         <PersonnelForm key={`personnel-form-${webListRefresh}`} embedded currentUser={currentUser} onSaved={() => setWebListRefresh((n) => n + 1)} />
       )}
