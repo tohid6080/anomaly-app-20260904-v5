@@ -10791,7 +10791,15 @@ export const translations = {
   "psOptionStat": { "fa": "{count} پاسخ (٪{pct})", "en": "{count} responses ({pct}%)" },
   "psAnsweredCount": { "fa": "{count} نفر پاسخ داده‌اند", "en": "{count} answered" },
   "psPercentValue": { "fa": "٪{pct}", "en": "{pct}%" },
-  "psOptionCount": { "fa": "{count} پاسخ", "en": "{count} responses" }
+  "psOptionCount": { "fa": "{count} پاسخ", "en": "{count} responses" },
+  "psEventAnomalyClosed": { "fa": "بسته‌شدن آنومالی", "en": "Anomaly closed" },
+  "psEventMachineryApproved": { "fa": "تأیید ماشین‌آلات", "en": "Machinery approved" },
+  "psEventScaffoldTagIssued": { "fa": "صدور تگ داربست", "en": "Scaffold tag issued" },
+  "psEventScaffoldRemoved": { "fa": "تأیید برچیده‌شدن داربست", "en": "Scaffold removal confirmed" },
+  "psEventIncidentInvestigationApproved": { "fa": "تأیید بررسی و ریشه‌یابی حادثه", "en": "Incident investigation approved" },
+  "psEventHcmsAssessmentApproved": { "fa": "تأیید ارزیابی ریسک HCMS", "en": "HCMS risk assessment approved" },
+  "psEventAccidentPronenessSubmitted": { "fa": "تکمیل پرسش‌نامه‌ی حادثه‌خیزی فردی", "en": "Accident-proneness assessment submitted" },
+  "psEventHseClimateSubmitted": { "fa": "تکمیل پرسش‌نامه‌ی فضای ایمنی (HSE Climate)", "en": "HSE Climate assessment submitted" }
 };
 
 // ---------- تزریقِ تنبلِ ترجمهٔ آلمانی ----------

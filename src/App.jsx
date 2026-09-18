@@ -98,6 +98,7 @@ import DocumentViewerModal from "./personnel/DocumentViewerModal.jsx";
 import LandingPage, { mergeLandingButtons } from "./LandingPage.jsx";
 import LiveChatWidget from "./livechat/LiveChatWidget.jsx";
 import PlatformSurveyPrompt from "./platformSurvey/PlatformSurveyPrompt.jsx";
+import { checkEventSurvey } from "./platformSurvey/platformSurveyApi.js";
 import { APP_NAME, sb, sbOk, sbErrMsg, uid, todayISO, THEME, styles, usePersistedState, setCurrentCompanyId, getCurrentCompanyId, loadCurrentCompanyPlanFeatures, isModuleInPlan, filterSubByPlan, resizeImageFile } from "./shared.js";
 
 /**
@@ -2699,6 +2700,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
   const isContractor = role === "CONTRACTOR";
   const canActAsContractor = isContractor && !readOnly;
   const myContractorName = (currentUser?.name || "").trim().toLowerCase();
+  const [eventSurvey, setEventSurvey] = useState(null);
 
   const [anomalies, setAnomalies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -3016,6 +3018,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
     setExpandedId(null);
     resetActionState();
     await loadGateData();
+    checkEventSurvey("anomaly_closed", currentUser).then((s) => { if (s) setEventSurvey(s); });
   };
 
   const rejectAnomaly = async (a) => {
@@ -3620,6 +3623,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
       />
 
       {viewerSrc && <DocumentViewerModal src={viewerSrc} onClose={() => setViewerSrc(null)} />}
+      {eventSurvey && <PlatformSurveyPrompt kind="event" survey={eventSurvey} currentUser={currentUser} onDismiss={() => setEventSurvey(null)} />}
     </div>
   );
 }

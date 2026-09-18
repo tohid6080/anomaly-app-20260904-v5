@@ -479,7 +479,7 @@ function StorageOverviewCard({ onNavigate }) {
             </span>
           )}
           <p style={{ fontSize: 10.5, color: THEME.text3, marginTop: 10, marginBottom: 0 }}>
-            {t("saLastUpdated", { time: new Date(data.generatedAt).toLocaleTimeString(numLocale()) })}
+            {t("saLastUpdated", { time: toJalaliDateTime(data.generatedAt) })}
           </p>
         </>
       )}
@@ -565,7 +565,7 @@ function StorageUsagePage() {
               </div>
             )}
             <p style={{ fontSize: 10.5, color: THEME.text3, margin: 0 }}>
-              {t("saLastUpdated", { time: new Date(data.generatedAt).toLocaleString(numLocale()) })}
+              {t("saLastUpdated", { time: toJalaliDateTime(data.generatedAt) })}
             </p>
           </div>
 
@@ -3794,6 +3794,20 @@ function StatBox({ label, value, color }) {
 }
 
 
+// ویرایشِ درجا (نه ساخت رکورد جدید) برایِ تاریخ+ساعتِ شروع/پایانِ یک ماژولِ
+// از‌قبل فعال — دورِ JalaliDateTimeInput (کنترل‌شده) یک draft محلی می‌کشد تا
+// همان معنایِ «commit با تغییر» را حفظ کند (نه یک دکمهٔ ذخیرهٔ جدا، که این‌جا
+// خواسته نشده) و مقدارش با m.startsAt/endsAt (بعدِ هر بارگذاریِ مجددِ لیست) هم‌گام بماند.
+function ModuleDateField({ value, onCommit, title, style }) {
+  const [draft, setDraft] = useState(value ? value.slice(0, 16) : "");
+  useEffect(() => { setDraft(value ? value.slice(0, 16) : ""); }, [value]);
+  return (
+    <div title={title}>
+      <JalaliDateTimeInput value={draft} onChange={(v) => { setDraft(v); onCommit(v); }} style={style} />
+    </div>
+  );
+}
+
 function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStats, onUpdate, onDelete, onSetActive, paymentsPromise, onAddPayment, onPlanChanged }) {
   const { t, dir } = useLanguage();
   const [status, setStatus] = useState(company.subscriptionStatus);
@@ -4147,8 +4161,8 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
                   <span style={{ fontSize: 9.5, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: m.isActive ? THEME.okBg : THEME.surface2, color: m.isActive ? THEME.ok : THEME.text3 }}>
                     {m.isActive ? t("commonActive") : t("commonInactive")}
                   </span>
-                  <input type="datetime-local" style={{ ...inputStyle, width: 168, fontSize: 10.5 }} defaultValue={m.startsAt ? m.startsAt.slice(0, 16) : ""} onBlur={(e) => handleModuleDateChange(m, "startsAt", e.target.value)} title={t("saModuleStartsAt")} />
-                  <input type="datetime-local" style={{ ...inputStyle, width: 168, fontSize: 10.5 }} defaultValue={m.endsAt ? m.endsAt.slice(0, 16) : ""} onBlur={(e) => handleModuleDateChange(m, "endsAt", e.target.value)} title={t("saModuleEndsAtNoExpiry")} />
+                  <ModuleDateField value={m.startsAt} onCommit={(v) => handleModuleDateChange(m, "startsAt", v)} title={t("saModuleStartsAt")} style={{ width: 168, fontSize: 10.5 }} />
+                  <ModuleDateField value={m.endsAt} onCommit={(v) => handleModuleDateChange(m, "endsAt", v)} title={t("saModuleEndsAtNoExpiry")} style={{ width: 168, fontSize: 10.5 }} />
                   <button type="button" onClick={() => handleToggleModuleActive(m)} style={{ ...btnStyle(m.isActive ? THEME.warn : THEME.ok), fontSize: 10.5, padding: "4px 9px" }}>
                     {m.isActive ? t("commonDeactivate") : t("commonActivate")}
                   </button>

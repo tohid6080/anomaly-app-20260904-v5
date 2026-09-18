@@ -20,6 +20,8 @@ import {
   submitReview as submitGateReview, approveGateItem, rejectGateItem, gateStatusLabel,
 } from "../hseGateApi.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { checkEventSurvey } from "../platformSurvey/platformSurveyApi.js";
+import PlatformSurveyPrompt from "../platformSurvey/PlatformSurveyPrompt.jsx";
 
 const SORT_OPTIONS_KEYS = [
   { value: "newest", labelKey: "sortNewest" },
@@ -42,6 +44,7 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
   // کارفرمایی معمولی. role (prop) همیشه "EMPLOYER" است (حتی برای حساب
   // سرپرست HSE)، پس مستقیم currentUser?.role چک می‌شود.
   const isGatekeeper = currentUser?.role === "HSE_SUPERVISOR" && !isContractor;
+  const [eventSurvey, setEventSurvey] = useState(null);
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -248,6 +251,9 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
     setExpandedId(null);
     await load();
     await loadGateData();
+    if (status === "approved") {
+      checkEventSurvey("machinery_approved", currentUser).then((s) => { if (s) setEventSurvey(s); });
+    }
   };
   const handleBulkApprove = async (ids) => {
     if (readOnly) { alert(t("errNoDecisionPermission")); return; }
@@ -618,6 +624,7 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
       />
 
       {viewerSrc && <DocumentViewerModal src={viewerSrc} onClose={() => setViewerSrc(null)} />}
+      {eventSurvey && <PlatformSurveyPrompt kind="event" survey={eventSurvey} currentUser={currentUser} onDismiss={() => setEventSurvey(null)} />}
     </div>
   );
 }

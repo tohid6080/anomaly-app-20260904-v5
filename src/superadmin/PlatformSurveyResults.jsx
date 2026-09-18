@@ -3,7 +3,7 @@ import { Users, Star } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { loadPlatformSurveyResponses } from "./superAdminApi.js";
-import { toJalaliDateTime } from "../personnel/jalaliDate.jsx";
+import { toJalaliDateTime, JalaliDateInput } from "../personnel/jalaliDate.jsx";
 
 const ROLE_LABEL_KEYS = { EMPLOYER: "roleLabelEmployer", HSE_SUPERVISOR: "roleLabelHseSupervisor", CONTRACTOR: "roleLabelContractor" };
 
@@ -46,8 +46,8 @@ export default function PlatformSurveyResults({ survey, onBack }) {
             <option value="">{t("psFilterAllRoles")}</option>
             {["EMPLOYER", "HSE_SUPERVISOR", "CONTRACTOR"].map((r) => <option key={r} value={r}>{t(ROLE_LABEL_KEYS[r])}</option>)}
           </select>
-          <input type="date" style={styles.filterSelect} value={fromDate} onChange={(e) => setFromDate(e.target.value)} dir="ltr" />
-          <input type="date" style={styles.filterSelect} value={toDate} onChange={(e) => setToDate(e.target.value)} dir="ltr" />
+          <JalaliDateInput value={fromDate} onChange={setFromDate} allowEmpty />
+          <JalaliDateInput value={toDate} onChange={setToDate} allowEmpty />
         </div>
       )}
 
