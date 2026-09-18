@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { Archive, FileSpreadsheet, Trash2, Users, AlertTriangle, GitBranch, History, Truck, Tag, ShieldAlert, Activity, ClipboardList, TrendingUp } from "lucide-react";
 import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
@@ -1121,7 +1122,7 @@ export default function ArchiveManager({ onBack, currentUser, wide }) {
 
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 680, margin: "0 auto", padding: 24, direction: dir }}>
-      {!wide && onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
+      {!wide && onBack && <BackLink onClick={onBack}>{t("commonBackToMenu")}</BackLink>}
       {!wide && (
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
           <Archive size={20} color={THEME.teal} />

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { Capacitor } from "@capacitor/core";
 import { Save, Send, ShieldCheck, XCircle, FileCheck2, PlayCircle, PauseCircle, CheckCircle2, RotateCcw, Printer, History } from "lucide-react";
 import { THEME, styles } from "../shared.js";
@@ -15,6 +16,8 @@ import { printPermit } from "./permitPrint.js";
 import { loadJobPositionTitle } from "../jobpositions/jobPositionsApi.js";
 import { loadBowtiesOfflineFirst } from "../bowtie/bowtieApi.js";
 import { loadPersonnelListOfflineFirst } from "../personnel/personnelApi.js";
+import { checkEventSurvey } from "../platformSurvey/platformSurveyApi.js";
+import PlatformSurveyPrompt from "../platformSurvey/PlatformSurveyPrompt.jsx";
 
 const clone = (v) => JSON.parse(JSON.stringify(v ?? null));
 const chip = (tone) => ({
@@ -44,6 +47,7 @@ export default function PermitWorkspace({ permitId, currentUser, readOnly, onBac
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
   const [showAudit, setShowAudit] = useState(false);
+  const [eventSurvey, setEventSurvey] = useState(null);
 
   const load = async () => {
     const p = await loadPermit(permitId);
@@ -145,6 +149,11 @@ export default function PermitWorkspace({ permitId, currentUser, readOnly, onBac
     setBusy(false);
     if (res?.__error) { setErr(res.message); return; }
     setOk(t("pmStatusChanged")); load();
+    // نظرسنجیِ رضایتِ رویدادمحور — فقط بعدِ بستنِ موفقِ مجوز، بی‌اثر روی
+    // بقیه‌ی گذارها. اگر نظرسنجیِ فعالِ منطبقی نباشد، checkEventSurvey فقط null برمی‌گرداند.
+    if (to === "closed") {
+      checkEventSurvey("permit_closed", currentUser).then((s) => { if (s) setEventSurvey(s); });
+    }
   };
 
   const doRenew = async () => {
@@ -164,7 +173,7 @@ export default function PermitWorkspace({ permitId, currentUser, readOnly, onBac
 
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 900, margin: "0 auto", padding: 22, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>}
+      {onBack && <BackLink onClick={onBack}>{t("commonBack")}</BackLink>}
 
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
         <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: THEME.heading }}>
@@ -273,6 +282,7 @@ export default function PermitWorkspace({ permitId, currentUser, readOnly, onBac
           })}
         </div>
       )}
+      {eventSurvey && <PlatformSurveyPrompt kind="event" survey={eventSurvey} currentUser={currentUser} onDismiss={() => setEventSurvey(null)} />}
     </div>
   );
 }

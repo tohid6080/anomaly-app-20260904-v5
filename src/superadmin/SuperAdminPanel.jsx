@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useId, useContext, createContext } from "react";
-import { ShieldAlert, Plus, LogOut, Send, CreditCard, AlertTriangle, UserPlus, KeyRound, Layers, Trash2, History, Activity, TrendingDown, Clock, LogIn, ShieldX, LayoutDashboard, Building2, Users, FileClock, ChevronLeft, HardDrive, RefreshCw, Settings2, Copy, GripVertical, ArrowUp, ArrowDown, RotateCcw, Eye, EyeOff, LayoutGrid, PanelsTopLeft, Bell, Palette, Megaphone, Sparkles, Gift, Info, ImagePlus, X, ClipboardList, Smartphone, UploadCloud, CheckCircle2, Download, Globe } from "lucide-react";
+import { ShieldAlert, Plus, LogOut, Send, CreditCard, AlertTriangle, UserPlus, KeyRound, Layers, Trash2, History, Activity, TrendingDown, Clock, LogIn, ShieldX, LayoutDashboard, Building2, Users, FileClock, ChevronLeft, HardDrive, RefreshCw, Settings2, Copy, GripVertical, ArrowUp, ArrowDown, RotateCcw, Eye, EyeOff, LayoutGrid, PanelsTopLeft, Bell, Palette, Megaphone, Sparkles, Gift, Info, ImagePlus, X, ClipboardList, Smartphone, UploadCloud, CheckCircle2, Download, Globe, ListChecks } from "lucide-react";
 import { loadAppReleases, createAppRelease, setReleasePublished, deleteAppRelease, loadLatestPublishedRelease, nextPatchVersion, triggerMobileBuild } from "./appReleaseApi.js";
 import { APP_VERSION, APP_VERSION_CODE } from "../shared.js";
 import { THEME, usePersistedState, GATED_MODULE_SUBS, SUB_KEY_TO_PARENT_MODULE, resizeImageFile } from "../shared.js";
@@ -8,11 +8,13 @@ import { loadModuleConfig, saveModuleConfig, loadNotificationTypes, saveNotifica
 import { DASHBOARD_WIDGET_GROUPS, mergeWidgetConfig, defaultWidgetConfig } from "../dashboard/dashboardWidgets.js";
 import { uploadBase64ToStorage, deleteFromStorage, parseStorageUrl } from "../offline/storageUpload.js";
 import AccountManagement, { AccountForm, emptyForm as emptyAccountForm } from "./AccountManagement.jsx";
+import WelcomeMessageModal from "./WelcomeMessageModal.jsx";
 import PricingConsole from "./PricingConsole.jsx";
 import { loadCompanyModules, addCompanyModule, updateCompanyModule, removeCompanyModule } from "./companyModulesApi.js";
-import { loadModulePrices, loadServices } from "../pricingApi.js";
+import { loadModulePrices, loadServices, formatCurrencyAmount } from "../pricingApi.js";
 import AdminAnalytics from "../admin/AdminAnalytics.jsx";
 import LandingPageManagementTab from "./LandingPageManagementTab.jsx";
+import PlatformSurveysPage from "./PlatformSurveysPage.jsx";
 import { toJalaliSafe, toJalaliDateTime, JalaliDateInput, JalaliDateTimeInput } from "../personnel/jalaliDate.jsx";
 import {
   loadCompanies, createCompany, updateCompany, deleteCompanySecure, setCompanyActive,
@@ -22,21 +24,22 @@ import {
   SUBSCRIPTION_TYPES, SUBSCRIPTION_STATUSES,
   loadPlans, setCompanySubscriptionContract, loadCompanySubscriptionHistory,
   computeContractAmount, computeMonthlyRecurringAmount,
-  computePaymentStatus, isPaymentOverdue, computeMonthlyPaymentAlarm, computeSubscriptionAlertTier,
+  computePaymentStatus, isPaymentOverdue, computeMonthlyPaymentAlarm, computeSubscriptionAlertTier, effectiveExpiryDate,
   loadCompanyUsageStats, loadRecentLogins, loadRecentFailedLogins, computeInactiveCompanies,
-  loadAuditLog, loadStorageUsage, setStorageCapacity, storageUsageStatus,
+  loadAuditLog, deleteAuditLogEntry, loadStorageUsage, setStorageCapacity, storageUsageStatus,
   loadCompanyBackups, loadBackupStorageUsage, triggerCompanyBackup, getBackupDownloadUrl,
   deleteCompanyBackup, restoreCompanyBackup, backupStatusMeta, BACKUP_TIERS,
   createBackupImportUpload, uploadBackupImport, validateBackupImport, restoreBackupImport, deleteBackupImport,
   BACKUP_MODULES, BACKUP_MODULE_KEYS, SHAREABLE_MODULES,
   copyBowtiesToCompany, copyRiskKnowledgeToCompany,
-  loadCardTransferPayments, approveCardTransferPayment, rejectCardTransferPayment, saveCardTransferSettings,
-  loadTrialRequests, approveTrialRequest, rejectTrialRequest,
-  loadGuestPurchaseRequests, approveGuestPurchaseRequest, rejectGuestPurchaseRequest,
+  loadCardTransferPayments, approveCardTransferPayment, rejectCardTransferPayment, deleteCardTransferPayment, saveCardTransferSettings,
+  loadTrialRequests, approveTrialRequest, rejectTrialRequest, deleteTrialRequest,
+  loadGuestPurchaseRequests, approveGuestPurchaseRequest, rejectGuestPurchaseRequest, deleteGuestPurchaseRequest,
 } from "./superAdminApi.js";
 import { computeSubscriptionAccess, loadOnlinePaymentsForCompany, loadCardTransferSettings } from "../subscriptionApi.js";
-import { loadErrorReports, updateErrorReportStatus } from "../errorReportsApi.js";
+import { loadErrorReports, updateErrorReportStatus, deleteErrorReport } from "../errorReportsApi.js";
 import DocumentViewerModal from "../personnel/DocumentViewerModal.jsx";
+import LiveChatAdminDock from "../livechat/LiveChatAdminDock.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import LanguageSelect from "../i18n/LanguageSelect.jsx";
 import { trialModuleLabel } from "../trialRequestApi.js";
@@ -58,7 +61,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
   // صفحه بمانیم، نه اینکه به «نمای کلی» برگردیم.
   const [page, setPage] = usePersistedState("ihms_sa_page", "overview");
   useEffect(() => {
-    const VALID = ["overview", "companies", "accounts", "plans", "monitoring", "storage", "auditLog", "errorReports", "systemConfig", "cardTransferPayments", "trialRequests", "guestPurchases"];
+    const VALID = ["overview", "companies", "accounts", "plans", "monitoring", "storage", "auditLog", "errorReports", "systemConfig", "cardTransferPayments", "trialRequests", "platformSurveys"];
     if (!VALID.includes(page)) setPage("overview");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -85,6 +88,30 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
+
+  // شمارشِ موارد در انتظار — سطحِ همین کامپوننت (نه فقط داخلِ DashboardOverview)
+  // چون نوارِ کناری همیشه دیده می‌شود، نه فقط وقتی page==="overview" است.
+  // هر ۴ ثانیه poll می‌شوند (دقیقاً همان BADGE_POLL_MS که LiveChatAdminDock
+  // برای فهرستِ گفتگوها استفاده می‌کند) تا وقتی درخواست/رسید/گزارشِ تازه‌ای
+  // می‌آید، ادمین مجبور به رفرشِ دستیِ صفحه نباشد.
+  const BADGE_POLL_MS = 4000;
+  const [openErrorCount, setOpenErrorCount] = useState(null);
+  const [pendingTrialCount, setPendingTrialCount] = useState(null);
+  const [pendingReceiptsCount, setPendingReceiptsCount] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    const load = () => {
+      loadErrorReports("open").then((r) => { if (!cancelled) setOpenErrorCount(Array.isArray(r) ? r.length : 0); }).catch(() => { if (!cancelled) setOpenErrorCount(0); });
+      loadTrialRequests("pending").then((r) => { if (!cancelled) setPendingTrialCount(Array.isArray(r) ? r.length : 0); }).catch(() => { if (!cancelled) setPendingTrialCount(0); });
+      Promise.all([loadCardTransferPayments("awaiting_review"), loadGuestPurchaseRequests("pending")])
+        .then(([a, b]) => { if (!cancelled) setPendingReceiptsCount((Array.isArray(a) ? a.length : 0) + (Array.isArray(b) ? b.length : 0)); })
+        .catch(() => { if (!cancelled) setPendingReceiptsCount(0); });
+    };
+    load();
+    const timer = setInterval(load, BADGE_POLL_MS);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, []);
+  const NAV_BADGE_COUNTS = { errorReports: openErrorCount, trialRequests: pendingTrialCount, cardTransferPayments: pendingReceiptsCount };
 
   const handleCreate = async () => {
     if (!newName.trim()) return;
@@ -152,11 +179,11 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
     ] },
     { labelKey: "saNavGroupConfig", items: [
       { key: "systemConfig", labelKey: "saNavSystemConfig", icon: Settings2 },
+      { key: "platformSurveys", labelKey: "saNavPlatformSurveys", icon: ListChecks },
     ] },
     { labelKey: "saNavGroupBilling", items: [
       { key: "cardTransferPayments", labelKey: "saNavCardPayments", icon: CreditCard },
       { key: "trialRequests", labelKey: "saNavTrialRequests", icon: ClipboardList },
-      { key: "guestPurchases", labelKey: "saNavGuestPurchases", icon: Send },
     ] },
   ];
 
@@ -180,6 +207,8 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
 
       {showChangePassword && <SuperAdminChangePassword onClose={() => setShowChangePassword(false)} />}
 
+      <LiveChatAdminDock currentAdmin={currentAdmin} />
+
       <div style={{ display: "flex", alignItems: "flex-start", maxWidth: 1400, margin: "0 auto" }}>
         <nav style={{ width: 200, flexShrink: 0, background: THEME.surface, borderInlineStart: `1px solid ${THEME.border}`, minHeight: "calc(100vh - 53px)", padding: "12px 10px" }}>
           {NAV_GROUPS.map((grp) => (
@@ -190,6 +219,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
               {grp.items.map((item) => {
                 const Icon = item.icon;
                 const active = page === item.key;
+                const badgeCount = NAV_BADGE_COUNTS[item.key];
                 return (
                   <button
                     key={item.key} type="button" onClick={() => setPage(item.key)}
@@ -201,6 +231,14 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
                     }}
                   >
                     <Icon size={14} /> {t(item.labelKey)}
+                    {badgeCount > 0 && (
+                      <span style={{
+                        marginInlineStart: "auto", background: THEME.danger, color: "#fff", fontSize: 10, fontWeight: 700,
+                        borderRadius: 999, minWidth: 17, height: 17, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px",
+                      }}>
+                        {badgeCount}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -213,6 +251,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
             <DashboardOverview
               companies={companies} summary={summary} usageStats={usageStats}
               onNavigate={setPage}
+              openErrorCount={openErrorCount} pendingTrialCount={pendingTrialCount} pendingReceiptsCount={pendingReceiptsCount}
             />
           )}
           {page === "companies" && (
@@ -236,28 +275,21 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
           {page === "errorReports" && <ErrorReportsPage currentAdmin={currentAdmin} />}
           {page === "cardTransferPayments" && <CardTransferPaymentsPage currentAdmin={currentAdmin} />}
           {page === "trialRequests" && <TrialRequestsPage currentAdmin={currentAdmin} />}
-          {page === "guestPurchases" && <GuestPurchaseRequestsPage currentAdmin={currentAdmin} />}
+          {page === "platformSurveys" && <PlatformSurveysPage currentAdmin={currentAdmin} />}
         </div>
       </div>
     </div>
   );
 }
 
-function DashboardOverview({ companies, summary, usageStats, onNavigate }) {
+function DashboardOverview({ companies, summary, usageStats, onNavigate, openErrorCount, pendingTrialCount, pendingReceiptsCount }) {
   const { t } = useLanguage();
   const [failedLoginCount, setFailedLoginCount] = useState(null);
   const [inactiveCount, setInactiveCount] = useState(null);
   const [paymentAlertCount, setPaymentAlertCount] = useState(null);
-  const [openErrorCount, setOpenErrorCount] = useState(null);
-  const [pendingTrialCount, setPendingTrialCount] = useState(null);
-  const [pendingGuestPurchaseCount, setPendingGuestPurchaseCount] = useState(null);
   const [recentActivity, setRecentActivity] = useState(null);
 
   useEffect(() => {
-    // این‌ها به companies وابسته نیستند — یک بار در mount.
-    loadErrorReports("open").then((r) => setOpenErrorCount(Array.isArray(r) ? r.length : 0)).catch(() => setOpenErrorCount(0));
-    loadTrialRequests("pending").then((r) => setPendingTrialCount(Array.isArray(r) ? r.length : 0)).catch(() => setPendingTrialCount(0));
-    loadGuestPurchaseRequests("pending").then((r) => setPendingGuestPurchaseCount(Array.isArray(r) ? r.length : 0)).catch(() => setPendingGuestPurchaseCount(0));
     loadAuditLog(6).then((r) => setRecentActivity(Array.isArray(r) ? r : [])).catch(() => setRecentActivity([]));
   }, []);
 
@@ -285,7 +317,7 @@ function DashboardOverview({ companies, summary, usageStats, onNavigate }) {
   };
 
   // هشدار پایان اشتراک — پلکان دقیق (۳۰/۱۵/۷/۳/امروز/منقضی)، نه فقط یک بازه‌ی ساده
-  const subscriptionAlertCount = companies.filter((c) => computeSubscriptionAlertTier(c.subscriptionEndDate)).length;
+  const subscriptionAlertCount = companies.filter((c) => computeSubscriptionAlertTier(effectiveExpiryDate(c))).length;
   const totalPersonnel = Object.values(usageStats?.personnelByCompany || {}).reduce((a, b) => a + b, 0);
   const totalAnomalies = Object.values(usageStats?.anomalyByCompany || {}).reduce((a, b) => a + b, 0);
 
@@ -338,8 +370,8 @@ function DashboardOverview({ companies, summary, usageStats, onNavigate }) {
         />
         <AttentionCard
           icon={Send} color={THEME.warn} bg={THEME.warnBg}
-          label={t("saPendingGuestPurchasesLabel")} value={pendingGuestPurchaseCount}
-          onClick={() => onNavigate("guestPurchases")}
+          label={t("saPendingReceiptsLabel")} value={pendingReceiptsCount}
+          onClick={() => onNavigate("cardTransferPayments")}
         />
       </div>
 
@@ -447,7 +479,7 @@ function StorageOverviewCard({ onNavigate }) {
             </span>
           )}
           <p style={{ fontSize: 10.5, color: THEME.text3, marginTop: 10, marginBottom: 0 }}>
-            {t("saLastUpdated", { time: new Date(data.generatedAt).toLocaleTimeString(numLocale()) })}
+            {t("saLastUpdated", { time: toJalaliDateTime(data.generatedAt) })}
           </p>
         </>
       )}
@@ -533,7 +565,7 @@ function StorageUsagePage() {
               </div>
             )}
             <p style={{ fontSize: 10.5, color: THEME.text3, margin: 0 }}>
-              {t("saLastUpdated", { time: new Date(data.generatedAt).toLocaleString(numLocale()) })}
+              {t("saLastUpdated", { time: toJalaliDateTime(data.generatedAt) })}
             </p>
           </div>
 
@@ -2862,7 +2894,18 @@ function ChangeLogPage({ companies }) {
 function AuditLogPage({ companies }) {
   const { t } = useLanguage();
   const [rows, setRows] = useState(null);
-  useEffect(() => { loadAuditLog(100).then(setRows); }, []);
+  const [deletingId, setDeletingId] = useState(null);
+  const load = () => loadAuditLog(100).then(setRows);
+  useEffect(() => { load(); }, []);
+
+  const handleDelete = async (r) => {
+    if (!confirm(t("commonConfirmDeleteGeneric"))) return;
+    setDeletingId(r.id);
+    const result = await deleteAuditLogEntry(r.id);
+    setDeletingId(null);
+    if (result?.__error) { alert(result.message); return; }
+    load();
+  };
 
   const ACTION_LABELS = {
     create_account: t("saActionCreateAccount"), update_account: t("saActionUpdateAccount"), deactivate_account: t("saActionDeactivateAccount"),
@@ -2890,6 +2933,7 @@ function AuditLogPage({ companies }) {
                 <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColTargetUsername")}</th>
                 <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColPerformedBy")}</th>
                 <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColTime")}</th>
+                <th style={{ textAlign: "center", padding: "6px 8px" }}></th>
               </tr>
             </thead>
             <tbody>
@@ -2900,6 +2944,12 @@ function AuditLogPage({ companies }) {
                   <td style={{ padding: "8px", textAlign: "center", direction: "ltr" }}>{r.target_username || "—"}</td>
                   <td style={{ padding: "8px", textAlign: "center" }}>{r.performed_by} ({TARGET_LABELS[r.performed_by_role] || r.performed_by_role})</td>
                   <td style={{ padding: "8px", textAlign: "center", color: THEME.text3 }}>{toJalaliSafe(r.created_at)}</td>
+                  <td style={{ padding: "8px", textAlign: "center" }}>
+                    <button type="button" onClick={() => handleDelete(r)} disabled={deletingId === r.id} aria-label={t("commonDelete")}
+                      style={{ background: "transparent", border: "none", color: THEME.danger, cursor: "pointer", padding: 4, display: "inline-flex" }}>
+                      <Trash2 size={13} />
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -2942,6 +2992,16 @@ function ErrorReportsPage({ currentAdmin }) {
   const handleSetStatus = async (r, status) => {
     setSaving(true);
     const result = await updateErrorReportStatus(r.id, status, noteDraft, currentAdmin?.fullName || currentAdmin?.username);
+    setSaving(false);
+    if (result?.__error) { alert(result.message); return; }
+    setExpandedId(null);
+    load();
+  };
+
+  const handleDelete = async (r) => {
+    if (!confirm(t("commonConfirmDeleteGeneric"))) return;
+    setSaving(true);
+    const result = await deleteErrorReport(r.id);
     setSaving(false);
     if (result?.__error) { alert(result.message); return; }
     setExpandedId(null);
@@ -3022,6 +3082,7 @@ function ErrorReportsPage({ currentAdmin }) {
                             <button type="button" style={btnStyle("#1d4ed8")} disabled={saving} onClick={() => handleSetStatus(r, "reviewed")}>{t("saErMarkReviewed")}</button>
                             <button type="button" style={btnStyle(THEME.ok)} disabled={saving} onClick={() => handleSetStatus(r, "resolved")}>{t("saErMarkResolved")}</button>
                             {r.status !== "open" && <button type="button" style={btnStyle(THEME.text3)} disabled={saving} onClick={() => handleSetStatus(r, "open")}>{t("saErReopen")}</button>}
+                            <button type="button" style={btnStyle(THEME.danger)} disabled={saving} onClick={() => handleDelete(r)}>{t("commonDelete")}</button>
                           </div>
                         </td>
                       </tr>
@@ -3082,6 +3143,37 @@ function CardTransferSettingsForm({ currentAdmin }) {
       </div>
       <label style={smallLabelStyle}>{t("saCtDescription")}</label>
       <textarea style={{ ...inputStyle, minHeight: 60 }} value={settings.description} onChange={(e) => setSettings({ ...settings, description: e.target.value })} dir={dir} />
+
+      <h4 style={{ fontSize: 12.5, fontWeight: 700, color: THEME.heading, margin: "16px 0 4px", paddingTop: 12, borderTop: `1px solid ${THEME.border}` }}>{t("saCtForexTitle")}</h4>
+      <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 8px" }}>{t("saCtForexNote")}</p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
+        <div>
+          <label style={smallLabelStyle}>{t("saCtForexAccountNumber")}</label>
+          <input style={{ ...inputStyle, direction: "ltr", textAlign: "left" }} value={settings.forexAccountNumber} onChange={(e) => setSettings({ ...settings, forexAccountNumber: e.target.value })} placeholder="IBAN / Account No." />
+        </div>
+        <div>
+          <label style={smallLabelStyle}>{t("saCtAccountHolderName")}</label>
+          <input style={inputStyle} value={settings.forexHolderName} onChange={(e) => setSettings({ ...settings, forexHolderName: e.target.value })} dir={dir} />
+        </div>
+      </div>
+      <label style={smallLabelStyle}>{t("saCtDescription")}</label>
+      <textarea style={{ ...inputStyle, minHeight: 50 }} value={settings.forexDescription} onChange={(e) => setSettings({ ...settings, forexDescription: e.target.value })} dir={dir} placeholder={t("saCtForexDescPlaceholder")} />
+
+      <h4 style={{ fontSize: 12.5, fontWeight: 700, color: THEME.heading, margin: "16px 0 4px", paddingTop: 12, borderTop: `1px solid ${THEME.border}` }}>{t("saCtCryptoTitle")}</h4>
+      <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 8px" }}>{t("saCtCryptoNote")}</p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
+        <div>
+          <label style={smallLabelStyle}>{t("saCtCryptoNetwork")}</label>
+          <input style={inputStyle} value={settings.cryptoNetwork} onChange={(e) => setSettings({ ...settings, cryptoNetwork: e.target.value })} dir="ltr" placeholder="USDT (TRC20)" />
+        </div>
+        <div>
+          <label style={smallLabelStyle}>{t("saCtCryptoAddress")}</label>
+          <input style={{ ...inputStyle, direction: "ltr", textAlign: "left", fontFamily: "monospace" }} value={settings.cryptoAddress} onChange={(e) => setSettings({ ...settings, cryptoAddress: e.target.value })} dir="ltr" />
+        </div>
+      </div>
+      <label style={smallLabelStyle}>{t("saCtDescription")}</label>
+      <textarea style={{ ...inputStyle, minHeight: 50 }} value={settings.cryptoDescription} onChange={(e) => setSettings({ ...settings, cryptoDescription: e.target.value })} dir={dir} />
+
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
         <button type="button" style={btnStyle()} onClick={handleSave} disabled={saving}>{saving ? t("saSavingEllipsis") : t("saCtSaveSettings")}</button>
         {message && <span style={{ fontSize: 11.5, color: THEME.text3 }}>{message}</span>}
@@ -3090,20 +3182,64 @@ function CardTransferSettingsForm({ currentAdmin }) {
   );
 }
 
+// فیلترِ وضعیتِ یکپارچه — دو منبعِ زیرین واژگانِ وضعیتِ متفاوتی دارند
+// (payments: awaiting_review/paid/rejected — guest_purchase_requests:
+// pending/approved/rejected)، پس مقدارِ فیلترِ این صفحه به هردو واژگان
+// نگاشت می‌شود.
+const RECEIPT_STATUS_GROUPS = {
+  all: { company: "all", guest: "all" },
+  pending: { company: "awaiting_review", guest: "pending" },
+  paid: { company: "paid", guest: "approved" },
+  rejected: { company: "rejected", guest: "rejected" },
+};
+
+// «رسیدهای پرداخت» — طبقِ خواسته‌ی صریح، لیستِ رسیدهای شرکت‌های موجود
+// (payments، method='card_transfer') با درخواست‌هایِ «خرید مستقیمِ
+// بازدیدکنندگان» (guest_purchase_requests) در یک جدولِ واحد ادغام
+// می‌شوند، چون کارِ ادمین رویِ هردو یکی است (بررسی/تأیید/رد). منطقِ
+// تأیید/رد اما عمداً جدا می‌ماند: یک ردیفِ «شرکتِ موجود» با تأیید بلافاصله
+// اشتراک را فعال می‌کند (approveCardTransferPayment)، ولی یک ردیفِ
+// «بازدیدکننده» با تأیید فقط تصمیم را ثبت می‌کند — ساختِ شرکت/حساب همچنان
+// باید از بخشِ «شرکت‌ها» به‌صورت دستی انجام شود (approveGuestPurchaseRequest،
+// دقیقاً همان‌طور که پیش از ادغام هم بود).
 function CardTransferPaymentsPage({ currentAdmin }) {
-  const { t, dir } = useLanguage();
-  const [statusFilter, setStatusFilter] = useState("awaiting_review");
+  const { t, lang, dir } = useLanguage();
+  const [statusFilter, setStatusFilter] = useState("pending");
   const [rows, setRows] = useState(null);
+  const [moduleLabels, setModuleLabels] = useState({});
+  const [serviceLabels, setServiceLabels] = useState({});
   const [expandedId, setExpandedId] = useState(null);
   const [rejectNote, setRejectNote] = useState("");
   const [showRejectFor, setShowRejectFor] = useState(null);
+  const [noteDraft, setNoteDraft] = useState("");
   const [saving, setSaving] = useState(false);
   const [viewerSrc, setViewerSrc] = useState(null);
 
-  const load = () => loadCardTransferPayments(statusFilter).then(setRows);
+  const load = () => {
+    const g = RECEIPT_STATUS_GROUPS[statusFilter] || RECEIPT_STATUS_GROUPS.all;
+    Promise.all([loadCardTransferPayments(g.company), loadGuestPurchaseRequests(g.guest)]).then(([companyRows, guestRows]) => {
+      const merged = [
+        ...companyRows.map((r) => ({ ...r, source: "company" })),
+        ...guestRows.map((r) => ({ ...r, source: "guest" })),
+      ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setRows(merged);
+    });
+  };
   useEffect(() => { setRows(null); load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [statusFilter]);
+  useEffect(() => {
+    Promise.all([loadModulePrices(), loadServices()]).then(([mods, svcs]) => {
+      setModuleLabels(Object.fromEntries(mods.map((m) => [m.moduleKey, m.label || m.moduleKey])));
+      setServiceLabels(Object.fromEntries(svcs.map((s) => [s.id, s.name || s.id])));
+    });
+  }, []);
 
-  const handleApprove = async (r) => {
+  const openRow = (r) => {
+    if (expandedId === r.id) { setExpandedId(null); return; }
+    setExpandedId(r.id);
+    setRejectNote(""); setShowRejectFor(null); setNoteDraft("");
+  };
+
+  const handleApproveCompany = async (r) => {
     if (!confirm(t("saCtApproveConfirm", { company: r.companyName }))) return;
     setSaving(true);
     const result = await approveCardTransferPayment(r.id, currentAdmin?.fullName || currentAdmin?.username);
@@ -3112,8 +3248,7 @@ function CardTransferPaymentsPage({ currentAdmin }) {
     setExpandedId(null);
     load();
   };
-
-  const handleReject = async (r) => {
+  const handleRejectCompany = async (r) => {
     setSaving(true);
     const result = await rejectCardTransferPayment(r.id, currentAdmin?.fullName || currentAdmin?.username, rejectNote);
     setSaving(false);
@@ -3121,8 +3256,37 @@ function CardTransferPaymentsPage({ currentAdmin }) {
     setShowRejectFor(null); setRejectNote(""); setExpandedId(null);
     load();
   };
+  const handleApproveGuest = async (r) => {
+    setSaving(true);
+    const result = await approveGuestPurchaseRequest(r.id, currentAdmin?.fullName || currentAdmin?.username, noteDraft);
+    setSaving(false);
+    if (result?.__error) { alert(result.message); return; }
+    setExpandedId(null);
+    load();
+  };
+  const handleRejectGuest = async (r) => {
+    setSaving(true);
+    const result = await rejectGuestPurchaseRequest(r.id, currentAdmin?.fullName || currentAdmin?.username, noteDraft);
+    setSaving(false);
+    if (result?.__error) { alert(result.message); return; }
+    setExpandedId(null);
+    load();
+  };
+  const handleDelete = async (r) => {
+    if (!confirm(t("commonConfirmDeleteGeneric"))) return;
+    setSaving(true);
+    const result = r.source === "company" ? await deleteCardTransferPayment(r.id) : await deleteGuestPurchaseRequest(r.id);
+    setSaving(false);
+    if (result?.__error) { alert(result.message); return; }
+    setExpandedId(null);
+    load();
+  };
 
-  const awaitingCount = statusFilter === "awaiting_review" ? (rows || []).length : null;
+  const statusMetaFor = (r) => (r.source === "company"
+    ? (CARD_PAYMENT_STATUS_META[r.status] || CARD_PAYMENT_STATUS_META.awaiting_review)
+    : (TRIAL_REQUEST_STATUS_META[r.status] || TRIAL_REQUEST_STATUS_META.pending));
+
+  const pendingCount = statusFilter === "pending" ? (rows || []).length : null;
 
   return (
     <div>
@@ -3131,19 +3295,20 @@ function CardTransferPaymentsPage({ currentAdmin }) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
           <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
             <CreditCard size={14} color={THEME.teal} /> {t("saCtTitle")}
-            {awaitingCount > 0 && (
+            {pendingCount > 0 && (
               <span style={{ background: THEME.danger, color: "#fff", fontSize: 10.5, fontWeight: 700, borderRadius: 999, minWidth: 19, height: 19, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>
-                {awaitingCount}
+                {pendingCount}
               </span>
             )}
           </h3>
           <select style={{ ...inputStyle, width: "auto" }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir={dir}>
             <option value="all">{t("saAllStatuses")}</option>
-            <option value="awaiting_review">{t("saCtStatusAwaiting")}</option>
+            <option value="pending">{t("saTrStatusPending")}</option>
             <option value="paid">{t("saCtStatusPaid")}</option>
             <option value="rejected">{t("saCtStatusRejected")}</option>
           </select>
         </div>
+        <p style={{ fontSize: 11, color: THEME.text3, marginBottom: 12, lineHeight: 1.8 }}>{t("saCtMergedNote")}</p>
 
         {rows === null && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("commonLoading")}</p>}
         {rows !== null && rows.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("saCtNoneFound")}</p>}
@@ -3163,13 +3328,25 @@ function CardTransferPaymentsPage({ currentAdmin }) {
               </thead>
               <tbody>
                 {rows.map((r) => {
-                  const sm = CARD_PAYMENT_STATUS_META[r.status] || CARD_PAYMENT_STATUS_META.awaiting_review;
+                  const sm = statusMetaFor(r);
+                  const rowKey = `${r.source}-${r.id}`;
+                  const isCompany = r.source === "company";
                   return (
-                    <React.Fragment key={r.id}>
-                      <tr style={{ borderBottom: `1px solid ${THEME.border}`, cursor: "pointer" }} onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}>
-                        <td style={{ padding: "8px", fontWeight: 600 }}>{r.companyName || "—"}</td>
-                        <td style={{ padding: "8px" }}>{r.planName || "—"} — {r.billingCycle === "monthly" ? t("saBillingMonthly") : t("saBillingYearly")}</td>
-                        <td style={{ padding: "8px", textAlign: "center", fontWeight: 700, color: THEME.heading }}>{r.amount.toLocaleString(numLocale())}</td>
+                    <React.Fragment key={rowKey}>
+                      <tr style={{ borderBottom: `1px solid ${THEME.border}`, cursor: "pointer" }} onClick={() => openRow(r)}>
+                        <td style={{ padding: "8px", fontWeight: 600 }}>
+                          {r.companyName || "—"}
+                          <span style={{
+                            marginInlineStart: 6, fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 999,
+                            background: isCompany ? THEME.okBg : "#e0e7ff", color: isCompany ? THEME.ok : "#3730a3",
+                          }}>
+                            {isCompany ? t("saCtSourceCompany") : t("saCtSourceGuest")}
+                          </span>
+                        </td>
+                        <td style={{ padding: "8px" }}>
+                          {isCompany && (r.planName || "—") + " — "}{r.billingCycle === "monthly" ? t("saBillingMonthly") : t("saBillingYearly")}
+                        </td>
+                        <td style={{ padding: "8px", textAlign: "center", fontWeight: 700, color: THEME.heading }}>{formatCurrencyAmount(r.amount, r.currency, lang)}</td>
                         <td style={{ padding: "8px" }}>{r.payerName} <span style={{ color: THEME.text3, fontSize: 10.5, direction: "ltr", display: "inline-block" }}>({r.payerPhone})</span></td>
                         <td style={{ padding: "8px", textAlign: "center", color: THEME.text3, whiteSpace: "nowrap" }}>{toJalaliDateTime(r.createdAt)}</td>
                         <td style={{ padding: "8px", textAlign: "center" }}>
@@ -3181,27 +3358,54 @@ function CardTransferPaymentsPage({ currentAdmin }) {
                           <td colSpan={6} style={{ padding: "10px 12px", background: THEME.bg }}>
                             <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 10 }}>
                               <p style={{ fontSize: 12, color: THEME.text2, margin: 0 }}>{t("saCtTrackingNo", { num: r.trackingNumber || "—" })}</p>
+                              {isCompany && r.payerEmail && <p style={{ fontSize: 12, color: THEME.text2, margin: 0, direction: "ltr" }}>{r.payerEmail}</p>}
+                              {isCompany && r.payerCompanyName && <p style={{ fontSize: 12, color: THEME.text2, margin: 0 }}>{t("saCtPayerCompanyName", { name: r.payerCompanyName })}</p>}
+                              {!isCompany && r.email && <p style={{ fontSize: 12, color: THEME.text2, margin: 0, direction: "ltr" }}>{r.email}</p>}
                               {r.receiptImage && (
                                 <button type="button" style={btnStyle(THEME.navyMid)} onClick={() => setViewerSrc(r.receiptImage)}>{t("saCtViewReceipt")}</button>
                               )}
                             </div>
+                            {!isCompany && (
+                              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 6, marginBottom: 10, fontSize: 12, color: THEME.text2 }}>
+                                <p style={{ margin: 0, gridColumn: "1 / -1" }}>
+                                  {t("saGprColModules")}<b>{r.selectedModules.length > 0 ? r.selectedModules.map((k) => moduleLabels[k] || k).join(listSep(getCurrentLang())) : "—"}</b>
+                                </p>
+                                {r.selectedServices.length > 0 && (
+                                  <p style={{ margin: 0, gridColumn: "1 / -1" }}>
+                                    {t("saGprColServices")}<b>{r.selectedServices.map((k) => serviceLabels[k] || k).join(listSep(getCurrentLang()))}</b>
+                                  </p>
+                                )}
+                              </div>
+                            )}
                             {r.adminNote && <p style={{ fontSize: 11.5, color: THEME.danger, margin: "0 0 8px" }}>{t("saCtRejectReason", { note: r.adminNote })}</p>}
                             {r.reviewedAt && <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 8px" }}>{t("saCtReviewedBy", { by: r.reviewedBy || "—", at: toJalaliDateTime(r.reviewedAt) })}</p>}
 
-                            {r.status === "awaiting_review" && (
+                            {isCompany && r.status === "awaiting_review" && (
                               <div>
                                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                                  <button type="button" style={btnStyle(THEME.ok)} disabled={saving} onClick={() => handleApprove(r)}>{t("saCtApproveActivate")}</button>
+                                  <button type="button" style={btnStyle(THEME.ok)} disabled={saving} onClick={() => handleApproveCompany(r)}>{t("saCtApproveActivate")}</button>
                                   <button type="button" style={btnStyle(THEME.danger)} disabled={saving} onClick={() => setShowRejectFor(showRejectFor === r.id ? null : r.id)}>{t("saCtRejectReceipt")}</button>
                                 </div>
                                 {showRejectFor === r.id && (
                                   <div style={{ marginTop: 8 }}>
                                     <textarea style={{ ...inputStyle, minHeight: 50 }} placeholder={t("saCtRejectReasonPlaceholder")} value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} dir={dir} />
-                                    <button type="button" style={{ ...btnStyle(THEME.danger), marginTop: 6 }} disabled={saving || !rejectNote.trim()} onClick={() => handleReject(r)}>{t("saCtSubmitReject")}</button>
+                                    <button type="button" style={{ ...btnStyle(THEME.danger), marginTop: 6 }} disabled={saving || !rejectNote.trim()} onClick={() => handleRejectCompany(r)}>{t("saCtSubmitReject")}</button>
                                   </div>
                                 )}
                               </div>
                             )}
+                            {!isCompany && r.status === "pending" && (
+                              <div>
+                                <textarea style={{ ...inputStyle, minHeight: 45, marginBottom: 8 }} placeholder={t("saTrNotePlaceholder")} value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} dir={dir} />
+                                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                                  <button type="button" style={btnStyle(THEME.ok)} disabled={saving} onClick={() => handleApproveGuest(r)}>{t("saTrApprove")}</button>
+                                  <button type="button" style={btnStyle(THEME.danger)} disabled={saving || !noteDraft.trim()} onClick={() => handleRejectGuest(r)}>{t("saTrReject")}</button>
+                                </div>
+                              </div>
+                            )}
+                            <div style={{ marginTop: 10 }}>
+                              <button type="button" style={btnStyle(THEME.danger)} disabled={saving} onClick={() => handleDelete(r)}>{t("commonDelete")}</button>
+                            </div>
                           </td>
                         </tr>
                       )}
@@ -3266,6 +3470,16 @@ function TrialRequestsPage({ currentAdmin }) {
     setSaving(false);
     if (result?.__error) { alert(result.message); return; }
     setShowRejectFor(null); setExpandedId(null);
+    load();
+  };
+
+  const handleDelete = async (r) => {
+    if (!confirm(t("commonConfirmDeleteGeneric"))) return;
+    setSaving(true);
+    const result = await deleteTrialRequest(r.id);
+    setSaving(false);
+    if (result?.__error) { alert(result.message); return; }
+    setExpandedId(null);
     load();
   };
 
@@ -3355,159 +3569,9 @@ function TrialRequestsPage({ currentAdmin }) {
                               </div>
                             </div>
                           )}
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ---------- درخواست‌های «خرید مستقیمِ بازدیدکننده» ----------
-// از صفحه‌ی عمومیِ «مشاهده پلن‌ها برای خرید» (پیش از ورود، PublicPurchaseForm
-// در SubscriptionGate.jsx → Edge Function submit-guest-purchase-request)
-// می‌آید — شاملِ ماژول/خدماتِ انتخابی و رسیدِ کارت‌به‌کارت. دقیقاً همان
-// فلسفه‌ی TrialRequestsPage بالا: تأیید اینجا فقط تصمیم را ثبت می‌کند؛ ساختِ
-// واقعیِ شرکت/حساب و تأییدِ نهاییِ رسید همچنان از مسیرهای موجود («شرکت‌ها» +
-// «پرداخت‌های کارت‌به‌کارت») به‌صورت دستی انجام می‌شود.
-function GuestPurchaseRequestsPage({ currentAdmin }) {
-  const { t, dir } = useLanguage();
-  const [statusFilter, setStatusFilter] = useState("pending");
-  const [rows, setRows] = useState(null);
-  const [moduleLabels, setModuleLabels] = useState({});
-  const [serviceLabels, setServiceLabels] = useState({});
-  const [expandedId, setExpandedId] = useState(null);
-  const [noteDraft, setNoteDraft] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [viewerSrc, setViewerSrc] = useState(null);
-
-  const load = () => loadGuestPurchaseRequests(statusFilter).then(setRows);
-  useEffect(() => { setRows(null); load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [statusFilter]);
-  useEffect(() => {
-    Promise.all([loadModulePrices(), loadServices()]).then(([mods, svcs]) => {
-      setModuleLabels(Object.fromEntries(mods.map((m) => [m.moduleKey, m.label || m.moduleKey])));
-      setServiceLabels(Object.fromEntries(svcs.map((s) => [s.id, s.name || s.id])));
-    });
-  }, []);
-
-  const openRow = (r) => {
-    if (expandedId === r.id) { setExpandedId(null); return; }
-    setExpandedId(r.id);
-    setNoteDraft("");
-  };
-
-  const handleApprove = async (r) => {
-    setSaving(true);
-    const result = await approveGuestPurchaseRequest(r.id, currentAdmin?.fullName || currentAdmin?.username, noteDraft);
-    setSaving(false);
-    if (result?.__error) { alert(result.message); return; }
-    setExpandedId(null);
-    load();
-  };
-
-  const handleReject = async (r) => {
-    setSaving(true);
-    const result = await rejectGuestPurchaseRequest(r.id, currentAdmin?.fullName || currentAdmin?.username, noteDraft);
-    setSaving(false);
-    if (result?.__error) { alert(result.message); return; }
-    setExpandedId(null);
-    load();
-  };
-
-  const pendingCount = statusFilter === "pending" ? (rows || []).length : null;
-
-  return (
-    <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
-        <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
-          <ClipboardList size={14} color={THEME.teal} /> {t("saNavGuestPurchases")}
-          {pendingCount > 0 && (
-            <span style={{ background: THEME.danger, color: "#fff", fontSize: 10.5, fontWeight: 700, borderRadius: 999, minWidth: 19, height: 19, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>
-              {pendingCount}
-            </span>
-          )}
-        </h3>
-        <select style={{ ...inputStyle, width: "auto" }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir={dir}>
-          <option value="all">{t("saAllStatuses")}</option>
-          <option value="pending">{t("saTrStatusPending")}</option>
-          <option value="approved">{t("saTrStatusApproved")}</option>
-          <option value="rejected">{t("saTrStatusRejected")}</option>
-        </select>
-      </div>
-      <p style={{ fontSize: 11, color: THEME.text3, marginBottom: 12 }}>{t("saGprNote")}</p>
-
-      {rows === null && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("commonLoading")}</p>}
-      {rows !== null && rows.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("saTrNoneFound")}</p>}
-
-      {rows && rows.length > 0 && (
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-            <thead>
-              <tr style={{ borderBottom: `1.5px solid ${THEME.border}`, color: THEME.text3 }}>
-                <th style={{ textAlign: "start", padding: "6px 8px" }}>{t("saTrColCompany")}</th>
-                <th style={{ textAlign: "start", padding: "6px 8px" }}>{t("saTrColApplicant")}</th>
-                <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saGprColAmount")}</th>
-                <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColTime")}</th>
-                <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("commonStatus")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => {
-                const sm = TRIAL_REQUEST_STATUS_META[r.status] || TRIAL_REQUEST_STATUS_META.pending;
-                return (
-                  <React.Fragment key={r.id}>
-                    <tr style={{ borderBottom: `1px solid ${THEME.border}`, cursor: "pointer" }} onClick={() => openRow(r)}>
-                      <td style={{ padding: "8px", fontWeight: 600 }}>{r.companyName}</td>
-                      <td style={{ padding: "8px" }}>
-                        {r.fullName}
-                        <div style={{ fontSize: 10.5, color: THEME.text3, direction: "ltr", textAlign: "start" }}>{r.phone}</div>
-                      </td>
-                      <td style={{ padding: "8px", textAlign: "center", fontFamily: "monospace", fontWeight: 700 }}>{r.amount.toLocaleString(numLocale())}</td>
-                      <td style={{ padding: "8px", textAlign: "center", color: THEME.text3, whiteSpace: "nowrap" }}>{toJalaliDateTime(r.createdAt)}</td>
-                      <td style={{ padding: "8px", textAlign: "center" }}>
-                        <span style={{ fontSize: 10.5, padding: "3px 10px", borderRadius: 999, background: sm.bg, color: sm.color, fontWeight: 700 }}>{t(sm.labelKey)}</span>
-                      </td>
-                    </tr>
-                    {expandedId === r.id && (
-                      <tr>
-                        <td colSpan={5} style={{ padding: "10px 12px", background: THEME.bg }}>
-                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 6, marginBottom: 10, fontSize: 12, color: THEME.text2 }}>
-                            <p style={{ margin: 0 }}>{t("saTrEmailLabel")}<b style={{ direction: "ltr", display: "inline-block" }}>{r.email || "—"}</b></p>
-                            <p style={{ margin: 0 }}>{t("saGprBillingCycleLabel")}<b>{r.billingCycle === "monthly" ? t("subTypeMonthly") : t("subTypeYearly")}</b></p>
-                            <p style={{ margin: 0 }}>{t("saGprPayerLabel")}<b>{r.payerName}</b> <span style={{ direction: "ltr", display: "inline-block" }}>({r.payerPhone})</span></p>
-                            <p style={{ margin: 0 }}>{t("saGprTrackingLabel")}<b style={{ direction: "ltr", display: "inline-block" }}>{r.trackingNumber || "—"}</b></p>
-                            <p style={{ margin: 0, gridColumn: "1 / -1" }}>
-                              {t("saGprColModules")}<b>{r.selectedModules.length > 0 ? r.selectedModules.map((k) => moduleLabels[k] || k).join(listSep(getCurrentLang())) : "—"}</b>
-                            </p>
-                            {r.selectedServices.length > 0 && (
-                              <p style={{ margin: 0, gridColumn: "1 / -1" }}>
-                                {t("saGprColServices")}<b>{r.selectedServices.map((k) => serviceLabels[k] || k).join(listSep(getCurrentLang()))}</b>
-                              </p>
-                            )}
+                          <div style={{ marginTop: 10 }}>
+                            <button type="button" style={btnStyle(THEME.danger)} disabled={saving} onClick={() => handleDelete(r)}>{t("commonDelete")}</button>
                           </div>
-                          {r.receiptImage && (
-                            <button type="button" onClick={() => setViewerSrc(r.receiptImage)} style={{ ...btnStyle(THEME.navyMid), marginBottom: 10 }}>
-                              {t("saGprViewReceipt")}
-                            </button>
-                          )}
-                          {r.adminNote && <p style={{ fontSize: 11.5, color: THEME.text3, margin: "0 0 8px" }}>{t("saTrReviewNote", { note: r.adminNote })}</p>}
-                          {r.reviewedAt && <p style={{ fontSize: 10.5, color: THEME.text3, margin: "0 0 8px" }}>{t("saTrReviewedBy", { by: r.reviewedBy || "—", at: toJalaliDateTime(r.reviewedAt) })}</p>}
-
-                          {r.status === "pending" && (
-                            <div>
-                              <textarea style={{ ...inputStyle, minHeight: 45, marginBottom: 8 }} placeholder={t("saTrNotePlaceholder")} value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} dir={dir} />
-                              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                                <button type="button" style={btnStyle(THEME.ok)} disabled={saving} onClick={() => handleApprove(r)}>{t("saTrApprove")}</button>
-                                <button type="button" style={btnStyle(THEME.danger)} disabled={saving || !noteDraft.trim()} onClick={() => handleReject(r)}>{t("saTrReject")}</button>
-                              </div>
-                            </div>
-                          )}
                         </td>
                       </tr>
                     )}
@@ -3518,8 +3582,6 @@ function GuestPurchaseRequestsPage({ currentAdmin }) {
           </table>
         </div>
       )}
-
-      {viewerSrc && <DocumentViewerModal src={viewerSrc} onClose={() => setViewerSrc(null)} />}
     </div>
   );
 }
@@ -3607,7 +3669,7 @@ function SystemInsights({ companies }) {
   const companyName = (id) => companies.find((c) => c.id === id)?.name || "—";
 
   const subscriptionAlerts = companies
-    .map((c) => ({ company: c, tier: computeSubscriptionAlertTier(c.subscriptionEndDate) }))
+    .map((c) => ({ company: c, tier: computeSubscriptionAlertTier(effectiveExpiryDate(c)) }))
     .filter((x) => x.tier);
 
   const paymentAlerts = companies
@@ -3637,7 +3699,7 @@ function SystemInsights({ companies }) {
             {subscriptionAlerts.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saNoneFound")}</p>}
             {subscriptionAlerts.map(({ company: c, tier }) => (
               <div key={c.id} style={{ fontSize: 12, padding: "5px 0", borderBottom: `1px solid ${THEME.border}`, display: "flex", justifyContent: "space-between" }}>
-                <span>{c.name}{t("saExpiryLabel", { date: toJalaliSafe(c.subscriptionEndDate) })}</span>
+                <span>{c.name}{t("saExpiryLabel", { date: toJalaliSafe(effectiveExpiryDate(c)) })}</span>
                 <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: tier.bg, color: tier.color, fontWeight: 600 }}>{tier.labelKey ? t(tier.labelKey) : tier.label}</span>
               </div>
             ))}
@@ -3732,6 +3794,20 @@ function StatBox({ label, value, color }) {
 }
 
 
+// ویرایشِ درجا (نه ساخت رکورد جدید) برایِ تاریخ+ساعتِ شروع/پایانِ یک ماژولِ
+// از‌قبل فعال — دورِ JalaliDateTimeInput (کنترل‌شده) یک draft محلی می‌کشد تا
+// همان معنایِ «commit با تغییر» را حفظ کند (نه یک دکمهٔ ذخیرهٔ جدا، که این‌جا
+// خواسته نشده) و مقدارش با m.startsAt/endsAt (بعدِ هر بارگذاریِ مجددِ لیست) هم‌گام بماند.
+function ModuleDateField({ value, onCommit, title, style }) {
+  const [draft, setDraft] = useState(value ? value.slice(0, 16) : "");
+  useEffect(() => { setDraft(value ? value.slice(0, 16) : ""); }, [value]);
+  return (
+    <div title={title}>
+      <JalaliDateTimeInput value={draft} onChange={(v) => { setDraft(v); onCommit(v); }} style={style} />
+    </div>
+  );
+}
+
 function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStats, onUpdate, onDelete, onSetActive, paymentsPromise, onAddPayment, onPlanChanged }) {
   const { t, dir } = useLanguage();
   const [status, setStatus] = useState(company.subscriptionStatus);
@@ -3759,6 +3835,10 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
   const [newModuleEnd, setNewModuleEnd] = useState("");
   const [moduleBusy, setModuleBusy] = useState(false);
   const [moduleError, setModuleError] = useState("");
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [trialAdjustDays, setTrialAdjustDays] = useState(1);
+  const [trialAdjustBusy, setTrialAdjustBusy] = useState(false);
+  const [trialAdjustError, setTrialAdjustError] = useState("");
 
   const loadCompanyModulesList = () => loadCompanyModules(company.id).then(setCompanyModules);
   useEffect(() => { loadCompanyModulesList(); loadModulePrices({ live: true }).then(setModulePricesCatalog); }, [company.id]);
@@ -3858,22 +3938,38 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
     onPlanChanged();
   };
 
-  const handleAddModule = async () => {
-    if (!newModuleKey) return;
-    setModuleBusy(true); setModuleError("");
-    const catalogEntry = modulePricesCatalog.find((m) => m.moduleKey === newModuleKey);
+  // تمدید/کوتاه‌کردنِ دوره‌ی آزمایشی به‌اندازه‌ی N روز — فقط trial_end
+  // جابه‌جا می‌شود (نسبت به پایانِ فعلی، یا اگر هنوز تنظیم نشده بود نسبت به
+  // شروعِ دوره یا همین الان)، trial_start دست‌نخورده می‌ماند.
+  const handleAdjustTrial = async (sign) => {
+    const n = Number(trialAdjustDays);
+    if (!n || n <= 0) return;
+    setTrialAdjustBusy(true);
+    setTrialAdjustError("");
+    const base = company.trialEnd || company.trialStart || new Date().toISOString();
+    const newEnd = new Date(new Date(base).getTime() + sign * n * 86400000).toISOString();
+    const result = await updateCompany(company.id, { trialEnd: newEnd });
+    setTrialAdjustBusy(false);
+    if (result?.__error) { setTrialAdjustError(result.message); return; }
+    onPlanChanged();
+  };
+
+  // یک ماژولِ سطحِ‌بالا + زیرماژول‌هایش (اگر داشت) را با بازه‌ی تاریخِ فرم
+  // اضافه می‌کند — هم از افزودنِ تکی و هم از «افزودنِ همه» صدا زده می‌شود.
+  const addModuleAndSubs = async (moduleKey) => {
+    const catalogEntry = modulePricesCatalog.find((m) => m.moduleKey === moduleKey);
     const startsAt = newModuleStart ? new Date(newModuleStart).toISOString() : undefined;
     const endsAt = newModuleEnd ? new Date(newModuleEnd).toISOString() : null;
-    const result = await addCompanyModule(company.id, newModuleKey, {
+    const result = await addCompanyModule(company.id, moduleKey, {
       startsAt, endsAt,
       priceMonthly: catalogEntry?.priceMonthly || 0,
       priceYearly: catalogEntry?.priceYearly || 0,
       source: "admin_grant",
     }, currentAdmin?.fullName);
-    if (result?.__error) { setModuleBusy(false); setModuleError(result.message); return; }
+    if (result?.__error) return result;
     // زیرماژول‌هایِ این ماژول (اگر داشت) پیش‌فرض همه فعال می‌شوند — ادمین
     // بعداً می‌تواند هرکدام را جدا از چک‌باکسِ زیرِ همین ردیف خاموش کند.
-    const subs = GATED_MODULE_SUBS[newModuleKey] || [];
+    const subs = GATED_MODULE_SUBS[moduleKey] || [];
     await Promise.all(subs.map((s) => {
       const subCatalogEntry = modulePricesCatalog.find((mp) => mp.moduleKey === s.key);
       return addCompanyModule(company.id, s.key, {
@@ -3883,6 +3979,28 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
         source: "admin_grant",
       }, currentAdmin?.fullName);
     }));
+    return null;
+  };
+  const handleAddModule = async () => {
+    if (!newModuleKey) return;
+    setModuleBusy(true); setModuleError("");
+    const result = await addModuleAndSubs(newModuleKey);
+    if (result?.__error) { setModuleBusy(false); setModuleError(result.message); return; }
+    setModuleBusy(false);
+    setNewModuleKey(""); setNewModuleEnd(""); setShowAddModule(false);
+    await loadCompanyModulesList();
+  };
+  // افزودنِ یک‌جای همه‌ی ماژول‌هایِ هنوز-تخصیص‌نیافته — به‌جایِ تکرارِ
+  // «افزودن» برایِ هرکدام جداگانه، طبقِ خواسته‌ی صریحِ کاربر. به‌ترتیب
+  // (نه موازی) اضافه می‌شوند تا فشارِ درخواست به دیتابیس یک‌باره زیاد نشود.
+  const handleAddAllModules = async () => {
+    if (unassignedModules.length === 0) return;
+    if (!confirm(t("saAddAllModulesConfirm", { count: unassignedModules.length }))) return;
+    setModuleBusy(true); setModuleError("");
+    for (const m of unassignedModules) {
+      const result = await addModuleAndSubs(m.moduleKey);
+      if (result?.__error) { setModuleBusy(false); setModuleError(result.message); await loadCompanyModulesList(); return; }
+    }
     setModuleBusy(false);
     setNewModuleKey(""); setNewModuleEnd(""); setShowAddModule(false);
     await loadCompanyModulesList();
@@ -4013,6 +4131,22 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
             )}
           </p>
         )}
+        {company.subscriptionType === "trial" && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 10 }}>
+            <input
+              type="number" min="1" style={{ ...inputStyle, width: 80 }} value={trialAdjustDays}
+              onChange={(e) => setTrialAdjustDays(e.target.value)} dir="ltr"
+            />
+            <span style={{ fontSize: 11, color: THEME.text2 }}>{t("saTrialAdjustDaysLabel")}</span>
+            <button type="button" onClick={() => handleAdjustTrial(1)} disabled={trialAdjustBusy} style={btnStyle(THEME.ok)}>
+              {trialAdjustBusy ? t("saSubmittingEllipsis") : t("saTrialExtendBtn")}
+            </button>
+            <button type="button" onClick={() => handleAdjustTrial(-1)} disabled={trialAdjustBusy} style={btnStyle(THEME.warn)}>
+              {trialAdjustBusy ? t("saSubmittingEllipsis") : t("saTrialShortenBtn")}
+            </button>
+            {trialAdjustError && <span style={{ fontSize: 10.5, color: THEME.danger }}>{trialAdjustError}</span>}
+          </div>
+        )}
 
         {/* ---------- ماژول‌های فعالِ این شرکت ---------- */}
         {moduleError && <p style={{ color: THEME.danger, fontSize: 11.5, marginBottom: 6 }}>{moduleError}</p>}
@@ -4027,8 +4161,8 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
                   <span style={{ fontSize: 9.5, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: m.isActive ? THEME.okBg : THEME.surface2, color: m.isActive ? THEME.ok : THEME.text3 }}>
                     {m.isActive ? t("commonActive") : t("commonInactive")}
                   </span>
-                  <input type="datetime-local" style={{ ...inputStyle, width: 168, fontSize: 10.5 }} defaultValue={m.startsAt ? m.startsAt.slice(0, 16) : ""} onBlur={(e) => handleModuleDateChange(m, "startsAt", e.target.value)} title={t("saModuleStartsAt")} />
-                  <input type="datetime-local" style={{ ...inputStyle, width: 168, fontSize: 10.5 }} defaultValue={m.endsAt ? m.endsAt.slice(0, 16) : ""} onBlur={(e) => handleModuleDateChange(m, "endsAt", e.target.value)} title={t("saModuleEndsAtNoExpiry")} />
+                  <ModuleDateField value={m.startsAt} onCommit={(v) => handleModuleDateChange(m, "startsAt", v)} title={t("saModuleStartsAt")} style={{ width: 168, fontSize: 10.5 }} />
+                  <ModuleDateField value={m.endsAt} onCommit={(v) => handleModuleDateChange(m, "endsAt", v)} title={t("saModuleEndsAtNoExpiry")} style={{ width: 168, fontSize: 10.5 }} />
                   <button type="button" onClick={() => handleToggleModuleActive(m)} style={{ ...btnStyle(m.isActive ? THEME.warn : THEME.ok), fontSize: 10.5, padding: "4px 9px" }}>
                     {m.isActive ? t("commonDeactivate") : t("commonActivate")}
                   </button>
@@ -4067,8 +4201,11 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
             </select>
             <JalaliDateTimeInput value={newModuleStart} onChange={setNewModuleStart} />
             <JalaliDateTimeInput value={newModuleEnd} onChange={setNewModuleEnd} />
-            <div style={{ display: "flex", gap: 6 }}>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               <button type="button" onClick={handleAddModule} disabled={moduleBusy || !newModuleKey} style={btnStyle()}>{moduleBusy ? t("saSubmittingEllipsis") : t("commonAdd")}</button>
+              {unassignedModules.length > 1 && (
+                <button type="button" onClick={handleAddAllModules} disabled={moduleBusy} style={btnStyle(THEME.teal)}>{moduleBusy ? t("saSubmittingEllipsis") : t("saAddAllModules")}</button>
+              )}
               <button type="button" onClick={() => { setShowAddModule(false); setModuleError(""); }} style={btnStyle(THEME.text3)}>{t("commonCancel")}</button>
             </div>
           </div>
@@ -4207,7 +4344,16 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
             </span>
           </div>
         ))}
+        {accounts.length > 0 && (
+          <button type="button" onClick={() => setShowWelcomeModal(true)} style={{ ...btnStyle(THEME.navyMid), display: "inline-flex", alignItems: "center", gap: 6, marginTop: 10 }}>
+            <Gift size={13} /> {t("saWelcomeMessageBtn")}
+          </button>
+        )}
       </div>
+
+      {showWelcomeModal && (
+        <WelcomeMessageModal company={company} accounts={accounts} onClose={() => setShowWelcomeModal(false)} onPasswordsChanged={loadAccounts} />
+      )}
 
       <div style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 12, marginBottom: 16 }}>
         <h4 style={{ fontSize: 12.5, color: THEME.heading, fontWeight: 700, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 6 }}>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { Send, Paperclip, Users as UsersIcon, Check, CheckCheck, LogOut, Reply, Pin, Settings, X, UserMinus, UserPlus } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { toJalaliDateTime } from "../personnel/jalaliDate.jsx";
@@ -138,7 +139,7 @@ export default function ChatThread({ conversationId, currentUser, onBack }) {
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: 24, display: "flex", flexDirection: "column", height: "calc(100vh - 48px)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-        <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>
+        <BackLink onClick={onBack}>{t("commonBack")}</BackLink>
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginRight: "auto" }}>
           {isGroup && <UsersIcon size={15} color={THEME.text3} />}
           <span style={{ fontWeight: 700, color: THEME.heading, fontSize: 14.5 }}>{title}</span>

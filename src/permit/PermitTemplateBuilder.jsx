@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { Plus, Trash2, ArrowUp, ArrowDown, Lock, Unlock, Save, Eye, EyeOff, BookOpen, Send, Undo2, Image as ImageIcon } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
@@ -170,7 +171,7 @@ export default function PermitTemplateBuilder({ templateId, currentUser, onBack,
 
   if (err && !tpl) return (
     <div style={{ padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>}
+      {onBack && <BackLink onClick={onBack}>{t("commonBack")}</BackLink>}
       <p style={styles.error}>{err}</p>
     </div>
   );
@@ -178,7 +179,7 @@ export default function PermitTemplateBuilder({ templateId, currentUser, onBack,
 
   return (
     <div style={{ direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>}
+      {onBack && <BackLink onClick={onBack}>{t("commonBack")}</BackLink>}
 
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
         <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: THEME.heading }}>{t("pmTemplateBuilder")}</h3>

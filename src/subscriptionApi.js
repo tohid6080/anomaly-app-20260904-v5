@@ -189,7 +189,15 @@ export async function activateTrialForCompany(companyId, planId, changedBy, star
 // system_settings موجود (با پیشوند payment_cardtransfer_*)، دقیقاً همان
 // الگوی appearance config در systemConfigApi.js. customer scope چون
 // همین صفحه‌ی قفل (SubscriptionGate) بعد از لاگین عادی خوانده می‌شود.
-const CARD_TRANSFER_KEYS = ["payment_cardtransfer_card_number", "payment_cardtransfer_holder_name", "payment_cardtransfer_description"];
+const CARD_TRANSFER_KEYS = [
+  "payment_cardtransfer_card_number", "payment_cardtransfer_holder_name", "payment_cardtransfer_description",
+  // حسابِ ارزی (دلار/یورو) — جدا از کارتِ ریالیِ بالا، فقط وقتی کاربر ارزِ
+  // غیرِ ریال را برای پرداخت انتخاب کند نشان داده می‌شود.
+  "payment_forex_account_number", "payment_forex_holder_name", "payment_forex_description",
+  // آدرسِ ارزِ دیجیتال — اختیاری، در کنارِ حسابِ ارزی به‌عنوانِ راهِ دیگرِ
+  // واریز نشان داده می‌شود (فقط اگر ادمین آدرسی ثبت کرده باشد).
+  "payment_crypto_network", "payment_crypto_address", "payment_crypto_description",
+];
 
 export async function loadCardTransferSettings() {
   const rows = await sb(`system_settings?key=in.(${CARD_TRANSFER_KEYS.map((k) => `"${k}"`).join(",")})&select=key,value_text`);
@@ -199,19 +207,25 @@ export async function loadCardTransferSettings() {
     cardNumber: map.payment_cardtransfer_card_number || "",
     holderName: map.payment_cardtransfer_holder_name || "",
     description: map.payment_cardtransfer_description || "",
+    forexAccountNumber: map.payment_forex_account_number || "",
+    forexHolderName: map.payment_forex_holder_name || "",
+    forexDescription: map.payment_forex_description || "",
+    cryptoNetwork: map.payment_crypto_network || "",
+    cryptoAddress: map.payment_crypto_address || "",
+    cryptoDescription: map.payment_crypto_description || "",
   };
 }
 
 // ثبت رسید پرداخت — وضعیت اولیه همیشه «در انتظار تأیید» است (خودِ RLS هم
 // این را در with_check اجبار می‌کند، پس این فقط یک لایه‌ی اطمینانِ دوم
 // سمت کلاینت است، نه مرز امنیتی واقعی).
-export async function submitCardTransferReceipt({ planId, billingCycle, amount, backupPeriod, payerName, payerPhone, trackingNumber, receiptImage, selectedModules, selectedServices, resolvedPlanId }, requestedBy) {
+export async function submitCardTransferReceipt({ planId, billingCycle, amount, currency, backupPeriod, payerName, payerPhone, payerEmail, payerCompanyName, trackingNumber, receiptImage, selectedModules, selectedServices, resolvedPlanId }, requestedBy) {
   const companyId = getCurrentCompanyId();
   if (!companyId) return { __error: true, message: tr("subErrCompanyUnknown") };
   // مسیرِ ماژولی: پلنِ متناظر ممکن است خالی باشد، ولی مجموعه‌ی ماژول‌ها باید باشد.
   const hasModules = Array.isArray(selectedModules) && selectedModules.length > 0;
   if ((!planId && !hasModules) || !billingCycle) return { __error: true, message: tr("subErrPlanCycleInvalid") };
-  // «شماره‌ی پیگیریِ تراکنش» اختیاری است؛ بقیه الزامی.
+  // «شماره‌ی پیگیریِ تراکنش»، ایمیل و نامِ شرکت اختیاری‌اند؛ بقیه الزامی.
   if (!payerName?.trim() || !isValidMobile(payerPhone)) {
     return { __error: true, message: tr("subErrReceiptFieldsRequired") };
   }
@@ -219,10 +233,11 @@ export async function submitCardTransferReceipt({ planId, billingCycle, amount, 
   const id = uid("card");
   const payload = {
     id, company_id: companyId, plan_id: planId || resolvedPlanId || null, billing_cycle: billingCycle,
-    amount: Math.round(Number(amount) || 0), order_id: id,
+    amount: Math.round(Number(amount) || 0), currency: currency === "usd" || currency === "eur" ? currency : "irr", order_id: id,
     backup_period: backupPeriod && backupPeriod !== "none" ? backupPeriod : null,
     method: "card_transfer", status: "awaiting_review",
     payer_name: payerName.trim(), payer_phone: payerPhone.trim(),
+    payer_email: (payerEmail || "").trim() || null, payer_company_name: (payerCompanyName || "").trim() || null,
     tracking_number: (trackingNumber || "").trim() || null, receipt_image: receiptImage || null,
     requested_by: requestedBy || "",
     selected_modules: hasModules ? selectedModules : null,

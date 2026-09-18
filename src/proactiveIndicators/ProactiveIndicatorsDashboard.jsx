@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { ChevronRight, TrendingUp, ClipboardList, BookOpen, X } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
@@ -113,7 +114,7 @@ export default function ProactiveIndicatorsDashboard({ onBack, currentUser, role
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
       <div style={{ display: "flex", justifyContent: wide ? "flex-end" : "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-        {!wide && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
+        {!wide && <BackLink onClick={onBack}>{t("commonBackToMenu")}</BackLink>}
         <button
           type="button" onClick={() => setShowGuide(true)}
           style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600, color: THEME.teal, border: "none", cursor: "pointer", fontFamily: THEME.font, background: THEME.tealSoft, padding: "7px 14px", borderRadius: 8 }}
@@ -173,7 +174,7 @@ function ResultsList({ indicatorKey, indicatorName, currentUser, onBack, wide })
 
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
-      <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>
+      <BackLink onClick={onBack}>{t("commonBack")}</BackLink>
       <h3 style={{ marginBottom: 4, color: THEME.heading, display: "flex", alignItems: "center", gap: 8 }}>
         <ClipboardList size={18} /> {t("pidResultsOf", { name: indicatorName })}
       </h3>

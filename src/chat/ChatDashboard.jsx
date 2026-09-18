@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { MessageCircle, Plus, Users, Paperclip, Trash2, Sparkles } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { toJalaliDateTime } from "../personnel/jalaliDate.jsx";
@@ -108,7 +109,7 @@ export default function ChatDashboard({ onBack, currentUser }) {
 
   return (
     <div style={{ maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
+      {onBack && <BackLink onClick={onBack}>{t("commonBackToMenu")}</BackLink>}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <MessageCircle size={20} color={THEME.teal} />
@@ -160,7 +161,7 @@ export default function ChatDashboard({ onBack, currentUser }) {
             </>
           )}
 
-          <div style={styles.backLink} onClick={() => setShowNew(false)}>{t("commonCancel")}</div>
+          <BackLink onClick={() => setShowNew(false)}>{t("commonCancel")}</BackLink>
         </div>
       )}
 

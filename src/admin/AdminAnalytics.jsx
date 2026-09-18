@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { Users, Filter } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { JalaliDateInput, toJalaliSafe } from "../personnel/jalaliDate.jsx";
@@ -130,7 +131,7 @@ export default function AdminAnalytics({ onBack, currentUser, companies }) {
 
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
+      {onBack && <BackLink onClick={onBack}>{t("commonBackToMenu")}</BackLink>}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
         <Users size={20} color={THEME.teal} />
         <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("adminAnalyticsTitle")}</h2>

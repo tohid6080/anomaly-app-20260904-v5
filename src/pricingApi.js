@@ -1,4 +1,34 @@
 import { sb, sbOk } from "./shared.js";
+import { translate, numLocale } from "./i18n/translations.js";
+
+// نمایشِ یک مبلغ همراه با واحدِ ارزش — تومان/دلار/یورو — در هر سه‌جا که
+// مبلغِ قابل‌پرداخت نشان داده می‌شود (خلاصه‌ی خرید، کارت‌به‌کارت، فرمِ
+// عمومی). lang صریح می‌گیرد (نه هوکِ useLanguage) تا از توابعِ خالص هم
+// صدا زده شود.
+export function formatCurrencyAmount(amount, currency, lang) {
+  const key = currency === "usd" ? "saUsdAmount" : currency === "eur" ? "saEurAmount" : "saTomanAmount";
+  return translate(lang, key, { amount: Number(amount || 0).toLocaleString(numLocale(lang)) });
+}
+
+// زنجیره‌ی بازگشتِ محتوایِ چندزبانه (نامِ ماژول/خدمت، توضیحاتِ خدمت):
+// زبانِ خواسته‌شده → انگلیسی → فارسی — همان الگویِ translate() در
+// translations.js، برای فیلدهایی که ادمین آزادانه تایپ می‌کند (نه یک
+// کلیدِ ثابتِ i18n). fa همیشه پر است (الزامی هنگامِ ساختِ ردیف)، پس
+// زنجیره هیچ‌وقت به رشته‌ی خالی نمی‌رسد.
+function localizedField(faVal, enVal, deVal, lang) {
+  if (lang === "de") return deVal || enVal || faVal || "";
+  if (lang === "en") return enVal || faVal || "";
+  return faVal || "";
+}
+export function moduleLabelFor(m, lang) {
+  return localizedField(m?.label, m?.labelEn, m?.labelDe, lang) || m?.moduleKey || "";
+}
+export function serviceNameFor(s, lang) {
+  return localizedField(s?.name, s?.nameEn, s?.nameDe, lang);
+}
+export function serviceDescriptionFor(s, lang) {
+  return localizedField(s?.description, s?.descriptionEn, s?.descriptionDe, lang);
+}
 
 /* ============================================================================ *
  * Module pricing & services — لایه‌ی داده + محاسبه‌ی خالصِ سبدِ خرید.
@@ -57,62 +87,23 @@ export async function loadServices(opts) {
 
 function mpFromSnap(m) {
   return {
-    moduleKey: m.moduleKey, label: m.label || "",
+    moduleKey: m.moduleKey, label: m.label || "", labelEn: m.labelEn || "", labelDe: m.labelDe || "",
     priceMonthly: Number(m.priceMonthly) || 0, priceYearly: Number(m.priceYearly) || 0,
+    priceMonthlyUsd: Number(m.priceMonthlyUsd) || 0, priceYearlyUsd: Number(m.priceYearlyUsd) || 0,
+    priceMonthlyEur: Number(m.priceMonthlyEur) || 0, priceYearlyEur: Number(m.priceYearlyEur) || 0,
     isFree: !!m.isFree, requires: Array.isArray(m.requires) ? m.requires : [],
     sortOrder: m.sortOrder ?? 0, isActive: true,
   };
 }
 function svcFromSnap(s) {
   return {
-    id: s.id, name: s.name || "", description: s.description || "",
+    id: s.id, name: s.name || "", nameEn: s.nameEn || "", nameDe: s.nameDe || "",
+    description: s.description || "", descriptionEn: s.descriptionEn || "", descriptionDe: s.descriptionDe || "",
     priceWeekly: Number(s.priceWeekly) || 0, priceMonthly: Number(s.priceMonthly) || 0, priceYearly: Number(s.priceYearly) || 0,
+    priceWeeklyUsd: Number(s.priceWeeklyUsd) || 0, priceMonthlyUsd: Number(s.priceMonthlyUsd) || 0, priceYearlyUsd: Number(s.priceYearlyUsd) || 0,
+    priceWeeklyEur: Number(s.priceWeeklyEur) || 0, priceMonthlyEur: Number(s.priceMonthlyEur) || 0, priceYearlyEur: Number(s.priceYearlyEur) || 0,
     period: s.period || "monthly", sortOrder: s.sortOrder ?? 0, isActive: true,
   };
-}
-
-// module_prices.label فقط فارسی است (یک ستونِ متنیِ ساده در دیتابیس، بدونِ
-// چندزبانگی) — صفحه‌ی خریدِ ماژول‌ها و صفحه‌ی «اشتراکِ شما به پایان رسیده
-// است» هر دو مستقیم همین label خام را نشان می‌دادند، حتی در زبانِ en/de.
-// این نگاشت هر moduleKey را به یک کلیدِ i18n وصل می‌کند تا نامِ ماژول با
-// زبانِ فعلیِ سایت هماهنگ باشد؛ اگر moduleKey ای در آینده اضافه شود و اینجا
-// ثبت نشود، به همان label خامِ فارسیِ دیتابیس برمی‌گردد (نه خالی/خطا).
-export const MODULE_PRICE_LABEL_KEYS = {
-  chat: "mpLabelChat",
-  notifications: "mpLabelNotifications",
-  profile: "mpLabelProfile",
-  quickTools: "mpLabelQuickTools",
-  anomalyReport: "mpLabelAnomalyReport",
-  incidentManagement: "mpLabelIncidentManagement",
-  proactiveIndicators: "mpLabelProactiveIndicators",
-  scaffoldManagement: "mpLabelScaffoldManagement",
-  personnelAccess: "mpLabelPersonnelAccess",
-  riskAssessment: "mpLabelRiskAssessment",
-  hcmsDashboard: "mpLabelHcmsDashboard",
-  riskKnowledgeManagement: "mpLabelRiskKnowledgeManagement",
-  operationalDashboard: "mpLabelOperationalDashboard",
-  managementDashboard: "mpLabelManagementDashboard",
-  machineryManagement: "mpLabelMachineryManagement",
-  liftingPlan: "mpLabelLiftingPlan",
-  "energy-calculator": "mpLabelEnergyCalculator",
-  "fleet-fuel-calculator": "mpLabelFleetFuelCalculator",
-  "excavation-calculator": "mpLabelExcavationCalculator",
-  archiveManagement: "mpLabelArchiveManagement",
-  trainingManagement: "mpLabelTrainingManagement",
-  permissionManagement: "mpLabelPermissionManagement",
-  jobPositionManagement: "mpLabelJobPositionManagement",
-  effectivenessThresholds: "mpLabelEffectivenessThresholds",
-  hcmsMatrixManagement: "mpLabelHcmsMatrixManagement",
-  chatAccessManagement: "mpLabelChatAccessManagement",
-  scaffoldCodeManagement: "mpLabelScaffoldCodeManagement",
-  anomalyCategoryManagement: "mpLabelAnomalyCategoryManagement",
-  hseSurvey: "mpLabelHseSurvey",
-  permitToWork: "mpLabelPermitToWork",
-  pssr: "mpLabelPssr",
-};
-export function moduleDisplayLabel(m, t) {
-  const key = MODULE_PRICE_LABEL_KEYS[m?.moduleKey];
-  return key ? t(key) : (m?.label || m?.moduleKey || "");
 }
 
 // گروه‌بندیِ دلخواه — { groups: [{id,name}], byModule: { moduleKey: groupId } }
@@ -141,13 +132,18 @@ export async function publishPricingSnapshot({ modules, services }, publishedBy)
   const snap = {
     v: 1, publishedAt: new Date().toISOString(), publishedBy: publishedBy || "",
     modules: (modules || []).map((m) => ({
-      moduleKey: m.moduleKey, label: m.label || "",
+      moduleKey: m.moduleKey, label: m.label || "", labelEn: m.labelEn || "", labelDe: m.labelDe || "",
       priceMonthly: Number(m.priceMonthly) || 0, priceYearly: Number(m.priceYearly) || 0,
+      priceMonthlyUsd: Number(m.priceMonthlyUsd) || 0, priceYearlyUsd: Number(m.priceYearlyUsd) || 0,
+      priceMonthlyEur: Number(m.priceMonthlyEur) || 0, priceYearlyEur: Number(m.priceYearlyEur) || 0,
       isFree: !!m.isFree, requires: Array.isArray(m.requires) ? m.requires : [], sortOrder: m.sortOrder ?? 0,
     })),
     services: (services || []).map((s) => ({
-      id: s.id, name: s.name || "", description: s.description || "",
+      id: s.id, name: s.name || "", nameEn: s.nameEn || "", nameDe: s.nameDe || "",
+      description: s.description || "", descriptionEn: s.descriptionEn || "", descriptionDe: s.descriptionDe || "",
       priceWeekly: Number(s.priceWeekly) || 0, priceMonthly: Number(s.priceMonthly) || 0, priceYearly: Number(s.priceYearly) || 0,
+      priceWeeklyUsd: Number(s.priceWeeklyUsd) || 0, priceMonthlyUsd: Number(s.priceMonthlyUsd) || 0, priceYearlyUsd: Number(s.priceYearlyUsd) || 0,
+      priceWeeklyEur: Number(s.priceWeeklyEur) || 0, priceMonthlyEur: Number(s.priceMonthlyEur) || 0, priceYearlyEur: Number(s.priceYearlyEur) || 0,
       period: s.period || "monthly", sortOrder: s.sortOrder ?? 0,
     })),
   };
@@ -158,8 +154,14 @@ function mpFromRow(r) {
   return {
     moduleKey: r.module_key,
     label: r.label || "",
+    labelEn: r.label_en || "",
+    labelDe: r.label_de || "",
     priceMonthly: Number(r.price_monthly) || 0,
     priceYearly: Number(r.price_yearly) || 0,
+    priceMonthlyUsd: Number(r.price_monthly_usd) || 0,
+    priceYearlyUsd: Number(r.price_yearly_usd) || 0,
+    priceMonthlyEur: Number(r.price_monthly_eur) || 0,
+    priceYearlyEur: Number(r.price_yearly_eur) || 0,
     isFree: !!r.is_free,
     requires: Array.isArray(r.requires) ? r.requires : [],
     sortOrder: r.sort_order ?? 0,
@@ -170,10 +172,20 @@ function svcFromRow(r) {
   return {
     id: r.id,
     name: r.name || "",
+    nameEn: r.name_en || "",
+    nameDe: r.name_de || "",
     description: r.description || "",
+    descriptionEn: r.description_en || "",
+    descriptionDe: r.description_de || "",
     priceWeekly: Number(r.price_weekly) || 0,
     priceMonthly: Number(r.price_monthly) || 0,
     priceYearly: Number(r.price_yearly) || 0,
+    priceWeeklyUsd: Number(r.price_weekly_usd) || 0,
+    priceMonthlyUsd: Number(r.price_monthly_usd) || 0,
+    priceYearlyUsd: Number(r.price_yearly_usd) || 0,
+    priceWeeklyEur: Number(r.price_weekly_eur) || 0,
+    priceMonthlyEur: Number(r.price_monthly_eur) || 0,
+    priceYearlyEur: Number(r.price_yearly_eur) || 0,
     period: r.period || "monthly",
     sortOrder: r.sort_order ?? 0,
     isActive: r.is_active !== false,
@@ -184,8 +196,14 @@ function svcFromRow(r) {
 export async function saveModulePrice(rec, updatedBy) {
   const body = {
     label: rec.label || "",
+    label_en: rec.labelEn || "",
+    label_de: rec.labelDe || "",
     price_monthly: Number(rec.priceMonthly) || 0,
     price_yearly: Number(rec.priceYearly) || 0,
+    price_monthly_usd: Number(rec.priceMonthlyUsd) || 0,
+    price_yearly_usd: Number(rec.priceYearlyUsd) || 0,
+    price_monthly_eur: Number(rec.priceMonthlyEur) || 0,
+    price_yearly_eur: Number(rec.priceYearlyEur) || 0,
     is_free: !!rec.isFree,
     requires: Array.isArray(rec.requires) ? rec.requires : [],
     sort_order: Number(rec.sortOrder) || 0,
@@ -207,10 +225,20 @@ export async function saveModulePrice(rec, updatedBy) {
 export async function upsertService(rec, createdBy) {
   const body = {
     name: rec.name || "",
+    name_en: rec.nameEn || "",
+    name_de: rec.nameDe || "",
     description: rec.description || "",
+    description_en: rec.descriptionEn || "",
+    description_de: rec.descriptionDe || "",
     price_weekly: Number(rec.priceWeekly) || 0,
     price_monthly: Number(rec.priceMonthly) || 0,
     price_yearly: Number(rec.priceYearly) || 0,
+    price_weekly_usd: Number(rec.priceWeeklyUsd) || 0,
+    price_monthly_usd: Number(rec.priceMonthlyUsd) || 0,
+    price_yearly_usd: Number(rec.priceYearlyUsd) || 0,
+    price_weekly_eur: Number(rec.priceWeeklyEur) || 0,
+    price_monthly_eur: Number(rec.priceMonthlyEur) || 0,
+    price_yearly_eur: Number(rec.priceYearlyEur) || 0,
     period: ["weekly", "monthly", "yearly", "once"].includes(rec.period) ? rec.period : "monthly",
     sort_order: Number(rec.sortOrder) || 0,
     is_active: rec.isActive !== false,
@@ -247,24 +275,33 @@ export async function deleteService(id) {
 // قیمتِ واقعیِ یک خدمت — از دوره‌ی خودِ همان ردیف (weekly/monthly/yearly)
 // می‌آید، نه از تاگلِ کلیِ سبد. 'once' هم از همان priceMonthly (مبلغِ
 // یک‌بارهٔ ثبت‌شده) می‌خواند. هم در محاسبه‌ی سبد، هم در نمایشِ صفحه‌ی خرید استفاده می‌شود.
-export function servicePriceFor(s) {
+// currency: 'irr' (پیش‌فرض) | 'usd' | 'eur'
+export function servicePriceFor(s, currency) {
   if (!s) return 0;
-  if (s.period === "weekly") return s.priceWeekly || 0;
-  if (s.period === "yearly") return s.priceYearly || 0;
-  return s.priceMonthly || 0; // 'monthly' و 'once' هر دو از همین فیلد
+  const suffix = currency === "usd" ? "Usd" : currency === "eur" ? "Eur" : "";
+  if (s.period === "weekly") return s["priceWeekly" + suffix] || 0;
+  if (s.period === "yearly") return s["priceYearly" + suffix] || 0;
+  return s["priceMonthly" + suffix] || 0; // 'monthly' و 'once' هر دو از همین فیلد
 }
 
-export function computeCartTotal({ selectedModuleKeys, selectedServiceIds, modulePrices, services, billingCycle }) {
+// currency: 'irr' (پیش‌فرض) | 'usd' | 'eur' — هم قیمتِ ماژول‌ها هم خدمات
+// را عوض می‌کند (requires: پیش‌شرط بودنِ سایرِ ماژول‌ها بین ارزها مشترک
+// است).
+export function computeCartTotal({ selectedModuleKeys, selectedServiceIds, modulePrices, services, billingCycle, currency }) {
   billingCycle = billingCycle === "monthly" ? "monthly" : "yearly";
+  currency = currency === "usd" || currency === "eur" ? currency : "irr";
   const mpMap = {};
   (modulePrices || []).forEach((m) => { mpMap[m.moduleKey] = m; });
   const svcMap = {};
   (services || []).forEach((s) => { svcMap[s.id] = s; });
 
+  const fieldSuffix = currency === "usd" ? "Usd" : currency === "eur" ? "Eur" : "";
   const priceOf = (k) => {
     const m = mpMap[k];
     if (!m || m.isFree) return 0;
-    return (billingCycle === "monthly" ? m.priceMonthly : m.priceYearly) || m.priceMonthly || 0;
+    const monthlyField = "priceMonthly" + fieldSuffix;
+    const yearlyField = "priceYearly" + fieldSuffix;
+    return (billingCycle === "monthly" ? m[monthlyField] : m[yearlyField]) || m[monthlyField] || 0;
   };
 
   const selReal = (selectedModuleKeys || []).filter((k) => mpMap[k] && !mpMap[k].isFree);
@@ -277,15 +314,15 @@ export function computeCartTotal({ selectedModuleKeys, selectedServiceIds, modul
   const svcRecurring = svcIds.reduce((a, id) => {
     const s = svcMap[id];
     if (s.period === "once") return a;
-    return a + servicePriceFor(s);
+    return a + servicePriceFor(s, currency);
   }, 0);
-  const svcOnce = svcIds.reduce((a, id) => (svcMap[id].period === "once" ? a + servicePriceFor(svcMap[id]) : a), 0);
+  const svcOnce = svcIds.reduce((a, id) => (svcMap[id].period === "once" ? a + servicePriceFor(svcMap[id], currency) : a), 0);
 
   const recurringTotal = sumAllModules + svcRecurring;
   const grandTotal = recurringTotal + svcOnce;
 
   return {
-    billingCycle,
+    billingCycle, currency,
     selReal,
     sumAllModules,
     svcRecurring, svcOnce, serviceIds: svcIds,

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { Tag, Plus, Trash2, Printer } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import DataView, { StatusPill } from "../shared/DataView.jsx";
@@ -15,6 +16,8 @@ import {
 import ScaffoldRequestForm from "./ScaffoldRequestForm.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { translate as i18nTranslate, getCurrentLang } from "../i18n/translations.js";
+import { checkEventSurvey } from "../platformSurvey/platformSurveyApi.js";
+import PlatformSurveyPrompt from "../platformSurvey/PlatformSurveyPrompt.jsx";
 
 const SORT_OPTIONS_KEYS = [
   { value: "newest", labelKey: "sortNewest" },
@@ -26,6 +29,7 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
   const { t, dir } = useLanguage();
   const SORT_OPTIONS = SORT_OPTIONS_KEYS.map((o) => ({ value: o.value, label: t(o.labelKey) }));
   const isContractor = role === "CONTRACTOR";
+  const [eventSurvey, setEventSurvey] = useState(null);
   const [list, setList] = useState([]);
   const [myContractorCode, setMyContractorCode] = useState("");
   const [loading, setLoading] = useState(true);
@@ -139,6 +143,7 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
     await issueScaffoldTag(t.id, currentUser?.name || "");
     setSaving(false);
     await load();
+    checkEventSurvey("scaffold_tag_issued", currentUser).then((s) => { if (s) setEventSurvey(s); });
   };
 
   const startCorrection = (t) => { setExpandedId(t.id); setCorrectionNote(""); setCorrectionDeadline(""); setCorrectionDeadlineTime("18:00"); };
@@ -179,6 +184,7 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
     await confirmScaffoldRemoved(t.id, currentUser?.name || "");
     setSaving(false);
     await load();
+    checkEventSurvey("scaffold_removed", currentUser).then((s) => { if (s) setEventSurvey(s); });
   };
 
   const handlePrintTag = async (t) => {
@@ -307,7 +313,7 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
 
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
-      {!wide && onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
+      {!wide && onBack && <BackLink onClick={onBack}>{t("commonBackToMenu")}</BackLink>}
       {!wide && (
         <>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
@@ -421,6 +427,7 @@ export default function ScaffoldDashboard({ onBack, currentUser, role, initialSt
           );
         }}
       />
+      {eventSurvey && <PlatformSurveyPrompt kind="event" survey={eventSurvey} currentUser={currentUser} onDismiss={() => setEventSurvey(null)} />}
     </div>
   );
 }

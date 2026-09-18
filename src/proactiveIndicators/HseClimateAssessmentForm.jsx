@@ -1,10 +1,13 @@
 import React, { useState } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { HSE_CLIMATE_QUESTIONS, HSE_CLIMATE_OPTIONS } from "./hseClimateData.js";
 import { submitHseClimateAssessment } from "./proactiveIndicatorsApi.js";
 import DimensionResultView from "./DimensionResultView.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { checkEventSurvey } from "../platformSurvey/platformSurveyApi.js";
+import PlatformSurveyPrompt from "../platformSurvey/PlatformSurveyPrompt.jsx";
 
 export default function HseClimateAssessmentForm({ currentUser, onBack, onSaved }) {
   const { t, dir, lang } = useLanguage();
@@ -13,6 +16,7 @@ export default function HseClimateAssessmentForm({ currentUser, onBack, onSaved 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState(null);
+  const [eventSurvey, setEventSurvey] = useState(null);
 
   const handleAnswer = (questionId, value) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
@@ -32,6 +36,7 @@ export default function HseClimateAssessmentForm({ currentUser, onBack, onSaved 
     setSaving(false);
     if (res?.__error) { setError(res.message); return; }
     setResult(res.result);
+    checkEventSurvey("hse_climate_assessment_submitted", currentUser).then((s) => { if (s) setEventSurvey(s); });
   };
 
   if (result) {
@@ -43,13 +48,14 @@ export default function HseClimateAssessmentForm({ currentUser, onBack, onSaved 
         </div>
         <DimensionResultView result={result} />
         <button type="button" style={{ ...styles.button, marginTop: 16 }} onClick={onSaved}>{t("commonBack")}</button>
+        {eventSurvey && <PlatformSurveyPrompt kind="event" survey={eventSurvey} currentUser={currentUser} onDismiss={() => setEventSurvey(null)} />}
       </div>
     );
   }
 
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: 24, direction: dir }}>
-      <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>
+      <BackLink onClick={onBack}>{t("commonBack")}</BackLink>
       <h3 style={{ marginBottom: 4, color: THEME.heading }}>{t("hseSurveyTitle")}</h3>
       <p style={{ color: THEME.text3, fontSize: 12, marginTop: 0, marginBottom: 16 }}>
         {t("hseFormDesc", { count: HSE_CLIMATE_QUESTIONS.length })}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { Sliders, HelpCircle } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { loadCompanyWeights, saveCompanyWeight, factorLabel } from "./dbeeWeightsApi.js";
@@ -48,7 +49,7 @@ export default function DbeeWeightsManager({ currentUser, onBack }) {
 
   return (
     <div style={{ maxWidth: 640, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackPlain")}</div>}
+      {onBack && <BackLink onClick={onBack}>{t("commonBackPlain")}</BackLink>}
       <h2 style={{ fontSize: 18, color: THEME.heading, fontWeight: 800, margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}>
         <Sliders size={20} color={THEME.teal} /> {t("dbeeWmTitle")}
       </h2>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { Clock, ShieldCheck, UserX } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { isoToJalaliDisplay, JalaliDateInput } from "./jalaliDate.jsx";
@@ -226,7 +227,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
 
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("pdetBackToList")}</div>}
+      {onBack && <BackLink onClick={onBack}>{t("pdetBackToList")}</BackLink>}
 
       <div style={{ ...styles.card, width: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>

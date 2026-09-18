@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { ShieldAlert, Plus, Trash2, Link as LinkIcon } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
@@ -9,6 +10,8 @@ import {
 import { loadFieldSuggestions, learnFromApprovedAssessment } from "../riskknowledge/riskKnowledgeApi.js";
 import RiskMatrixPreview from "./RiskMatrixPreview.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { checkEventSurvey } from "../platformSurvey/platformSurveyApi.js";
+import PlatformSurveyPrompt from "../platformSurvey/PlatformSurveyPrompt.jsx";
 
 const EMPTY_FORM = {
   process: "", activity: "", activityType: "", unit: "", equipment: "",
@@ -37,6 +40,7 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId, wid
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [suggestions, setSuggestions] = useState({ cause: [], consequence: [], existingControls: [], proposedControls: [] });
+  const [eventSurvey, setEventSurvey] = useState(null);
   const isContractor = currentUser?.role === "CONTRACTOR";
 
   const load = async () => {
@@ -183,6 +187,7 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId, wid
     ).catch(() => {});
     setShowForm(false);
     await load();
+    checkEventSurvey("hcms_assessment_approved", currentUser).then((s) => { if (s) setEventSurvey(s); });
   };
 
   if (loading) return <div style={{ padding: 24, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</div>;
@@ -190,7 +195,7 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId, wid
   if (showForm) {
     return (
       <div style={wide ? { direction: dir } : { maxWidth: 720, margin: "0 auto", padding: 24, direction: dir }}>
-        <div style={styles.backLink} onClick={() => setShowForm(false)}>{t("hcmsCancel")}</div>
+        <BackLink onClick={() => setShowForm(false)}>{t("hcmsCancel")}</BackLink>
         <h2 style={{ fontSize: 17, color: THEME.heading, fontWeight: 700, marginBottom: 4 }}>{editingId ? t("hcmsEditAssessment") : t("hcmsNewAssessment")}</h2>
         {form.linkedAnomalyId && (
           <p style={{ fontSize: 11.5, color: THEME.teal, display: "flex", alignItems: "center", gap: 4, marginBottom: 8 }}>
@@ -317,7 +322,7 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId, wid
 
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
-      {!wide && onBack && <div style={styles.backLink} onClick={onBack}>{t("hcmsBackToRiskManagement")}</div>}
+      {!wide && onBack && <BackLink onClick={onBack}>{t("hcmsBackToRiskManagement")}</BackLink>}
       <div style={{ display: "flex", alignItems: "center", justifyContent: wide ? "flex-end" : "space-between", gap: 10, marginBottom: 14 }}>
         {!wide && (
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -383,6 +388,7 @@ export default function HcmsDashboard({ onBack, currentUser, focusAnomalyId, wid
           </div>
         </div>
       ))}
+      {eventSurvey && <PlatformSurveyPrompt kind="event" survey={eventSurvey} currentUser={currentUser} onDismiss={() => setEventSurvey(null)} />}
     </div>
   );
 }

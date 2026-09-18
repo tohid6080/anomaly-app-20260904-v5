@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { UserCheck, UserX, Plus, Trash2, ShieldCheck } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
@@ -120,7 +121,7 @@ export default function PermitSignersManager({ currentUser, role, onBack, wide }
 
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>}
+      {onBack && <BackLink onClick={onBack}>{t("commonBack")}</BackLink>}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
         <ShieldCheck size={17} color={THEME.tealDeep} />
         <h3 style={{ margin: 0, color: THEME.heading, fontSize: 15, fontWeight: 800 }}>{t("pmSigners")}</h3>

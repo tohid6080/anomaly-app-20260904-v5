@@ -77,12 +77,22 @@ export async function loadCompanies() {
 }
 
 export async function createCompany(rec) {
+  const subscriptionType = rec.subscriptionType || "trial";
   const payload = {
-    name: rec.name, subscription_type: rec.subscriptionType || "trial",
+    name: rec.name, subscription_type: subscriptionType,
     subscription_status: rec.subscriptionStatus || "active", subscription_start_date: rec.subscriptionStartDate || null,
     subscription_end_date: rec.subscriptionEndDate || null,
     storage_quota_mb: rec.storageQuotaMb || 500,
   };
+  // computeSubscriptionAccess (subscriptionApi.js) برایِ subscriptionType==="trial"
+  // فقط trial_start/trial_end را می‌خواند، نه subscription_start_date/end_date —
+  // بدونِ این دو خط، شرکتِ تازه‌ساخته‌شده با نوعِ «آزمایشی» با همان بازه‌ی
+  // تاریخی که تویِ فرم انتخاب شده هم «دوره‌ی آزمایشی تنظیم نشده است» نشان
+  // می‌داد، چون این دو ستونِ اختصاصی هرگز پر نمی‌شدند.
+  if (subscriptionType === "trial") {
+    payload.trial_start = rec.subscriptionStartDate || null;
+    payload.trial_end = rec.subscriptionEndDate || null;
+  }
   const rows = await sb("companies", { method: "POST", body: JSON.stringify([payload]) }, "super_admin");
   if (!sbOk(rows)) return { __error: true, message: tr("saErrCreateCompany") };
   return companyFromRow(rows[0]);
@@ -93,6 +103,9 @@ export async function updateCompany(id, patch) {
   if ("subscriptionType" in patch) dbPatch.subscription_type = patch.subscriptionType;
   if ("subscriptionStatus" in patch) dbPatch.subscription_status = patch.subscriptionStatus;
   if ("subscriptionEndDate" in patch) dbPatch.subscription_end_date = patch.subscriptionEndDate || null;
+  // برای تمدید/کوتاه‌کردنِ دستیِ دوره‌ی آزمایشی (trial_start عمداً دست‌نخورده
+  // می‌ماند — فقط پایانِ دوره جابه‌جا می‌شود، نه شروعش)
+  if ("trialEnd" in patch) dbPatch.trial_end = patch.trialEnd || null;
   if ("storageQuotaMb" in patch) dbPatch.storage_quota_mb = patch.storageQuotaMb;
   if ("notes" in patch) dbPatch.notes = patch.notes;
   // "" / null → از سطحِ پلن ارث می‌برد
@@ -207,6 +220,16 @@ export function isPaymentOverdue(company, paymentStatus) {
 }
 
 // ---------- هشدار پایان اشتراک — پلکان دقیق درخواست‌شده ----------
+// شرکتِ آزمایشی مبنایِ واقعیِ انقضا (دسترسی‌گیت‌کردن در computeSubscriptionAccess
+// هم دقیقاً همین‌طور) trial_end است، نه subscription_end_date — تمدید/کوتاه‌کردنِ
+// دوره‌ی آزمایشی (handleAdjustTrial) فقط trialEnd را عوض می‌کند. اگر
+// جایی مستقیم subscriptionEndDate بخواند (مثلِ قبلِ این تابع در
+// SystemInsights/DashboardOverview)، بعد از تمدید/کوتاه‌کردن هنوز تاریخِ
+// کهنه را نشان می‌دهد — این تابع همان‌جایی است که باید به‌جایش صدا زده شود.
+export function effectiveExpiryDate(c) {
+  return c.subscriptionType === "trial" ? (c.trialEnd || c.subscriptionEndDate) : c.subscriptionEndDate;
+}
+
 export function computeSubscriptionAlertTier(endDate) {
   if (!endDate) return null;
   const now = new Date(); now.setHours(0, 0, 0, 0);
@@ -249,8 +272,8 @@ export async function createCompanyUserAccount(companyId, { name, username, pass
 
 export async function loadCompanyUserAccounts(companyId) {
   const [employers, contractorRows] = await Promise.all([
-    sb(`employer_accounts?company_id=eq.${companyId}&select=id,name,username,role&order=name.asc`, {}, "super_admin"),
-    sb(`contractors?company_id=eq.${companyId}&select=id,name,username&order=name.asc`, {}, "super_admin"),
+    sb(`employer_accounts?company_id=eq.${companyId}&select=id,name,username,role,email&order=name.asc`, {}, "super_admin"),
+    sb(`contractors?company_id=eq.${companyId}&select=id,name,username,email&order=name.asc`, {}, "super_admin"),
   ]);
   const emp = (sbOk(employers) ? employers : []).map((a) => ({ ...a, type: "employer" }));
   const con = (sbOk(contractorRows) ? contractorRows : []).map((a) => ({ ...a, type: "contractor" }));
@@ -492,8 +515,9 @@ function cardTransferPaymentFromRow(r) {
   return {
     id: r.id, companyId: r.company_id, companyName: r.companies?.name || "",
     planId: r.plan_id, planName: r.plans?.name || "", billingCycle: r.billing_cycle,
-    amount: Number(r.amount) || 0, status: r.status, backupPeriod: r.backup_period || "none",
+    amount: Number(r.amount) || 0, currency: r.currency || "irr", status: r.status, backupPeriod: r.backup_period || "none",
     payerName: r.payer_name || "", payerPhone: r.payer_phone || "",
+    payerEmail: r.payer_email || "", payerCompanyName: r.payer_company_name || "",
     trackingNumber: r.tracking_number || "", receiptImage: r.receipt_image || "",
     adminNote: r.admin_note || "", reviewedBy: r.reviewed_by || "", reviewedAt: r.reviewed_at || "",
     requestedBy: r.requested_by || "", createdAt: r.created_at,
@@ -566,14 +590,26 @@ export async function rejectCardTransferPayment(paymentId, reviewedBy, note) {
   return { ok: true };
 }
 
+export async function deleteCardTransferPayment(id) {
+  const rows = await sb(`payments?id=eq.${id}`, { method: "DELETE" }, "super_admin");
+  if (!sbOk(rows)) return { __error: true, message: tr("saErrDeleteReceipt") };
+  return { ok: true };
+}
+
 // ---------- تنظیمات نمایشی پرداخت کارت‌به‌کارت (شماره کارت/نام/توضیحات) ----------
 // روی همان system_settings موجود، دقیقاً همان الگوی saveAppearanceConfig
 // در systemConfigApi.js — تا «از ساختارهای موجود استفاده کن» رعایت شود.
-export async function saveCardTransferSettings({ cardNumber, holderName, description }, updatedBy) {
+export async function saveCardTransferSettings({ cardNumber, holderName, description, forexAccountNumber, forexHolderName, forexDescription, cryptoNetwork, cryptoAddress, cryptoDescription }, updatedBy) {
   const entries = [
     ["payment_cardtransfer_card_number", cardNumber || ""],
     ["payment_cardtransfer_holder_name", holderName || ""],
     ["payment_cardtransfer_description", description || ""],
+    ["payment_forex_account_number", forexAccountNumber || ""],
+    ["payment_forex_holder_name", forexHolderName || ""],
+    ["payment_forex_description", forexDescription || ""],
+    ["payment_crypto_network", cryptoNetwork || ""],
+    ["payment_crypto_address", cryptoAddress || ""],
+    ["payment_crypto_description", cryptoDescription || ""],
   ];
   const payload = entries.map(([key, value]) => ({ key, value_text: value, updated_at: new Date().toISOString(), updated_by: updatedBy || "" }));
   const rows = await sb("system_settings?on_conflict=key", { method: "POST", body: JSON.stringify(payload), prefer: "resolution=merge-duplicates,return=representation" }, "super_admin");
@@ -637,6 +673,12 @@ export async function rejectTrialRequest(id, reviewedBy, note) {
   return { ok: true };
 }
 
+export async function deleteTrialRequest(id) {
+  const rows = await sb(`trial_requests?id=eq.${id}`, { method: "DELETE" }, "super_admin");
+  if (!sbOk(rows)) return { __error: true, message: tr("saErrDeleteRequest") };
+  return { ok: true };
+}
+
 // درخواست‌های «خرید مستقیمِ بازدیدکننده» — از صفحه‌ی عمومیِ «مشاهده پلن‌ها
 // برای خرید» (پیش از ورود)، شاملِ ماژول/خدماتِ انتخابی و رسیدِ کارت‌به‌کارت.
 // همان فلسفه‌ی trial_requests: صرفاً ثبت/بررسیِ سرنخ + رسید است — ساختِ
@@ -647,7 +689,7 @@ function guestPurchaseRequestFromRow(r) {
     id: r.id, fullName: r.full_name, phone: r.phone, companyName: r.company_name, email: r.email || "",
     selectedModules: Array.isArray(r.selected_modules) ? r.selected_modules : [],
     selectedServices: Array.isArray(r.selected_services) ? r.selected_services : [],
-    billingCycle: r.billing_cycle || "yearly", amount: Number(r.amount) || 0,
+    billingCycle: r.billing_cycle || "yearly", amount: Number(r.amount) || 0, currency: r.currency || "irr",
     payerName: r.payer_name || "", payerPhone: r.payer_phone || "",
     trackingNumber: r.tracking_number || "", receiptImage: r.receipt_image || "",
     status: r.status || "pending", adminNote: r.admin_note || "",
@@ -679,6 +721,12 @@ export async function rejectGuestPurchaseRequest(id, reviewedBy, note) {
   }, "super_admin");
   if (!sbOk(rows)) return { __error: true, message: tr("saErrRejectRequest") };
   if (rows.length === 0) return { __error: true, message: tr("saRequestAlreadyReviewed") };
+  return { ok: true };
+}
+
+export async function deleteGuestPurchaseRequest(id) {
+  const rows = await sb(`guest_purchase_requests?id=eq.${id}`, { method: "DELETE" }, "super_admin");
+  if (!sbOk(rows)) return { __error: true, message: tr("saErrDeleteRequest") };
   return { ok: true };
 }
 
@@ -799,6 +847,12 @@ export async function loadAuditLog(limit = 50) {
   } catch {
     return [];
   }
+}
+
+export async function deleteAuditLogEntry(id) {
+  const rows = await sb(`admin_audit_log?id=eq.${id}`, { method: "DELETE" }, "super_admin");
+  if (!sbOk(rows)) return { __error: true, message: tr("saErrDeleteAuditEntry") };
+  return { ok: true };
 }
 
 // ---------- آمار مصرف واقعی هر شرکت — بعد از تکمیل مهاجرت company_id ----------
@@ -1241,4 +1295,170 @@ export function backupStatusMeta(status) {
     case "pending":   return { color: "#3730a3", bg: "#e0e7ff", labelKey: "backupStatusPending" };
     default:          return { color: THEME.danger, bg: THEME.dangerBg, labelKey: "backupStatusFailed" };
   }
+}
+
+// ---------- ویجتِ گفتگویِ زنده با بازدیدکنندگانِ سایت ----------
+// طرفِ بازدیدکننده (بدونِ حساب) از src/livechat/livechatApi.js و Edge
+// Function عمومیِ chat-visitor می‌گذرد (دقیقاً همان الگویِ deny-all RLS +
+// service_role که trial_requests/guest_purchase_requests دارند)؛ این‌جا
+// فقط طرفِ سوپرادمین است — همان الگویِ sb(..., "super_admin") بقیه‌ی این
+// فایل. شمارشِ خوانده‌نشده از ویوِ chat_visitor_conversations_with_stats
+// (محاسبه‌شده از admin_last_read_at) می‌آید، نه یک ستونِ افزایشی — پس نیازی
+// به عملیاتِ اتمیکِ جداگانه نیست.
+
+function liveChatConvFromRow(r) {
+  return {
+    id: r.id,
+    visitorName: r.visitor_name,
+    visitorEmail: r.visitor_email || "",
+    visitorPhone: r.visitor_phone || "",
+    lastMessageAt: r.last_message_at,
+    lastMessagePreview: r.last_message_preview || "",
+    unreadCount: Number(r.admin_unread_count) || 0,
+    createdAt: r.created_at,
+  };
+}
+function liveChatMsgFromRow(r) {
+  return {
+    id: r.id,
+    conversationId: r.conversation_id,
+    sender: r.sender,
+    senderName: r.sender_name || "",
+    body: r.body,
+    createdAt: r.created_at,
+  };
+}
+
+export async function loadLiveChatConversations() {
+  const rows = await sb(`chat_visitor_conversations_with_stats?select=*&order=last_message_at.desc`, {}, "super_admin");
+  return sbOk(rows) ? rows.map(liveChatConvFromRow) : [];
+}
+
+export async function loadLiveChatMessages(conversationId) {
+  const rows = await sb(`chat_visitor_messages?conversation_id=eq.${conversationId}&select=*&order=created_at.asc`, {}, "super_admin");
+  return sbOk(rows) ? rows.map(liveChatMsgFromRow) : [];
+}
+
+export async function sendLiveChatAdminMessage(conversationId, body, senderName) {
+  const text = (body || "").trim();
+  if (!text) return { __error: true, message: tr("saLcErrEmptyMessage") };
+  const rows = await sb(`chat_visitor_messages`, {
+    method: "POST",
+    body: JSON.stringify([{ conversation_id: conversationId, sender: "admin", sender_name: senderName || "", body: text }]),
+  }, "super_admin");
+  if (!sbOk(rows) || rows.length === 0) return { __error: true, message: tr("saLcErrSend") };
+  await sb(`chat_visitor_conversations?id=eq.${conversationId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ last_message_at: new Date().toISOString() }),
+    prefer: "return=minimal",
+  }, "super_admin");
+  return { ok: true, message: liveChatMsgFromRow(rows[0]) };
+}
+
+export async function markLiveChatConversationRead(conversationId) {
+  await sb(`chat_visitor_conversations?id=eq.${conversationId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ admin_last_read_at: new Date().toISOString() }),
+    prefer: "return=minimal",
+  }, "super_admin");
+}
+
+// ---------- ماژولِ «مدیریتِ نظرسنجی‌ها» — سمتِ SuperAdmin ----------
+// کاملاً مستقل و موازیِ ماژولِ موجودِ survey/ (کلیدِ hseSurvey، مختصِ هر
+// شرکت) — این‌جا SuperAdmin نظرسنجی‌ای می‌سازد که سراسریِ پلتفرم پخش
+// می‌شود، در سه kind: public (بازدیدکننده‌ی ناشناسِ پیش از ورود)،
+// welcome (بلافاصله بعدِ لاگین)، event (بعدِ یک اقدامِ واقعیِ کاربر —
+// نگاه کن به src/platformSurvey/platformSurveyApi.js برایِ سمتِ کاربر و
+// نقاطِ فراخوانیِ رویداد در permitApi.js/correctiveActionsApi.js caller ها).
+
+function platformSurveyFromRow(r) {
+  return {
+    id: r.id,
+    kind: r.kind,
+    title: r.title,
+    description: r.description || "",
+    status: r.status,
+    questions: Array.isArray(r.questions) ? r.questions : [],
+    triggerModule: r.trigger_module || "",
+    triggerEvent: r.trigger_event || "",
+    displayDelaySeconds: Number(r.display_delay_seconds) || 0,
+    maxDisplayCount: Number(r.max_display_count) || 1,
+    targetRoles: Array.isArray(r.target_roles) ? r.target_roles : [],
+    targetJobPositionIds: Array.isArray(r.target_job_position_ids) ? r.target_job_position_ids : [],
+    startDate: r.start_date || "",
+    endDate: r.end_date || "",
+    createdBy: r.created_by || "",
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export async function loadPlatformSurveys(kind) {
+  const filter = kind ? `&kind=eq.${kind}` : "";
+  const rows = await sb(`platform_surveys?select=*&order=created_at.desc${filter}`, {}, "super_admin");
+  return sbOk(rows) ? rows.map(platformSurveyFromRow) : [];
+}
+
+export async function createPlatformSurvey(rec) {
+  const payload = {
+    kind: rec.kind,
+    title: rec.title || "",
+    description: rec.description || "",
+    status: rec.status || "draft",
+    questions: rec.questions || [],
+    trigger_module: rec.triggerModule || null,
+    trigger_event: rec.triggerEvent || null,
+    display_delay_seconds: rec.displayDelaySeconds || 0,
+    max_display_count: rec.maxDisplayCount || 1,
+    target_roles: rec.targetRoles || [],
+    target_job_position_ids: rec.targetJobPositionIds || [],
+    start_date: rec.startDate || null,
+    end_date: rec.endDate || null,
+    created_by: rec.createdBy || "",
+  };
+  const rows = await sb("platform_surveys", { method: "POST", body: JSON.stringify([payload]) }, "super_admin");
+  if (!sbOk(rows) || rows.length === 0) return { __error: true, message: tr("psErrSave") };
+  return { ok: true, survey: platformSurveyFromRow(rows[0]) };
+}
+
+export async function updatePlatformSurvey(id, patch) {
+  const dbPatch = { updated_at: new Date().toISOString() };
+  if ("title" in patch) dbPatch.title = patch.title;
+  if ("description" in patch) dbPatch.description = patch.description;
+  if ("status" in patch) dbPatch.status = patch.status;
+  if ("questions" in patch) dbPatch.questions = patch.questions;
+  if ("triggerModule" in patch) dbPatch.trigger_module = patch.triggerModule || null;
+  if ("triggerEvent" in patch) dbPatch.trigger_event = patch.triggerEvent || null;
+  if ("displayDelaySeconds" in patch) dbPatch.display_delay_seconds = patch.displayDelaySeconds;
+  if ("maxDisplayCount" in patch) dbPatch.max_display_count = patch.maxDisplayCount;
+  if ("targetRoles" in patch) dbPatch.target_roles = patch.targetRoles;
+  if ("targetJobPositionIds" in patch) dbPatch.target_job_position_ids = patch.targetJobPositionIds;
+  if ("startDate" in patch) dbPatch.start_date = patch.startDate || null;
+  if ("endDate" in patch) dbPatch.end_date = patch.endDate || null;
+  const rows = await sb(`platform_surveys?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(dbPatch) }, "super_admin");
+  if (!sbOk(rows) || rows.length === 0) return { __error: true, message: tr("psErrSave") };
+  return { ok: true, survey: platformSurveyFromRow(rows[0]) };
+}
+
+export async function deletePlatformSurvey(id) {
+  const rows = await sb(`platform_surveys?id=eq.${id}`, { method: "DELETE" }, "super_admin");
+  if (!sbOk(rows)) return { __error: true, message: tr("psErrDelete") };
+  return { ok: true };
+}
+
+function platformSurveyResponseFromRow(r) {
+  return {
+    id: r.id,
+    surveyId: r.survey_id,
+    respondentUsername: r.respondent_username || "",
+    respondentRole: r.respondent_role || "",
+    respondentCompanyId: r.respondent_company_id || "",
+    answers: r.answers || {},
+    submittedAt: r.submitted_at,
+  };
+}
+
+export async function loadPlatformSurveyResponses(surveyId) {
+  const rows = await sb(`platform_survey_responses?survey_id=eq.${surveyId}&select=*&order=submitted_at.desc`, {}, "super_admin");
+  return sbOk(rows) ? rows.map(platformSurveyResponseFromRow) : [];
 }

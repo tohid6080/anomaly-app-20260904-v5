@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { Plus, Paperclip, X, CheckCircle2, Filter } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import SyncStatusBadge from "../offline/SyncStatusBadge.jsx";
@@ -17,6 +18,8 @@ import {
   updateTripodCorrectiveActionStatus, CA_STATUS_LABELS,
 } from "../tripodBeta/tripodAnalysesApi.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { checkEventSurvey } from "../platformSurvey/platformSurveyApi.js";
+import PlatformSurveyPrompt from "../platformSurvey/PlatformSurveyPrompt.jsx";
 
 // نگاشت وضعیت‌های Tripod Beta (OPEN/IN_PROGRESS/DONE/CANCELLED) به واژگان
 // همین لیست، فقط برای نمایش یکدست بج وضعیت — چیزی در دیتابیس تغییر نمی‌کند
@@ -77,6 +80,7 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser, wide }
   const [showFilters, setShowFilters] = useState(false);
   const [kpiFilter, setKpiFilter] = useState(""); // کلیک روی یک کارت KPI، لیست را فیلتر می‌کند
   const [assignTripodAction, setAssignTripodAction] = useState(null); // اقدام Tripod Beta در حال ارجاع به پیمانکار
+  const [eventSurvey, setEventSurvey] = useState(null);
 
   const isContractor = currentUser?.role === "CONTRACTOR";
 
@@ -160,6 +164,8 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser, wide }
     if (result?.__error) { setError(result.message); return; }
     setShowForm(false);
     await load();
+    // نظرسنجیِ رضایتِ رویدادمحور — بعدِ تأییدِ موفقِ اقدامِ اصلاحی
+    checkEventSurvey("corrective_action_approved", currentUser).then((s) => { if (s) setEventSurvey(s); });
   };
 
   const handleFileUpload = async (file) => {
@@ -193,7 +199,7 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser, wide }
   if (showForm) {
     return (
       <div style={wide ? { direction: dir } : { maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
-        <div style={styles.backLink} onClick={() => setShowForm(false)}>{t("cadCancel")}</div>
+        <BackLink onClick={() => setShowForm(false)}>{t("cadCancel")}</BackLink>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
           <h2 style={{ fontSize: 17, color: THEME.heading, fontWeight: 700, margin: 0 }}>{editingId ? t("cadEditTitle") : t("cadNewTitle")}</h2>
           {editingId && <StatusBadge status={form.status} />}
@@ -324,7 +330,7 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser, wide }
   // ---------- لیست + داشبورد ----------
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 1000, margin: "0 auto", padding: 24, direction: dir }}>
-      {!wide && onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>}
+      {!wide && onBack && <BackLink onClick={onBack}>{t("commonBack")}</BackLink>}
       <div style={{ display: "flex", alignItems: "center", justifyContent: wide ? "flex-end" : "space-between", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
         {!wide && <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("cadListTitle")}</h2>}
         <button type="button" style={{ ...styles.smallButton, display: "flex", alignItems: "center", gap: 6 }} onClick={openNew}>
@@ -444,6 +450,7 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser, wide }
           onSaved={async () => { setAssignTripodAction(null); await load(); }}
         />
       )}
+      {eventSurvey && <PlatformSurveyPrompt kind="event" survey={eventSurvey} currentUser={currentUser} onDismiss={() => setEventSurvey(null)} />}
     </div>
   );
 }

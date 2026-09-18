@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { GitBranch, Target as TargetIcon, History as HistoryIcon, Send, Play, CheckCircle2, XCircle, RotateCcw, Trash2 } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { toJalaliSafe, JalaliDateInput } from "../personnel/jalaliDate.jsx";
@@ -14,6 +15,8 @@ import TogglePicker from "./ChecklistPicker.jsx";
 import TripodTree from "./TripodTree.jsx";
 import BarrierMappingPicker from "../bowtie/BarrierMappingPicker.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { checkEventSurvey } from "../platformSurvey/platformSurveyApi.js";
+import PlatformSurveyPrompt from "../platformSurvey/PlatformSurveyPrompt.jsx";
 
 const TABS = [
   { key: "summary", labelKey: "twTabSummary" },
@@ -36,6 +39,7 @@ export default function TripodAnalysisWorkspace({ analysisId, incident, currentU
   const [tab, setTab] = useState("summary");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [eventSurvey, setEventSurvey] = useState(null);
 
   const refresh = async () => {
     const [a, tg, br, rc, ca, hist] = await Promise.all([
@@ -63,11 +67,14 @@ export default function TripodAnalysisWorkspace({ analysisId, incident, currentU
     setBusy(false);
     if (result?.__error) { setError(result.message); return; }
     await refresh();
+    if (action === "approve") {
+      checkEventSurvey("incident_investigation_approved", currentUser).then((s) => { if (s) setEventSurvey(s); });
+    }
   };
 
   return (
     <div>
-      <div style={styles.backLink} onClick={onBack}>{t("commonBackPlain")}</div>
+      <BackLink onClick={onBack}>{t("commonBackPlain")}</BackLink>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
         <div>
           <h2 style={{ fontSize: 17, color: THEME.heading, fontWeight: 800, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
@@ -120,6 +127,7 @@ export default function TripodAnalysisWorkspace({ analysisId, incident, currentU
         </div>
       )}
       {tab === "history" && <HistoryTab history={history} />}
+      {eventSurvey && <PlatformSurveyPrompt kind="event" survey={eventSurvey} currentUser={currentUser} onDismiss={() => setEventSurvey(null)} />}
     </div>
   );
 }

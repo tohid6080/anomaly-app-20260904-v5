@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { ClipboardList, Clock } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
@@ -32,7 +33,7 @@ export default function MyAssignedGateItems({ currentUser, onBack }) {
 
   return (
     <div style={{ maxWidth: 700, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackPlain")}</div>}
+      {onBack && <BackLink onClick={onBack}>{t("commonBackPlain")}</BackLink>}
       <h2 style={{ fontSize: 18, color: THEME.heading, fontWeight: 800, margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}>
         <ClipboardList size={20} color={THEME.teal} /> {t("gateMineTitle")}
       </h2>

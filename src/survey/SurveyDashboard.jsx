@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { Plus, Copy, QrCode, Lock, Unlock, Trash2, Pencil, BarChart3, ClipboardList, Send, CheckCircle2, XCircle, Hourglass } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
@@ -116,7 +117,7 @@ export default function SurveyDashboard({ currentUser, role, onBack, wide, readO
 
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>}
+      {onBack && <BackLink onClick={onBack}>{t("commonBack")}</BackLink>}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
         <ClipboardList size={17} color={THEME.tealDeep} />
         <h3 style={{ margin: 0, color: THEME.heading, fontSize: 15, fontWeight: 800 }}>{t("moduleHseSurvey")}</h3>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { Tag as TagIcon, Plus } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { loadAllAnomalyCategories, createAnomalyCategory, updateAnomalyCategory, setAnomalyCategoryActive } from "./anomalyCategoriesApi.js";
@@ -49,7 +50,7 @@ export default function AnomalyCategoryManager({ onBack, wide }) {
 
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 560, margin: "0 auto", padding: 24, direction: dir }}>
-      {!wide && onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToSystemManagement")}</div>}
+      {!wide && onBack && <BackLink onClick={onBack}>{t("commonBackToSystemManagement")}</BackLink>}
       {!wide && (
         <>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>

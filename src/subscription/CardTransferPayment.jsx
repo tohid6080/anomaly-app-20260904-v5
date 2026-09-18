@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { CreditCard, Copy, Check, Clock, Globe, ImagePlus, X } from "lucide-react";
 import { styles, THEME, resizeImageFile, isValidMobile } from "../shared.js";
 import { loadCardTransferSettings, submitCardTransferReceipt } from "../subscriptionApi.js";
+import { formatCurrencyAmount } from "../pricingApi.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
-import { numLocale } from "../i18n/translations.js";
 
 /**
  * بخش «روش‌های پرداخت» — زیر خلاصه‌ی خرید در صفحه‌ی انتخاب پلن
@@ -14,14 +14,21 @@ import { numLocale } from "../i18n/translations.js";
  *    verifyPayment در subscriptionApi.js دست‌نخورده باقی می‌ماند تا
  *    بعداً با اتصال Zarinpal واقعی دوباره فعال شود.
  */
-export default function PaymentMethodsSection({ currentUser, selectedPlan, billingCycle, amount, backupPeriod, selectedModules, selectedServices, resolvedPlanId }) {
+export default function PaymentMethodsSection({ currentUser, selectedPlan, billingCycle, amount, currency, backupPeriod, selectedModules, selectedServices, resolvedPlanId }) {
   const { t, lang, dir } = useLanguage();
+  const cur = currency === "usd" || currency === "eur" ? currency : "irr";
   const [method, setMethod] = useState("card_transfer");
   const [settings, setSettings] = useState(undefined); // undefined = در حال بارگذاری
-  const [copied, setCopied] = useState(false);
+  const [copiedField, setCopiedField] = useState("");
 
-  const [payerName, setPayerName] = useState(currentUser?.name || "");
+  // عمداً از currentUser?.name پیش‌فرض گرفته نمی‌شود (برخلافِ payerPhone
+  // زیرِ همین خط) — این پیش‌فرض بود که باعث می‌شد فیلدِ نام برایِ برخی
+  // حساب‌ها (مثلاً حساب‌هایی که از مسیرِ آزمایشی ساخته شده‌اند) از قبل با
+  // مقداری نامرتبط پر شده باشد؛ کاربر همیشه خودش تایپ می‌کند.
+  const [payerName, setPayerName] = useState("");
   const [payerPhone, setPayerPhone] = useState(currentUser?.phone || "");
+  const [payerEmail, setPayerEmail] = useState("");
+  const [payerCompanyName, setPayerCompanyName] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
   const [receiptImage, setReceiptImage] = useState("");
   const [imageBusy, setImageBusy] = useState(false);
@@ -31,11 +38,11 @@ export default function PaymentMethodsSection({ currentUser, selectedPlan, billi
 
   useEffect(() => { loadCardTransferSettings().then(setSettings); }, []);
 
-  const handleCopy = async () => {
+  const handleCopy = async (field, text) => {
     try {
-      await navigator.clipboard.writeText(settings?.cardNumber || "");
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(text || "");
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(""), 2000);
     } catch {
       // بی‌اهمیت — مرورگر یا Context اجازه‌ی clipboard نداده؛ کاربر می‌تواند دستی انتخاب/کپی کند
     }
@@ -62,8 +69,8 @@ export default function PaymentMethodsSection({ currentUser, selectedPlan, billi
     setSaving(true);
     const result = await submitCardTransferReceipt(
       {
-        planId: selectedPlan?.id || "", billingCycle, amount, backupPeriod,
-        payerName, payerPhone, trackingNumber, receiptImage,
+        planId: selectedPlan?.id || "", billingCycle, amount, currency: cur, backupPeriod,
+        payerName, payerPhone, payerEmail, payerCompanyName, trackingNumber, receiptImage,
         selectedModules: Array.isArray(selectedModules) ? selectedModules : undefined,
         selectedServices: Array.isArray(selectedServices) ? selectedServices : undefined,
         resolvedPlanId: resolvedPlanId || undefined,
@@ -122,7 +129,7 @@ export default function PaymentMethodsSection({ currentUser, selectedPlan, billi
         <div>
           {settings === undefined && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 12 }}>{t("ctpLoadingPaymentInfo")}</p>}
 
-          {settings && (
+          {settings && cur === "irr" && (
             <div style={{ background: THEME.tealSoft, border: `1px solid ${THEME.teal}`, borderRadius: 12, padding: 16, marginBottom: 14 }}>
               <div style={{ marginBottom: 10 }}>
                 <div style={{ fontSize: 11, color: THEME.text2, marginBottom: 4 }}>{t("ctpCardNumber")}</div>
@@ -132,10 +139,10 @@ export default function PaymentMethodsSection({ currentUser, selectedPlan, billi
                   </span>
                   {settings.cardNumber && (
                     <button
-                      type="button" onClick={handleCopy}
-                      style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 7, border: "none", cursor: "pointer", fontFamily: THEME.font, fontSize: 11, fontWeight: 700, background: copied ? THEME.ok : THEME.teal, color: "#fff" }}
+                      type="button" onClick={() => handleCopy("card", settings.cardNumber)}
+                      style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 7, border: "none", cursor: "pointer", fontFamily: THEME.font, fontSize: 11, fontWeight: 700, background: copiedField === "card" ? THEME.ok : THEME.teal, color: "#fff" }}
                     >
-                      {copied ? <Check size={12} /> : <Copy size={12} />} {copied ? t("ctpCopied") : t("ctpCopyCardNumber")}
+                      {copiedField === "card" ? <Check size={12} /> : <Copy size={12} />} {copiedField === "card" ? t("ctpCopied") : t("ctpCopyCardNumber")}
                     </button>
                   )}
                 </div>
@@ -148,10 +155,66 @@ export default function PaymentMethodsSection({ currentUser, selectedPlan, billi
               )}
               <div style={{ marginBottom: settings.description ? 10 : 0 }}>
                 <div style={{ fontSize: 11, color: THEME.text2, marginBottom: 2 }}>{t("ctpPayableAmount")}</div>
-                <div style={{ fontSize: 15, fontWeight: 800, color: THEME.teal }}>{t("saTomanAmount", { amount: (amount || 0).toLocaleString(numLocale(lang)) })}</div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: THEME.teal }}>{formatCurrencyAmount(amount, cur, lang)}</div>
               </div>
               {settings.description && (
                 <p style={{ fontSize: 11.5, color: THEME.text2, lineHeight: 1.9, margin: 0, whiteSpace: "pre-wrap" }}>{settings.description}</p>
+              )}
+            </div>
+          )}
+
+          {settings && cur !== "irr" && (
+            <div style={{ background: THEME.tealSoft, border: `1px solid ${THEME.teal}`, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ fontSize: 11, color: THEME.text2, marginBottom: 4 }}>{t("ctpForexAccountNumber")}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 15, fontWeight: 800, color: THEME.heading, letterSpacing: 0.5, direction: "ltr", wordBreak: "break-all" }}>
+                    {settings.forexAccountNumber || "—"}
+                  </span>
+                  {settings.forexAccountNumber && (
+                    <button
+                      type="button" onClick={() => handleCopy("forex", settings.forexAccountNumber)}
+                      style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 7, border: "none", cursor: "pointer", fontFamily: THEME.font, fontSize: 11, fontWeight: 700, background: copiedField === "forex" ? THEME.ok : THEME.teal, color: "#fff" }}
+                    >
+                      {copiedField === "forex" ? <Check size={12} /> : <Copy size={12} />} {copiedField === "forex" ? t("ctpCopied") : t("ctpCopyAccountNumber")}
+                    </button>
+                  )}
+                </div>
+              </div>
+              {settings.forexHolderName && (
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ fontSize: 11, color: THEME.text2, marginBottom: 2 }}>{t("ctpToTheNameOf")}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: THEME.heading }}>{settings.forexHolderName}</div>
+                </div>
+              )}
+              <div style={{ marginBottom: settings.forexDescription ? 10 : 0 }}>
+                <div style={{ fontSize: 11, color: THEME.text2, marginBottom: 2 }}>{t("ctpPayableAmount")}</div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: THEME.teal }}>{formatCurrencyAmount(amount, cur, lang)}</div>
+              </div>
+              {settings.forexDescription && (
+                <p style={{ fontSize: 11.5, color: THEME.text2, lineHeight: 1.9, margin: 0, whiteSpace: "pre-wrap" }}>{settings.forexDescription}</p>
+              )}
+
+              {settings.cryptoAddress && (
+                <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px dashed ${THEME.teal}` }}>
+                  <div style={{ fontSize: 11, color: THEME.text2, marginBottom: 4 }}>
+                    {t("ctpCryptoAlternative")} {settings.cryptoNetwork && <span style={{ fontWeight: 700, color: THEME.heading }}>({settings.cryptoNetwork})</span>}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 12.5, fontWeight: 700, color: THEME.heading, direction: "ltr", fontFamily: "monospace", wordBreak: "break-all" }}>
+                      {settings.cryptoAddress}
+                    </span>
+                    <button
+                      type="button" onClick={() => handleCopy("crypto", settings.cryptoAddress)}
+                      style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 7, border: "none", cursor: "pointer", fontFamily: THEME.font, fontSize: 11, fontWeight: 700, background: copiedField === "crypto" ? THEME.ok : THEME.teal, color: "#fff" }}
+                    >
+                      {copiedField === "crypto" ? <Check size={12} /> : <Copy size={12} />} {copiedField === "crypto" ? t("ctpCopied") : t("ctpCopyAddress")}
+                    </button>
+                  </div>
+                  {settings.cryptoDescription && (
+                    <p style={{ fontSize: 11, color: THEME.text2, lineHeight: 1.9, margin: "6px 0 0", whiteSpace: "pre-wrap" }}>{settings.cryptoDescription}</p>
+                  )}
+                </div>
               )}
             </div>
           )}
@@ -163,6 +226,12 @@ export default function PaymentMethodsSection({ currentUser, selectedPlan, billi
 
           <label style={styles.label}>{t("ctpMobileNumber")}</label>
           <input style={styles.input} value={payerPhone} onChange={(e) => setPayerPhone(e.target.value.replace(/[^\d]/g, "").slice(0, 11))} dir="ltr" inputMode="numeric" maxLength={11} placeholder="09xxxxxxxxx" />
+
+          <label style={styles.label}>{t("ctpEmailOptional")}</label>
+          <input style={styles.input} type="email" value={payerEmail} onChange={(e) => setPayerEmail(e.target.value)} dir="ltr" />
+
+          <label style={styles.label}>{t("ctpCompanyNameOptional")}</label>
+          <input style={styles.input} value={payerCompanyName} onChange={(e) => setPayerCompanyName(e.target.value)} dir={dir} />
 
           <label style={styles.label}>{t("ctpTransactionTrackingNumberOptional")}</label>
           <input style={styles.input} value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} dir="ltr" />
