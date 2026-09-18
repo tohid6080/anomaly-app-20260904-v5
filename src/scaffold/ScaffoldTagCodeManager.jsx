@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { Tag } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { loadContractorsWithScaffoldCode, setContractorScaffoldCode } from "./scaffoldApi.js";
@@ -44,7 +45,7 @@ export default function ScaffoldTagCodeManager({ onBack, wide }) {
 
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 520, margin: "0 auto", padding: 24, direction: dir }}>
-      {!wide && onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
+      {!wide && onBack && <BackLink onClick={onBack}>{t("commonBackToMenu")}</BackLink>}
       {!wide && (
         <>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>

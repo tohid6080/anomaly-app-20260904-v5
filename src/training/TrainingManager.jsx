@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { GraduationCap, Plus, Trash2, X } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { loadActiveJobPositions } from "../jobpositions/jobPositionsApi.js";
@@ -96,7 +97,7 @@ export default function TrainingManager({ onBack, wide }) {
 
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 1000, margin: "0 auto", padding: 24, direction: dir }}>
-      {!wide && onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToSystemManagement")}</div>}
+      {!wide && onBack && <BackLink onClick={onBack}>{t("commonBackToSystemManagement")}</BackLink>}
       {!wide && (
         <>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>

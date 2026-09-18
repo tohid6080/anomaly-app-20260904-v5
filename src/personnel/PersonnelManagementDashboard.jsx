@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { BarChart3, Filter, X } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { JalaliDateInput } from "./jalaliDate.jsx";
@@ -71,7 +72,7 @@ export default function PersonnelManagementDashboard({ personnelList, contractor
 
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: 24, direction: dir }}>
-      <div style={styles.backLink} onClick={onClose}>{t("pmdBackToPersonnelList")}</div>
+      <BackLink onClick={onClose}>{t("pmdBackToPersonnelList")}</BackLink>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
         <BarChart3 size={20} color={THEME.teal} />
         <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("pmdTitle")}</h2>

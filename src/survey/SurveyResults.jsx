@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { Download, Printer, RefreshCw, Trash2, Search, Share2, Copy, Check } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
@@ -112,7 +113,7 @@ export default function SurveyResults({ survey, onBack, wide, onChanged }) {
 
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>}
+      {onBack && <BackLink onClick={onBack}>{t("commonBack")}</BackLink>}
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
         <h3 style={{ margin: 0, color: THEME.heading, fontSize: 15, fontWeight: 800 }}>{survey.title || t("svUntitled")}</h3>
         <span style={{ fontSize: 12, color: THEME.text3 }}>· {t("svResponsesN", { n: responses ? responses.length : survey.responseCount })}</span>

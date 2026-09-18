@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { Tag, CheckCircle2 } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { JalaliDateInput } from "../personnel/jalaliDate.jsx";
@@ -84,7 +85,7 @@ export default function ScaffoldRequestForm({ currentUser, contractorCode, onCre
 
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 520, margin: "0 auto", padding: 24, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>}
+      {onBack && <BackLink onClick={onBack}>{t("commonBack")}</BackLink>}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
         <Tag size={20} color={THEME.teal} />
         <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("scaffNewTagTitle")}</h2>

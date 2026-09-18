@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { Capacitor } from "@capacitor/core";
 import { Save, Send, ShieldCheck, XCircle, FileCheck2, PlayCircle, PauseCircle, CheckCircle2, RotateCcw, Printer, History } from "lucide-react";
 import { THEME, styles } from "../shared.js";
@@ -172,7 +173,7 @@ export default function PermitWorkspace({ permitId, currentUser, readOnly, onBac
 
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 900, margin: "0 auto", padding: 22, direction: dir }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>}
+      {onBack && <BackLink onClick={onBack}>{t("commonBack")}</BackLink>}
 
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
         <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: THEME.heading }}>

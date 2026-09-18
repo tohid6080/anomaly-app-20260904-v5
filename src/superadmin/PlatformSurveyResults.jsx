@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { Users, Star } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
@@ -33,7 +34,7 @@ export default function PlatformSurveyResults({ survey, onBack }) {
 
   return (
     <div dir={dir}>
-      <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>
+      <BackLink onClick={onBack}>{t("commonBack")}</BackLink>
 
       <h3 style={{ fontSize: 15, fontWeight: 800, color: THEME.heading, margin: "0 0 4px" }}>{survey.title}</h3>
       <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: THEME.text2, marginBottom: 16 }}>

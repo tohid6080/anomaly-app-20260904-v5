@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { ClipboardCheck, Trash2, Printer, Calculator } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { JalaliDateInput, toJalaliSafe } from "../personnel/jalaliDate.jsx";
@@ -51,7 +52,7 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack, wide
         <p style={{ color: THEME.danger, fontSize: 13, lineHeight: 1.9 }}>
           {t("sbsCategoriesMissing")}
         </p>
-        <div style={{ ...styles.backLink, marginTop: 12, justifyContent: "center" }} onClick={onBack}>{t("commonBackPlain")}</div>
+        <BackLink onClick={onBack} style={{ marginTop: 12, justifyContent: "center" }}>{t("commonBackPlain")}</BackLink>
       </div>
     );
   }
@@ -90,7 +91,7 @@ export default function SbsSubmodule({ currentUser, role, readOnly, onBack, wide
 
   return (
     <div>
-      <div style={styles.backLink} onClick={onBack}>{t("commonBackPlain")}</div>
+      <BackLink onClick={onBack}>{t("commonBackPlain")}</BackLink>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4, flexWrap: "wrap", gap: 10 }}>
         <h2 style={{ fontSize: 18, color: THEME.heading, fontWeight: 800, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
           <ClipboardCheck size={20} color={THEME.teal} /> {t("sbsTitle")}

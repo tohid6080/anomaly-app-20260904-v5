@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { ShieldCheck, AlertTriangle, TrendingDown, TrendingUp, Minus, RefreshCw, Sliders, Link2, ChevronLeft, Send } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { toJalaliSafe, JalaliDateInput } from "../personnel/jalaliDate.jsx";
@@ -62,7 +63,7 @@ export default function BarrierEffectivenessDashboard({ currentUser, role, onBac
 
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: 24 }}>
-      {onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackPlain")}</div>}
+      {onBack && <BackLink onClick={onBack}>{t("commonBackPlain")}</BackLink>}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10, marginBottom: 4 }}>
         <div>
           <h2 style={{ fontSize: 18, color: THEME.heading, fontWeight: 800, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
@@ -277,7 +278,7 @@ function BarrierDetailView({ barrier, bowtieTitle, currentUser, isEmployerSide, 
 
   return (
     <div style={{ maxWidth: 800, margin: "0 auto", padding: 24 }}>
-      <div style={styles.backLink} onClick={onBack}>{t("commonBackPlain")}</div>
+      <BackLink onClick={onBack}>{t("commonBackPlain")}</BackLink>
       <h2 style={{ fontSize: 18, color: THEME.heading, fontWeight: 800, margin: "0 0 4px" }}>{barrier.label}</h2>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 18 }}>{bowtieTitle} — {barrier.side === "preventive" ? t("dbeeSidePreventive") : t("dbeeSideRecovery")}</p>
 

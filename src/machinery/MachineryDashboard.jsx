@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { Truck, Plus, Trash2, FileText, Paperclip } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import DataView, { StatusPill } from "../shared/DataView.jsx";
@@ -474,7 +475,7 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
 
   return (
     <div style={wide ? { ...styles.cardWide, direction: dir } : { maxWidth: 900, margin: "0 auto", padding: 24, direction: dir }}>
-      {!wide && onBack && <div style={styles.backLink} onClick={onBack}>{t("commonBackToMenu")}</div>}
+      {!wide && onBack && <BackLink onClick={onBack}>{t("commonBackToMenu")}</BackLink>}
       {!wide && (
         <>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>

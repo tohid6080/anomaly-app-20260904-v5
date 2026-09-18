@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { Truck, CheckCircle2 } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { JalaliDateInput } from "../personnel/jalaliDate.jsx";
@@ -147,7 +148,7 @@ export default function MachineryForm({ existingMachinery, existingDocuments, cu
   const pairStyle = wideGrid ? { display: "contents" } : styles.formGrid;
   return (
     <div style={(wide || embedded) ? { direction: dir } : { maxWidth: 640, margin: "0 auto", padding: 24, direction: dir }}>
-      {!embedded && onBack && <div style={styles.backLink} onClick={onBack}>{t("mfBack")}</div>}
+      {!embedded && onBack && <BackLink onClick={onBack}>{t("mfBack")}</BackLink>}
       {!embedded && (
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
           <Truck size={20} color={THEME.teal} />

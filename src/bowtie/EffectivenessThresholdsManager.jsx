@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { Sliders } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { loadThresholds, saveThresholds } from "./effectivenessApi.js";
@@ -41,7 +42,7 @@ export default function EffectivenessThresholdsManager({ onBack, currentUser, wi
 
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 480, margin: "0 auto", padding: 24, direction: dir }}>
-      {!wide && onBack && <div style={styles.backLink} onClick={onBack}>{t("rkBackToSystemManagement")}</div>}
+      {!wide && onBack && <BackLink onClick={onBack}>{t("rkBackToSystemManagement")}</BackLink>}
       {!wide && (
         <>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>

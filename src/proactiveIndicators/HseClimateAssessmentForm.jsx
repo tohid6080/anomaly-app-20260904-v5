@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import BackLink from "../shared/BackLink.jsx";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { HSE_CLIMATE_QUESTIONS, HSE_CLIMATE_OPTIONS } from "./hseClimateData.js";
@@ -54,7 +55,7 @@ export default function HseClimateAssessmentForm({ currentUser, onBack, onSaved 
 
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: 24, direction: dir }}>
-      <div style={styles.backLink} onClick={onBack}>{t("commonBack")}</div>
+      <BackLink onClick={onBack}>{t("commonBack")}</BackLink>
       <h3 style={{ marginBottom: 4, color: THEME.heading }}>{t("hseSurveyTitle")}</h3>
       <p style={{ color: THEME.text3, fontSize: 12, marginTop: 0, marginBottom: 16 }}>
         {t("hseFormDesc", { count: HSE_CLIMATE_QUESTIONS.length })}
