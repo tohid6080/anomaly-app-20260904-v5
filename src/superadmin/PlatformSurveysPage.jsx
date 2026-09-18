@@ -20,7 +20,9 @@ const TABS = [
 ];
 
 const STATUS_LABEL_KEYS = { draft: "psStatusDraft", active: "psStatusActive", closed: "psStatusClosed" };
-const STATUS_COLOR = { draft: THEME.text3, active: THEME.ok, closed: THEME.danger };
+// جفتِ background/foregroundِ آماده (نه STATUS_COLOR[x] + "22" — THEME.* رشته‌ی
+// var(--x, #hex) است، الصاقِ رشته‌ای شفافیتِ هگز به آن CSS نامعتبر می‌سازد)
+const STATUS_STYLE = { draft: { bg: THEME.surface2, fg: THEME.text3 }, active: { bg: THEME.okBg, fg: THEME.ok }, closed: { bg: THEME.dangerBg, fg: THEME.danger } };
 
 export default function PlatformSurveysPage({ currentAdmin }) {
   const { t, dir } = useLanguage();
@@ -103,7 +105,7 @@ export default function PlatformSurveysPage({ currentAdmin }) {
               <div style={{ flex: 1, minWidth: 180 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
                   <span style={{ fontSize: 13, fontWeight: 700, color: THEME.heading }}>{s.title}</span>
-                  <span style={{ fontSize: 10.5, padding: "2px 9px", borderRadius: 999, background: STATUS_COLOR[s.status] + "22", color: STATUS_COLOR[s.status], fontWeight: 700 }}>
+                  <span style={{ fontSize: 10.5, padding: "2px 9px", borderRadius: 999, background: (STATUS_STYLE[s.status] || STATUS_STYLE.draft).bg, color: (STATUS_STYLE[s.status] || STATUS_STYLE.draft).fg, fontWeight: 700 }}>
                     {t(STATUS_LABEL_KEYS[s.status] || s.status)}
                   </span>
                 </div>
