@@ -47,15 +47,19 @@ Deno.serve(async (req) => {
     const perQuestion = questions.filter((q) => q?.type !== "section").map((q) => {
       const vals = responses.map((r) => r.answers?.[q.id]).filter((v) => v != null && v !== "");
       const base: any = { id: q.id, title: q.title || "", type: q.type };
+      // در حالتِ آزمون، شناسه‌ی گزینه‌های درست را هم برمی‌گردانیم (نه پاسخِ کسی —
+      // فقط خودِ کلید) تا نمودارِ گزینه‌ها مشخص کند کدام گزینه درست بوده.
+      const correctIds = new Set<string>(isExam && Array.isArray(q.config?.correct) ? q.config.correct : []);
       if (CHOICE.includes(q.type)) {
         const counts: Record<string, number> = {};
         (q.config?.options || []).forEach((o: any) => { counts[o.id] = 0; });
         vals.forEach((v) => (Array.isArray(v) ? v : [v]).forEach((id) => { if (id in counts) counts[id] += 1; }));
-        base.options = (q.config?.options || []).map((o: any) => ({ label: o.label || "", count: counts[o.id] || 0 }));
+        base.options = (q.config?.options || []).map((o: any) => ({ label: o.label || "", count: counts[o.id] || 0, correct: correctIds.size > 0 ? correctIds.has(o.id) : undefined }));
         base.total = vals.length;
       } else if (q.type === "yes_no") {
         const yes = vals.filter((v) => v === "yes").length;
         base.yes = yes; base.no = vals.length - yes; base.total = vals.length;
+        if (correctIds.size > 0) base.correctYesNo = correctIds.has("yes") ? "yes" : correctIds.has("no") ? "no" : null;
       } else if (NUMERIC.includes(q.type)) {
         const nums = vals.map(Number).filter((n) => !Number.isNaN(n));
         base.avg = nums.length ? Math.round((nums.reduce((a, b) => a + b, 0) / nums.length) * 100) / 100 : null;

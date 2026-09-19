@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { AlertTriangle, BarChart3 } from "lucide-react";
+import { AlertTriangle, BarChart3, Check } from "lucide-react";
 import { THEME } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { loadPublicSurveyResults } from "./surveyApi.js";
@@ -72,12 +72,12 @@ export default function PublicSurveyResults({ resultsToken }) {
         {(d.perQuestion || []).map((q, i) => (
           <Card key={q.id} title={`${i + 1}. ${q.title || q.id}`} note={q.correctRate != null ? t("svCorrectRateNote", { pct: q.correctRate }) : null}>
             {q.options && q.options.map((o, oi) => (
-              <Bar key={oi} label={o.label || "—"} count={o.count} pct={q.total ? Math.round((o.count / q.total) * 100) : 0} />
+              <Bar key={oi} label={o.label || "—"} count={o.count} pct={q.total ? Math.round((o.count / q.total) * 100) : 0} correct={o.correct} t={t} />
             ))}
             {q.yes != null && (
               <>
-                <Bar label={t("commonYes")} count={q.yes} pct={q.total ? Math.round((q.yes / q.total) * 100) : 0} />
-                <Bar label={t("commonNo")} count={q.no} pct={q.total ? Math.round((q.no / q.total) * 100) : 0} />
+                <Bar label={t("commonYes")} count={q.yes} pct={q.total ? Math.round((q.yes / q.total) * 100) : 0} correct={q.correctYesNo === "yes"} t={t} />
+                <Bar label={t("commonNo")} count={q.no} pct={q.total ? Math.round((q.no / q.total) * 100) : 0} correct={q.correctYesNo === "no"} t={t} />
               </>
             )}
             {q.avg !== undefined && q.options == null && q.yes == null && (
@@ -114,14 +114,22 @@ function Kpi({ label, value }) {
     </div>
   );
 }
-function Bar({ label, count, pct }) {
+function Bar({ label, count, pct, correct, t }) {
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11.5, color: THEME.text2, marginBottom: 2 }}>
-        <span>{label}</span><span style={{ fontFamily: MONO }}>{count} · {pct}%</span>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, fontSize: 11.5, color: THEME.text2, marginBottom: 2 }}>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 5, minWidth: 0 }}>
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{label}</span>
+          {correct && (
+            <span style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 3, fontSize: 9, fontWeight: 800, color: THEME.ok, background: THEME.okBg, borderRadius: 999, padding: "1px 7px" }}>
+              <Check size={9} /> {t("svCorrectAnswer")}
+            </span>
+          )}
+        </span>
+        <span style={{ fontFamily: MONO, flexShrink: 0 }}>{count} · {pct}%</span>
       </div>
       <div style={{ height: 8, background: THEME.surface2, borderRadius: 999, overflow: "hidden" }}>
-        <div style={{ width: `${pct}%`, height: "100%", background: THEME.teal }} />
+        <div style={{ width: `${pct}%`, height: "100%", background: correct ? THEME.ok : THEME.teal }} />
       </div>
     </div>
   );
