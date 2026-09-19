@@ -120,6 +120,39 @@ export default function ContractorEvalSettingsManager({ onBack, currentUser, wid
         </div>
       </div>
 
+      {/* حد نصاب سطوح عملکرد */}
+      <div style={styles.cardWide}>
+        <h3 style={{ margin: "0 0 4px", fontSize: 15, color: THEME.heading }}>{t("evalThresholdsTitle")}</h3>
+        <p style={{ fontSize: 12, color: THEME.text3, marginBottom: 12 }}>{t("evalThresholdsDesc")}</p>
+        <div style={styles.formGrid}>
+          <div>
+            <label style={styles.label}>{t("evalThresholdExcellent")}</label>
+            <input type="number" style={styles.input} value={config?.excellentMin ?? 85}
+              onChange={(e) => setConfig({ ...config, excellentMin: Number(e.target.value) })}
+              onBlur={(e) => handleSaveConfig({ excellentMin: Number(e.target.value) })} dir="ltr" />
+          </div>
+          <div>
+            <label style={styles.label}>{t("evalThresholdGood")}</label>
+            <input type="number" style={styles.input} value={config?.goodMin ?? 70}
+              onChange={(e) => setConfig({ ...config, goodMin: Number(e.target.value) })}
+              onBlur={(e) => handleSaveConfig({ goodMin: Number(e.target.value) })} dir="ltr" />
+          </div>
+          <div>
+            <label style={styles.label}>{t("evalThresholdAcceptable")}</label>
+            <input type="number" style={styles.input} value={config?.acceptableMin ?? 50}
+              onChange={(e) => setConfig({ ...config, acceptableMin: Number(e.target.value) })}
+              onBlur={(e) => handleSaveConfig({ acceptableMin: Number(e.target.value) })} dir="ltr" />
+          </div>
+          <div>
+            <label style={styles.label}>{t("evalCalcMethodLabel")}</label>
+            <select style={styles.input} value={config?.calcMethod || "redistribute"} onChange={(e) => handleSaveConfig({ calcMethod: e.target.value })}>
+              <option value="redistribute">{t("evalCalcMethodRedistribute")}</option>
+              <option value="full_score">{t("evalCalcMethodFullScore")}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
       {/* وزن هر ماژول */}
       <div style={styles.cardWide}>
         <h3 style={{ margin: "0 0 4px", fontSize: 15, color: THEME.heading }}>{t("evalWeightsTitle")}</h3>

@@ -4790,6 +4790,15 @@ export const de = {
   "evalHseDeadlineLabel": "Frist für HSE-Prüfer (Tage)",
   "evalEmployerDeadlineLabel": "Frist für Auftraggeber-Freigabe (Tage)",
 
+  "evalThresholdsTitle": "Schwellenwerte der Leistungsstufen",
+  "evalThresholdsDesc": "Punktzahl-Grenzwerte für den Farbstatus, und der Umgang mit Modulen ohne Daten.",
+  "evalThresholdExcellent": "Ausgezeichnet (Minimum)",
+  "evalThresholdGood": "Gut (Minimum)",
+  "evalThresholdAcceptable": "Akzeptabel (Minimum)",
+  "evalCalcMethodLabel": "Umgang mit Modulen ohne Daten",
+  "evalCalcMethodRedistribute": "Gewicht auf aktive Module umverteilen (Standard)",
+  "evalCalcMethodFullScore": "Ignorieren und volle Punktzahl annehmen",
+
   "evalWeightsTitle": "Gewichtung jedes Moduls an der Gesamtpunktzahl",
   "evalWeightsDesc": "Die Gewichte müssen sich zu genau 100 summieren.",
   "evalCategoryInactive": "inaktiv",

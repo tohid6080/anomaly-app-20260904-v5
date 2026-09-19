@@ -10835,6 +10835,15 @@ export const translations = {
   "evalHseDeadlineLabel": { "fa": "مهلت بررسی سرپرست HSE (روز)", "en": "HSE reviewer deadline (days)" },
   "evalEmployerDeadlineLabel": { "fa": "مهلت تأیید کارفرما (روز)", "en": "Employer approval deadline (days)" },
 
+  "evalThresholdsTitle": { "fa": "حد نصاب سطوح عملکرد", "en": "Performance tier thresholds" },
+  "evalThresholdsDesc": { "fa": "مرزهای امتیاز برای تعیین وضعیت رنگی، و روش برخورد با ماژول‌های بدون‌داده.", "en": "Score cut-offs for the colored status, and how modules with no data are handled." },
+  "evalThresholdExcellent": { "fa": "عالی (حداقل)", "en": "Excellent (min)" },
+  "evalThresholdGood": { "fa": "خوب (حداقل)", "en": "Good (min)" },
+  "evalThresholdAcceptable": { "fa": "قابل قبول (حداقل)", "en": "Acceptable (min)" },
+  "evalCalcMethodLabel": { "fa": "روش برخورد با ماژول بدون‌داده", "en": "How to handle modules with no data" },
+  "evalCalcMethodRedistribute": { "fa": "بازتوزیع وزن بین ماژول‌های فعال (پیش‌فرض)", "en": "Redistribute weight across active modules (default)" },
+  "evalCalcMethodFullScore": { "fa": "نادیده‌گرفتن و امتیاز کامل فرض شود", "en": "Ignore and assume full score" },
+
   "evalWeightsTitle": { "fa": "وزن هر ماژول در امتیاز کل", "en": "Module weight in total score" },
   "evalWeightsDesc": { "fa": "مجموع وزن‌ها باید دقیقاً ۱۰۰ باشد.", "en": "Weights must add up to exactly 100." },
   "evalCategoryInactive": { "fa": "غیرفعال", "en": "inactive" },
