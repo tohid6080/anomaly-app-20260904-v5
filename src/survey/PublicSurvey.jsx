@@ -37,6 +37,17 @@ export default function PublicSurvey({ publicToken }) {
     catch { return false; }
   }, [info, publicToken]);
 
+  // اگر پاسخ‌دهنده این لینکِ تکمیل‌شده را دوباره باز کند (رفرش/بازکردنِ مجدد)،
+  // نمره و بررسیِ سؤال‌به‌سؤالِ همان بار را از localStorage برمی‌گردانیم تا
+  // به‌جای پیامِ عمومیِ «متشکریم»، نتیجهٔ واقعی دوباره دیده شود.
+  useEffect(() => {
+    if (!already || result) return;
+    try {
+      const raw = localStorage.getItem(`ihms_survey_result_${publicToken}`);
+      if (raw) setResult(JSON.parse(raw));
+    } catch { /* ignore */ }
+  }, [already, result, publicToken]);
+
   const isExam = !!(info && !info.__error && info.settings?.mode === "exam");
 
   // ترتیبِ سؤال‌ها: در حالتِ آزمونِ درهم‌ریخته، یک بار در بارگذاری قاطی می‌شود.
@@ -195,8 +206,17 @@ export default function PublicSurvey({ publicToken }) {
     const res = await submitSurveyResponse(publicToken, answers, respMeta, "link");
     setSaving(false);
     if (res?.__error) { setError(res.message); return; }
-    if (res.percent != null) setResult({ score: res.score, maxScore: res.maxScore, percent: res.percent, passed: res.passed, review: Array.isArray(res.review) ? res.review : null });
-    try { if (settings.onePerDevice) localStorage.setItem(`ihms_survey_done_${publicToken}`, "1"); } catch { /* ignore */ }
+    let r = null;
+    if (res.percent != null) {
+      r = { score: res.score, maxScore: res.maxScore, percent: res.percent, passed: res.passed, review: Array.isArray(res.review) ? res.review : null };
+      setResult(r);
+    }
+    try {
+      if (settings.onePerDevice) {
+        localStorage.setItem(`ihms_survey_done_${publicToken}`, "1");
+        if (r) localStorage.setItem(`ihms_survey_result_${publicToken}`, JSON.stringify(r));
+      }
+    } catch { /* ignore */ }
     setDone(true);
   };
   submitRef.current = doSubmit;
