@@ -98,12 +98,12 @@ export default function PublicSurveyResults({ resultsToken }) {
               </p>
             )}
             {q.options && q.options.map((o, oi) => (
-              <Bar key={oi} label={o.label || "—"} count={o.count} pct={q.total ? Math.round((o.count / q.total) * 100) : 0} correct={o.correct} t={t} />
+              <Bar key={oi} label={o.label || "—"} count={o.count} pct={q.total ? Math.round((o.count / q.total) * 100) : 0} correct={o.correct} wrong={o.correct === false && o.count > 0} t={t} />
             ))}
             {q.yes != null && (
               <>
-                <Bar label={t("commonYes")} count={q.yes} pct={q.total ? Math.round((q.yes / q.total) * 100) : 0} correct={q.correctYesNo === "yes"} t={t} />
-                <Bar label={t("commonNo")} count={q.no} pct={q.total ? Math.round((q.no / q.total) * 100) : 0} correct={q.correctYesNo === "no"} t={t} />
+                <Bar label={t("commonYes")} count={q.yes} pct={q.total ? Math.round((q.yes / q.total) * 100) : 0} correct={q.correctYesNo === "yes"} wrong={q.correctYesNo != null && q.correctYesNo !== "yes" && q.yes > 0} t={t} />
+                <Bar label={t("commonNo")} count={q.no} pct={q.total ? Math.round((q.no / q.total) * 100) : 0} correct={q.correctYesNo === "no"} wrong={q.correctYesNo != null && q.correctYesNo !== "no" && q.no > 0} t={t} />
               </>
             )}
             {q.avg !== undefined && q.options == null && q.yes == null && (
@@ -175,7 +175,7 @@ function Kpi({ label, value }) {
     </div>
   );
 }
-function Bar({ label, count, pct, correct, t }) {
+function Bar({ label, count, pct, correct, wrong, t }) {
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, fontSize: 11.5, color: THEME.text2, marginBottom: 2 }}>
@@ -186,11 +186,16 @@ function Bar({ label, count, pct, correct, t }) {
               <Check size={9} /> {t("svCorrectAnswer")}
             </span>
           )}
+          {wrong && (
+            <span style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 3, fontSize: 9, fontWeight: 800, color: THEME.danger, background: THEME.dangerBg, borderRadius: 999, padding: "1px 7px" }}>
+              <XCircle size={9} /> {t("svAnswerWrong")}
+            </span>
+          )}
         </span>
         <span style={{ fontFamily: MONO, flexShrink: 0 }}>{count} · {pct}%</span>
       </div>
       <div style={{ height: 8, background: THEME.surface2, borderRadius: 999, overflow: "hidden" }}>
-        <div style={{ width: `${pct}%`, height: "100%", background: correct ? THEME.ok : THEME.teal }} />
+        <div style={{ width: `${pct}%`, height: "100%", background: correct ? THEME.ok : wrong ? THEME.danger : THEME.teal }} />
       </div>
     </div>
   );
