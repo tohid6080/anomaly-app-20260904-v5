@@ -69,8 +69,19 @@ export default function PublicSurveyResults({ resultsToken }) {
           </Card>
         )}
 
-        {(d.perQuestion || []).map((q, i) => (
+        {(d.perQuestion || []).map((q, i) => {
+          const correctLabel = q.options
+            ? (q.options.find((o) => o.correct)?.label ?? null)
+            : q.correctYesNo != null
+              ? (q.correctYesNo === "yes" ? t("commonYes") : t("commonNo"))
+              : null;
+          return (
           <Card key={q.id} title={`${i + 1}. ${q.title || q.id}`} note={q.correctRate != null ? t("svCorrectRateNote", { pct: q.correctRate }) : null}>
+            {correctLabel != null && (
+              <p style={{ fontSize: 12, fontWeight: 700, color: THEME.ok, background: THEME.okBg, borderRadius: 8, padding: "6px 10px", margin: "0 0 6px", display: "flex", alignItems: "center", gap: 6 }}>
+                <Check size={13} /> {t("svCorrectAnswer")}: {correctLabel}
+              </p>
+            )}
             {q.options && q.options.map((o, oi) => (
               <Bar key={oi} label={o.label || "—"} count={o.count} pct={q.total ? Math.round((o.count / q.total) * 100) : 0} correct={o.correct} t={t} />
             ))}
@@ -90,7 +101,8 @@ export default function PublicSurveyResults({ resultsToken }) {
               <p style={{ fontSize: 11.5, color: THEME.text3, margin: 0 }}>{t("svTextAnswersCount", { n: q.count })}</p>
             )}
           </Card>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
