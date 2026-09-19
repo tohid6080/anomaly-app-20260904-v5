@@ -106,6 +106,15 @@ export function scoreExam(questions, answers, passScore = 60) {
   return { score, maxScore, percent, passed: maxScore > 0 && percent >= passScore, review };
 }
 
+// نمایشِ مدتِ پاسخ‌دهی (ثانیه → mm:ss) — null یعنی نامشخص (پاسخ‌هایِ قدیمی‌تر
+// از این قابلیت، یا وقتی زمانِ شروع به هر دلیلی ثبت نشده).
+export function formatDuration(seconds) {
+  if (seconds == null || !Number.isFinite(seconds) || seconds < 0) return null;
+  const m = Math.floor(seconds / 60);
+  const s = Math.round(seconds % 60);
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
 // آیا این آزمون اصلاً سؤالِ نمره‌دار دارد؟
 export function examHasScorable(questions) {
   return (questions || []).some(

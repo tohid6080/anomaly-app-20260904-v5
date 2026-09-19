@@ -72,6 +72,7 @@ export async function loadSurveyResponses(surveyId) {
         maxScore: r.max_score != null ? Number(r.max_score) : null,
         percent: r.percent != null ? Number(r.percent) : null,
         passed: typeof r.passed === "boolean" ? r.passed : null,
+        durationSeconds: r.duration_seconds != null ? Number(r.duration_seconds) : null,
       }))
     : [];
 }
@@ -246,12 +247,12 @@ export async function loadPublicSurvey(token) {
   }
 }
 
-export async function submitSurveyResponse(token, answers, respondentMeta, source) {
+export async function submitSurveyResponse(token, answers, respondentMeta, source, durationSeconds) {
   try {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/submit-survey-response`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${SUPABASE_ANON_KEY}`, apikey: SUPABASE_ANON_KEY },
-      body: JSON.stringify({ token, answers, respondentMeta: respondentMeta || {}, source: source || "link" }),
+      body: JSON.stringify({ token, answers, respondentMeta: respondentMeta || {}, source: source || "link", durationSeconds: Number.isFinite(durationSeconds) ? durationSeconds : null }),
     });
     const data = await res.json();
     if (!res.ok) return { __error: true, message: data?.error || tr("svErrSubmit") };

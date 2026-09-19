@@ -4,6 +4,7 @@ import { THEME } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { loadPublicSurveyResponse } from "./surveyApi.js";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
+import { formatDuration } from "./surveyModel.js";
 import ChoiceReview from "./ChoiceReview.jsx";
 
 const MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
@@ -42,7 +43,10 @@ export default function PublicSurveyResponse({ responseId }) {
           <h2 style={{ fontSize: 17, fontWeight: 800, color: THEME.heading, margin: "8px 0 4px" }}>{d.passed ? t("svExamPassed") : t("svExamFailed")}</h2>
           <div style={{ fontSize: 30, fontWeight: 800, color: d.passed ? THEME.ok : THEME.danger, fontFamily: MONO, margin: "6px 0" }}>{d.percent}%</div>
           {d.maxScore != null && <p style={{ fontSize: 12, color: THEME.text3, margin: "0 0 4px" }}>{t("svExamScoreLine", { score: d.score, max: d.maxScore, pass: d.passScore })}</p>}
-          <p style={{ fontSize: 11, color: THEME.text3 }}>{toJalaliSafe(d.submittedAt)}</p>
+          <p style={{ fontSize: 11, color: THEME.text3 }}>
+            {toJalaliSafe(d.submittedAt)}
+            {formatDuration(d.durationSeconds) && ` · ${t("svDurationLabel")}: ${formatDuration(d.durationSeconds)}`}
+          </p>
         </div>
 
         {d.review && d.review.length > 0 && (

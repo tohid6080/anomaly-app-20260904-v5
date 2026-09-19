@@ -53,6 +53,7 @@ Deno.serve(async (req) => {
   const answers = body?.answers && typeof body.answers === "object" ? body.answers : null;
   const respondentMeta = body?.respondentMeta && typeof body.respondentMeta === "object" ? body.respondentMeta : {};
   const source = ["link", "qr", "preview"].includes(body?.source) ? body.source : "link";
+  const durationSeconds = Number.isFinite(body?.durationSeconds) && body.durationSeconds >= 0 ? Math.round(body.durationSeconds) : null;
   if (!token) return json({ error: "لینک نامعتبر است" }, 400);
   if (!answers) return json({ error: "پاسخی ارسال نشده است" }, 400);
 
@@ -93,7 +94,7 @@ Deno.serve(async (req) => {
     const id = "sresp_" + crypto.randomUUID().replace(/-/g, "").slice(0, 20);
     const row: Record<string, unknown> = {
       id, survey_id: s.id, company_id: s.company_id,
-      answers: clean, respondent_meta: meta, source,
+      answers: clean, respondent_meta: meta, source, duration_seconds: durationSeconds,
     };
     if (sc) { row.score = sc.score; row.max_score = sc.maxScore; row.percent = sc.percent; row.passed = sc.passed; }
 
