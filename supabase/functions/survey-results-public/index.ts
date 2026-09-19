@@ -1,8 +1,11 @@
 // supabase/functions/survey-results-public/index.ts
 //
-// عمومی و بدونِ احراز هویت — خلاصهٔ *تجمیعیِ* نتایجِ یک نظرسنجی/آزمون را با
-// results_token برمی‌گرداند، فقط اگر settings.shareResults روشن باشد. هیچ پاسخِ
-// فردی، هیچ نام/واحدِ پاسخ‌دهنده و هیچ متنِ آزادِ پاسخ برنمی‌گردد.
+// عمومی و بدونِ احراز هویت — خلاصهٔ نتایجِ یک نظرسنجی/آزمون را با
+// results_token برمی‌گرداند، فقط اگر settings.shareResults روشن باشد. برای
+// حالتِ آزمون، به‌درخواستِ صریحِ کاربر، پاسخِ تک‌تکِ شرکت‌کنندگان هم برمی‌گردد
+// (نامِ پاسخ‌دهنده فقط اگر collectName روشن باشد) تا صفحهٔ نتایج بتواند نشان
+// دهد هر نفر کدام سؤال را درست/غلط زده و پاسخِ درست چه بوده — هیچ متنِ آزادِ
+// پاسخ (سؤال‌هایِ تشریحی) در این خروجی نیست، فقط سؤال‌هایِ نمره‌دار.
 //
 // Deploy:
 //   supabase functions deploy survey-results-public --no-verify-jwt
@@ -39,7 +42,7 @@ Deno.serve(async (req) => {
     const st = s.settings || {};
     if (!st.shareResults) return json({ error: "اشتراکِ نتایجِ این نظرسنجی خاموش است" }, 403);
 
-    const rRes = await restFetch(`survey_responses?survey_id=eq.${encodeURIComponent(s.id)}&select=answers,percent,passed,submitted_at`);
+    const rRes = await restFetch(`survey_responses?survey_id=eq.${encodeURIComponent(s.id)}&select=id,answers,respondent_meta,percent,passed,submitted_at&order=submitted_at.asc`);
     const responses: any[] = rRes.ok && Array.isArray(rRes.data) ? rRes.data : [];
     const questions: any[] = Array.isArray(s.questions) ? s.questions : [];
     const isExam = st.mode === "exam";
@@ -54,7 +57,7 @@ Deno.serve(async (req) => {
         const counts: Record<string, number> = {};
         (q.config?.options || []).forEach((o: any) => { counts[o.id] = 0; });
         vals.forEach((v) => (Array.isArray(v) ? v : [v]).forEach((id) => { if (id in counts) counts[id] += 1; }));
-        base.options = (q.config?.options || []).map((o: any) => ({ label: o.label || "", count: counts[o.id] || 0, correct: correctIds.size > 0 ? correctIds.has(o.id) : undefined }));
+        base.options = (q.config?.options || []).map((o: any) => ({ id: o.id, label: o.label || "", count: counts[o.id] || 0, correct: correctIds.size > 0 ? correctIds.has(o.id) : undefined }));
         base.total = vals.length;
       } else if (q.type === "yes_no") {
         const yes = vals.filter((v) => v === "yes").length;
@@ -76,6 +79,22 @@ Deno.serve(async (req) => {
       }
       return base;
     });
+
+    // پاسخِ تک‌تکِ شرکت‌کنندگان — فقط سؤال‌هایِ نمره‌دار (بقیه انواع اینجا معنا
+    // ندارند)؛ نام/واحد فقط اگر خودِ آزمون آن‌ها را جمع می‌کند، وگرنه null.
+    const scorableQs = questions.filter((q) => q?.type !== "section" && SCORABLE.includes(q.type) && Array.isArray(q.config?.correct) && q.config.correct.length > 0);
+    const respondents = isExam ? responses.map((r, idx) => ({
+      id: r.id || String(idx),
+      index: idx + 1,
+      name: st.collectName && r.respondent_meta?.name ? String(r.respondent_meta.name) : null,
+      unit: st.collectUnit && r.respondent_meta?.unit ? String(r.respondent_meta.unit) : null,
+      submittedAt: r.submitted_at,
+      percent: r.percent, passed: r.passed,
+      review: scorableQs.map((q) => {
+        const a = r.answers?.[q.id];
+        return { questionId: q.id, yourAnswer: a ?? null, correct: isCorrect(q, a) };
+      }),
+    })) : null;
 
     const byDayMap: Record<string, number> = {};
     responses.forEach((r) => { const d = (r.submitted_at || "").slice(0, 10); if (d) byDayMap[d] = (byDayMap[d] || 0) + 1; });
@@ -102,6 +121,7 @@ Deno.serve(async (req) => {
       mode: isExam ? "exam" : "survey",
       responseCount: responses.length,
       perQuestion,
+      respondents,
       trend,
       exam,
     });
