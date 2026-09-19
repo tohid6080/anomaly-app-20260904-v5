@@ -3492,6 +3492,7 @@ export const de = {
   "svDescPlaceholder": "Kurzbeschreibung (optional)…",
   "svPreview": "Vorschau",
   "svExitPreview": "Vorschau beenden",
+  "svRestartPreview": "Vorschau neu starten",
   "svSettings": "Einstellungen",
   "svSave": "Speichern",
   "svSaved": "Gespeichert ✓",

@@ -3,13 +3,15 @@ import BackLink from "../shared/BackLink.jsx";
 import {
   Plus, Trash2, Copy, ChevronUp, ChevronDown, Save, Eye, EyeOff, Settings2,
   Type, AlignLeft, CircleDot, ListChecks, Hash, Calendar, Star, SlidersHorizontal, Heading, ToggleLeft, GripVertical,
+  CheckCircle2, XCircle, RotateCcw,
 } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
-import { QUESTION_TYPES, CHOICE_TYPES, SCORABLE_TYPES, newQuestion, newOption, examHasScorable } from "./surveyModel.js";
+import { QUESTION_TYPES, CHOICE_TYPES, SCORABLE_TYPES, newQuestion, newOption, examHasScorable, validateResponse, scoreExam } from "./surveyModel.js";
 import { saveSurvey } from "./surveyApi.js";
 import { JalaliDateInput } from "../personnel/jalaliDate.jsx";
 import SurveyRuntime from "./SurveyRuntime.jsx";
+import ExamReviewList from "./ExamReviewList.jsx";
 
 const ICONS = { Type, AlignLeft, CircleDot, ListChecks, ChevronDown, ToggleLeft, Star, SlidersHorizontal, Hash, Calendar, Heading };
 const clone = (v) => JSON.parse(JSON.stringify(v ?? null));
@@ -27,6 +29,8 @@ export default function SurveyBuilder({ survey, onBack, onSaved, currentUser, wi
   const [preview, setPreview] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [pAnswers, setPAnswers] = useState({});
+  const [pErrors, setPErrors] = useState({});
+  const [pResult, setPResult] = useState(null); // نتیجهٔ آزمونِ پیش‌نمایش (محاسبهٔ کاملاً محلی — نگاه کنید به submitPreview)
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
@@ -35,6 +39,26 @@ export default function SurveyBuilder({ survey, onBack, onSaved, currentUser, wi
 
   const sel = draft.questions.find((q) => q.id === selId) || null;
   const isExam = draft.settings.mode === "exam";
+  const pQuestionsById = useMemo(() => {
+    const m = {};
+    draft.questions.forEach((q) => { m[q.id] = q; });
+    return m;
+  }, [draft.questions]);
+  const restartPreview = () => { setPAnswers({}); setPErrors({}); setPResult(null); };
+  // نمره‌دهیِ پیش‌نمایش کاملاً محلی است (بدونِ Edge Function) — چون خودِ سازنده
+  // همین حالا کلیدِ پاسخ را در اختیار دارد؛ فقط برایِ آزمونِ واقعیِ عمومی است
+  // که کلید سمتِ سرور می‌ماند (نگاه کنید به submit-survey-response).
+  const submitPreview = () => {
+    const { ok, errors: errs } = validateResponse(draft.questions, pAnswers, t);
+    if (Object.keys(errs).length) {
+      setPErrors(errs);
+      const firstQ = draft.questions.find((q) => errs[q.id]);
+      if (firstQ) document.getElementById(`sv-q-${firstQ.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    if (!ok) return;
+    setPResult(scoreExam(draft.questions, pAnswers, Number(draft.settings.passScore) || 60));
+  };
   const toggleCorrect = (qid, oid, multi) => setQuestions((qs) => qs.map((q) => {
     if (q.id !== qid) return q;
     const cur = Array.isArray(q.config?.correct) ? q.config.correct : [];
@@ -115,7 +139,37 @@ export default function SurveyBuilder({ survey, onBack, onSaved, currentUser, wi
         <div style={{ ...styles.cardWide }}>
           <h3 style={{ fontSize: 16, fontWeight: 800, color: THEME.heading, margin: "0 0 4px" }}>{draft.title || t("svUntitled")}</h3>
           {draft.description && <p style={{ fontSize: 12.5, color: THEME.text2, margin: "0 0 14px", lineHeight: 1.9 }}>{draft.description}</p>}
-          <SurveyRuntime questions={draft.questions} answers={pAnswers} onChange={(qid, v) => setPAnswers((a) => ({ ...a, [qid]: v }))} />
+          {pResult ? (
+            <div>
+              <div style={{ textAlign: "center", padding: "6px 0 22px" }}>
+                {pResult.passed ? <CheckCircle2 size={40} color={THEME.ok} style={{ marginBottom: 10 }} /> : <XCircle size={40} color={THEME.danger} style={{ marginBottom: 10 }} />}
+                <h4 style={{ fontSize: 15, fontWeight: 800, color: THEME.heading, margin: "0 0 6px" }}>{pResult.passed ? t("svExamPassed") : t("svExamFailed")}</h4>
+                <div style={{ fontSize: 26, fontWeight: 800, color: pResult.passed ? THEME.ok : THEME.danger, fontFamily: "monospace", margin: "4px 0" }}>{pResult.percent}%</div>
+                <p style={{ fontSize: 11.5, color: THEME.text3, margin: 0 }}>{t("svExamScoreLine", { score: pResult.score, max: pResult.maxScore, pass: Number(draft.settings.passScore) || 60 })}</p>
+              </div>
+              {pResult.review.length > 0 && (
+                <>
+                  <p style={{ fontSize: 12.5, fontWeight: 700, color: THEME.heading, marginBottom: 10 }}>{t("svExamReviewIntro")}</p>
+                  <ExamReviewList review={pResult.review} questionsById={pQuestionsById} t={t} />
+                </>
+              )}
+              <button type="button" onClick={restartPreview} style={{ ...styles.smallButton, background: THEME.surface2, color: THEME.text, marginTop: 16, display: "inline-flex", alignItems: "center", gap: 5 }}>
+                <RotateCcw size={13} /> {t("svRestartPreview")}
+              </button>
+            </div>
+          ) : (
+            <>
+              <SurveyRuntime
+                questions={draft.questions}
+                answers={pAnswers}
+                errors={pErrors}
+                onChange={(qid, v) => { setPAnswers((a) => ({ ...a, [qid]: v })); setPErrors((e) => (e[qid] ? { ...e, [qid]: undefined } : e)); }}
+              />
+              {isExam && (
+                <button type="button" onClick={submitPreview} style={{ ...styles.button, marginTop: 16 }}>{t("svExamSubmit")}</button>
+              )}
+            </>
+          )}
         </div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: wide ? "minmax(0, 1fr) 320px" : "1fr", gap: 14, alignItems: "start" }}>

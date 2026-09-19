@@ -5,6 +5,7 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { loadPublicSurvey, submitSurveyResponse } from "./surveyApi.js";
 import { validateResponse } from "./surveyModel.js";
 import SurveyRuntime from "./SurveyRuntime.jsx";
+import ExamReviewList from "./ExamReviewList.jsx";
 
 /**
  * صفحهٔ مستقلِ نظرسنجی/آزمون — با آدرسِ هشِ #survey/<token> باز می‌شود (نگاه
@@ -121,30 +122,7 @@ export default function PublicSurvey({ publicToken }) {
               <p style={{ fontSize: 13, fontWeight: 700, color: THEME.heading, lineHeight: 1.9, marginBottom: 14 }}>
                 {t("svExamReviewIntro")}
               </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {review.map((r, i) => {
-                  const q = questionsById[r.questionId];
-                  if (!q) return null;
-                  return (
-                    <div key={r.questionId} style={{ background: THEME.surface, border: `1px solid ${r.correct ? THEME.okBg : THEME.dangerBg}`, borderRadius: 12, padding: 12 }}>
-                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
-                        <span style={{ fontSize: 12.5, fontWeight: 700, color: THEME.heading }}>{i + 1}. {q.title || q.id}</span>
-                        <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 800, padding: "2px 9px", borderRadius: 999, background: r.correct ? THEME.okBg : THEME.dangerBg, color: r.correct ? THEME.ok : THEME.danger, display: "inline-flex", alignItems: "center", gap: 4 }}>
-                          {r.correct ? <CheckCircle2 size={11} /> : <XCircle size={11} />} {r.correct ? t("svAnswerCorrect") : t("svAnswerWrong")}
-                        </span>
-                      </div>
-                      <p style={{ fontSize: 12, color: THEME.text2, margin: "0 0 3px" }}>
-                        {t("svYourAnswer")}: <b style={{ color: THEME.text }}>{reviewAnswerLabel(q, r.yourAnswer, t) ?? t("svNoAnswerGiven")}</b>
-                      </p>
-                      {!r.correct && (
-                        <p style={{ fontSize: 12, color: THEME.ok, margin: 0 }}>
-                          {t("svCorrectAnswer")}: <b>{reviewAnswerLabel(q, r.correctAnswer, t)}</b>
-                        </p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+              <ExamReviewList review={review} questionsById={questionsById} t={t} />
             </div>
           )}
         </div>
@@ -263,16 +241,6 @@ export default function PublicSurvey({ publicToken }) {
 }
 
 const wrap = { minHeight: "100vh", background: THEME.bg, fontFamily: THEME.font };
-
-// برچسبِ نمایشیِ یک پاسخ (شناسه‌ی گزینه‌ها → متنِ گزینه، yes/no → ترجمه) —
-// برایِ نمایشِ «پاسخِ شما»/«پاسخِ درست» در صفحه‌ی بررسیِ پس از آزمون.
-function reviewAnswerLabel(q, val, t) {
-  if (val == null) return null;
-  if (q.type === "yes_no") return val === "yes" ? t("commonYes") : val === "no" ? t("commonNo") : String(val);
-  const opts = q.config?.options || [];
-  if (Array.isArray(val)) return val.map((id) => opts.find((o) => o.id === id)?.label || id).join("، ");
-  return opts.find((o) => o.id === val)?.label || String(val);
-}
 
 function Center({ children }) {
   return <div style={{ ...wrap, display: "flex", alignItems: "center", justifyContent: "center" }}><p style={{ color: THEME.text3 }}>{children}</p></div>;
