@@ -10855,9 +10855,11 @@ export const translations = {
   "evalCustomFieldLabelPh": { "fa": "عنوان شاخص", "en": "Indicator title" },
   "evalCustomFieldCoeffPh": { "fa": "ضریب ٪", "en": "Coefficient %" },
   "evalAddCustomField": { "fa": "افزودن", "en": "Add" },
-
-  "evalAuditTitle": { "fa": "تاریخچه تغییرات تنظیمات", "en": "Settings change history" },
-  "evalAuditEmpty": { "fa": "هنوز تغییری ثبت نشده است.", "en": "No changes recorded yet." },
+  "evalFieldTypeNumber": { "fa": "عدد", "en": "Number" },
+  "evalFieldTypePercent": { "fa": "درصد", "en": "Percent" },
+  "evalFieldTypeBoolean": { "fa": "بله/خیر", "en": "Yes/No" },
+  "evalFieldTypeOther": { "fa": "سایر (امتیاز دستی)", "en": "Other (manual score)" },
+  "evalFieldTypeOtherHint": { "fa": "برای «سایر»، در فرمِ ارزیابی امتیاز از ۰ تا ۱۰۰ به‌صورت دستی وارد می‌شود و توضیحِ شفاف‌سازی الزامی است.", "en": "For \"Other\", the score (0-100) is entered manually on the evaluation form, with a required clarifying description." },
 
   "evalStatusDraft": { "fa": "پیش‌نویس", "en": "Draft" },
   "evalStatusCalculated": { "fa": "محاسبه‌شده", "en": "Calculated" },

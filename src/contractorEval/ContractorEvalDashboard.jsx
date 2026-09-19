@@ -8,7 +8,7 @@ import {
   loadEffectiveCategories, loadEvalConfig, loadEvalPeriods, createEvalPeriod, nextPeriodRange,
   getOrCreateEvalRecord, loadEvalRecordsForPeriod, loadEvalRecordDetail, loadEvalHistoryForContractor,
   loadOwnFinalEvaluations, calculateEvalRecord, submitHseReview, approveByEmployer, returnForCorrection,
-  tierOf,
+  tierOf, loadCustomFieldValuesForRecord, saveCustomFieldValue,
 } from "./contractorEvalApi.js";
 
 const STATUS_LABEL_KEY = {
@@ -78,6 +78,7 @@ export default function ContractorEvalDashboard({ wide, role, isSupervisor, curr
   const [loading, setLoading] = useState(true);
   const [note, setNote] = useState("");
   const [openCat, setOpenCat] = useState("");
+  const [customValues, setCustomValues] = useState({});
 
   const boot = useCallback(async () => {
     if (isContractor) {
@@ -109,9 +110,12 @@ export default function ContractorEvalDashboard({ wide, role, isSupervisor, curr
     const rec = await getOrCreateEvalRecord(periodId, contractorId, currentUser?.name);
     setRecord(rec);
     if (rec) {
-      const d = await loadEvalRecordDetail(rec.id);
+      const [d, cvRows] = await Promise.all([loadEvalRecordDetail(rec.id), loadCustomFieldValuesForRecord(rec.id)]);
       setDetail(d);
-    } else setDetail(null);
+      const cvMap = {};
+      for (const r of cvRows) cvMap[r.field_key] = { value: r.value, note: r.note };
+      setCustomValues(cvMap);
+    } else { setDetail(null); setCustomValues({}); }
     const hist = await loadEvalHistoryForContractor(contractorId, 6);
     setHistory(hist);
     const rows = await loadEvalRecordsForPeriod(periodId);
@@ -256,6 +260,20 @@ export default function ContractorEvalDashboard({ wide, role, isSupervisor, curr
                             </div>
                           );
                         }) : <span style={{ fontSize: 11, color: THEME.text3 }}>{t(`evalNaReason_${cs?.na_reason || "noContractorData"}`)}</span>}
+                        {canAct && record.status !== "final" && c.indicators.filter((ind) => ind.custom).length > 0 && (
+                          <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4, paddingTop: 8, borderTop: `1px dashed ${THEME.borderSoft}` }}>
+                            {c.indicators.filter((ind) => ind.custom).map((ind) => (
+                              <CustomFieldEditor
+                                key={ind.key} indicator={ind} lang={lang} t={t}
+                                saved={customValues[ind.key]}
+                                onSave={async (value, valNote) => {
+                                  await saveCustomFieldValue(record.id, ind.key, value, valNote);
+                                  setCustomValues((prev) => ({ ...prev, [ind.key]: { value: String(value), note: valNote } }));
+                                }}
+                              />
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -278,6 +296,40 @@ export default function ContractorEvalDashboard({ wide, role, isSupervisor, curr
           )}
         </>
       )}
+    </div>
+  );
+}
+
+function CustomFieldEditor({ indicator, saved, onSave, lang, t }) {
+  const [value, setValue] = useState(saved?.value ?? "");
+  const [note, setNote] = useState(saved?.note ?? "");
+  const [savedFlash, setSavedFlash] = useState(false);
+  const isOther = indicator.customType === "other";
+
+  const handleSave = async () => {
+    if (isOther && !note.trim()) return; // برای «سایر» توضیح الزامی است
+    await onSave(Number(value) || 0, note);
+    setSavedFlash(true);
+    setTimeout(() => setSavedFlash(false), 1800);
+  };
+
+  return (
+    <div style={{ fontSize: 11.5 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+        <span style={{ color: THEME.text2, fontWeight: 600 }}>{indicator.label[lang] || indicator.label.fa}</span>
+        <span style={{ fontSize: 10, color: THEME.teal }}>{t(isOther ? "evalFieldTypeOther" : "evalCustomFieldCoeffPh")}</span>
+      </div>
+      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+        <input type="number" min={0} max={100} value={value} onChange={(e) => setValue(e.target.value)}
+          style={{ ...styles.input, width: 70, marginBottom: 0, padding: "6px 8px" }} dir="ltr" placeholder="0-100" />
+        {isOther && (
+          <input value={note} onChange={(e) => setNote(e.target.value)} placeholder={t("evalNotePlaceholder")}
+            style={{ ...styles.input, flex: 1, marginBottom: 0, padding: "6px 8px" }} />
+        )}
+        <button type="button" style={{ ...styles.smallButton, padding: "6px 12px", fontSize: 11 }} onClick={handleSave}>
+          {savedFlash ? t("commonSavedDone") : t("saSaveChanges")}
+        </button>
+      </div>
     </div>
   );
 }

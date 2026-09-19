@@ -255,15 +255,16 @@ export async function loadEffectiveCategories() {
     };
   });
 
-  // شاخص‌های سفارشیِ کارفرما (بندِ ۶ بریف) — به دسته‌ی مربوطه اضافه می‌شوند
-  const customs = sbOk(indRows) ? indRows.filter((r) => r.is_custom) : [];
-  for (const c of customs) {
+  // شاخص‌های سفارشیِ کارفرما (بندِ ۶ بریف) — از contractor_eval_custom_fields
+  // می‌آیند (جدولِ اختصاصیِ همین منظور)، نه از indicator_settings.
+  const customFields = await loadCustomFields();
+  for (const c of customFields) {
     const cat = categories.find((x) => x.key === c.category_key);
     if (!cat) continue;
     cat.indicators.push({
-      key: c.indicator_key, custom: true,
+      key: c.field_key, custom: true, customType: c.field_type || "number",
       label: { fa: c.label_fa, en: c.label_en || c.label_fa, de: c.label_de || c.label_en || c.label_fa },
-      unit: "%", target: Number(c.target_value ?? 100), coeff: Number(c.coefficient ?? 0),
+      unit: c.field_type === "other" ? "score" : "%", target: 100, coeff: Number(c.coefficient ?? 0),
     });
   }
   return categories;
@@ -281,13 +282,15 @@ export async function saveCategoryWeight(categoryKey, weight, updatedBy) {
   return result;
 }
 
+// Override کردنِ ضریب/هدف/فعال‌بودنِ یک شاخصِ از‌قبل‌موجود (نه شاخصِ سفارشی —
+// شاخص‌های سفارشی از contractor_eval_custom_fields می‌آیند، رجوع کن به
+// addCustomField/loadCustomFields).
 export async function saveIndicatorSetting(categoryKey, indicatorKey, patch, updatedBy) {
   const companyId = getCurrentCompanyId();
   const existing = await sb(`contractor_eval_indicator_settings?company_id=eq.${companyId}&category_key=eq.${categoryKey}&indicator_key=eq.${indicatorKey}&select=id`);
   const payload = {
     company_id: companyId, category_key: categoryKey, indicator_key: indicatorKey,
     coefficient: patch.coefficient, target_value: patch.targetValue, is_active: patch.isActive !== false,
-    is_custom: !!patch.isCustom, label_fa: patch.labelFa || "", label_en: patch.labelEn || "", label_de: patch.labelDe || "",
     updated_by: updatedBy || "", updated_at: new Date().toISOString(),
   };
   const id = sbOk(existing) && existing[0] ? existing[0].id : uid("evalind");
@@ -308,6 +311,27 @@ export async function addCustomField(categoryKey, field, createdBy) {
 export async function loadCustomFields() {
   const companyId = getCurrentCompanyId();
   const rows = await sb(`contractor_eval_custom_fields?company_id=eq.${companyId}&is_active=eq.true&select=*`);
+  return sbOk(rows) ? rows : [];
+}
+
+// مقدارِ یک فیلدِ سفارشی، به‌ازای یک رکوردِ ارزیابیِ مشخص — برایِ نوعِ
+// «سایر» این همان امتیازِ واردشده‌ی دستی (۰ تا ۱۰۰) به‌همراه توضیحِ
+// شفاف‌سازی است؛ برایِ بقیه‌ی انواع، مقدارِ خامی است که هنگامِ محاسبه طبقِ
+// هدف/فرمولِ معمول امتیازدهی می‌شود.
+export async function saveCustomFieldValue(evalRecordId, fieldKey, value, note) {
+  const companyId = getCurrentCompanyId();
+  const existing = await sb(`contractor_eval_custom_field_values?eval_record_id=eq.${evalRecordId}&field_key=eq.${fieldKey}&select=id`);
+  const payload = { eval_record_id: evalRecordId, company_id: companyId, field_key: fieldKey, value: String(value ?? ""), note: note || "" };
+  const id = sbOk(existing) && existing[0] ? existing[0].id : uid("evalfv");
+  const action = sbOk(existing) && existing[0] ? "update" : "insert";
+  return sb(action === "update" ? `contractor_eval_custom_field_values?id=eq.${id}` : "contractor_eval_custom_field_values", {
+    method: action === "update" ? "PATCH" : "POST",
+    body: JSON.stringify(action === "update" ? payload : [{ ...payload, id }]),
+  });
+}
+
+export async function loadCustomFieldValuesForRecord(evalRecordId) {
+  const rows = await sb(`contractor_eval_custom_field_values?eval_record_id=eq.${evalRecordId}&select=*`);
   return sbOk(rows) ? rows : [];
 }
 
@@ -579,10 +603,16 @@ export async function calculateEvalRecord(recordId, calculatedBy) {
   for (const c of categories.filter((c) => c.active)) {
     metricsByCategory[c.key] = await GATHERERS[c.key] ? await GATHERERS[c.key](ctx) : null;
   }
+  const customValueRows = await loadCustomFieldValuesForRecord(recordId);
+  const customValueMap = {};
+  for (const r of customValueRows) customValueMap[r.field_key] = r;
 
   const activeCats = categories.filter((c) => c.active);
-  const applicableCats = activeCats.filter((c) => metricsByCategory[c.key] != null);
-  const naCats = activeCats.filter((c) => metricsByCategory[c.key] == null);
+  // یک دسته حتی اگر داده‌ی خودکارِ ماژولش موجود نباشد، وقتی حداقل یک
+  // شاخصِ سفارشیِ مقداردهی‌شده دارد همچنان قابلِ‌محاسبه است.
+  const categoryHasCustomValue = (c) => c.indicators.some((ind) => ind.custom && customValueMap[ind.key] != null);
+  const applicableCats = activeCats.filter((c) => metricsByCategory[c.key] != null || categoryHasCustomValue(c));
+  const naCats = activeCats.filter((c) => metricsByCategory[c.key] == null && !categoryHasCustomValue(c));
   const inactiveCats = categories.filter((c) => !c.active);
 
   const weightPool = applicableCats.reduce((s, c) => s + c.weight, 0);
@@ -594,20 +624,31 @@ export async function calculateEvalRecord(recordId, calculatedBy) {
 
   for (const c of activeCats) {
     const metrics = metricsByCategory[c.key];
-    const isApplicable = metrics != null;
+    const isApplicable = metrics != null || categoryHasCustomValue(c);
     let raw = null, effWeight = 0, contribution = 0;
     if (isApplicable) {
       raw = 0;
       for (const ind of c.indicators) {
-        const actual = metrics[ind.key];
-        const ach = achievementPct(ind, actual);
+        let actual, note = "";
+        if (ind.custom) {
+          const cv = customValueMap[ind.key];
+          actual = cv ? Number(cv.value) : null;
+          note = cv?.note || "";
+        } else {
+          actual = metrics ? metrics[ind.key] : null;
+        }
+        // نوعِ «سایر» یعنی درصدِ تحقق را خودِ بازبین مستقیماً وارد کرده
+        // (۰ تا ۱۰۰) — نه یک مقدارِ خام که باید با هدف مقایسه شود.
+        const ach = ind.custom && ind.customType === "other"
+          ? (actual == null ? null : Math.max(0, Math.min(100, actual)))
+          : achievementPct(ind, actual);
         const points = ach == null ? null : ach * (ind.coeff / 100);
         if (points != null) raw += points;
         indicatorRows.push({
           id: uid("evalindr"), eval_record_id: recordId, company_id: companyId,
           category_key: c.key, indicator_key: ind.key,
-          actual_value: actual ?? null, target_value: ind.target ?? null, achievement_pct: ach,
-          coefficient: ind.coeff, points_earned: points, source_module: c.source, source_note: "",
+          actual_value: actual ?? null, target_value: ind.custom ? null : (ind.target ?? null), achievement_pct: ach,
+          coefficient: ind.coeff, points_earned: points, source_module: ind.custom ? "manual" : c.source, source_note: note,
         });
       }
       raw = Math.round(raw * 10) / 10;

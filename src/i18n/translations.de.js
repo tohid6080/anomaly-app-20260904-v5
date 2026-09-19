@@ -4810,9 +4810,11 @@ export const de = {
   "evalCustomFieldLabelPh": "Bezeichnung des Indikators",
   "evalCustomFieldCoeffPh": "Koeffizient %",
   "evalAddCustomField": "Hinzufügen",
-
-  "evalAuditTitle": "Änderungsverlauf der Einstellungen",
-  "evalAuditEmpty": "Noch keine Änderungen erfasst.",
+  "evalFieldTypeNumber": "Zahl",
+  "evalFieldTypePercent": "Prozent",
+  "evalFieldTypeBoolean": "Ja/Nein",
+  "evalFieldTypeOther": "Sonstiges (manuelle Bewertung)",
+  "evalFieldTypeOtherHint": "Bei \"Sonstiges\" wird die Punktzahl (0-100) im Bewertungsformular manuell eingegeben, mit einer erforderlichen erläuternden Beschreibung.",
 
   "evalStatusDraft": "Entwurf",
   "evalStatusCalculated": "Berechnet",

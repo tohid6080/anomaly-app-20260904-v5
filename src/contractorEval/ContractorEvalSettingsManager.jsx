@@ -5,8 +5,15 @@ import { styles, THEME } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import {
   DEFAULT_CATEGORIES, loadEffectiveCategories, loadEvalConfig, saveEvalConfig,
-  saveCategoryWeight, addCustomField, loadCustomFields, loadEvalSettingsAudit,
+  saveCategoryWeight, addCustomField, loadCustomFields,
 } from "./contractorEvalApi.js";
+
+const FIELD_TYPE_OPTIONS = [
+  { value: "number", labelKey: "evalFieldTypeNumber" },
+  { value: "percent", labelKey: "evalFieldTypePercent" },
+  { value: "boolean", labelKey: "evalFieldTypeBoolean" },
+  { value: "other", labelKey: "evalFieldTypeOther" },
+];
 
 const CADENCE_OPTIONS = [
   { value: "monthly", labelKey: "evalCadenceMonthly" },
@@ -26,7 +33,6 @@ export default function ContractorEvalSettingsManager({ onBack, currentUser, wid
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [config, setConfig] = useState(null);
   const [customFields, setCustomFields] = useState([]);
-  const [audit, setAudit] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -34,13 +40,12 @@ export default function ContractorEvalSettingsManager({ onBack, currentUser, wid
   const [newField, setNewField] = useState({ categoryKey: "anomaly", labelFa: "", type: "number", coefficient: "" });
 
   const reload = useCallback(async () => {
-    const [cats, cfg, fields, auditRows] = await Promise.all([
-      loadEffectiveCategories(), loadEvalConfig(), loadCustomFields(), loadEvalSettingsAudit(20),
+    const [cats, cfg, fields] = await Promise.all([
+      loadEffectiveCategories(), loadEvalConfig(), loadCustomFields(),
     ]);
     setCategories(cats);
     setConfig(cfg);
     setCustomFields(fields);
-    setAudit(auditRows);
     setLoading(false);
   }, []);
 
@@ -189,33 +194,21 @@ export default function ContractorEvalSettingsManager({ onBack, currentUser, wid
             {categories.map((c) => <option key={c.key} value={c.key}>{c.label[lang] || c.label.fa}</option>)}
           </select>
           <input style={styles.input} placeholder={t("evalCustomFieldLabelPh")} value={newField.labelFa} onChange={(e) => setNewField({ ...newField, labelFa: e.target.value })} />
+          <select style={styles.input} value={newField.type} onChange={(e) => setNewField({ ...newField, type: e.target.value })}>
+            {FIELD_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{t(o.labelKey)}</option>)}
+          </select>
           <input type="number" style={styles.input} placeholder={t("evalCustomFieldCoeffPh")} value={newField.coefficient} onChange={(e) => setNewField({ ...newField, coefficient: e.target.value })} dir="ltr" />
         </div>
+        {newField.type === "other" && <p style={{ fontSize: 11, color: THEME.text3, marginTop: 6 }}>{t("evalFieldTypeOtherHint")}</p>}
         <button type="button" style={{ ...styles.smallButton, marginTop: 10 }} onClick={handleAddField}>{t("evalAddCustomField")}</button>
         <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
           {customFields.map((f) => (
             <div key={f.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, padding: "6px 10px", background: THEME.surface2, borderRadius: 8 }}>
-              <span>{f.label_fa}</span>
+              <span>{f.label_fa} <span style={{ color: THEME.text3 }}>({t(FIELD_TYPE_OPTIONS.find((o) => o.value === f.field_type)?.labelKey || "evalFieldTypeNumber")})</span></span>
               <span style={{ color: THEME.teal, fontWeight: 700 }}>{f.coefficient}%</span>
             </div>
           ))}
         </div>
-      </div>
-
-      {/* تاریخچه تغییرات */}
-      <div style={styles.cardWide}>
-        <h3 style={{ margin: "0 0 12px", fontSize: 15, color: THEME.heading }}>{t("evalAuditTitle")}</h3>
-        {audit.length === 0 && <p style={{ fontSize: 12, color: THEME.text3 }}>{t("evalAuditEmpty")}</p>}
-        {audit.map((a) => (
-          <div key={a.id} style={{ fontSize: 12, padding: "7px 0", borderBottom: `1px solid ${THEME.borderSoft}`, display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <span style={{ color: THEME.text3, minWidth: 130 }}>{new Date(a.changed_at).toLocaleString(lang === "en" ? "en-US" : lang === "de" ? "de-DE" : "fa-IR")}</span>
-            <span style={{ color: THEME.text3 }}>{a.changed_by || "—"}</span>
-            <span style={{ flex: 1 }}>{a.field_changed}</span>
-            <span style={{ color: THEME.text3 }}>{a.old_value}</span>
-            <span>→</span>
-            <span style={{ fontWeight: 700 }}>{a.new_value}</span>
-          </div>
-        ))}
       </div>
     </div>
   );
