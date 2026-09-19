@@ -3484,6 +3484,7 @@ export const de = {
   "svLinkCopied": "Link kopiert",
   "svLinkQrNote": "Senden Sie diesen Link/QR an Ihr Personal, damit es die Umfrage beantworten kann.",
   "svCopyLink": "Link kopieren",
+  "svCopyResponseLink": "Ergebnislink dieser Person kopieren",
   "svErrNeedQuestions": "Fügen Sie vor der Aktivierung mindestens eine Frage hinzu.",
   "svCopyOf": "Kopie von {title}",
   "svErrNotFound": "Umfrage nicht gefunden.",

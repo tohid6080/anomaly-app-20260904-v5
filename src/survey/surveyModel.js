@@ -116,17 +116,6 @@ export function examHasScorable(questions) {
 // آیا این سؤال «قابلِ پاسخ» است (بخش/توضیح نه)
 export const isAnswerable = (q) => q && q.type !== "section";
 
-// برچسبِ نمایشیِ یک پاسخ (شناسه‌ی گزینه‌ها → متنِ گزینه، yes/no → ترجمه) —
-// برایِ نمایشِ «پاسخِ شما»/«پاسخِ درست» در صفحه‌ی بررسیِ آزمون (هم لینکِ
-// عمومی، هم پیش‌نمایشِ داخلِ سازنده).
-export function reviewAnswerLabel(q, val, t) {
-  if (val == null) return null;
-  if (q.type === "yes_no") return val === "yes" ? t("commonYes") : val === "no" ? t("commonNo") : String(val);
-  const opts = q.config?.options || [];
-  if (Array.isArray(val)) return val.map((id) => opts.find((o) => o.id === id)?.label || id).join("، ");
-  return opts.find((o) => o.id === val)?.label || String(val);
-}
-
 // اعتبارسنجیِ یک پاسخ در برابرِ یک سؤال → پیامِ خطا یا "" (بدونِ خطا)
 export function validateAnswer(q, value, t) {
   const tr = typeof t === "function" ? t : (k) => k;

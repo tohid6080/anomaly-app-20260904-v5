@@ -4,7 +4,7 @@ import { Download, Printer, RefreshCw, Trash2, Search, Share2, Copy, Check } fro
 import { THEME, styles } from "../shared.js";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
-import { loadSurveyResponses, deleteSurveyResponse, setShareResults, buildResultsLink } from "./surveyApi.js";
+import { loadSurveyResponses, deleteSurveyResponse, setShareResults, buildResultsLink, buildResponseLink } from "./surveyApi.js";
 import { summarizeQuestion, isAnswerable, CHOICE_TYPES, SCORABLE_TYPES, responsesByDay } from "./surveyModel.js";
 
 const MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
@@ -27,6 +27,7 @@ export default function SurveyResults({ survey, onBack, wide, onChanged }) {
   const [filter, setFilter] = useState("");
   const [shareBusy, setShareBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copiedRespId, setCopiedRespId] = useState(null);
   const shareOn = !!survey.settings?.shareResults;
 
   const load = async () => setAllResponses(await loadSurveyResponses(survey.id));
@@ -54,6 +55,11 @@ export default function SurveyResults({ survey, onBack, wide, onChanged }) {
     if (!res?.__error) onChanged && onChanged();
   };
   const copyResultsLink = () => { navigator.clipboard?.writeText(buildResultsLink(survey.resultsToken)); setCopied(true); setTimeout(() => setCopied(false), 1500); };
+  const copyResponseLink = (id) => {
+    navigator.clipboard?.writeText(buildResponseLink(id));
+    setCopiedRespId(id);
+    setTimeout(() => setCopiedRespId((c) => (c === id ? null : c)), 1500);
+  };
 
   const optLabel = (q, id) => (q.config?.options || []).find((o) => o.id === id)?.label || id;
 
@@ -186,6 +192,7 @@ export default function SurveyResults({ survey, onBack, wide, onChanged }) {
               <thead><tr>
                 <th style={thS}>#</th>{survey.settings?.collectName && <th style={thS}>{t("svColName")}</th>}
                 <th style={thS}>{t("svColSubmittedAt")}</th><th style={thS}>{t("svColPercent")}</th><th style={thS}>{t("svColResult")}</th>
+                {shareOn && <th style={thS} />}
               </tr></thead>
               <tbody>
                 {responses.map((r, i) => (
@@ -201,6 +208,14 @@ export default function SurveyResults({ survey, onBack, wide, onChanged }) {
                         </span>
                       )}
                     </td>
+                    {shareOn && (
+                      <td style={tdS}>
+                        <button type="button" onClick={() => copyResponseLink(r.id)} title={t("svCopyResponseLink")}
+                          style={{ border: "none", background: "transparent", color: copiedRespId === r.id ? THEME.ok : THEME.text3, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10.5, fontFamily: THEME.font, padding: 0 }}>
+                          {copiedRespId === r.id ? <Check size={12} /> : <Copy size={12} />} {t("svCopyResponseLink")}
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
