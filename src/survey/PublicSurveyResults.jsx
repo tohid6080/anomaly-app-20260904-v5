@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { AlertTriangle, BarChart3, Check } from "lucide-react";
+import { AlertTriangle, BarChart3, Check, CheckCircle2, XCircle } from "lucide-react";
 import { THEME } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { loadPublicSurveyResults } from "./surveyApi.js";
@@ -77,6 +77,17 @@ export default function PublicSurveyResults({ resultsToken }) {
               : null;
           return (
           <Card key={q.id} title={`${i + 1}. ${q.title || q.id}`}>
+            {q.correctRate != null && (
+              <p style={{
+                fontSize: 11, fontWeight: 800, margin: "0 0 6px", display: "inline-flex", alignItems: "center", gap: 5,
+                padding: "3px 10px", borderRadius: 999,
+                color: q.correctRate === 100 ? THEME.ok : q.correctRate === 0 ? THEME.danger : THEME.text2,
+                background: q.correctRate === 100 ? THEME.okBg : q.correctRate === 0 ? THEME.dangerBg : THEME.surface2,
+              }}>
+                {q.correctRate === 100 ? <CheckCircle2 size={12} /> : q.correctRate === 0 ? <XCircle size={12} /> : null}
+                {q.correctRate === 100 ? t("svAnswerCorrect") : q.correctRate === 0 ? t("svAnswerWrong") : t("svCorrectRateNote", { pct: q.correctRate })}
+              </p>
+            )}
             {correctLabel != null && (
               <p style={{ fontSize: 12, fontWeight: 700, color: THEME.ok, background: THEME.okBg, borderRadius: 8, padding: "6px 10px", margin: "0 0 6px", display: "flex", alignItems: "center", gap: 6 }}>
                 <Check size={13} /> {t("svCorrectAnswer")}: {correctLabel}
