@@ -10,7 +10,10 @@ import SurveyRuntime from "./SurveyRuntime.jsx";
  * صفحهٔ مستقلِ نظرسنجی/آزمون — با آدرسِ هشِ #survey/<token> باز می‌شود (نگاه
  * کنید به App.jsx). بدونِ نیاز به ورود؛ ساختار از Edge Function می‌آید و پاسخ
  * هم از طریقِ Edge Function ثبت می‌شود. در حالتِ آزمون، نمره سمتِ سرور حساب
- * می‌شود و کلیدِ پاسخ اصلاً به این صفحه فرستاده نمی‌شود.
+ * می‌شود؛ کلیدِ پاسخ پیش از ثبتِ پاسخ هرگز به این صفحه فرستاده نمی‌شود — فقط
+ * پس از ثبت، و فقط اگر «نمایشِ نمره به پاسخ‌دهنده» روشن باشد، پاسخِ درستِ هر
+ * سؤال برایِ صفحهٔ بررسیِ نتیجه برمی‌گردد (نگاه کنید به scoreExam در
+ * surveyModel.js و Edge Function مربوطه).
  */
 export default function PublicSurvey({ publicToken }) {
   const { t, dir } = useLanguage();
@@ -21,7 +24,7 @@ export default function PublicSurvey({ publicToken }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
-  const [result, setResult] = useState(null);       // { percent, passed } از سرور (حالتِ آزمون)
+  const [result, setResult] = useState(null);       // { percent, passed, review } از سرور (حالتِ آزمون)
   const [remaining, setRemaining] = useState(null);  // ثانیه‌های باقی‌مانده (محدودیتِ زمانی)
   const [started, setStarted] = useState(false);     // برای آزمونِ زمان‌دار: تا زدنِ «شروعِ آزمون» زمان‌سنج فعال نمی‌شود
   const deadlineRef = useRef(null);
@@ -45,6 +48,12 @@ export default function PublicSurvey({ publicToken }) {
     }
     return qs;
   }, [info, isExam]);
+
+  const questionsById = useMemo(() => {
+    const m = {};
+    questions.forEach((q) => { m[q.id] = q; });
+    return m;
+  }, [questions]);
 
   const needsStartGate = isExam && !!info?.settings?.timeLimitMin;
 
@@ -70,28 +79,63 @@ export default function PublicSurvey({ publicToken }) {
 
   if (done || already) {
     const showScore = isExam && settings.showScoreToRespondent !== false && result && result.percent != null;
+    const review = showScore && Array.isArray(result.review) ? result.review : [];
     return (
       <div style={wrap}>
-        <div style={{ textAlign: "center", padding: "40px 16px", maxWidth: 420, margin: "0 auto" }}>
-          {showScore ? (
-            result.passed ? <CheckCircle2 size={46} color={THEME.ok} style={{ marginBottom: 12 }} /> : <XCircle size={46} color={THEME.danger} style={{ marginBottom: 12 }} />
-          ) : (
-            <CheckCircle2 size={44} color={THEME.ok} style={{ marginBottom: 12 }} />
-          )}
-          <h2 style={{ fontSize: 17, fontWeight: 800, color: THEME.heading, margin: "0 0 8px" }}>
-            {showScore ? (result.passed ? t("svExamPassed") : t("svExamFailed")) : t("svThankYouTitle")}
-          </h2>
-          {showScore && (
-            <div style={{ fontSize: 30, fontWeight: 800, color: result.passed ? THEME.ok : THEME.danger, fontFamily: "monospace", margin: "6px 0" }}>
-              {result.percent}%
+        <div style={{ maxWidth: 640, margin: "0 auto", padding: "40px 16px 60px", direction: dir }}>
+          <div style={{ textAlign: "center", maxWidth: 420, margin: "0 auto" }}>
+            {showScore ? (
+              result.passed ? <CheckCircle2 size={46} color={THEME.ok} style={{ marginBottom: 12 }} /> : <XCircle size={46} color={THEME.danger} style={{ marginBottom: 12 }} />
+            ) : (
+              <CheckCircle2 size={44} color={THEME.ok} style={{ marginBottom: 12 }} />
+            )}
+            <h2 style={{ fontSize: 17, fontWeight: 800, color: THEME.heading, margin: "0 0 8px" }}>
+              {showScore ? (result.passed ? t("svExamPassed") : t("svExamFailed")) : t("svThankYouTitle")}
+            </h2>
+            {showScore && (
+              <div style={{ fontSize: 30, fontWeight: 800, color: result.passed ? THEME.ok : THEME.danger, fontFamily: "monospace", margin: "6px 0" }}>
+                {result.percent}%
+              </div>
+            )}
+            {showScore && result.maxScore != null && (
+              <p style={{ fontSize: 12, color: THEME.text3, margin: "0 0 8px" }}>{t("svExamScoreLine", { score: result.score, max: result.maxScore, pass: settings.passScore })}</p>
+            )}
+            <p style={{ fontSize: 13, color: THEME.text2, lineHeight: 1.9, whiteSpace: "pre-wrap" }}>
+              {settings.thankYouText || t("svThankYouBody")}
+            </p>
+          </div>
+
+          {review.length > 0 && (
+            <div style={{ textAlign: "start", marginTop: 30 }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: THEME.heading, lineHeight: 1.9, marginBottom: 14 }}>
+                {t("svExamReviewIntro")}
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {review.map((r, i) => {
+                  const q = questionsById[r.questionId];
+                  if (!q) return null;
+                  return (
+                    <div key={r.questionId} style={{ background: THEME.surface, border: `1px solid ${r.correct ? THEME.okBg : THEME.dangerBg}`, borderRadius: 12, padding: 12 }}>
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
+                        <span style={{ fontSize: 12.5, fontWeight: 700, color: THEME.heading }}>{i + 1}. {q.title || q.id}</span>
+                        <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 800, padding: "2px 9px", borderRadius: 999, background: r.correct ? THEME.okBg : THEME.dangerBg, color: r.correct ? THEME.ok : THEME.danger, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                          {r.correct ? <CheckCircle2 size={11} /> : <XCircle size={11} />} {r.correct ? t("svAnswerCorrect") : t("svAnswerWrong")}
+                        </span>
+                      </div>
+                      <p style={{ fontSize: 12, color: THEME.text2, margin: "0 0 3px" }}>
+                        {t("svYourAnswer")}: <b style={{ color: THEME.text }}>{reviewAnswerLabel(q, r.yourAnswer, t) ?? t("svNoAnswerGiven")}</b>
+                      </p>
+                      {!r.correct && (
+                        <p style={{ fontSize: 12, color: THEME.ok, margin: 0 }}>
+                          {t("svCorrectAnswer")}: <b>{reviewAnswerLabel(q, r.correctAnswer, t)}</b>
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
-          {showScore && result.maxScore != null && (
-            <p style={{ fontSize: 12, color: THEME.text3, margin: "0 0 8px" }}>{t("svExamScoreLine", { score: result.score, max: result.maxScore, pass: settings.passScore })}</p>
-          )}
-          <p style={{ fontSize: 13, color: THEME.text2, lineHeight: 1.9, whiteSpace: "pre-wrap" }}>
-            {settings.thankYouText || t("svThankYouBody")}
-          </p>
         </div>
       </div>
     );
@@ -151,7 +195,7 @@ export default function PublicSurvey({ publicToken }) {
     const res = await submitSurveyResponse(publicToken, answers, respMeta, "link");
     setSaving(false);
     if (res?.__error) { setError(res.message); return; }
-    if (res.percent != null) setResult({ score: res.score, maxScore: res.maxScore, percent: res.percent, passed: res.passed });
+    if (res.percent != null) setResult({ score: res.score, maxScore: res.maxScore, percent: res.percent, passed: res.passed, review: Array.isArray(res.review) ? res.review : null });
     try { if (settings.onePerDevice) localStorage.setItem(`ihms_survey_done_${publicToken}`, "1"); } catch { /* ignore */ }
     setDone(true);
   };
@@ -199,6 +243,16 @@ export default function PublicSurvey({ publicToken }) {
 }
 
 const wrap = { minHeight: "100vh", background: THEME.bg, fontFamily: THEME.font };
+
+// برچسبِ نمایشیِ یک پاسخ (شناسه‌ی گزینه‌ها → متنِ گزینه، yes/no → ترجمه) —
+// برایِ نمایشِ «پاسخِ شما»/«پاسخِ درست» در صفحه‌ی بررسیِ پس از آزمون.
+function reviewAnswerLabel(q, val, t) {
+  if (val == null) return null;
+  if (q.type === "yes_no") return val === "yes" ? t("commonYes") : val === "no" ? t("commonNo") : String(val);
+  const opts = q.config?.options || [];
+  if (Array.isArray(val)) return val.map((id) => opts.find((o) => o.id === id)?.label || id).join("، ");
+  return opts.find((o) => o.id === val)?.label || String(val);
+}
 
 function Center({ children }) {
   return <div style={{ ...wrap, display: "flex", alignItems: "center", justifyContent: "center" }}><p style={{ color: THEME.text3 }}>{children}</p></div>;
