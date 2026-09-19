@@ -182,6 +182,12 @@ export function buildResultsLink(resultsToken) {
   const base = PUBLIC_APP_URL.endsWith("/") ? PUBLIC_APP_URL : `${PUBLIC_APP_URL}/`;
   return `${base}#survey-results/${resultsToken}`;
 }
+// لینکِ نتیجه‌ی یک پاسخِ مشخص — برایِ فرستادن به خودِ همان شرکت‌کننده. شناسه‌ی
+// خودِ پاسخ (survey_responses.id) به‌عنوانِ توکن استفاده می‌شود.
+export function buildResponseLink(responseId) {
+  const base = PUBLIC_APP_URL.endsWith("/") ? PUBLIC_APP_URL : `${PUBLIC_APP_URL}/`;
+  return `${base}#survey-response/${responseId}`;
+}
 
 // روشن/خاموش‌کردنِ اشتراکِ عمومیِ نتایج — کلِ رکورد دوباره نوشته می‌شود
 // (settings jsonb، partial patch ندارد؛ همان الگوی saveSurvey).
@@ -200,6 +206,21 @@ export async function loadPublicSurveyResults(token) {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${SUPABASE_ANON_KEY}`, apikey: SUPABASE_ANON_KEY },
       body: JSON.stringify({ token }),
+    });
+    const data = await res.json();
+    if (!res.ok) return { __error: true, message: data?.error || tr("svErrFetchInfo") };
+    return data;
+  } catch {
+    return { __error: true, message: tr("svErrServer") };
+  }
+}
+
+export async function loadPublicSurveyResponse(responseId) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/survey-response-public`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${SUPABASE_ANON_KEY}`, apikey: SUPABASE_ANON_KEY },
+      body: JSON.stringify({ responseId }),
     });
     const data = await res.json();
     if (!res.ok) return { __error: true, message: data?.error || tr("svErrFetchInfo") };

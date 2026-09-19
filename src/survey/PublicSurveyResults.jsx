@@ -4,6 +4,7 @@ import { THEME } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { loadPublicSurveyResults } from "./surveyApi.js";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
+import ChoiceReview from "./ChoiceReview.jsx";
 
 const MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
 const wrap = { minHeight: "100vh", background: THEME.bg, fontFamily: THEME.font };
@@ -134,10 +135,15 @@ export default function PublicSurveyResults({ resultsToken }) {
                   {r.review.map((rv, qi) => {
                     const q = questionsById[rv.questionId];
                     if (!q) return null;
+                    const correctAnswer = q.type === "yes_no"
+                      ? q.correctYesNo
+                      : q.options
+                        ? (q.type === "multi_choice" ? q.options.filter((o) => o.correct).map((o) => o.id) : (q.options.find((o) => o.correct)?.id ?? null))
+                        : null;
                     return (
                       <div key={rv.questionId}>
                         <div style={{ fontSize: 12, fontWeight: 700, color: THEME.heading, marginBottom: 4 }}>{qi + 1}. {q.title || q.id}</div>
-                        <RespondentAnswer q={q} yourAnswer={rv.yourAnswer} t={t} />
+                        <ChoiceReview q={q} yourAnswer={rv.yourAnswer} correctAnswer={correctAnswer} t={t} />
                       </div>
                     );
                   })}
@@ -166,42 +172,6 @@ function Kpi({ label, value }) {
     <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 10, padding: "10px 12px" }}>
       <div style={{ fontSize: 10, color: THEME.text3, fontWeight: 700 }}>{label}</div>
       <div style={{ fontSize: 19, fontWeight: 800, fontFamily: MONO, color: THEME.heading, marginTop: 2 }}>{value}</div>
-    </div>
-  );
-}
-// پاسخِ یک شرکت‌کننده به یک سؤالِ نمره‌دار — فهرستِ همه‌ی گزینه‌ها، گزینه‌ی
-// درست سبز، گزینه‌ای که او اشتباه انتخاب کرده قرمز.
-function RespondentAnswer({ q, yourAnswer, t }) {
-  const opts = q.type === "yes_no"
-    ? [{ id: "yes", label: t("commonYes"), correct: q.correctYesNo === "yes" }, { id: "no", label: t("commonNo"), correct: q.correctYesNo === "no" }]
-    : (q.options || []);
-  return (
-    <div>
-      <ChoiceRows options={opts} picked={yourAnswer} />
-      {yourAnswer == null && <p style={{ fontSize: 10.5, color: THEME.text3, margin: "4px 0 0" }}>{t("svNoAnswerGiven")}</p>}
-    </div>
-  );
-}
-function ChoiceRows({ options, picked }) {
-  const pickedIds = new Set(Array.isArray(picked) ? picked : picked != null ? [picked] : []);
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-      {options.map((o) => {
-        const isPicked = pickedIds.has(o.id);
-        const isCorrect = !!o.correct;
-        const isWrongPick = isPicked && !isCorrect;
-        return (
-          <div key={o.id} style={{
-            display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, padding: "5px 9px", borderRadius: 7,
-            background: isCorrect ? THEME.okBg : isWrongPick ? THEME.dangerBg : THEME.surface2,
-            color: isCorrect ? THEME.ok : isWrongPick ? THEME.danger : THEME.text2,
-            fontWeight: isCorrect || isWrongPick ? 700 : 500,
-          }}>
-            {isCorrect ? <CheckCircle2 size={12} /> : isWrongPick ? <XCircle size={12} /> : <span style={{ width: 12, flexShrink: 0 }} />}
-            <span>{o.label || "—"}</span>
-          </div>
-        );
-      })}
     </div>
   );
 }

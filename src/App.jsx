@@ -31,6 +31,7 @@ import { AppearanceProvider, useAppearance } from "./shared/AppearanceContext.js
 const PublicHseClimateSurvey = lazy(() => import("./proactiveIndicators/PublicHseClimateSurvey.jsx"));
 const PublicSurvey = lazy(() => import("./survey/PublicSurvey.jsx"));
 const PublicSurveyResults = lazy(() => import("./survey/PublicSurveyResults.jsx"));
+const PublicSurveyResponse = lazy(() => import("./survey/PublicSurveyResponse.jsx"));
 const SurveyDashboard = lazy(() => import("./survey/SurveyDashboard.jsx"));
 const PermitDashboard = lazy(() => import("./permit/PermitDashboard.jsx"));
 const HomeDashboard = lazy(() => import("./dashboard/HomeDashboard.jsx"));
@@ -6030,6 +6031,8 @@ export default function App() {
   // مسیرِ عمومیِ «نظرسنجی و آزمون HSE» — همان الگو، با توکنِ عمومی؛ بدونِ ورود.
   const surveyMatch = typeof window !== "undefined" ? window.location.hash.match(/^#survey\/(.+)$/) : null;
   const surveyResultsMatch = typeof window !== "undefined" ? window.location.hash.match(/^#survey-results\/(.+)$/) : null;
+  // لینکِ نتیجه‌ی یک پاسخِ مشخص — برایِ فرستادن به خودِ همان شرکت‌کننده.
+  const surveyResponseMatch = typeof window !== "undefined" ? window.location.hash.match(/^#survey-response\/(.+)$/) : null;
   // پنل Super Admin زبانِ کاملاً جداگانه‌ای دارد (کلید localStorage:
   // "ihms_lang_superadmin") تا انتخابِ زبانِ سوپرادمین هیچ اثری روی
   // کاربران عادیِ سامانه نگذارد و برعکس.
@@ -6051,6 +6054,8 @@ export default function App() {
           <LazyPanel><PublicSurvey publicToken={surveyMatch[1]} /></LazyPanel>
         ) : surveyResultsMatch ? (
           <LazyPanel><PublicSurveyResults resultsToken={surveyResultsMatch[1]} /></LazyPanel>
+        ) : surveyResponseMatch ? (
+          <LazyPanel><PublicSurveyResponse responseId={surveyResponseMatch[1]} /></LazyPanel>
         ) : (
           <AppInnerWithAppearance />
         )}

@@ -9300,6 +9300,7 @@ export const translations = {
   "svLinkCopied": { "fa": "لینک کپی شد", "en": "Link copied" },
   "svLinkQrNote": { "fa": "این لینک/QR را برای پرسنل بفرستید تا نظرسنجی را پاسخ دهند.", "en": "Send this link/QR to your personnel so they can answer the survey." },
   "svCopyLink": { "fa": "کپیِ لینک", "en": "Copy link" },
+  "svCopyResponseLink": { "fa": "کپیِ لینکِ نتیجه‌ی این نفر", "en": "Copy this person's result link" },
   "svErrNeedQuestions": { "fa": "برای فعال‌سازی، حداقل یک سؤال لازم است.", "en": "Add at least one question before activating." },
   "svErrRejectReasonRequired": { "fa": "برای رد درخواست، نوشتنِ دلیل الزامی است.", "en": "A reason is required to reject the request." },
   "svRequestNewSurvey": { "fa": "درخواستِ نظرسنجیِ جدید", "en": "Request a new survey" },
