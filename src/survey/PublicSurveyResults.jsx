@@ -73,7 +73,7 @@ export default function PublicSurveyResults({ resultsToken }) {
           </Card>
         )}
 
-        {(d.perQuestion || []).map((q, i) => {
+        {d.mode !== "exam" && (d.perQuestion || []).map((q, i) => {
           const correctLabel = q.options
             ? (q.options.find((o) => o.correct)?.label ?? null)
             : q.correctYesNo != null
