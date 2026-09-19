@@ -9323,6 +9323,7 @@ export const translations = {
   "svDescPlaceholder": { "fa": "توضیحِ کوتاه (اختیاری)…", "en": "Short description (optional)…" },
   "svPreview": { "fa": "پیش‌نمایش", "en": "Preview" },
   "svExitPreview": { "fa": "خروج از پیش‌نمایش", "en": "Exit preview" },
+  "svRestartPreview": { "fa": "شروعِ دوبارهٔ پیش‌نمایش", "en": "Restart preview" },
   "svSettings": { "fa": "تنظیمات", "en": "Settings" },
   "svSave": { "fa": "ذخیره", "en": "Save" },
   "svSaved": { "fa": "ذخیره شد ✓", "en": "Saved ✓" },
