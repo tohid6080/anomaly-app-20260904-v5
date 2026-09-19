@@ -20,6 +20,7 @@ function isEmpty(v: unknown) {
 function scoreExam(questions: any[], answers: Record<string, unknown>, passScore: number) {
   let score = 0;
   let maxScore = 0;
+  const review: any[] = [];
   for (const q of questions) {
     if (!q || q.type === "section" || !SCORABLE.includes(q.type)) continue;
     const pts = Number(q.config?.points);
@@ -35,9 +36,10 @@ function scoreExam(questions: any[], answers: Record<string, unknown>, passScore
       right = a != null && a === correct[0];
     }
     if (right) score += pts;
+    review.push({ questionId: q.id, yourAnswer: a ?? null, correctAnswer: q.type === "multi_choice" ? correct : correct[0], correct: right });
   }
   const percent = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
-  return { score, maxScore, percent, passed: maxScore > 0 && percent >= passScore };
+  return { score, maxScore, percent, passed: maxScore > 0 && percent >= passScore, review };
 }
 
 Deno.serve(async (req) => {
@@ -99,7 +101,7 @@ Deno.serve(async (req) => {
     if (!inserted.ok) return json({ error: "خطا در ثبتِ پاسخ" }, 500);
 
     if (sc && st.showScoreToRespondent !== false) {
-      return json({ ok: true, score: sc.score, maxScore: sc.maxScore, percent: sc.percent, passed: sc.passed });
+      return json({ ok: true, score: sc.score, maxScore: sc.maxScore, percent: sc.percent, passed: sc.passed, review: sc.review });
     }
     return json({ ok: true });
   } catch (e) {

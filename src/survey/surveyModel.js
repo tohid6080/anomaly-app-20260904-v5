@@ -84,6 +84,7 @@ export function newSurvey() {
 export function scoreExam(questions, answers, passScore = 60) {
   let score = 0;
   let maxScore = 0;
+  const review = [];
   (questions || []).forEach((q) => {
     if (!isAnswerable(q) || !SCORABLE_TYPES.includes(q.type)) return;
     const pts = Number(q.config?.points);
@@ -99,9 +100,10 @@ export function scoreExam(questions, answers, passScore = 60) {
       right = a != null && a === correct[0];
     }
     if (right) score += pts;
+    review.push({ questionId: q.id, yourAnswer: a ?? null, correctAnswer: q.type === "multi_choice" ? correct : correct[0], correct: right });
   });
   const percent = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
-  return { score, maxScore, percent, passed: maxScore > 0 && percent >= passScore };
+  return { score, maxScore, percent, passed: maxScore > 0 && percent >= passScore, review };
 }
 
 // آیا این آزمون اصلاً سؤالِ نمره‌دار دارد؟

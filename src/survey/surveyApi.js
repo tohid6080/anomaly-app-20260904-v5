@@ -234,8 +234,8 @@ export async function submitSurveyResponse(token, answers, respondentMeta, sourc
     });
     const data = await res.json();
     if (!res.ok) return { __error: true, message: data?.error || tr("svErrSubmit") };
-    // در حالتِ آزمون (اگر نمایشِ نمره روشن باشد) نمره هم برمی‌گردد.
-    return { ok: true, score: data?.score, maxScore: data?.maxScore, percent: data?.percent, passed: data?.passed };
+    // در حالتِ آزمون (اگر نمایشِ نمره روشن باشد) نمره و بررسیِ سؤال‌به‌سؤال هم برمی‌گردد.
+    return { ok: true, score: data?.score, maxScore: data?.maxScore, percent: data?.percent, passed: data?.passed, review: Array.isArray(data?.review) ? data.review : null };
   } catch {
     return { __error: true, message: tr("svErrServer") };
   }
