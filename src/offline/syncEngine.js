@@ -56,6 +56,12 @@ export const MODULE_TABLE_MAP = {
   pssrActionHistory: { table: "pssr_action_history", idField: "id" },
   pssrNotifications: { table: "pssr_notifications", idField: "id" },
   correctiveActions: { table: "corrective_actions", idField: "id" },
+  contractorEvalConfig: { table: "contractor_eval_config", idField: "id" },
+  contractorEvalSettings: { table: "contractor_eval_settings", idField: "id" },
+  contractorEvalIndicatorSettings: { table: "contractor_eval_indicator_settings", idField: "id" },
+  contractorEvalCustomFields: { table: "contractor_eval_custom_fields", idField: "id" },
+  contractorEvalPeriods: { table: "contractor_eval_periods", idField: "id" },
+  contractorEvalRecords: { table: "contractor_eval_records", idField: "id" },
   // future modules register here once built
 };
 

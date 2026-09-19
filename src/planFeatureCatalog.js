@@ -55,6 +55,7 @@ export const PLAN_FEATURES = [
       { key: "tripodBetaAnalysis", labelKey: "pfTripodBetaAnalysis" },
     ],
   },
+  { key: "contractorHseEvaluation", labelKey: "pfContractorHseEvaluation" },
   {
     key: "machineryManagement", labelKey: "pfMachineryManagement",
     sub: [{ key: "machineryDashboard", labelKey: "pfMachineryDashboard" }],
@@ -106,6 +107,7 @@ export const PLAN_FEATURES = [
       { key: "hcmsMatrixManagement", labelKey: "pfHcmsMatrixManagement" },
       { key: "effectivenessThresholds", labelKey: "pfEffectivenessThresholds" },
       { key: "anomalyCategoryManagement", labelKey: "pfAnomalyCategoryManagement" },
+      { key: "contractorEvalSettings", labelKey: "pfContractorEvalSettings" },
     ],
   },
 ];

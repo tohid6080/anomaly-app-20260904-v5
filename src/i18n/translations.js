@@ -10811,7 +10811,71 @@ export const translations = {
   "psEventIncidentInvestigationApproved": { "fa": "تأیید بررسی و ریشه‌یابی حادثه", "en": "Incident investigation approved" },
   "psEventHcmsAssessmentApproved": { "fa": "تأیید ارزیابی ریسک HCMS", "en": "HCMS risk assessment approved" },
   "psEventAccidentPronenessSubmitted": { "fa": "تکمیل پرسش‌نامه‌ی حادثه‌خیزی فردی", "en": "Accident-proneness assessment submitted" },
-  "psEventHseClimateSubmitted": { "fa": "تکمیل پرسش‌نامه‌ی فضای ایمنی (HSE Climate)", "en": "HSE Climate assessment submitted" }
+  "psEventHseClimateSubmitted": { "fa": "تکمیل پرسش‌نامه‌ی فضای ایمنی (HSE Climate)", "en": "HSE Climate assessment submitted" },
+
+  "moduleContractorHseEvaluation": { "fa": "ارزیابی عملکرد HSE پیمانکاران", "en": "Contractor HSE Performance Evaluation" },
+  "subContractorEvalSettings": { "fa": "تنظیمات ارزیابی پیمانکار", "en": "Contractor Evaluation Settings" },
+  "pfContractorHseEvaluation": { "fa": "ارزیابی عملکرد HSE پیمانکاران", "en": "Contractor HSE Evaluation" },
+  "pfContractorEvalSettings": { "fa": "تنظیمات ارزیابی پیمانکار", "en": "Contractor Evaluation Settings" },
+
+  "evalTierExcellent": { "fa": "عالی", "en": "Excellent" },
+  "evalTierGood": { "fa": "خوب", "en": "Good" },
+  "evalTierAcceptable": { "fa": "قابل قبول", "en": "Acceptable" },
+  "evalTierPoor": { "fa": "ضعیف", "en": "Poor" },
+  "evalErrRecordNotFound": { "fa": "رکورد ارزیابی یافت نشد.", "en": "Evaluation record not found." },
+
+  "evalSettingsTitle": { "fa": "تنظیمات ارزیابی پیمانکار", "en": "Contractor Evaluation Settings" },
+  "evalCadenceTitle": { "fa": "دوره‌بندی ارزیابی", "en": "Evaluation Cadence" },
+  "evalCadenceDesc": { "fa": "تناوبِ ایجاد خودکار دوره‌های ارزیابی و مهلت‌های Workflow.", "en": "How often evaluation periods are created, and the workflow deadlines." },
+  "evalCadenceLabel": { "fa": "تناوب ارزیابی", "en": "Evaluation cadence" },
+  "evalCadenceMonthly": { "fa": "ماهانه", "en": "Monthly" },
+  "evalCadenceQuarterly": { "fa": "سه‌ماهه", "en": "Quarterly" },
+  "evalCadenceSemiannual": { "fa": "شش‌ماهه", "en": "Semiannual" },
+  "evalCadenceAnnual": { "fa": "سالانه", "en": "Annual" },
+  "evalHseDeadlineLabel": { "fa": "مهلت بررسی سرپرست HSE (روز)", "en": "HSE reviewer deadline (days)" },
+  "evalEmployerDeadlineLabel": { "fa": "مهلت تأیید کارفرما (روز)", "en": "Employer approval deadline (days)" },
+
+  "evalWeightsTitle": { "fa": "وزن هر ماژول در امتیاز کل", "en": "Module weight in total score" },
+  "evalWeightsDesc": { "fa": "مجموع وزن‌ها باید دقیقاً ۱۰۰ باشد.", "en": "Weights must add up to exactly 100." },
+  "evalCategoryInactive": { "fa": "غیرفعال", "en": "inactive" },
+  "evalWeightSumLabel": { "fa": "مجموع وزن‌ها: {sum} / ۱۰۰", "en": "Total weight: {sum} / 100" },
+  "evalErrWeightsMustBe100": { "fa": "مجموع وزن‌ها باید دقیقاً ۱۰۰ باشد.", "en": "The weights must add up to exactly 100." },
+
+  "evalCustomFieldTitle": { "fa": "افزودن شاخص سفارشی", "en": "Add a custom indicator" },
+  "evalCustomFieldDesc": { "fa": "کارفرما می‌تواند فیلد ارزیابی دلخواه خودش را اضافه کند.", "en": "The employer can add their own evaluation field." },
+  "evalCustomFieldLabelPh": { "fa": "عنوان شاخص", "en": "Indicator title" },
+  "evalCustomFieldCoeffPh": { "fa": "ضریب ٪", "en": "Coefficient %" },
+  "evalAddCustomField": { "fa": "افزودن", "en": "Add" },
+
+  "evalAuditTitle": { "fa": "تاریخچه تغییرات تنظیمات", "en": "Settings change history" },
+  "evalAuditEmpty": { "fa": "هنوز تغییری ثبت نشده است.", "en": "No changes recorded yet." },
+
+  "evalStatusDraft": { "fa": "پیش‌نویس", "en": "Draft" },
+  "evalStatusCalculated": { "fa": "محاسبه‌شده", "en": "Calculated" },
+  "evalStatusHseReview": { "fa": "در بررسی سرپرست HSE", "en": "In HSE review" },
+  "evalStatusEmployerReview": { "fa": "در انتظار تأیید کارفرما", "en": "Pending employer approval" },
+  "evalStatusReturned": { "fa": "بازگشتی برای اصلاح", "en": "Returned for correction" },
+  "evalStatusFinal": { "fa": "نهایی‌شده", "en": "Final" },
+
+  "evalPickContractor": { "fa": "پیمانکار", "en": "Contractor" },
+  "evalPickPeriod": { "fa": "دوره ارزیابی", "en": "Evaluation period" },
+  "evalNewPeriod": { "fa": "دوره جدید", "en": "New period" },
+  "evalNoFinalYet": { "fa": "هنوز هیچ ارزیابیِ نهایی‌شده‌ای برای شما ثبت نشده است.", "en": "No finalized evaluation has been recorded for you yet." },
+  "evalStatusLabel": { "fa": "وضعیت", "en": "Status" },
+  "evalOpenModules": { "fa": "ماژول‌های محاسبه‌شده", "en": "Calculated modules" },
+  "evalHseNoteLabel": { "fa": "یادداشت سرپرست HSE", "en": "HSE reviewer note" },
+  "evalEmployerNoteLabel": { "fa": "یادداشت کارفرما", "en": "Employer note" },
+  "evalActionCalculate": { "fa": "جمع‌آوری و محاسبه امتیاز", "en": "Gather data & calculate score" },
+  "evalActionSubmitHseReview": { "fa": "ارسال برای تأیید کارفرما", "en": "Submit for employer approval" },
+  "evalActionApprove": { "fa": "تأیید و نهایی‌سازی", "en": "Approve & finalize" },
+  "evalActionReturn": { "fa": "بازگشت برای اصلاح", "en": "Return for correction" },
+  "evalNotePlaceholder": { "fa": "یادداشت (اختیاری)", "en": "Note (optional)" },
+  "evalCategoryBreakdownTitle": { "fa": "امتیاز به تفکیک ماژول", "en": "Score by module" },
+  "evalNaReason_noContractorData": { "fa": "داده‌ای برای این پیمانکار در این ماژول ثبت نشده — از محاسبه کنار گذاشته و وزنش بازتوزیع شد.", "en": "No data for this contractor in this module — excluded and its weight redistributed." },
+  "evalNaReason_categoryDisabled": { "fa": "این ماژول برای ارزیابی غیرفعال است.", "en": "This module is disabled for evaluation." },
+  "evalNaReason_hcmsRiskNotContractorLinked": { "fa": "داده‌ی HCMS/BowTie امروز بر اساس «واحد» گروه‌بندی می‌شود، نه پیمانکار.", "en": "HCMS/BowTie data is currently grouped by unit, not by contractor." },
+  "evalCompareChartTitle": { "fa": "مقایسه پیمانکاران در این دوره", "en": "Contractors compared in this period" },
+  "evalTrendChartTitle": { "fa": "روند این پیمانکار در دوره‌های قبل", "en": "This contractor's trend across periods" }
 };
 
 // ---------- تزریقِ تنبلِ ترجمهٔ آلمانی ----------

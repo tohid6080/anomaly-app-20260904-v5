@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef, useMemo, Suspense, lazy } from "react";
 import BackLink from "./shared/BackLink.jsx";
-import { AlertTriangle, Plus, X, ChevronRight, ChevronLeft, ChevronDown, ChevronsRight, ChevronsLeft, LogOut, CheckCircle2, Clock, Camera, ImagePlus, Trash2, FileSpreadsheet, FileText, User, Users, ShieldCheck, LayoutGrid, BarChart3, Briefcase, Settings, Archive, Truck, Tag, MessageCircle, GraduationCap, ShieldOff, ShieldAlert, Database, Fingerprint, Info, Sliders, TrendingUp, Search, Home, Megaphone, Sparkles, Gift, Bell, ArrowUpRight, ClipboardList, MoreVertical, RefreshCw, GripVertical, Zap } from "lucide-react";
+import { AlertTriangle, Plus, X, ChevronRight, ChevronLeft, ChevronDown, ChevronsRight, ChevronsLeft, LogOut, CheckCircle2, Clock, Camera, ImagePlus, Trash2, FileSpreadsheet, FileText, User, Users, ShieldCheck, LayoutGrid, BarChart3, Briefcase, Settings, Archive, Truck, Tag, MessageCircle, GraduationCap, ShieldOff, ShieldAlert, Database, Fingerprint, Info, Sliders, TrendingUp, Search, Home, Megaphone, Sparkles, Gift, Bell, ArrowUpRight, ClipboardList, MoreVertical, RefreshCw, GripVertical, Zap, Award } from "lucide-react";
 // بارگذاری تنبلِ صفحه‌های ماژول — هرکدام چانکِ جدای خودش، فقط با باز شدنِ
 // آن ماژول بارگذاری می‌شود؛ از باندلِ اولیه‌ی سنگینِ App.jsx بیرون می‌مانند.
 const BowTieDashboard = lazy(() => import("./bowtie/BowTieDashboard.jsx"));
 const HcmsDashboard = lazy(() => import("./hcms/HcmsDashboard.jsx"));
 const HcmsMatrixManager = lazy(() => import("./hcms/HcmsMatrixManager.jsx"));
+const ContractorEvalDashboard = lazy(() => import("./contractorEval/ContractorEvalDashboard.jsx"));
+const ContractorEvalSettingsManager = lazy(() => import("./contractorEval/ContractorEvalSettingsManager.jsx"));
 // بارگذاری تنبل: پنل‌های بزرگ و کم‌استفاده که کتابخانه‌های سنگینِ خروجی
 // (xlsx / exceljs / jszip) را با خود می‌آورند؛ از باندلِ اولیه جدا می‌شوند
 // و فقط هنگام باز شدنِ همان بخش بارگذاری می‌شوند.
@@ -228,6 +230,12 @@ const HSE_MODULES = [
     sub: [
       { key: "pssrList", label: "لیست PSSR", labelKey: "subPssrList" },
     ],
+  },
+  {
+    key: "contractorHseEvaluation",
+    label: "ارزیابی عملکرد HSE پیمانکاران",
+    labelKey: "moduleContractorHseEvaluation",
+    icon: true,
   },
   {
     key: "machineryManagement",
@@ -3631,7 +3639,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
 }
 
 // ---------- پنل ادمین ----------
-const MODULE_ICON = { profile: User, chat: MessageCircle, anomalyReport: AlertTriangle, personnelAccess: Users, managementDashboard: BarChart3, operationalDashboard: ClipboardList, proactiveIndicators: TrendingUp, incidentManagement: ShieldAlert, quickTools: Zap, hseSurvey: ClipboardList, permitToWork: FileSpreadsheet };
+const MODULE_ICON = { profile: User, chat: MessageCircle, anomalyReport: AlertTriangle, personnelAccess: Users, managementDashboard: BarChart3, operationalDashboard: ClipboardList, proactiveIndicators: TrendingUp, incidentManagement: ShieldAlert, quickTools: Zap, hseSurvey: ClipboardList, permitToWork: FileSpreadsheet, contractorHseEvaluation: Award };
 
 // اعمال «پیکربندی سامانه» (ترتیب + برچسب نمایشی، از پنل Super Admin) روی
 // لیست ماژول‌های از‌قبل فیلترشده‌ی هر داشبورد. آیکون/badge/muted/sub که از
@@ -5129,6 +5137,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       isModuleInPlan(planFeatures, "chatAccessManagement") && { key: "chatAccessManagement", label: t("subChatAccess") },
       isModuleInPlan(planFeatures, "hcmsMatrixManagement") && { key: "hcmsMatrixManagement", label: t("subHcmsMatrix") },
       isModuleInPlan(planFeatures, "effectivenessThresholds") && { key: "effectivenessThresholds", label: t("subEffectivenessThresholds") },
+      isModuleInPlan(planFeatures, "contractorEvalSettings") && { key: "contractorEvalSettings", label: t("subContractorEvalSettings") },
       isModuleInPlan(planFeatures, "riskKnowledgeManagement") && { key: "riskKnowledgeManagement", label: t("subRiskKnowledge") },
       isModuleInPlan(planFeatures, "anomalyCategoryManagement") && { key: "anomalyCategoryManagement", label: t("subAnomalyCategories") },
     ].filter(Boolean),
@@ -5215,6 +5224,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
             {isModuleInPlan(planFeatures, "chatAccessManagement") && <MenuRow icon={ShieldOff} label={t("subChatAccess")} onClick={() => setView("chatAccessManagement")} />}
             {isModuleInPlan(planFeatures, "hcmsMatrixManagement") && <MenuRow icon={ShieldAlert} label={t("subHcmsMatrix")} onClick={() => setView("hcmsMatrixManagement")} />}
             {isModuleInPlan(planFeatures, "effectivenessThresholds") && <MenuRow icon={Sliders} label={t("subEffectivenessThresholds")} onClick={() => setView("effectivenessThresholds")} />}
+            {isModuleInPlan(planFeatures, "contractorEvalSettings") && <MenuRow icon={Award} label={t("subContractorEvalSettings")} onClick={() => setView("contractorEvalSettings")} />}
             {isModuleInPlan(planFeatures, "riskKnowledgeManagement") && <MenuRow icon={Database} label={t("subRiskKnowledge")} onClick={() => setView("riskKnowledgeManagement")} />}
             {isModuleInPlan(planFeatures, "anomalyCategoryManagement") && <MenuRow icon={Tag} label={t("subAnomalyCategories")} onClick={() => setView("anomalyCategoryManagement")} />}
           </div>
@@ -5227,6 +5237,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       {isSupervisor && view === "chatAccessManagement" && <ChatAccessManager wide={isDesktop} onBack={() => setView("systemManagement")} />}
       {isSupervisor && view === "hcmsMatrixManagement" && <HcmsMatrixManager wide={isDesktop} onBack={() => setView("systemManagement")} />}
       {isSupervisor && view === "effectivenessThresholds" && <EffectivenessThresholdsManager wide={isDesktop} onBack={() => setView("systemManagement")} currentUser={currentUser} />}
+      {isSupervisor && view === "contractorEvalSettings" && <ContractorEvalSettingsManager wide={isDesktop} onBack={() => setView("systemManagement")} currentUser={currentUser} />}
       {isSupervisor && view === "anomalyCategoryManagement" && <AnomalyCategoryManager wide={isDesktop} onBack={() => setView("systemManagement")} />}
 
       {isDesktop && (view === "anomalyReport" || view === "anomalyForm" || view === "anomalyList") && anomalyWebCombined}
@@ -5327,6 +5338,16 @@ function EmployerDashboard({ onLogout, currentUser }) {
           focusPersonnelId={assessmentContext?.personnelId}
           focusJobTitle={assessmentContext?.jobTitle}
           focusPersonnelName={assessmentContext?.personnelName}
+        />
+      )}
+      {view === "contractorHseEvaluation" && (
+        <ContractorEvalDashboard
+          wide={isDesktop}
+          role="EMPLOYER"
+          isSupervisor={isSupervisor}
+          currentUser={currentUser}
+          readOnly={getAccessLevel(permMap, "contractorHseEvaluation") === "view"}
+          onBack={() => setView("menu")}
         />
       )}
       {view === "hseSurvey" && (
@@ -5675,6 +5696,15 @@ function ContractorDashboard({ onLogout, currentUser }) {
           focusPersonnelId={assessmentContext?.personnelId}
           focusJobTitle={assessmentContext?.jobTitle}
           focusPersonnelName={assessmentContext?.personnelName}
+        />
+      )}
+      {view === "contractorHseEvaluation" && (
+        <ContractorEvalDashboard
+          wide={isDesktop}
+          role="CONTRACTOR"
+          currentUser={currentUser}
+          readOnly
+          onBack={() => setView("menu")}
         />
       )}
       {view === "hseSurvey" && (
