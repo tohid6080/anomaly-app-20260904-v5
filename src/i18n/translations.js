@@ -9386,6 +9386,8 @@ export const translations = {
   "svTabResponses": { "fa": "پاسخ‌ها", "en": "Responses" },
   "svNoResponses": { "fa": "هنوز پاسخی ثبت نشده است.", "en": "No responses yet." },
   "svColSubmittedAt": { "fa": "زمانِ ثبت", "en": "Submitted at" },
+  "svColDuration": { "fa": "مدتِ پاسخ‌دهی", "en": "Time taken" },
+  "svDurationLabel": { "fa": "مدتِ پاسخ‌دهی", "en": "Time taken" },
   "svAvg": { "fa": "میانگین", "en": "Average" },
   "svRangeMinMax": { "fa": "کمینه {min} · بیشینه {max} · ({n} پاسخ)", "en": "min {min} · max {max} · ({n} responses)" },
   "svRefresh": { "fa": "به‌روزرسانی", "en": "Refresh" },

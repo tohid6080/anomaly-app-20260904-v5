@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
 
   try {
     const rRes = await restFetch(
-      `survey_responses?id=eq.${encodeURIComponent(responseId)}&select=id,survey_id,answers,respondent_meta,score,max_score,percent,passed,submitted_at`,
+      `survey_responses?id=eq.${encodeURIComponent(responseId)}&select=id,survey_id,answers,respondent_meta,score,max_score,percent,passed,submitted_at,duration_seconds`,
     );
     const r = rRes.ok && Array.isArray(rRes.data) && rRes.data.length ? rRes.data[0] : null;
     if (!r) return json({ error: "این لینک معتبر نیست" }, 404);
@@ -74,6 +74,7 @@ Deno.serve(async (req) => {
       percent: r.percent,
       passed: r.passed,
       passScore: Number(st.passScore) || 60,
+      durationSeconds: r.duration_seconds != null ? Number(r.duration_seconds) : null,
       review,
     });
   } catch (e) {

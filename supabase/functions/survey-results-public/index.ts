@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
     const st = s.settings || {};
     if (!st.shareResults) return json({ error: "اشتراکِ نتایجِ این نظرسنجی خاموش است" }, 403);
 
-    const rRes = await restFetch(`survey_responses?survey_id=eq.${encodeURIComponent(s.id)}&select=id,answers,respondent_meta,percent,passed,submitted_at&order=submitted_at.asc`);
+    const rRes = await restFetch(`survey_responses?survey_id=eq.${encodeURIComponent(s.id)}&select=id,answers,respondent_meta,percent,passed,submitted_at,duration_seconds&order=submitted_at.asc`);
     const responses: any[] = rRes.ok && Array.isArray(rRes.data) ? rRes.data : [];
     const questions: any[] = Array.isArray(s.questions) ? s.questions : [];
     const isExam = st.mode === "exam";
@@ -90,6 +90,7 @@ Deno.serve(async (req) => {
       unit: st.collectUnit && r.respondent_meta?.unit ? String(r.respondent_meta.unit) : null,
       submittedAt: r.submitted_at,
       percent: r.percent, passed: r.passed,
+      durationSeconds: r.duration_seconds != null ? Number(r.duration_seconds) : null,
       review: scorableQs.map((q) => {
         const a = r.answers?.[q.id];
         return { questionId: q.id, yourAnswer: a ?? null, correct: isCorrect(q, a) };

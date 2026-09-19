@@ -5,7 +5,7 @@ import { THEME, styles } from "../shared.js";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { loadSurveyResponses, deleteSurveyResponse, setShareResults, buildResultsLink, buildResponseLink } from "./surveyApi.js";
-import { summarizeQuestion, isAnswerable, CHOICE_TYPES, SCORABLE_TYPES, responsesByDay } from "./surveyModel.js";
+import { summarizeQuestion, isAnswerable, CHOICE_TYPES, SCORABLE_TYPES, responsesByDay, formatDuration } from "./surveyModel.js";
 
 const MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
 
@@ -85,7 +85,7 @@ export default function SurveyResults({ survey, onBack, wide, onChanged }) {
 
   const csv = useMemo(() => {
     if (!responses) return "";
-    const head = ["#", t("svColSubmittedAt"),
+    const head = ["#", t("svColSubmittedAt"), t("svColDuration"),
       ...(isExam ? [t("svColName"), t("svColPercent"), t("svColResult")] : []),
       ...answerable.map((q) => (q.title || q.id))];
     const cell = (v) => {
@@ -93,7 +93,7 @@ export default function SurveyResults({ survey, onBack, wide, onChanged }) {
       return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
     };
     const lines = responses.map((r, i) => [
-      i + 1, toJalaliSafe(r.submittedAt),
+      i + 1, toJalaliSafe(r.submittedAt), formatDuration(r.durationSeconds) || "",
       ...(isExam ? [
         r.respondentMeta?.name || "",
         r.percent != null ? r.percent + "%" : "",
@@ -191,7 +191,7 @@ export default function SurveyResults({ survey, onBack, wide, onChanged }) {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11.5 }}>
               <thead><tr>
                 <th style={thS}>#</th>{survey.settings?.collectName && <th style={thS}>{t("svColName")}</th>}
-                <th style={thS}>{t("svColSubmittedAt")}</th><th style={thS}>{t("svColPercent")}</th><th style={thS}>{t("svColResult")}</th>
+                <th style={thS}>{t("svColSubmittedAt")}</th><th style={thS}>{t("svColDuration")}</th><th style={thS}>{t("svColPercent")}</th><th style={thS}>{t("svColResult")}</th>
                 {shareOn && <th style={thS} />}
               </tr></thead>
               <tbody>
@@ -200,6 +200,7 @@ export default function SurveyResults({ survey, onBack, wide, onChanged }) {
                     <td style={tdS}>{i + 1}</td>
                     {survey.settings?.collectName && <td style={tdS}>{r.respondentMeta?.name || "—"}</td>}
                     <td style={tdS}>{toJalaliSafe(r.submittedAt)}</td>
+                    <td style={{ ...tdS, fontFamily: MONO }}>{formatDuration(r.durationSeconds) || "—"}</td>
                     <td style={{ ...tdS, fontFamily: MONO, fontWeight: 700, color: r.passed ? THEME.ok : THEME.danger }}>{r.percent != null ? r.percent + "%" : "—"}</td>
                     <td style={tdS}>
                       {r.passed == null ? "—" : (
@@ -281,7 +282,7 @@ export default function SurveyResults({ survey, onBack, wide, onChanged }) {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11.5 }}>
             <thead>
               <tr>
-                <th style={thS}>#</th><th style={thS}>{t("svColSubmittedAt")}</th>
+                <th style={thS}>#</th><th style={thS}>{t("svColSubmittedAt")}</th><th style={thS}>{t("svColDuration")}</th>
                 {answerable.map((q, i) => <th key={q.id} style={thS}>{i + 1}</th>)}
                 <th style={thS} />
               </tr>
@@ -291,6 +292,7 @@ export default function SurveyResults({ survey, onBack, wide, onChanged }) {
                 <tr key={r.id}>
                   <td style={tdS}>{i + 1}</td>
                   <td style={tdS}>{toJalaliSafe(r.submittedAt)}</td>
+                  <td style={{ ...tdS, fontFamily: MONO }}>{formatDuration(r.durationSeconds) || "—"}</td>
                   {answerable.map((q) => {
                     const a = r.answers[q.id];
                     let text = "";

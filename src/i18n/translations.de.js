@@ -3555,6 +3555,8 @@ export const de = {
   "svTabResponses": "Antworten",
   "svNoResponses": "Noch keine Antworten.",
   "svColSubmittedAt": "Gesendet am",
+  "svColDuration": "Benötigte Zeit",
+  "svDurationLabel": "Benötigte Zeit",
   "svAvg": "Durchschnitt",
   "svRangeMinMax": "Min {min} · Max {max} · ({n} Antworten)",
   "svRefresh": "Aktualisieren",

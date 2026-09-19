@@ -69,6 +69,15 @@ export default function PublicSurvey({ publicToken }) {
 
   const needsStartGate = isExam && !!info?.settings?.timeLimitMin;
 
+  // لحظه‌ای که پاسخ‌دهنده واقعاً وارد سؤال‌ها می‌شود (بعد از دروازه‌ی شروع،
+  // اگر بود) — یک‌بار ثبت می‌شود تا مدتِ پاسخ‌دهی هنگامِ ثبت محاسبه شود.
+  const startedAtRef = useRef(null);
+  useEffect(() => {
+    if (startedAtRef.current || !info || info.__error || done || already) return;
+    if (needsStartGate && !started) return;
+    startedAtRef.current = Date.now();
+  }, [info, done, already, needsStartGate, started]);
+
   // محدودیتِ زمانی — برای آزمونِ زمان‌دار، فقط پس از زدنِ «شروعِ آزمون» شمارش آغاز می‌شود
   useEffect(() => {
     if (!isExam || !info?.settings?.timeLimitMin || done || already) return;
@@ -181,7 +190,8 @@ export default function PublicSurvey({ publicToken }) {
       ...(settings.collectName ? { name: meta.name.trim() } : {}),
       ...(settings.collectUnit ? { unit: meta.unit.trim() } : {}),
     };
-    const res = await submitSurveyResponse(publicToken, answers, respMeta, "link");
+    const durationSeconds = startedAtRef.current ? Math.max(0, Math.round((Date.now() - startedAtRef.current) / 1000)) : null;
+    const res = await submitSurveyResponse(publicToken, answers, respMeta, "link", durationSeconds);
     setSaving(false);
     if (res?.__error) { setError(res.message); return; }
     let r = null;

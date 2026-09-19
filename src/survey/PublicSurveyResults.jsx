@@ -4,6 +4,7 @@ import { THEME } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { loadPublicSurveyResults } from "./surveyApi.js";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
+import { formatDuration } from "./surveyModel.js";
 import ChoiceReview from "./ChoiceReview.jsx";
 
 const MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
@@ -127,6 +128,9 @@ export default function PublicSurveyResults({ resultsToken }) {
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", fontSize: 11, color: THEME.text3, margin: "-2px 0 4px" }}>
                   {r.unit && <span>{r.unit}</span>}
                   <span>{toJalaliSafe(r.submittedAt)}</span>
+                  {formatDuration(r.durationSeconds) && (
+                    <span style={{ fontFamily: MONO }}>{t("svDurationLabel")}: {formatDuration(r.durationSeconds)}</span>
+                  )}
                   {r.percent != null && (
                     <span style={{ fontWeight: 800, fontFamily: MONO, color: r.passed ? THEME.ok : THEME.danger }}>{r.percent}%</span>
                   )}
