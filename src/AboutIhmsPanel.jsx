@@ -178,9 +178,16 @@ export function AboutIhmsModal({ onClose, latestRelease, online, queueItems = []
 
   const updateAvailable = isNewerThanCurrent(release);
 
-  const todayDisplay = lang !== "fa"
-    ? new Date().toLocaleDateString(numLocale(lang), { year: "numeric", month: "long", day: "numeric" })
-    : isoToJalaliDisplay(new Date().toISOString().slice(0, 10));
+  // «آخرین به‌روزرسانی» باید تاریخِ واقعیِ انتشارِ آخرین نسخه باشد
+  // (release.publishedAt)، نه «امروز» — قبلاً همیشه تاریخِ روز را نشان
+  // می‌داد (چون new Date() بدونِ وابستگی به release محاسبه می‌شد)، مستقل
+  // از این‌که واقعاً چیزی امروز منتشر شده باشد یا نه؛ کاربر را گمراه
+  // می‌کرد که «امروز منتشر شد» درحالی‌که فقط تاریخِ سیستم بود.
+  const lastUpdateDisplay = release?.publishedAt
+    ? (lang !== "fa"
+        ? new Date(release.publishedAt).toLocaleDateString(numLocale(lang), { year: "numeric", month: "long", day: "numeric" })
+        : isoToJalaliDisplay(release.publishedAt.slice(0, 10)))
+    : "—";
 
   const buildDisplay = typeof __BUILD_TIME__ !== "undefined"
     ? (lang !== "fa"
@@ -308,7 +315,7 @@ export function AboutIhmsModal({ onClose, latestRelease, online, queueItems = []
             value={release ? `${release.version} (build ${release.versionCode})` : (checking ? "…" : "—")}
             ltr
           />
-          <Row label={t("aboutLastUpdate")} value={todayDisplay} />
+          <Row label={t("aboutLastUpdate")} value={lastUpdateDisplay} />
           <Row label={t("aboutBuild")} value={buildDisplay} />
           <Row label={t("aboutDeveloper")} value="Tohid Mirasadi" ltr />
           <Row label={t("aboutLanguageLabel")} value={t("aboutLanguageValue")} />
