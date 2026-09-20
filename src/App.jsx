@@ -64,7 +64,7 @@ const tr = (key, params) => translate(getCurrentLang(), key, params);
 import {
   isBiometricAvailable, isBiometricEnabledFor, getBiometricEnabledUsername,
   enableBiometricLogin, disableBiometricLogin,
-  verifyBiometricAndGetCredentials,
+  verifyBiometricAndGetCredentials, isNativeApp,
 } from "./biometricAuth.js";
 import { checkLoginLockout, recordLoginAttempt, validatePasswordLength, MIN_PASSWORD_LENGTH } from "./loginSecurity.js";
 import { useAndroidBackButton } from "./backButtonHandler.js";
@@ -1346,7 +1346,12 @@ function LoginScreen({ onLogin }) {
   // «فقط صفحه‌ی ورود» (SuperAdmin → پیکربندی سامانه → مدیریتِ صفحه اصلی
   // → «حالتِ نمایشِ صفحه اصلی») یعنی صفحه‌ی فرودِ عمومی اصلاً رندر نشود؛
   // فرمِ ورود به‌جایِ Modal روی آن، خودش تکِ محتوایِ صفحه می‌شود.
-  const loginOnly = landingOverride?.displayMode === "loginOnly";
+  //
+  // روی اپِ نیتیوِ اندروید این تنظیم اصلاً معنی ندارد و همیشه باید
+  // loginOnly باشد، مستقل از چیزی که سوپرادمین برایِ سایتِ وب انتخاب کرده
+  // — طبقِ خواسته‌ی صریحِ کاربر: «این قسمت نباید ربطی به اپلیکیشن داشته
+  // باشه». صفحه‌ی فرودِ عمومی/بازاریابی فقط برایِ وب است.
+  const loginOnly = isNativeApp() || landingOverride?.displayMode === "loginOnly";
   const loginCardProps = {
     t, dir, appearance,
     username, setUsername, password, setPassword,

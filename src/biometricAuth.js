@@ -26,6 +26,14 @@ const ENABLED_FLAG_KEY = "ihms_biometric_enabled_username";
 function isNative() {
   return Capacitor.isNativePlatform();
 }
+// export شده چون App.jsx هم لازمش دارد (صفحه‌ی ورود روی اپِ نیتیو باید
+// همیشه loginOnly باشد، مستقل از displayMode ای که سوپرادمین برای وب تنظیم
+// کرده) — همان چکِ سینکرونِ Capacitor، بدونِ import پویا چون این فایل خودش
+// همین حالا @capacitor/core را استاتیک import کرده و به باندلِ App.jsx
+// اضافه شده (از طریقِ isBiometricAvailable/…).
+export function isNativeApp() {
+  return isNative();
+}
 
 // آیا سخت‌افزار بیومتریک روی این دستگاه موجود است و حداقل یک اثر انگشت/چهره ثبت شده؟
 export async function isBiometricAvailable() {
