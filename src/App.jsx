@@ -1429,7 +1429,7 @@ function LoginFormCard({
   return (
     <div
       onClick={onClick}
-      style={{ width: 520, maxWidth: "100%", background: THEME.surface, borderRadius: 18, border: `1px solid ${THEME.border}`, boxShadow: "0 40px 90px -40px rgba(0,0,0,0.55)", padding: "70px 34px 52px", maxHeight: "calc(100vh - 20px)", overflowY: "auto", display: "flex", flexDirection: "column" }}
+      style={{ width: 420, maxWidth: "100%", background: THEME.surface, borderRadius: 18, border: `1px solid ${THEME.border}`, boxShadow: "0 40px 90px -40px rgba(0,0,0,0.55)", padding: "26px 30px 22px", maxHeight: "calc(100vh - 20px)", overflowY: "auto", display: "flex", flexDirection: "column" }}
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2 }}>
         <LanguageSelect align="start" />
@@ -1439,11 +1439,11 @@ function LoginFormCard({
           </button>
         )}
       </div>
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
-        <IhmsLogo size={504} src={appearance?.logoUrl} />
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+        <IhmsLogo size={260} src={appearance?.logoUrl} />
       </div>
       <h2 style={{ textAlign: "center", marginBottom: 1, fontSize: 15.5, color: THEME.heading, fontWeight: 800, fontFamily: THEME.font }}>{t("loginButton")}</h2>
-      <p style={{ textAlign: "center", color: THEME.text3, fontSize: 11, marginTop: 2, marginBottom: 8, fontFamily: THEME.font, fontWeight: 600 }}>{t("loginTagline")}</p>
+      <p style={{ textAlign: "center", color: THEME.text3, fontSize: 11, marginTop: 2, marginBottom: 6, fontFamily: THEME.font, fontWeight: 600 }}>{t("loginTagline")}</p>
 
       <label style={{ ...styles.label, textAlign: dir === "rtl" ? "right" : "left", marginTop: 8, marginBottom: 3, fontFamily: THEME.font }}>{t("username")}</label>
       <input style={{ ...styles.input, padding: "9px 12px" }} value={username} onChange={(e) => setUsername(e.target.value)} dir={dir} autoFocus />
