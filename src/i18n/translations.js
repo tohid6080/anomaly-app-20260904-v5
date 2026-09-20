@@ -10894,7 +10894,10 @@ export const translations = {
   "amSecMobileTabsTitle": { "fa": "چیدمان پیش‌فرض نوار پایین (بعد از ورود)", "en": "Default bottom nav layout (after login)" },
   "amSecMobileTabsDesc": { "fa": "این چیدمان فقط حالت اولیه است — به‌محض این‌که کاربر از «تنظیمات» خودش چیدمان را عوض کند، انتخاب خودش همیشه اولویت دارد.", "en": "This is only the initial layout — as soon as a user changes it from their own Settings, their personal choice always takes priority." },
   "amMobileTabsCount": { "fa": "{n} گزینه انتخاب‌شده (حداقل {min}، حداکثر {max})", "en": "{n} selected (min {min}, max {max})" },
-  "scErrSaveMobileTabs": { "fa": "خطا در ذخیره‌ی چیدمان پیش‌فرض نوار پایین", "en": "Failed to save the default bottom-nav layout" }
+  "scErrSaveMobileTabs": { "fa": "خطا در ذخیره‌ی چیدمان پیش‌فرض نوار پایین", "en": "Failed to save the default bottom-nav layout" },
+
+  "lpApkBannerText": { "fa": "نسخه‌ی جدید اپلیکیشن اندروید ({version}) منتشر شد", "en": "New Android app version ({version}) is available" },
+  "lpApkBannerBtn": { "fa": "دانلود مستقیم APK", "en": "Download APK" }
 };
 
 // ---------- تزریقِ تنبلِ ترجمهٔ آلمانی ----------

@@ -4,8 +4,11 @@ import {
   FileCheck, HardHat, Boxes, MessagesSquare, FolderOpen, UserCog, LayoutDashboard,
   ArrowLeft, ArrowRight, Check, Menu, X, BarChart3, LineChart, Gauge, Smartphone,
   Zap, Database, FileBarChart, Recycle, Layers, TrendingUp, Bell, Globe, Tag,
+  Download,
 } from "lucide-react";
 import { useLanguage } from "./i18n/LanguageContext.jsx";
+import { loadLatestPublishedRelease } from "./superadmin/appReleaseApi.js";
+import { openApkDownload } from "./appDownload.js";
 
 /* ------------------------------------------------------------------ *
  * صفحهٔ فرودِ عمومیِ IHMS — Enterprise SaaS، سه‌زبانه (فا/EN/DE)، تمِ
@@ -686,7 +689,7 @@ function useReveal() {
 
 export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, announcements, logoUrl, systemName, heroImageUrl, landingOverride }) {
   const viewPlans = onViewPlans || onStartFree;
-  const { lang, setLang } = useLanguage();
+  const { lang, setLang, t } = useLanguage();
   const dir = lang === "fa" ? "rtl" : "ltr";
   const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
 
@@ -694,6 +697,30 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
   const [mNav, setMNav] = useState(false);
   const [modCat, setModCat] = useState(0);
   const rootRef = useReveal();
+
+  // نوارِ دانلودِ APK — آخرین نسخه‌ی «منتشرشده» از همان app_releases که
+  // «درباره IHMS» داخلِ اپ هم می‌خواند؛ اینجا برایِ بازدیدکنندگانِ عمومیِ
+  // سایت (بدونِ ورود) است تا بتوانند مستقیماً از رویِ صفحه اصلی دانلود و
+  // نصب کنند، نه فقط از داخلِ اپلیکیشنِ نصب‌شده.
+  const [latestRelease, setLatestRelease] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    loadLatestPublishedRelease().then((r) => { if (alive) setLatestRelease(r); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
+
+  // این صفحه (فقط صفحه‌ی فرودِ عمومی — نه داخلِ اپلیکیشن) طبقِ خواسته‌ی
+  // صریح باید حتی داخلِ مرورگرِ گوشی هم به‌صورتِ دسکتاپی رندر شود، نه با
+  // چیدمانِ موبایلیِ ریسپانسیوِ خودش. viewport را موقتِ عریض می‌کنیم تا
+  // همه‌ی مدیاکوئری‌های `@media (max-width: …)` این فایل هیچ‌وقت فعال
+  // نشوند؛ با ترک‌کردنِ این صفحه (مثلاً باز شدنِ فرمِ ورود/سایرِ صفحات)
+  // viewportِ استاندارد برمی‌گردد.
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="viewport"]');
+    const prev = meta?.getAttribute("content");
+    if (meta) meta.setAttribute("content", "width=1280");
+    return () => { if (meta && prev) meta.setAttribute("content", prev); };
+  }, []);
 
   // متنِ سفارشی‌شده از «مدیریتِ صفحه اصلی سامانه» — از LoginScreen (App.jsx)
   // به‌عنوانِ prop می‌آید (نه fetch مستقل اینجا)، چون همین داده (به‌خصوص
@@ -747,6 +774,27 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
   return (
     <div className="ihms-lp" dir={dir} ref={rootRef}>
       <style>{LP_CSS}</style>
+
+      {latestRelease?.effectiveDownloadUrl && (
+        <div style={{
+          background: `linear-gradient(90deg, ${C.navyDeep}, ${C.navy})`, color: "#fff",
+          display: "flex", alignItems: "center", justifyContent: "center", flexWrap: "wrap", gap: 10,
+          padding: "9px 16px", fontSize: 13, fontWeight: 700, textAlign: "center",
+        }}>
+          <Smartphone size={15} style={{ flexShrink: 0 }} />
+          <span>{t("lpApkBannerText", { version: latestRelease.version })}</span>
+          <button
+            type="button"
+            onClick={() => openApkDownload(latestRelease.effectiveDownloadUrl)}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6, background: C.teal, color: "#06201c",
+              border: "none", borderRadius: 999, padding: "6px 16px", fontSize: 12.5, fontWeight: 800, cursor: "pointer",
+            }}
+          >
+            <Download size={14} /> {t("lpApkBannerBtn")}
+          </button>
+        </div>
+      )}
 
       {/* HEADER */}
       <header className={"hdr" + (scrolled ? " scrolled" : "")} id="lp-top">

@@ -4850,4 +4850,7 @@ export const de = {
   "amSecMobileTabsDesc": "Dies ist nur das Anfangslayout — sobald ein Nutzer es in seinen eigenen Einstellungen ändert, hat seine persönliche Wahl immer Vorrang.",
   "amMobileTabsCount": "{n} ausgewählt (min. {min}, max. {max})",
   "scErrSaveMobileTabs": "Speichern des Standard-Layouts der unteren Navigation fehlgeschlagen",
+
+  "lpApkBannerText": "Neue Android-App-Version ({version}) verfügbar",
+  "lpApkBannerBtn": "APK herunterladen",
 };
