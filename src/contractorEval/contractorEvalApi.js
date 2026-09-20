@@ -401,6 +401,41 @@ export async function loadEvalRecordDetail(recordId) {
   };
 }
 
+// یک «شرکتِ پیمانکار» می‌تواند بیش از یک حسابِ ورود داشته باشد (مثلاً دو
+// کارشناسِ HSE از همان شرکت، هرکدام پنلِ جداگانه‌ی خودشان) — contractors.name
+// یکسان، اما id متفاوت. ارزیابی باید کلِ شرکت را ببیند، نه فقط داده‌هایی
+// که زیرِ همان یک حسابِ انتخاب‌شده ثبت شده — وگرنه اگر پرسنل/ماشین‌آلات از
+// طریقِ حسابِ خواهر ثبت شده باشند، در محاسبه دیده نمی‌شوند. این تابع همه‌ی
+// id هایی که هم‌نامِ (trim+lower) پیمانکارِ انتخاب‌شده‌اند را برمی‌گرداند.
+// فهرستِ پیمانکاران برایِ دراپ‌داونِ ارزیابی — بر خلافِ
+// loadContractorsForDropdown (که هر ردیفِ contractors را جدا نشان می‌دهد)،
+// اینجا به‌ازایِ هر نامِ شرکتِ تکراری فقط یک گزینه نشان داده می‌شود؛ محاسبه‌ی
+// امتیاز با انتخابِ همان یک گزینه، خودش داده‌ی همه‌ی حساب‌های هم‌نام را جمع
+// می‌کند (رجوع کن به resolveContractorGroup/calculateEvalRecord).
+export async function loadDistinctContractorCompanies() {
+  const companyId = getCurrentCompanyId();
+  const rows = await sb(`contractors?company_id=eq.${companyId}&select=id,name&order=name.asc`);
+  if (!sbOk(rows)) return [];
+  const seen = new Set();
+  const out = [];
+  for (const r of rows) {
+    const key = norm(r.name);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push({ id: r.id, name: r.name });
+  }
+  return out;
+}
+
+async function resolveContractorGroup(companyId, contractorId) {
+  const rows = await sb(`contractors?company_id=eq.${companyId}&select=id,name`);
+  if (!sbOk(rows)) return { ids: [contractorId], name: "" };
+  const selfRow = rows.find((r) => r.id === contractorId);
+  const name = selfRow?.name || "";
+  const ids = rows.filter((r) => norm(r.name) === norm(name)).map((r) => r.id);
+  return { ids: ids.length ? ids : [contractorId], name };
+}
+
 // ================================================================
 // جمع‌آوریِ خودکارِ داده از ماژول‌های واقعی IHMS
 // ================================================================
@@ -418,10 +453,10 @@ async function gatherAnomalyMetrics(companyId, contractorName) {
   return { closeRate, criticalOpen, avgCloseDays };
 }
 
-async function gatherCorrectiveActionMetrics(companyId, contractorId, contractorName) {
+async function gatherCorrectiveActionMetrics(companyId, contractorIds, contractorName) {
   const rows = await sb(`corrective_actions?company_id=eq.${companyId}&select=status,priority,due_date,completed_at,responsible_contractor_id,responsible_contractor_name`);
   if (!sbOk(rows)) return null;
-  const mine = rows.filter((r) => r.responsible_contractor_id === contractorId || norm(r.responsible_contractor_name) === norm(contractorName));
+  const mine = rows.filter((r) => contractorIds.includes(r.responsible_contractor_id) || norm(r.responsible_contractor_name) === norm(contractorName));
   if (mine.length === 0) return null;
   const closable = mine.filter((r) => r.status !== "expired");
   const closed = closable.filter((r) => r.status === "closed");
@@ -431,8 +466,8 @@ async function gatherCorrectiveActionMetrics(companyId, contractorId, contractor
   return { onTime, overdue, criticalOpen };
 }
 
-async function gatherOccHealthMetrics(companyId, contractorId) {
-  const rows = await sb(`personnel?company_id=eq.${companyId}&contractor_id=eq.${contractorId}&employment_status=eq.active&select=occ_health_path,status`);
+async function gatherOccHealthMetrics(companyId, contractorIds) {
+  const rows = await sb(`personnel?company_id=eq.${companyId}&contractor_id=in.(${contractorIds.join(",")})&employment_status=eq.active&select=occ_health_path,status`);
   if (!sbOk(rows) || rows.length === 0) return null;
   const completed = rows.filter((r) => r.occ_health_path === "has_certificate").length;
   const completion = Math.round((completed / rows.length) * 100);
@@ -441,8 +476,8 @@ async function gatherOccHealthMetrics(companyId, contractorId) {
   return { completion, expired, pending };
 }
 
-async function gatherTrainingMetrics(companyId, contractorId) {
-  const personnelRows = await sb(`personnel?company_id=eq.${companyId}&contractor_id=eq.${contractorId}&employment_status=eq.active&select=id,job_title`);
+async function gatherTrainingMetrics(companyId, contractorIds) {
+  const personnelRows = await sb(`personnel?company_id=eq.${companyId}&contractor_id=in.(${contractorIds.join(",")})&employment_status=eq.active&select=id,job_title`);
   if (!sbOk(personnelRows) || personnelRows.length === 0) return null;
   const jobTitles = [...new Set(personnelRows.map((p) => p.job_title).filter(Boolean))];
   if (jobTitles.length === 0) return null;
@@ -480,8 +515,8 @@ async function gatherTrainingMetrics(companyId, contractorId) {
   return { compliance: Math.round((done / required) * 100), untrained: untrainedPeople.size };
 }
 
-async function gatherMachineryMetrics(companyId, contractorId) {
-  const rows = await sb(`machinery?company_id=eq.${companyId}&contractor_id=eq.${contractorId}&traffic_status=eq.active&select=insurance_expiry,inspection_expiry,driver_license_expiry,approval_status`);
+async function gatherMachineryMetrics(companyId, contractorIds) {
+  const rows = await sb(`machinery?company_id=eq.${companyId}&contractor_id=in.(${contractorIds.join(",")})&traffic_status=eq.active&select=insurance_expiry,inspection_expiry,driver_license_expiry,approval_status`);
   if (!sbOk(rows) || rows.length === 0) return null;
   const validInspection = rows.filter((r) => (daysUntil(r.inspection_expiry) ?? -1) >= 0).length;
   const validInsurance = rows.filter((r) => (daysUntil(r.insurance_expiry) ?? -1) >= 0).length;
@@ -521,14 +556,20 @@ async function gatherIncidentMetrics(companyId, contractorName) {
   return { rca, openTripodCA, delay };
 }
 
-async function gatherProactiveMetrics(companyId, contractorId, contractorName) {
+async function gatherProactiveMetrics(companyId, contractorIds, contractorName) {
   const out = {};
   try {
-    const climate = await loadHseClimateAggregate({ contractorId });
-    if (climate?.averageTotal != null) out.climate = Math.round(climate.averageTotal);
+    // ممکن است کمپینِ HSE Climate زیرِ هرکدام از حساب‌های خواهرِ همین شرکت
+    // ثبت شده باشد — همه را می‌خوانیم و با وزنِ تعدادِ پاسخ میانگین می‌گیریم.
+    const climates = (await Promise.all(contractorIds.map((cid) => loadHseClimateAggregate({ contractorId: cid }).catch(() => null))))
+      .filter((c) => c?.averageTotal != null && c.responseCount > 0);
+    if (climates.length) {
+      const totalResponses = climates.reduce((s, c) => s + c.responseCount, 0);
+      out.climate = Math.round(climates.reduce((s, c) => s + c.averageTotal * c.responseCount, 0) / totalResponses);
+    }
   } catch { /* اختیاری — نبودِ کمپینِ فعال برای این پیمانکار خطا نیست */ }
 
-  const assignments = await sb(`sbs_sample_size_assignments?company_id=eq.${companyId}&contractor_id=eq.${contractorId}&select=total_sample_size&order=created_at.desc&limit=1`);
+  const assignments = await sb(`sbs_sample_size_assignments?company_id=eq.${companyId}&contractor_id=in.(${contractorIds.join(",")})&select=total_sample_size&order=created_at.desc&limit=1`);
   if (sbOk(assignments) && assignments[0]?.total_sample_size) {
     const target = assignments[0].total_sample_size;
     const obs = await sb(`sbs_observations?company_id=eq.${companyId}&select=contractor_org`);
@@ -536,7 +577,7 @@ async function gatherProactiveMetrics(companyId, contractorId, contractorName) {
     out.sbs = target > 0 ? Math.min(100, Math.round((done / target) * 100)) : null;
   }
 
-  const personnelRows = await sb(`personnel?company_id=eq.${companyId}&contractor_id=eq.${contractorId}&employment_status=eq.active&select=id`);
+  const personnelRows = await sb(`personnel?company_id=eq.${companyId}&contractor_id=in.(${contractorIds.join(",")})&employment_status=eq.active&select=id`);
   const personnelIds = sbOk(personnelRows) ? personnelRows.map((p) => p.id) : [];
   if (personnelIds.length) {
     const assess = await sb(`proactive_indicator_assessments?indicator_key=eq.accident_proneness&personnel_id=in.(${personnelIds.join(",")})&select=personnel_id,total_level&order=assessment_date.desc`);
@@ -551,8 +592,8 @@ async function gatherProactiveMetrics(companyId, contractorId, contractorName) {
   return Object.keys(out).length ? out : null;
 }
 
-async function gatherPssrMetrics(companyId, contractorId) {
-  const rows = await sb(`pssr_action_items?company_id=eq.${companyId}&responsible_contractor_id=eq.${contractorId}&select=status,due_date,cat`);
+async function gatherPssrMetrics(companyId, contractorIds) {
+  const rows = await sb(`pssr_action_items?company_id=eq.${companyId}&responsible_contractor_id=in.(${contractorIds.join(",")})&select=status,due_date,cat`);
   if (!sbOk(rows) || rows.length === 0) return null;
   const today = new Date().toISOString().slice(0, 10);
   const closable = rows; // همه‌ی اقدامات (بدونِ حالتِ expired جدا در این ماژول)
@@ -563,8 +604,8 @@ async function gatherPssrMetrics(companyId, contractorId) {
   return { onTime, overdue, catA };
 }
 
-async function gatherScaffoldMetrics(companyId, contractorId) {
-  const rows = await sb(`scaffold_tags?company_id=eq.${companyId}&contractor_id=eq.${contractorId}&select=status`);
+async function gatherScaffoldMetrics(companyId, contractorIds) {
+  const rows = await sb(`scaffold_tags?company_id=eq.${companyId}&contractor_id=in.(${contractorIds.join(",")})&select=status`);
   if (!sbOk(rows) || rows.length === 0) return null;
   const valid = rows.filter((r) => r.status === "tag_issued" || r.status === "removed").length;
   const revisit = rows.filter((r) => r.status === "needs_correction").length;
@@ -573,14 +614,14 @@ async function gatherScaffoldMetrics(companyId, contractorId) {
 
 const GATHERERS = {
   anomaly: (ctx) => gatherAnomalyMetrics(ctx.companyId, ctx.contractorName),
-  correctiveActions: (ctx) => gatherCorrectiveActionMetrics(ctx.companyId, ctx.contractorId, ctx.contractorName),
-  occHealth: (ctx) => gatherOccHealthMetrics(ctx.companyId, ctx.contractorId),
-  training: (ctx) => gatherTrainingMetrics(ctx.companyId, ctx.contractorId),
-  machinery: (ctx) => gatherMachineryMetrics(ctx.companyId, ctx.contractorId),
+  correctiveActions: (ctx) => gatherCorrectiveActionMetrics(ctx.companyId, ctx.contractorIds, ctx.contractorName),
+  occHealth: (ctx) => gatherOccHealthMetrics(ctx.companyId, ctx.contractorIds),
+  training: (ctx) => gatherTrainingMetrics(ctx.companyId, ctx.contractorIds),
+  machinery: (ctx) => gatherMachineryMetrics(ctx.companyId, ctx.contractorIds),
   incidents: (ctx) => gatherIncidentMetrics(ctx.companyId, ctx.contractorName),
-  proactive: (ctx) => gatherProactiveMetrics(ctx.companyId, ctx.contractorId, ctx.contractorName),
-  pssr: (ctx) => gatherPssrMetrics(ctx.companyId, ctx.contractorId),
-  scaffold: (ctx) => gatherScaffoldMetrics(ctx.companyId, ctx.contractorId),
+  proactive: (ctx) => gatherProactiveMetrics(ctx.companyId, ctx.contractorIds, ctx.contractorName),
+  pssr: (ctx) => gatherPssrMetrics(ctx.companyId, ctx.contractorIds),
+  scaffold: (ctx) => gatherScaffoldMetrics(ctx.companyId, ctx.contractorIds),
 };
 
 // ================================================================
@@ -597,7 +638,10 @@ export async function calculateEvalRecord(recordId, calculatedBy) {
   if (!record) return { ok: false, error: tr("evalErrRecordNotFound") };
   const contractorId = record.contractor_id;
   const contractorName = record.contractors?.name || "";
-  const ctx = { companyId, contractorId, contractorName };
+  // چند حسابِ ورودِ جداگانه می‌توانند به یک شرکتِ پیمانکارِ واحد تعلق داشته
+  // باشند (نامِ یکسان) — ارزیابی باید داده‌ی همه‌ی آن حساب‌ها را با هم ببیند.
+  const { ids: contractorIds } = await resolveContractorGroup(companyId, contractorId);
+  const ctx = { companyId, contractorId, contractorIds, contractorName };
 
   const metricsByCategory = {};
   for (const c of categories.filter((c) => c.active)) {

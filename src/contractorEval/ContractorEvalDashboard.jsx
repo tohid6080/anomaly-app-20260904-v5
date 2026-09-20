@@ -3,12 +3,11 @@ import BackLink from "../shared/BackLink.jsx";
 import { Award, Plus, RefreshCw } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
-import { loadContractorsForDropdown } from "../correctiveActions/correctiveActionsApi.js";
 import {
   loadEffectiveCategories, loadEvalConfig, loadEvalPeriods, createEvalPeriod, nextPeriodRange,
   getOrCreateEvalRecord, loadEvalRecordsForPeriod, loadEvalRecordDetail, loadEvalHistoryForContractor,
   loadOwnFinalEvaluations, calculateEvalRecord, submitHseReview, approveByEmployer, returnForCorrection,
-  tierOf, loadCustomFieldValuesForRecord, saveCustomFieldValue,
+  tierOf, loadCustomFieldValuesForRecord, saveCustomFieldValue, loadDistinctContractorCompanies,
 } from "./contractorEvalApi.js";
 
 const STATUS_LABEL_KEY = {
@@ -94,7 +93,7 @@ export default function ContractorEvalDashboard({ wide, role, isSupervisor, curr
       return;
     }
     const [cs, ps, cfg, cats] = await Promise.all([
-      loadContractorsForDropdown(), loadEvalPeriods(), loadEvalConfig(), loadEffectiveCategories(),
+      loadDistinctContractorCompanies(), loadEvalPeriods(), loadEvalConfig(), loadEffectiveCategories(),
     ]);
     setContractors(cs); setPeriods(ps); setConfig(cfg); setCategories(cats);
     if (cs[0]) setContractorId(cs[0].id);

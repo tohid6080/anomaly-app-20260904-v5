@@ -51,18 +51,6 @@ async function checkContactUniqueness(field: "email" | "phone", value: string, e
   return conflict;
 }
 
-// بررسی یکتاییِ «نامِ شرکتِ پیمانکار» درونِ همان company_id — کاربر صریحاً
-// خواسته دو حسابِ پیمانکارِ جداگانه با یک نامِ شرکتِ یکسان (مثلاً چون دو
-// نفر از همان شرکت هرکدام حسابِ خودشان را خواسته‌اند) دیگر ساخته نشود؛ هر
-// دو نفر باید زیرِ همان یک حسابِ پیمانکار کار کنند، نه هرکدام یک ردیفِ
-// تکراری در contractors. مقایسه با trim+lower برای بی‌اثر بودنِ فاصله/کیس.
-async function checkContractorNameUniqueness(name: string, companyId: string | null, excludeId: string | null) {
-  if (!companyId) return false; // بدونِ company_id مشخص، مقایسه معنی ندارد
-  const res = await restFetch(`contractors?company_id=eq.${companyId}&select=id,name`);
-  if (!res.ok || !Array.isArray(res.data)) return false;
-  const target = name.trim().toLowerCase();
-  return res.data.some((r: any) => r.id !== excludeId && String(r.name || "").trim().toLowerCase() === target);
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS_HEADERS });
@@ -105,9 +93,6 @@ Deno.serve(async (req) => {
       }
       if (f.phone && await checkContactUniqueness("phone", f.phone, table, null)) {
         return json({ error: "این شماره موبایل قبلاً برای حساب دیگری استفاده شده است" }, 409);
-      }
-      if (targetType === "contractor" && await checkContractorNameUniqueness(f.name, f.companyId || null, null)) {
-        return json({ error: "برای این پروژه/شرکت، پیمانکاری با همین نام قبلاً ثبت شده است — به‌جای ساختن حساب جدید، همان حساب را ویرایش یا رمز آن را بازنشانی کنید." }, 409);
       }
       const existing = await restFetch(`${table}?username=eq.${encodeURIComponent(f.username.trim())}&select=id`);
       if (existing.ok && Array.isArray(existing.data) && existing.data.length > 0) {
@@ -161,16 +146,6 @@ Deno.serve(async (req) => {
       }
       if (f.phone && await checkContactUniqueness("phone", f.phone, table, targetId)) {
         return json({ error: "این شماره موبایل قبلاً برای حساب دیگری استفاده شده است" }, 409);
-      }
-      if (targetType === "contractor" && "name" in f && f.name?.trim()) {
-        let companyIdForCheck = f.companyId;
-        if (!("companyId" in f)) {
-          const cur = await restFetch(`contractors?id=eq.${targetId}&select=company_id`);
-          companyIdForCheck = cur.ok && Array.isArray(cur.data) && cur.data[0] ? cur.data[0].company_id : null;
-        }
-        if (await checkContractorNameUniqueness(f.name, companyIdForCheck || null, targetId)) {
-          return json({ error: "برای این پروژه/شرکت، پیمانکاری با همین نام قبلاً ثبت شده است." }, 409);
-        }
       }
       const payload: Record<string, unknown> = {};
       if ("name" in f) payload.name = f.name;
