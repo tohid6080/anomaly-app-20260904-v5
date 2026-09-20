@@ -32,7 +32,30 @@ export default function UpdateAvailableBanner() {
     check();
     // یک بررسی دوباره هر ۶ ساعت، در صورتی که اپ مدت طولانی باز بماند.
     const interval = setInterval(check, 6 * 60 * 60 * 1000);
-    return () => { alive = false; clearInterval(interval); };
+    // مشکلِ واقعی‌ای که کاربر گزارش داد: اگر اپ از قبل باز بوده (حتی در
+    // پس‌زمینه) و سوپرادمین همین حین یک نسخه‌ی تازه منتشر کند، این
+    // کامپوننت فقط یک‌بار در mount چک می‌کرد و تا ۶ ساعت بعد یا
+    // بستن/بازکردنِ کاملِ اپ، خبردار نمی‌شد. همان الگویِ resume-detection
+    // که AppInnerWithAppearance برای تنظیماتِ ظاهری استفاده می‌کند، اینجا
+    // هم اضافه شد — با هر بازگشتِ اپ به فورگراند دوباره چک می‌شود.
+    const onVisible = () => { if (document.visibilityState === "visible") check(); };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    let capRemove = null;
+    (async () => {
+      try {
+        const { App: CapApp } = await import("@capacitor/app");
+        const h = await CapApp.addListener("appStateChange", ({ isActive }) => { if (isActive) check(); });
+        capRemove = () => h.remove();
+      } catch { /* پلاگین نبود — بی‌اهمیت، resume از راهِ visibilitychange هم پوشش دارد */ }
+    })();
+    return () => {
+      alive = false;
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+      if (capRemove) capRemove();
+    };
   }, []);
 
   if (!Capacitor.isNativePlatform()) return null;
