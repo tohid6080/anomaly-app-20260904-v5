@@ -10896,7 +10896,7 @@ export const translations = {
   "amMobileTabsCount": { "fa": "{n} گزینه انتخاب‌شده (حداقل {min}، حداکثر {max})", "en": "{n} selected (min {min}, max {max})" },
   "scErrSaveMobileTabs": { "fa": "خطا در ذخیره‌ی چیدمان پیش‌فرض نوار پایین", "en": "Failed to save the default bottom-nav layout" },
 
-  "lpApkBannerText": { "fa": "نسخه‌ی جدید اپلیکیشن اندروید ({version}) منتشر شد", "en": "New Android app version ({version}) is available" },
+  "lpApkBannerText": { "fa": "نسخه‌ی جدید اپلیکیشن اندروید IHMS ({version}) منتشر شد", "en": "A new version of the IHMS Android app ({version}) has been released" },
   "lpApkBannerBtn": { "fa": "دانلود مستقیم APK", "en": "Download APK" }
 };
 

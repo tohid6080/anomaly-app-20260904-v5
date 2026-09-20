@@ -4851,6 +4851,6 @@ export const de = {
   "amMobileTabsCount": "{n} ausgewählt (min. {min}, max. {max})",
   "scErrSaveMobileTabs": "Speichern des Standard-Layouts der unteren Navigation fehlgeschlagen",
 
-  "lpApkBannerText": "Neue Android-App-Version ({version}) verfügbar",
+  "lpApkBannerText": "Eine neue Version der IHMS-Android-App ({version}) wurde veröffentlicht",
   "lpApkBannerBtn": "APK herunterladen",
 };
