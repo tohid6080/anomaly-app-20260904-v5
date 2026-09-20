@@ -4842,4 +4842,12 @@ export const de = {
   "evalNaReason_hcmsRiskNotContractorLinked": "HCMS/BowTie-Daten sind derzeit nach Einheit gruppiert, nicht nach Auftragnehmer.",
   "evalCompareChartTitle": "Auftragnehmervergleich in dieser Periode",
   "evalTrendChartTitle": "Trend dieses Auftragnehmers über frühere Perioden",
+
+  "saScTabAppManagement": "App-Verwaltung",
+  "amSecTrialBtnTitle": "Button für Testanfrage & Bewertung",
+  "amSecTrialBtnDesc": "Den Button für die kostenlose Bewertungs- und Testtarifanfrage im Anmeldedialog ein- oder ausblenden — unabhängig vom Inhalt der Startseite.",
+  "amSecMobileTabsTitle": "Standard-Layout der unteren Navigation (nach der Anmeldung)",
+  "amSecMobileTabsDesc": "Dies ist nur das Anfangslayout — sobald ein Nutzer es in seinen eigenen Einstellungen ändert, hat seine persönliche Wahl immer Vorrang.",
+  "amMobileTabsCount": "{n} ausgewählt (min. {min}, max. {max})",
+  "scErrSaveMobileTabs": "Speichern des Standard-Layouts der unteren Navigation fehlgeschlagen",
 };

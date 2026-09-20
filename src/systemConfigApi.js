@@ -719,3 +719,36 @@ export async function saveLandingPageContent(content, updatedBy) {
   if (!sbOk(rows)) return { __error: true, message: tr("scErrSaveLanding") };
   return { ok: true };
 }
+
+// ---------- پیش‌فرضِ سراسریِ نوارِ پایینِ موبایل ----------
+// همان الگویِ landing_page_content: یک ردیفِ دیگر در همان system_settings
+// (بدونِ جدولِ جدید). این فقط «مقدارِ اولیه»ی نوارِ پایین را برایِ
+// کاربرانی که هنوز شخصی‌سازی نکرده‌اند تعیین می‌کند — همین که کاربر از
+// «تنظیمات» خودش چیدمان را عوض کند، آن انتخابِ شخصی (در localStorage
+// per-user) همیشه اولویت دارد و این پیش‌فرض دیگر اثری ندارد.
+const MOBILE_TAB_DEFAULT_KEY = "mobile_tab_default";
+
+export async function loadMobileTabDefault() {
+  let rows = null;
+  try {
+    rows = await sb(`system_settings?key=eq.${MOBILE_TAB_DEFAULT_KEY}&select=value_text`);
+  } catch { rows = null; }
+  if (!sbOk(rows) || rows.length === 0 || !rows[0].value_text) return null;
+  try {
+    const parsed = JSON.parse(rows[0].value_text);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch { return null; }
+}
+
+export async function saveMobileTabDefault(keys, updatedBy) {
+  const payload = [{
+    key: MOBILE_TAB_DEFAULT_KEY,
+    value_text: JSON.stringify(Array.isArray(keys) ? keys : []),
+    value_numeric: null,
+    updated_at: new Date().toISOString(),
+    updated_by: updatedBy || "",
+  }];
+  const rows = await sb("system_settings?on_conflict=key", { method: "POST", body: JSON.stringify(payload), prefer: "resolution=merge-duplicates,return=representation" }, "super_admin");
+  if (!sbOk(rows)) return { __error: true, message: tr("scErrSaveMobileTabs") };
+  return { ok: true };
+}

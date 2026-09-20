@@ -14,6 +14,7 @@ import { loadCompanyModules, addCompanyModule, updateCompanyModule, removeCompan
 import { loadModulePrices, loadServices, formatCurrencyAmount } from "../pricingApi.js";
 import AdminAnalytics from "../admin/AdminAnalytics.jsx";
 import LandingPageManagementTab from "./LandingPageManagementTab.jsx";
+import AppManagementTab from "./AppManagementTab.jsx";
 import PlatformSurveysPage from "./PlatformSurveysPage.jsx";
 import { toJalaliSafe, toJalaliDateTime, JalaliDateInput, JalaliDateTimeInput } from "../personnel/jalaliDate.jsx";
 import {
@@ -1251,6 +1252,7 @@ function CompaniesPage({
 const SYSTEM_CONFIG_TABS = [
   { key: "modules", labelKey: "saScTabModules", icon: LayoutGrid },
   { key: "landing", labelKey: "saScTabLanding", icon: Globe },
+  { key: "appManagement", labelKey: "saScTabAppManagement", icon: Settings2 },
   { key: "dashboard", labelKey: "saScTabDashboard", icon: PanelsTopLeft },
   { key: "notifications", labelKey: "saScTabNotifications", icon: Bell },
   { key: "appearance", labelKey: "saScTabAppearance", icon: Palette },
@@ -1279,6 +1281,7 @@ function SystemConfigPage({ currentAdmin, companies }) {
       </div>
       {tab === "modules" && <ModuleManagementTab currentAdmin={currentAdmin} />}
       {tab === "landing" && <LandingPageManagementTab currentAdmin={currentAdmin} />}
+      {tab === "appManagement" && <AppManagementTab currentAdmin={currentAdmin} />}
       {tab === "dashboard" && <DashboardManagementTab currentAdmin={currentAdmin} />}
       {tab === "notifications" && <NotificationManagementTab currentAdmin={currentAdmin} />}
       {tab === "appearance" && <AppearanceManagementTab currentAdmin={currentAdmin} />}

@@ -88,7 +88,10 @@ export default function LandingPageManagementTab({ currentAdmin }) {
 
       <Section title={t("lpSecButtons")}>
         <p style={{ fontSize: 11, color: THEME.text3, marginBottom: 10, lineHeight: 1.8 }}>{t("lpButtonsNote")}</p>
-        {LANDING_BUTTON_KEYS.map((key) => (
+        {/* دکمه‌ی «درخواست ارزیابی و پلن آزمایشی» عمداً اینجا نیست — طبق
+            خواسته‌ی صریح، مستقل شد و حالا در «مدیریت اپلیکیشن» ویرایش
+            می‌شود (همان buttons.loginTrialRequest، همین محتوا/همین ذخیره). */}
+        {LANDING_BUTTON_KEYS.filter((key) => key !== "loginTrialRequest").map((key) => (
           <div key={key} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 2px", borderBottom: `1px solid ${THEME.borderSoft}` }}>
             <span style={{ flex: 1, fontSize: 12.5, color: THEME.text, fontWeight: 600 }}>{t("lpBtn_" + key)}</span>
             <button type="button" onClick={() => toggleButton(key)}

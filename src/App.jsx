@@ -24,7 +24,7 @@ const IncidentsListPage = lazy(() => import("./incidents/IncidentsListPage.jsx")
 const PSSRListPage = lazy(() => import("./pssr/PSSRListPage.jsx"));
 import { loadOpenActionsForResponsible } from "./pssr/pssrMeetingsApi.js";
 import { loadHomeKpiSummary } from "./dashboard/homeKpiApi.js";
-import { loadModuleConfig, loadNotificationTypes, loadAppearanceConfig, applyAppearanceToDom, effectiveAppearance, cacheAppearanceConfig, readCachedAppearanceConfig, syncAppearanceNow, loadActiveAnnouncements, loadDashboardWidgetConfig, loadLandingPageContent, readCachedLandingPageContent } from "./systemConfigApi.js";
+import { loadModuleConfig, loadNotificationTypes, loadAppearanceConfig, applyAppearanceToDom, effectiveAppearance, cacheAppearanceConfig, readCachedAppearanceConfig, syncAppearanceNow, loadActiveAnnouncements, loadDashboardWidgetConfig, loadLandingPageContent, readCachedLandingPageContent, loadMobileTabDefault } from "./systemConfigApi.js";
 import { mergeWidgetConfig, defaultWidgetConfig } from "./dashboard/dashboardWidgets.js";
 import { submitToGate, loadPendingGateItems, loadAssignedGateItems, loadAssignedReviewItemsForModule, deleteGateItemsForRecord, loadCompanyStaffOptions, assignForReview, submitReview, approveGateItem, rejectGateItem, GATE_STATUS_LABELS, gateStatusLabel } from "./hseGateApi.js";
 import SubscriptionGate, { PlanSelectionScreen } from "./subscription/SubscriptionGate.jsx";
@@ -1424,7 +1424,7 @@ function LoginFormCard({
   return (
     <div
       onClick={onClick}
-      style={{ width: 360, maxWidth: "100%", background: THEME.surface, borderRadius: 18, border: `1px solid ${THEME.border}`, boxShadow: "0 40px 90px -40px rgba(0,0,0,0.55)", padding: "44px 26px 32px", maxHeight: "calc(100vh - 20px)", overflowY: "auto", display: "flex", flexDirection: "column" }}
+      style={{ width: 520, maxWidth: "100%", background: THEME.surface, borderRadius: 18, border: `1px solid ${THEME.border}`, boxShadow: "0 40px 90px -40px rgba(0,0,0,0.55)", padding: "70px 34px 52px", maxHeight: "calc(100vh - 20px)", overflowY: "auto", display: "flex", flexDirection: "column" }}
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2 }}>
         <LanguageSelect align="start" />
@@ -1434,8 +1434,8 @@ function LoginFormCard({
           </button>
         )}
       </div>
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
-        <IhmsLogo size={168} src={appearance?.logoUrl} />
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
+        <IhmsLogo size={504} src={appearance?.logoUrl} />
       </div>
       <h2 style={{ textAlign: "center", marginBottom: 1, fontSize: 15.5, color: THEME.heading, fontWeight: 800, fontFamily: THEME.font }}>{t("loginButton")}</h2>
       <p style={{ textAlign: "center", color: THEME.text3, fontSize: 11, marginTop: 2, marginBottom: 8, fontFamily: THEME.font, fontWeight: 600 }}>{t("loginTagline")}</p>
@@ -3881,9 +3881,31 @@ const MOBILE_GROUP_ORDER = [
 // نوارِ پایینِ موبایل — پیش‌فرض همان چهار آیتمِ قبلی. سرپرستِ کارفرما
 // می‌تواند در «تنظیمات» آیتم‌ها و ترتیبشان را عوض کند (حداکثر ۵ برای
 // خوانایی). کلیدها همان view keys اند؛ setView(key) کافی است.
+// این آرایه فقط آخرین خطِ دفاع است — اگر پیش‌فرضِ سراسریِ سوپرادمین
+// («مدیریت اپلیکیشن») هنوز بارگذاری نشده یا هیچ‌وقت تنظیم نشده باشد.
+// حالتِ معمول: useSystemMobileTabDefault پایین‌تر جایگزینش می‌کند.
 const MOBILE_TAB_DEFAULT = ["menu", "operationalDashboard", "modules", "notifications"];
 const MOBILE_TAB_MAX = 5;
 const MOBILE_TAB_MIN = 2;
+
+// پیش‌فرضِ سراسریِ نوارِ پایین را می‌خواند و اعتبارسنجی می‌کند — فقط برایِ
+// کاربرانی که خودشان هنوز چیدمانِ نوار پایین را شخصی‌سازی نکرده‌اند
+// (usePersistedState هنوز null است) به‌کار می‌رود؛ انتخابِ شخصیِ کاربر
+// همیشه اولویت دارد و این هوک اصلاً رویش اثر نمی‌گذارد.
+function useSystemMobileTabDefault(t) {
+  const [sysDefault, setSysDefault] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    loadMobileTabDefault().then((keys) => {
+      if (!alive || !Array.isArray(keys)) return;
+      const meta = mobileTabMeta(t);
+      const valid = keys.filter((k) => meta[k]).slice(0, MOBILE_TAB_MAX);
+      if (valid.length >= MOBILE_TAB_MIN) setSysDefault(valid);
+    }).catch(() => { /* بی‌اهمیت — پیش‌فرضِ ثابتِ کد همچنان به‌کار می‌رود */ });
+    return () => { alive = false; };
+  }, [t]);
+  return sysDefault || MOBILE_TAB_DEFAULT;
+}
 function mobileTabMeta(t) {
   return {
     menu: { icon: Home, label: t("mobTabHome") },
@@ -4954,6 +4976,8 @@ function EmployerDashboard({ onLogout, currentUser }) {
   // شخصی‌سازیِ نوارِ پایینِ موبایل (فقط سرپرست کارفرما، در «تنظیمات»). null =
   // پیش‌فرض. per-user در localStorage، پس بعد از ورودِ دوباره باقی می‌ماند.
   const [mobileTabs, setMobileTabs] = usePersistedState("ihms_mobile_tabs_" + (currentUser?.username || "anon"), null);
+  const systemMobileTabDefault = useSystemMobileTabDefault(t);
+  const effectiveMobileTabs = mobileTabs || systemMobileTabDefault;
   useEffect(() => { trackPageView(currentUser, view); }, [view]);
   // دکمهٔ برگشت گوشی مثل برگشت داخلی سامانه (بدون خروج از نرم‌افزار).
   useAndroidBackButton(() => { if (view !== "menu") { setView("menu"); return true; } return false; });
@@ -5184,7 +5208,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       view={view}
       setView={setView}
       sidebarModules={sidebarModules}
-      mobileTabs={mobileTabs}
+      mobileTabs={effectiveMobileTabs}
     >
       {/* موبایل: تبِ «ماژول‌ها» — همان ترتیبِ «مدیریت ماژول‌ها» (applyModuleConfig)،
           یکسان با Sidebarِ دسکتاپ، ولی جست‌وجوشونده و گروه‌بندی‌شده بر اساسِ حوزه. */}
@@ -5318,7 +5342,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
         </div>
       )}
 
-      {view === "profile" && <ProfileView onBack={() => setView("menu")} currentUser={currentUser} roleLabel={canEdit ? t("roleLabelEmployer") : t("roleLabelEmployerViewOnly")} mobileTabsProps={{ candidates: bottomNavCandidates, value: mobileTabs, onSave: setMobileTabs }} />}
+      {view === "profile" && <ProfileView onBack={() => setView("menu")} currentUser={currentUser} roleLabel={canEdit ? t("roleLabelEmployer") : t("roleLabelEmployerViewOnly")} mobileTabsProps={{ candidates: bottomNavCandidates, value: effectiveMobileTabs, onSave: setMobileTabs }} />}
       {view === "chat" && <ChatDashboard onBack={() => setView("menu")} currentUser={currentUser} />}
       {view === "riskKnowledgeManagement" && <LazyPanel><RiskKnowledgeManager wide={isDesktop} onBack={() => setView("riskAssessment")} currentUser={currentUser} /></LazyPanel>}
       {!isDesktop && view === "anomalyForm" && anomalyCanEdit && <AnomalyForm onBack={() => setView("anomalyReport")} currentUser={currentUser} onSaved={() => setView("anomalyList")} />}
@@ -5398,6 +5422,8 @@ function ContractorDashboard({ onLogout, currentUser }) {
   const [view, setView] = usePersistedState("ihms_view_contractor", "menu");
   // شخصی‌سازیِ نوارِ پایینِ موبایل — همان قابلیتِ پنلِ کارفرما، per-user.
   const [mobileTabs, setMobileTabs] = usePersistedState("ihms_mobile_tabs_" + (currentUser?.username || "anon"), null);
+  const systemMobileTabDefault = useSystemMobileTabDefault(t);
+  const effectiveMobileTabs = mobileTabs || systemMobileTabDefault;
   useEffect(() => { trackPageView(currentUser, view); }, [view]);
   // دکمهٔ برگشت گوشی مثل برگشت داخلی سامانه (بدون خروج از نرم‌افزار).
   useAndroidBackButton(() => { if (view !== "menu") { setView("menu"); return true; } return false; });
@@ -5583,7 +5609,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
       view={view}
       setView={setView}
       sidebarModules={sidebarModules}
-      mobileTabs={mobileTabs}
+      mobileTabs={effectiveMobileTabs}
     >
       {/* موبایل: تبِ «ماژول‌ها» — جست‌وجوشونده و گروه‌بندی‌شده، همان ترتیبِ Sidebarِ دسکتاپ. */}
       {view === "modules" && (
@@ -5678,7 +5704,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
         </div>
       )}
 
-      {view === "profile" && <ProfileView onBack={() => setView("menu")} currentUser={currentUser} roleLabel={t("roleLabelContractor")} mobileTabsProps={{ candidates: bottomNavCandidates, value: mobileTabs, onSave: setMobileTabs }} />}
+      {view === "profile" && <ProfileView onBack={() => setView("menu")} currentUser={currentUser} roleLabel={t("roleLabelContractor")} mobileTabsProps={{ candidates: bottomNavCandidates, value: effectiveMobileTabs, onSave: setMobileTabs }} />}
       {view === "chat" && <ChatDashboard onBack={() => setView("menu")} currentUser={currentUser} />}
       {view === "hcmsDashboard" && <HcmsDashboard wide={isDesktop} onBack={() => setView("riskAssessment")} currentUser={currentUser} />}
       {view === "bowtieDashboard" && <BowTieDashboard wide={isDesktop} role="CONTRACTOR" onBack={() => setView("riskAssessment")} currentUser={currentUser} readOnly={getAccessLevel(permMap, "riskAssessment") === "view"} />}

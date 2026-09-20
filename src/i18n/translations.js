@@ -10886,7 +10886,15 @@ export const translations = {
   "evalNaReason_categoryDisabled": { "fa": "این ماژول برای ارزیابی غیرفعال است.", "en": "This module is disabled for evaluation." },
   "evalNaReason_hcmsRiskNotContractorLinked": { "fa": "داده‌ی HCMS/BowTie امروز بر اساس «واحد» گروه‌بندی می‌شود، نه پیمانکار.", "en": "HCMS/BowTie data is currently grouped by unit, not by contractor." },
   "evalCompareChartTitle": { "fa": "مقایسه پیمانکاران در این دوره", "en": "Contractors compared in this period" },
-  "evalTrendChartTitle": { "fa": "روند این پیمانکار در دوره‌های قبل", "en": "This contractor's trend across periods" }
+  "evalTrendChartTitle": { "fa": "روند این پیمانکار در دوره‌های قبل", "en": "This contractor's trend across periods" },
+
+  "saScTabAppManagement": { "fa": "مدیریت اپلیکیشن", "en": "App Management" },
+  "amSecTrialBtnTitle": { "fa": "دکمه درخواست ارزیابی و پلن آزمایشی", "en": "Trial request & assessment button" },
+  "amSecTrialBtnDesc": { "fa": "نمایش/عدمِ نمایشِ دکمه‌ی درخواستِ ارزیابی و پلن آزمایشی رایگان داخل پنجره‌ی ورود — مستقل از محتوای صفحه اصلی.", "en": "Show or hide the free assessment & trial plan request button inside the sign-in dialog — independent of the landing page content." },
+  "amSecMobileTabsTitle": { "fa": "چیدمان پیش‌فرض نوار پایین (بعد از ورود)", "en": "Default bottom nav layout (after login)" },
+  "amSecMobileTabsDesc": { "fa": "این چیدمان فقط حالت اولیه است — به‌محض این‌که کاربر از «تنظیمات» خودش چیدمان را عوض کند، انتخاب خودش همیشه اولویت دارد.", "en": "This is only the initial layout — as soon as a user changes it from their own Settings, their personal choice always takes priority." },
+  "amMobileTabsCount": { "fa": "{n} گزینه انتخاب‌شده (حداقل {min}، حداکثر {max})", "en": "{n} selected (min {min}, max {max})" },
+  "scErrSaveMobileTabs": { "fa": "خطا در ذخیره‌ی چیدمان پیش‌فرض نوار پایین", "en": "Failed to save the default bottom-nav layout" }
 };
 
 // ---------- تزریقِ تنبلِ ترجمهٔ آلمانی ----------
