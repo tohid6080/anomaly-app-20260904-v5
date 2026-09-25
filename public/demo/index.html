@@ -2392,6 +2392,8 @@ document.getElementById("login-form").addEventListener("submit", function(e){
 function doLogout(){
   document.getElementById("app-shell").hidden = true;
   document.getElementById("screen-login").hidden = false;
+  document.getElementById("wrap-root").classList.remove("mode-mobile");
+  document.body.classList.remove("phone-preview");
 }
 document.getElementById("btn-logout").addEventListener("click", doLogout);
 document.getElementById("tb-more-logout").addEventListener("click", doLogout);
