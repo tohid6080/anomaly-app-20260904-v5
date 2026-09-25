@@ -2340,6 +2340,18 @@ export const translations = {
     "fa": "هیچ Bucket ای یافت نشد",
     "en": "No buckets found"
   },
+  "saCleanupOrphansBtn": {
+    "fa": "پاکسازی فایل‌های یتیم",
+    "en": "Clean up orphaned files"
+  },
+  "saCleanupOrphansConfirm": {
+    "fa": "فایل‌های APKای که دیگر به هیچ نسخه‌ای در «مدیریت آپدیت نرم‌افزار و موبایل» وصل نیستند برای همیشه حذف می‌شوند. ادامه می‌دهید؟",
+    "en": "APK files no longer linked to any release in \"Software & Mobile Update Management\" will be permanently deleted. Continue?"
+  },
+  "saCleanupOrphansResult": {
+    "fa": "{count} فایلِ یتیم حذف شد — {size} آزاد شد.",
+    "en": "{count} orphaned file(s) deleted — {size} freed."
+  },
   "saCustomerCompanies": {
     "fa": "شرکت‌های مشتری",
     "en": "Customer Companies"
