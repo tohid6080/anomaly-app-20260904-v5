@@ -349,7 +349,7 @@ const L = {
       "طراحی نقشهٔ لیفتینگ", "محاسبه‌گرِ شیب و عرضِ ایمنِ گودبرداری", "محاسبه و پایشِ مصرفِ برق", "محاسبهٔ مصرفِ سوختِ ناوگان",
     ],
     modCats: ["همه", "ایمنی", "بهداشت", "محیط زیست", "مدیریت", "گزارش‌گیری"],
-    modMore: "مشاهده جزئیات", soon: "به‌زودی",
+    soon: "به‌زودی",
     mods: pairsToMods([
       ["حوادث (شبه‌حوادث به‌زودی)", "ثبت، بررسی و تحلیل حوادث به روش Tripod Beta."],
       ["سیستم به‌روزرسانی ارزیابی ریسک", "تأثیرگذاری بر روی بریرهای BowTie طبق موتور اثربخشی."],
@@ -445,7 +445,7 @@ const L = {
       "Lifting Plan Designer", "Excavation slope & width calculator", "Electricity consumption calculator", "Fleet fuel calculator",
     ],
     modCats: ["All", "Safety", "Health", "Environment", "Management", "Reporting"],
-    modMore: "Details", soon: "Coming soon",
+    soon: "Coming soon",
     mods: pairsToMods([
       ["Incidents (near-misses coming soon)", "Log, review and analyse incidents using the Tripod Beta method."],
       ["Living risk-assessment system", "Feeds BowTie barrier effectiveness through the effectiveness engine."],
@@ -541,7 +541,7 @@ const L = {
       "Hebeplan-Designer", "Rechner für Böschungsneigung und Grabenbreite", "Stromverbrauchsrechner", "Kraftstoffverbrauchsrechner für den Fuhrpark",
     ],
     modCats: ["Alle", "Sicherheit", "Gesundheit", "Umwelt", "Management", "Berichte"],
-    modMore: "Details", soon: "Demnächst",
+    soon: "Demnächst",
     mods: pairsToMods([
       ["Vorfälle (Beinaheunfälle demnächst)", "Vorfälle erfassen, prüfen und mit der Tripod-Beta-Methode analysieren."],
       ["Fortlaufende Risikobewertung", "Speist die Wirksamkeit der BowTie-Barrieren über die Wirksamkeits-Engine."],
@@ -978,8 +978,7 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, log
                 <div className="mT">{m.title}</div>
                 <div className="mD">{m.desc}</div>
                 {m.soon
-                  ? <span className="more" style={{ color: C.ink3, fontWeight: 700 }}>{x.soon}</span>
-                  : <span className="more">{x.modMore} <Arrow size={13} /></span>}
+                  && <span className="more" style={{ color: C.ink3, fontWeight: 700 }}>{x.soon}</span>}
               </div>
             ))}
           </div>
