@@ -77,13 +77,12 @@ const LP_CSS = `
 .ihms-lp *{box-sizing:border-box}
 .ihms-lp{font-family:${FONT};color:${C.ink};line-height:1.75;-webkit-font-smoothing:antialiased;
   background:
-    linear-gradient(${C.line} 1px, transparent 1px),
-    linear-gradient(90deg, ${C.line} 1px, transparent 1px),
+    radial-gradient(circle, ${C.line} 1.5px, transparent 1.5px),
     radial-gradient(1100px 620px at 100% 0%, ${C.tealSoft} 0%, transparent 58%),
     radial-gradient(900px 560px at 0% 42%, rgba(18,181,166,.07) 0%, transparent 55%),
     radial-gradient(820px 520px at 100% 82%, rgba(14,44,63,.06) 0%, transparent 55%),
     ${C.bg};
-  background-size:44px 44px, 44px 44px, auto, auto, auto, auto}
+  background-size:24px 24px, auto, auto, auto, auto}
 .ihms-lp h1,.ihms-lp h2,.ihms-lp h3,.ihms-lp p{margin:0}
 .ihms-lp a{color:inherit;text-decoration:none}
 .ihms-lp button{font-family:inherit}
@@ -157,7 +156,7 @@ const LP_CSS = `
 .ihms-lp .demo-cta-row .btn.copied{border-color:${C.good};color:${C.good}}
 .ihms-lp .hero-photo{position:relative;border-radius:22px;overflow:hidden;aspect-ratio:4/3.4;border:1px solid ${C.line};
   background:linear-gradient(160deg,${C.navy},${C.navyDeep});box-shadow:0 40px 80px -40px rgba(8,26,39,.55)}
-.ihms-lp .hero-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.ihms-lp .hero-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .ihms-lp .hero-photo .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.5);font-weight:700;font-size:13px;padding:24px;text-align:center}
 .ihms-lp .hero-photo .grid-lines{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:34px 34px}
 @media (max-width:900px){
