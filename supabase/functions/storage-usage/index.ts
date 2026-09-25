@@ -17,7 +17,58 @@
 //   supabase functions deploy storage-usage
 
 import { getCallerClaims } from "../_shared/jwtUtils.ts";
-import { json, CORS_HEADERS, callRpc, restFetch } from "../_shared/supabaseAdmin.ts";
+import { json, CORS_HEADERS, callRpc, restFetch, SUPABASE_URL, SERVICE_ROLE_KEY } from "../_shared/supabaseAdmin.ts";
+
+const APK_BUCKET = "app-releases";
+
+// فایل‌های APK همیشه زیرِ v<version_code>/<file>.apk هستند (دو سطح ثابت) —
+// سطحِ ریشه فقط پوشه‌ها را برمی‌گرداند (id=null)، برای فایل‌های واقعی باید
+// هر پوشه را جدا لیست کرد.
+async function listBucketPrefix(prefix: string): Promise<any[]> {
+  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/list/${APK_BUCKET}`, {
+    method: "POST",
+    headers: { apikey: SERVICE_ROLE_KEY, Authorization: `Bearer ${SERVICE_ROLE_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ prefix, limit: 1000, sortBy: { column: "name", order: "asc" } }),
+  });
+  if (!res.ok) return [];
+  const data = await res.json().catch(() => []);
+  return Array.isArray(data) ? data : [];
+}
+
+async function listAllApkFiles(): Promise<{ path: string; bytes: number }[]> {
+  const top = await listBucketPrefix("");
+  const out: { path: string; bytes: number }[] = [];
+  for (const entry of top) {
+    if (entry.id !== null) continue; // فقط پوشه‌های v<N>
+    const sub = await listBucketPrefix(`${entry.name}/`);
+    for (const f of sub) {
+      if (f.id === null) continue;
+      out.push({ path: `${entry.name}/${f.name}`, bytes: Number(f.metadata?.size) || 0 });
+    }
+  }
+  return out;
+}
+
+async function removeBucketPaths(paths: string[]): Promise<boolean> {
+  if (paths.length === 0) return true;
+  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${APK_BUCKET}`, {
+    method: "DELETE",
+    headers: { apikey: SERVICE_ROLE_KEY, Authorization: `Bearer ${SERVICE_ROLE_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ prefixes: paths }),
+  });
+  return res.ok;
+}
+
+// مسیرِ واقعی یک ردیفِ app_releases — apk_path اگر ثبت شده، وگرنه از خودِ
+// apk_url استخراج می‌شود (همان الگویِ derivePathFromApkUrl سمتِ کلاینت).
+function releaseStoragePath(row: any): string {
+  const direct = String(row?.apk_path || "").trim();
+  if (direct) return direct;
+  const url = String(row?.apk_url || "");
+  const marker = `/storage/v1/object/public/${APK_BUCKET}/`;
+  const i = url.indexOf(marker);
+  return i === -1 ? "" : decodeURIComponent(url.slice(i + marker.length));
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS_HEADERS });
@@ -47,6 +98,30 @@ Deno.serve(async (req) => {
       );
       if (!result.ok) return json({ error: "خطا در ذخیره‌ی ظرفیت" }, 500);
       return json({ ok: true });
+    }
+
+    // ---------- پاکسازی فایل‌های یتیمِ باکتِ app-releases ----------
+    // نسخه‌هایی که قبلاً (پیش از رفعِ باگِ apk_path) از سوپرادمین حذف
+    // شده‌اند، APKشان در Storage باقی مانده چون هیچ ردیفی دیگر به آن اشاره
+    // نمی‌کند. این‌جا هر فایلِ داخلِ باکت را با ردیف‌های واقعاً موجودِ
+    // app_releases مقایسه می‌کند و هرچه در آن‌ها نبود را پاک می‌کند.
+    if (action === "cleanup_app_releases") {
+      const releasesRes = await restFetch("app_releases?select=apk_path,apk_url");
+      const rows = releasesRes.ok && Array.isArray(releasesRes.data) ? releasesRes.data : [];
+      const keep = new Set<string>();
+      for (const r of rows) {
+        const p = releaseStoragePath(r);
+        if (p) keep.add(p);
+      }
+
+      const allFiles = await listAllApkFiles();
+      const orphans = allFiles.filter((f) => !keep.has(f.path));
+      const freedBytes = orphans.reduce((sum, f) => sum + f.bytes, 0);
+
+      const removed = await removeBucketPaths(orphans.map((f) => f.path));
+      if (!removed) return json({ error: "خطا در حذفِ فایل‌های یتیم از Storage" }, 500);
+
+      return json({ ok: true, deletedCount: orphans.length, freedBytes, deletedPaths: orphans.map((f) => f.path) });
     }
 
     // ---------- خواندن وضعیت کامل Storage ----------

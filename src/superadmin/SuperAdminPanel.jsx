@@ -27,7 +27,7 @@ import {
   computeContractAmount, computeMonthlyRecurringAmount,
   computePaymentStatus, isPaymentOverdue, computeMonthlyPaymentAlarm, computeSubscriptionAlertTier, effectiveExpiryDate,
   loadCompanyUsageStats, loadRecentLogins, loadRecentFailedLogins, computeInactiveCompanies, loadLandingPageStats,
-  loadAuditLog, deleteAuditLogEntry, loadStorageUsage, setStorageCapacity, storageUsageStatus,
+  loadAuditLog, deleteAuditLogEntry, loadStorageUsage, setStorageCapacity, storageUsageStatus, cleanupOrphanedAppReleaseFiles,
   loadCompanyBackups, loadBackupStorageUsage, triggerCompanyBackup, getBackupDownloadUrl,
   deleteCompanyBackup, restoreCompanyBackup, backupStatusMeta, BACKUP_TIERS,
   createBackupImportUpload, uploadBackupImport, validateBackupImport, restoreBackupImport, deleteBackupImport,
@@ -504,6 +504,8 @@ function StorageUsagePage() {
   const [editingCapacity, setEditingCapacity] = useState(false);
   const [capacityInput, setCapacityInput] = useState("");
   const [savingCapacity, setSavingCapacity] = useState(false);
+  const [cleaningUp, setCleaningUp] = useState(false);
+  const [cleanupMsg, setCleanupMsg] = useState("");
 
   const capacityBytes = data?.capacityMb ? data.capacityMb * 1024 * 1024 : null;
   const usedBytes = data?.totalBytesUsed || 0;
@@ -518,6 +520,16 @@ function StorageUsagePage() {
     setSavingCapacity(false);
     if (result?.__error) { alert(result.message); return; }
     setEditingCapacity(false);
+    await refresh();
+  };
+
+  const handleCleanupOrphans = async () => {
+    if (!window.confirm(t("saCleanupOrphansConfirm"))) return;
+    setCleanupMsg(""); setCleaningUp(true);
+    const result = await cleanupOrphanedAppReleaseFiles();
+    setCleaningUp(false);
+    if (result?.__error) { setCleanupMsg(result.message); return; }
+    setCleanupMsg(t("saCleanupOrphansResult", { count: result.deletedCount, size: formatBytes(result.freedBytes) }));
     await refresh();
   };
 
@@ -619,6 +631,7 @@ function StorageUsagePage() {
                     <th style={{ textAlign: "start", padding: "6px 8px" }}>Bucket</th>
                     <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColUsedVolume")}</th>
                     <th style={{ textAlign: "center", padding: "6px 8px" }}>{t("saColFileCount")}</th>
+                    <th style={{ textAlign: "center", padding: "6px 8px" }}></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -627,14 +640,22 @@ function StorageUsagePage() {
                       <td style={{ padding: "8px", fontWeight: 600, direction: "ltr", textAlign: "start" }}>{b.bucket}</td>
                       <td style={{ padding: "8px", textAlign: "center" }}>{formatBytes(b.bytesUsed)}</td>
                       <td style={{ padding: "8px", textAlign: "center" }}>{b.objectCount.toLocaleString(numLocale())}</td>
+                      <td style={{ padding: "8px", textAlign: "center" }}>
+                        {b.bucket === "app-releases" && (
+                          <button type="button" onClick={handleCleanupOrphans} disabled={cleaningUp} style={{ ...btnStyle(THEME.warn), fontSize: 10.5, padding: "5px 10px" }}>
+                            {cleaningUp ? t("saChecking") : t("saCleanupOrphansBtn")}
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                   {data.byBucket.length === 0 && (
-                    <tr><td colSpan={3} style={{ padding: 20, textAlign: "center", color: THEME.text3 }}>{t("saNoBucketsFound")}</td></tr>
+                    <tr><td colSpan={4} style={{ padding: 20, textAlign: "center", color: THEME.text3 }}>{t("saNoBucketsFound")}</td></tr>
                   )}
                 </tbody>
               </table>
             </div>
+            {cleanupMsg && <p style={{ fontSize: 11.5, color: THEME.teal, marginTop: 10, lineHeight: 1.8 }}>{cleanupMsg}</p>}
           </div>
         </>
       )}

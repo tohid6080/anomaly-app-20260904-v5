@@ -967,6 +967,12 @@ export async function setStorageCapacity(capacityMb) {
   return callStorageUsage({ action: "set_capacity", capacityMb });
 }
 
+// حذفِ فایل‌های APKِ یتیم (بدون ردیفِ متناظر در app_releases) از باکتِ
+// app-releases — برای پاک‌سازیِ فایل‌هایی که قبل از رفعِ باگِ apk_path حذف شده بودند.
+export async function cleanupOrphanedAppReleaseFiles() {
+  return callStorageUsage({ action: "cleanup_app_releases" });
+}
+
 // وضعیت رنگی مصرف — دقیقاً همان سه آستانه‌ی درخواست‌شده
 export function storageUsageStatus(percent) {
   if (percent >= 90) return { label: tr("storageStatusCritical"), color: THEME.danger, bg: THEME.dangerBg };
