@@ -26,7 +26,7 @@ import {
   loadPlans, setCompanySubscriptionContract, loadCompanySubscriptionHistory,
   computeContractAmount, computeMonthlyRecurringAmount,
   computePaymentStatus, isPaymentOverdue, computeMonthlyPaymentAlarm, computeSubscriptionAlertTier, effectiveExpiryDate,
-  loadCompanyUsageStats, loadRecentLogins, loadRecentFailedLogins, computeInactiveCompanies,
+  loadCompanyUsageStats, loadRecentLogins, loadRecentFailedLogins, computeInactiveCompanies, loadLandingPageStats,
   loadAuditLog, deleteAuditLogEntry, loadStorageUsage, setStorageCapacity, storageUsageStatus,
   loadCompanyBackups, loadBackupStorageUsage, triggerCompanyBackup, getBackupDownloadUrl,
   deleteCompanyBackup, restoreCompanyBackup, backupStatusMeta, BACKUP_TIERS,
@@ -3641,6 +3641,18 @@ function UsageChip({ label, value }) {
   );
 }
 
+// دکمه‌های اصلیِ صفحهٔ فرود که ردیابی می‌شوند — رجوع کنید به
+// src/landingAnalytics/landingAnalyticsApi.js و src/LandingPage.jsx
+// (trackLandingButtonClick). ترتیب همان ترتیبِ نمایش در این باکس است.
+const LANDING_CLICK_METRICS = [
+  { key: "cta_start_free", labelKey: "saLandingCtaStartFree" },
+  { key: "cta_view_plans", labelKey: "saLandingCtaViewPlans" },
+  { key: "cta_login", labelKey: "saLandingCtaLogin" },
+  { key: "cta_live_demo", labelKey: "saLandingCtaLiveDemo" },
+  { key: "cta_share_demo", labelKey: "saLandingCtaShareDemo" },
+  { key: "cta_download_app", labelKey: "saLandingCtaDownloadApp" },
+];
+
 function SystemInsights({ companies }) {
   const { t } = useLanguage();
   const [recentLogins, setRecentLogins] = useState([]);
@@ -3649,6 +3661,12 @@ function SystemInsights({ companies }) {
   const [companyPayments, setCompanyPayments] = useState({});
   const [loading, setLoading] = useState(true);
   const [paymentsLoading, setPaymentsLoading] = useState(true);
+  const [landingStats, setLandingStats] = useState([]);
+  const [landingStatsLoading, setLandingStatsLoading] = useState(true);
+
+  useEffect(() => {
+    loadLandingPageStats().then((rows) => { setLandingStats(rows); setLandingStatsLoading(false); });
+  }, []);
 
   useEffect(() => {
     if (companies.length === 0) return;
@@ -3670,6 +3688,9 @@ function SystemInsights({ companies }) {
   }, [companies]);
 
   const companyName = (id) => companies.find((c) => c.id === id)?.name || "—";
+
+  const landingCountFor = (metricKey) => landingStats.find((r) => r.metric_key === metricKey)?.count || 0;
+  const landingButtonRows = LANDING_CLICK_METRICS.map((m) => ({ ...m, count: landingCountFor(m.key) }));
 
   const subscriptionAlerts = companies
     .map((c) => ({ company: c, tier: computeSubscriptionAlertTier(effectiveExpiryDate(c)) }))
@@ -3752,35 +3773,59 @@ function SystemInsights({ companies }) {
         ))}
       </div>
 
-      <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16, marginBottom: 16 }}>
-        <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
-          <Activity size={14} color={THEME.teal} /> {t("saSystemMonitoring")}
-        </h3>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
-          <div>
-            <p style={{ fontSize: 12, fontWeight: 700, color: THEME.text2, marginBottom: 6, display: "flex", alignItems: "center", gap: 5 }}>
-              <LogIn size={12} /> {t("saRecentLogins")}
-            </p>
-            {loading && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("commonLoading")}</p>}
-            {!loading && recentLogins.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saNoRecordsYet")}</p>}
-            {recentLogins.map((r) => (
-              <div key={r.id} style={{ fontSize: 11.5, padding: "5px 0", borderBottom: `1px solid ${THEME.border}` }}>
-                {r.full_name || r.username} — {companyName(r.company_id)} — {toJalaliSafe(r.created_at)}
-              </div>
-            ))}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16, marginBottom: 16 }}>
+        <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
+          <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
+            <Activity size={14} color={THEME.teal} /> {t("saSystemMonitoring")}
+          </h3>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
+            <div>
+              <p style={{ fontSize: 12, fontWeight: 700, color: THEME.text2, marginBottom: 6, display: "flex", alignItems: "center", gap: 5 }}>
+                <LogIn size={12} /> {t("saRecentLogins")}
+              </p>
+              {loading && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("commonLoading")}</p>}
+              {!loading && recentLogins.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saNoRecordsYet")}</p>}
+              {recentLogins.map((r) => (
+                <div key={r.id} style={{ fontSize: 11.5, padding: "5px 0", borderBottom: `1px solid ${THEME.border}` }}>
+                  {r.full_name || r.username} — {companyName(r.company_id)} — {toJalaliSafe(r.created_at)}
+                </div>
+              ))}
+            </div>
+            <div>
+              <p style={{ fontSize: 12, fontWeight: 700, color: THEME.danger, marginBottom: 6, display: "flex", alignItems: "center", gap: 5 }}>
+                <ShieldX size={12} /> {t("saRecentFailedLogins")}
+              </p>
+              {loading && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("commonLoading")}</p>}
+              {!loading && recentFailedLogins.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saNoRecordsYet")}</p>}
+              {recentFailedLogins.map((r) => (
+                <div key={r.id} style={{ fontSize: 11.5, padding: "5px 0", borderBottom: `1px solid ${THEME.border}` }}>
+                  {r.username} — {companyName(r.company_id)} — {toJalaliSafe(r.created_at)}
+                </div>
+              ))}
+            </div>
           </div>
-          <div>
-            <p style={{ fontSize: 12, fontWeight: 700, color: THEME.danger, marginBottom: 6, display: "flex", alignItems: "center", gap: 5 }}>
-              <ShieldX size={12} /> {t("saRecentFailedLogins")}
-            </p>
-            {loading && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("commonLoading")}</p>}
-            {!loading && recentFailedLogins.length === 0 && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saNoRecordsYet")}</p>}
-            {recentFailedLogins.map((r) => (
-              <div key={r.id} style={{ fontSize: 11.5, padding: "5px 0", borderBottom: `1px solid ${THEME.border}` }}>
-                {r.username} — {companyName(r.company_id)} — {toJalaliSafe(r.created_at)}
+        </div>
+
+        <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
+          <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
+            <Globe size={14} color={THEME.teal} /> {t("saLandingStatsTitle")}
+          </h3>
+          {landingStatsLoading && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("commonLoading")}</p>}
+          {!landingStatsLoading && (
+            <>
+              <div style={{ display: "flex", padding: "2px 0 14px" }}>
+                <StatBox label={t("saLandingTotalVisits")} value={landingCountFor("page_view").toLocaleString(numLocale())} />
               </div>
-            ))}
-          </div>
+              <p style={{ fontSize: 12, fontWeight: 700, color: THEME.text2, marginBottom: 6 }}>{t("saLandingButtonClicksTitle")}</p>
+              {landingButtonRows.every((r) => r.count === 0) && <p style={{ fontSize: 11.5, color: THEME.text3 }}>{t("saLandingNoClicksYet")}</p>}
+              {landingButtonRows.map((r) => (
+                <div key={r.key} style={{ fontSize: 12, padding: "6px 0", borderBottom: `1px solid ${THEME.border}`, display: "flex", justifyContent: "space-between" }}>
+                  <span>{t(r.labelKey)}</span>
+                  <span style={{ fontWeight: 700, color: THEME.heading }}>{r.count.toLocaleString(numLocale())}</span>
+                </div>
+              ))}
+            </>
+          )}
         </div>
       </div>
     </>

@@ -9,6 +9,7 @@ import {
 import { useLanguage } from "./i18n/LanguageContext.jsx";
 import { loadLatestPublishedRelease } from "./superadmin/appReleaseApi.js";
 import { openApkDownload } from "./appDownload.js";
+import { trackLandingPageView, trackLandingButtonClick } from "./landingAnalytics/landingAnalyticsApi.js";
 
 /* ------------------------------------------------------------------ *
  * صفحهٔ فرودِ عمومیِ IHMS — Enterprise SaaS، سه‌زبانه (فا/EN/DE)، تمِ
@@ -742,10 +743,19 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, log
   }, []);
 
   const copyDemoLink = () => {
+    trackLandingButtonClick("cta_share_demo");
     navigator.clipboard?.writeText(DEMO_URL);
     setDemoCopied(true);
     setTimeout(() => setDemoCopied(false), 1500);
   };
+
+  // آمار بازدید صفحه اصلی — برای سوپرادمین › مانیتورینگ و تحلیل؛ رجوع کنید
+  // به src/landingAnalytics/landingAnalyticsApi.js
+  useEffect(() => { trackLandingPageView(); }, []);
+
+  const handleStartFree = () => { trackLandingButtonClick("cta_start_free"); onStartFree(); };
+  const handleViewPlans = () => { trackLandingButtonClick("cta_view_plans"); viewPlans(); };
+  const handleLogin = () => { trackLandingButtonClick("cta_login"); onUserLogin(); };
 
   // متنِ سفارشی‌شده از «مدیریتِ صفحه اصلی سامانه» — از LoginScreen (App.jsx)
   // به‌عنوانِ prop می‌آید (نه fetch مستقل اینجا)، چون همین داده (به‌خصوص
@@ -814,7 +824,7 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, log
           <span>{t("lpApkBannerText", { version: latestRelease.version })}</span>
           <button
             type="button"
-            onClick={() => openApkDownload(latestRelease.effectiveDownloadUrl)}
+            onClick={() => { trackLandingButtonClick("cta_download_app"); openApkDownload(latestRelease.effectiveDownloadUrl); }}
             style={{
               display: "inline-flex", alignItems: "center", gap: 6, background: C.teal, color: "#06201c",
               border: "none", borderRadius: 999, padding: "6px 16px", fontSize: 12.5, fontWeight: 800, cursor: "pointer",
@@ -842,12 +852,12 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, log
             {socialLinks}
             {langSwitch}
             {btn.ctaPlans && (
-              <button type="button" className="btn btn-primary" style={{ padding: "10px 16px", fontSize: 13 }} onClick={viewPlans}>
+              <button type="button" className="btn btn-primary" style={{ padding: "10px 16px", fontSize: 13 }} onClick={handleViewPlans}>
                 {x.ctaPlans}
               </button>
             )}
             {btn.login && (
-              <button type="button" className="btn btn-primary hide-sm" style={{ padding: "10px 16px", fontSize: 13 }} onClick={onUserLogin}>
+              <button type="button" className="btn btn-primary hide-sm" style={{ padding: "10px 16px", fontSize: 13 }} onClick={handleLogin}>
                 {x.login}
               </button>
             )}
@@ -862,8 +872,8 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, log
               <a key={i} href={"#lp-" + NAV_IDS[i]} onClick={(e) => { e.preventDefault(); go(NAV_IDS[i]); }}>{label}</a>
             ))}
             <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 12 }}>{langSwitch}{socialLinks}</div>
-            {btn.ctaPlans && <button type="button" className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => { setMNav(false); viewPlans(); }}>{x.ctaPlans}</button>}
-            {btn.login && <button type="button" className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => { setMNav(false); onUserLogin(); }}>{x.login}</button>}
+            {btn.ctaPlans && <button type="button" className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => { setMNav(false); handleViewPlans(); }}>{x.ctaPlans}</button>}
+            {btn.login && <button type="button" className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => { setMNav(false); handleLogin(); }}>{x.login}</button>}
           </div>
         </div>
       </header>
@@ -877,8 +887,8 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, log
               <h1>{x.heroH1a}<span className="accent">{x.heroH1b}</span></h1>
               <p className="lede">{x.heroLede}</p>
               <div className="cta">
-                {btn.ctaPrimary && <button type="button" className="btn btn-primary btn-lg" onClick={onStartFree}>{x.ctaPrimary}</button>}
-                {btn.ctaPlans && <button type="button" className="btn btn-ghost btn-lg" onClick={viewPlans}>{x.ctaPlans}</button>}
+                {btn.ctaPrimary && <button type="button" className="btn btn-primary btn-lg" onClick={handleStartFree}>{x.ctaPrimary}</button>}
+                {btn.ctaPlans && <button type="button" className="btn btn-ghost btn-lg" onClick={handleViewPlans}>{x.ctaPlans}</button>}
                 {btn.ctaSecondary && <button type="button" className="btn btn-ghost btn-lg" onClick={() => go("features")}>{x.ctaSecondary}</button>}
               </div>
               <div className="ticks">
@@ -888,7 +898,7 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, log
 
             <div className="hero-visual" data-rv>
               <div className="demo-cta-row">
-                <a href={DEMO_URL} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+                <a href={DEMO_URL} target="_blank" rel="noopener noreferrer" className="btn btn-primary" onClick={() => trackLandingButtonClick("cta_live_demo")}>
                   <PlayCircle size={16} /> {x.demoBtn}
                 </a>
                 <button
@@ -1022,7 +1032,7 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, log
                   </div>
                 ))}
               </div>
-              {btn.scBtn && <button type="button" className="btn btn-primary btn-lg" style={{ marginTop: 20 }} onClick={onStartFree}>{x.scBtn}</button>}
+              {btn.scBtn && <button type="button" className="btn btn-primary btn-lg" style={{ marginTop: 20 }} onClick={handleStartFree}>{x.scBtn}</button>}
             </div>
             <div className="bigmock" data-rv>
               <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
@@ -1095,7 +1105,7 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, log
             <div className="grid-lines" />
             <h2>{x.fH2}</h2>
             <p>{x.fP}</p>
-            {btn.ctaPrimary && <button type="button" className="btn btn-primary btn-lg" style={{ marginTop: 24, position: "relative" }} onClick={onStartFree}>{x.ctaPrimary}</button>}
+            {btn.ctaPrimary && <button type="button" className="btn btn-primary btn-lg" style={{ marginTop: 24, position: "relative" }} onClick={handleStartFree}>{x.ctaPrimary}</button>}
             <div style={{ marginTop: 14, fontSize: 12, color: "rgba(255,255,255,.7)", position: "relative" }}>{x.fSub}</div>
           </div>
         </div>
@@ -1125,8 +1135,8 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, log
             </div>
             <div>
               <h4>{x.ftStart}</h4>
-              {btn.ctaPrimary && <a href="#" onClick={(e) => { e.preventDefault(); onStartFree(); }}>{x.ftLinks[5]}</a>}
-              {btn.login && <a href="#" onClick={(e) => { e.preventDefault(); onUserLogin(); }}>{x.ftLinks[6]}</a>}
+              {btn.ctaPrimary && <a href="#" onClick={(e) => { e.preventDefault(); handleStartFree(); }}>{x.ftLinks[5]}</a>}
+              {btn.login && <a href="#" onClick={(e) => { e.preventDefault(); handleLogin(); }}>{x.ftLinks[6]}</a>}
             </div>
           </div>
           <div className="base">
