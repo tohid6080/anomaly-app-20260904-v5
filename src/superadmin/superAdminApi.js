@@ -902,6 +902,15 @@ export async function loadRecentFailedLogins(limit = 20) {
   return sbOk(rows) ? rows : [];
 }
 
+// ---------- آمار صفحه اصلیِ سایت (بازدید + کلیکِ دکمه‌ها) ----------
+// فقط شمارنده می‌خوانیم (landing_page_stats)؛ نوشتن از طریقِ Edge Function
+// عمومیِ track-landing-event انجام می‌شود — رجوع کنید به
+// src/landingAnalytics/landingAnalyticsApi.js
+export async function loadLandingPageStats() {
+  const rows = await sb(`landing_page_stats?select=metric_key,count,updated_at`, {}, "super_admin");
+  return sbOk(rows) ? rows : [];
+}
+
 // ---------- تحلیل هوشمند — فقط قواعد ساده روی داده‌ی واقعی موجود ----------
 // طبق خواسته‌ی صریح: اگر داده کافی نیست، چیزی ساخته نمی‌شود؛ فقط لیست خالی برمی‌گردد.
 

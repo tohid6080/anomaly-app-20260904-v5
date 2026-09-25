@@ -2669,6 +2669,46 @@ export const translations = {
     "fa": "تلاش‌های ناموفق ورود",
     "en": "Recent Failed Login Attempts"
   },
+  "saLandingStatsTitle": {
+    "fa": "آمار صفحه اصلی سایت",
+    "en": "Landing Page Stats"
+  },
+  "saLandingTotalVisits": {
+    "fa": "بازدید کل",
+    "en": "Total Visits"
+  },
+  "saLandingButtonClicksTitle": {
+    "fa": "کلیکِ دکمه‌های اصلی",
+    "en": "Main Button Clicks"
+  },
+  "saLandingNoClicksYet": {
+    "fa": "هنوز کلیکی ثبت نشده.",
+    "en": "No clicks recorded yet."
+  },
+  "saLandingCtaStartFree": {
+    "fa": "شروع رایگان",
+    "en": "Start Free"
+  },
+  "saLandingCtaViewPlans": {
+    "fa": "مشاهده پلن‌ها",
+    "en": "View Plans"
+  },
+  "saLandingCtaLogin": {
+    "fa": "ورود کاربران",
+    "en": "Sign In"
+  },
+  "saLandingCtaLiveDemo": {
+    "fa": "مشاهده دموی زنده",
+    "en": "Live Demo"
+  },
+  "saLandingCtaShareDemo": {
+    "fa": "اشتراک‌گذاری دمو",
+    "en": "Share Demo"
+  },
+  "saLandingCtaDownloadApp": {
+    "fa": "دانلود اپلیکیشن",
+    "en": "App Download"
+  },
   "saPersonnelLabel": {
     "fa": "پرسنل",
     "en": "Personnel"
