@@ -75,15 +75,25 @@ const DEMO_URL = "https://ihmsapp.ir/demo/";
 
 const LP_CSS = `
 .ihms-lp *{box-sizing:border-box}
-.ihms-lp{font-family:${FONT};color:${C.ink};background:${C.bg};line-height:1.75;-webkit-font-smoothing:antialiased}
+.ihms-lp{font-family:${FONT};color:${C.ink};line-height:1.75;-webkit-font-smoothing:antialiased;
+  background:
+    linear-gradient(${C.line} 1px, transparent 1px),
+    linear-gradient(90deg, ${C.line} 1px, transparent 1px),
+    radial-gradient(1100px 620px at 100% 0%, ${C.tealSoft} 0%, transparent 58%),
+    radial-gradient(900px 560px at 0% 42%, rgba(18,181,166,.07) 0%, transparent 55%),
+    radial-gradient(820px 520px at 100% 82%, rgba(14,44,63,.06) 0%, transparent 55%),
+    ${C.bg};
+  background-size:44px 44px, 44px 44px, auto, auto, auto, auto}
 .ihms-lp h1,.ihms-lp h2,.ihms-lp h3,.ihms-lp p{margin:0}
 .ihms-lp a{color:inherit;text-decoration:none}
 .ihms-lp button{font-family:inherit}
-.ihms-lp .wrap{max-width:1180px;margin:0 auto;padding:0 clamp(18px,4vw,40px)}
-.ihms-lp section{padding:clamp(56px,8vw,104px) 0}
+.ihms-lp .wrap{max-width:1680px;margin:0 auto;padding:0 clamp(18px,4vw,40px)}
+.ihms-lp section{padding:clamp(40px,5.5vw,72px) 0;border-top:1px solid ${C.line}}
+.ihms-lp section.hero{border-top:none}
+.ihms-lp section>.wrap{border-inline:1px solid ${C.line};padding-inline:clamp(18px,4vw,56px)}
 .ihms-lp .eyebrow{display:inline-block;font-size:12.5px;font-weight:800;letter-spacing:.02em;color:${C.tealDeep};background:${C.tealSoft};padding:6px 14px;border-radius:999px;margin-bottom:16px}
 .ihms-lp .h2{font-size:clamp(23px,3.4vw,34px);font-weight:900;letter-spacing:-.01em;color:${C.ink};text-wrap:balance}
-.ihms-lp .sub{font-size:clamp(14px,1.7vw,16.5px);color:${C.ink2};max-width:660px;margin:12px auto 0}
+.ihms-lp .sub{font-size:clamp(15px,1.9vw,18.5px);color:${C.ink2};max-width:760px;margin:12px auto 0}
 .ihms-lp .center{text-align:center}
 .ihms-lp .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:800;font-size:14.5px;
   border-radius:12px;padding:13px 24px;cursor:pointer;transition:transform .15s ease,box-shadow .2s ease,background .2s ease;border:1px solid transparent}
@@ -137,7 +147,7 @@ const LP_CSS = `
 .ihms-lp .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(28px,5vw,60px);align-items:center}
 .ihms-lp .hero h1{font-size:clamp(30px,5.2vw,50px);font-weight:900;line-height:1.28;letter-spacing:-.015em;color:${C.ink}}
 .ihms-lp .hero h1 .accent{color:${C.tealDeep};display:block}
-.ihms-lp .hero .lede{font-size:clamp(14.5px,1.9vw,17px);color:${C.ink2};margin-top:18px;max-width:560px}
+.ihms-lp .hero .lede{font-size:clamp(16px,2.1vw,19px);color:${C.ink2};margin-top:18px;max-width:800px}
 .ihms-lp .hero .cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px}
 .ihms-lp .hero .ticks{display:flex;gap:20px;flex-wrap:wrap;margin-top:22px;font-size:13px;font-weight:700;color:${C.ink2}}
 .ihms-lp .hero .ticks span{display:inline-flex;align-items:center;gap:7px}
