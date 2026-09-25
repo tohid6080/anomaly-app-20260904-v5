@@ -10481,7 +10481,7 @@ export const translations = {
   "lpSecFinal": { "fa": "بخشِ پایانیِ فراخوان (CTA)", "en": "Final CTA section" },
   "lpSecFooter": { "fa": "فوتر", "en": "Footer" },
   "lpHeroImage": { "fa": "تصویرِ بخشِ اصلی (Hero)", "en": "Hero image" },
-  "lpHeroImageNote": { "fa": "همان تصویرِ سمتِ چپِ بخشِ ابتداییِ صفحه، پیش از تیتر — مستقل از هر سه زبان، فقط یک تصویر برای همه.", "en": "The photo shown beside the very first section of the page, above the headline — one image shared across all three languages." },
+  "lpHeroImageNote": { "fa": "همان تصویرِ سمتِ چپِ بخشِ ابتداییِ صفحه، پیش از تیتر — مستقل از هر سه زبان، فقط یک تصویر برای همه. نسبتِ قابِ نمایش ۲۰:۱۷ (عرض:ارتفاع) است؛ برای اینکه عکس دقیقاً داخلِ قاب جا بگیرد و لبه‌هایش بریده نشود، عکسی با همین نسبت آپلود کنید — مثلاً ۱۲۰۰×۱۰۲۰ پیکسل (هر اندازه‌ی دیگری هم با همین نسبت مناسب است).", "en": "The photo shown beside the very first section of the page, above the headline — one image shared across all three languages. The display frame's ratio is 20:17 (width:height); to have the photo fit exactly with no cropping, upload an image with this same ratio — e.g. 1200×1020px (any other size with the same ratio also works)." },
   "lpHeroEyebrow": { "fa": "چشم‌انداز (خطِ کوچکِ بالای تیتر)", "en": "Eyebrow (small line above the headline)" },
   "lpHeroH1a": { "fa": "تیترِ اصلی — خطِ اول", "en": "Main headline — first line" },
   "lpHeroH1b": { "fa": "تیترِ اصلی — خطِ تأکیدی (رنگی)", "en": "Main headline — accent line" },

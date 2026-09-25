@@ -157,7 +157,7 @@ const LP_CSS = `
 .ihms-lp .demo-cta-row .btn.copied{border-color:${C.good};color:${C.good}}
 .ihms-lp .hero-photo{position:relative;border-radius:22px;overflow:hidden;aspect-ratio:4/3.4;border:1px solid ${C.line};
   background:linear-gradient(160deg,${C.navy},${C.navyDeep});box-shadow:0 40px 80px -40px rgba(8,26,39,.55)}
-.ihms-lp .hero-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.ihms-lp .hero-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .ihms-lp .hero-photo .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.5);font-weight:700;font-size:13px;padding:24px;text-align:center}
 .ihms-lp .hero-photo .grid-lines{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:34px 34px}
 @media (max-width:900px){
