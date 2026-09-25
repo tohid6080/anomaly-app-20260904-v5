@@ -161,7 +161,7 @@ export default function LandingPageManagementTab({ currentAdmin }) {
           {draft.heroImageUrl ? (
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <div style={{ width: 140, aspectRatio: "4/3.4", borderRadius: 8, overflow: "hidden", border: `1px solid ${THEME.border}`, flexShrink: 0, background: THEME.surface2 }}>
-                <img src={draft.heroImageUrl} alt={t("saPreviewAlt")} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                <img src={draft.heroImageUrl} alt={t("saPreviewAlt")} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <label style={{ padding: "7px 14px", borderRadius: 8, border: "none", background: THEME.navyMid, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font, display: "inline-flex", alignItems: "center", gap: 6, width: "fit-content" }}>
