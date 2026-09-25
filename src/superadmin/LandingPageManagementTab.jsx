@@ -158,6 +158,15 @@ export default function LandingPageManagementTab({ currentAdmin }) {
         <div style={{ marginBottom: 14 }}>
           <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 6 }}>{t("lpHeroImage")}</label>
           <p style={{ fontSize: 10.5, color: THEME.text3, marginBottom: 8, lineHeight: 1.8 }}>{t("lpHeroImageNote")}</p>
+          <div style={{ background: THEME.surface2, borderInlineStart: `3px solid ${THEME.teal}`, borderRadius: 8, padding: "10px 12px", marginBottom: 10 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: THEME.text }}>{t("lpHeroImageSpecsTitle")}</div>
+            <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 3 }}>
+              <span style={{ fontSize: 11, color: THEME.text2, fontWeight: 600 }}>{t("lpHeroImageSpecDims")}</span>
+              <span style={{ fontSize: 11, color: THEME.text2, fontWeight: 600 }}>{t("lpHeroImageSpecRatio")}</span>
+              <span style={{ fontSize: 11, color: THEME.text2, fontWeight: 600 }}>{t("lpHeroImageSpecFormat")}</span>
+            </div>
+            <div style={{ marginTop: 6, fontSize: 10, color: THEME.text3, lineHeight: 1.8 }}>{t("lpHeroImageSpecFlex")}</div>
+          </div>
           {draft.heroImageUrl ? (
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <div style={{ width: 140, aspectRatio: "4/3.4", borderRadius: 8, overflow: "hidden", border: `1px solid ${THEME.border}`, flexShrink: 0, background: THEME.surface2 }}>
