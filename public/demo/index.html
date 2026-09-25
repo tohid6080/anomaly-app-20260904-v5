@@ -345,9 +345,14 @@ input,select,textarea{font-family:inherit}
    ویوپورت محدود می‌شود)، دقیقاً مثلِ یک عکسِ ثابت از گوشی که کاربر
    دارد داخلش آیتم‌ها را چک می‌کند. */
 body.phone-preview{height:100dvh; overflow:hidden; display:flex; align-items:center; justify-content:center; padding:16px}
-.wrap.mode-mobile{position:relative; min-height:0; max-width:412px; height:min(880px, calc(100dvh - 32px)); margin:0; flex-shrink:0; border-radius:38px; border:11px solid #060d12; box-shadow:0 30px 70px -20px rgba(0,0,0,.7), 0 0 0 2px #1c2833; overflow:hidden; transform:translateZ(0)}
-.wrap.mode-mobile::before{content:""; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:84px; height:5px; border-radius:99px; background:radial-gradient(circle 3px at 68px 2.5px, #3a4a59 60%, transparent 62%), #1c2833; z-index:250}
-.wrap.mode-mobile::after{content:""; position:absolute; inset:0; border-radius:27px; background:linear-gradient(115deg, rgba(255,255,255,.07) 0%, rgba(255,255,255,0) 20%, rgba(255,255,255,0) 78%, rgba(255,255,255,.035) 100%); pointer-events:none; z-index:230}
+.wrap.mode-mobile{position:relative; min-height:0; max-width:412px; height:min(880px, calc(100dvh - 32px)); margin:0; flex-shrink:0; border-radius:48px; border:11px solid transparent; border-image:linear-gradient(160deg,#4b4c4e,#232427) 1; box-shadow:0 30px 70px -20px rgba(0,0,0,.7), 0 0 0 2px #1c2833; overflow:hidden; transform:translateZ(0)}
+.wrap.mode-mobile::before{content:""; position:absolute; top:16px; left:50%; transform:translateX(-50%); width:100px; height:26px; border-radius:16px; background:#000; z-index:250}
+.wrap.mode-mobile::after{content:""; position:absolute; inset:0; border-radius:37px; background:linear-gradient(115deg, rgba(255,255,255,.07) 0%, rgba(255,255,255,0) 20%, rgba(255,255,255,0) 78%, rgba(255,255,255,.035) 100%); pointer-events:none; z-index:230}
+.btn-nub{display:none}
+.wrap.mode-mobile .btn-nub{display:block; position:absolute; background:linear-gradient(90deg,#3a3b3d,#232427); z-index:260}
+.wrap.mode-mobile .btn-nub.power{right:-3px; top:170px; width:3px; height:70px; border-radius:0 2px 2px 0}
+.wrap.mode-mobile .btn-nub.vol-up{left:-3px; top:150px; width:3px; height:36px; border-radius:2px 0 0 2px}
+.wrap.mode-mobile .btn-nub.vol-down{left:-3px; top:194px; width:3px; height:36px; border-radius:2px 0 0 2px}
 .wrap.mode-mobile .login-screen,
 .wrap.mode-mobile .app-shell{min-height:0; height:100%; overflow-y:auto}
 .wrap.mode-mobile .sidebar{display:none}
@@ -361,7 +366,7 @@ body.phone-preview{height:100dvh; overflow:hidden; display:flex; align-items:cen
 .wrap.mode-mobile .home-row{flex-direction:column}
 .wrap.mode-mobile .chat-wrap{grid-template-columns:1fr}
 .wrap.mode-mobile .chat-threads{max-height:140px}
-.wrap.mode-mobile .topbar{padding-inline:14px}
+.wrap.mode-mobile .topbar{padding-inline:14px; padding-top:38px}
 .wrap.mode-mobile .tb-line1,.wrap.mode-mobile .tb-line2{max-width:60vw}
 .wrap.mode-mobile .sidebar-collapse-btn{display:none}
 .wrap.mode-mobile .toast{bottom:76px}
@@ -389,6 +394,9 @@ body.phone-preview{height:100dvh; overflow:hidden; display:flex; align-items:cen
 </style>
 
 <div class="wrap" id="wrap-root">
+  <span class="btn-nub power"></span>
+  <span class="btn-nub vol-up"></span>
+  <span class="btn-nub vol-down"></span>
 
   <!-- ======================= ورود ======================= -->
   <div class="login-screen" id="screen-login">

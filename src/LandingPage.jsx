@@ -208,8 +208,13 @@ const LP_CSS = `
 .ihms-lp .feat .fT{font-size:14.5px;font-weight:800;color:${C.ink}}
 .ihms-lp .feat .fD{font-size:12.5px;color:${C.ink2};margin-top:3px}
 .ihms-lp .bigmock{background:#fff;border:1px solid ${C.line};border-radius:20px;box-shadow:0 40px 80px -46px rgba(12,34,51,.4);padding:16px}
-.ihms-lp .phone{width:min(260px,80%);margin:0 auto;background:${C.navyDeep};border-radius:34px;padding:12px;box-shadow:0 40px 80px -40px rgba(8,26,39,.6)}
-.ihms-lp .phone .screen{background:#fff;border-radius:24px;overflow:hidden;aspect-ratio:9/18.5}
+.ihms-lp .phone{position:relative;width:min(280px,80%);margin:0 auto;background:linear-gradient(160deg,#4b4c4e,#232427);border-radius:54px;padding:14px;box-shadow:0 40px 80px -40px rgba(8,26,39,.6),inset 0 0 0 1.5px rgba(255,255,255,.12)}
+.ihms-lp .phone .screen{position:relative;background:#fff;border-radius:42px;overflow:hidden;aspect-ratio:9/19.5}
+.ihms-lp .phone .dynamic-island{position:absolute;top:14px;left:50%;transform:translateX(-50%);width:32%;height:24px;background:#000;border-radius:14px;z-index:6}
+.ihms-lp .phone .side-btn{position:absolute;background:linear-gradient(90deg,#3a3b3d,#232427);border-radius:2px}
+.ihms-lp .phone .side-btn.power{right:-3px;top:150px;width:3px;height:70px}
+.ihms-lp .phone .side-btn.vol-up{left:-3px;top:130px;width:3px;height:36px}
+.ihms-lp .phone .side-btn.vol-down{left:-3px;top:174px;width:3px;height:36px}
 
 .ihms-lp .toggle{display:inline-flex;background:${C.bgSoft};border:1px solid ${C.line};border-radius:999px;padding:4px;margin:18px auto 8px;gap:4px}
 .ihms-lp .toggle button{border:none;background:none;font-size:12.5px;font-weight:800;color:${C.ink2};padding:9px 20px;border-radius:999px;cursor:pointer}
@@ -830,8 +835,8 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
         <div className="wrap">
           <div className="row">
             <a href="#lp-top" onClick={(e) => { e.preventDefault(); go("top"); }} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <img src={logoUrl || `${import.meta.env.BASE_URL}logo.png`} alt="IHMS" width={34} height={34} style={{ objectFit: "contain" }} />
-              <span style={{ fontWeight: 900, fontSize: 18, color: C.navy, letterSpacing: "-.01em" }}>IHMS</span>
+              <img src={logoUrl || `${import.meta.env.BASE_URL}logo.png`} alt="IHMS" width={48} height={48} style={{ objectFit: "contain" }} />
+              <span style={{ fontWeight: 900, fontSize: 25, color: C.navy, letterSpacing: "-.01em" }}>IHMS</span>
             </a>
             <nav className="nav">
               {x.nav.map((label, i) => (
@@ -1050,8 +1055,12 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
           <div className="g2">
             <div className="center" data-rv style={{ order: 2 }}>
               <div className="phone">
+                <span className="side-btn power" />
+                <span className="side-btn vol-up" />
+                <span className="side-btn vol-down" />
                 <div className="screen" style={{ background: C.navyDeep, padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>
-                  <div style={{ color: "#fff", fontSize: 11, fontWeight: 800, padding: "4px 2px" }}>{x.phHome}</div>
+                  <div className="dynamic-island" />
+                  <div style={{ color: "#fff", fontSize: 11, fontWeight: 800, padding: "4px 2px", marginTop: 22 }}>{x.phHome}</div>
                   <div style={{ background: "#fff", borderRadius: 12, padding: 10 }}>
                     <div style={{ fontSize: 10, fontWeight: 800, color: C.ink }}>{x.phWelcome}</div>
                     <div style={{ fontSize: 8, color: C.ink3, marginTop: 3 }}>{x.phTasks}</div>
