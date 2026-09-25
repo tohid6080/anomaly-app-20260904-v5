@@ -77,13 +77,12 @@ const LP_CSS = `
 .ihms-lp *{box-sizing:border-box}
 .ihms-lp{font-family:${FONT};color:${C.ink};line-height:1.75;-webkit-font-smoothing:antialiased;
   background:
-    linear-gradient(${C.line} 1px, transparent 1px),
-    linear-gradient(90deg, ${C.line} 1px, transparent 1px),
+    radial-gradient(circle, ${C.line} 1.5px, transparent 1.5px),
     radial-gradient(1100px 620px at 100% 0%, ${C.tealSoft} 0%, transparent 58%),
     radial-gradient(900px 560px at 0% 42%, rgba(18,181,166,.07) 0%, transparent 55%),
     radial-gradient(820px 520px at 100% 82%, rgba(14,44,63,.06) 0%, transparent 55%),
     ${C.bg};
-  background-size:44px 44px, 44px 44px, auto, auto, auto, auto}
+  background-size:24px 24px, auto, auto, auto, auto}
 .ihms-lp h1,.ihms-lp h2,.ihms-lp h3,.ihms-lp p{margin:0}
 .ihms-lp a{color:inherit;text-decoration:none}
 .ihms-lp button{font-family:inherit}
