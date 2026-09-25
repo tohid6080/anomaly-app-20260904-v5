@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Plus, Trash2, ExternalLink, Eye, EyeOff } from "lucide-react";
-import { THEME, styles, PUBLIC_APP_URL } from "../shared.js";
+import { Plus, Trash2, ExternalLink, Eye, EyeOff, ImagePlus } from "lucide-react";
+import { THEME, styles, PUBLIC_APP_URL, resizeImageFile } from "../shared.js";
+import { uploadBase64ToStorage, deleteFromStorage, parseStorageUrl } from "../offline/storageUpload.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { loadLandingPageContent, saveLandingPageContent } from "../systemConfigApi.js";
 import { LANDING_DEFAULTS, LANDING_BUTTON_KEYS, LANDING_BUTTONS_DEFAULT, LANDING_DISPLAY_MODE_DEFAULT } from "../LandingPage.jsx";
@@ -24,6 +25,7 @@ export default function LandingPageManagementTab({ currentAdmin }) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [msgErr, setMsgErr] = useState(false);
+  const [uploadingHeroImage, setUploadingHeroImage] = useState(false);
 
   const load = async () => {
     const saved = await loadLandingPageContent();
@@ -33,6 +35,7 @@ export default function LandingPageManagementTab({ currentAdmin }) {
       de: { ...LANDING_DEFAULTS.de, ...(saved?.de || {}) },
       buttons: { ...LANDING_BUTTONS_DEFAULT, ...(saved?.buttons || {}) },
       displayMode: saved?.displayMode === "loginOnly" ? "loginOnly" : LANDING_DISPLAY_MODE_DEFAULT,
+      heroImageUrl: saved?.heroImageUrl || "",
     };
     setBaseline(merged);
     setDraft(JSON.parse(JSON.stringify(merged)));
@@ -51,6 +54,42 @@ export default function LandingPageManagementTab({ currentAdmin }) {
   const addItem = (key, blank) => setField({ [key]: [...d[key], blank] });
   const toggleButton = (key) => setDraft((prev) => ({ ...prev, buttons: { ...prev.buttons, [key]: !prev.buttons[key] } }));
   const setDisplayMode = (mode) => setDraft((prev) => ({ ...prev, displayMode: mode }));
+
+  // آپلودِ مستقیم عکس — همان الگوی موجودِ پروژه (uploadBase64ToStorage)،
+  // در همان باکتِ announcement-images (بدونِ نیاز به باکتِ/migration جدید،
+  // فقط با پیشوندِ نامِ فایلِ متفاوت). مقدارِ URL فقط در draft محلی نشسته
+  // می‌شود؛ نوشتنِ واقعی روی landing_page_content تنها با دکمهٔ «ذخیره».
+  const clearHeroImagePick = (e) => { e.target.value = ""; };
+  const handleHeroImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setMessage(""); setUploadingHeroImage(true);
+    try {
+      const base64 = await resizeImageFile(file);
+      const url = await uploadBase64ToStorage("announcement-images", `landing-hero-${Date.now()}.jpg`, base64, "image/jpeg");
+      if (draft.heroImageUrl) {
+        const old = parseStorageUrl(draft.heroImageUrl);
+        if (old) deleteFromStorage(old.bucket, old.path).catch(() => {});
+      }
+      setDraft((prev) => ({ ...prev, heroImageUrl: url }));
+    } catch (err) {
+      const status = err?.status;
+      const rawText = (err?.message || "").replace(/^(خطا در آپلود فایل|File upload error):\s*/, "");
+      setMsgErr(true);
+      setMessage(status === 401 || status === 403
+        ? t("saAnUploadErr403", { status, detail: rawText })
+        : t("saAnUploadErrGeneric", { status: status ?? t("saUnknownCode"), detail: rawText || t("saUnknownError") }));
+    }
+    setUploadingHeroImage(false);
+    e.target.value = "";
+  };
+  const handleHeroImageRemove = () => {
+    if (draft.heroImageUrl) {
+      const old = parseStorageUrl(draft.heroImageUrl);
+      if (old) deleteFromStorage(old.bucket, old.path).catch(() => {});
+    }
+    setDraft((prev) => ({ ...prev, heroImageUrl: "" }));
+  };
 
   const isDirty = JSON.stringify(baseline) !== JSON.stringify(draft);
 
@@ -116,6 +155,31 @@ export default function LandingPageManagementTab({ currentAdmin }) {
       {message && <p style={{ fontSize: 11.5, color: msgErr ? THEME.danger : THEME.ok, marginBottom: 10 }}>{message}</p>}
 
       <Section title={t("lpSecHero")}>
+        <div style={{ marginBottom: 14 }}>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 6 }}>{t("lpHeroImage")}</label>
+          <p style={{ fontSize: 10.5, color: THEME.text3, marginBottom: 8, lineHeight: 1.8 }}>{t("lpHeroImageNote")}</p>
+          {draft.heroImageUrl ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ width: 140, aspectRatio: "4/3.4", borderRadius: 8, overflow: "hidden", border: `1px solid ${THEME.border}`, flexShrink: 0, background: THEME.surface2 }}>
+                <img src={draft.heroImageUrl} alt={t("saPreviewAlt")} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <label style={{ padding: "7px 14px", borderRadius: 8, border: "none", background: THEME.navyMid, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font, display: "inline-flex", alignItems: "center", gap: 6, width: "fit-content" }}>
+                  <ImagePlus size={13} /> {uploadingHeroImage ? t("saUploading") : t("saReplaceImage")}
+                  <input type="file" accept="image/*" onClick={clearHeroImagePick} onChange={handleHeroImageUpload} disabled={uploadingHeroImage} style={{ display: "none" }} />
+                </label>
+                <button type="button" onClick={handleHeroImageRemove} style={{ padding: "7px 14px", borderRadius: 8, border: "none", background: THEME.danger, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font, display: "inline-flex", alignItems: "center", gap: 6, width: "fit-content" }}>
+                  <Trash2 size={13} /> {t("saRemoveImage")}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <label style={{ padding: "7px 14px", borderRadius: 8, border: "none", background: THEME.navyMid, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font, display: "inline-flex", alignItems: "center", gap: 6, width: "fit-content" }}>
+              <ImagePlus size={13} /> {uploadingHeroImage ? t("saUploading") : t("saUploadImage")}
+              <input type="file" accept="image/*" onClick={clearHeroImagePick} onChange={handleHeroImageUpload} disabled={uploadingHeroImage} style={{ display: "none" }} />
+            </label>
+          )}
+        </div>
         <Field label={t("lpHeroEyebrow")} value={d.heroEyebrow} onChange={(v) => setField({ heroEyebrow: v })} dir={contentDir} />
         <Row>
           <Field label={t("lpHeroH1a")} value={d.heroH1a} onChange={(v) => setField({ heroH1a: v })} dir={contentDir} />

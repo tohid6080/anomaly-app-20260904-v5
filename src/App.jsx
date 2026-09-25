@@ -1338,11 +1338,6 @@ function LoginScreen({ onLogin }) {
     setBioChecking(false);
   };
 
-  const ann0 = Array.isArray(loginAnnouncements) && loginAnnouncements.length > 0 ? loginAnnouncements[0] : null;
-  const landingAnnouncements = ann0
-    ? [{ title: ann0.title, body: ann0.message, dateLabel: toJalaliSafe(ann0.createdAt || "") }]
-    : [];
-
   // «فقط صفحه‌ی ورود» (SuperAdmin → پیکربندی سامانه → مدیریتِ صفحه اصلی
   // → «حالتِ نمایشِ صفحه اصلی») یعنی صفحه‌ی فرودِ عمومی اصلاً رندر نشود؛
   // فرمِ ورود به‌جایِ Modal روی آن، خودش تکِ محتوایِ صفحه می‌شود.
@@ -1373,10 +1368,9 @@ function LoginScreen({ onLogin }) {
             onStartFree={() => setShowTrialRequest(true)}
             onViewPlans={() => setShowPlans(true)}
             onUserLogin={() => setShowLogin(true)}
-            announcements={landingAnnouncements}
             logoUrl={appearance?.logoUrl}
             systemName={appearance?.systemName || ""}
-            heroImageUrl={ann0?.loginImageUrl || appearance?.loginImageUrl || ""}
+            heroImageUrl={landingOverride?.heroImageUrl || ""}
             landingOverride={landingOverride}
           />
 

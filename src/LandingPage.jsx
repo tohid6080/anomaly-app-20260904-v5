@@ -3,7 +3,7 @@ import {
   AlertTriangle, ClipboardCheck, ListChecks, Wrench, GraduationCap, Users,
   FileCheck, HardHat, MessagesSquare, FolderOpen, UserCog, LayoutDashboard,
   ArrowLeft, ArrowRight, Check, Menu, X, BarChart3, LineChart, Gauge, Smartphone,
-  Zap, Database, FileBarChart, Recycle, Layers, TrendingUp, Bell, Globe, Tag,
+  Zap, Database, FileBarChart, Recycle, Layers, TrendingUp, Globe, Tag,
   Download, PlayCircle, Copy,
 } from "lucide-react";
 import { useLanguage } from "./i18n/LanguageContext.jsx";
@@ -173,12 +173,6 @@ const LP_CSS = `
 @media (max-width:960px){.ihms-lp .g4{grid-template-columns:repeat(2,1fr)}.ihms-lp .g3{grid-template-columns:1fr 1fr}}
 @media (max-width:620px){.ihms-lp .g3,.ihms-lp .g4,.ihms-lp .g2{grid-template-columns:1fr}}
 
-.ihms-lp .anounce{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:${C.tealSoft};border:1px solid #cdeee9;border-radius:14px;padding:12px 16px;margin-top:34px}
-.ihms-lp .anounce .dot{width:34px;height:34px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;color:${C.tealDeep};flex-shrink:0}
-.ihms-lp .anounce .txt{flex:1;min-width:220px;font-size:12.5px;color:${C.ink2}}
-.ihms-lp .anounce .txt b{color:${C.ink};font-weight:800}
-.ihms-lp .anounce .date{font-size:11.5px;color:${C.ink3};font-variant-numeric:tabular-nums}
-
 .ihms-lp .flow{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:36px}
 .ihms-lp .flow .step{flex:1 1 150px;max-width:190px;text-align:center}
 .ihms-lp .flow .sIco{width:54px;height:54px;border-radius:15px;background:#fff;border:1px solid ${C.line};display:flex;align-items:center;justify-content:center;margin:0 auto 12px;color:${C.tealDeep}}
@@ -320,8 +314,6 @@ const L = {
     ctaPrimary: "همین الان رایگان شروع کنید", ctaPlans: "مشاهده پلن‌ها برای خرید", ctaSecondary: "مشاهده امکانات", login: "ورود کاربران",
     demoBtn: "مشاهدهٔ دموی زنده سامانه", demoShareBtn: "اشتراک‌گذاری با دوستان", demoCopyTitle: "کپیِ لینکِ دمو برای اشتراک‌گذاری", demoCopiedTitle: "لینک کپی شد!",
     ticks: ["شروع سریع", "دسترسی تحت وب و موبایل", "مدیریت یکپارچه HSE"],
-    annTitle: "نسخهٔ جدید سامانهٔ IHMS منتشر شد", annBody: "امکانات جدید و بهبودهای سامانه را مشاهده کنید.",
-    annDate: "۱۴۰۵/۰۶/۱۸", annBtn: "مشاهده اطلاعیه", annAll: "مشاهده همه اطلاعیه‌ها",
     whyEyebrow: "چرا IHMS؟", whyH2: "تمام فرآیندهای HSE را در یک محیط یکپارچه مدیریت کنید",
     whySub: "از ثبت اطلاعات میدانی تا تصمیم‌گیری مدیریتی، همه‌چیز در یک بستر منسجم و قابل‌اتکا.",
     why: [
@@ -418,8 +410,6 @@ const L = {
     ctaPrimary: "Start free now", ctaPlans: "View plans to buy", ctaSecondary: "See features", login: "Sign in",
     demoBtn: "See the live demo", demoShareBtn: "Share with friends", demoCopyTitle: "Copy demo link to share", demoCopiedTitle: "Link copied!",
     ticks: ["Quick setup", "Web & mobile access", "Unified HSE management"],
-    annTitle: "A new version of IHMS has been released", annBody: "See the new features and improvements.",
-    annDate: "2026/09/09", annBtn: "View announcement", annAll: "View all announcements",
     whyEyebrow: "Why IHMS?", whyH2: "Manage every HSE process in one integrated place",
     whySub: "From field data entry to management decisions — everything on one coherent, dependable platform.",
     why: [
@@ -516,8 +506,6 @@ const L = {
     ctaPrimary: "Jetzt kostenlos starten", ctaPlans: "Tarife zum Kauf ansehen", ctaSecondary: "Funktionen ansehen", login: "Anmelden",
     demoBtn: "Live-Demo ansehen", demoShareBtn: "Mit Freunden teilen", demoCopyTitle: "Demo-Link zum Teilen kopieren", demoCopiedTitle: "Link kopiert!",
     ticks: ["Schnelle Einrichtung", "Web- & Mobilzugriff", "Einheitliches HSE-Management"],
-    annTitle: "Eine neue Version von IHMS wurde veröffentlicht", annBody: "Sehen Sie die neuen Funktionen und Verbesserungen.",
-    annDate: "09.09.2026", annBtn: "Ankündigung ansehen", annAll: "Alle Ankündigungen ansehen",
     whyEyebrow: "Warum IHMS?", whyH2: "Verwalten Sie jeden HSE-Prozess an einem integrierten Ort",
     whySub: "Von der Felddatenerfassung bis zur Managemententscheidung – alles auf einer kohärenten, zuverlässigen Plattform.",
     why: [
@@ -623,7 +611,7 @@ export const LANDING_DEFAULTS = { fa: L.fa, en: L.en, de: L.de };
 // LoginScreen در App.jsx که واقعاً بینِ این دو انتخاب می‌کند).
 export const LANDING_DISPLAY_MODE_DEFAULT = "full";
 
-export const LANDING_BUTTON_KEYS = ["ctaPrimary", "ctaPlans", "ctaSecondary", "login", "annBtn", "scBtn", "loginTrialRequest"];
+export const LANDING_BUTTON_KEYS = ["ctaPrimary", "ctaPlans", "ctaSecondary", "login", "scBtn", "loginTrialRequest"];
 export const LANDING_BUTTONS_DEFAULT = Object.fromEntries(LANDING_BUTTON_KEYS.map((k) => [k, true]));
 // صادر می‌شود چون «دکمهٔ درخواست ارزیابی و پلن آزمایشی» داخلِ پنجرهٔ
 // ورود (App.jsx، نه این فایل) رندر می‌شود ولی باید همان buttons map را
@@ -717,7 +705,7 @@ function useReveal() {
   return ref;
 }
 
-export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, announcements, logoUrl, systemName, heroImageUrl, landingOverride }) {
+export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, logoUrl, systemName, heroImageUrl, landingOverride }) {
   const viewPlans = onViewPlans || onStartFree;
   const { lang, setLang, t } = useLanguage();
   const dir = lang === "fa" ? "rtl" : "ltr";
@@ -786,7 +774,6 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
   };
   const NAV_IDS = ["top", "features", "modules", "benefits", "about", "contact"];
 
-  const ann = Array.isArray(announcements) && announcements.length > 0 ? announcements[0] : null;
   const shownMods = (x.mods || []).filter((m) => modCat === 0 || CAT_INDEX[m.category] === modCat);
   // تعدادی که تقریباً همیشه در ۲ ردیف جا می‌شود (اندازه‌گیری‌شده روی عرض‌های
   // رایج دسکتاپ)؛ بقیه با دکمهٔ «نمایش همه» باز می‌شوند تا چیپ‌ها برای جاشدنِ
@@ -921,19 +908,6 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
                 <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,rgba(8,26,39,.05),rgba(8,26,39,.28))" }} />
               </div>
             </div>
-          </div>
-
-          {/* Announcement bar */}
-          <div className="anounce" data-rv>
-            <span className="dot"><Bell size={16} /></span>
-            <div className="txt">
-              <b>{ann?.title || x.annTitle}</b>{"  "}— {ann?.body || x.annBody}
-            </div>
-            <span className="date">{ann?.dateLabel || x.annDate}</span>
-            {btn.annBtn && <button type="button" className="btn btn-primary" style={{ padding: "8px 16px", fontSize: 12.5 }} onClick={onStartFree}>{x.annBtn}</button>}
-            <a href="#lp-top" onClick={(e) => { e.preventDefault(); go("top"); }} style={{ fontSize: 12, fontWeight: 800, color: C.tealDeep, display: "inline-flex", alignItems: "center", gap: 4 }}>
-              {x.annAll} <Arrow size={13} />
-            </a>
           </div>
         </div>
       </section>
