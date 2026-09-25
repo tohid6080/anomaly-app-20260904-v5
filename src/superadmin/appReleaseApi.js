@@ -88,6 +88,17 @@ async function deleteApk(path) {
   }).catch(() => {});
 }
 
+// نسخه‌هایی که از دکمه‌ی «به‌روزرسانی موبایل» (build-android.yml) ساخته
+// شده‌اند apk_path ثبت‌شده ندارند (فقط apk_url) — برای اینکه حذفِ این
+// نسخه‌ها هم فایلِ واقعی را از Storage پاک کند، مسیر را از خودِ URL
+// عمومی استخراج می‌کنیم.
+function derivePathFromApkUrl(apkUrl) {
+  if (!apkUrl) return "";
+  const marker = `/storage/v1/object/public/${APK_BUCKET}/`;
+  const i = apkUrl.indexOf(marker);
+  return i === -1 ? "" : decodeURIComponent(apkUrl.slice(i + marker.length));
+}
+
 // ---------- نوشتن ----------
 
 // ثبت (و در صورت انتخاب، انتشارِ) یک نسخه‌ی جدید. version_code خودکار =
@@ -167,9 +178,12 @@ export async function triggerMobileBuild({ version, releaseNotes } = {}) {
 
 // حذف یک نسخه (به‌همراه APKاش در Storage).
 export async function deleteAppRelease(id) {
-  const row = await sb(`app_releases?id=eq.${id}&select=apk_path`, {}, "super_admin");
+  const row = await sb(`app_releases?id=eq.${id}&select=apk_path,apk_url`, {}, "super_admin");
   const rows = await sb(`app_releases?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" }, "super_admin");
   if (!sbOk(rows)) return { __error: true, message: tr("arErrDelete") };
-  if (sbOk(row) && row.length > 0 && row[0].apk_path) await deleteApk(row[0].apk_path);
+  if (sbOk(row) && row.length > 0) {
+    const path = row[0].apk_path || derivePathFromApkUrl(row[0].apk_url);
+    if (path) await deleteApk(path);
+  }
   return { ok: true };
 }
