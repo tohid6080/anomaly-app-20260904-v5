@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle, ClipboardCheck, ListChecks, Wrench, GraduationCap, Users,
-  FileCheck, HardHat, Boxes, MessagesSquare, FolderOpen, UserCog, LayoutDashboard,
+  FileCheck, HardHat, MessagesSquare, FolderOpen, UserCog, LayoutDashboard,
   ArrowLeft, ArrowRight, Check, Menu, X, BarChart3, LineChart, Gauge, Smartphone,
   Zap, Database, FileBarChart, Recycle, Layers, TrendingUp, Bell, Globe, Tag,
   Download, PlayCircle, Copy,
@@ -208,8 +208,13 @@ const LP_CSS = `
 .ihms-lp .feat .fT{font-size:14.5px;font-weight:800;color:${C.ink}}
 .ihms-lp .feat .fD{font-size:12.5px;color:${C.ink2};margin-top:3px}
 .ihms-lp .bigmock{background:#fff;border:1px solid ${C.line};border-radius:20px;box-shadow:0 40px 80px -46px rgba(12,34,51,.4);padding:16px}
-.ihms-lp .phone{width:min(260px,80%);margin:0 auto;background:${C.navyDeep};border-radius:34px;padding:12px;box-shadow:0 40px 80px -40px rgba(8,26,39,.6)}
-.ihms-lp .phone .screen{background:#fff;border-radius:24px;overflow:hidden;aspect-ratio:9/18.5}
+.ihms-lp .phone{position:relative;width:min(280px,80%);margin:0 auto;background:linear-gradient(160deg,#4b4c4e,#232427);border-radius:54px;padding:14px;box-shadow:0 40px 80px -40px rgba(8,26,39,.6),inset 0 0 0 1.5px rgba(255,255,255,.12)}
+.ihms-lp .phone .screen{position:relative;background:#0e2c3f;border-radius:42px;overflow:hidden;aspect-ratio:9/19.5}
+.ihms-lp .phone .screen-img{display:block;width:100%;height:100%;object-fit:cover}
+.ihms-lp .phone .side-btn{position:absolute;background:linear-gradient(90deg,#3a3b3d,#232427);border-radius:2px}
+.ihms-lp .phone .side-btn.power{right:-3px;top:150px;width:3px;height:70px}
+.ihms-lp .phone .side-btn.vol-up{left:-3px;top:130px;width:3px;height:36px}
+.ihms-lp .phone .side-btn.vol-down{left:-3px;top:174px;width:3px;height:36px}
 
 .ihms-lp .toggle{display:inline-flex;background:${C.bgSoft};border:1px solid ${C.line};border-radius:999px;padding:4px;margin:18px auto 8px;gap:4px}
 .ihms-lp .toggle button{border:none;background:none;font-size:12.5px;font-weight:800;color:${C.ink2};padding:9px 20px;border-radius:999px;cursor:pointer}
@@ -382,8 +387,7 @@ const L = {
       ["پیگیری اقدامات", "وضعیت اقدامات اصلاحی تا بسته‌شدن."],
     ],
     mbTag: "نسخهٔ اندروید سامانه",
-    phHome: "خانه", phWelcome: "خوش آمدید 👋", phTasks: "وظایف امروز شما",
-    phList: ["ثبت گزارش شرایط ناایمن", "بازرسی روزانه داربست", "پیگیری اقدام اصلاحی #۱۲"],
+    mbShotAlt: "نمایی از صفحهٔ خانهٔ اپلیکیشن IHMS",
     trEyebrow: "چرا سازمان‌ها IHMS را انتخاب می‌کنند", trH2: "یک سیستم؛ یک تصویر کامل از عملکرد HSE",
     trSub: "به‌جای فایل‌های پراکنده و پیگیری دستی، یک بستر منسجم برای کلِ چرخهٔ HSE.",
     trust: ["کاهش زمان ثبت و پیگیری", "شفافیت فرآیندها", "دسترسی سریع به اطلاعات", "گزارش‌گیری مدیریتی", "کنترل بهتر ریسک", "افزایش بهره‌وری تیم HSE"],
@@ -480,8 +484,7 @@ const L = {
       ["Track actions", "Corrective-action status through to closure."],
     ],
     mbTag: "Android app",
-    phHome: "Home", phWelcome: "Welcome 👋", phTasks: "Your tasks today",
-    phList: ["Report an unsafe condition", "Daily scaffold inspection", "Follow up corrective action #12"],
+    mbShotAlt: "IHMS app home screen preview",
     trEyebrow: "Why teams choose IHMS", trH2: "One system; one complete picture of HSE performance",
     trSub: "Instead of scattered files and manual chasing, one coherent platform for the whole HSE cycle.",
     trust: ["Less time to log and follow up", "Process transparency", "Fast access to information", "Management reporting", "Better risk control", "Higher HSE-team productivity"],
@@ -578,8 +581,7 @@ const L = {
       ["Maßnahmen verfolgen", "Status der Korrekturmaßnahmen bis zum Abschluss."],
     ],
     mbTag: "Android-App",
-    phHome: "Start", phWelcome: "Willkommen 👋", phTasks: "Ihre Aufgaben heute",
-    phList: ["Unsicheren Zustand melden", "Tägliche Gerüstinspektion", "Korrekturmaßnahme #12 verfolgen"],
+    mbShotAlt: "Vorschau des IHMS-App-Startbildschirms",
     trEyebrow: "Warum Teams IHMS wählen", trH2: "Ein System; ein vollständiges Bild der HSE-Leistung",
     trSub: "Statt verstreuter Dateien und manuellem Nachfassen – eine kohärente Plattform für den gesamten HSE-Zyklus.",
     trust: ["Weniger Zeit für Erfassung und Nachverfolgung", "Prozesstransparenz", "Schneller Zugriff auf Informationen", "Management-Berichte", "Bessere Risikokontrolle", "Höhere Produktivität des HSE-Teams"],
@@ -830,8 +832,8 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
         <div className="wrap">
           <div className="row">
             <a href="#lp-top" onClick={(e) => { e.preventDefault(); go("top"); }} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <img src={logoUrl || `${import.meta.env.BASE_URL}logo.png`} alt="IHMS" width={34} height={34} style={{ objectFit: "contain" }} />
-              <span style={{ fontWeight: 900, fontSize: 18, color: C.navy, letterSpacing: "-.01em" }}>IHMS</span>
+              <img src={logoUrl || `${import.meta.env.BASE_URL}logo.png`} alt="IHMS" width={48} height={48} style={{ objectFit: "contain" }} />
+              <span style={{ fontWeight: 900, fontSize: 25, color: C.navy, letterSpacing: "-.01em" }}>IHMS</span>
             </a>
             <nav className="nav">
               {x.nav.map((label, i) => (
@@ -1050,23 +1052,11 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
           <div className="g2">
             <div className="center" data-rv style={{ order: 2 }}>
               <div className="phone">
-                <div className="screen" style={{ background: C.navyDeep, padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>
-                  <div style={{ color: "#fff", fontSize: 11, fontWeight: 800, padding: "4px 2px" }}>{x.phHome}</div>
-                  <div style={{ background: "#fff", borderRadius: 12, padding: 10 }}>
-                    <div style={{ fontSize: 10, fontWeight: 800, color: C.ink }}>{x.phWelcome}</div>
-                    <div style={{ fontSize: 8, color: C.ink3, marginTop: 3 }}>{x.phTasks}</div>
-                  </div>
-                  {x.phList.map((tk, i) => (
-                    <div key={i} style={{ background: "#fff", borderRadius: 10, padding: "9px 10px", display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ width: 20, height: 20, borderRadius: 6, background: C.tealSoft, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <Check size={11} color={C.tealDeep} />
-                      </span>
-                      <span style={{ fontSize: 9, color: C.ink2, flex: 1 }}>{tk}</span>
-                    </div>
-                  ))}
-                  <div style={{ marginTop: "auto", background: "#0e2c3f", borderRadius: 12, display: "flex", justifyContent: "space-around", padding: "8px 4px" }}>
-                    {[LayoutDashboard, ListChecks, Boxes, Bell].map((I, i) => <I key={i} size={14} color={i === 0 ? C.teal : "rgba(255,255,255,.5)"} />)}
-                  </div>
+                <span className="side-btn power" />
+                <span className="side-btn vol-up" />
+                <span className="side-btn vol-down" />
+                <div className="screen">
+                  <img src="/mobile-app-preview.png" alt={x.mbShotAlt} className="screen-img" />
                 </div>
               </div>
             </div>
