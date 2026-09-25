@@ -198,9 +198,12 @@ const LP_CSS = `
 .ihms-lp .mcard .more{font-size:11.5px;font-weight:800;color:${C.tealDeep};display:inline-flex;align-items:center;gap:5px}
 
 .ihms-lp .qt-block{margin-top:48px;padding-top:40px;border-top:1px solid ${C.line}}
-.ihms-lp .qt-grid{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;max-width:940px;margin:0 auto}
-.ihms-lp .qt-chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:${C.ink};
-  background:${C.tealSoft};border:1px solid ${C.line};border-radius:999px;padding:7px 14px}
+.ihms-lp .qt-grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.ihms-lp .qt-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:${C.ink};
+  background:${C.tealSoft};border:1px solid ${C.line};border-radius:999px;padding:6px 12px;white-space:nowrap}
+.ihms-lp .qt-more-btn{border:1px solid ${C.line};background:#fff;color:${C.tealDeep};font-size:12.5px;font-weight:800;
+  padding:8px 18px;border-radius:999px;cursor:pointer;font-family:inherit}
+.ihms-lp .qt-more-btn:hover{background:${C.tealSoft}}
 
 .ihms-lp .showcase{background:${C.bgSoft}}
 .ihms-lp .feat{display:flex;gap:12px;align-items:flex-start;padding:14px 0;border-bottom:1px solid ${C.line}}
@@ -345,6 +348,7 @@ const L = {
     qtEyebrow: "ابزارهای سریع HSE",
     qtH2: "ابزارهای محاسباتیِ آمادهٔ HSE، داخلِ همین سامانه",
     qtSub: "ده‌ها ماشین‌حسابِ تخصصیِ ایمنی، لیفتینگ و پرتونگاری — بدونِ نصب، همیشه در دسترس.",
+    qtMoreBtn: "نمایش همه", qtLessBtn: "نمایش کمتر",
     qtList: [
       "مبدل واحدها", "LTIFR و نرخِ شدت", "TRIR", "ترکیبِ ترازِ صدا",
       "درصدِ بارِ جرثقیل", "ضریبِ زاویهٔ اسلینگ", "محاسبهٔ زاویهٔ اسلینگ", "کششِ پایه‌های اسلینگ",
@@ -442,6 +446,7 @@ const L = {
     qtEyebrow: "HSE Quick Tools",
     qtH2: "Ready-made HSE calculators, built into the same system",
     qtSub: "Dozens of specialist safety, lifting and radiography calculators — nothing to install, always available.",
+    qtMoreBtn: "Show all", qtLessBtn: "Show less",
     qtList: [
       "Unit converter", "LTIFR & severity rate", "TRIR", "Combine sound levels",
       "Crane load %", "Sling angle factor", "Sling angle calculation", "Sling leg tension",
@@ -539,6 +544,7 @@ const L = {
     qtEyebrow: "HSE-Schnellwerkzeuge",
     qtH2: "Fertige HSE-Rechner, direkt im selben System",
     qtSub: "Dutzende Fachrechner für Sicherheit, Hebevorgänge und Radiografie — ohne Installation, jederzeit verfügbar.",
+    qtMoreBtn: "Alle anzeigen", qtLessBtn: "Weniger anzeigen",
     qtList: [
       "Einheitenrechner", "LTIFR & Schwererate", "TRIR", "Schallpegel kombinieren",
       "Kranlast %", "Anschlagwinkel-Faktor", "Berechnung des Anschlagwinkels", "Zugkraft der Anschlagstränge",
@@ -721,6 +727,7 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
   const [mNav, setMNav] = useState(false);
   const [modCat, setModCat] = useState(0);
   const [demoCopied, setDemoCopied] = useState(false);
+  const [qtExpanded, setQtExpanded] = useState(false);
   const rootRef = useReveal();
 
   // نوارِ دانلودِ APK — آخرین نسخه‌ی «منتشرشده» از همان app_releases که
@@ -781,6 +788,11 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
 
   const ann = Array.isArray(announcements) && announcements.length > 0 ? announcements[0] : null;
   const shownMods = (x.mods || []).filter((m) => modCat === 0 || CAT_INDEX[m.category] === modCat);
+  // تعدادی که تقریباً همیشه در ۲ ردیف جا می‌شود (اندازه‌گیری‌شده روی عرض‌های
+  // رایج دسکتاپ)؛ بقیه با دکمهٔ «نمایش همه» باز می‌شوند تا چیپ‌ها برای جاشدنِ
+  // همه‌ی ۲۳ مورد در ۲ ردیف، ریز و ناخوانا نشوند.
+  const QT_VISIBLE_COUNT = 14;
+  const qtShown = qtExpanded ? x.qtList : x.qtList.slice(0, QT_VISIBLE_COUNT);
 
   const langSwitch = (
     <label className="langsw">
@@ -1007,10 +1019,17 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
               <p className="sub">{x.qtSub}</p>
             </div>
             <div className="qt-grid">
-              {x.qtList.map((name) => (
+              {qtShown.map((name) => (
                 <span key={name} className="qt-chip"><Check size={13} color={C.tealDeep} /> {name}</span>
               ))}
             </div>
+            {x.qtList.length > QT_VISIBLE_COUNT && (
+              <div className="center" style={{ marginTop: 14 }}>
+                <button type="button" className="qt-more-btn" onClick={() => setQtExpanded((v) => !v)}>
+                  {qtExpanded ? x.qtLessBtn : `${x.qtMoreBtn} (+${x.qtList.length - QT_VISIBLE_COUNT})`}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </section>
