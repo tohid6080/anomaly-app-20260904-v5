@@ -4,7 +4,7 @@ import {
   FileCheck, HardHat, Boxes, MessagesSquare, FolderOpen, UserCog, LayoutDashboard,
   ArrowLeft, ArrowRight, Check, Menu, X, BarChart3, LineChart, Gauge, Smartphone,
   Zap, Database, FileBarChart, Recycle, Layers, TrendingUp, Bell, Globe, Tag,
-  Download,
+  Download, PlayCircle, Copy,
 } from "lucide-react";
 import { useLanguage } from "./i18n/LanguageContext.jsx";
 import { loadLatestPublishedRelease } from "./superadmin/appReleaseApi.js";
@@ -66,6 +66,10 @@ const SOCIAL_LINKS = [
   { key: "instagram", href: "https://www.instagram.com/ihmsapp?stkn=ZGpmcmd1d3BhYWRn", Icon: InstagramIcon, label: "Instagram" },
   { key: "linkedin", href: "https://www.linkedin.com/in/integrated-hse-management-system-health-safety-environment-852870437", Icon: LinkedinIcon, label: "LinkedIn" },
 ];
+
+// لینکِ دموی زندهِ سامانه — مثلِ SOCIAL_LINKS ثابت است و از طریقِ
+// «مدیریتِ صفحه اصلی سامانه» قابل‌ویرایش نیست، چون به‌ندرت تغییر می‌کند.
+const DEMO_URL = "https://claude.ai/artifact/Dznvj1GGESZXzqaEkT4Azg";
 
 const LP_CSS = `
 .ihms-lp *{box-sizing:border-box}
@@ -133,6 +137,13 @@ const LP_CSS = `
 .ihms-lp .hero h1 .accent{color:${C.tealDeep};display:block}
 .ihms-lp .hero .lede{font-size:clamp(14.5px,1.9vw,17px);color:${C.ink2};margin-top:18px;max-width:560px}
 .ihms-lp .hero .cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px}
+.ihms-lp .demo-strip{display:inline-flex;align-items:center;gap:10px;margin-top:16px;padding:6px;padding-inline-start:18px;background:${C.tealSoft};border:1px solid #cdeee9;border-radius:999px}
+.ihms-lp .demo-strip .ds-ico{display:flex;color:${C.tealDeep}}
+.ihms-lp .demo-strip-link{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:800;color:${C.tealDeep};white-space:nowrap}
+.ihms-lp .demo-strip-link:hover{text-decoration:underline}
+.ihms-lp .copy-btn{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;flex-shrink:0;border-radius:999px;border:1px solid #fff;background:#fff;color:${C.ink2};cursor:pointer;transition:color .15s ease}
+.ihms-lp .copy-btn:hover{color:${C.tealDeep}}
+.ihms-lp .copy-btn.copied{color:${C.good}}
 .ihms-lp .hero .ticks{display:flex;gap:20px;flex-wrap:wrap;margin-top:22px;font-size:13px;font-weight:700;color:${C.ink2}}
 .ihms-lp .hero .ticks span{display:inline-flex;align-items:center;gap:7px}
 .ihms-lp .hero-visual{position:relative}
@@ -291,6 +302,7 @@ const L = {
     heroH1a: "مدیریت هوشمند HSE", heroH1b: "از گزارش تا تصمیم‌گیری",
     heroLede: "IHMS یک سامانهٔ جامع و یکپارچه برای مدیریت ایمنی، بهداشت، محیط‌زیست و فرآیندهای HSE سازمان است؛ با استفاده از اطلاعات واقعی، فرآیندهای سازمان را یکپارچه کنید، ریسک‌ها را کنترل کنید و تصمیم‌های دقیق‌تری بگیرید.",
     ctaPrimary: "همین الان رایگان شروع کنید", ctaPlans: "مشاهده پلن‌ها برای خرید", ctaSecondary: "مشاهده امکانات", login: "ورود کاربران",
+    demoBtn: "مشاهدهٔ دموی زنده سامانه", demoCopyTitle: "کپیِ لینکِ دمو برای اشتراک‌گذاری", demoCopiedTitle: "لینک کپی شد!",
     ticks: ["شروع سریع", "دسترسی تحت وب و موبایل", "مدیریت یکپارچه HSE"],
     annTitle: "نسخهٔ جدید سامانهٔ IHMS منتشر شد", annBody: "امکانات جدید و بهبودهای سامانه را مشاهده کنید.",
     annDate: "۱۴۰۵/۰۶/۱۸", annBtn: "مشاهده اطلاعیه", annAll: "مشاهده همه اطلاعیه‌ها",
@@ -388,6 +400,7 @@ const L = {
     heroH1a: "Smart HSE management", heroH1b: "from report to decision",
     heroLede: "IHMS is a complete, integrated platform for managing your organisation's safety, health, environment and HSE processes. Use real data to unify your workflows, control risk and make sharper decisions.",
     ctaPrimary: "Start free now", ctaPlans: "View plans to buy", ctaSecondary: "See features", login: "Sign in",
+    demoBtn: "See the live demo", demoCopyTitle: "Copy demo link to share", demoCopiedTitle: "Link copied!",
     ticks: ["Quick setup", "Web & mobile access", "Unified HSE management"],
     annTitle: "A new version of IHMS has been released", annBody: "See the new features and improvements.",
     annDate: "2026/09/09", annBtn: "View announcement", annAll: "View all announcements",
@@ -485,6 +498,7 @@ const L = {
     heroH1a: "Intelligentes HSE-Management", heroH1b: "vom Bericht bis zur Entscheidung",
     heroLede: "IHMS ist eine vollständige, integrierte Plattform für das Management von Sicherheit, Gesundheit, Umwelt und HSE-Prozessen Ihrer Organisation. Nutzen Sie echte Daten, um Abläufe zu vereinheitlichen, Risiken zu steuern und fundiertere Entscheidungen zu treffen.",
     ctaPrimary: "Jetzt kostenlos starten", ctaPlans: "Tarife zum Kauf ansehen", ctaSecondary: "Funktionen ansehen", login: "Anmelden",
+    demoBtn: "Live-Demo ansehen", demoCopyTitle: "Demo-Link zum Teilen kopieren", demoCopiedTitle: "Link kopiert!",
     ticks: ["Schnelle Einrichtung", "Web- & Mobilzugriff", "Einheitliches HSE-Management"],
     annTitle: "Eine neue Version von IHMS wurde veröffentlicht", annBody: "Sehen Sie die neuen Funktionen und Verbesserungen.",
     annDate: "09.09.2026", annBtn: "Ankündigung ansehen", annAll: "Alle Ankündigungen ansehen",
@@ -696,6 +710,7 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
   const [scrolled, setScrolled] = useState(false);
   const [mNav, setMNav] = useState(false);
   const [modCat, setModCat] = useState(0);
+  const [demoCopied, setDemoCopied] = useState(false);
   const rootRef = useReveal();
 
   // نوارِ دانلودِ APK — آخرین نسخه‌ی «منتشرشده» از همان app_releases که
@@ -721,6 +736,12 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
     if (meta) meta.setAttribute("content", "width=1280");
     return () => { if (meta && prev) meta.setAttribute("content", prev); };
   }, []);
+
+  const copyDemoLink = () => {
+    navigator.clipboard?.writeText(DEMO_URL);
+    setDemoCopied(true);
+    setTimeout(() => setDemoCopied(false), 1500);
+  };
 
   // متنِ سفارشی‌شده از «مدیریتِ صفحه اصلی سامانه» — از LoginScreen (App.jsx)
   // به‌عنوانِ prop می‌آید (نه fetch مستقل اینجا)، چون همین داده (به‌خصوص
@@ -851,6 +872,21 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, ann
                 {btn.ctaPrimary && <button type="button" className="btn btn-primary btn-lg" onClick={onStartFree}>{x.ctaPrimary}</button>}
                 {btn.ctaPlans && <button type="button" className="btn btn-ghost btn-lg" onClick={viewPlans}>{x.ctaPlans}</button>}
                 {btn.ctaSecondary && <button type="button" className="btn btn-ghost btn-lg" onClick={() => go("features")}>{x.ctaSecondary}</button>}
+              </div>
+              <div className="demo-strip">
+                <span className="ds-ico"><PlayCircle size={18} /></span>
+                <a href={DEMO_URL} target="_blank" rel="noopener noreferrer" className="demo-strip-link">
+                  {x.demoBtn} <Arrow size={13} />
+                </a>
+                <button
+                  type="button"
+                  className={"copy-btn" + (demoCopied ? " copied" : "")}
+                  title={demoCopied ? x.demoCopiedTitle : x.demoCopyTitle}
+                  aria-label={demoCopied ? x.demoCopiedTitle : x.demoCopyTitle}
+                  onClick={copyDemoLink}
+                >
+                  {demoCopied ? <Check size={16} /> : <Copy size={16} />}
+                </button>
               </div>
               <div className="ticks">
                 {x.ticks.map((tk) => <span key={tk}><Check size={15} color={C.tealDeep} /> {tk}</span>)}
