@@ -140,14 +140,19 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   </React.StrictMode>
 );
 
-// صفحه‌ی بارگذاریِ وب (index.html#ihms-boot) — به‌محضِ اینکه React واقعاً
-// یک فریم را نقاشی کرده (نه با تایمرِ ثابت، تا وقتی داده از کش موجود است
-// بی‌دلیل طولانی نشود) با یک فِیدِ نرم پاک می‌شود. کاملاً مستقل از Splash
-// بومیِ زیر (که فقط داخل اپلیکیشنِ اندرویدِ نصب‌شده معنا دارد).
+// صفحه‌ی بارگذاریِ وب (index.html#ihms-boot) — طبقِ خواسته‌ی صریح، حداقل
+// ۳ ثانیه (از لحظه‌ی واقعیِ نمایش‌داده‌شدنش در index.html، نه از همین‌جا)
+// روی صفحه می‌ماند، بعد وقتی React هم واقعاً یک فریم را نقاشی کرده، با یک
+// فِیدِ نرم پاک می‌شود. کاملاً مستقل از Splash بومیِ زیر (که فقط داخل
+// اپلیکیشنِ اندرویدِ نصب‌شده معنا دارد).
+const IHMS_BOOT_MIN_MS = 3000;
 function hideBootLoader() {
   const el = document.getElementById("ihms-boot");
   if (!el) return;
-  requestAnimationFrame(() => requestAnimationFrame(() => {
+  requestAnimationFrame(() => requestAnimationFrame(async () => {
+    const startedAt = window.__ihmsBootStart || Date.now();
+    const remaining = Math.max(0, IHMS_BOOT_MIN_MS - (Date.now() - startedAt));
+    if (remaining > 0) await new Promise((resolve) => setTimeout(resolve, remaining));
     el.classList.add("ihms-boot-hide");
     el.addEventListener("transitionend", () => el.remove(), { once: true });
     // اگر transitionend به هر دلیلی نیاید (مثلاً prefers-reduced-motion)،

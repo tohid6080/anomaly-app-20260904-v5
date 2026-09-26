@@ -30,6 +30,10 @@
         <div id="ihms-boot__track"><div id="ihms-boot__fill"></div></div>
       </div>
     </div>
+    <!-- زمانِ واقعیِ شروعِ نمایشِ صفحه‌ی بارگذاری — همین‌جا، پیش از هر
+         اسکریپتِ ماژولی، تا main.jsx بتواند حداقلِ ۳ ثانیه را از لحظه‌ی
+         واقعیِ دیده‌شدنِ لوگو حساب کند، نه از لحظه‌ی اجرای خودش. -->
+    <script>window.__ihmsBootStart = Date.now();</script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
