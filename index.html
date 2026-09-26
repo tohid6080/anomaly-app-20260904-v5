@@ -17,8 +17,19 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Estedad:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Markazi+Text:wght@400;500;600;700&family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./boot-loader.css" />
   </head>
   <body>
+    <!-- صفحه‌ی بارگذاریِ اولیه — پیش از اینکه React اصلاً بارگذاری/اجرا شود
+         نمایش داده می‌شود (به همین دلیل باید همین‌جا، در HTMLِ خام باشد، نه
+         تزریق‌شده با جاوااسکریپت). با آماده‌شدنِ اپ، main.jsx آن را با یک
+         محو شدنِ نرم پاک می‌کند — رجوع کنید به hideBootLoader() در main.jsx. -->
+    <div id="ihms-boot" aria-hidden="true">
+      <div id="ihms-boot__inner">
+        <img id="ihms-boot__logo" src="./logo.png" alt="" />
+        <div id="ihms-boot__track"><div id="ihms-boot__fill"></div></div>
+      </div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

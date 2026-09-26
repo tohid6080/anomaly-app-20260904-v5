@@ -1,0 +1,65 @@
+/* صفحه‌ی بارگذاریِ اولیه (پیش از رندرِ React) — عمداً یک فایلِ CSS جدا،
+   نه <style> درون‌خطی در index.html: طبقِ همان محدودیتِ مستندشده در
+   main.jsx (پلاگینِ html-inline-proxyِ Vite گاهی resolve کردنِ <style>
+   درون‌خطیِ index.html را روی ویندوز با مسیرِ درایوِ ناهماهنگ‌حرف می‌شکند). */
+
+#ihms-boot {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle, #e4ecf1 1.5px, transparent 1.5px),
+    radial-gradient(1100px 620px at 100% 0%, #e6f6f4 0%, transparent 58%),
+    radial-gradient(900px 560px at 0% 42%, rgba(18, 181, 166, .07) 0%, transparent 55%),
+    radial-gradient(820px 520px at 100% 82%, rgba(14, 44, 63, .06) 0%, transparent 55%),
+    #ffffff;
+  background-size: 24px 24px, auto, auto, auto, auto;
+  transition: opacity .4s ease;
+}
+#ihms-boot.ihms-boot-hide {
+  opacity: 0;
+  pointer-events: none;
+}
+#ihms-boot__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 34px;
+}
+#ihms-boot__logo {
+  width: 220px;
+  height: auto;
+  display: block;
+}
+#ihms-boot__track {
+  position: relative;
+  width: 240px;
+  height: 3px;
+  border-radius: 999px;
+  background: #e4ecf1;
+  overflow: hidden;
+}
+#ihms-boot__fill {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #12b5a6, #0e8f86);
+  transform-origin: left center;
+  animation: ihms-boot-bar 1.6s cubic-bezier(.65, 0, .35, 1) infinite;
+}
+@keyframes ihms-boot-bar {
+  0%   { transform: translateX(-100%) scaleX(.4); }
+  50%  { transform: translateX(20%)   scaleX(.6); }
+  100% { transform: translateX(120%)  scaleX(.4); }
+}
+@media (max-width: 640px) {
+  #ihms-boot__inner { gap: 26px; }
+  #ihms-boot__logo { width: 156px; }
+  #ihms-boot__track { width: 168px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #ihms-boot__fill { animation: none; transform: scaleX(.55); }
+}
