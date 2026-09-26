@@ -140,6 +140,23 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   </React.StrictMode>
 );
 
+// صفحه‌ی بارگذاریِ وب (index.html#ihms-boot) — به‌محضِ اینکه React واقعاً
+// یک فریم را نقاشی کرده (نه با تایمرِ ثابت، تا وقتی داده از کش موجود است
+// بی‌دلیل طولانی نشود) با یک فِیدِ نرم پاک می‌شود. کاملاً مستقل از Splash
+// بومیِ زیر (که فقط داخل اپلیکیشنِ اندرویدِ نصب‌شده معنا دارد).
+function hideBootLoader() {
+  const el = document.getElementById("ihms-boot");
+  if (!el) return;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    el.classList.add("ihms-boot-hide");
+    el.addEventListener("transitionend", () => el.remove(), { once: true });
+    // اگر transitionend به هر دلیلی نیاید (مثلاً prefers-reduced-motion)،
+    // این محافظِ زمانی مطمئن می‌شود از DOM واقعاً حذف می‌شود.
+    setTimeout(() => el.remove(), 600);
+  }));
+}
+hideBootLoader();
+
 // بعد از رندر اولیه‌ی اپ (که همان صفحه‌ی ورود خواهد بود، مگر نشستی از
 // قبل ذخیره شده باشد)، Splash Screen بومی را با یک محو شدن نرم کنار
 // می‌زند. این تابع کاملاً مستقل از هر منطق Login/احراز هویتی است.
