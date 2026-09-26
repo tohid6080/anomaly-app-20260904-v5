@@ -27,10 +27,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 34px;
+  gap: 40px;
 }
 #ihms-boot__logo {
-  width: 220px;
+  width: 280px;
   height: auto;
   display: block;
 }
@@ -56,8 +56,8 @@
   100% { transform: translateX(120%)  scaleX(.4); }
 }
 @media (max-width: 640px) {
-  #ihms-boot__inner { gap: 26px; }
-  #ihms-boot__logo { width: 156px; }
+  #ihms-boot__inner { gap: 30px; }
+  #ihms-boot__logo { width: 190px; }
   #ihms-boot__track { width: 168px; }
 }
 @media (prefers-reduced-motion: reduce) {
