@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Construction, Plus, Copy, Archive, ArchiveRestore, Trash2, GitBranch,
-  History, ClipboardList, ChevronDown, ChevronRight, Save, X, SlidersHorizontal, BookOpen, ShieldCheck,
+  History, ClipboardList, ChevronDown, ChevronRight, Save, X, SlidersHorizontal, BookOpen, ShieldCheck, GraduationCap,
 } from "lucide-react";
 import { THEME, styles } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
@@ -26,6 +26,8 @@ import { computeLiftCalc, DEFAULT_CRITERIA, syncCraneRig } from "./liftingCalcEn
 import { validateLiftingPlan } from "./liftingSafetyEngine.js";
 import { loadPersonnelList } from "../personnel/personnelApi.js";
 import { loadMachineryList } from "../machinery/machineryApi.js";
+import { fmtN, fmtKg, CalcRow, Verdict, Gauge } from "./liftingCalcDisplay.jsx";
+import LiftingPlanSample from "./LiftingPlanSample.jsx";
 
 // دسترسی به مدل‌های جرثقیل/Load Chart و معیارهای پذیرش (دیتای مبنا، نه یک
 // پلنِ خاص) همچنان فقط برای HSE_SUPERVISOR است — دقیقاً همان محدودیتی که
@@ -497,6 +499,9 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
   }
   if (mode === "criteria") {
     return <LiftingCriteriaManager onBack={() => setMode("list")} wide={wide} currentUser={currentUser} />;
+  }
+  if (mode === "sample") {
+    return <LiftingPlanSample onBack={() => setMode("list")} wide={wide} />;
   }
 
   // ---------- render: editor ----------
@@ -981,6 +986,9 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
         backLabel={t("commonBackPlain")}
         actions={(
           <>
+            <button type="button" onClick={() => setMode("sample")} title={t("lpBtnSample")} style={headerActionBtn}>
+              <GraduationCap size={14} /> {t("lpBtnSample")}
+            </button>
             {isSupervisor && (
               <button type="button" onClick={() => setMode("craneModels")} title={t("subCraneModels")} style={headerActionBtn}>
                 <Construction size={14} /> {t("lpBtnCraneModels")}
@@ -1068,52 +1076,7 @@ export default function LiftingPlanWorkspace({ currentUser, role, onBack, wide, 
   );
 }
 
-function fmtN(n, d = 0) {
-  if (n == null || Number.isNaN(n)) return "—";
-  return Number(n).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
-}
-const fmtKg = (n) => fmtN(n, 0);
 const round2 = (n) => (n == null ? "" : Math.round(n * 100) / 100);
-
-function CalcRow({ k, v, tone, strong }) {
-  const color = tone === "bad" ? THEME.danger : tone === "warn" ? THEME.warn : tone === "ok" ? THEME.ok : THEME.text;
-  return (
-    <div style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "4px 0", borderBottom: `1px solid ${THEME.borderSoft}`, fontSize: 11.5 }}>
-      <span style={{ color: THEME.text3 }}>{k}</span>
-      <span style={{ fontWeight: strong ? 800 : 700, color, fontVariantNumeric: "tabular-nums" }}>{v}</span>
-    </div>
-  );
-}
-
-function Verdict({ worst, pct, t }) {
-  const map = {
-    ok: { c: THEME.ok, bg: THEME.okBg, txt: t("lpVerdictOk") },
-    warn: { c: THEME.warn, bg: THEME.warnBg, txt: t("lpVerdictWarn") },
-    fail: { c: THEME.danger, bg: THEME.dangerBg, txt: t("lpVerdictFail") },
-  };
-  const m = map[worst] || map.ok;
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 11px", borderRadius: 9, background: m.bg, color: m.c, fontWeight: 800, fontSize: 12.5, marginBottom: 8 }}>
-      <span>{m.txt}</span>
-      <span style={{ marginInlineStart: "auto", fontVariantNumeric: "tabular-nums" }}>{pct == null ? "—" : `${fmtN(pct, 1)}٪`}</span>
-    </div>
-  );
-}
-
-function Gauge({ pct, warn = 75, max = 85 }) {
-  const p = Math.max(0, Math.min(100, pct || 0));
-  return (
-    <div>
-      <div style={{ position: "relative", height: 10, borderRadius: 6, overflow: "hidden", background: `linear-gradient(90deg, ${THEME.ok} 0 ${warn}%, ${THEME.warn} ${warn}% ${max}%, ${THEME.danger} ${max}% 100%)` }}>
-        <div style={{ position: "absolute", inset: 0, background: THEME.surface, opacity: 0.55 }} />
-        <div style={{ position: "absolute", insetBlock: 0, insetInlineStart: 0, width: `${p}%`, borderInlineEnd: `2.5px solid ${THEME.text}` }} />
-      </div>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: THEME.text3, marginTop: 2, fontVariantNumeric: "tabular-nums" }}>
-        <span>۰</span><span>{fmtN(warn)}</span><span>{fmtN(max)}</span><span>۱۰۰</span>
-      </div>
-    </div>
-  );
-}
 
 function Field({ label, children, full }) {
   return (
