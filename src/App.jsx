@@ -1212,13 +1212,6 @@ async function attemptCredentialLogin(username, password) {
   return { error: true };
 }
 
-// حسابِ سرپرستِ HSE در «شرکتِ پیش‌فرض (داده‌های موجود)» — شرکتِ نمونه‌ای که
-// برایِ دموی زندهِ مشتری با داده‌هایِ کاملاً نمونه/غیرِواقعی پر شده است، نه
-// اطلاعاتِ شخصیِ واقعی. لینکِ «دموی زنده» در LandingPage.jsx با #demo-login
-// به همین دو مقدار می‌رسد.
-const DEMO_LOGIN_USERNAME = "saeed.vafaei";
-const DEMO_LOGIN_PASSWORD = "Demo@12345";
-
 function LoginScreen({ onLogin }) {
   const { t, dir } = useLanguage();
   const appearance = useAppearance();
@@ -1298,7 +1291,7 @@ function LoginScreen({ onLogin }) {
     return false;
   };
 
-  const doLogin = async (u, p) => {
+  const handleSubmit = async () => {
     setLoading(true);
     setError("");
     setWarning("");
@@ -1306,32 +1299,17 @@ function LoginScreen({ onLogin }) {
     // اول: آیا این نام‌کاربری به‌خاطر تلاش‌های ناموفق اخیر قفل است؟ این
     // بررسی واقعاً سمت سرور انجام می‌شود (نه یک شمارنده‌ی قابل‌پاک‌شدن در
     // مرورگر خودِ کاربر).
-    const lockStatus = await checkLoginLockout(u);
+    const lockStatus = await checkLoginLockout(username);
     if (lockStatus?.locked) {
       setLoading(false);
       setError(t("accountTemporarilyLocked"));
       return;
     }
 
-    const { user } = await attemptCredentialLogin(u, p);
-    await finishLogin(u, user, p);
+    const { user } = await attemptCredentialLogin(username, password);
+    await finishLogin(username, user, password);
     setLoading(false);
   };
-
-  const handleSubmit = async () => { await doLogin(username, password); };
-
-  // لینکِ «دموی زندهِ» LandingPage.jsx (#demo-login) به‌جایِ فایلِ ایستایِ
-  // قدیمیِ public/demo/index.html، حالا مستقیماً به همین اپِ واقعی با
-  // حسابِ سرپرستِ HSE شرکتِ نمونه (داده‌هایِ کاملاً نمونه/غیرِواقعی) وارد
-  // می‌شود — بدونِ اینکه بازدیدکننده چیزی تایپ کند. هش فوراً پاک می‌شود تا
-  // اگر بعداً همین کاربر خروج زد، دوباره خودکار به همین حساب برنگردد.
-  useEffect(() => {
-    if (typeof window === "undefined" || window.location.hash !== "#demo-login") return;
-    history.replaceState(null, "", window.location.pathname + window.location.search);
-    setShowLogin(true);
-    doLogin(DEMO_LOGIN_USERNAME, DEMO_LOGIN_PASSWORD);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleBiometricLogin = async () => {
     setBioChecking(true);

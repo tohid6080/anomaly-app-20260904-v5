@@ -68,13 +68,11 @@ const SOCIAL_LINKS = [
   { key: "linkedin", href: "https://www.linkedin.com/in/integrated-hse-management-system-health-safety-environment-852870437", Icon: LinkedinIcon, label: "LinkedIn" },
 ];
 
-// لینکِ دموی زندهِ سامانه — دیگر به فایلِ ایستایِ قدیمیِ public/demo/index.html
-// نمی‌رود؛ مستقیماً خودِ اپِ واقعی را با حسابِ سرپرستِ HSE شرکتِ نمونه
-// (داده‌هایِ کاملاً نمونه/غیرِواقعی — رجوع به DEMO_LOGIN_USERNAME در App.jsx)
-// خودکار باز می‌کند، بدونِ اینکه بازدیدکننده چیزی تایپ کند. مثلِ SOCIAL_LINKS
-// ثابت است و از طریقِ «مدیریتِ صفحه اصلی سامانه» قابل‌ویرایش نیست، چون
-// به‌ندرت تغییر می‌کند.
-const DEMO_URL = "https://ihmsapp.ir/#demo-login";
+// لینکِ دموی زندهِ سامانه — یک فایلِ HTML مستقل که رویِ همین دامنه سرو
+// می‌شود (public/demo/index.html)، نه یک لینکِ بیرونی؛ مثلِ الگویِ
+// DOWNLOAD_PAGE در appDownload.js. مثلِ SOCIAL_LINKS ثابت است و از طریقِ
+// «مدیریتِ صفحه اصلی سامانه» قابل‌ویرایش نیست، چون به‌ندرت تغییر می‌کند.
+const DEMO_URL = "https://ihmsapp.ir/demo/";
 
 const LP_CSS = `
 .ihms-lp *{box-sizing:border-box}
