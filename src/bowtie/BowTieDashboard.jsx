@@ -34,8 +34,12 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
  * leave it broken offline, we block entry to the Canvas with a clear
  * message when there's no connection.
  */
-export default function BowTieDashboard({ onBack, currentUser, readOnly, role, wide }) {
+export default function BowTieDashboard({ onBack, currentUser, readOnly: readOnlyProp, role, wide }) {
   const { t, dir } = useLanguage();
+  // تحلیلِ ریسکِ BowTie ابزارِ کارفرما/سرپرستِ HSE است، نه یک رکوردِ
+  // خودِ پیمانکار — صرف‌نظر از سطحِ دسترسیِ ماژول در پلن (که ممکن است
+  // برای اهدافِ دیگری «edit» تنظیم شده باشد)، پیمانکار همیشه فقط‌خواندنی می‌بیند.
+  const readOnly = readOnlyProp || role === "CONTRACTOR";
   const [openBowtie, setOpenBowtie] = useState(null);
   const [showEffectivenessDashboard, setShowEffectivenessDashboard] = useState(false);
   const [bowties, setBowties] = useState([]);
