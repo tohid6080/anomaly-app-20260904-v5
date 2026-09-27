@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import BackLink from "../shared/BackLink.jsx";
-import { Plus, Users, FileSpreadsheet, FileDown } from "lucide-react";
+import { Plus, Users, FileSpreadsheet, FileDown, Trash2 } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import DataView, { StatusPill } from "../shared/DataView.jsx";
-import { loadPersonnelListOfflineFirst, personnelStatusMeta, employmentStatusMeta, checkAndUpdateDeadlines, loadContractorOptions, PERSONNEL_STATUS } from "./personnelApi.js";
+import { loadPersonnelListOfflineFirst, personnelStatusMeta, employmentStatusMeta, checkAndUpdateDeadlines, loadContractorOptions, deletePersonnelDB, PERSONNEL_STATUS } from "./personnelApi.js";
 import { exportPersonnelPdf, exportPersonnelExcel } from "./personnelExport.js";
 import PersonnelForm from "./PersonnelForm.jsx";
 import PersonnelDetail from "./PersonnelDetail.jsx";
@@ -40,6 +40,10 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
   const [exporting, setExporting] = useState(false);
 
   const isContractor = role === "CONTRACTOR";
+  // حذفِ رکوردِ پرسنلِ ثبت‌شده فقط برایِ سرپرست/مدیرِ HSE کارفرما مجاز است —
+  // role (prop) همیشه "EMPLOYER" است (حتی برایِ حسابِ سرپرستِ HSE)، پس دقیقاً
+  // مثلِ الگویِ تأییدشده‌یِ machineryManagement مستقیم currentUser?.role چک می‌شود.
+  const isGatekeeper = currentUser?.role === "HSE_SUPERVISOR" && !isContractor && !readOnly;
 
   useEffect(() => {
     if (!isContractor) loadContractorOptions().then(setContractorOptions);
@@ -102,6 +106,12 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
     const queue = await getQueue();
     const item = queue.find((q) => q.module === "personnel" && q.recordId === recordId);
     if (item) await retryItemNow(item.queueId);
+    load();
+  };
+
+  const handleDelete = async (p) => {
+    if (!confirm(t("confirmDeletePersonnel", { name: p.fullName }))) return;
+    await deletePersonnelDB(p.id, currentUser?.name);
     load();
   };
 
@@ -314,7 +324,12 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
           },
         ]}
         renderRowActions={(p) => (
-          <button type="button" style={styles.smallButton} onClick={() => setSelected(p)}>{t("viewAction")}</button>
+          <>
+            <button type="button" style={styles.smallButton} onClick={() => setSelected(p)}>{t("viewAction")}</button>
+            {isGatekeeper && (
+              <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => handleDelete(p)}><Trash2 size={12} /></button>
+            )}
+          </>
         )}
         renderCard={(p) => {
           const sm = personnelStatusMeta(p.status);
@@ -340,6 +355,17 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
                   )}
                 </div>
               </div>
+              {isGatekeeper && (
+                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
+                  <button
+                    type="button"
+                    style={{ ...styles.smallButton, background: THEME.danger }}
+                    onClick={(e) => { e.stopPropagation(); handleDelete(p); }}
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              )}
             </div>
           );
         }}

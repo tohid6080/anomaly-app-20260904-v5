@@ -312,10 +312,10 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
           <Paperclip size={12} /> {t("mdDocsLabel")}{docsMap[m.id] ? ` (${docs.length})` : ""}
         </button>
         {isContractor && !readOnly && (
-          <>
-            <button type="button" style={styles.smallButton} onClick={() => startEdit(m)}>{t("commonEdit")}</button>
-            <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => handleDelete(m)}><Trash2 size={12} /></button>
-          </>
+          <button type="button" style={styles.smallButton} onClick={() => startEdit(m)}>{t("commonEdit")}</button>
+        )}
+        {(isContractor || isGatekeeper) && !readOnly && (
+          <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => handleDelete(m)}><Trash2 size={12} /></button>
         )}
         {isGatekeeper && !readOnly && m.approvalStatus === "pending" && (
           <button type="button" style={styles.smallButton} onClick={() => startReview(m)}>{t("mdReview")}</button>

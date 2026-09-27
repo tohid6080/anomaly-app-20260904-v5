@@ -2197,6 +2197,7 @@ export const de = {
   "errNoDecisionPermission": "Sie haben keine Berechtigung, diese Entscheidung zu treffen",
   "errNoteRequiredForRejection": "Für eine Ablehnung oder Nachbesserungsanforderung ist ein Hinweis erforderlich",
   "confirmDeleteMachine": "Diese Maschine löschen?",
+  "confirmDeletePersonnel": "Den Datensatz von „{name}“ endgültig löschen?",
   "confirmBulkApprove": "{count} Eintrag/Einträge freigeben?",
   "mdDocsLabel": "Dokumente",
   "mdReview": "Prüfen",
