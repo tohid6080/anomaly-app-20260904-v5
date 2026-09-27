@@ -6457,6 +6457,10 @@ export const translations = {
     "fa": "این ماشین حذف شود؟",
     "en": "Delete this machine?"
   },
+  "confirmDeletePersonnel": {
+    "fa": "رکورد «{name}» برای همیشه حذف شود؟",
+    "en": "Permanently delete the record for \"{name}\"?"
+  },
   "confirmBulkApprove": {
     "fa": "{count} مورد تأیید شود؟",
     "en": "Approve {count} item(s)?"
