@@ -236,11 +236,32 @@ export async function deletePersonnelDB(id, performedBy) {
     if (parsed) { try { await deleteFromStorage(parsed.bucket, parsed.path); } catch { /* ادامه بده */ } }
     await offlineWrite({ module: "personnelDocuments", table: "personnel_documents", action: "delete", id: doc.id, payload: {} });
   }
-  await offlineWrite({ module: "personnel", table: "personnel", action: "delete", id, payload: {} });
-  if (performedBy) insertAuditLog(id, "deleted", "حذف پرسنل", performedBy);
+
+  // رفعِ گزارشِ صریح: «یه سری رکوردهای پرسنل حذف نمی‌شوند». علت: این سه
+  // جدول واقعاً personnel_id را FK می‌کنند و اینجا هیچ‌وقت پاک نمی‌شدند —
+  // پس حذفِ هر پرسنلی که حتی یک ردیفِ Audit Log یا ارزیابیِ شاخصِ پیش‌نگر
+  // داشت (که برایِ هر پرسنلِ ثبت‌شده از طریقِ فرمِ واقعی همیشه درست است،
+  // چون خودِ createPersonnelDB یک ردیفِ «created» ثبت می‌کند) با نقضِ FK
+  // رد می‌شد — بی‌صدا، چون نه اینجا و نه فراخوانِ سمتِ UI نتیجه را چک می‌کرد.
+  const auditRows = await sb(`personnel_audit_log?personnel_id=eq.${id}&select=id`);
+  for (const row of (sbOk(auditRows) ? auditRows : [])) {
+    await offlineWrite({ module: "personnelAuditLog", table: "personnel_audit_log", action: "delete", id: row.id, payload: {} });
+  }
+  const assessmentRows = await sb(`proactive_indicator_assessments?personnel_id=eq.${id}&select=id`);
+  for (const row of (sbOk(assessmentRows) ? assessmentRows : [])) {
+    await offlineWrite({ module: "proactiveIndicatorAssessments", table: "proactive_indicator_assessments", action: "delete", id: row.id, payload: {} });
+  }
+  const notificationRows = await sb(`personnel_notifications?personnel_id=eq.${id}&select=id`);
+  for (const row of (sbOk(notificationRows) ? notificationRows : [])) {
+    await offlineWrite({ module: "personnelNotifications", table: "personnel_notifications", action: "delete", id: row.id, payload: {} });
+  }
+
+  const result = await offlineWrite({ module: "personnel", table: "personnel", action: "delete", id, payload: {} });
+  if (!result.ok) return { __error: true, message: result.error || translate(getCurrentLang(), "commonErrorDelete") };
   // طبق همان رفعِ Machinery/Anomaly: رکورد گیت مربوطه هم پاک شود — وگرنه
   // یتیم می‌ماند و برای همیشه در «کارهای در دست اقدام من» باقی می‌ماند.
   deleteGateItemsForRecord("personnelAccess", id).catch(() => {});
+  return { ok: true };
 }
 
 // ---------- Documents ----------

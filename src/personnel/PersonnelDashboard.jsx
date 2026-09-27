@@ -111,7 +111,8 @@ export default function PersonnelDashboard({ onBack, currentUser, role, initialS
 
   const handleDelete = async (p) => {
     if (!confirm(t("confirmDeletePersonnel", { name: p.fullName }))) return;
-    await deletePersonnelDB(p.id, currentUser?.name);
+    const result = await deletePersonnelDB(p.id, currentUser?.name);
+    if (result?.__error) { alert(result.message); return; }
     load();
   };
 
