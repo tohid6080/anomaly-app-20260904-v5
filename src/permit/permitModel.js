@@ -115,9 +115,11 @@ export function arrMove(arr, i, dir) {
 // هر گامِ گذار (submitted→under_review و ...) می‌تواند به یک «سمت» (از
 // job_positions شرکت) به‌عنوانِ تأییدکننده محدود شود، به‌همراهِ یک سمتِ
 // جانشین برایِ وقتی صاحبِ سمتِ اصلی در دسترس نیست. این تنظیمات را فقط
-// سرپرستِ HSE کارفرما، در فرم‌سازِ قالب، مشخص می‌کند. اگر برایِ گامی سمتی
-// تعیین نشود، هر کاربرِ دارایِ دسترسیِ ویرایش می‌تواند آن را انجام دهد —
-// یعنی قالب‌هایی که هنوز این بخش را تنظیم نکرده‌اند، رفتارِ قبلی را دارند.
+// سرپرستِ HSE کارفرما، در فرم‌سازِ قالب، مشخص می‌کند. پیمانکار هرگز مجازِ
+// انجامِ این مراحل نیست (این مراحل یعنی تأییدِ کارفرما، نه ثبتِ درخواست).
+// اگر برایِ گامی سمتی تعیین نشود، هر کاربرِ غیرِپیمانکارِ دارایِ دسترسیِ
+// ویرایش می‌تواند آن را انجام دهد — یعنی قالب‌هایی که هنوز این بخش را
+// تنظیم نکرده‌اند، همان رفتارِ قبلی را (به‌جز برایِ پیمانکار) دارند.
 export const APPROVAL_STEPS = ["review", "decide", "activate", "suspend", "resume", "close"];
 
 export function blankWorkflow() { return { approvals: {} }; }
@@ -127,6 +129,7 @@ export function getStepApproval(workflow, stepId) {
 }
 
 export function canPerformStep(workflow, stepId, currentUser) {
+  if (currentUser?.role === "CONTRACTOR") return false;
   const cfg = getStepApproval(workflow, stepId);
   if (!cfg.jobPositionId) return true;
   const jp = currentUser?.jobPositionId;
