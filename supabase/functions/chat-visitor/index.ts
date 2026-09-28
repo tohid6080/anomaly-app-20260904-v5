@@ -93,7 +93,10 @@ Deno.serve(async (req) => {
     if (text.length > MAX_BODY_LEN) return json({ error: "متنِ پیام خیلی طولانی است" }, 400);
 
     const owned = await findOwnedConversation(conversationId, visitorToken);
-    if (!owned) return json({ error: "نشستِ گفتگو نامعتبر است" }, 403);
+    // تشخیصیِ موقت — تا وقتی معلوم شود چرا owned.blocked=true جلویِ ارسال
+    // را نمی‌گیرد، همین یک پاسخ، مقدارِ خامِ owned را مستقیماً از سرور نشان
+    // می‌دهد؛ بعد از پیداشدنِ علت باید حذف شود.
+    if (!owned) return json({ error: "نشستِ گفتگو نامعتبر است", _debug: { conversationId, visitorToken, owned } }, 403);
     // عمداً 403 نیست: کلاینت (livechatApi.js) هر 403 را «نشستِ نامعتبر»
     // می‌شمارد و session را پاک کرده به فرمِ شروع برمی‌گردد — یعنی
     // بازدیدکننده‌ی بلاک‌شده به‌سادگی می‌توانست یک گفتگویِ تازه باز کند و
@@ -113,7 +116,7 @@ Deno.serve(async (req) => {
       headers: { Prefer: "return=minimal" },
     });
 
-    return json({ message: msgOut(msgRes.data[0]) });
+    return json({ message: msgOut(msgRes.data[0]), _debug: { conversationId, owned } });
   }
 
   // ---------- دریافتِ پیام‌ها (برای poll دوره‌ای وقتی پنل باز است) ----------
