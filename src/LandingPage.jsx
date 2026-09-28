@@ -60,12 +60,54 @@ function LinkedinIcon({ size }) {
     </svg>
   );
 }
+function TelegramIcon({ size }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="1" y="1" width="22" height="22" rx="6" fill="#26A5E4" />
+      <path d="M6 12.5l11-5.8c.5-.3 1 .1.8.7l-2.6 9.3c-.1.5-.6.6-1 .3l-3-2.3-1.8 1.7c-.2.2-.5.1-.5-.2l.2-3 6-5.6-7.8 4.6-3.3-1c-.5-.1-.5-.7 0-.9z" fill="#fff" />
+    </svg>
+  );
+}
+// آرمِ بله/روبیکا رسماً مستند/تأییدشده در دسترسم نبود — یک حبابِ پیامِ
+// ساده و عمومی با رنگِ نزدیک به برندِ هرکدام گذاشته شده؛ اگر با لوگویِ
+// واقعیِ فعلیِ این دو اپ فرق دارد، فقط کافی‌ست fill رنگِ پس‌زمینه یا خودِ
+// path این دو تابع اصلاح شود.
+function BaleIcon({ size }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="1" y="1" width="22" height="22" rx="6" fill="#FF6D00" />
+      <path d="M6 8.5c0-1.1.9-2 2-2h8c1.1 0 2 .9 2 2v5c0 1.1-.9 2-2 2h-5.5L7 18v-2.5H8c-1.1 0-2-.9-2-2v-5z" fill="#fff" />
+    </svg>
+  );
+}
+function RubikaIcon({ size }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="1" y="1" width="22" height="22" rx="6" fill="#E6273E" />
+      <path d="M6 8.5c0-1.1.9-2 2-2h8c1.1 0 2 .9 2 2v5c0 1.1-.9 2-2 2h-5.5L7 18v-2.5H8c-1.1 0-2-.9-2-2v-5z" fill="#fff" />
+    </svg>
+  );
+}
+// آیکونِ تماس — با رنگِ برندِ خودِ IHMS (نه رنگِ شخصِ‌ثالث)، چون شماره‌ی
+// موبایل مالِ یک پلتفرمِ بیرونی نیست
+function PhoneContactIcon({ size }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="1" y="1" width="22" height="22" rx="6" fill={C.teal} />
+      <path d="M8.4 6.2c.4-.2.9-.1 1.1.3l1.1 2c.2.3.1.7-.1.9l-1 .9c.5 1.2 1.4 2.1 2.6 2.6l.9-1c.2-.2.6-.3.9-.1l2 1.1c.4.2.5.7.3 1.1l-.8 1.5c-.3.5-.9.8-1.5.7-3.2-.5-5.8-3.1-6.3-6.3-.1-.6.2-1.2.7-1.5l1.1-.6z" fill="#fff" />
+    </svg>
+  );
+}
 
 // لینک‌های شبکه‌های اجتماعیِ رسمیِ IHMS — ثابت، مثل الگویِ PUBLIC_APP_URL در
 // shared.js (بدونِ نیاز به مدیریتِ سوپرادمین، چون به‌ندرت تغییر می‌کنند)
 const SOCIAL_LINKS = [
   { key: "instagram", href: "https://www.instagram.com/ihmsapp?stkn=ZGpmcmd1d3BhYWRn", Icon: InstagramIcon, label: "Instagram" },
   { key: "linkedin", href: "https://www.linkedin.com/in/integrated-hse-management-system-health-safety-environment-852870437", Icon: LinkedinIcon, label: "LinkedIn" },
+  { key: "telegram", href: "https://t.me/ihmsapp", Icon: TelegramIcon, label: "Telegram" },
+  { key: "bale", href: "https://bale.ai/ihmsapp", Icon: BaleIcon, label: "بله" },
+  { key: "rubika", href: "https://rubika.ir/ihmsapp", Icon: RubikaIcon, label: "روبیکا" },
+  { key: "phone", href: "tel:+989220939682", Icon: PhoneContactIcon, label: "+98 922 093 9682" },
 ];
 
 // لینکِ دموی زندهِ سامانه — یک فایلِ HTML مستقل که رویِ همین دامنه سرو
