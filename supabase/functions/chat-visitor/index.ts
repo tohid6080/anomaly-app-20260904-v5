@@ -29,10 +29,11 @@ function msgOut(r: any) {
 
 // گفتگو را با شناسه+توکن پیدا می‌کند — اگر تطبیق نکرد null، یعنی «مجاز نیست».
 // visitor_last_read_at هم برمی‌گردد چون هم poll (بعد از دیدن) و هم status
-// (بدون دیدن) به آن نیاز دارند.
+// (بدون دیدن) به آن نیاز دارند؛ blocked هم برمی‌گردد تا action=send بتواند
+// پیامِ بازدیدکننده‌ی بلاک‌شده را رد کند.
 async function findOwnedConversation(conversationId: string, visitorToken: string) {
   const res = await restFetch(
-    `chat_visitor_conversations?id=eq.${conversationId}&visitor_token=eq.${encodeURIComponent(visitorToken)}&select=id,visitor_last_read_at`
+    `chat_visitor_conversations?id=eq.${conversationId}&visitor_token=eq.${encodeURIComponent(visitorToken)}&select=id,visitor_last_read_at,blocked`
   );
   if (!res.ok || !Array.isArray(res.data) || res.data.length === 0) return null;
   return res.data[0];
@@ -93,6 +94,11 @@ Deno.serve(async (req) => {
 
     const owned = await findOwnedConversation(conversationId, visitorToken);
     if (!owned) return json({ error: "نشستِ گفتگو نامعتبر است" }, 403);
+    // عمداً 403 نیست: کلاینت (livechatApi.js) هر 403 را «نشستِ نامعتبر»
+    // می‌شمارد و session را پاک کرده به فرمِ شروع برمی‌گردد — یعنی
+    // بازدیدکننده‌ی بلاک‌شده به‌سادگی می‌توانست یک گفتگویِ تازه باز کند و
+    // بلاک را دور بزند. 423 (Locked) نشستِ فعلی را دست‌نخورده نگه می‌دارد.
+    if (owned.blocked) return json({ error: "امکانِ ارسالِ پیام در این گفتگو وجود ندارد" }, 423);
 
     const msgRes = await restFetch("chat_visitor_messages", {
       method: "POST",

@@ -1331,6 +1331,9 @@ function liveChatConvFromRow(r) {
     lastMessagePreview: r.last_message_preview || "",
     unreadCount: Number(r.admin_unread_count) || 0,
     createdAt: r.created_at,
+    blocked: !!r.blocked,
+    blockedAt: r.blocked_at || null,
+    blockedBy: r.blocked_by || "",
   };
 }
 function liveChatMsgFromRow(r) {
@@ -1374,6 +1377,26 @@ export async function markLiveChatConversationRead(conversationId) {
   await sb(`chat_visitor_conversations?id=eq.${conversationId}`, {
     method: "PATCH",
     body: JSON.stringify({ admin_last_read_at: new Date().toISOString() }),
+    prefer: "return=minimal",
+  }, "super_admin");
+}
+
+// بلاک/آنبلاکِ یک گفتگو — بازدیدکننده‌ی بلاک‌شده دیگر نمی‌تواند پیامِ جدید
+// بفرستد (رد در Edge Function chat-visitor)، ولی تاریخچه‌ی گفتگو حذف
+// نمی‌شود؛ هیچ policy جدیدی لازم نیست چون UPDATE برایِ super_admin از قبل
+// روی کلِ جدول مجاز است.
+export async function blockLiveChatConversation(conversationId, blockedBy) {
+  await sb(`chat_visitor_conversations?id=eq.${conversationId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ blocked: true, blocked_at: new Date().toISOString(), blocked_by: blockedBy || "" }),
+    prefer: "return=minimal",
+  }, "super_admin");
+}
+
+export async function unblockLiveChatConversation(conversationId) {
+  await sb(`chat_visitor_conversations?id=eq.${conversationId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ blocked: false, blocked_at: null, blocked_by: "" }),
     prefer: "return=minimal",
   }, "super_admin");
 }

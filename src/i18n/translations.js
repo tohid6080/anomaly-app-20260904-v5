@@ -8875,6 +8875,9 @@ export const translations = {
   "lcAdminComposerAria": { "fa": "پاسخ", "en": "Reply" },
   "lcAdminSendAria": { "fa": "ارسال پاسخ", "en": "Send reply" },
   "lcAdminOpenAria": { "fa": "باز کردن گفتگوهای بازدیدکنندگان", "en": "Open visitor conversations" },
+  "lcBlockAria": { "fa": "بلاک‌کردنِ این گفتگو", "en": "Block this conversation" },
+  "lcUnblockAria": { "fa": "رفعِ بلاکِ این گفتگو", "en": "Unblock this conversation" },
+  "lcBlockedBadge": { "fa": "بلاک‌شده", "en": "Blocked" },
 
   // SuperAdmin › Change own password
   "saCpBothRequired": { "fa": "رمز فعلی و رمز جدید هر دو الزامی است", "en": "Both the current and new password are required" },
