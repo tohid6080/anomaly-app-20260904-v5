@@ -60,33 +60,17 @@ function LinkedinIcon({ size }) {
     </svg>
   );
 }
+// تلگرام/بله/روبیکا: برخلافِ چهار آیکونِ دیگرِ این فایل، SVG دستی نیستند —
+// فایلِ تصویریِ واقعی‌ای هستند که کاربر مستقیم داد (public/icons/)، چون
+// نسخه‌ی SVG دستیِ قبلی برای بله/روبیکا فقط یک حدسِ عمومی بود.
 function TelegramIcon({ size }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="1" y="1" width="22" height="22" rx="6" fill="#26A5E4" />
-      <path d="M6 12.5l11-5.8c.5-.3 1 .1.8.7l-2.6 9.3c-.1.5-.6.6-1 .3l-3-2.3-1.8 1.7c-.2.2-.5.1-.5-.2l.2-3 6-5.6-7.8 4.6-3.3-1c-.5-.1-.5-.7 0-.9z" fill="#fff" />
-    </svg>
-  );
+  return <img src="/icons/social-telegram.png" width={size} height={size} alt="Telegram" style={{ display: "block", objectFit: "contain" }} />;
 }
-// آرمِ بله/روبیکا رسماً مستند/تأییدشده در دسترسم نبود — یک حبابِ پیامِ
-// ساده و عمومی با رنگِ نزدیک به برندِ هرکدام گذاشته شده؛ اگر با لوگویِ
-// واقعیِ فعلیِ این دو اپ فرق دارد، فقط کافی‌ست fill رنگِ پس‌زمینه یا خودِ
-// path این دو تابع اصلاح شود.
 function BaleIcon({ size }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="1" y="1" width="22" height="22" rx="6" fill="#FF6D00" />
-      <path d="M6 8.5c0-1.1.9-2 2-2h8c1.1 0 2 .9 2 2v5c0 1.1-.9 2-2 2h-5.5L7 18v-2.5H8c-1.1 0-2-.9-2-2v-5z" fill="#fff" />
-    </svg>
-  );
+  return <img src="/icons/social-bale.jpg" width={size} height={size} alt="بله" style={{ display: "block", borderRadius: "50%", objectFit: "cover" }} />;
 }
 function RubikaIcon({ size }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="1" y="1" width="22" height="22" rx="6" fill="#E6273E" />
-      <path d="M6 8.5c0-1.1.9-2 2-2h8c1.1 0 2 .9 2 2v5c0 1.1-.9 2-2 2h-5.5L7 18v-2.5H8c-1.1 0-2-.9-2-2v-5z" fill="#fff" />
-    </svg>
-  );
+  return <img src="/icons/social-rubika.png" width={size} height={size} alt="روبیکا" style={{ display: "block", objectFit: "contain" }} />;
 }
 // آیکونِ تماس — با رنگِ برندِ خودِ IHMS (نه رنگِ شخصِ‌ثالث)، چون شماره‌ی
 // موبایل مالِ یک پلتفرمِ بیرونی نیست
