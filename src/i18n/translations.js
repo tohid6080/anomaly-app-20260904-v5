@@ -8878,6 +8878,10 @@ export const translations = {
   "lcBlockAria": { "fa": "بلاک‌کردنِ این گفتگو", "en": "Block this conversation" },
   "lcUnblockAria": { "fa": "رفعِ بلاکِ این گفتگو", "en": "Unblock this conversation" },
   "lcBlockedBadge": { "fa": "بلاک‌شده", "en": "Blocked" },
+  "lcDeleteAria": { "fa": "حذفِ این گفتگو", "en": "Delete this conversation" },
+  "saLcErrBlock": { "fa": "خطا در بلاک‌کردنِ گفتگو", "en": "Error blocking the conversation" },
+  "saLcErrUnblock": { "fa": "خطا در رفعِ بلاکِ گفتگو", "en": "Error unblocking the conversation" },
+  "saLcErrDelete": { "fa": "خطا در حذفِ گفتگو", "en": "Error deleting the conversation" },
 
   // SuperAdmin › Change own password
   "saCpBothRequired": { "fa": "رمز فعلی و رمز جدید هر دو الزامی است", "en": "Both the current and new password are required" },

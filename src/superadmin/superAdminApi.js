@@ -1,4 +1,4 @@
-import { sb, sbOk, SUPABASE_URL, SUPABASE_ANON_KEY, uid, THEME } from "../shared.js";
+import { sb, sbOk, sbErrMsg, SUPABASE_URL, SUPABASE_ANON_KEY, uid, THEME } from "../shared.js";
 import { issueSessionToken, getSessionToken } from "../sessionToken.js";
 import { translate, getCurrentLang, listSep, numLocale } from "../i18n/translations.js";
 
@@ -1384,21 +1384,39 @@ export async function markLiveChatConversationRead(conversationId) {
 // بلاک/آنبلاکِ یک گفتگو — بازدیدکننده‌ی بلاک‌شده دیگر نمی‌تواند پیامِ جدید
 // بفرستد (رد در Edge Function chat-visitor)، ولی تاریخچه‌ی گفتگو حذف
 // نمی‌شود؛ هیچ policy جدیدی لازم نیست چون UPDATE برایِ super_admin از قبل
-// روی کلِ جدول مجاز است.
+// روی کلِ جدول مجاز است. sbOk حتماً چک می‌شود — قبلاً چک نمی‌شد و یک خطای
+// خاموش (مثلاً migration ستونِ blocked هنوز اجرا نشده) باعث می‌شد PATCH در
+// واقع هیچ اثری نداشته باشد و poll بعدی (هر ۴ ثانیه) وضعیتِ خوش‌بینانه‌ی
+// محلی را دوباره به حالتِ قبل برگرداند — یعنی از دیدِ ادمین «بلاک ثابت
+// نمی‌ماند».
 export async function blockLiveChatConversation(conversationId, blockedBy) {
-  await sb(`chat_visitor_conversations?id=eq.${conversationId}`, {
+  const rows = await sb(`chat_visitor_conversations?id=eq.${conversationId}`, {
     method: "PATCH",
     body: JSON.stringify({ blocked: true, blocked_at: new Date().toISOString(), blocked_by: blockedBy || "" }),
     prefer: "return=minimal",
   }, "super_admin");
+  if (!sbOk(rows)) return { __error: true, message: `${tr("saLcErrBlock")} (${sbErrMsg(rows)})` };
+  return { ok: true };
 }
 
 export async function unblockLiveChatConversation(conversationId) {
-  await sb(`chat_visitor_conversations?id=eq.${conversationId}`, {
+  const rows = await sb(`chat_visitor_conversations?id=eq.${conversationId}`, {
     method: "PATCH",
     body: JSON.stringify({ blocked: false, blocked_at: null, blocked_by: "" }),
     prefer: "return=minimal",
   }, "super_admin");
+  if (!sbOk(rows)) return { __error: true, message: `${tr("saLcErrUnblock")} (${sbErrMsg(rows)})` };
+  return { ok: true };
+}
+
+// حذفِ کاملِ یک گفتگو (+ پیام‌هایش، با on delete cascade). برخلافِ
+// بلاک/آنبلاک، این عملیات برگشت‌ناپذیر است — همان دکمه‌ی «حذف» با
+// commonConfirmDeleteGeneric که در بقیه‌ی فهرست‌های سوپرادمین استفاده
+// می‌شود.
+export async function deleteLiveChatConversation(conversationId) {
+  const rows = await sb(`chat_visitor_conversations?id=eq.${conversationId}`, { method: "DELETE" }, "super_admin");
+  if (!sbOk(rows)) return { __error: true, message: `${tr("saLcErrDelete")} (${sbErrMsg(rows)})` };
+  return { ok: true };
 }
 
 // ---------- ماژولِ «مدیریتِ نظرسنجی‌ها» — سمتِ SuperAdmin ----------

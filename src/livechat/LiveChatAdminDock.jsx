@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { Headset, X, Send, Ban } from "lucide-react";
+import { Headset, X, Send, Ban, Trash2 } from "lucide-react";
 import { THEME } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { toJalaliDateTime } from "../personnel/jalaliDate.jsx";
-import { loadLiveChatConversations, loadLiveChatMessages, sendLiveChatAdminMessage, markLiveChatConversationRead, blockLiveChatConversation, unblockLiveChatConversation } from "../superadmin/superAdminApi.js";
+import { loadLiveChatConversations, loadLiveChatMessages, sendLiveChatAdminMessage, markLiveChatConversationRead, blockLiveChatConversation, unblockLiveChatConversation, deleteLiveChatConversation } from "../superadmin/superAdminApi.js";
 
 const LIST_POLL_MS = 4000;
 const THREAD_POLL_MS = 4000;
@@ -24,6 +24,7 @@ export default function LiveChatAdminDock({ currentAdmin }) {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [blocking, setBlocking] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -68,14 +69,24 @@ export default function LiveChatAdminDock({ currentAdmin }) {
     if (!selectedConv || blocking) return;
     setBlocking(true);
     const nextBlocked = !selectedConv.blocked;
-    if (nextBlocked) {
-      const adminName = currentAdmin?.fullName || currentAdmin?.username || "";
-      await blockLiveChatConversation(selectedId, adminName);
-    } else {
-      await unblockLiveChatConversation(selectedId);
-    }
-    setConversations((prev) => prev.map((c) => (c.id === selectedId ? { ...c, blocked: nextBlocked } : c)));
+    const adminName = currentAdmin?.fullName || currentAdmin?.username || "";
+    const result = nextBlocked
+      ? await blockLiveChatConversation(selectedId, adminName)
+      : await unblockLiveChatConversation(selectedId);
     setBlocking(false);
+    if (result?.__error) { alert(result.message); return; }
+    setConversations((prev) => prev.map((c) => (c.id === selectedId ? { ...c, blocked: nextBlocked } : c)));
+  };
+
+  const handleDelete = async () => {
+    if (!selectedConv || deleting) return;
+    if (!confirm(t("commonConfirmDeleteGeneric"))) return;
+    setDeleting(true);
+    const result = await deleteLiveChatConversation(selectedId);
+    setDeleting(false);
+    if (result?.__error) { alert(result.message); return; }
+    setConversations((prev) => prev.filter((c) => c.id !== selectedId));
+    setSelectedId(null);
   };
 
   const handleSend = async () => {
@@ -130,6 +141,18 @@ export default function LiveChatAdminDock({ currentAdmin }) {
                   color: "#fff", cursor: blocking ? "default" : "pointer", opacity: blocking ? 0.6 : 1,
                 }}>
                 <Ban size={14} />
+              </button>
+            )}
+            {selectedId && selectedConv && (
+              <button type="button" onClick={handleDelete} disabled={deleting}
+                aria-label={t("lcDeleteAria")} title={t("lcDeleteAria")}
+                style={{
+                  flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
+                  width: 26, height: 26, borderRadius: 8, background: "transparent",
+                  border: "1px solid rgba(255,255,255,0.35)", color: "#fff",
+                  cursor: deleting ? "default" : "pointer", opacity: deleting ? 0.6 : 1,
+                }}>
+                <Trash2 size={14} />
               </button>
             )}
             <button type="button" onClick={() => setOpen(false)} aria-label={t("lcCloseAria")} style={{ background: "transparent", border: "none", color: "#fff", cursor: "pointer", padding: 4, display: "flex" }}>
