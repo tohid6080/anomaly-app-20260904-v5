@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { Headset, X, Send } from "lucide-react";
+import { Headset, X, Send, Ban } from "lucide-react";
 import { THEME } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { toJalaliDateTime } from "../personnel/jalaliDate.jsx";
-import { loadLiveChatConversations, loadLiveChatMessages, sendLiveChatAdminMessage, markLiveChatConversationRead } from "../superadmin/superAdminApi.js";
+import { loadLiveChatConversations, loadLiveChatMessages, sendLiveChatAdminMessage, markLiveChatConversationRead, blockLiveChatConversation, unblockLiveChatConversation } from "../superadmin/superAdminApi.js";
 
 const LIST_POLL_MS = 4000;
 const THREAD_POLL_MS = 4000;
@@ -23,6 +23,7 @@ export default function LiveChatAdminDock({ currentAdmin }) {
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [blocking, setBlocking] = useState(false);
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -63,6 +64,20 @@ export default function LiveChatAdminDock({ currentAdmin }) {
 
   const backToList = () => setSelectedId(null);
 
+  const toggleBlock = async () => {
+    if (!selectedConv || blocking) return;
+    setBlocking(true);
+    const nextBlocked = !selectedConv.blocked;
+    if (nextBlocked) {
+      const adminName = currentAdmin?.fullName || currentAdmin?.username || "";
+      await blockLiveChatConversation(selectedId, adminName);
+    } else {
+      await unblockLiveChatConversation(selectedId);
+    }
+    setConversations((prev) => prev.map((c) => (c.id === selectedId ? { ...c, blocked: nextBlocked } : c)));
+    setBlocking(false);
+  };
+
   const handleSend = async () => {
     const text = draft.trim();
     if (!text || sending || !selectedId) return;
@@ -98,6 +113,25 @@ export default function LiveChatAdminDock({ currentAdmin }) {
             <span style={{ flex: 1, minWidth: 0, color: "#fff", fontSize: 13, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {selectedConv ? selectedConv.visitorName : t("lcAdminDockTitle")}
             </span>
+            {selectedConv?.blocked && (
+              <span style={{ flexShrink: 0, fontSize: 9.5, fontWeight: 700, color: "#fff", background: THEME.danger, borderRadius: 6, padding: "2px 6px" }}>
+                {t("lcBlockedBadge")}
+              </span>
+            )}
+            {selectedId && selectedConv && (
+              <button type="button" onClick={toggleBlock} disabled={blocking}
+                aria-label={selectedConv.blocked ? t("lcUnblockAria") : t("lcBlockAria")}
+                title={selectedConv.blocked ? t("lcUnblockAria") : t("lcBlockAria")}
+                style={{
+                  flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
+                  width: 26, height: 26, borderRadius: 8,
+                  background: selectedConv.blocked ? THEME.danger : "transparent",
+                  border: `1px solid ${selectedConv.blocked ? THEME.danger : "rgba(255,255,255,0.35)"}`,
+                  color: "#fff", cursor: blocking ? "default" : "pointer", opacity: blocking ? 0.6 : 1,
+                }}>
+                <Ban size={14} />
+              </button>
+            )}
             <button type="button" onClick={() => setOpen(false)} aria-label={t("lcCloseAria")} style={{ background: "transparent", border: "none", color: "#fff", cursor: "pointer", padding: 4, display: "flex" }}>
               <X size={17} />
             </button>
@@ -124,7 +158,14 @@ export default function LiveChatAdminDock({ currentAdmin }) {
                     {(conv.visitorName || "?").trim().charAt(0)}
                   </span>
                   <span style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 2 }}>
-                    <span style={{ fontSize: 12.5, fontWeight: 700, color: THEME.text }}>{conv.visitorName}</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+                      <span style={{ fontSize: 12.5, fontWeight: 700, color: THEME.text, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{conv.visitorName}</span>
+                      {conv.blocked && (
+                        <span style={{ flexShrink: 0, fontSize: 9, fontWeight: 700, color: THEME.danger, background: THEME.dangerBg, borderRadius: 5, padding: "1px 5px" }}>
+                          {t("lcBlockedBadge")}
+                        </span>
+                      )}
+                    </span>
                     <span style={{ display: "block", fontSize: 11, color: THEME.text3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{conv.lastMessagePreview}</span>
                   </span>
                   {conv.unreadCount > 0 && (
