@@ -126,6 +126,8 @@ export default function LiveChatWidget() {
       setSendError(result.message);
       return;
     }
+    // تشخیصیِ موقت — رجوع کن به کامنتِ livechatApi.js
+    if (result._debug) alert(JSON.stringify(result._debug, null, 2));
     setMessages((prev) => [...prev, result.message]);
     setDraft("");
   };

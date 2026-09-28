@@ -72,7 +72,9 @@ export async function startLiveChat(name, email, phone) {
 export async function sendLiveChatVisitorMessage(session, body) {
   const result = await callChatVisitor("send", { conversationId: session.conversationId, visitorToken: session.visitorToken, body });
   if (result?.__error) return result;
-  return { ok: true, message: msgFromApi(result.message) };
+  // _debug: تشخیصیِ موقت، فقط برای پیداکردنِ علتِ کار نکردنِ بلاک — بعد از
+  // پیداشدنِ علت هم این‌جا و هم سمتِ Edge Function حذف می‌شود.
+  return { ok: true, message: msgFromApi(result.message), _debug: result._debug };
 }
 
 export async function pollLiveChatMessages(session) {
