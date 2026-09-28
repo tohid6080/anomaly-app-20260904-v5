@@ -88,9 +88,9 @@ function PhoneContactIcon({ size }) {
 const SOCIAL_LINKS = [
   { key: "instagram", href: "https://www.instagram.com/ihmsapp?stkn=ZGpmcmd1d3BhYWRn", Icon: InstagramIcon, label: "Instagram" },
   { key: "linkedin", href: "https://www.linkedin.com/in/integrated-hse-management-system-health-safety-environment-852870437", Icon: LinkedinIcon, label: "LinkedIn" },
-  { key: "telegram", href: "https://t.me/ihmsapp", Icon: TelegramIcon, label: "Telegram" },
-  { key: "bale", href: "https://bale.ai/ihmsapp", Icon: BaleIcon, label: "بله" },
-  { key: "rubika", href: "https://rubika.ir/ihmsapp", Icon: RubikaIcon, label: "روبیکا" },
+  { key: "telegram", href: "https://web.telegram.org/k/#@ihmsapp", Icon: TelegramIcon, label: "Telegram" },
+  { key: "bale", href: "https://web.bale.ai/ihmsapp", Icon: BaleIcon, label: "بله" },
+  { key: "rubika", href: "https://web.rubika.ir/ihmsapp", Icon: RubikaIcon, label: "روبیکا" },
   { key: "phone", href: "tel:+989220939682", Icon: PhoneContactIcon, label: "+98 922 093 9682" },
 ];
 
