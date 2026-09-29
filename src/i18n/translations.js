@@ -10231,6 +10231,8 @@ export const translations = {
   "trmErrRequiredFields": { "fa": "نام و نام خانوادگی، موبایل، شرکت/سازمان، نام‌کاربری و رمز عبور الزامی است", "en": "Full name, mobile number, company/organization, username and password are required" },
   "trmErrPasswordShort": { "fa": "رمز عبور باید حداقل ۸ کاراکتر باشد", "en": "Password must be at least 8 characters" },
   "trmErrPasswordMismatch": { "fa": "رمز عبور و تکرار آن یکسان نیستند", "en": "Password and confirmation do not match" },
+  "trmErrCaptchaRequired": { "fa": "لطفاً تأیید کنید که ربات نیستید", "en": "Please confirm you are not a robot" },
+  "trmErrCaptchaFailed": { "fa": "تأییدِ ربات‌نبودن ناموفق بود — لطفاً دوباره تلاش کنید", "en": "The bot-verification check failed — please try again" },
   "trmDoneTitle": { "fa": "ثبت‌نام شما با موفقیت انجام شد", "en": "Your signup was completed successfully" },
   "trmDoneBody": { "fa": "شرکت و حساب کاربریِ شما همین الان با یک دوره‌ی آزمایشیِ ۳۰روزه و همه‌ی ماژول‌ها فعال شد. برای ورود از همان نام‌کاربری و رمز عبوری که وارد کردید استفاده کنید.", "en": "Your company and account are now active with a 30-day trial and all modules. Log in with the same username and password you just entered." },
   "trmTitle": { "fa": "درخواست ارزیابی و پلن آزمایشی", "en": "Assessment & Trial Plan Request" },

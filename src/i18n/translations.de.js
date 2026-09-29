@@ -4256,6 +4256,8 @@ export const de = {
   "trmErrRequiredFields": "Vollständiger Name, Mobilnummer, Unternehmen/Organisation, Benutzername und Passwort sind erforderlich",
   "trmErrPasswordShort": "Das Passwort muss mindestens 8 Zeichen lang sein",
   "trmErrPasswordMismatch": "Passwort und Bestätigung stimmen nicht überein",
+  "trmErrCaptchaRequired": "Bitte bestätigen Sie, dass Sie kein Roboter sind",
+  "trmErrCaptchaFailed": "Die Bot-Überprüfung ist fehlgeschlagen — bitte versuchen Sie es erneut",
   "trmDoneTitle": "Ihre Anmeldung wurde erfolgreich abgeschlossen",
   "trmDoneBody": "Ihr Unternehmen und Ihr Konto sind jetzt mit einer 30-tägigen Testphase und allen Modulen aktiv. Melden Sie sich mit dem gerade eingegebenen Benutzernamen und Passwort an.",
   "trmTitle": "Anfrage für Beratung & Testtarif",

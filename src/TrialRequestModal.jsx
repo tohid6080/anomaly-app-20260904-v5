@@ -1,8 +1,65 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { X, ClipboardList, Send, CheckCircle2 } from "lucide-react";
-import { styles, THEME } from "./shared.js";
+import { styles, THEME, TURNSTILE_SITE_KEY } from "./shared.js";
 import { submitTrialSignup } from "./trialRequestApi.js";
 import { useLanguage } from "./i18n/LanguageContext.jsx";
+
+const TURNSTILE_SCRIPT_ID = "cf-turnstile-script";
+const TURNSTILE_SCRIPT_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+
+// ویجتِ Cloudflare Turnstile را با API صریح (نه خودکار) رندر می‌کند — چون
+// این مودال بارها باز/بسته می‌شود، رندرِ خودکار (پیش‌فرضِ اسکریپت) فقط در
+// اولین بارِ لودشدنِ اسکریپت اجرا می‌شود و در بازکردن‌های بعدی هیچ ویجتی
+// نشان نمی‌دهد. توکنِ حاصل یک‌بارمصرف است؛ resetTurnstile بعدِ هر تلاشِ
+// ثبت‌نام (موفق یا ناموفق) یک چالشِ تازه می‌سازد.
+function useTurnstile(onToken) {
+  const containerRef = useRef(null);
+  const widgetIdRef = useRef(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const renderWidget = () => {
+      if (cancelled || !containerRef.current || !window.turnstile || !TURNSTILE_SITE_KEY) return;
+      widgetIdRef.current = window.turnstile.render(containerRef.current, {
+        sitekey: TURNSTILE_SITE_KEY,
+        callback: (token) => { if (!cancelled) onToken(token); },
+        "expired-callback": () => { if (!cancelled) onToken(""); },
+        "error-callback": () => { if (!cancelled) onToken(""); },
+      });
+    };
+
+    if (window.turnstile) {
+      renderWidget();
+    } else {
+      let script = document.getElementById(TURNSTILE_SCRIPT_ID);
+      if (!script) {
+        script = document.createElement("script");
+        script.id = TURNSTILE_SCRIPT_ID;
+        script.src = TURNSTILE_SCRIPT_SRC;
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+      }
+      script.addEventListener("load", renderWidget);
+    }
+
+    return () => {
+      cancelled = true;
+      if (widgetIdRef.current != null && window.turnstile) {
+        try { window.turnstile.remove(widgetIdRef.current); } catch { /* بی‌اهمیت */ }
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const reset = () => {
+    if (widgetIdRef.current != null && window.turnstile) {
+      try { window.turnstile.reset(widgetIdRef.current); } catch { /* بی‌اهمیت */ }
+    }
+  };
+
+  return { containerRef, reset };
+}
 
 /**
  * فرم عمومی «درخواست ارزیابی و پلن آزمایشی» — از صفحه‌ی ورود (بدون نیاز
@@ -34,6 +91,8 @@ export default function TrialRequestModal({ onClose }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState(null);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const { containerRef: turnstileRef, reset: resetTurnstile } = useTurnstile(setTurnstileToken);
 
   const handleSubmit = async () => {
     setError("");
@@ -54,6 +113,10 @@ export default function TrialRequestModal({ onClose }) {
       setError(t("trmErrUsernamesMustDiffer"));
       return;
     }
+    if (!turnstileToken) {
+      setError(t("trmErrCaptchaRequired"));
+      return;
+    }
     setSaving(true);
     const res = await submitTrialSignup({
       fullName: fullName.trim(), phone: phone.trim(), companyName: companyName.trim(),
@@ -63,8 +126,13 @@ export default function TrialRequestModal({ onClose }) {
       personnelCount: personnelCount ? Number(personnelCount) : null,
       projectName: projectName.trim(), projectCity: projectCity.trim(), email: email.trim(),
       description: description.trim(),
+      turnstileToken,
     });
     setSaving(false);
+    // توکنِ Turnstile یک‌بارمصرف است — چه موفق چه ناموفق، برای تلاشِ بعدی
+    // باید یک چالشِ تازه حل شود.
+    resetTurnstile();
+    setTurnstileToken("");
     if (res?.__error) { setError(res.message); return; }
     setResult(res);
   };
@@ -182,6 +250,8 @@ export default function TrialRequestModal({ onClose }) {
 
             <label style={styles.label}>{t("trmNotes")}</label>
             <textarea style={{ ...styles.input, minHeight: 70 }} value={description} onChange={(e) => setDescription(e.target.value)} dir={dir} />
+
+            <div ref={turnstileRef} style={{ margin: "14px 0 4px", display: "flex", justifyContent: "center" }} />
 
             {error && <p style={styles.error}>{error}</p>}
 

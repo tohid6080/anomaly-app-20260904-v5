@@ -14,6 +14,12 @@
 // set_employer_password/set_contractor_password (که هش‌کردن را با
 // pgcrypto داخلِ خودِ دیتابیس انجام می‌دهند) تنظیم می‌شود.
 //
+// CAPTCHA (Cloudflare Turnstile): قبل از هر کارِ دیگری، توکنِ ارسالی از
+// کلاینت با TURNSTILE_SECRET_KEY نزدِ Cloudflare بررسی می‌شود — این
+// secret را (نه site key که در src/shared.js عمومی است) باید یک‌بار با
+// دستورِ زیر تنظیم کنید، وگرنه این تابع همیشه fail-closed رد می‌کند:
+//   supabase secrets set TURNSTILE_SECRET_KEY=your_secret_key_here
+//
 // Deploy:
 //   supabase functions deploy submit-trial-signup --no-verify-jwt
 
@@ -75,6 +81,34 @@ async function checkUsernameUniqueness(value: string) {
   return empMatches.length > 0 || conMatches.length > 0;
 }
 
+// تأییدِ CAPTCHA سمتِ سرور — توکنِ Cloudflare Turnstile که کلاینت فرستاده را
+// با secret key (فقط سمتِ سرور، از طریقِ `supabase secrets set
+// TURNSTILE_SECRET_KEY=...` تنظیم می‌شود، هرگز در کدِ فرانت‌اند نیست) نزدِ
+// خودِ Cloudflare بررسی می‌کند. اگر TURNSTILE_SECRET_KEY تنظیم نشده باشد،
+// این تابع fail-closed رفتار می‌کند (رد می‌کند، نه رد کردنِ بی‌صدا) — تا
+// از حالتِ «CAPTCHA خاموش بدونِ اطلاع» جلوگیری شود.
+async function verifyTurnstileToken(token: string, remoteIp: string | null) {
+  const secretKey = Deno.env.get("TURNSTILE_SECRET_KEY") || "";
+  if (!secretKey) return { ok: false, reason: "TURNSTILE_SECRET_KEY تنظیم نشده است" };
+  if (!token) return { ok: false, reason: "توکنِ CAPTCHA ارسال نشده است" };
+  try {
+    const form = new URLSearchParams();
+    form.set("secret", secretKey);
+    form.set("response", token);
+    if (remoteIp) form.set("remoteip", remoteIp);
+    const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: form.toString(),
+    });
+    const data = await res.json().catch(() => null);
+    if (data?.success === true) return { ok: true };
+    return { ok: false, reason: Array.isArray(data?.["error-codes"]) ? data["error-codes"].join(",") : "verify_failed" };
+  } catch (e) {
+    return { ok: false, reason: String((e as Error)?.message || e) };
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS_HEADERS });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
@@ -84,6 +118,14 @@ Deno.serve(async (req) => {
     body = await req.json();
   } catch {
     return json({ error: "بدنه‌ی درخواست نامعتبر است" }, 400);
+  }
+
+  const turnstileToken = String(body?.turnstileToken || "");
+  const remoteIp = req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for");
+  const captcha = await verifyTurnstileToken(turnstileToken, remoteIp);
+  if (!captcha.ok) {
+    console.error("Turnstile verification failed:", captcha.reason);
+    return json({ error: "تأییدِ ربات‌نبودن ناموفق بود — لطفاً دوباره تلاش کنید" }, 403);
   }
 
   const fullName = String(body?.fullName || "").trim();
