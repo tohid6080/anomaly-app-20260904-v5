@@ -135,10 +135,12 @@ Deno.serve(async (req) => {
   const password = String(body?.password || "");
   const email = String(body?.email || "").trim();
   const contractorName = String(body?.contractorName || "").trim();
+  const contractorContactPersonName = String(body?.contractorContactPersonName || "").trim();
   const contractorUsername = String(body?.contractorUsername || "").trim();
   const contractorPassword = String(body?.contractorPassword || "");
 
-  if (!fullName || !phone || !companyName || !username || !password || !contractorName || !contractorUsername || !contractorPassword) {
+  if (!fullName || !phone || !companyName || !username || !password
+    || !contractorName || !contractorContactPersonName || !contractorUsername || !contractorPassword) {
     return json({ error: "همه‌ی فیلدهای اجباری (شامل اطلاعاتِ پیمانکار) باید تکمیل شوند" }, 400);
   }
   if (!isValidMobileFormat(phone)) {
@@ -200,11 +202,14 @@ Deno.serve(async (req) => {
     const companyId = companyRes.data[0].id;
 
     // ---------- حساب کارفرما (نام‌کاربری/رمزِ خودِ بازدیدکننده) ----------
+    // role عمداً hse_supervisor است، نه employer ساده — طبقِ قراردادِ
+    // شرکت‌های آزمایشی در این پروژه: فقط یک حسابِ «سرپرست کارفرما» ساخته
+    // می‌شود، نه یک حساب کارفرمایِ عادی.
     const employerRes = await restFetch("employer_accounts", {
       method: "POST",
       body: JSON.stringify([{
         name: fullName, username, company_id: companyId, job_position_id: null,
-        role: "employer", can_edit: true, phone, email,
+        role: "hse_supervisor", can_edit: true, phone, email,
       }]),
     });
     if (!employerRes.ok || !Array.isArray(employerRes.data) || employerRes.data.length === 0) {
@@ -221,7 +226,7 @@ Deno.serve(async (req) => {
       method: "POST",
       body: JSON.stringify([{
         name: contractorName, username: contractorUsername, company_id: companyId, job_position_id: null,
-        contact_person_name: "", start_date: null, contract_details: "", phone: "", email: "",
+        contact_person_name: contractorContactPersonName, start_date: null, contract_details: "", phone: "", email: "",
       }]),
     });
     if (!contractorRes.ok || !Array.isArray(contractorRes.data) || contractorRes.data.length === 0) {

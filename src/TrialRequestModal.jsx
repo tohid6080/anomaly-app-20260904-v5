@@ -77,6 +77,7 @@ export default function TrialRequestModal({ onClose }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [contractorContactPersonName, setContractorContactPersonName] = useState("");
   const [contractorName, setContractorName] = useState("");
   const [contractorUsername, setContractorUsername] = useState("");
   const [contractorPassword, setContractorPassword] = useState("");
@@ -97,7 +98,7 @@ export default function TrialRequestModal({ onClose }) {
   const handleSubmit = async () => {
     setError("");
     if (!fullName.trim() || !phone.trim() || !companyName.trim() || !username.trim() || !password
-      || !contractorName.trim() || !contractorUsername.trim() || !contractorPassword) {
+      || !contractorContactPersonName.trim() || !contractorName.trim() || !contractorUsername.trim() || !contractorPassword) {
       setError(t("trmErrRequiredFields"));
       return;
     }
@@ -121,6 +122,7 @@ export default function TrialRequestModal({ onClose }) {
     const res = await submitTrialSignup({
       fullName: fullName.trim(), phone: phone.trim(), companyName: companyName.trim(),
       username: username.trim(), password,
+      contractorContactPersonName: contractorContactPersonName.trim(),
       contractorName: contractorName.trim(), contractorUsername: contractorUsername.trim(), contractorPassword,
       position: position.trim(), industry: industry.trim(),
       personnelCount: personnelCount ? Number(personnelCount) : null,
@@ -202,6 +204,12 @@ export default function TrialRequestModal({ onClose }) {
 
             <p style={{ fontSize: 11, fontWeight: 700, color: THEME.heading, margin: "10px 0 4px" }}>{t("trmContractorSectionTitle")}</p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 0 }}>
+              {/* طبقِ الگویِ AccountManagement.jsx: «نام و نام خانوادگی» شخص
+                  باید پیش از نامِ شرکتِ پیمانکار بیاید. */}
+              <div>
+                <label style={styles.label}>{t("trmContractorContactPersonNameReq")}</label>
+                <input style={styles.input} value={contractorContactPersonName} onChange={(e) => setContractorContactPersonName(e.target.value)} dir={dir} />
+              </div>
               <div>
                 <label style={styles.label}>{t("trmContractorNameReq")}</label>
                 <input style={styles.input} value={contractorName} onChange={(e) => setContractorName(e.target.value)} dir={dir} />
