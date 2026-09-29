@@ -27,14 +27,12 @@ export const SUPABASE_ANON_KEY = "sb_publishable_pvobGcp2snOD3oFTX2LVMg_bZx2A9CR
 // استفاده در offline/networkStatus.js برای تست واقعی در دسترس‌بودن (نه فقط navigator.onLine)
 export const SUPABASE_PING_URL = `${SUPABASE_URL}/rest/v1/`;
 
-// کلیدِ site‌ِ Cloudflare Turnstile — عمومی است (برخلافِ secret key که فقط
-// سمتِ Edge Function و از طریقِ `supabase secrets set TURNSTILE_SECRET_KEY=...`
-// تنظیم می‌شود)، پس امن است این‌جا هم مثلِ بقیه‌ی این فایل مستقیم نوشته شود.
-// تا وقتی جایگزین نشده، فرمِ ثبت‌نامِ خودسرویس (TrialRequestModal.jsx)
-// ویجتِ CAPTCHA نامعتبر نشان می‌دهد و ثبت‌نام رد می‌شود — باید قبل از
-// استفاده‌ی واقعی، با site keyِ ساخته‌شده در dash.cloudflare.com → Turnstile
-// جایگزین شود.
-export const TURNSTILE_SITE_KEY = "REPLACE_WITH_YOUR_TURNSTILE_SITE_KEY";
+// کلیدِ site‌ِ Cloudflare Turnstile (برایِ ihmsapp.ir، از dash.cloudflare.com →
+// Turnstile) — عمومی است (برخلافِ secret key که فقط سمتِ Edge Function و از
+// طریقِ `supabase secrets set TURNSTILE_SECRET_KEY=...` تنظیم می‌شود)، پس امن
+// است این‌جا هم مثلِ بقیه‌ی این فایل مستقیم نوشته شود. بدونِ تنظیم‌بودنِ
+// TURNSTILE_SECRET_KEY سمتِ سرور هم، submit-trial-signup هرچه بفرستد رد می‌کند.
+export const TURNSTILE_SITE_KEY = "0x4AAAAAAFJiYjxJMsOEXaUK";
 
 // آدرس عمومی و قابل‌اشتراک نسخه‌ی وب سامانه (GitHub Pages). لینک‌هایی که
 // قرار است بیرونِ اپ باز شوند (مثل پرسشنامه‌ی عمومی HSE Climate) باید
