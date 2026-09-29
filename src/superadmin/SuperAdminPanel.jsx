@@ -34,7 +34,7 @@ import {
   BACKUP_MODULES, BACKUP_MODULE_KEYS, SHAREABLE_MODULES,
   copyBowtiesToCompany, copyRiskKnowledgeToCompany,
   loadCardTransferPayments, approveCardTransferPayment, rejectCardTransferPayment, deleteCardTransferPayment, saveCardTransferSettings,
-  loadTrialRequests, approveTrialRequest, rejectTrialRequest, deleteTrialRequest,
+  loadTrialRequests, approveTrialRequest, rejectTrialRequest, deleteTrialRequest, loadSelfServiceSignupCount,
   loadGuestPurchaseRequests, approveGuestPurchaseRequest, rejectGuestPurchaseRequest, deleteGuestPurchaseRequest,
 } from "./superAdminApi.js";
 import { computeSubscriptionAccess, loadOnlinePaymentsForCompany, loadCardTransferSettings } from "../subscriptionApi.js";
@@ -3467,8 +3467,15 @@ function TrialRequestsPage({ currentAdmin }) {
   const [noteDraft, setNoteDraft] = useState("");
   const [showRejectFor, setShowRejectFor] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [selfServiceCount, setSelfServiceCount] = useState(null);
 
-  const load = () => loadTrialRequests(statusFilter).then(setRows);
+  // مستقل از statusFilter — همیشه شمارشِ کلِ ثبت‌نام‌های خودسرویس (فرمِ
+  // صفحه‌ی ورود) را نشان می‌دهد، نه فقط همان‌هایی که فیلترِ فعلی نشان می‌دهد؛
+  // بعدِ هر عملیاتِ حذف هم دوباره تازه می‌شود (load صدایش می‌زند).
+  const load = () => {
+    loadTrialRequests(statusFilter).then(setRows);
+    loadSelfServiceSignupCount().then(setSelfServiceCount);
+  };
   useEffect(() => { setRows(null); load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [statusFilter]);
 
   const openRow = (r) => {
@@ -3520,12 +3527,19 @@ function TrialRequestsPage({ currentAdmin }) {
             </span>
           )}
         </h3>
-        <select style={{ ...inputStyle, width: "auto" }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir={dir}>
-          <option value="all">{t("saAllStatuses")}</option>
-          <option value="pending">{t("saTrStatusPending")}</option>
-          <option value="approved">{t("saTrStatusApproved")}</option>
-          <option value="rejected">{t("saTrStatusRejected")}</option>
-        </select>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          {selfServiceCount != null && (
+            <span style={{ fontSize: 11, color: THEME.text2, background: THEME.bg, border: `1px solid ${THEME.border}`, borderRadius: 999, padding: "4px 10px" }}>
+              {t("saTrSelfServiceCount", { count: selfServiceCount })}
+            </span>
+          )}
+          <select style={{ ...inputStyle, width: "auto" }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir={dir}>
+            <option value="all">{t("saAllStatuses")}</option>
+            <option value="pending">{t("saTrStatusPending")}</option>
+            <option value="approved">{t("saTrStatusApproved")}</option>
+            <option value="rejected">{t("saTrStatusRejected")}</option>
+          </select>
+        </div>
       </div>
       <p style={{ fontSize: 11, color: THEME.text3, marginBottom: 12 }}>
         {t("saTrNote")}

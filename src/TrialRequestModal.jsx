@@ -21,6 +21,9 @@ export default function TrialRequestModal({ onClose }) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [contractorName, setContractorName] = useState("");
+  const [contractorUsername, setContractorUsername] = useState("");
+  const [contractorPassword, setContractorPassword] = useState("");
+  const [contractorConfirmPassword, setContractorConfirmPassword] = useState("");
   const [position, setPosition] = useState("");
   const [industry, setIndustry] = useState("");
   const [personnelCount, setPersonnelCount] = useState("");
@@ -34,22 +37,28 @@ export default function TrialRequestModal({ onClose }) {
 
   const handleSubmit = async () => {
     setError("");
-    if (!fullName.trim() || !phone.trim() || !companyName.trim() || !username.trim() || !password) {
+    if (!fullName.trim() || !phone.trim() || !companyName.trim() || !username.trim() || !password
+      || !contractorName.trim() || !contractorUsername.trim() || !contractorPassword) {
       setError(t("trmErrRequiredFields"));
       return;
     }
-    if (password.length < 8) {
+    if (password.length < 8 || contractorPassword.length < 8) {
       setError(t("trmErrPasswordShort"));
       return;
     }
-    if (password !== confirmPassword) {
+    if (password !== confirmPassword || contractorPassword !== contractorConfirmPassword) {
       setError(t("trmErrPasswordMismatch"));
+      return;
+    }
+    if (username.trim() === contractorUsername.trim()) {
+      setError(t("trmErrUsernamesMustDiffer"));
       return;
     }
     setSaving(true);
     const res = await submitTrialSignup({
       fullName: fullName.trim(), phone: phone.trim(), companyName: companyName.trim(),
-      username: username.trim(), password, contractorName: contractorName.trim(),
+      username: username.trim(), password,
+      contractorName: contractorName.trim(), contractorUsername: contractorUsername.trim(), contractorPassword,
       position: position.trim(), industry: industry.trim(),
       personnelCount: personnelCount ? Number(personnelCount) : null,
       projectName: projectName.trim(), projectCity: projectCity.trim(), email: email.trim(),
@@ -73,19 +82,9 @@ export default function TrialRequestModal({ onClose }) {
           <div style={{ textAlign: "center", padding: "20px 6px" }}>
             <CheckCircle2 size={46} color={THEME.ok} style={{ marginBottom: 12 }} />
             <h3 style={{ color: THEME.heading, fontSize: 16, marginBottom: 8 }}>{t("trmDoneTitle")}</h3>
-            <p style={{ fontSize: 12.5, color: THEME.text3, lineHeight: 1.9, marginBottom: 14 }}>
+            <p style={{ fontSize: 12.5, color: THEME.text3, lineHeight: 1.9, marginBottom: 18 }}>
               {t("trmDoneBody")}
             </p>
-            <div style={{ textAlign: "start", background: THEME.bg, border: `1px solid ${THEME.border}`, borderRadius: 10, padding: 14, marginBottom: 16 }}>
-              <p style={{ fontSize: 11.5, color: THEME.text3, margin: "0 0 10px", lineHeight: 1.8 }}>{t("trmContractorCredsIntro")}</p>
-              <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "6px 10px", fontSize: 12.5 }}>
-                <span style={{ color: THEME.text3 }}>{t("trmFieldContractorUsername")}</span>
-                <span dir="ltr" style={{ fontFamily: "monospace", color: THEME.heading, fontWeight: 700, userSelect: "all" }}>{result.contractorUsername}</span>
-                <span style={{ color: THEME.text3 }}>{t("trmFieldContractorPassword")}</span>
-                <span dir="ltr" style={{ fontFamily: "monospace", color: THEME.heading, fontWeight: 700, userSelect: "all" }}>{result.contractorPassword}</span>
-              </div>
-              <p style={{ fontSize: 10.5, color: THEME.danger, margin: "10px 0 0", lineHeight: 1.8 }}>{t("trmContractorCredsWarning")}</p>
-            </div>
             <button type="button" style={{ ...styles.button, width: "auto", marginTop: 0, padding: "9px 24px" }} onClick={onClose}>{t("saClose")}</button>
           </div>
         ) : (
@@ -131,9 +130,25 @@ export default function TrialRequestModal({ onClose }) {
                 <label style={styles.label}>{t("trmConfirmPasswordReq")}</label>
                 <input style={styles.input} type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} dir="ltr" />
               </div>
+            </div>
+
+            <p style={{ fontSize: 11, fontWeight: 700, color: THEME.heading, margin: "10px 0 4px" }}>{t("trmContractorSectionTitle")}</p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 0 }}>
               <div>
-                <label style={styles.label}>{t("trmContractorNameOptional")}</label>
-                <input style={styles.input} value={contractorName} onChange={(e) => setContractorName(e.target.value)} dir={dir} placeholder={t("trmContractorNamePlaceholder")} />
+                <label style={styles.label}>{t("trmContractorNameReq")}</label>
+                <input style={styles.input} value={contractorName} onChange={(e) => setContractorName(e.target.value)} dir={dir} />
+              </div>
+              <div>
+                <label style={styles.label}>{t("trmContractorUsernameReq")}</label>
+                <input style={styles.input} value={contractorUsername} onChange={(e) => setContractorUsername(e.target.value)} dir="ltr" />
+              </div>
+              <div>
+                <label style={styles.label}>{t("trmContractorPasswordReq")}</label>
+                <input style={styles.input} type="password" value={contractorPassword} onChange={(e) => setContractorPassword(e.target.value)} dir="ltr" />
+              </div>
+              <div>
+                <label style={styles.label}>{t("trmContractorConfirmPasswordReq")}</label>
+                <input style={styles.input} type="password" value={contractorConfirmPassword} onChange={(e) => setContractorConfirmPassword(e.target.value)} dir="ltr" />
               </div>
             </div>
 

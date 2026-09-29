@@ -2,12 +2,12 @@
 //
 // عمومی و بدون نیاز به احراز هویت — جانشینِ خودسرویسِ submit-trial-request:
 // به‌جای ثبتِ یک سرنخِ منتظرِ بررسیِ دستیِ SuperAdmin، همین‌جا و بلافاصله
-// شرکت + حساب کارفرما (با نام‌کاربری/رمزِ خودِ بازدیدکننده) + حساب پیمانکار
-// (نام‌کاربری/رمزِ خودکار) ساخته می‌شود، دوره‌ی آزمایشیِ ۳۰روزه فعال، و
-// تمامیِ ماژول‌های فعال (module_prices) + زیرماژول‌هایشان به شرکت اعطا
-// می‌شود. یک ردیفِ trial_requests هم برایِ حفظِ تاریخچه/گزارش‌گیریِ
-// SuperAdmin با status='approved' ثبت می‌شود (صفحه‌ی بررسیِ موجود دست‌نخورده
-// می‌ماند، فقط دیگر چیزی «در انتظار» از این دکمه نمی‌آید).
+// شرکت + حساب کارفرما + حساب پیمانکار (هر دو با نام‌کاربری/رمزِ انتخابیِ
+// خودِ بازدیدکننده) ساخته می‌شود، دوره‌ی آزمایشیِ ۳۰روزه فعال، و تمامیِ
+// ماژول‌های فعال (module_prices) + زیرماژول‌هایشان به شرکت اعطا می‌شود.
+// یک ردیفِ trial_requests هم برایِ حفظِ تاریخچه/گزارش‌گیریِ SuperAdmin با
+// status='approved' ثبت می‌شود (صفحه‌ی بررسیِ موجود دست‌نخورده می‌ماند،
+// فقط دیگر چیزی «در انتظار» از این دکمه نمی‌آید).
 //
 // رمزِ عبور هرگز مستقیم در ستونِ password نوشته نمی‌شود — دقیقاً همان
 // الگویِ manage-account: بعدِ INSERT، از طریقِ RPC های
@@ -61,30 +61,18 @@ async function checkContactUniqueness(field: "email" | "phone", value: string) {
   return empMatches.length > 0 || conMatches.length > 0;
 }
 
-function slugify(s: string) {
-  return s
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "")
-    .slice(0, 14);
-}
-
-function randomPassword(len = 10) {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
-  const bytes = new Uint8Array(len);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (b) => chars[b % chars.length]).join("");
-}
-
-// نام‌کاربریِ پیمانکار را از نامِ شرکت/کارفرما می‌سازد و در صورتِ تکراری‌بودن
-// چند بار با یک عددِ تصادفیِ جدید دوباره امتحان می‌کند.
-async function generateUniqueContractorUsername(seed: string) {
-  const base = slugify(seed) || "contractor";
-  for (let attempt = 0; attempt < 6; attempt++) {
-    const candidate = `${base}-c${Math.floor(1000 + Math.random() * 9000)}`;
-    const existing = await restFetch(`contractors?username=eq.${encodeURIComponent(candidate)}&select=id`);
-    if (existing.ok && Array.isArray(existing.data) && existing.data.length === 0) return candidate;
-  }
-  return null;
+// یکتاییِ نام‌کاربری در هر دو جدول با هم چک می‌شود (نه فقط جدولِ مقصد):
+// چون ورود (issue-session-token) اول employer_accounts و بعد contractors
+// را امتحان می‌کند، اگر همین یک نام‌کاربری در هر دو جدول وجود داشته باشد،
+// حسابِ پیمانکار هرگز قابلِ ورود نمی‌شود (همیشه رویِ حسابِ کارفرما می‌افتد).
+async function checkUsernameUniqueness(value: string) {
+  const [empRes, conRes] = await Promise.all([
+    restFetch(`employer_accounts?username=eq.${encodeURIComponent(value)}&select=id`),
+    restFetch(`contractors?username=eq.${encodeURIComponent(value)}&select=id`),
+  ]);
+  const empMatches = empRes.ok && Array.isArray(empRes.data) ? empRes.data : [];
+  const conMatches = conRes.ok && Array.isArray(conRes.data) ? conRes.data : [];
+  return empMatches.length > 0 || conMatches.length > 0;
 }
 
 Deno.serve(async (req) => {
@@ -104,10 +92,12 @@ Deno.serve(async (req) => {
   const username = String(body?.username || "").trim();
   const password = String(body?.password || "");
   const email = String(body?.email || "").trim();
-  const contractorNameInput = String(body?.contractorName || "").trim();
+  const contractorName = String(body?.contractorName || "").trim();
+  const contractorUsername = String(body?.contractorUsername || "").trim();
+  const contractorPassword = String(body?.contractorPassword || "");
 
-  if (!fullName || !phone || !companyName || !username || !password) {
-    return json({ error: "نام و نام خانوادگی، موبایل، نام شرکت، نام‌کاربری و رمز عبور الزامی است" }, 400);
+  if (!fullName || !phone || !companyName || !username || !password || !contractorName || !contractorUsername || !contractorPassword) {
+    return json({ error: "همه‌ی فیلدهای اجباری (شامل اطلاعاتِ پیمانکار) باید تکمیل شوند" }, 400);
   }
   if (!isValidMobileFormat(phone)) {
     return json({ error: "شماره موبایل باید ۱۱ رقم و با ۰۹ شروع شود" }, 400);
@@ -116,14 +106,22 @@ Deno.serve(async (req) => {
     return json({ error: "فرمت ایمیل نامعتبر است" }, 400);
   }
   if (password.length < 8) {
-    return json({ error: "رمز عبور باید حداقل ۸ کاراکتر باشد" }, 400);
+    return json({ error: "رمز عبورِ کارفرما باید حداقل ۸ کاراکتر باشد" }, 400);
+  }
+  if (contractorPassword.length < 8) {
+    return json({ error: "رمز عبورِ پیمانکار باید حداقل ۸ کاراکتر باشد" }, 400);
+  }
+  if (contractorUsername === username) {
+    return json({ error: "نام‌کاربریِ پیمانکار باید با نام‌کاربریِ کارفرما متفاوت باشد" }, 400);
   }
 
   try {
     // ---------- یکتاییِ نام‌کاربری/شرکت/تماس ----------
-    const usernameCheck = await restFetch(`employer_accounts?username=eq.${encodeURIComponent(username)}&select=id`);
-    if (usernameCheck.ok && Array.isArray(usernameCheck.data) && usernameCheck.data.length > 0) {
-      return json({ error: "این نام‌کاربری قبلاً استفاده شده است" }, 409);
+    if (await checkUsernameUniqueness(username)) {
+      return json({ error: "این نام‌کاربری (کارفرما) قبلاً استفاده شده است" }, 409);
+    }
+    if (await checkUsernameUniqueness(contractorUsername)) {
+      return json({ error: "این نام‌کاربری (پیمانکار) قبلاً استفاده شده است" }, 409);
     }
     if (email && (await checkContactUniqueness("email", email))) {
       return json({ error: "این ایمیل قبلاً برای حساب دیگری استفاده شده است" }, 409);
@@ -176,13 +174,7 @@ Deno.serve(async (req) => {
       return json({ error: "شرکت ساخته شد ولی تنظیمِ رمزِ عبورِ کارفرما با خطا مواجه شد — لطفاً با پشتیبانی تماس بگیرید" }, 500);
     }
 
-    // ---------- حساب پیمانکار (نام‌کاربری/رمزِ خودکار) ----------
-    const contractorUsername = await generateUniqueContractorUsername(username || companyName);
-    if (!contractorUsername) {
-      return json({ error: "شرکت و حسابِ کارفرما ساخته شد ولی ساختِ حسابِ پیمانکار با خطا مواجه شد — لطفاً با پشتیبانی تماس بگیرید" }, 500);
-    }
-    const contractorPassword = randomPassword();
-    const contractorName = contractorNameInput || `پیمانکارِ ${companyName}`;
+    // ---------- حساب پیمانکار (نام‌کاربری/رمزِ خودِ بازدیدکننده) ----------
     const contractorRes = await restFetch("contractors", {
       method: "POST",
       body: JSON.stringify([{
@@ -249,7 +241,6 @@ Deno.serve(async (req) => {
       companyName,
       employerUsername: username,
       contractorUsername,
-      contractorPassword,
       trialEnd: trialEndIso,
     });
   } catch (e) {

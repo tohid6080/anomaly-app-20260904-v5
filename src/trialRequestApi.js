@@ -19,9 +19,9 @@ export const trialModuleLabel = (value) => (TRIAL_MODULE_LABEL_KEYS[value] ? tr(
  * proactiveIndicators/proactiveIndicatorsApi.js) چون trial_requests هیچ
  * RLS policy ای برای anon/authenticated ندارد. برخلافِ نسخه‌ی قبلی (که فقط
  * یک سرنخِ منتظرِ بررسیِ دستیِ SuperAdmin ثبت می‌کرد)، این‌جا خودِ شرکت +
- * حساب کارفرما (با نام‌کاربری/رمزِ همین فرم) + حساب پیمانکار (خودکار) +
- * دورهٔ آزمایشیِ ۳۰روزه با همه‌ی ماژول‌ها بلافاصله ساخته می‌شوند — بدونِ
- * فعال‌سازیِ دستی. یک ردیفِ trial_requests هم برایِ تاریخچه با
+ * حساب کارفرما + حساب پیمانکار (هر دو با نام‌کاربری/رمزِ انتخابیِ خودِ
+ * فرم) + دورهٔ آزمایشیِ ۳۰روزه با همه‌ی ماژول‌ها بلافاصله ساخته می‌شوند —
+ * بدونِ فعال‌سازیِ دستی. یک ردیفِ trial_requests هم برایِ تاریخچه با
  * status='approved' ثبت می‌شود؛ صفحه‌ی بررسیِ دستیِ SuperAdmin دست‌نخورده
  * می‌ماند (برایِ سرنخ‌های احتمالیِ دیگر)، فقط این دکمه دیگر چیزی «در
  * انتظار» در آن نمی‌گذارد.
@@ -40,7 +40,6 @@ export async function submitTrialSignup(fields) {
       companyName: data.companyName,
       employerUsername: data.employerUsername,
       contractorUsername: data.contractorUsername,
-      contractorPassword: data.contractorPassword,
       trialEnd: data.trialEnd,
     };
   } catch {
