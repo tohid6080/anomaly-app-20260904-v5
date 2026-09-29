@@ -647,6 +647,16 @@ export async function loadTrialRequests(statusFilter) {
   return sbOk(rows) ? rows.map(trialRequestFromRow) : [];
 }
 
+// شمارشِ ثبت‌نام‌های خودکارِ خودسرویس (فرمِ صفحه‌ی ورود → submit-trial-signup)
+// — این ردیف‌ها هرگز «در انتظار» نبوده‌اند، از همان لحظه با
+// reviewed_by ثابتِ زیر و status=approved ثبت می‌شوند؛ همین رشته تنها
+// signal برایِ تفکیکشان از سرنخ‌هایِ قدیمیِ بررسی‌شده‌ی دستی است.
+const SELF_SERVICE_REVIEWED_BY = "سیستم (خودسرویس)";
+export async function loadSelfServiceSignupCount() {
+  const rows = await sb(`trial_requests?reviewed_by=eq.${encodeURIComponent(SELF_SERVICE_REVIEWED_BY)}&select=id`, {}, "super_admin");
+  return sbOk(rows) ? rows.length : 0;
+}
+
 export async function approveTrialRequest(id, approvedTrialDays, reviewedBy, note) {
   const days = Number(approvedTrialDays);
   if (!days || days <= 0) return { __error: true, message: tr("saInvalidTrialDuration") };

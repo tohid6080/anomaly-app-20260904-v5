@@ -1,58 +1,140 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { X, ClipboardList, Send, CheckCircle2 } from "lucide-react";
-import { styles, THEME } from "./shared.js";
-import { submitTrialRequest, TRIAL_MODULE_LABEL_KEYS } from "./trialRequestApi.js";
+import { styles, THEME, TURNSTILE_SITE_KEY } from "./shared.js";
+import { submitTrialSignup } from "./trialRequestApi.js";
 import { useLanguage } from "./i18n/LanguageContext.jsx";
 
-// فهرست ساده و خواناست، فقط برای همین فرم سرنخ (Lead) — عمداً مستقل از
-// HSE_MODULES/PLAN_FEATURES نگه داشته شده تا این کامپوننت عمومی (پیش از
-// ورود) به کد داخلی App.jsx/SuperAdmin وابسته نشود.
-const MODULE_OPTIONS = ["anomaly", "risk", "personnel", "proactive", "incident", "machinery", "scaffold", "dashboard", "chat_archive"];
+const TURNSTILE_SCRIPT_ID = "cf-turnstile-script";
+const TURNSTILE_SCRIPT_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+
+// ویجتِ Cloudflare Turnstile را با API صریح (نه خودکار) رندر می‌کند — چون
+// این مودال بارها باز/بسته می‌شود، رندرِ خودکار (پیش‌فرضِ اسکریپت) فقط در
+// اولین بارِ لودشدنِ اسکریپت اجرا می‌شود و در بازکردن‌های بعدی هیچ ویجتی
+// نشان نمی‌دهد. توکنِ حاصل یک‌بارمصرف است؛ resetTurnstile بعدِ هر تلاشِ
+// ثبت‌نام (موفق یا ناموفق) یک چالشِ تازه می‌سازد.
+function useTurnstile(onToken) {
+  const containerRef = useRef(null);
+  const widgetIdRef = useRef(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const renderWidget = () => {
+      if (cancelled || !containerRef.current || !window.turnstile || !TURNSTILE_SITE_KEY) return;
+      widgetIdRef.current = window.turnstile.render(containerRef.current, {
+        sitekey: TURNSTILE_SITE_KEY,
+        callback: (token) => { if (!cancelled) onToken(token); },
+        "expired-callback": () => { if (!cancelled) onToken(""); },
+        "error-callback": () => { if (!cancelled) onToken(""); },
+      });
+    };
+
+    if (window.turnstile) {
+      renderWidget();
+    } else {
+      let script = document.getElementById(TURNSTILE_SCRIPT_ID);
+      if (!script) {
+        script = document.createElement("script");
+        script.id = TURNSTILE_SCRIPT_ID;
+        script.src = TURNSTILE_SCRIPT_SRC;
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+      }
+      script.addEventListener("load", renderWidget);
+    }
+
+    return () => {
+      cancelled = true;
+      if (widgetIdRef.current != null && window.turnstile) {
+        try { window.turnstile.remove(widgetIdRef.current); } catch { /* بی‌اهمیت */ }
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const reset = () => {
+    if (widgetIdRef.current != null && window.turnstile) {
+      try { window.turnstile.reset(widgetIdRef.current); } catch { /* بی‌اهمیت */ }
+    }
+  };
+
+  return { containerRef, reset };
+}
 
 /**
  * فرم عمومی «درخواست ارزیابی و پلن آزمایشی» — از صفحه‌ی ورود (بدون نیاز
  * به حساب کاربری) باز می‌شود. ثبت از طریق Edge Function عمومی
- * submit-trial-request انجام می‌شود؛ نتیجه فقط برای SuperAdmin (بخش
- * «درخواست‌های ارزیابی و پلن آزمایشی») قابل‌مشاهده است.
+ * submit-trial-signup انجام می‌شود؛ برخلافِ نسخه‌ی قبلی (صرفاً یک سرنخِ
+ * منتظرِ بررسیِ دستی)، همین‌جا شرکت + حساب کارفرما (با همین نام‌کاربری/
+ * رمز) + حساب پیمانکار (خودکار) + دورهٔ آزمایشیِ ۳۰روزه با همه‌ی ماژول‌ها
+ * بلافاصله ساخته می‌شوند — بدونِ نیاز به فعال‌سازیِ دستیِ SuperAdmin.
  */
 export default function TrialRequestModal({ onClose }) {
   const { t, dir } = useLanguage();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [companyName, setCompanyName] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [contractorName, setContractorName] = useState("");
+  const [contractorUsername, setContractorUsername] = useState("");
+  const [contractorPassword, setContractorPassword] = useState("");
+  const [contractorConfirmPassword, setContractorConfirmPassword] = useState("");
   const [position, setPosition] = useState("");
   const [industry, setIndustry] = useState("");
   const [personnelCount, setPersonnelCount] = useState("");
   const [projectName, setProjectName] = useState("");
   const [projectCity, setProjectCity] = useState("");
   const [email, setEmail] = useState("");
-  const [desiredModules, setDesiredModules] = useState([]);
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [done, setDone] = useState(false);
-
-  const toggleModule = (m) => {
-    setDesiredModules((prev) => (prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m]));
-  };
+  const [result, setResult] = useState(null);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const { containerRef: turnstileRef, reset: resetTurnstile } = useTurnstile(setTurnstileToken);
 
   const handleSubmit = async () => {
     setError("");
-    if (!fullName.trim() || !phone.trim() || !companyName.trim()) {
+    if (!fullName.trim() || !phone.trim() || !companyName.trim() || !username.trim() || !password
+      || !contractorName.trim() || !contractorUsername.trim() || !contractorPassword) {
       setError(t("trmErrRequiredFields"));
       return;
     }
+    if (password.length < 8 || contractorPassword.length < 8) {
+      setError(t("trmErrPasswordShort"));
+      return;
+    }
+    if (password !== confirmPassword || contractorPassword !== contractorConfirmPassword) {
+      setError(t("trmErrPasswordMismatch"));
+      return;
+    }
+    if (username.trim() === contractorUsername.trim()) {
+      setError(t("trmErrUsernamesMustDiffer"));
+      return;
+    }
+    if (!turnstileToken) {
+      setError(t("trmErrCaptchaRequired"));
+      return;
+    }
     setSaving(true);
-    const result = await submitTrialRequest({
+    const res = await submitTrialSignup({
       fullName: fullName.trim(), phone: phone.trim(), companyName: companyName.trim(),
+      username: username.trim(), password,
+      contractorName: contractorName.trim(), contractorUsername: contractorUsername.trim(), contractorPassword,
       position: position.trim(), industry: industry.trim(),
       personnelCount: personnelCount ? Number(personnelCount) : null,
       projectName: projectName.trim(), projectCity: projectCity.trim(), email: email.trim(),
-      desiredModules, description: description.trim(),
+      description: description.trim(),
+      turnstileToken,
     });
     setSaving(false);
-    if (result?.__error) { setError(result.message); return; }
-    setDone(true);
+    // توکنِ Turnstile یک‌بارمصرف است — چه موفق چه ناموفق، برای تلاشِ بعدی
+    // باید یک چالشِ تازه حل شود.
+    resetTurnstile();
+    setTurnstileToken("");
+    if (res?.__error) { setError(res.message); return; }
+    setResult(res);
   };
 
   return (
@@ -64,7 +146,7 @@ export default function TrialRequestModal({ onClose }) {
         style={{ background: THEME.surface, borderRadius: 16, padding: 22, maxWidth: 520, width: "100%", direction: dir, maxHeight: "92vh", overflowY: "auto", fontFamily: THEME.font }}
         onClick={(e) => e.stopPropagation()}
       >
-        {done ? (
+        {result ? (
           <div style={{ textAlign: "center", padding: "20px 6px" }}>
             <CheckCircle2 size={46} color={THEME.ok} style={{ marginBottom: 12 }} />
             <h3 style={{ color: THEME.heading, fontSize: 16, marginBottom: 8 }}>{t("trmDoneTitle")}</h3>
@@ -100,6 +182,46 @@ export default function TrialRequestModal({ onClose }) {
                 <label style={styles.label}>{t("trmCompanyReq")}</label>
                 <input style={styles.input} value={companyName} onChange={(e) => setCompanyName(e.target.value)} dir={dir} />
               </div>
+            </div>
+
+            <p style={{ fontSize: 11, fontWeight: 700, color: THEME.heading, margin: "10px 0 4px" }}>{t("trmLoginSectionTitle")}</p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 0 }}>
+              <div>
+                <label style={styles.label}>{t("trmUsernameReq")}</label>
+                <input style={styles.input} value={username} onChange={(e) => setUsername(e.target.value)} dir="ltr" />
+              </div>
+              <div>
+                <label style={styles.label}>{t("trmPasswordReq")}</label>
+                <input style={styles.input} type="password" value={password} onChange={(e) => setPassword(e.target.value)} dir="ltr" />
+              </div>
+              <div>
+                <label style={styles.label}>{t("trmConfirmPasswordReq")}</label>
+                <input style={styles.input} type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} dir="ltr" />
+              </div>
+            </div>
+
+            <p style={{ fontSize: 11, fontWeight: 700, color: THEME.heading, margin: "10px 0 4px" }}>{t("trmContractorSectionTitle")}</p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 0 }}>
+              <div>
+                <label style={styles.label}>{t("trmContractorNameReq")}</label>
+                <input style={styles.input} value={contractorName} onChange={(e) => setContractorName(e.target.value)} dir={dir} />
+              </div>
+              <div>
+                <label style={styles.label}>{t("trmContractorUsernameReq")}</label>
+                <input style={styles.input} value={contractorUsername} onChange={(e) => setContractorUsername(e.target.value)} dir="ltr" />
+              </div>
+              <div>
+                <label style={styles.label}>{t("trmContractorPasswordReq")}</label>
+                <input style={styles.input} type="password" value={contractorPassword} onChange={(e) => setContractorPassword(e.target.value)} dir="ltr" />
+              </div>
+              <div>
+                <label style={styles.label}>{t("trmContractorConfirmPasswordReq")}</label>
+                <input style={styles.input} type="password" value={contractorConfirmPassword} onChange={(e) => setContractorConfirmPassword(e.target.value)} dir="ltr" />
+              </div>
+            </div>
+
+            <p style={{ fontSize: 11, fontWeight: 700, color: THEME.heading, margin: "10px 0 4px" }}>{t("trmMoreInfoSectionTitle")}</p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 0 }}>
               <div>
                 <label style={styles.label}>{t("trmPosition")}</label>
                 <input style={styles.input} value={position} onChange={(e) => setPosition(e.target.value)} dir={dir} />
@@ -126,26 +248,10 @@ export default function TrialRequestModal({ onClose }) {
               </div>
             </div>
 
-            <label style={styles.label}>{t("trmDesiredModules")}</label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 4 }}>
-              {MODULE_OPTIONS.map((m) => (
-                <label
-                  key={m}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 5, fontSize: 11.5, padding: "6px 10px", borderRadius: 999, cursor: "pointer",
-                    background: desiredModules.includes(m) ? THEME.teal : THEME.bg,
-                    color: desiredModules.includes(m) ? "#fff" : THEME.text2,
-                    border: `1px solid ${desiredModules.includes(m) ? THEME.teal : THEME.border}`,
-                  }}
-                >
-                  <input type="checkbox" checked={desiredModules.includes(m)} onChange={() => toggleModule(m)} style={{ display: "none" }} />
-                  {t(TRIAL_MODULE_LABEL_KEYS[m] || m)}
-                </label>
-              ))}
-            </div>
-
             <label style={styles.label}>{t("trmNotes")}</label>
             <textarea style={{ ...styles.input, minHeight: 70 }} value={description} onChange={(e) => setDescription(e.target.value)} dir={dir} />
+
+            <div ref={turnstileRef} style={{ margin: "14px 0 4px", display: "flex", justifyContent: "center" }} />
 
             {error && <p style={styles.error}>{error}</p>}
 
