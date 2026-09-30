@@ -145,13 +145,25 @@ Deno.serve(async (req) => {
   const contractorUsername = String(body?.contractorUsername || "").trim();
   const contractorPassword = String(body?.contractorPassword || "");
   const orgStructureType = String(body?.orgStructureType || "");
+  const firstProjectName = String(body?.firstProjectName || "").trim();
 
-  if (!fullName || !phone || !companyName || !username || !password
-    || !contractorName || !contractorContactPersonName || !contractorUsername || !contractorPassword) {
-    return json({ error: "همه‌ی فیلدهای اجباری (شامل اطلاعاتِ پیمانکار) باید تکمیل شوند" }, 400);
-  }
   if (!ORG_STRUCTURE_TYPES.includes(orgStructureType)) {
     return json({ error: "لطفاً ساختار سازمانی شرکت را انتخاب کنید" }, 400);
+  }
+  // اطلاعاتِ پیمانکار فقط برایِ نوعِ «کارفرما/چند پیمانکار» لازم است؛ نامِ
+  // پروژه فقط برایِ نوعِ «مستقل/چند پروژه» — نوعِ «مستقل/بدونِ پروژه» هیچ‌کدام
+  // را لازم ندارد.
+  const isEmployerContractor = orgStructureType === "employer_contractor";
+  const isMultiProject = orgStructureType === "standalone_multi_project";
+
+  if (!fullName || !phone || !companyName || !username || !password) {
+    return json({ error: "همه‌ی فیلدهای اجباری باید تکمیل شوند" }, 400);
+  }
+  if (isEmployerContractor && (!contractorName || !contractorContactPersonName || !contractorUsername || !contractorPassword)) {
+    return json({ error: "همه‌ی فیلدهای اجباری (شامل اطلاعاتِ پیمانکار) باید تکمیل شوند" }, 400);
+  }
+  if (isMultiProject && !firstProjectName) {
+    return json({ error: "نامِ پروژه الزامی است" }, 400);
   }
   if (!isValidMobileFormat(phone)) {
     return json({ error: "شماره موبایل باید ۱۱ رقم و با ۰۹ شروع شود" }, 400);
@@ -160,13 +172,15 @@ Deno.serve(async (req) => {
     return json({ error: "فرمت ایمیل نامعتبر است" }, 400);
   }
   if (password.length < 8) {
-    return json({ error: "رمز عبورِ کارفرما باید حداقل ۸ کاراکتر باشد" }, 400);
+    return json({ error: "رمز عبورِ سرپرست باید حداقل ۸ کاراکتر باشد" }, 400);
   }
-  if (contractorPassword.length < 8) {
-    return json({ error: "رمز عبورِ پیمانکار باید حداقل ۸ کاراکتر باشد" }, 400);
-  }
-  if (contractorUsername === username) {
-    return json({ error: "نام‌کاربریِ پیمانکار باید با نام‌کاربریِ کارفرما متفاوت باشد" }, 400);
+  if (isEmployerContractor) {
+    if (contractorPassword.length < 8) {
+      return json({ error: "رمز عبورِ پیمانکار باید حداقل ۸ کاراکتر باشد" }, 400);
+    }
+    if (contractorUsername === username) {
+      return json({ error: "نام‌کاربریِ پیمانکار باید با نام‌کاربریِ کارفرما متفاوت باشد" }, 400);
+    }
   }
 
   try {
@@ -174,7 +188,7 @@ Deno.serve(async (req) => {
     if (await checkUsernameUniqueness(username)) {
       return json({ error: "این نام‌کاربری (کارفرما) قبلاً استفاده شده است" }, 409);
     }
-    if (await checkUsernameUniqueness(contractorUsername)) {
+    if (isEmployerContractor && await checkUsernameUniqueness(contractorUsername)) {
       return json({ error: "این نام‌کاربری (پیمانکار) قبلاً استفاده شده است" }, 409);
     }
     if (email && (await checkContactUniqueness("email", email))) {
@@ -232,21 +246,39 @@ Deno.serve(async (req) => {
       return json({ error: "شرکت ساخته شد ولی تنظیمِ رمزِ عبورِ کارفرما با خطا مواجه شد — لطفاً با پشتیبانی تماس بگیرید" }, 500);
     }
 
-    // ---------- حساب پیمانکار (نام‌کاربری/رمزِ خودِ بازدیدکننده) ----------
-    const contractorRes = await restFetch("contractors", {
-      method: "POST",
-      body: JSON.stringify([{
-        name: contractorName, username: contractorUsername, company_id: companyId, job_position_id: null,
-        contact_person_name: contractorContactPersonName, start_date: null, contract_details: "", phone: "", email: "",
-      }]),
-    });
-    if (!contractorRes.ok || !Array.isArray(contractorRes.data) || contractorRes.data.length === 0) {
-      return json({ error: "شرکت و حسابِ کارفرما ساخته شد ولی ساختِ حسابِ پیمانکار با خطا مواجه شد — لطفاً با پشتیبانی تماس بگیرید" }, 500);
+    // ---------- حساب پیمانکار (فقط برایِ نوعِ «کارفرما/چند پیمانکار») ----------
+    if (isEmployerContractor) {
+      const contractorRes = await restFetch("contractors", {
+        method: "POST",
+        body: JSON.stringify([{
+          name: contractorName, username: contractorUsername, company_id: companyId, job_position_id: null,
+          contact_person_name: contractorContactPersonName, start_date: null, contract_details: "", phone: "", email: "",
+        }]),
+      });
+      if (!contractorRes.ok || !Array.isArray(contractorRes.data) || contractorRes.data.length === 0) {
+        return json({ error: "شرکت و حسابِ کارفرما ساخته شد ولی ساختِ حسابِ پیمانکار با خطا مواجه شد — لطفاً با پشتیبانی تماس بگیرید" }, 500);
+      }
+      const contractorId = contractorRes.data[0].id;
+      const contractorPwRes = await callRpc("set_contractor_password", { p_id: contractorId, p_new_password: contractorPassword });
+      if (!contractorPwRes.ok) {
+        return json({ error: "همه‌چیز ساخته شد ولی تنظیمِ رمزِ عبورِ پیمانکار با خطا مواجه شد — لطفاً با پشتیبانی تماس بگیرید" }, 500);
+      }
     }
-    const contractorId = contractorRes.data[0].id;
-    const contractorPwRes = await callRpc("set_contractor_password", { p_id: contractorId, p_new_password: contractorPassword });
-    if (!contractorPwRes.ok) {
-      return json({ error: "همه‌چیز ساخته شد ولی تنظیمِ رمزِ عبورِ پیمانکار با خطا مواجه شد — لطفاً با پشتیبانی تماس بگیرید" }, 500);
+
+    // ---------- پروژه‌ی اول (فقط برایِ نوعِ «مستقل/چند پروژه») ----------
+    // همان جدولِ contractor_companies (فهرستِ نام‌های زیرمجموعه‌ی هر شرکت)
+    // این‌جا با نامِ «پروژه» پر می‌شود — چون از نظرِ ساختاریِ داده دقیقاً
+    // همان چیزی‌ست که لازم است: یک نامِ گروه‌بندیِ زیرِ company_id که بعداً
+    // چند حسابِ «contractors» (این‌جا: افرادِ HSE) با آن نام تگ می‌شوند. هیچ
+    // جدول/ستونِ جدیدی لازم نبود.
+    if (isMultiProject) {
+      const projectRes = await restFetch("contractor_companies", {
+        method: "POST",
+        body: JSON.stringify([{ company_id: companyId, name: firstProjectName, created_by: "سیستم (ثبت‌نامِ خودسرویس)" }]),
+      });
+      if (!projectRes.ok || !Array.isArray(projectRes.data) || projectRes.data.length === 0) {
+        return json({ error: "شرکت و حسابِ سرپرست ساخته شد ولی ثبتِ پروژه با خطا مواجه شد — لطفاً با پشتیبانی تماس بگیرید" }, 500);
+      }
     }
 
     // ---------- اعطایِ همه‌ی ماژول‌هایِ فعال + زیرماژول‌هایشان ----------
@@ -298,7 +330,8 @@ Deno.serve(async (req) => {
       ok: true,
       companyName,
       employerUsername: username,
-      contractorUsername,
+      contractorUsername: isEmployerContractor ? contractorUsername : null,
+      firstProjectName: isMultiProject ? firstProjectName : null,
       trialEnd: trialEndIso,
     });
   } catch (e) {

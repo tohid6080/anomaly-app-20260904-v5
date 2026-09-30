@@ -3039,6 +3039,42 @@ export const translations = {
     "fa": "نامِ «{name}» از فهرست حذف شود؟ حساب‌های پیمانکاریِ قبلاً ساخته‌شده با این نام دست‌نخورده می‌مانند.",
     "en": "Remove \"{name}\" from the list? Contractor accounts already created with this name are unaffected."
   },
+  "saProjectsNote": {
+    "fa": "این فهرست فقط برایِ شرکت‌هایِ «مستقل/چند پروژه» معنا دارد. هر پروژه می‌تواند چند حسابِ کاربریِ HSE داخلِ خودش داشته باشد.",
+    "en": "This list is only relevant for \"standalone/multi-project\" companies. Each project can have several HSE user accounts inside it."
+  },
+  "saProjectNamePlaceholder": {
+    "fa": "نامِ پروژه را وارد کنید",
+    "en": "Enter the project's name"
+  },
+  "saAddProject": {
+    "fa": "افزودن به فهرست",
+    "en": "Add to list"
+  },
+  "saNoProjects": {
+    "fa": "این شرکت هنوز هیچ پروژه‌ای ندارد.",
+    "en": "This company has no projects yet."
+  },
+  "saDeleteProjectConfirm": {
+    "fa": "نامِ «{name}» از فهرستِ پروژه‌ها حذف شود؟ حساب‌هایِ HSEِ قبلاً ساخته‌شده در این پروژه دست‌نخورده می‌مانند.",
+    "en": "Remove \"{name}\" from the project list? HSE accounts already created in this project are unaffected."
+  },
+  "saProjectPeopleCount": {
+    "fa": "{count} نفر",
+    "en": "{count} people"
+  },
+  "saNoProjectPeopleYet": {
+    "fa": "هنوز هیچ نیروی HSEای به این پروژه اضافه نشده است.",
+    "en": "No HSE personnel have been added to this project yet."
+  },
+  "saAddHsePersonToProject": {
+    "fa": "افزودنِ نیروی HSE به این پروژه",
+    "en": "Add HSE personnel to this project"
+  },
+  "saProjectNameLabel": {
+    "fa": "نام پروژه",
+    "en": "Project name"
+  },
   "saNoAccountsYet": {
     "fa": "هنوز هیچ حساب کاربری برای این شرکت ساخته نشده — بدون حساب، هیچ‌کس نمی‌تواند وارد سایت اصلی شود.",
     "en": "No user account has been created for this company yet — without an account, no one can log in to the main site."
@@ -8452,8 +8488,9 @@ export const translations = {
   "email": { "fa": "ایمیل", "en": "Email" },
   "amTabAdmin": { "fa": "حساب‌های ادمین", "en": "Admin Accounts" },
   "amTabHseSupervisor": { "fa": "حساب‌های سرپرست/مدیر کارفرما", "en": "Employer Supervisor/Manager Accounts" },
-  "amTabEmployer": { "fa": "حساب‌های کارفرما", "en": "Employer Accounts" },
+  "amTabEmployer": { "fa": "حساب‌های کارفرما/کارشناسان", "en": "Employer/Specialist Accounts" },
   "amTabContractor": { "fa": "حساب‌های پیمانکار", "en": "Contractor Accounts" },
+  "amTabProject": { "fa": "پروژه‌ها", "en": "Projects" },
 
   // --- corrective actions: Tripod Beta / incident-origin integration (project-specific) ---
   "cadTripodOriginBadge": { "fa": "🔗 مدیریت حوادث / Tripod Beta", "en": "🔗 Incident Management / Tripod Beta" },
@@ -10266,6 +10303,9 @@ export const translations = {
   "trmContractorUsernameReq": { "fa": "نام‌کاربریِ پیمانکار *", "en": "Contractor username *" },
   "trmContractorPasswordReq": { "fa": "رمز عبورِ پیمانکار *", "en": "Contractor password *" },
   "trmContractorConfirmPasswordReq": { "fa": "تکرار رمز عبورِ پیمانکار *", "en": "Confirm contractor password *" },
+  "trmFirstProjectSectionTitle": { "fa": "پروژه‌ی اول", "en": "First project" },
+  "trmFirstProjectNameReq": { "fa": "نام پروژه *", "en": "Project name *" },
+  "trmFirstProjectNote": { "fa": "می‌توانید بعداً از طریقِ پشتیبانی، پروژه‌های بیشتری اضافه کنید و افرادِ HSE را به هرکدام اختصاص دهید.", "en": "You can add more projects later through support and assign HSE people to each one." },
   "trmMoreInfoSectionTitle": { "fa": "اطلاعات تکمیلی (اختیاری)", "en": "Additional information (optional)" },
   "trmPosition": { "fa": "سمت", "en": "Position" },
   "trmIndustry": { "fa": "حوزه فعالیت", "en": "Industry" },

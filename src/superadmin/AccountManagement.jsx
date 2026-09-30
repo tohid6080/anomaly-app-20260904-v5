@@ -3,7 +3,7 @@ import { UserPlus, KeyRound, Power, Pencil, Users, Trash2 } from "lucide-react";
 import { THEME, isValidMobile } from "../shared.js";
 import {
   loadCompanies, loadAccountsByType, loadAccountsByTypePage, createAccount, updateAccount, setAccountActive, resetAccountPassword, deleteAccount,
-  loadJobPositionsForCompany, loadContractorCompanies,
+  loadJobPositionsForCompany, loadContractorCompanies, createContractorCompany, setContractorCompanyActive, deleteContractorCompany,
 } from "./superAdminApi.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { PageNav, SearchBox, useDebouncedValue, ADMIN_PAGE_SIZE } from "../shared/AdminPagination.jsx";
@@ -15,6 +15,7 @@ const TABS = [
   { key: "hse_supervisor", labelKey: "amTabHseSupervisor" },
   { key: "employer", labelKey: "amTabEmployer" },
   { key: "contractor", labelKey: "amTabContractor" },
+  { key: "project", labelKey: "amTabProject" },
 ];
 
 // دقیقاً همان الگوی اعتبارسنجی فرم‌های دیگر پروژه (PersonnelForm) — موبایل
@@ -49,16 +50,17 @@ export default function AccountManagement({ currentAdmin }) {
   // loadCompanies (فهرستِ کاملِ شرکت‌ها) عمداً دست‌نخورده و بدونِ
   // صفحه‌بندی می‌ماند — companyName()/Dropdownِ AccountForm به کلِ فهرست
   // نیاز دارند. فقط جدولِ خودِ حساب‌ها (accounts) از سرور صفحه‌بندی/
-  // جستجو می‌شود.
+  // جستجو می‌شود. تبِ «project» جدولِ حساب‌های معمولی ندارد — دیتایِ خودش
+  // را مستقلاً داخلِ ProjectsTabPanel بارگذاری می‌کند.
   const load = async () => {
     setLoading(true);
-    const [comp, accRes] = await Promise.all([
-      loadCompanies(),
-      loadAccountsByTypePage({ targetType: tab, page, pageSize: ADMIN_PAGE_SIZE, search: debouncedSearch }),
-    ]);
+    const comp = await loadCompanies();
     setCompanies(comp);
-    setAccounts(accRes.rows);
-    setAccountsTotal(accRes.total);
+    if (tab !== "project") {
+      const accRes = await loadAccountsByTypePage({ targetType: tab, page, pageSize: ADMIN_PAGE_SIZE, search: debouncedSearch });
+      setAccounts(accRes.rows);
+      setAccountsTotal(accRes.total);
+    }
     setLoading(false);
   };
   useEffect(() => { setPage(1); }, [tab, debouncedSearch]);
@@ -186,6 +188,10 @@ export default function AccountManagement({ currentAdmin }) {
         ))}
       </div>
 
+      {tab === "project" ? (
+        <ProjectsTabPanel companies={companies} currentAdmin={currentAdmin} />
+      ) : (
+      <>
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
         <button type="button" onClick={() => { setShowCreate((v) => !v); setForm(emptyForm()); setError(""); }} style={{ ...btnStyle(), display: "flex", alignItems: "center", gap: 6 }}>
           <UserPlus size={13} /> {t("amNewAccount")}
@@ -288,6 +294,8 @@ export default function AccountManagement({ currentAdmin }) {
           </table>
         </div>
       )}
+      </>
+      )}
 
       {transferState && (
         <div
@@ -332,7 +340,7 @@ export default function AccountManagement({ currentAdmin }) {
   );
 }
 
-export function AccountForm({ tab, form, setForm, companies, onSave, saving, saveLabel, showPassword, disableCompanySelect }) {
+export function AccountForm({ tab, form, setForm, companies, onSave, saving, saveLabel, showPassword, disableCompanySelect, nameFieldLabelKey }) {
   const { t, dir } = useLanguage();
   const isContractor = tab === "contractor";
   const [jobPositions, setJobPositions] = useState([]);
@@ -366,7 +374,7 @@ export function AccountForm({ tab, form, setForm, companies, onSave, saving, sav
           </div>
         )}
         <div>
-          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{isContractor ? t("amContractorCompanyName") : t("amFullName")}</label>
+          <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{isContractor ? t(nameFieldLabelKey || "amContractorCompanyName") : t("amFullName")}</label>
           {isContractor ? (
             <select style={inputStyle} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} dir={dir} disabled={!form.companyId}>
               <option value="">{form.companyId ? t("amSelectPlaceholder") : t("amSelectCompanyFirst")}</option>
@@ -418,6 +426,264 @@ export function AccountForm({ tab, form, setForm, companies, onSave, saving, sav
         )}
       </div>
       <button type="button" onClick={onSave} disabled={saving} style={btnStyle()}>{saving ? t("saSavingEllipsis") : saveLabel}</button>
+    </div>
+  );
+}
+
+// تبِ «پروژه‌ها» — برایِ شرکت‌هایِ نوعِ «مستقل/چند پروژه». هیچ جدول/ستونِ
+// جدیدی لازم نبود: از همان جدولِ contractor_companies (فهرستِ نام‌ها زیرِ
+// یک شرکت) به‌عنوانِ «فهرستِ پروژه‌ها» و از همان جدولِ contractors
+// (حساب‌هایی با name = نامِ یکی از آن فهرست) به‌عنوانِ «افرادِ HSE داخلِ آن
+// پروژه» استفاده می‌شود — دقیقاً همان الگویی که برایِ «شرکت‌های پیمانکاریِ
+// زیرمجموعه» در CompanyManagePanel (سوپرادمین → شرکت‌ها) از قبل هست، فقط
+// این‌جا سراسریِ همه‌ی شرکت‌ها (با انتخابِ شرکت) و با برچسبِ «پروژه».
+function ProjectsTabPanel({ companies, currentAdmin }) {
+  const { t, dir } = useLanguage();
+  const [companyId, setCompanyId] = useState("");
+  const [projects, setProjects] = useState([]);
+  const [loadingProjects, setLoadingProjects] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
+  const [addingProject, setAddingProject] = useState(false);
+  const [projectError, setProjectError] = useState("");
+  const [expandedProject, setExpandedProject] = useState(null);
+  const [people, setPeople] = useState([]);
+  const [addPersonForProject, setAddPersonForProject] = useState(null);
+  const [form, setForm] = useState(emptyForm());
+  const [editingId, setEditingId] = useState(null);
+  const [resettingId, setResettingId] = useState(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const loadProjects = () => {
+    if (!companyId) { setProjects([]); return; }
+    setLoadingProjects(true);
+    loadContractorCompanies(companyId).then((rows) => { setProjects(rows); setLoadingProjects(false); });
+  };
+  const loadPeople = () => {
+    if (!companyId) { setPeople([]); return; }
+    loadAccountsByType("contractor", companyId).then(setPeople);
+  };
+  useEffect(() => {
+    loadProjects();
+    loadPeople();
+    setExpandedProject(null);
+    setAddPersonForProject(null);
+    setEditingId(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyId]);
+
+  const handleAddProject = async () => {
+    setAddingProject(true);
+    setProjectError("");
+    const result = await createContractorCompany(companyId, newProjectName, currentAdmin?.fullName);
+    setAddingProject(false);
+    if (result?.__error) { setProjectError(result.message); return; }
+    setNewProjectName("");
+    loadProjects();
+  };
+
+  const handleToggleProjectActive = async (p) => {
+    const result = await setContractorCompanyActive(p.id, p.isActive === false);
+    if (result?.__error) { alert(result.message); return; }
+    loadProjects();
+  };
+
+  const handleDeleteProject = async (p) => {
+    if (!confirm(t("saDeleteProjectConfirm", { name: p.name }))) return;
+    const result = await deleteContractorCompany(p.id);
+    if (result?.__error) { alert(result.message); return; }
+    if (expandedProject === p.name) setExpandedProject(null);
+    loadProjects();
+  };
+
+  const openAddPerson = (projectName) => {
+    setForm({ ...emptyForm(), companyId, name: projectName });
+    setAddPersonForProject(projectName);
+    setEditingId(null);
+    setError("");
+  };
+
+  const openEditPerson = (a) => {
+    setEditingId(editingId === a.id ? null : a.id);
+    setAddPersonForProject(null);
+    setForm({
+      name: a.name, username: a.username, password: "", companyId: a.company_id || "", jobPositionId: a.job_position_id || "",
+      contactPersonName: a.contact_person_name || "", startDate: a.start_date || "", contractDetails: a.contract_details || "",
+      phone: a.phone || "", email: a.email || "",
+    });
+    setError("");
+  };
+
+  const validateContact = () => {
+    if (form.email && !isValidEmailFormat(form.email)) return t("amInvalidEmail");
+    if (form.phone && !isValidMobile(form.phone)) return t("amInvalidMobile");
+    return "";
+  };
+
+  const handleCreatePerson = async () => {
+    if (!form.name.trim() || !form.username.trim() || form.password.length < 8) {
+      setError(t("amNameUsernamePasswordRequired"));
+      return;
+    }
+    const contactError = validateContact();
+    if (contactError) { setError(contactError); return; }
+    setSaving(true);
+    setError("");
+    const result = await createAccount("contractor", form);
+    setSaving(false);
+    if (result?.__error || result?.error) { setError(result.message || result.error); return; }
+    setAddPersonForProject(null);
+    loadPeople();
+  };
+
+  const handleSaveEditPerson = async (id) => {
+    const contactError = validateContact();
+    if (contactError) { setError(contactError); return; }
+    setSaving(true);
+    setError("");
+    const result = await updateAccount("contractor", id, form);
+    setSaving(false);
+    if (result?.__error || result?.error) { setError(result.message || result.error); return; }
+    setEditingId(null);
+    loadPeople();
+  };
+
+  const handleTogglePersonActive = async (a) => {
+    const result = await setAccountActive("contractor", a.id, a.is_active === false);
+    if (result?.__error || result?.error) { alert(result.message || result.error); return; }
+    loadPeople();
+  };
+
+  const handleResetPersonPassword = async (id) => {
+    if (newPassword.length < 8) { setError(t("errPasswordMin8")); return; }
+    setSaving(true);
+    setError("");
+    const result = await resetAccountPassword("contractor", id, newPassword);
+    setSaving(false);
+    if (result?.__error || result?.error) { setError(result.message || result.error); return; }
+    setResettingId(null);
+    setNewPassword("");
+    alert(t("amPasswordResetSuccess"));
+  };
+
+  const handleDeletePerson = async (a) => {
+    if (!confirm(t("amDeleteAccountConfirm", { name: a.name, username: a.username }))) return;
+    const result = await deleteAccount("contractor", a.id);
+    if (result?.__error || result?.error) { alert(result.message || result.error); return; }
+    loadPeople();
+  };
+
+  return (
+    <div>
+      <p style={{ fontSize: 10.5, color: THEME.text3, marginBottom: 10, lineHeight: 1.8 }}>{t("saProjectsNote")}</p>
+      <div style={{ marginBottom: 14 }}>
+        <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("amSelectCompanyFirst")}</label>
+        <select style={{ ...inputStyle, maxWidth: 320 }} value={companyId} onChange={(e) => setCompanyId(e.target.value)} dir={dir}>
+          <option value="">{t("amSelectPlaceholder")}</option>
+          {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+      </div>
+
+      {companyId && (
+        <>
+          <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+            <input
+              style={{ ...inputStyle, flex: 1, minWidth: 160 }} value={newProjectName}
+              onChange={(e) => setNewProjectName(e.target.value)} dir={dir}
+              placeholder={t("saProjectNamePlaceholder")}
+            />
+            <button type="button" onClick={handleAddProject} disabled={addingProject || !newProjectName.trim()} style={btnStyle()}>
+              {addingProject ? t("saSavingEllipsis") : t("saAddProject")}
+            </button>
+          </div>
+          {projectError && <p style={{ color: THEME.danger, fontSize: 12, marginBottom: 10 }}>{projectError}</p>}
+
+          {loadingProjects ? (
+            <p style={{ color: THEME.text3, fontSize: 12, textAlign: "center", padding: 20 }}>{t("commonLoading")}</p>
+          ) : projects.length === 0 ? (
+            <p style={{ color: THEME.text3, fontSize: 12, textAlign: "center", padding: 20 }}>{t("saNoProjects")}</p>
+          ) : (
+            projects.map((p) => {
+              const projectPeople = people.filter((a) => a.name === p.name);
+              const isExpanded = expandedProject === p.name;
+              return (
+                <div key={p.id} style={{ border: `1px solid ${THEME.border}`, borderRadius: 8, marginBottom: 8, overflow: "hidden" }}>
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", background: THEME.bg, cursor: "pointer", flexWrap: "wrap" }}
+                    onClick={() => setExpandedProject(isExpanded ? null : p.name)}
+                  >
+                    <span style={{ fontWeight: 700, color: THEME.heading, fontSize: 12.5 }}>{p.name}</span>
+                    <span style={{ fontSize: 10.5, color: THEME.text3 }}>{t("saProjectPeopleCount", { count: projectPeople.length })}</span>
+                    <div style={{ marginInlineStart: "auto", display: "flex", gap: 6, alignItems: "center" }} onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button" onClick={() => handleToggleProjectActive(p)}
+                        style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, fontWeight: 600, border: "none", cursor: "pointer", background: p.isActive === false ? THEME.surface2 : THEME.okBg, color: p.isActive === false ? THEME.text3 : THEME.ok }}
+                      >
+                        {p.isActive === false ? t("commonInactive") : t("commonActive")}
+                      </button>
+                      <button
+                        type="button" onClick={() => handleDeleteProject(p)} title={t("saDeleteContractorCompanyTitle")}
+                        style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, border: "none", borderRadius: 6, background: THEME.dangerBg, color: THEME.danger, cursor: "pointer" }}
+                      >
+                        <Trash2 size={11} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {isExpanded && (
+                    <div style={{ padding: 12 }}>
+                      {projectPeople.length === 0 && <p style={{ fontSize: 11, color: THEME.text3 }}>{t("saNoProjectPeopleYet")}</p>}
+                      {projectPeople.map((a) => (
+                        <div key={a.id} style={{ fontSize: 11.5, color: THEME.text2, padding: "6px 0", borderBottom: `1px solid ${THEME.border}` }}>
+                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                            <span style={{ fontWeight: 700, color: THEME.heading }}>{a.contact_person_name || "—"}</span>
+                            <span style={{ direction: "ltr", color: THEME.text3 }}>({a.username})</span>
+                            <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, fontWeight: 600, background: a.is_active === false ? THEME.surface2 : THEME.okBg, color: a.is_active === false ? THEME.text3 : THEME.ok }}>
+                              {a.is_active === false ? t("commonInactive") : t("commonActive")}
+                            </span>
+                            <div style={{ marginInlineStart: "auto", display: "flex", gap: 4 }}>
+                              <button type="button" onClick={() => openEditPerson(a)} style={{ ...btnStyle(THEME.navyMid), fontSize: 11, padding: "4px 8px" }} title={t("amEditTitle")}>
+                                <Pencil size={11} />
+                              </button>
+                              <button type="button" onClick={() => { setResettingId(resettingId === a.id ? null : a.id); setNewPassword(""); setError(""); }} style={{ ...btnStyle(THEME.warn), fontSize: 11, padding: "4px 8px" }} title="Reset Password">
+                                <KeyRound size={11} />
+                              </button>
+                              <button type="button" onClick={() => handleTogglePersonActive(a)} style={{ ...btnStyle(a.is_active === false ? THEME.ok : THEME.danger), fontSize: 11, padding: "4px 8px" }} title={a.is_active === false ? t("amActivate") : t("amDeactivate")}>
+                                <Power size={11} />
+                              </button>
+                              <button type="button" onClick={() => handleDeletePerson(a)} style={{ ...btnStyle(THEME.danger), fontSize: 11, padding: "4px 8px" }} title={t("amDeleteAccountTitle")}>
+                                <Trash2 size={11} />
+                              </button>
+                            </div>
+                          </div>
+                          {editingId === a.id && (
+                            <AccountForm tab="contractor" form={form} setForm={setForm} companies={companies} onSave={() => handleSaveEditPerson(a.id)} saving={saving} saveLabel={t("saSaveChanges")} showPassword={false} disableCompanySelect nameFieldLabelKey="saProjectNameLabel" />
+                          )}
+                          {resettingId === a.id && (
+                            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 6 }}>
+                              <input type="password" style={{ ...inputStyle, width: 220 }} placeholder={t("saNewPasswordMin8")} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} dir="ltr" />
+                              <button type="button" onClick={() => handleResetPersonPassword(a.id)} style={btnStyle()} disabled={saving}>{saving ? "..." : t("amResetPassword")}</button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+
+                      {addPersonForProject === p.name && (
+                        <AccountForm tab="contractor" form={form} setForm={setForm} companies={companies} onSave={handleCreatePerson} saving={saving} saveLabel={t("amCreateAccount")} showPassword disableCompanySelect nameFieldLabelKey="saProjectNameLabel" />
+                      )}
+                      {error && <p style={{ color: THEME.danger, fontSize: 12, marginTop: 8 }}>{error}</p>}
+                      <button type="button" onClick={() => openAddPerson(p.name)} style={{ ...btnStyle(), display: "flex", alignItems: "center", gap: 6, marginTop: 10 }}>
+                        <UserPlus size={13} /> {t("saAddHsePersonToProject")}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </>
+      )}
     </div>
   );
 }

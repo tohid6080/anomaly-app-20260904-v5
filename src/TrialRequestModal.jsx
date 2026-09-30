@@ -94,6 +94,7 @@ export default function TrialRequestModal({ onClose }) {
   const [contractorUsername, setContractorUsername] = useState("");
   const [contractorPassword, setContractorPassword] = useState("");
   const [contractorConfirmPassword, setContractorConfirmPassword] = useState("");
+  const [firstProjectName, setFirstProjectName] = useState("");
   const [position, setPosition] = useState("");
   const [industry, setIndustry] = useState("");
   const [personnelCount, setPersonnelCount] = useState("");
@@ -107,26 +108,39 @@ export default function TrialRequestModal({ onClose }) {
   const [turnstileToken, setTurnstileToken] = useState("");
   const { containerRef: turnstileRef, reset: resetTurnstile } = useTurnstile(setTurnstileToken);
 
+  // طبقِ ساختارِ سازمانیِ انتخابی، دو بخشِ «اطلاعاتِ پیمانکار» و «نامِ
+  // پروژه» با هم منافات دارند و هیچ‌کدام برایِ «مستقل/بدونِ پروژه» لازم
+  // نیستند — این سه ثابت در سراسرِ اعتبارسنجی/ارسال استفاده می‌شوند.
+  const isEmployerContractor = orgStructureType === "employer_contractor";
+  const isMultiProject = orgStructureType === "standalone_multi_project";
+
   const handleSubmit = async () => {
     setError("");
-    if (!fullName.trim() || !phone.trim() || !companyName.trim() || !username.trim() || !password
-      || !contractorContactPersonName.trim() || !contractorName.trim() || !contractorUsername.trim() || !contractorPassword) {
-      setError(t("trmErrRequiredFields"));
-      return;
-    }
     if (!orgStructureType) {
       setError(t("trmErrOrgStructureRequired"));
       return;
     }
-    if (password.length < 8 || contractorPassword.length < 8) {
+    if (!fullName.trim() || !phone.trim() || !companyName.trim() || !username.trim() || !password) {
+      setError(t("trmErrRequiredFields"));
+      return;
+    }
+    if (isEmployerContractor && (!contractorContactPersonName.trim() || !contractorName.trim() || !contractorUsername.trim() || !contractorPassword)) {
+      setError(t("trmErrRequiredFields"));
+      return;
+    }
+    if (isMultiProject && !firstProjectName.trim()) {
+      setError(t("trmErrRequiredFields"));
+      return;
+    }
+    if (password.length < 8 || (isEmployerContractor && contractorPassword.length < 8)) {
       setError(t("trmErrPasswordShort"));
       return;
     }
-    if (password !== confirmPassword || contractorPassword !== contractorConfirmPassword) {
+    if (password !== confirmPassword || (isEmployerContractor && contractorPassword !== contractorConfirmPassword)) {
       setError(t("trmErrPasswordMismatch"));
       return;
     }
-    if (username.trim() === contractorUsername.trim()) {
+    if (isEmployerContractor && username.trim() === contractorUsername.trim()) {
       setError(t("trmErrUsernamesMustDiffer"));
       return;
     }
@@ -139,8 +153,11 @@ export default function TrialRequestModal({ onClose }) {
       fullName: fullName.trim(), phone: phone.trim(), companyName: companyName.trim(),
       orgStructureType,
       username: username.trim(), password,
-      contractorContactPersonName: contractorContactPersonName.trim(),
-      contractorName: contractorName.trim(), contractorUsername: contractorUsername.trim(), contractorPassword,
+      contractorContactPersonName: isEmployerContractor ? contractorContactPersonName.trim() : "",
+      contractorName: isEmployerContractor ? contractorName.trim() : "",
+      contractorUsername: isEmployerContractor ? contractorUsername.trim() : "",
+      contractorPassword: isEmployerContractor ? contractorPassword : "",
+      firstProjectName: isMultiProject ? firstProjectName.trim() : "",
       position: position.trim(), industry: industry.trim(),
       personnelCount: personnelCount ? Number(personnelCount) : null,
       projectName: projectName.trim(), projectCity: projectCity.trim(), email: email.trim(),
@@ -250,31 +267,48 @@ export default function TrialRequestModal({ onClose }) {
               </div>
             </div>
 
-            <p style={{ fontSize: 11, fontWeight: 700, color: THEME.heading, margin: "10px 0 4px" }}>{t("trmContractorSectionTitle")}</p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 0 }}>
-              {/* طبقِ الگویِ AccountManagement.jsx: «نام و نام خانوادگی» شخص
-                  باید پیش از نامِ شرکتِ پیمانکار بیاید. */}
-              <div>
-                <label style={styles.label}>{t("trmContractorContactPersonNameReq")}</label>
-                <input style={styles.input} value={contractorContactPersonName} onChange={(e) => setContractorContactPersonName(e.target.value)} dir={dir} />
-              </div>
-              <div>
-                <label style={styles.label}>{t("trmContractorNameReq")}</label>
-                <input style={styles.input} value={contractorName} onChange={(e) => setContractorName(e.target.value)} dir={dir} />
-              </div>
-              <div>
-                <label style={styles.label}>{t("trmContractorUsernameReq")}</label>
-                <input style={styles.input} value={contractorUsername} onChange={(e) => setContractorUsername(e.target.value)} dir="ltr" />
-              </div>
-              <div>
-                <label style={styles.label}>{t("trmContractorPasswordReq")}</label>
-                <input style={styles.input} type="password" value={contractorPassword} onChange={(e) => setContractorPassword(e.target.value)} dir="ltr" />
-              </div>
-              <div>
-                <label style={styles.label}>{t("trmContractorConfirmPasswordReq")}</label>
-                <input style={styles.input} type="password" value={contractorConfirmPassword} onChange={(e) => setContractorConfirmPassword(e.target.value)} dir="ltr" />
-              </div>
-            </div>
+            {isEmployerContractor && (
+              <>
+                <p style={{ fontSize: 11, fontWeight: 700, color: THEME.heading, margin: "10px 0 4px" }}>{t("trmContractorSectionTitle")}</p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 0 }}>
+                  {/* طبقِ الگویِ AccountManagement.jsx: «نام و نام خانوادگی» شخص
+                      باید پیش از نامِ شرکتِ پیمانکار بیاید. */}
+                  <div>
+                    <label style={styles.label}>{t("trmContractorContactPersonNameReq")}</label>
+                    <input style={styles.input} value={contractorContactPersonName} onChange={(e) => setContractorContactPersonName(e.target.value)} dir={dir} />
+                  </div>
+                  <div>
+                    <label style={styles.label}>{t("trmContractorNameReq")}</label>
+                    <input style={styles.input} value={contractorName} onChange={(e) => setContractorName(e.target.value)} dir={dir} />
+                  </div>
+                  <div>
+                    <label style={styles.label}>{t("trmContractorUsernameReq")}</label>
+                    <input style={styles.input} value={contractorUsername} onChange={(e) => setContractorUsername(e.target.value)} dir="ltr" />
+                  </div>
+                  <div>
+                    <label style={styles.label}>{t("trmContractorPasswordReq")}</label>
+                    <input style={styles.input} type="password" value={contractorPassword} onChange={(e) => setContractorPassword(e.target.value)} dir="ltr" />
+                  </div>
+                  <div>
+                    <label style={styles.label}>{t("trmContractorConfirmPasswordReq")}</label>
+                    <input style={styles.input} type="password" value={contractorConfirmPassword} onChange={(e) => setContractorConfirmPassword(e.target.value)} dir="ltr" />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {isMultiProject && (
+              <>
+                <p style={{ fontSize: 11, fontWeight: 700, color: THEME.heading, margin: "10px 0 4px" }}>{t("trmFirstProjectSectionTitle")}</p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 0 }}>
+                  <div>
+                    <label style={styles.label}>{t("trmFirstProjectNameReq")}</label>
+                    <input style={styles.input} value={firstProjectName} onChange={(e) => setFirstProjectName(e.target.value)} dir={dir} />
+                  </div>
+                </div>
+                <p style={{ fontSize: 10.5, color: THEME.text3, margin: "2px 0 4px", lineHeight: 1.8 }}>{t("trmFirstProjectNote")}</p>
+              </>
+            )}
 
             <p style={{ fontSize: 11, fontWeight: 700, color: THEME.heading, margin: "10px 0 4px" }}>{t("trmMoreInfoSectionTitle")}</p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 0 }}>
