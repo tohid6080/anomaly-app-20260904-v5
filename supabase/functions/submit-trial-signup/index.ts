@@ -28,6 +28,12 @@ import { json, CORS_HEADERS, restFetch, callRpc } from "../_shared/supabaseAdmin
 const TRIAL_DAYS = 30;
 const DEFAULT_STORAGE_QUOTA_MB = 500;
 
+// سه ساختارِ سازمانیِ قابل‌انتخاب هنگامِ ثبت‌نام — companies.org_structure_type
+// همین سه مقدار را با یک CHECK constraint اجرا می‌کند (رجوع به migration
+// 20260930120000). این فاز فقط یک برچسبِ ذخیره‌شده است؛ employer_contractor
+// همان مدلِ فعلی/پیش‌فرضِ IHMS است و کاملاً دست‌نخورده می‌ماند.
+const ORG_STRUCTURE_TYPES = ["standalone_no_project", "standalone_multi_project", "employer_contractor"];
+
 // زیرماژول‌هایِ هر ماژول — کپیِ کلیدهایِ GATED_MODULE_SUBS از src/shared.js.
 // Edge Function نمی‌تواند از src/ (باندلِ فرانت‌اند) import کند، پس فقط
 // خودِ کلیدها (نه labelKeyهایِ نمایشی) این‌جا تکرار شده‌اند. اگر
@@ -138,10 +144,14 @@ Deno.serve(async (req) => {
   const contractorContactPersonName = String(body?.contractorContactPersonName || "").trim();
   const contractorUsername = String(body?.contractorUsername || "").trim();
   const contractorPassword = String(body?.contractorPassword || "");
+  const orgStructureType = String(body?.orgStructureType || "");
 
   if (!fullName || !phone || !companyName || !username || !password
     || !contractorName || !contractorContactPersonName || !contractorUsername || !contractorPassword) {
     return json({ error: "همه‌ی فیلدهای اجباری (شامل اطلاعاتِ پیمانکار) باید تکمیل شوند" }, 400);
+  }
+  if (!ORG_STRUCTURE_TYPES.includes(orgStructureType)) {
+    return json({ error: "لطفاً ساختار سازمانی شرکت را انتخاب کنید" }, 400);
   }
   if (!isValidMobileFormat(phone)) {
     return json({ error: "شماره موبایل باید ۱۱ رقم و با ۰۹ شروع شود" }, 400);
@@ -194,6 +204,7 @@ Deno.serve(async (req) => {
         trial_start: nowIso,
         trial_end: trialEndIso,
         storage_quota_mb: DEFAULT_STORAGE_QUOTA_MB,
+        org_structure_type: orgStructureType,
       }]),
     });
     if (!companyRes.ok || !Array.isArray(companyRes.data) || companyRes.data.length === 0) {

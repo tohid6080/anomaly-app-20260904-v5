@@ -17,8 +17,9 @@ import LandingPageManagementTab from "./LandingPageManagementTab.jsx";
 import AppManagementTab from "./AppManagementTab.jsx";
 import PlatformSurveysPage from "./PlatformSurveysPage.jsx";
 import { toJalaliSafe, toJalaliDateTime, JalaliDateInput, JalaliDateTimeInput } from "../personnel/jalaliDate.jsx";
+import { PageNav, SearchBox, useDebouncedValue, ADMIN_PAGE_SIZE } from "../shared/AdminPagination.jsx";
 import {
-  loadCompanies, createCompany, updateCompany, deleteCompanySecure, setCompanyActive,
+  loadCompanies, loadCompaniesPage, createCompany, updateCompany, deleteCompanySecure, setCompanyActive,
   loadCompanyPayments, addCompanyPayment, PAYMENT_TYPES,
   loadCompanyUserAccounts, createAccount,
   loadContractorCompanies, createContractorCompany, setContractorCompanyActive, deleteContractorCompany,
@@ -34,7 +35,7 @@ import {
   BACKUP_MODULES, BACKUP_MODULE_KEYS, SHAREABLE_MODULES,
   copyBowtiesToCompany, copyRiskKnowledgeToCompany,
   loadCardTransferPayments, approveCardTransferPayment, rejectCardTransferPayment, deleteCardTransferPayment, saveCardTransferSettings,
-  loadTrialRequests, approveTrialRequest, rejectTrialRequest, deleteTrialRequest, loadSelfServiceSignupCount,
+  loadTrialRequests, loadTrialRequestsPage, approveTrialRequest, rejectTrialRequest, deleteTrialRequest, loadSelfServiceSignupCount,
   loadGuestPurchaseRequests, approveGuestPurchaseRequest, rejectGuestPurchaseRequest, deleteGuestPurchaseRequest,
 } from "./superAdminApi.js";
 import { computeSubscriptionAccess, loadOnlinePaymentsForCompany, loadCardTransferSettings } from "../subscriptionApi.js";
@@ -1140,14 +1141,41 @@ function CompaniesPage({
   payments, onAddPayment, onPlanChanged,
 }) {
   const { t, dir } = useLanguage();
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const debouncedSearch = useDebouncedValue(search, 350);
+  const [pagedRows, setPagedRows] = useState(null);
+  const [total, setTotal] = useState(0);
+
+  // companies در وابستگی‌ها عمداً هست: بعدِ ایجاد/ویرایش/حذف یک شرکت
+  // (که همه از طریقِ parent's `load()` فهرستِ کاملِ companies را تازه
+  // می‌کنند)، این صفحه‌ی جداگانه هم باید دوباره از سرور بخواند تا با
+  // تغییر هماهنگ بماند — بدونِ اینکه خودِ loadCompanies (فهرستِ کامل)
+  // را که بقیه‌ی پنل به آن نیاز دارند صفحه‌بندی کنیم.
+  useEffect(() => { setPage(1); }, [debouncedSearch]);
+  useEffect(() => {
+    let cancelled = false;
+    loadCompaniesPage({ page, pageSize: ADMIN_PAGE_SIZE, search: debouncedSearch }).then((res) => {
+      if (cancelled) return;
+      setPagedRows(res.rows);
+      setTotal(res.total);
+    });
+    return () => { cancelled = true; };
+  }, [page, debouncedSearch, companies]);
+
+  const totalPages = Math.max(1, Math.ceil(total / ADMIN_PAGE_SIZE));
+
   return (
     <div>
       <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
           <h3 style={{ fontSize: 14, color: THEME.heading, fontWeight: 700, margin: 0 }}>{t("saCustomerCompanies")}</h3>
-          <button type="button" onClick={() => setShowCreate((v) => !v)} style={{ ...btnStyle(), display: "flex", alignItems: "center", gap: 6 }}>
-            <Plus size={13} /> {t("saNewCompany")}
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <SearchBox value={search} onChange={setSearch} placeholder={t("commonSearch")} />
+            <button type="button" onClick={() => setShowCreate((v) => !v)} style={{ ...btnStyle(), display: "flex", alignItems: "center", gap: 6 }}>
+              <Plus size={13} /> {t("saNewCompany")}
+            </button>
+          </div>
         </div>
 
         {showCreate && (
@@ -1206,7 +1234,7 @@ function CompaniesPage({
               </tr>
             </thead>
             <tbody>
-              {companies.map((c) => {
+              {(pagedRows || []).map((c) => {
                 const access = computeSubscriptionAccess(c);
                 const planName = plans.find((p) => p.id === c.planId)?.name || t("saNoPlan");
                 return (
@@ -1248,11 +1276,17 @@ function CompaniesPage({
                   </React.Fragment>
                 );
               })}
-              {companies.length === 0 && (
+              {pagedRows === null && (
+                <tr><td colSpan={5} style={{ padding: 20, textAlign: "center", color: THEME.text3 }}>{t("commonLoading")}</td></tr>
+              )}
+              {pagedRows !== null && pagedRows.length === 0 && (
                 <tr><td colSpan={5} style={{ padding: 20, textAlign: "center", color: THEME.text3 }}>{t("saNoCompaniesYet")}</td></tr>
               )}
             </tbody>
           </table>
+        </div>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
+          <PageNav page={page} totalPages={totalPages} onChange={setPage} />
         </div>
       </div>
     </div>
@@ -3461,7 +3495,11 @@ const TRIAL_REQUEST_STATUS_META = {
 function TrialRequestsPage({ currentAdmin }) {
   const { t, dir } = useLanguage();
   const [statusFilter, setStatusFilter] = useState("pending");
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 350);
+  const [page, setPage] = useState(1);
   const [rows, setRows] = useState(null);
+  const [total, setTotal] = useState(0);
   const [expandedId, setExpandedId] = useState(null);
   const [trialDaysDraft, setTrialDaysDraft] = useState("14");
   const [noteDraft, setNoteDraft] = useState("");
@@ -3473,10 +3511,15 @@ function TrialRequestsPage({ currentAdmin }) {
   // صفحه‌ی ورود) را نشان می‌دهد، نه فقط همان‌هایی که فیلترِ فعلی نشان می‌دهد؛
   // بعدِ هر عملیاتِ حذف هم دوباره تازه می‌شود (load صدایش می‌زند).
   const load = () => {
-    loadTrialRequests(statusFilter).then(setRows);
+    loadTrialRequestsPage({ statusFilter, page, pageSize: ADMIN_PAGE_SIZE, search: debouncedSearch }).then((res) => {
+      setRows(res.rows);
+      setTotal(res.total);
+    });
     loadSelfServiceSignupCount().then(setSelfServiceCount);
   };
-  useEffect(() => { setRows(null); load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [statusFilter]);
+  useEffect(() => { setPage(1); }, [statusFilter, debouncedSearch]);
+  useEffect(() => { setRows(null); load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [statusFilter, debouncedSearch, page]);
+  const totalPages = Math.max(1, Math.ceil(total / ADMIN_PAGE_SIZE));
 
   const openRow = (r) => {
     if (expandedId === r.id) { setExpandedId(null); return; }
@@ -3514,7 +3557,7 @@ function TrialRequestsPage({ currentAdmin }) {
     load();
   };
 
-  const pendingCount = statusFilter === "pending" ? (rows || []).length : null;
+  const pendingCount = statusFilter === "pending" ? total : null;
 
   return (
     <div style={{ background: THEME.surface, borderRadius: 10, border: `1px solid ${THEME.border}`, padding: 16 }}>
@@ -3533,6 +3576,7 @@ function TrialRequestsPage({ currentAdmin }) {
               {t("saTrSelfServiceCount", { count: selfServiceCount })}
             </span>
           )}
+          <SearchBox value={search} onChange={setSearch} placeholder={t("commonSearch")} />
           <select style={{ ...inputStyle, width: "auto" }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} dir={dir}>
             <option value="all">{t("saAllStatuses")}</option>
             <option value="pending">{t("saTrStatusPending")}</option>
@@ -3547,6 +3591,11 @@ function TrialRequestsPage({ currentAdmin }) {
 
       {rows === null && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("commonLoading")}</p>}
       {rows !== null && rows.length === 0 && <p style={{ fontSize: 12, color: THEME.text3, textAlign: "center", padding: 20 }}>{t("saTrNoneFound")}</p>}
+      {rows !== null && rows.length > 0 && (
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
+          <PageNav page={page} totalPages={totalPages} onChange={setPage} />
+        </div>
+      )}
 
       {rows && rows.length > 0 && (
         <div style={{ overflowX: "auto" }}>
@@ -3891,6 +3940,14 @@ function ModuleDateField({ value, onCommit, title, style }) {
   );
 }
 
+// همان سه گزینه/همان کلیدهای ترجمه‌ی TrialRequestModal.jsx — یک منبعِ
+// واحد برای متنِ هر نوع، نه رشته‌ی تکراری در دو جا
+const ORG_STRUCTURE_LABEL_KEYS = {
+  standalone_no_project: "trmOrgStructOpt1Title",
+  standalone_multi_project: "trmOrgStructOpt2Title",
+  employer_contractor: "trmOrgStructOpt3Title",
+};
+
 function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStats, onUpdate, onDelete, onSetActive, paymentsPromise, onAddPayment, onPlanChanged }) {
   const { t, dir } = useLanguage();
   const [status, setStatus] = useState(company.subscriptionStatus);
@@ -4154,6 +4211,10 @@ function CompanyManagePanel({ company, companies, plans, currentAdmin, usageStat
         <UsageChip label={t("saPersonnelLabel")} value={usageStats?.personnelByCompany?.[company.id] || 0} />
         <UsageChip label={t("saAnomalyLabel")} value={usageStats?.anomalyByCompany?.[company.id] || 0} />
         <UsageChip label={t("saFileAttachmentLabel")} value={usageStats?.attachmentByCompany?.[company.id] || 0} />
+        <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 8, padding: "6px 12px", fontSize: 12 }}>
+          <span style={{ color: THEME.text3 }}>{t("saOrgStructureLabel")}: </span>
+          <b style={{ color: THEME.heading }}>{t(ORG_STRUCTURE_LABEL_KEYS[company.orgStructureType] || ORG_STRUCTURE_LABEL_KEYS.employer_contractor)}</b>
+        </div>
       </div>
       <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
         {/* غیرفعال‌سازی: برای شرکتی که مثلاً پولشو نداده — کاملاً برگشت‌پذیر,

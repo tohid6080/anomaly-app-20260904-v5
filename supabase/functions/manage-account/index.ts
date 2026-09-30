@@ -51,6 +51,21 @@ async function checkContactUniqueness(field: "email" | "phone", value: string, e
   return conflict;
 }
 
+// یکتاییِ نام‌کاربری در هر دو جدول با هم — دقیقاً همان دلیل و همان الگویِ
+// checkUsernameUniqueness در submit-trial-signup/index.ts: چون ورود
+// (issue-session-token) اول employer_accounts و بعد contractors را
+// امتحان می‌کند، اگر یک نام‌کاربری در هر دو جدول باشد، حسابی که دومی
+// ساخته شده هرگز قابلِ ورود نمی‌شود. قبلاً این‌جا فقط همان یک جدولِ
+// targetType بررسی می‌شد — همین مسیرِ ایجادِ دستی، این باگ را می‌ساخت.
+async function checkUsernameUniqueness(value: string) {
+  const [empRes, conRes] = await Promise.all([
+    restFetch(`employer_accounts?username=eq.${encodeURIComponent(value)}&select=id`),
+    restFetch(`contractors?username=eq.${encodeURIComponent(value)}&select=id`),
+  ]);
+  const empMatches = empRes.ok && Array.isArray(empRes.data) ? empRes.data : [];
+  const conMatches = conRes.ok && Array.isArray(conRes.data) ? conRes.data : [];
+  return empMatches.length > 0 || conMatches.length > 0;
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS_HEADERS });
@@ -94,8 +109,7 @@ Deno.serve(async (req) => {
       if (f.phone && await checkContactUniqueness("phone", f.phone, table, null)) {
         return json({ error: "این شماره موبایل قبلاً برای حساب دیگری استفاده شده است" }, 409);
       }
-      const existing = await restFetch(`${table}?username=eq.${encodeURIComponent(f.username.trim())}&select=id`);
-      if (existing.ok && Array.isArray(existing.data) && existing.data.length > 0) {
+      if (await checkUsernameUniqueness(f.username.trim())) {
         return json({ error: "این نام‌کاربری قبلاً استفاده شده است" }, 409);
       }
 

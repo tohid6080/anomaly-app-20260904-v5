@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import { UserPlus, KeyRound, Power, Pencil, Users, Trash2 } from "lucide-react";
 import { THEME, isValidMobile } from "../shared.js";
 import {
-  loadCompanies, loadAccountsByType, createAccount, updateAccount, setAccountActive, resetAccountPassword, deleteAccount,
+  loadCompanies, loadAccountsByType, loadAccountsByTypePage, createAccount, updateAccount, setAccountActive, resetAccountPassword, deleteAccount,
   loadJobPositionsForCompany, loadContractorCompanies,
 } from "./superAdminApi.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { PageNav, SearchBox, useDebouncedValue, ADMIN_PAGE_SIZE } from "../shared/AdminPagination.jsx";
 
 const inputStyle = { width: "100%", padding: "8px 10px", borderRadius: 8, border: `1.5px solid ${THEME.border}`, fontSize: 12.5, fontFamily: THEME.font, boxSizing: "border-box" };
 const btnStyle = (bg) => ({ padding: "7px 14px", borderRadius: 8, border: "none", background: bg || THEME.teal, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font });
@@ -31,6 +32,10 @@ export default function AccountManagement({ currentAdmin }) {
   const [tab, setTab] = useState("hse_supervisor");
   const [companies, setCompanies] = useState([]);
   const [accounts, setAccounts] = useState([]);
+  const [accountsTotal, setAccountsTotal] = useState(0);
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 350);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState(emptyForm());
@@ -41,14 +46,24 @@ export default function AccountManagement({ currentAdmin }) {
   const [saving, setSaving] = useState(false);
   const [transferState, setTransferState] = useState(null);
 
+  // loadCompanies (فهرستِ کاملِ شرکت‌ها) عمداً دست‌نخورده و بدونِ
+  // صفحه‌بندی می‌ماند — companyName()/Dropdownِ AccountForm به کلِ فهرست
+  // نیاز دارند. فقط جدولِ خودِ حساب‌ها (accounts) از سرور صفحه‌بندی/
+  // جستجو می‌شود.
   const load = async () => {
     setLoading(true);
-    const [comp, accs] = await Promise.all([loadCompanies(), loadAccountsByType(tab)]);
+    const [comp, accRes] = await Promise.all([
+      loadCompanies(),
+      loadAccountsByTypePage({ targetType: tab, page, pageSize: ADMIN_PAGE_SIZE, search: debouncedSearch }),
+    ]);
     setCompanies(comp);
-    setAccounts(accs);
+    setAccounts(accRes.rows);
+    setAccountsTotal(accRes.total);
     setLoading(false);
   };
-  useEffect(() => { load(); setShowCreate(false); setEditingId(null); setForm(emptyForm()); setError(""); }, [tab]);
+  useEffect(() => { setPage(1); }, [tab, debouncedSearch]);
+  useEffect(() => { load(); setShowCreate(false); setEditingId(null); setForm(emptyForm()); setError(""); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [tab, debouncedSearch, page]);
+  const totalPages = Math.max(1, Math.ceil(accountsTotal / ADMIN_PAGE_SIZE));
 
   const companyName = (id) => companies.find((c) => c.id === id)?.name || "—";
 
@@ -171,9 +186,13 @@ export default function AccountManagement({ currentAdmin }) {
         ))}
       </div>
 
-      <button type="button" onClick={() => { setShowCreate((v) => !v); setForm(emptyForm()); setError(""); }} style={{ ...btnStyle(), display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
-        <UserPlus size={13} /> {t("amNewAccount")}
-      </button>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+        <button type="button" onClick={() => { setShowCreate((v) => !v); setForm(emptyForm()); setError(""); }} style={{ ...btnStyle(), display: "flex", alignItems: "center", gap: 6 }}>
+          <UserPlus size={13} /> {t("amNewAccount")}
+        </button>
+        <SearchBox value={search} onChange={setSearch} placeholder={t("commonSearch")} />
+        <PageNav page={page} totalPages={totalPages} onChange={setPage} />
+      </div>
 
       {tab === "contractor" && (
         <p style={{ fontSize: 10.5, color: THEME.text3, marginBottom: 10, lineHeight: 1.8 }}>

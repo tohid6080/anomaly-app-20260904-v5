@@ -1347,6 +1347,9 @@ export const translations = {
     "fa": "جستجو",
     "en": "Search"
   },
+  "commonPrevPage": { "fa": "قبلی", "en": "Previous" },
+  "commonNextPage": { "fa": "بعدی", "en": "Next" },
+  "commonPageOf": { "fa": "صفحه {page} از {total}", "en": "Page {page} of {total}" },
   "commonFilter": {
     "fa": "فیلتر",
     "en": "Filter"
@@ -2430,6 +2433,10 @@ export const translations = {
   "saCompanyNamePlaceholder": {
     "fa": "نام شرکت",
     "en": "Company name"
+  },
+  "saOrgStructureLabel": {
+    "fa": "ساختار سازمانی",
+    "en": "Org. structure"
   },
   "saColCompanyName": {
     "fa": "نام شرکت",
@@ -10240,6 +10247,14 @@ export const translations = {
   "trmFullNameReq": { "fa": "نام و نام خانوادگی *", "en": "Full name *" },
   "trmPhoneReq": { "fa": "شماره موبایل *", "en": "Mobile number *" },
   "trmCompanyReq": { "fa": "شرکت / سازمان *", "en": "Company / Organization *" },
+  "trmOrgStructureSectionTitle": { "fa": "ساختار سازمانی شرکت شما *", "en": "Your organization's structure *" },
+  "trmOrgStructOpt1Title": { "fa": "شرکت مستقل / بدون پروژه", "en": "Independent company / No project" },
+  "trmOrgStructOpt1Desc": { "fa": "برای شرکت‌هایی که فعلاً بدون تعریف پروژه مشخص، از IHMS برای مدیریت HSE داخلی خود استفاده می‌کنند.", "en": "For companies that use IHMS to manage their internal HSE without defining a specific project yet." },
+  "trmOrgStructOpt2Title": { "fa": "شرکت مستقل / چند پروژه", "en": "Independent company / Multiple projects" },
+  "trmOrgStructOpt2Desc": { "fa": "برای شرکت‌هایی که چند پروژه مستقل را تحت مدیریت یک سازمان اجرا می‌کنند.", "en": "For companies running several independent projects under one organization." },
+  "trmOrgStructOpt3Title": { "fa": "کارفرما / چند پیمانکار", "en": "Employer / Multiple contractors" },
+  "trmOrgStructOpt3Desc": { "fa": "برای کارفرماهایی که چند پیمانکار و پروژه‌های مرتبط با آن‌ها را تحت نظارت و مدیریت HSE دارند.", "en": "For employers overseeing multiple contractors and their related projects under HSE management." },
+  "trmErrOrgStructureRequired": { "fa": "لطفاً یکی از ساختارهای سازمانی را انتخاب کنید", "en": "Please select one of the organizational structures" },
   "trmLoginSectionTitle": { "fa": "اطلاعات ورود شما (سرپرست کارفرما)", "en": "Your login details (Employer Supervisor)" },
   "trmUsernameReq": { "fa": "نام‌کاربری *", "en": "Username *" },
   "trmPasswordReq": { "fa": "رمز عبور *", "en": "Password *" },
