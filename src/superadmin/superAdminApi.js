@@ -1,4 +1,4 @@
-import { sb, sbOk, sbErrMsg, SUPABASE_URL, SUPABASE_ANON_KEY, uid, THEME } from "../shared.js";
+import { sb, sbPage, sbOk, sbErrMsg, SUPABASE_URL, SUPABASE_ANON_KEY, uid, THEME } from "../shared.js";
 import { issueSessionToken, getSessionToken } from "../sessionToken.js";
 import { translate, getCurrentLang, listSep, numLocale } from "../i18n/translations.js";
 
@@ -68,12 +68,33 @@ function companyFromRow(r) {
     // "" یعنی از سطحِ پلن ارث می‌برد؛ مقدار صریح، Override پلن است
     backupFrequency: r.backup_frequency || "",
     backupLastRunAt: r.backup_last_run_at || "",
+    // برچسبِ ساختارِ سازمانی که هنگامِ ثبت‌نام انتخاب شده (یا پیش‌فرضِ
+    // «کارفرما/چند پیمانکار» برای شرکت‌های قدیمی‌تر) — صرفاً نمایشی،
+    // هیچ منطق/دسترسی‌ای به آن وابسته نیست
+    orgStructureType: r.org_structure_type || "employer_contractor",
   };
 }
 
 export async function loadCompanies() {
   const rows = await sb("companies?select=*&order=registered_at.desc", {}, "super_admin");
   return (sbOk(rows) ? rows : []).map(companyFromRow);
+}
+
+// نسخه‌ی صفحه‌بندی/جستجوشونده‌ی loadCompanies — فقط برای جدولِ خودِ
+// CompaniesPage استفاده می‌شود. loadCompanies (بالا) عمداً دست‌نخورده
+// می‌ماند چون خیلی جای دیگرِ پنلِ SuperAdmin (آمار داشبورد، فهرستِ
+// اعلانات/شرکت‌های موردِ ممیزی، Dropdownِ AccountManagement و...) به
+// فهرستِ کاملِ شرکت‌ها نیاز دارند و نباید تحتِ تأثیرِ صفحه‌بندی قرار بگیرند.
+export async function loadCompaniesPage({ page = 1, pageSize = 20, search = "" } = {}) {
+  const offset = (page - 1) * pageSize;
+  const searchFilter = search.trim() ? `&name=ilike.*${encodeURIComponent(search.trim())}*` : "";
+  const result = await sbPage(
+    `companies?select=*&order=registered_at.desc&limit=${pageSize}&offset=${offset}${searchFilter}`,
+    {},
+    "super_admin"
+  );
+  if (result.__error) return { rows: [], total: 0, __error: true, message: result.message };
+  return { rows: result.rows.map(companyFromRow), total: result.total };
 }
 
 export async function createCompany(rec) {
@@ -647,6 +668,28 @@ export async function loadTrialRequests(statusFilter) {
   return sbOk(rows) ? rows.map(trialRequestFromRow) : [];
 }
 
+// نسخه‌ی صفحه‌بندی/جستجوشونده — فقط برای جدولِ خودِ TrialRequestsPage.
+// loadTrialRequests (بالا) عمداً دست‌نخورده می‌ماند چون سایدبارِ SuperAdmin
+// برای نشان‌دادنِ شمارِ «در انتظار» هم دقیقاً همین تابع را صدا می‌زند و
+// فقط rows.length می‌خواهد — نباید شکلِ خروجی‌اش عوض شود.
+// statusFilter موجود (پیش‌فرضِ pending) دقیقاً همان رفتارِ قبلی را حفظ
+// می‌کند؛ جستجو رویِ نامِ شرکت/نامِ متقاضی/موبایل با هم (or) انجام می‌شود.
+export async function loadTrialRequestsPage({ statusFilter, page = 1, pageSize = 20, search = "" } = {}) {
+  const offset = (page - 1) * pageSize;
+  const statusPart = statusFilter && statusFilter !== "all" ? `&status=eq.${statusFilter}` : "";
+  const term = search.trim();
+  const searchFilter = term
+    ? `&or=(company_name.ilike.*${encodeURIComponent(term)}*,full_name.ilike.*${encodeURIComponent(term)}*,phone.ilike.*${encodeURIComponent(term)}*)`
+    : "";
+  const result = await sbPage(
+    `trial_requests?select=*&order=created_at.desc&limit=${pageSize}&offset=${offset}${statusPart}${searchFilter}`,
+    {},
+    "super_admin"
+  );
+  if (result.__error) return { rows: [], total: 0, __error: true, message: result.message };
+  return { rows: result.rows.map(trialRequestFromRow), total: result.total };
+}
+
 // شمارشِ ثبت‌نام‌های خودکارِ خودسرویس (فرمِ صفحه‌ی ورود → submit-trial-signup)
 // — این ردیف‌ها هرگز «در انتظار» نبوده‌اند، از همان لحظه با
 // reviewed_by ثابتِ زیر و status=approved ثبت می‌شوند؛ همین رشته تنها
@@ -827,6 +870,34 @@ export async function loadAccountsByType(targetType, companyId) {
     : "id,name,username,company_id,job_position_id,role,can_edit,phone,email,is_active";
   const rows = await sb(`${table}?select=${selectCols}&order=name.asc${roleFilter}${companyFilter}`, {}, "super_admin");
   return sbOk(rows) ? rows : [];
+}
+
+// نسخه‌ی صفحه‌بندی/جستجوشونده — فقط برای جدولِ اصلیِ AccountManagement.
+// loadAccountsByType (بالا) عمداً دست‌نخورده می‌ماند چون همان تابع برای
+// فهرستِ «انتقال به همکارِ دیگر» هنگامِ حذفِ پیمانکار هم استفاده می‌شود
+// و آن‌جا باید همه‌ی همکارهای همان شرکت را (بدونِ صفحه‌بندی) برگرداند.
+// جستجو رویِ نام/نام‌کاربری/نامِ تماسِ پیمانکار با هم (or) انجام می‌شود.
+export async function loadAccountsByTypePage({ targetType, companyId, page = 1, pageSize = 20, search = "" } = {}) {
+  const table = targetType === "contractor" ? "contractors" : "employer_accounts";
+  const roleFilter = targetType === "employer" ? "&role=eq.employer" : targetType === "hse_supervisor" ? "&role=eq.hse_supervisor" : "";
+  const companyFilter = companyId ? `&company_id=eq.${companyId}` : "";
+  const selectCols = targetType === "contractor"
+    ? "id,name,username,company_id,job_position_id,contact_person_name,start_date,contract_details,phone,email,is_active"
+    : "id,name,username,company_id,job_position_id,role,can_edit,phone,email,is_active";
+  const offset = (page - 1) * pageSize;
+  const term = search.trim();
+  const searchFilter = term
+    ? targetType === "contractor"
+      ? `&or=(name.ilike.*${encodeURIComponent(term)}*,username.ilike.*${encodeURIComponent(term)}*,contact_person_name.ilike.*${encodeURIComponent(term)}*)`
+      : `&or=(name.ilike.*${encodeURIComponent(term)}*,username.ilike.*${encodeURIComponent(term)}*)`
+    : "";
+  const result = await sbPage(
+    `${table}?select=${selectCols}&order=name.asc&limit=${pageSize}&offset=${offset}${roleFilter}${companyFilter}${searchFilter}`,
+    {},
+    "super_admin"
+  );
+  if (result.__error) return { rows: [], total: 0, __error: true, message: result.message };
+  return { rows: result.rows, total: result.total };
 }
 
 export async function createAccount(targetType, fields) {

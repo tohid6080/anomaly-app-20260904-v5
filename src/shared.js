@@ -75,6 +75,46 @@ export async function sb(path, options = {}, scope = "customer") {
   }
 }
 
+// نسخه‌ی صفحه‌بندی‌شده‌ی sb() — فقط برای فهرست‌هایی که واقعاً ممکن است
+// بزرگ شوند (مثلاً پنل‌های SuperAdmin) و نباید همه‌ی ردیف‌ها یک‌جا به
+// مرورگر بیایند. عمداً به‌جای تغییرِ خودِ sb() اضافه شده — sb() در ده‌ها
+// جای دیگر با قراردادِ «فقط آرایه یا __error» استفاده می‌شود و نباید
+// شکلِ خروجی‌اش عوض شود. path باید از قبل limit/offset را در querystring
+// داشته باشد (مثلاً `companies?select=*&limit=20&offset=0`)؛ این تابع
+// با افزودنِ `Prefer: count=exact` تعدادِ کلِ ردیف‌های منطبق (فارغ از
+// limit/offset) را هم از هدرِ Content-Range می‌خواند تا UI بتواند شماره‌ی
+// صفحات را نشان دهد، بدونِ اینکه خودِ ردیف‌ها بیش از یک صفحه لود شوند.
+export async function sbPage(path, options = {}, scope = "customer") {
+  try {
+    const sessionToken = getSessionToken(scope);
+    const authToken = sessionToken || SUPABASE_ANON_KEY;
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+      ...options,
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${authToken}`,
+        "Content-Type": "application/json",
+        Prefer: `count=exact${options.prefer ? `,${options.prefer}` : ""}`,
+        ...(options.headers || {}),
+      },
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("Supabase error", res.status, text);
+      return { __error: true, status: res.status, message: text || `HTTP ${res.status}` };
+    }
+    const text = res.status === 204 ? "" : await res.text();
+    const rows = text ? JSON.parse(text) : [];
+    // Content-Range نمونه: "0-19/137" یا وقتی هیچ ردیفی نیست "*/0"
+    const range = res.headers.get("content-range") || "";
+    const total = Number(range.split("/")[1]) || 0;
+    return { rows, total };
+  } catch (e) {
+    console.error("Supabase fetch failed", e);
+    return { __error: true, status: 0, message: String((e && e.message) || e) };
+  }
+}
+
 // ---------- فاز ۲: زمینه‌ی «شرکت فعلی» ----------
 // در لحظه‌ی ورود (یا بازیابی نشست از localStorage بعد از رفرش) یک‌بار تنظیم
 // می‌شود. توابع دیتالایر هر ماژول که به شرکت وابسته‌اند (مثلاً personnelApi)

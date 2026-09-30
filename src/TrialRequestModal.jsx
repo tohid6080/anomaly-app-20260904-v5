@@ -7,6 +7,17 @@ import { useLanguage } from "./i18n/LanguageContext.jsx";
 const TURNSTILE_SCRIPT_ID = "cf-turnstile-script";
 const TURNSTILE_SCRIPT_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 
+// سه ساختارِ سازمانیِ قابل‌انتخاب — مقدارها دقیقاً با CHECK constraint روی
+// companies.org_structure_type یکی است (migration 20260930120000). این فاز
+// صرفاً یک برچسبِ ذخیره‌شده است؛ هیچ رفتارِ دیگری (فیلدها، حساب کارفرما/
+// پیمانکار، ماژول‌ها) بر اساسِ این انتخاب فرق نمی‌کند — گزینه‌ی سوم دقیقاً
+// همان مدلِ فعلی/پیش‌فرضِ IHMS است.
+const ORG_STRUCTURE_OPTIONS = [
+  { value: "standalone_no_project", titleKey: "trmOrgStructOpt1Title", descKey: "trmOrgStructOpt1Desc" },
+  { value: "standalone_multi_project", titleKey: "trmOrgStructOpt2Title", descKey: "trmOrgStructOpt2Desc" },
+  { value: "employer_contractor", titleKey: "trmOrgStructOpt3Title", descKey: "trmOrgStructOpt3Desc" },
+];
+
 // ویجتِ Cloudflare Turnstile را با API صریح (نه خودکار) رندر می‌کند — چون
 // این مودال بارها باز/بسته می‌شود، رندرِ خودکار (پیش‌فرضِ اسکریپت) فقط در
 // اولین بارِ لودشدنِ اسکریپت اجرا می‌شود و در بازکردن‌های بعدی هیچ ویجتی
@@ -74,6 +85,7 @@ export default function TrialRequestModal({ onClose }) {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [companyName, setCompanyName] = useState("");
+  const [orgStructureType, setOrgStructureType] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -102,6 +114,10 @@ export default function TrialRequestModal({ onClose }) {
       setError(t("trmErrRequiredFields"));
       return;
     }
+    if (!orgStructureType) {
+      setError(t("trmErrOrgStructureRequired"));
+      return;
+    }
     if (password.length < 8 || contractorPassword.length < 8) {
       setError(t("trmErrPasswordShort"));
       return;
@@ -121,6 +137,7 @@ export default function TrialRequestModal({ onClose }) {
     setSaving(true);
     const res = await submitTrialSignup({
       fullName: fullName.trim(), phone: phone.trim(), companyName: companyName.trim(),
+      orgStructureType,
       username: username.trim(), password,
       contractorContactPersonName: contractorContactPersonName.trim(),
       contractorName: contractorName.trim(), contractorUsername: contractorUsername.trim(), contractorPassword,
@@ -184,6 +201,37 @@ export default function TrialRequestModal({ onClose }) {
                 <label style={styles.label}>{t("trmCompanyReq")}</label>
                 <input style={styles.input} value={companyName} onChange={(e) => setCompanyName(e.target.value)} dir={dir} />
               </div>
+            </div>
+
+            <p style={{ fontSize: 11, fontWeight: 700, color: THEME.heading, margin: "10px 0 4px" }}>{t("trmOrgStructureSectionTitle")}</p>
+            <div style={{ display: "grid", gap: 8, marginBottom: 4 }}>
+              {ORG_STRUCTURE_OPTIONS.map((opt) => {
+                const selected = orgStructureType === opt.value;
+                return (
+                  <div
+                    key={opt.value}
+                    onClick={() => setOrgStructureType(opt.value)}
+                    style={{
+                      cursor: "pointer", borderRadius: 10, padding: "10px 12px",
+                      border: `1.5px solid ${selected ? THEME.teal : THEME.border}`,
+                      background: selected ? THEME.okBg : THEME.bg,
+                      display: "flex", alignItems: "flex-start", gap: 8,
+                    }}
+                  >
+                    <div style={{
+                      marginTop: 2, width: 14, height: 14, borderRadius: "50%", flexShrink: 0,
+                      border: `1.5px solid ${selected ? THEME.teal : THEME.text3}`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>
+                      {selected && <div style={{ width: 7, height: 7, borderRadius: "50%", background: THEME.teal }} />}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: THEME.heading }}>{t(opt.titleKey)}</div>
+                      <div style={{ fontSize: 10.5, color: THEME.text3, marginTop: 2, lineHeight: 1.7 }}>{t(opt.descKey)}</div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             <p style={{ fontSize: 11, fontWeight: 700, color: THEME.heading, margin: "10px 0 4px" }}>{t("trmLoginSectionTitle")}</p>
