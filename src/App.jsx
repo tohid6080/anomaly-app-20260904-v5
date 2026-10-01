@@ -3748,24 +3748,42 @@ function DashboardHeader({ panelLabelKey, currentUser, onLogout, onOpenSettings,
   // از روی همان id از دیتابیس خوانده و کامل می‌شوند — بدون نیاز به ورود
   // دوباره یا مهاجرت دیتابیس.
   const isContractorUser = currentUser?.role === "CONTRACTOR";
+  const isEmployerSideUser = currentUser?.role === "EMPLOYER" || currentUser?.role === "HSE_SUPERVISOR";
   const personName = isContractorUser
     ? (currentUser?.contactPersonName || currentUser?.name || "")
     : (currentUser?.name || "");
 
-  // حساب‌هایِ «پیمانکار» که برایِ شرکت‌هایِ «مستقل/چند پروژه» ساخته شده‌اند
-  // (از طریقِ تبِ «پروژه‌ها» در سوپرادمین) واقعاً پیمانکار نیستند — افرادِ
-  // HSEِ داخلِ یک پروژه‌اند؛ contractors.name برایشان همان نامِ پروژه است،
-  // نه نامِ یک شرکتِ پیمانکاری. برایِ این‌ها باید «پیمانکار» از هدر حذف و
-  // به‌جایش نامِ پروژه نشان داده شود.
-  const [isMultiProjectContractor, setIsMultiProjectContractor] = useState(false);
+  // نوعِ ساختارِ سازمانیِ شرکتِ کاربرِ جاری — برایِ هر دو سمتِ کارفرما
+  // (EMPLOYER/HSE_SUPERVISOR) و پیمانکار (CONTRACTOR) یکسان خوانده می‌شود
+  // (همان policy اضافیِ companies_own_row_read که هر دو سمت را پوشش می‌دهد):
+  //   ۱. حساب‌هایِ «پیمانکار» که برایِ شرکت‌هایِ «مستقل/چند پروژه» ساخته
+  //      شده‌اند (تبِ «پروژه‌ها» در سوپرادمین) واقعاً پیمانکار نیستند —
+  //      افرادِ HSEِ داخلِ یک پروژه‌اند؛ contractors.name برایشان همان نامِ
+  //      پروژه است. برایِ این‌ها «پیمانکار» از هدر حذف و به‌جایش نامِ پروژه
+  //      نشان داده می‌شود.
+  //   ۲. حساب‌هایِ EMPLOYER/HSE_SUPERVISORِ شرکت‌هایِ «مستقل/بدون پروژه» یا
+  //      «مستقل/چند پروژه» هم واقعاً کارفرما نیستند — سرپرست/کارشناسِ یک
+  //      سازمانِ مستقل‌اند؛ طبقِ خواسته‌ی صریح، کلمه‌ی «کارفرما» نباید در
+  //      هدرِ این‌ها دیده شود.
+  // ساختارِ «کارفرما/چند پیمانکار» (پیش‌فرض) کاملاً دست‌نخورده می‌ماند.
+  const [orgStructureType, setOrgStructureType] = useState("");
   useEffect(() => {
-    if (!isContractorUser || !currentUser?.companyId) { setIsMultiProjectContractor(false); return; }
+    if (!currentUser?.companyId) { setOrgStructureType(""); return; }
     sb(`companies?id=eq.${currentUser.companyId}&select=org_structure_type`).then((rows) => {
-      setIsMultiProjectContractor(sbOk(rows) && rows.length > 0 && rows[0].org_structure_type === "standalone_multi_project");
-    }).catch(() => setIsMultiProjectContractor(false));
+      setOrgStructureType(sbOk(rows) && rows.length > 0 ? (rows[0].org_structure_type || "") : "");
+    }).catch(() => setOrgStructureType(""));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isContractorUser, currentUser?.companyId]);
-  const effectivePanelLabelKey = isMultiProjectContractor ? "panelHse" : panelLabelKey;
+  }, [currentUser?.companyId]);
+  const isStandaloneCompany = orgStructureType === "standalone_no_project" || orgStructureType === "standalone_multi_project";
+  const isMultiProjectContractor = isContractorUser && orgStructureType === "standalone_multi_project";
+  let effectivePanelLabelKey = panelLabelKey;
+  if (isMultiProjectContractor) {
+    effectivePanelLabelKey = "panelHse";
+  } else if (isEmployerSideUser && isStandaloneCompany) {
+    effectivePanelLabelKey = currentUser?.role === "HSE_SUPERVISOR"
+      ? "panelSupervisor"
+      : (currentUser?.canEdit !== false ? "panelExpert" : "panelExpertViewOnly");
+  }
 
   const [companyName, setCompanyName] = useState(
     isContractorUser ? (currentUser?.companyName || currentUser?.name || "") : (currentUser?.companyName || "")

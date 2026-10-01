@@ -66,6 +66,18 @@ export const translations = {
     "fa": "پنل HSE",
     "en": "HSE Panel"
   },
+  "panelSupervisor": {
+    "fa": "پنل سرپرست",
+    "en": "Supervisor Panel"
+  },
+  "panelExpert": {
+    "fa": "پنل کارشناس",
+    "en": "Expert Panel"
+  },
+  "panelExpertViewOnly": {
+    "fa": "پنل کارشناس (فقط مشاهده)",
+    "en": "Expert Panel (View Only)"
+  },
   "logout": {
     "fa": "خروج",
     "en": "Logout"
@@ -8495,6 +8507,14 @@ export const translations = {
   "amTabEmployer": { "fa": "حساب‌های کارفرما/کارشناسان", "en": "Employer/Specialist Accounts" },
   "amTabContractor": { "fa": "حساب‌های پیمانکار", "en": "Contractor Accounts" },
   "amTabProject": { "fa": "پروژه‌ها", "en": "Projects" },
+  "amTabOrgStructure": { "fa": "شرکت‌های مستقل", "en": "Standalone Companies" },
+  "amOrgPickCompanyNote": { "fa": "یک شرکتِ «مستقل/بدون پروژه» یا «مستقل/چند پروژه» را انتخاب کنید تا ساختارِ سرپرست/کارشناسان (و پروژه‌های آن، در صورت وجود) نمایش داده شود.", "en": "Pick a \"standalone/no project\" or \"standalone/multi-project\" company to see its supervisor/experts structure (and its projects, if any)." },
+  "amOrgSupervisorSection": { "fa": "سرپرست", "en": "Supervisor" },
+  "amOrgAddSupervisor": { "fa": "افزودن سرپرست", "en": "Add Supervisor" },
+  "amOrgNoSupervisorYet": { "fa": "هنوز سرپرستی برای این شرکت تعریف نشده است.", "en": "No supervisor defined for this company yet." },
+  "amOrgExpertsSection": { "fa": "کارشناسان شرکت", "en": "Company Experts" },
+  "amOrgAddExpert": { "fa": "افزودن کارشناس", "en": "Add Expert" },
+  "amOrgNoExpertsYet": { "fa": "هنوز کارشناسی برای این شرکت تعریف نشده است.", "en": "No experts defined for this company yet." },
 
   // --- corrective actions: Tripod Beta / incident-origin integration (project-specific) ---
   "cadTripodOriginBadge": { "fa": "🔗 مدیریت حوادث / Tripod Beta", "en": "🔗 Incident Management / Tripod Beta" },
