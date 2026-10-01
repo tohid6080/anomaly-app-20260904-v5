@@ -16,6 +16,7 @@ export const de = {
   "panelEmployer": "Auftraggeberbereich",
   "panelEmployerViewOnly": "Auftraggeberbereich (nur Ansicht)",
   "panelContractor": "Auftragnehmerbereich",
+  "panelHse": "HSE-Bereich",
   "logout": "Abmelden",
   "settingsTooltip": "Einstellungen",
   "backToMenu": "← Zurück zum Menü",

@@ -3769,6 +3769,22 @@ function DashboardHeader({ panelLabelKey, currentUser, onLogout, onOpenSettings,
   const personName = isContractorUser
     ? (currentUser?.contactPersonName || currentUser?.name || "")
     : (currentUser?.name || "");
+
+  // حساب‌هایِ «پیمانکار» که برایِ شرکت‌هایِ «مستقل/چند پروژه» ساخته شده‌اند
+  // (از طریقِ تبِ «پروژه‌ها» در سوپرادمین) واقعاً پیمانکار نیستند — افرادِ
+  // HSEِ داخلِ یک پروژه‌اند؛ contractors.name برایشان همان نامِ پروژه است،
+  // نه نامِ یک شرکتِ پیمانکاری. برایِ این‌ها باید «پیمانکار» از هدر حذف و
+  // به‌جایش نامِ پروژه نشان داده شود.
+  const [isMultiProjectContractor, setIsMultiProjectContractor] = useState(false);
+  useEffect(() => {
+    if (!isContractorUser || !currentUser?.companyId) { setIsMultiProjectContractor(false); return; }
+    sb(`companies?id=eq.${currentUser.companyId}&select=org_structure_type`).then((rows) => {
+      setIsMultiProjectContractor(sbOk(rows) && rows.length > 0 && rows[0].org_structure_type === "standalone_multi_project");
+    }).catch(() => setIsMultiProjectContractor(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isContractorUser, currentUser?.companyId]);
+  const effectivePanelLabelKey = isMultiProjectContractor ? "panelHse" : panelLabelKey;
+
   const [companyName, setCompanyName] = useState(
     isContractorUser ? (currentUser?.companyName || currentUser?.name || "") : (currentUser?.companyName || "")
   );
@@ -3776,7 +3792,10 @@ function DashboardHeader({ panelLabelKey, currentUser, onLogout, onOpenSettings,
   useEffect(() => {
     if (!currentUser) return;
     if (isContractorUser) {
-      setCompanyName(currentUser.companyName || currentUser.name || "");
+      // currentUser.name همیشه از RPC تنظیم می‌شود؛ برایِ این حالت دقیقاً
+      // همان نامِ پروژه است (نه نامِ شرکتِ کارفرما) — عمداً currentUser.companyName
+      // نادیده گرفته می‌شود تا نامِ پروژه قطعی نشان داده شود، نه با شانس.
+      setCompanyName(isMultiProjectContractor ? (currentUser.name || "") : (currentUser.companyName || currentUser.name || ""));
     } else if (currentUser.companyName) {
       setCompanyName(currentUser.companyName);
     } else if (currentUser.companyId) {
@@ -3788,7 +3807,7 @@ function DashboardHeader({ panelLabelKey, currentUser, onLogout, onOpenSettings,
       loadJobPositionTitle(currentUser.jobPositionId).then((tt) => setJobTitle(tt || "")).catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser?.id]);
+  }, [currentUser?.id, isMultiProjectContractor]);
   const showCompany = companyName && appearance?.headerShowCompanyName !== false;
 
   // فقط برایِ شرکت‌هایِ «مستقل/چند پروژه»، و فقط وقتی حداقل یک پروژه
@@ -3809,7 +3828,7 @@ function DashboardHeader({ panelLabelKey, currentUser, onLogout, onOpenSettings,
         <div style={{ minWidth: 0, lineHeight: 1.35 }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 6, minWidth: 0 }}>
             <span style={{ fontSize: 14.5, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "60vw" }}>
-              {t(panelLabelKey)}{showCompany ? ":" : ""}
+              {t(effectivePanelLabelKey)}{showCompany ? ":" : ""}
             </span>
             {showCompany && (
               <span style={{ fontSize: 12.5, fontWeight: 700, color: "rgba(255,255,255,0.92)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "45vw" }}>{companyName}</span>
@@ -3841,7 +3860,7 @@ function DashboardHeader({ panelLabelKey, currentUser, onLogout, onOpenSettings,
           <ReportErrorModal
             currentUser={currentUser}
             moduleKey={currentModuleKey || ""}
-            pageLabel={t(panelLabelKey)}
+            pageLabel={t(effectivePanelLabelKey)}
             onClose={() => setShowReportError(false)}
           />
         )}

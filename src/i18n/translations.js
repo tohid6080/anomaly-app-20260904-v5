@@ -62,6 +62,10 @@ export const translations = {
     "fa": "پنل پیمانکار",
     "en": "Contractor Panel"
   },
+  "panelHse": {
+    "fa": "پنل HSE",
+    "en": "HSE Panel"
+  },
   "logout": {
     "fa": "خروج",
     "en": "Logout"
