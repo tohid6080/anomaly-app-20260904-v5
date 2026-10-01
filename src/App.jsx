@@ -334,6 +334,24 @@ async function loadMyCompanyName(companyId) {
   return sbOk(rows) && rows.length > 0 ? rows[0].name : "";
 }
 
+// فقط برایِ شرکت‌هایِ «مستقل/چند پروژه» — نامِ پروژه‌هایی که واقعاً حداقل
+// یک نفر (یک ردیفِ فعالِ contractors با همان نام) داخلشان تعریف شده‌
+// باشد؛ طبقِ خواسته‌ی صریح، تا سوپرادمین کسی را به پروژه اضافه نکرده،
+// نباید اصلاً در هدر دیده شود — پروژه‌ای بدون عضو، نمایشی ندارد.
+async function loadMyActiveProjectNames(companyId) {
+  if (!companyId) return [];
+  const companyRows = await sb(`companies?id=eq.${companyId}&select=org_structure_type`);
+  const structureType = sbOk(companyRows) && companyRows.length > 0 ? companyRows[0].org_structure_type : "";
+  if (structureType !== "standalone_multi_project") return [];
+  const [projectRows, peopleRows] = await Promise.all([
+    sb(`contractor_companies?company_id=eq.${companyId}&is_active=eq.true&select=name`),
+    sb(`contractors?company_id=eq.${companyId}&is_active=eq.true&select=name`),
+  ]);
+  const projects = sbOk(projectRows) ? projectRows : [];
+  const peopleNames = new Set((sbOk(peopleRows) ? peopleRows : []).map((r) => r.name));
+  return projects.filter((p) => peopleNames.has(p.name)).map((p) => p.name);
+}
+
 async function loadContractors() {
   const companyId = getCurrentCompanyId();
   const filter = companyId ? `&company_id=eq.${companyId}` : "";
@@ -3751,6 +3769,22 @@ function DashboardHeader({ panelLabelKey, currentUser, onLogout, onOpenSettings,
   const personName = isContractorUser
     ? (currentUser?.contactPersonName || currentUser?.name || "")
     : (currentUser?.name || "");
+
+  // حساب‌هایِ «پیمانکار» که برایِ شرکت‌هایِ «مستقل/چند پروژه» ساخته شده‌اند
+  // (از طریقِ تبِ «پروژه‌ها» در سوپرادمین) واقعاً پیمانکار نیستند — افرادِ
+  // HSEِ داخلِ یک پروژه‌اند؛ contractors.name برایشان همان نامِ پروژه است،
+  // نه نامِ یک شرکتِ پیمانکاری. برایِ این‌ها باید «پیمانکار» از هدر حذف و
+  // به‌جایش نامِ پروژه نشان داده شود.
+  const [isMultiProjectContractor, setIsMultiProjectContractor] = useState(false);
+  useEffect(() => {
+    if (!isContractorUser || !currentUser?.companyId) { setIsMultiProjectContractor(false); return; }
+    sb(`companies?id=eq.${currentUser.companyId}&select=org_structure_type`).then((rows) => {
+      setIsMultiProjectContractor(sbOk(rows) && rows.length > 0 && rows[0].org_structure_type === "standalone_multi_project");
+    }).catch(() => setIsMultiProjectContractor(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isContractorUser, currentUser?.companyId]);
+  const effectivePanelLabelKey = isMultiProjectContractor ? "panelHse" : panelLabelKey;
+
   const [companyName, setCompanyName] = useState(
     isContractorUser ? (currentUser?.companyName || currentUser?.name || "") : (currentUser?.companyName || "")
   );
@@ -3758,7 +3792,10 @@ function DashboardHeader({ panelLabelKey, currentUser, onLogout, onOpenSettings,
   useEffect(() => {
     if (!currentUser) return;
     if (isContractorUser) {
-      setCompanyName(currentUser.companyName || currentUser.name || "");
+      // currentUser.name همیشه از RPC تنظیم می‌شود؛ برایِ این حالت دقیقاً
+      // همان نامِ پروژه است (نه نامِ شرکتِ کارفرما) — عمداً currentUser.companyName
+      // نادیده گرفته می‌شود تا نامِ پروژه قطعی نشان داده شود، نه با شانس.
+      setCompanyName(isMultiProjectContractor ? (currentUser.name || "") : (currentUser.companyName || currentUser.name || ""));
     } else if (currentUser.companyName) {
       setCompanyName(currentUser.companyName);
     } else if (currentUser.companyId) {
@@ -3770,8 +3807,19 @@ function DashboardHeader({ panelLabelKey, currentUser, onLogout, onOpenSettings,
       loadJobPositionTitle(currentUser.jobPositionId).then((tt) => setJobTitle(tt || "")).catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser?.id]);
+  }, [currentUser?.id, isMultiProjectContractor]);
   const showCompany = companyName && appearance?.headerShowCompanyName !== false;
+
+  // فقط برایِ شرکت‌هایِ «مستقل/چند پروژه»، و فقط وقتی حداقل یک پروژه
+  // واقعاً عضو دارد (طبقِ خواسته‌ی صریح: تا سوپرادمین کسی را به یک پروژه
+  // اضافه نکرده، اسمِ آن پروژه اصلاً دیده نمی‌شود). سمتِ پیمانکار/HSE این
+  // بخش دیده نمی‌شود — این فقط برایِ کارفرما/سرپرست است.
+  const [activeProjectNames, setActiveProjectNames] = useState([]);
+  useEffect(() => {
+    if (isContractorUser || !currentUser?.companyId) { setActiveProjectNames([]); return; }
+    loadMyActiveProjectNames(currentUser.companyId).then(setActiveProjectNames).catch(() => setActiveProjectNames([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id, currentUser?.companyId]);
 
   return (
     <div style={{ ...styles.topBar, background: `linear-gradient(120deg, ${THEME.headerBg}, ${THEME.navyDeep})`, direction: dir }}>
@@ -3780,7 +3828,7 @@ function DashboardHeader({ panelLabelKey, currentUser, onLogout, onOpenSettings,
         <div style={{ minWidth: 0, lineHeight: 1.35 }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 6, minWidth: 0 }}>
             <span style={{ fontSize: 14.5, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "60vw" }}>
-              {t(panelLabelKey)}{showCompany ? ":" : ""}
+              {t(effectivePanelLabelKey)}{showCompany ? ":" : ""}
             </span>
             {showCompany && (
               <span style={{ fontSize: 12.5, fontWeight: 700, color: "rgba(255,255,255,0.92)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "45vw" }}>{companyName}</span>
@@ -3790,6 +3838,11 @@ function DashboardHeader({ panelLabelKey, currentUser, onLogout, onOpenSettings,
             <div style={{ fontSize: 10.5, color: "rgba(255,255,255,0.6)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "60vw" }}>
               {personName}
               {jobTitle && <span style={{ color: "rgba(255,255,255,0.45)" }}> - {jobTitle}</span>}
+            </div>
+          )}
+          {activeProjectNames.length > 0 && (
+            <div style={{ fontSize: 10.5, color: "rgba(255,255,255,0.6)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "60vw" }}>
+              {t("headerActiveProjects")} {activeProjectNames.join(listSep(getCurrentLang()))}
             </div>
           )}
         </div>
@@ -3807,7 +3860,7 @@ function DashboardHeader({ panelLabelKey, currentUser, onLogout, onOpenSettings,
           <ReportErrorModal
             currentUser={currentUser}
             moduleKey={currentModuleKey || ""}
-            pageLabel={t(panelLabelKey)}
+            pageLabel={t(effectivePanelLabelKey)}
             onClose={() => setShowReportError(false)}
           />
         )}
