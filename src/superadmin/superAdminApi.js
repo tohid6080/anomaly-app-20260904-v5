@@ -104,6 +104,10 @@ export async function createCompany(rec) {
     subscription_status: rec.subscriptionStatus || "active", subscription_start_date: rec.subscriptionStartDate || null,
     subscription_end_date: rec.subscriptionEndDate || null,
     storage_quota_mb: rec.storageQuotaMb || 500,
+    // پیش‌فرض «کارفرما/چند پیمانکار» — دقیقاً همان مقدارِ پیش‌فرضِ ستونِ
+    // org_structure_type در دیتابیس، برایِ سازگاریِ کاملِ رفتار با قبل
+    // وقتی این فیلد در فرم انتخاب نشود.
+    org_structure_type: rec.orgStructureType || "employer_contractor",
   };
   // computeSubscriptionAccess (subscriptionApi.js) برایِ subscriptionType==="trial"
   // فقط trial_start/trial_end را می‌خواند، نه subscription_start_date/end_date —

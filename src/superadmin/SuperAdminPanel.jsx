@@ -75,6 +75,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [newName, setNewName] = useState("");
   const [newType, setNewType] = useState("trial");
+  const [newOrgStructureType, setNewOrgStructureType] = useState("employer_contractor");
   const [newStatus, setNewStatus] = useState("active");
   const [newStartDate, setNewStartDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [newStartTime, setNewStartTime] = useState("00:00");
@@ -119,9 +120,9 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
     if (!newName.trim()) return;
     const startIso = newStartDate ? new Date(`${newStartDate}T${newStartTime || "00:00"}:00`).toISOString() : null;
     const endIso = newEndDate ? new Date(`${newEndDate}T${newEndTime || "00:00"}:00`).toISOString() : null;
-    const result = await createCompany({ name: newName.trim(), subscriptionType: newType, subscriptionStatus: newStatus, subscriptionStartDate: startIso, subscriptionEndDate: endIso });
+    const result = await createCompany({ name: newName.trim(), subscriptionType: newType, subscriptionStatus: newStatus, subscriptionStartDate: startIso, subscriptionEndDate: endIso, orgStructureType: newOrgStructureType });
     if (!result?.__error) {
-      setNewName(""); setNewEndDate(""); setNewStartTime("00:00"); setNewEndTime("00:00");
+      setNewName(""); setNewEndDate(""); setNewStartTime("00:00"); setNewEndTime("00:00"); setNewOrgStructureType("employer_contractor");
       setShowCreate(false);
       await load();
     }
@@ -262,6 +263,7 @@ export default function SuperAdminPanel({ currentAdmin, onLogout }) {
               expandedId={expandedId} showCreate={showCreate} newName={newName} newType={newType} newStatus={newStatus} setNewStatus={setNewStatus}
               newStartDate={newStartDate} setNewStartDate={setNewStartDate} newStartTime={newStartTime} setNewStartTime={setNewStartTime}
               newEndDate={newEndDate} setNewEndDate={setNewEndDate} newEndTime={newEndTime} setNewEndTime={setNewEndTime}
+              newOrgStructureType={newOrgStructureType} setNewOrgStructureType={setNewOrgStructureType}
               setShowCreate={setShowCreate} setNewName={setNewName} setNewType={setNewType}
               onCreate={handleCreate} onToggleExpand={toggleExpand}
               onUpdate={handleUpdate} onDelete={handleDelete} onSetActive={handleSetActive}
@@ -1137,6 +1139,7 @@ function QuickLinkCard({ icon: Icon, label, onClick }) {
 function CompaniesPage({
   companies, plans, currentAdmin, usageStats, expandedId, showCreate, newName, newType, newStatus, setNewStatus,
   newStartDate, setNewStartDate, newStartTime, setNewStartTime, newEndDate, setNewEndDate, newEndTime, setNewEndTime,
+  newOrgStructureType, setNewOrgStructureType,
   setShowCreate, setNewName, setNewType, onCreate, onToggleExpand, onUpdate, onDelete, onSetActive,
   payments, onAddPayment, onPlanChanged,
 }) {
@@ -1187,6 +1190,12 @@ function CompaniesPage({
               </select>
               <select style={inputStyle} value={newStatus} onChange={(e) => setNewStatus(e.target.value)} dir={dir}>
                 {SUBSCRIPTION_STATUSES.map((s) => <option key={s.value} value={s.value}>{t(s.labelKey)}</option>)}
+              </select>
+            </div>
+            <div style={{ marginBottom: 10 }}>
+              <label style={{ fontSize: 10.5, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 3 }}>{t("saOrgStructureLabel")}</label>
+              <select style={{ ...inputStyle, maxWidth: 320 }} value={newOrgStructureType} onChange={(e) => setNewOrgStructureType(e.target.value)} dir={dir}>
+                {Object.entries(ORG_STRUCTURE_LABEL_KEYS).map(([value, labelKey]) => <option key={value} value={value}>{t(labelKey)}</option>)}
               </select>
             </div>
             <p style={{ fontSize: 11, color: THEME.text3, margin: "0 0 6px", fontWeight: 600 }}>

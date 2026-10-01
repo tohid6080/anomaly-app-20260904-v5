@@ -16,7 +16,12 @@ const TABS = [
   { key: "employer", labelKey: "amTabEmployer" },
   { key: "contractor", labelKey: "amTabContractor" },
   { key: "project", labelKey: "amTabProject" },
+  { key: "orgStructure", labelKey: "amTabOrgStructure" },
 ];
+
+// تب‌هایی که جدولِ حساب‌هایِ معمولیِ همین کامپوننت را ندارند — دیتایِ خودشان
+// را مستقلاً (با انتخابگرِ شرکتِ خودشان) بارگذاری می‌کنند.
+const TABS_WITHOUT_ACCOUNTS_TABLE = ["project", "orgStructure"];
 
 // دقیقاً همان الگوی اعتبارسنجی فرم‌های دیگر پروژه (PersonnelForm) — موبایل
 // ایرانی ۱۱ رقمی با ۰۹ شروع می‌شود
@@ -50,13 +55,14 @@ export default function AccountManagement({ currentAdmin }) {
   // loadCompanies (فهرستِ کاملِ شرکت‌ها) عمداً دست‌نخورده و بدونِ
   // صفحه‌بندی می‌ماند — companyName()/Dropdownِ AccountForm به کلِ فهرست
   // نیاز دارند. فقط جدولِ خودِ حساب‌ها (accounts) از سرور صفحه‌بندی/
-  // جستجو می‌شود. تبِ «project» جدولِ حساب‌های معمولی ندارد — دیتایِ خودش
-  // را مستقلاً داخلِ ProjectsTabPanel بارگذاری می‌کند.
+  // جستجو می‌شود. تب‌هایِ TABS_WITHOUT_ACCOUNTS_TABLE جدولِ حساب‌های معمولی
+  // ندارند — دیتایِ خودشان را مستقلاً داخلِ ProjectsTabPanel/
+  // OrgStructureTabPanel بارگذاری می‌کنند.
   const load = async () => {
     setLoading(true);
     const comp = await loadCompanies();
     setCompanies(comp);
-    if (tab !== "project") {
+    if (!TABS_WITHOUT_ACCOUNTS_TABLE.includes(tab)) {
       const accRes = await loadAccountsByTypePage({ targetType: tab, page, pageSize: ADMIN_PAGE_SIZE, search: debouncedSearch });
       setAccounts(accRes.rows);
       setAccountsTotal(accRes.total);
@@ -190,6 +196,8 @@ export default function AccountManagement({ currentAdmin }) {
 
       {tab === "project" ? (
         <ProjectsTabPanel companies={companies} currentAdmin={currentAdmin} />
+      ) : tab === "orgStructure" ? (
+        <OrgStructureTabPanel companies={companies} currentAdmin={currentAdmin} />
       ) : (
       <>
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
@@ -430,16 +438,19 @@ export function AccountForm({ tab, form, setForm, companies, onSave, saving, sav
   );
 }
 
-// تبِ «پروژه‌ها» — برایِ شرکت‌هایِ نوعِ «مستقل/چند پروژه». هیچ جدول/ستونِ
-// جدیدی لازم نبود: از همان جدولِ contractor_companies (فهرستِ نام‌ها زیرِ
-// یک شرکت) به‌عنوانِ «فهرستِ پروژه‌ها» و از همان جدولِ contractors
-// (حساب‌هایی با name = نامِ یکی از آن فهرست) به‌عنوانِ «افرادِ HSE داخلِ آن
-// پروژه» استفاده می‌شود — دقیقاً همان الگویی که برایِ «شرکت‌های پیمانکاریِ
-// زیرمجموعه» در CompanyManagePanel (سوپرادمین → شرکت‌ها) از قبل هست، فقط
-// این‌جا سراسریِ همه‌ی شرکت‌ها (با انتخابِ شرکت) و با برچسبِ «پروژه».
-function ProjectsTabPanel({ companies, currentAdmin }) {
+// بخشِ «پروژه‌ها + افرادِ HSE هر پروژه»یِ یک شرکتِ مشخص (بدونِ خودِ
+// انتخابگرِ شرکت) — هیچ جدول/ستونِ جدیدی لازم نبود: از همان جدولِ
+// contractor_companies (فهرستِ نام‌ها زیرِ یک شرکت) به‌عنوانِ «فهرستِ
+// پروژه‌ها» و از همان جدولِ contractors (حساب‌هایی با name = نامِ یکی از
+// آن فهرست) به‌عنوانِ «افرادِ HSE داخلِ آن پروژه» استفاده می‌شود — دقیقاً
+// همان الگویی که برایِ «شرکت‌های پیمانکاریِ زیرمجموعه» در CompanyManagePanel
+// (سوپرادمین → شرکت‌ها) از قبل هست.
+// استخراج‌شده (بدونِ تغییرِ رفتار) تا هم تبِ «پروژه‌ها» (ProjectsTabPanel،
+// انتخابگرِ شرکتِ سراسری) و هم تبِ «شرکت‌های مستقل» (OrgStructureTabPanel،
+// فقط برایِ نوعِ «مستقل/چند پروژه») از همین یک کامپوننت استفاده کنند —
+// بدونِ تکرارِ منطقِ CRUD پروژه/افراد در دو جا.
+function CompanyProjectsSection({ companyId, companies, currentAdmin }) {
   const { t, dir } = useLanguage();
-  const [companyId, setCompanyId] = useState("");
   const [projects, setProjects] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
@@ -575,31 +586,20 @@ function ProjectsTabPanel({ companies, currentAdmin }) {
   };
 
   return (
-    <div>
-      <p style={{ fontSize: 10.5, color: THEME.text3, marginBottom: 10, lineHeight: 1.8 }}>{t("saProjectsNote")}</p>
-      <div style={{ marginBottom: 14 }}>
-        <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("amSelectCompanyFirst")}</label>
-        <select style={{ ...inputStyle, maxWidth: 320 }} value={companyId} onChange={(e) => setCompanyId(e.target.value)} dir={dir}>
-          <option value="">{t("amSelectPlaceholder")}</option>
-          {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
+    <>
+      <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+        <input
+          style={{ ...inputStyle, flex: 1, minWidth: 160 }} value={newProjectName}
+          onChange={(e) => setNewProjectName(e.target.value)} dir={dir}
+          placeholder={t("saProjectNamePlaceholder")}
+        />
+        <button type="button" onClick={handleAddProject} disabled={addingProject || !newProjectName.trim()} style={btnStyle()}>
+          {addingProject ? t("saSavingEllipsis") : t("saAddProject")}
+        </button>
       </div>
+      {projectError && <p style={{ color: THEME.danger, fontSize: 12, marginBottom: 10 }}>{projectError}</p>}
 
-      {companyId && (
-        <>
-          <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
-            <input
-              style={{ ...inputStyle, flex: 1, minWidth: 160 }} value={newProjectName}
-              onChange={(e) => setNewProjectName(e.target.value)} dir={dir}
-              placeholder={t("saProjectNamePlaceholder")}
-            />
-            <button type="button" onClick={handleAddProject} disabled={addingProject || !newProjectName.trim()} style={btnStyle()}>
-              {addingProject ? t("saSavingEllipsis") : t("saAddProject")}
-            </button>
-          </div>
-          {projectError && <p style={{ color: THEME.danger, fontSize: 12, marginBottom: 10 }}>{projectError}</p>}
-
-          {loadingProjects ? (
+      {loadingProjects ? (
             <p style={{ color: THEME.text3, fontSize: 12, textAlign: "center", padding: 20 }}>{t("commonLoading")}</p>
           ) : projects.length === 0 ? (
             <p style={{ color: THEME.text3, fontSize: 12, textAlign: "center", padding: 20 }}>{t("saNoProjects")}</p>
@@ -682,6 +682,231 @@ function ProjectsTabPanel({ companies, currentAdmin }) {
               );
             })
           )}
+    </>
+  );
+}
+
+// تبِ «پروژه‌ها» — انتخابگرِ شرکتِ سراسری (هر نوع شرکتی) + نمایشِ
+// CompanyProjectsSection برایِ شرکتِ انتخاب‌شده. برایِ شرکت‌هایِ «مستقل/چند
+// پروژه» همین یک کامپوننت، داخلِ تبِ «شرکت‌های مستقل» هم دوباره استفاده
+// می‌شود (رجوع به OrgStructureTabPanel) — بدونِ هیچ تغییری در رفتارِ این‌جا.
+function ProjectsTabPanel({ companies, currentAdmin }) {
+  const { t, dir } = useLanguage();
+  const [companyId, setCompanyId] = useState("");
+  return (
+    <div>
+      <p style={{ fontSize: 10.5, color: THEME.text3, marginBottom: 10, lineHeight: 1.8 }}>{t("saProjectsNote")}</p>
+      <div style={{ marginBottom: 14 }}>
+        <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("amSelectCompanyFirst")}</label>
+        <select style={{ ...inputStyle, maxWidth: 320 }} value={companyId} onChange={(e) => setCompanyId(e.target.value)} dir={dir}>
+          <option value="">{t("amSelectPlaceholder")}</option>
+          {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+      </div>
+      {companyId && <CompanyProjectsSection companyId={companyId} companies={companies} currentAdmin={currentAdmin} />}
+    </div>
+  );
+}
+
+// فهرستِ ساده‌یِ حساب‌هایِ یک نقش (سرپرست یا کارشناس) برایِ یک شرکتِ
+// مشخص — نسخه‌ی سبک‌ترِ همان CRUDِ تبِ اصلیِ این فایل (بدونِ صفحه‌بندی/
+// جستجو، چون محدود به یک شرکت است)، با همان توابعِ موجودِ
+// createAccount/updateAccount/setAccountActive/resetAccountPassword/
+// deleteAccount — بدونِ هیچ Edge Function یا جدولِ جدید. برایِ
+// tab="hse_supervisor"/"employer"، AccountForm خودش (بر اساسِ
+// isContractor=false) فرمِ ساده‌ی «نام و نام خانوادگی» را نشان می‌دهد —
+// نیازی به nameFieldLabelKey نیست.
+function CompanyRoleAccountsSection({ tab, companyId, companies, title, addLabel, emptyLabel }) {
+  const { t } = useLanguage();
+  const [accounts, setAccounts] = useState([]);
+  const [adding, setAdding] = useState(false);
+  const [form, setForm] = useState(emptyForm());
+  const [editingId, setEditingId] = useState(null);
+  const [resettingId, setResettingId] = useState(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const load = () => { loadAccountsByType(tab, companyId).then(setAccounts); };
+  useEffect(() => {
+    load();
+    setAdding(false);
+    setEditingId(null);
+    setResettingId(null);
+    setError("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, companyId]);
+
+  const openAdd = () => { setForm({ ...emptyForm(), companyId }); setAdding(true); setEditingId(null); setError(""); };
+  const openEdit = (a) => {
+    setEditingId(editingId === a.id ? null : a.id);
+    setAdding(false);
+    setForm({
+      name: a.name, username: a.username, password: "", companyId: a.company_id || "", jobPositionId: a.job_position_id || "",
+      contactPersonName: a.contact_person_name || "", startDate: a.start_date || "", contractDetails: a.contract_details || "",
+      phone: a.phone || "", email: a.email || "",
+    });
+    setError("");
+  };
+  const validateContact = () => {
+    if (form.email && !isValidEmailFormat(form.email)) return t("amInvalidEmail");
+    if (form.phone && !isValidMobile(form.phone)) return t("amInvalidMobile");
+    return "";
+  };
+  const handleCreate = async () => {
+    if (!form.name.trim() || !form.username.trim() || form.password.length < 8) { setError(t("amNameUsernamePasswordRequired")); return; }
+    const contactError = validateContact();
+    if (contactError) { setError(contactError); return; }
+    setSaving(true); setError("");
+    const result = await createAccount(tab, form);
+    setSaving(false);
+    if (result?.__error || result?.error) { setError(result.message || result.error); return; }
+    setAdding(false);
+    load();
+  };
+  const handleSaveEdit = async (id) => {
+    const contactError = validateContact();
+    if (contactError) { setError(contactError); return; }
+    setSaving(true); setError("");
+    const result = await updateAccount(tab, id, form);
+    setSaving(false);
+    if (result?.__error || result?.error) { setError(result.message || result.error); return; }
+    setEditingId(null);
+    load();
+  };
+  const handleToggleActive = async (a) => {
+    const result = await setAccountActive(tab, a.id, a.is_active === false);
+    if (result?.__error || result?.error) { alert(result.message || result.error); return; }
+    load();
+  };
+  const handleResetPassword = async (id) => {
+    if (newPassword.length < 8) { setError(t("errPasswordMin8")); return; }
+    setSaving(true); setError("");
+    const result = await resetAccountPassword(tab, id, newPassword);
+    setSaving(false);
+    if (result?.__error || result?.error) { setError(result.message || result.error); return; }
+    setResettingId(null); setNewPassword("");
+    alert(t("amPasswordResetSuccess"));
+  };
+  const handleDelete = async (a) => {
+    if (!confirm(t("amDeleteAccountConfirm", { name: a.name, username: a.username }))) return;
+    const result = await deleteAccount(tab, a.id);
+    if (result?.__error || result?.error) { alert(result.message || result.error); return; }
+    load();
+  };
+
+  return (
+    <div style={{ marginBottom: 18 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+        <h4 style={{ fontSize: 12.5, fontWeight: 700, color: THEME.heading, margin: 0 }}>{title}</h4>
+        <button type="button" onClick={openAdd} style={{ ...btnStyle(), display: "flex", alignItems: "center", gap: 4, fontSize: 11, padding: "5px 10px" }}>
+          <UserPlus size={12} /> {addLabel}
+        </button>
+      </div>
+      {adding && (
+        <AccountForm tab={tab} form={form} setForm={setForm} companies={companies} onSave={handleCreate} saving={saving} saveLabel={t("amCreateAccount")} showPassword disableCompanySelect />
+      )}
+      {error && <p style={{ color: THEME.danger, fontSize: 12, marginBottom: 8 }}>{error}</p>}
+      {accounts.length === 0 && !adding && <p style={{ fontSize: 11, color: THEME.text3 }}>{emptyLabel}</p>}
+      {accounts.map((a) => (
+        <div key={a.id} style={{ fontSize: 11.5, color: THEME.text2, padding: "8px 10px", border: `1px solid ${THEME.border}`, borderRadius: 8, marginBottom: 6 }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            <span style={{ fontWeight: 700, color: THEME.heading }}>{a.name}</span>
+            <span style={{ direction: "ltr", color: THEME.text3 }}>({a.username})</span>
+            <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, fontWeight: 600, background: a.is_active === false ? THEME.surface2 : THEME.okBg, color: a.is_active === false ? THEME.text3 : THEME.ok }}>
+              {a.is_active === false ? t("commonInactive") : t("commonActive")}
+            </span>
+            <div style={{ marginInlineStart: "auto", display: "flex", gap: 4 }}>
+              <button type="button" onClick={() => openEdit(a)} style={{ ...btnStyle(THEME.navyMid), fontSize: 11, padding: "4px 8px" }} title={t("amEditTitle")}>
+                <Pencil size={11} />
+              </button>
+              <button type="button" onClick={() => { setResettingId(resettingId === a.id ? null : a.id); setNewPassword(""); setError(""); }} style={{ ...btnStyle(THEME.warn), fontSize: 11, padding: "4px 8px" }} title="Reset Password">
+                <KeyRound size={11} />
+              </button>
+              <button type="button" onClick={() => handleToggleActive(a)} style={{ ...btnStyle(a.is_active === false ? THEME.ok : THEME.danger), fontSize: 11, padding: "4px 8px" }} title={a.is_active === false ? t("amActivate") : t("amDeactivate")}>
+                <Power size={11} />
+              </button>
+              <button type="button" onClick={() => handleDelete(a)} style={{ ...btnStyle(THEME.danger), fontSize: 11, padding: "4px 8px" }} title={t("amDeleteAccountTitle")}>
+                <Trash2 size={11} />
+              </button>
+            </div>
+          </div>
+          {editingId === a.id && (
+            <div style={{ marginTop: 8 }}>
+              <AccountForm tab={tab} form={form} setForm={setForm} companies={companies} onSave={() => handleSaveEdit(a.id)} saving={saving} saveLabel={t("saSaveChanges")} showPassword={false} disableCompanySelect />
+            </div>
+          )}
+          {resettingId === a.id && (
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 6 }}>
+              <input type="password" style={{ ...inputStyle, width: 220 }} placeholder={t("saNewPasswordMin8")} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} dir="ltr" />
+              <button type="button" onClick={() => handleResetPassword(a.id)} style={btnStyle()} disabled={saving}>{saving ? "..." : t("amResetPassword")}</button>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// همان دو کلیدِ ترجمه‌ای که TrialRequestModal.jsx/SuperAdminPanel.jsx
+// (ORG_STRUCTURE_LABEL_KEYS) هم برایِ عنوانِ هر نوع ساختار استفاده
+// می‌کنند — یک کپیِ محلیِ کوچک تا از importِ متقابل با SuperAdminPanel.jsx
+// (که خودش این فایل را import می‌کند) پرهیز شود.
+const STANDALONE_ORG_LABEL_KEYS = {
+  standalone_no_project: "trmOrgStructOpt1Title",
+  standalone_multi_project: "trmOrgStructOpt2Title",
+};
+
+// تبِ «شرکت‌های مستقل» — ساختارِ Supervisor→Expert (نوعِ «بدونِ پروژه») یا
+// Supervisor→(Project HSE + Company Expert) (نوعِ «چند پروژه») را برایِ
+// یک شرکتِ انتخاب‌شده نشان می‌دهد. هیچ نقش/جدولِ جدیدی ساخته نشده: سرپرست
+// همان حساب‌هایِ role=hse_supervisor، کارشناس همان role=employer، و
+// Project HSE همان contractors است — دقیقاً همان‌هایی که تب‌هایِ «سرپرست/
+// مدیر کارفرما»، «کارفرما/کارشناسان» و «پروژه‌ها» از قبل مدیریت می‌کنند.
+// این تب فقط یک نمایِ گروه‌بندی‌شده و برچسب‌گذاری‌شده‌ی مخصوصِ شرکت‌های
+// «مستقل» رویِ همان داده است — بدونِ تغییر در تب‌های موجود یا رفتارِ
+// شرکت‌هایِ «کارفرما/چند پیمانکار» (که اصلاً در این انتخابگر دیده نمی‌شوند).
+function OrgStructureTabPanel({ companies, currentAdmin }) {
+  const { t, dir } = useLanguage();
+  const [companyId, setCompanyId] = useState("");
+  const standaloneCompanies = companies.filter((c) => c.orgStructureType !== "employer_contractor");
+  const selectedCompany = standaloneCompanies.find((c) => c.id === companyId) || null;
+  const isMultiProject = selectedCompany?.orgStructureType === "standalone_multi_project";
+
+  return (
+    <div>
+      <p style={{ fontSize: 10.5, color: THEME.text3, marginBottom: 10, lineHeight: 1.8 }}>{t("amOrgPickCompanyNote")}</p>
+      <div style={{ marginBottom: 14 }}>
+        <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("amSelectCompanyFirst")}</label>
+        <select style={{ ...inputStyle, maxWidth: 320 }} value={companyId} onChange={(e) => setCompanyId(e.target.value)} dir={dir}>
+          <option value="">{t("amSelectPlaceholder")}</option>
+          {standaloneCompanies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+      </div>
+
+      {selectedCompany && (
+        <>
+          <p style={{ fontSize: 11, marginBottom: 14 }}>
+            <span style={{ color: THEME.text3 }}>{t("saOrgStructureLabel")}: </span>
+            <b style={{ color: THEME.heading }}>{t(STANDALONE_ORG_LABEL_KEYS[selectedCompany.orgStructureType])}</b>
+          </p>
+
+          <CompanyRoleAccountsSection
+            tab="hse_supervisor" companyId={companyId} companies={companies}
+            title={t("amOrgSupervisorSection")} addLabel={t("amOrgAddSupervisor")} emptyLabel={t("amOrgNoSupervisorYet")}
+          />
+
+          {isMultiProject && (
+            <div style={{ marginBottom: 18 }}>
+              <h4 style={{ fontSize: 12.5, fontWeight: 700, color: THEME.heading, margin: "0 0 8px" }}>{t("amTabProject")}</h4>
+              <CompanyProjectsSection companyId={companyId} companies={companies} currentAdmin={currentAdmin} />
+            </div>
+          )}
+
+          <CompanyRoleAccountsSection
+            tab="employer" companyId={companyId} companies={companies}
+            title={t("amOrgExpertsSection")} addLabel={t("amOrgAddExpert")} emptyLabel={t("amOrgNoExpertsYet")}
+          />
         </>
       )}
     </div>
