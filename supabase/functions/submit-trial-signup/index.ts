@@ -317,7 +317,10 @@ Deno.serve(async (req) => {
         full_name: fullName, phone, company_name: companyName,
         position: String(body?.position || "").trim(), industry: String(body?.industry || "").trim(),
         personnel_count: personnelCount != null && Number.isFinite(personnelCount) ? personnelCount : null,
-        project_name: String(body?.projectName || "").trim(), project_city: String(body?.projectCity || "").trim(),
+        // برایِ «مستقل/چند پروژه» فیلدِ توصیفیِ projectName دیگر در فرم نیست
+        // (با firstProjectName جایگزین شد) — همان نام برایِ تاریخچه این‌جا
+        // هم ثبت می‌شود تا این ردیف خالی نماند.
+        project_name: String(body?.projectName || firstProjectName || "").trim(), project_city: String(body?.projectCity || "").trim(),
         email, desired_modules: [], description: String(body?.description || "").trim(),
         status: "approved", approved_trial_days: TRIAL_DAYS,
         admin_note: "ثبت‌نام خودکار خودسرویس — شرکت و حساب‌ها بلافاصله ساخته شدند",
