@@ -2721,6 +2721,7 @@ export const de = {
   "email": "E-Mail",
   "amTabAdmin": "Administratorkonten",
   "amTabHseSupervisor": "Konten von Auftraggeber-Beauftragten/-Managern",
+  "headerActiveProjects": "Projekte:",
   "amTabEmployer": "Auftraggeber-/Fachkraftkonten",
   "amTabContractor": "Auftragnehmerkonten",
   "amTabProject": "Projekte",

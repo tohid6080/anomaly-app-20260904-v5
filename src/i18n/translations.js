@@ -8488,6 +8488,7 @@ export const translations = {
   "email": { "fa": "ایمیل", "en": "Email" },
   "amTabAdmin": { "fa": "حساب‌های ادمین", "en": "Admin Accounts" },
   "amTabHseSupervisor": { "fa": "حساب‌های سرپرست/مدیر کارفرما", "en": "Employer Supervisor/Manager Accounts" },
+  "headerActiveProjects": { "fa": "پروژه‌ها:", "en": "Projects:" },
   "amTabEmployer": { "fa": "حساب‌های کارفرما/کارشناسان", "en": "Employer/Specialist Accounts" },
   "amTabContractor": { "fa": "حساب‌های پیمانکار", "en": "Contractor Accounts" },
   "amTabProject": { "fa": "پروژه‌ها", "en": "Projects" },
