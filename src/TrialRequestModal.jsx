@@ -324,10 +324,15 @@ export default function TrialRequestModal({ onClose }) {
                 <label style={styles.label}>{t("trmPersonnelCount")}</label>
                 <input style={styles.input} type="number" min="0" value={personnelCount} onChange={(e) => setPersonnelCount(e.target.value)} dir="ltr" />
               </div>
-              <div>
-                <label style={styles.label}>{t("trmProjectName")}</label>
-                <input style={styles.input} value={projectName} onChange={(e) => setProjectName(e.target.value)} dir={dir} />
-              </div>
+              {/* برایِ «مستقل/چند پروژه» این فیلد با «نامِ پروژه‌ی اول» (بالاتر،
+                  اجباری) عیناً تکراری است — نشانش ندادن، نه حذفِ کامل: هر دو
+                  نوعِ دیگر هنوز به این فیلدِ اختیاریِ توصیفی نیاز دارند. */}
+              {!isMultiProject && (
+                <div>
+                  <label style={styles.label}>{t("trmProjectName")}</label>
+                  <input style={styles.input} value={projectName} onChange={(e) => setProjectName(e.target.value)} dir={dir} />
+                </div>
+              )}
               <div>
                 <label style={styles.label}>{t("trmProjectCity")}</label>
                 <input style={styles.input} value={projectCity} onChange={(e) => setProjectCity(e.target.value)} dir={dir} />
