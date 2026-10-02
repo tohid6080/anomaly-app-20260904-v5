@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import BackLink from "../shared/BackLink.jsx";
 import { Plus, Paperclip, X, CheckCircle2, Filter } from "lucide-react";
-import { styles, THEME } from "../shared.js";
+import { styles, THEME, useOrgStructureType } from "../shared.js";
 import SyncStatusBadge from "../offline/SyncStatusBadge.jsx";
 import { getQueue } from "../offline/offlineDb.js";
 import { retryItemNow } from "../offline/syncEngine.js";
@@ -10,7 +10,7 @@ import { JalaliDateInput, toJalaliSafe } from "../personnel/jalaliDate.jsx";
 import { fileToBase64 } from "../personnel/fileHelpers.js";
 import {
   loadCorrectiveActions, createCorrectiveAction, updateCorrectiveAction, approveCorrectiveAction,
-  uploadCorrectiveActionFile, loadContractorsForDropdown, computeKpis, isOverdue,
+  uploadCorrectiveActionFile, loadContractorsForDropdown, loadExpertsForDropdown, computeKpis, isOverdue,
   SOURCE_OPTIONS, PRIORITY_OPTIONS, STATUS_META, STATUS_ORDER,
 } from "./correctiveActionsApi.js";
 import {
@@ -58,7 +58,9 @@ function tripodActionToListItem(t) {
 
 const EMPTY_FORM = {
   actionNumber: "", source: "other", nonconformanceDescription: "", rootCause: "", actionDescription: "",
-  responsibleContractorId: "", responsibleContractorName: "", responsiblePerson: "", projectName: "",
+  responsibleContractorId: "", responsibleContractorName: "",
+  responsibleEmployerAccountId: "", responsibleEmployerAccountName: "",
+  responsiblePerson: "", projectName: "",
   dueDate: "", priority: "medium", status: "open", completedAt: "", executorNotes: "", attachments: [],
   approvedBy: "", approvedAt: "", approverNotes: "",
 };
@@ -69,6 +71,7 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser, wide }
   const { t, dir } = useLanguage();
   const [list, setList] = useState([]);
   const [contractors, setContractors] = useState([]);
+  const [experts, setExperts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -83,15 +86,22 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser, wide }
   const [eventSurvey, setEventSurvey] = useState(null);
 
   const isContractor = currentUser?.role === "CONTRACTOR";
+  // برایِ شرکت‌هایِ «مستقل/بدون پروژه» و «مستقل/چند پروژه» هیچ پیمانکاری
+  // وجود ندارد — مسئولِ اقدام باید یک «کارشناس» (employer_accounts) باشد،
+  // نه یک ردیفِ contractors. ساختارِ «کارفرما/چند پیمانکار» (پیش‌فرض)
+  // دقیقاً همان dropdownِ پیمانکارِ موجود را می‌بیند، بدونِ هیچ تغییری.
+  const orgStructureType = useOrgStructureType(currentUser?.companyId);
+  const isStandaloneCompany = orgStructureType === "standalone_no_project" || orgStructureType === "standalone_multi_project";
 
   const load = async () => {
-    const [rows, contractorRows, tripodRows] = await Promise.all([
-      loadCorrectiveActions(), loadContractorsForDropdown(), loadTripodCorrectiveActionsForCompany(),
+    const [rows, contractorRows, expertRows, tripodRows] = await Promise.all([
+      loadCorrectiveActions(), loadContractorsForDropdown(), loadExpertsForDropdown(), loadTripodCorrectiveActionsForCompany(),
     ]);
     const merged = [...rows, ...tripodRows.map(tripodActionToListItem)]
       .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
     setList(merged);
     setContractors(contractorRows);
+    setExperts(expertRows);
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
@@ -131,7 +141,9 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser, wide }
     setForm({
       actionNumber: a.actionNumber, source: a.source, nonconformanceDescription: a.nonconformanceDescription,
       rootCause: a.rootCause, actionDescription: a.actionDescription, responsibleContractorId: a.responsibleContractorId,
-      responsibleContractorName: a.responsibleContractorName, responsiblePerson: a.responsiblePerson, projectName: a.projectName,
+      responsibleContractorName: a.responsibleContractorName,
+      responsibleEmployerAccountId: a.responsibleEmployerAccountId, responsibleEmployerAccountName: a.responsibleEmployerAccountName,
+      responsiblePerson: a.responsiblePerson, projectName: a.projectName,
       dueDate: a.dueDate, priority: a.priority, status: a.status, completedAt: a.completedAt, executorNotes: a.executorNotes,
       attachments: a.attachments, approvedBy: a.approvedBy, approvedAt: a.approvedAt, approverNotes: a.approverNotes,
     });
@@ -233,21 +245,39 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser, wide }
         <div style={{ ...styles.card, width: "auto", marginBottom: 14 }}>
           <h3 style={{ fontSize: 13, color: THEME.heading, margin: "0 0 10px", fontWeight: 700 }}>{t("cadResponsibilityTiming")}</h3>
           <div style={styles.formGrid}>
-            <div>
-              <label style={styles.label}>{t("cadResponsibleContractor")}</label>
-              <select
-                style={styles.input}
-                value={form.responsibleContractorId}
-                onChange={(e) => {
-                  const c = contractors.find((x) => x.id === e.target.value);
-                  setForm({ ...form, responsibleContractorId: e.target.value, responsibleContractorName: c?.name || "" });
-                }}
-                dir={dir}
-              >
-                <option value="">{t("fieldSelectPlaceholder")}</option>
-                {contractors.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-            </div>
+            {isStandaloneCompany ? (
+              <div>
+                <label style={styles.label}>{t("cadResponsibleExpert")}</label>
+                <select
+                  style={styles.input}
+                  value={form.responsibleEmployerAccountId}
+                  onChange={(e) => {
+                    const ex = experts.find((x) => x.id === e.target.value);
+                    setForm({ ...form, responsibleEmployerAccountId: e.target.value, responsibleEmployerAccountName: ex?.name || "" });
+                  }}
+                  dir={dir}
+                >
+                  <option value="">{t("fieldSelectPlaceholder")}</option>
+                  {experts.map((ex) => <option key={ex.id} value={ex.id}>{ex.name}</option>)}
+                </select>
+              </div>
+            ) : (
+              <div>
+                <label style={styles.label}>{t("cadResponsibleContractor")}</label>
+                <select
+                  style={styles.input}
+                  value={form.responsibleContractorId}
+                  onChange={(e) => {
+                    const c = contractors.find((x) => x.id === e.target.value);
+                    setForm({ ...form, responsibleContractorId: e.target.value, responsibleContractorName: c?.name || "" });
+                  }}
+                  dir={dir}
+                >
+                  <option value="">{t("fieldSelectPlaceholder")}</option>
+                  {contractors.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+            )}
             <div>
               <label style={styles.label}>{t("cadResponsibleExecutorName")}</label>
               <input style={styles.input} value={form.responsiblePerson} onChange={(e) => setForm({ ...form, responsiblePerson: e.target.value })} dir={dir} />
@@ -421,6 +451,7 @@ export default function CorrectiveActionsDashboard({ onBack, currentUser, wide }
               <div style={{ fontSize: 12, color: THEME.text2, marginTop: 5 }}>{a.nonconformanceDescription.slice(0, 130)}{a.nonconformanceDescription.length > 130 ? "…" : ""}</div>
               <div style={{ fontSize: 10.5, color: THEME.text3, marginTop: 5 }}>
                 {a.responsibleContractorName && <>{t("cadContractorInline", { name: a.responsibleContractorName })}</>}
+                {a.responsibleEmployerAccountName && <>{t("cadExpertInline", { name: a.responsibleEmployerAccountName })}</>}
                 {a.responsiblePerson && <>{t("cadResponsibleInline", { name: a.responsiblePerson })}</>}
                 {a.dueDate && <>{t("cadDueInline", { date: toJalaliSafe(a.dueDate) })}</>}
                 {a.createdAt && <>{t("cadCreatedInline", { date: toJalaliSafe(a.createdAt) })}</>}

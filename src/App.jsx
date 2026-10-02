@@ -102,6 +102,8 @@ import DocumentViewerModal from "./personnel/DocumentViewerModal.jsx";
 import LandingPage, { mergeLandingButtons } from "./LandingPage.jsx";
 import LiveChatWidget from "./livechat/LiveChatWidget.jsx";
 import PlatformSurveyPrompt from "./platformSurvey/PlatformSurveyPrompt.jsx";
+import MyActiveActionsPanel from "./correctiveActions/MyActiveActionsPanel.jsx";
+import { loadMyActiveCorrectiveActions, loadPendingReviewCorrectiveActions, isOverdue as isCorrectiveActionOverdue } from "./correctiveActions/correctiveActionsApi.js";
 import { checkEventSurvey } from "./platformSurvey/platformSurveyApi.js";
 import { APP_NAME, sb, sbOk, sbErrMsg, uid, todayISO, THEME, styles, usePersistedState, setCurrentCompanyId, getCurrentCompanyId, loadCurrentCompanyPlanFeatures, isModuleInPlan, filterSubByPlan, resizeImageFile } from "./shared.js";
 
@@ -757,6 +759,21 @@ function computePssrSmartItems(myOpenActions) {
       : tr("smartPssrActionOpen", { count: myOpenActions.length }),
     target: { module: "pssr" },
   }];
+}
+
+// همان فلسفه‌ی زنده‌محاسبه‌شده — برایِ اقدام‌هایِ اصلاحیِ «دردستِ اقدام»
+// خودِ کاربر (myActiveActions از loadMyActiveCorrectiveActions) و، فقط
+// برایِ سرپرست، تعدادِ منتظرِ تأییدِ کل شرکت.
+function computeCorrectiveActionSmartItems(myActiveActions, pendingReviewCount) {
+  const items = [];
+  const todayStr = new Date().toDateString();
+  const mine = myActiveActions || [];
+  const overdueCount = mine.filter(isCorrectiveActionOverdue).length;
+  const dueTodayCount = mine.filter((a) => !isCorrectiveActionOverdue(a) && a.dueDate && new Date(a.dueDate).toDateString() === todayStr).length;
+  if (overdueCount > 0) items.push({ key: "ca-overdue-mine", label: tr("smartCaOverdueMine", { count: overdueCount }), target: { module: "correctiveActions" } });
+  if (dueTodayCount > 0) items.push({ key: "ca-due-today-mine", label: tr("smartCaDueTodayMine", { count: dueTodayCount }), target: { module: "correctiveActions" } });
+  if (pendingReviewCount > 0) items.push({ key: "ca-pending-review", label: tr("smartCaPendingReview", { count: pendingReviewCount }), target: { module: "correctiveActions" } });
+  return items;
 }
 
 // طبقه‌بندی هر آیتم زنده‌محاسبه‌شده‌ی اعلان به یکی از انواع رجیستری
@@ -4526,6 +4543,11 @@ function WelcomeScreen({ currentUser, setView, onNavigate, sidebarModules }) {
 
   return (
     <div>
+      {/* فقط برایِ شرکت‌هایِ «مستقل» خودش را نشان می‌دهد (self-gating داخلی
+          با useOrgStructureType) — طبقِ خواسته‌ی صریح، «امروز چه چیزی نیاز
+          به اقدام دارد» باید اولین چیزِ دیده‌شده باشد، پیش از کارت‌هایِ
+          عمومیِ خوش‌آمدگویی/اطلاعیه. */}
+      <MyActiveActionsPanel currentUser={currentUser} onOpenModule={() => setView("correctiveActionsList")} />
       {homeBlocks.map(renderHomeBlock)}
       <PlatformSurveyPrompt kind="welcome" currentUser={currentUser} />
     </div>
@@ -5041,7 +5063,13 @@ function EmployerDashboard({ onLogout, currentUser }) {
   }, [currentUser?.id]);
 
   const loadNotifs = async () => {
-    const [allPersonnel, allAnomalies, allMachinery, allPermits, notifTypes, myPssrActions] = await Promise.all([loadPersonnelList(), loadAnomaliesOfflineFirst(), loadMachineryListOfflineFirst(), loadPermits().catch(() => []), loadNotificationTypes().catch(() => null), loadOpenActionsForResponsible("employer", currentUser?.id).catch(() => [])]);
+    const isSupervisorForNotifs = currentUser?.role === "HSE_SUPERVISOR";
+    const [allPersonnel, allAnomalies, allMachinery, allPermits, notifTypes, myPssrActions, myCaActions, caPendingReview] = await Promise.all([
+      loadPersonnelList(), loadAnomaliesOfflineFirst(), loadMachineryListOfflineFirst(), loadPermits().catch(() => []), loadNotificationTypes().catch(() => null),
+      loadOpenActionsForResponsible("employer", currentUser?.id).catch(() => []),
+      loadMyActiveCorrectiveActions("employer", currentUser?.id).catch(() => []),
+      isSupervisorForNotifs ? loadPendingReviewCorrectiveActions().catch(() => []) : Promise.resolve([]),
+    ]);
     await checkAndUpdateDeadlines(allPersonnel); // فقط برای انتقال خودکار به «منقضی» — دیگر اعلان ثبت نمی‌کند
     const barrierAlerts = await loadDegradedBarrierAlerts().catch(() => []);
     const rawItems = [
@@ -5049,6 +5077,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       ...computeMachinerySmartItems(allMachinery, undefined, notifTypes?.find((t) => t.typeKey === "machinery_expiring")?.warningDays),
       ...computePermitSmartItems(allPermits, undefined, undefined, notifTypes?.find((t) => t.typeKey === "permit_expiring")?.warningDays),
       ...computePssrSmartItems(myPssrActions),
+      ...computeCorrectiveActionSmartItems(myCaActions, caPendingReview.length),
       ...barrierAlerts, // فاز ۴: هشدار کاهش اثربخشی Barrier — برای کارفرما/HSE بدون محدودیت پیمانکار
       // داربست عمداً اینجا نیست — طبق خواسته‌ی کاربر، این ماژول توی زنگوله اعلان نمی‌شود
     ];
@@ -5487,7 +5516,11 @@ function ContractorDashboard({ onLogout, currentUser }) {
   }, [currentUser?.id]);
 
   const loadNotifs = async () => {
-    const [personnelList, allAnomalies, allMachinery, allPermits, notifTypes, myPssrActions] = await Promise.all([loadPersonnelList(), loadAnomaliesOfflineFirst(), loadMachineryListOfflineFirst(), loadPermits().catch(() => []), loadNotificationTypes().catch(() => null), loadOpenActionsForResponsible("contractor", currentUser?.id).catch(() => [])]);
+    const [personnelList, allAnomalies, allMachinery, allPermits, notifTypes, myPssrActions, myCaActions] = await Promise.all([
+      loadPersonnelList(), loadAnomaliesOfflineFirst(), loadMachineryListOfflineFirst(), loadPermits().catch(() => []), loadNotificationTypes().catch(() => null),
+      loadOpenActionsForResponsible("contractor", currentUser?.id).catch(() => []),
+      loadMyActiveCorrectiveActions("contractor", currentUser?.id).catch(() => []),
+    ]);
     await checkAndUpdateDeadlines(personnelList); // فقط برای انتقال خودکار به «منقضی» — دیگر اعلان ثبت نمی‌کند
     const barrierAlerts = await loadDegradedBarrierAlerts(currentUser?.name).catch(() => []);
     const rawItems = [
@@ -5495,6 +5528,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
       ...computeMachinerySmartItems(allMachinery, currentUser?.name, notifTypes?.find((t) => t.typeKey === "machinery_expiring")?.warningDays),
       ...computePermitSmartItems(allPermits, currentUser?.name, currentUser?.name, notifTypes?.find((t) => t.typeKey === "permit_expiring")?.warningDays),
       ...computePssrSmartItems(myPssrActions),
+      ...computeCorrectiveActionSmartItems(myCaActions, 0),
       ...barrierAlerts, // فاز ۴: فقط بریرهایی که «این پیمانکار» در شواهدشان نقش دارد («پیمانکار مرتبط»)
       // داربست عمداً اینجا نیست — طبق خواسته‌ی کاربر، این ماژول توی زنگوله اعلان نمی‌شود
     ];

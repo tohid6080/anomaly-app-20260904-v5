@@ -60,6 +60,8 @@ function fromRow(r) {
     actionDescription: r.action_description || "",
     responsibleContractorId: r.responsible_contractor_id || "",
     responsibleContractorName: r.responsible_contractor_name || "",
+    responsibleEmployerAccountId: r.responsible_employer_account_id || "",
+    responsibleEmployerAccountName: r.responsible_employer_account_name || "",
     responsiblePerson: r.responsible_person || "",
     projectName: r.project_name || "",
     dueDate: r.due_date || "",
@@ -92,6 +94,8 @@ function toDb(rec) {
     action_description: rec.actionDescription || null,
     responsible_contractor_id: rec.responsibleContractorId || null,
     responsible_contractor_name: rec.responsibleContractorName || null,
+    responsible_employer_account_id: rec.responsibleEmployerAccountId || null,
+    responsible_employer_account_name: rec.responsibleEmployerAccountName || null,
     responsible_person: rec.responsiblePerson || null,
     project_name: rec.projectName || null,
     due_date: rec.dueDate || null,
@@ -213,6 +217,36 @@ export async function approveCorrectiveAction(id, approvedBy, approverNotes) {
   });
 }
 
+// ردِ یک اقدامِ «منتظرِ تأیید» — چون این لیست هیچ وضعیتِ جداگانه‌ی
+// «رد‌شده» ندارد، دقیقاً مثلِ بقیه‌ی گردش‌کار، به «باز» برمی‌گردد تا
+// مسئول دوباره رویش کار کند؛ یادداشتِ تأییدکننده (چرا رد شد) حفظ می‌شود.
+export async function rejectCorrectiveAction(id, approverNotes) {
+  return updateCorrectiveAction(id, { status: "open", approverNotes: approverNotes || "" });
+}
+
+// ---------- «کارهای من» — برایِ پنلِ خلاصه‌یِ شرکت‌هایِ مستقل ----------
+// دقیقاً همان فلسفه‌یِ loadOpenActionsForResponsible در pssrMeetingsApi.js:
+// اقدام‌هایِ غیرِبسته‌ که مسئولشان همین حساب است — چه پیمانکار (ساختارِ
+// فعلی) چه کارشناس (ساختارِ مستقل). «منقضی‌شده» هم کنار «بسته‌شده» از این
+// فهرست حذف می‌شود چون هر دو وضعیتِ پایانی‌اند، نه کاری که «دردستِ اقدام» باشد.
+export async function loadMyActiveCorrectiveActions(accountType, accountId) {
+  if (!accountId) return [];
+  const companyId = getCurrentCompanyId();
+  const companyFilter = companyId ? `&company_id=eq.${companyId}` : "";
+  const field = accountType === "employer" ? "responsible_employer_account_id" : "responsible_contractor_id";
+  const rows = await sb(`corrective_actions?${field}=eq.${accountId}&status=neq.closed&status=neq.expired${companyFilter}&select=*&order=due_date.asc`);
+  return sbOk(rows) ? rows.map((r) => fromRow(r)) : [];
+}
+
+// اقدام‌هایِ «منتظرِ تأییدِ» سرپرست — فقط برایِ نقشِ HSE_SUPERVISOR استفاده
+// می‌شود (دقیقاً همان دروازه‌یِ isReviewer که تأیید/ردِ دستی هم دارد).
+export async function loadPendingReviewCorrectiveActions() {
+  const companyId = getCurrentCompanyId();
+  const filter = companyId ? `&company_id=eq.${companyId}` : "";
+  const rows = await sb(`corrective_actions?status=eq.done_pending_approval${filter}&select=*&order=completed_at.asc`);
+  return sbOk(rows) ? rows.map((r) => fromRow(r)) : [];
+}
+
 // ---------- اتصال به موتور اثربخشی BowTie (فاز ۴) ----------
 // آیا همین الان یک اقدام اصلاحیِ «باز» (هر وضعیتی جز بسته‌شده) برای این
 // Barrier وجود دارد؟ — پایه‌ی جلوگیری از تکرار در بازمحاسبه‌های بعدی.
@@ -271,6 +305,17 @@ export async function loadContractorsForDropdown() {
   const companyId = getCurrentCompanyId();
   const filter = companyId ? `&company_id=eq.${companyId}` : "";
   const rows = await sb(`contractors?select=id,name&order=name.asc${filter}`);
+  return sbOk(rows) ? rows.map((r) => ({ id: r.id, name: r.name })) : [];
+}
+
+// ---------- کمکی: لیست کارشناسان برای dropdown «مسئول» شرکت‌هایِ مستقل ----------
+// فقط برایِ شرکت‌هایِ «مستقل/بدون پروژه» و «مستقل/چند پروژه» استفاده
+// می‌شود — جایگزینِ loadContractorsForDropdown برایِ این دو نوع شرکت،
+// چون آن‌ها اصلاً پیمانکار ندارند.
+export async function loadExpertsForDropdown() {
+  const companyId = getCurrentCompanyId();
+  const filter = companyId ? `&company_id=eq.${companyId}` : "";
+  const rows = await sb(`employer_accounts?role=eq.employer&select=id,name&order=name.asc${filter}`);
   return sbOk(rows) ? rows.map((r) => ({ id: r.id, name: r.name })) : [];
 }
 
