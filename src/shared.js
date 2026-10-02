@@ -137,6 +137,23 @@ export function getCurrentCompanyId() {
   return _currentCompanyId;
 }
 
+// نوعِ ساختارِ سازمانیِ شرکتِ داده‌شده — "" یعنی هنوز نیامده یا شرکتی در
+// کار نیست. هر کامپوننتی که لازم دارد بداند شرکتِ جاری «مستقل/بدون
+// پروژه»، «مستقل/چند پروژه» یا (پیش‌فرض) «کارفرما/چند پیمانکار» است،
+// به‌جایِ کوئریِ جداگانه، همین یک هوکِ مشترک را صدا می‌زند — دقیقاً همان
+// policyِ companies_own_row_read (id = current_company_id()) که برایِ
+// هر نقشی کار می‌کند.
+export function useOrgStructureType(companyId) {
+  const [orgStructureType, setOrgStructureType] = useState("");
+  useEffect(() => {
+    if (!companyId) { setOrgStructureType(""); return; }
+    sb(`companies?id=eq.${companyId}&select=org_structure_type`).then((rows) => {
+      setOrgStructureType(sbOk(rows) && rows.length > 0 ? (rows[0].org_structure_type || "") : "");
+    }).catch(() => setOrgStructureType(""));
+  }, [companyId]);
+  return orgStructureType;
+}
+
 export function sbOk(rows) {
   return Array.isArray(rows);
 }

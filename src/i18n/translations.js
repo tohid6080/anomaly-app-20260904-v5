@@ -5116,6 +5116,10 @@ export const translations = {
     "fa": "شرکت / پیمانکار مسئول",
     "en": "Responsible Company / Contractor"
   },
+  "cadResponsibleExpert": {
+    "fa": "کارشناسِ مسئول",
+    "en": "Responsible Expert"
+  },
   "cadResponsibleExecutorName": {
     "fa": "مسئول اجرا (نام شخص)",
     "en": "Executing Person (Name)"
@@ -5235,6 +5239,10 @@ export const translations = {
   "cadContractorInline": {
     "fa": "پیمانکار: {name} · ",
     "en": "Contractor: {name} · "
+  },
+  "cadExpertInline": {
+    "fa": "کارشناس: {name} · ",
+    "en": "Expert: {name} · "
   },
   "cadResponsibleInline": {
     "fa": "مسئول: {name} · ",
@@ -10476,6 +10484,28 @@ export const translations = {
   "smartPermitExpiringSelf": { "fa": "{count} مجوز کار فعال شما نزدیک به پایان اعتبار است", "en": "{count} of your active work permits are near their expiry" },
   "smartPssrActionOpen": { "fa": "{count} Action باز PSSR به شما واگذار شده است", "en": "{count} open PSSR actions are assigned to you" },
   "smartPssrActionOpenWithCatA": { "fa": "{count} Action باز PSSR به شما واگذار شده ({catA} مورد CAT A)", "en": "{count} open PSSR actions are assigned to you ({catA} CAT A)" },
+  "smartCaOverdueMine": { "fa": "{count} اقدامِ اصلاحیِ شما سررسید گذشته است", "en": "{count} of your corrective actions are overdue" },
+  "smartCaDueTodayMine": { "fa": "{count} اقدامِ اصلاحیِ شما امروز سررسید دارد", "en": "{count} of your corrective actions are due today" },
+  "smartCaPendingReview": { "fa": "{count} اقدامِ اصلاحی منتظرِ تأیید شماست", "en": "{count} corrective actions are pending your approval" },
+
+  // MyActiveActionsPanel.jsx — پنلِ «کارهایِ در دستِ اقدام» برای شرکت‌هایِ مستقل
+  "maapTitleSupervisor": { "fa": "امروز چه چیزی نیاز به اقدام دارد؟", "en": "What needs action today?" },
+  "maapTitleExpert": { "fa": "کارهای من امروز", "en": "My tasks today" },
+  "maapSubtitle": { "fa": "فقط کارهایِ در دستِ اقدام — موارد تأیید‌وبسته‌شده این‌جا نمایش داده نمی‌شوند.", "en": "Only tasks still pending action — approved/closed items are not shown here." },
+  "maapAllClear": { "fa": "همه‌چیز مرتب است — هیچ کاری در دستِ اقدام نیست.", "en": "All clear — nothing pending action." },
+  "maapGroupOverdue": { "fa": "سررسید گذشته", "en": "Overdue" },
+  "maapGroupDueToday": { "fa": "امروز سررسید دارد", "en": "Due today" },
+  "maapGroupPendingReview": { "fa": "در انتظار تأیید من", "en": "Pending my review" },
+  "maapGroupOther": { "fa": "سایرِ کارهای باز", "en": "Other active" },
+  "maapDueLabel": { "fa": "سررسید:", "en": "Due:" },
+  "maapAssigneeLabel": { "fa": "مسئول:", "en": "Assignee:" },
+  "maapApprove": { "fa": "تأیید", "en": "Approve" },
+  "maapReject": { "fa": "رد", "en": "Reject" },
+  "maapMarkDone": { "fa": "ثبتِ انجام‌شد", "en": "Mark as done" },
+  "maapKpiOpenActions": { "fa": "اقدامِ باز", "en": "Open actions" },
+  "maapKpiOverdue": { "fa": "سررسیدگذشته", "en": "Overdue" },
+  "maapKpiOpenAnomalies": { "fa": "آنومالیِ باز", "en": "Open anomalies" },
+  "maapKpiPendingReview": { "fa": "منتظرِ تأیید", "en": "Pending review" },
 
   // App.jsx: account-deactivated, change password, biometric confirm
   "appDeactivatedTitle": { "fa": "دسترسی قطع شد", "en": "Access revoked" },
