@@ -15,13 +15,12 @@ const TABS = [
   { key: "hse_supervisor", labelKey: "amTabHseSupervisor" },
   { key: "employer", labelKey: "amTabEmployer" },
   { key: "contractor", labelKey: "amTabContractor" },
-  { key: "project", labelKey: "amTabProject" },
   { key: "orgStructure", labelKey: "amTabOrgStructure" },
 ];
 
 // تب‌هایی که جدولِ حساب‌هایِ معمولیِ همین کامپوننت را ندارند — دیتایِ خودشان
 // را مستقلاً (با انتخابگرِ شرکتِ خودشان) بارگذاری می‌کنند.
-const TABS_WITHOUT_ACCOUNTS_TABLE = ["project", "orgStructure"];
+const TABS_WITHOUT_ACCOUNTS_TABLE = ["orgStructure"];
 
 // دقیقاً همان الگوی اعتبارسنجی فرم‌های دیگر پروژه (PersonnelForm) — موبایل
 // ایرانی ۱۱ رقمی با ۰۹ شروع می‌شود
@@ -56,8 +55,8 @@ export default function AccountManagement({ currentAdmin }) {
   // صفحه‌بندی می‌ماند — companyName()/Dropdownِ AccountForm به کلِ فهرست
   // نیاز دارند. فقط جدولِ خودِ حساب‌ها (accounts) از سرور صفحه‌بندی/
   // جستجو می‌شود. تب‌هایِ TABS_WITHOUT_ACCOUNTS_TABLE جدولِ حساب‌های معمولی
-  // ندارند — دیتایِ خودشان را مستقلاً داخلِ ProjectsTabPanel/
-  // OrgStructureTabPanel بارگذاری می‌کنند.
+  // ندارند — دیتایِ خودشان را مستقلاً داخلِ OrgStructureTabPanel بارگذاری
+  // می‌کنند.
   const load = async () => {
     setLoading(true);
     const comp = await loadCompanies();
@@ -194,9 +193,7 @@ export default function AccountManagement({ currentAdmin }) {
         ))}
       </div>
 
-      {tab === "project" ? (
-        <ProjectsTabPanel companies={companies} currentAdmin={currentAdmin} />
-      ) : tab === "orgStructure" ? (
+      {tab === "orgStructure" ? (
         <OrgStructureTabPanel companies={companies} currentAdmin={currentAdmin} />
       ) : (
       <>
@@ -445,10 +442,12 @@ export function AccountForm({ tab, form, setForm, companies, onSave, saving, sav
 // آن فهرست) به‌عنوانِ «افرادِ HSE داخلِ آن پروژه» استفاده می‌شود — دقیقاً
 // همان الگویی که برایِ «شرکت‌های پیمانکاریِ زیرمجموعه» در CompanyManagePanel
 // (سوپرادمین → شرکت‌ها) از قبل هست.
-// استخراج‌شده (بدونِ تغییرِ رفتار) تا هم تبِ «پروژه‌ها» (ProjectsTabPanel،
-// انتخابگرِ شرکتِ سراسری) و هم تبِ «شرکت‌های مستقل» (OrgStructureTabPanel،
-// فقط برایِ نوعِ «مستقل/چند پروژه») از همین یک کامپوننت استفاده کنند —
-// بدونِ تکرارِ منطقِ CRUD پروژه/افراد در دو جا.
+// استخراج‌شده (بدونِ تغییرِ رفتار) تا تبِ «شرکت‌های مستقل»
+// (OrgStructureTabPanel، فقط برایِ نوعِ «مستقل/چند پروژه») بتواند همین
+// منطقِ CRUD پروژه/افراد را بدونِ بازنویسی استفاده کند — پیش‌تر یک تبِ
+// جداگانه‌ی «پروژه‌ها» هم همین کامپوننت را با انتخابگرِ شرکتِ سراسری نشان
+// می‌داد، ولی چون خروجیِ آن زیرمجموعه‌ی کاملِ همین تب بود (همین بخش +
+// سرپرست + کارشناسان شرکت)، طبقِ خواسته‌ی صریح در همین‌جا ادغام و حذف شد.
 function CompanyProjectsSection({ companyId, companies, currentAdmin }) {
   const { t, dir } = useLanguage();
   const [projects, setProjects] = useState([]);
@@ -683,28 +682,6 @@ function CompanyProjectsSection({ companyId, companies, currentAdmin }) {
             })
           )}
     </>
-  );
-}
-
-// تبِ «پروژه‌ها» — انتخابگرِ شرکتِ سراسری (هر نوع شرکتی) + نمایشِ
-// CompanyProjectsSection برایِ شرکتِ انتخاب‌شده. برایِ شرکت‌هایِ «مستقل/چند
-// پروژه» همین یک کامپوننت، داخلِ تبِ «شرکت‌های مستقل» هم دوباره استفاده
-// می‌شود (رجوع به OrgStructureTabPanel) — بدونِ هیچ تغییری در رفتارِ این‌جا.
-function ProjectsTabPanel({ companies, currentAdmin }) {
-  const { t, dir } = useLanguage();
-  const [companyId, setCompanyId] = useState("");
-  return (
-    <div>
-      <p style={{ fontSize: 10.5, color: THEME.text3, marginBottom: 10, lineHeight: 1.8 }}>{t("saProjectsNote")}</p>
-      <div style={{ marginBottom: 14 }}>
-        <label style={{ fontSize: 11, color: THEME.text2, fontWeight: 600, display: "block", marginBottom: 4 }}>{t("amSelectCompanyFirst")}</label>
-        <select style={{ ...inputStyle, maxWidth: 320 }} value={companyId} onChange={(e) => setCompanyId(e.target.value)} dir={dir}>
-          <option value="">{t("amSelectPlaceholder")}</option>
-          {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-      </div>
-      {companyId && <CompanyProjectsSection companyId={companyId} companies={companies} currentAdmin={currentAdmin} />}
-    </div>
   );
 }
 

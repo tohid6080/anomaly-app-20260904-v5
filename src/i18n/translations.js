@@ -3055,10 +3055,6 @@ export const translations = {
     "fa": "نامِ «{name}» از فهرست حذف شود؟ حساب‌های پیمانکاریِ قبلاً ساخته‌شده با این نام دست‌نخورده می‌مانند.",
     "en": "Remove \"{name}\" from the list? Contractor accounts already created with this name are unaffected."
   },
-  "saProjectsNote": {
-    "fa": "این فهرست فقط برایِ شرکت‌هایِ «مستقل/چند پروژه» معنا دارد. هر پروژه می‌تواند چند حسابِ کاربریِ HSE داخلِ خودش داشته باشد.",
-    "en": "This list is only relevant for \"standalone/multi-project\" companies. Each project can have several HSE user accounts inside it."
-  },
   "saProjectNamePlaceholder": {
     "fa": "نامِ پروژه را وارد کنید",
     "en": "Enter the project's name"

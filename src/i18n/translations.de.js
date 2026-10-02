@@ -4804,7 +4804,6 @@ export const de = {
   "saAddContractorAccount": "Nachunternehmer-Konto hinzufügen",
   "saDeleteContractorCompanyTitle": "Aus der Liste entfernen",
   "saDeleteContractorCompanyConfirm": "„{name}“ aus der Liste entfernen? Bereits erstellte Nachunternehmer-Konten mit diesem Namen bleiben unverändert.",
-  "saProjectsNote": "Diese Liste ist nur für Unternehmen vom Typ „unabhängig/mehrere Projekte“ relevant. Jedes Projekt kann mehrere HSE-Benutzerkonten enthalten.",
   "saProjectNamePlaceholder": "Projektnamen eingeben",
   "saAddProject": "Zur Liste hinzufügen",
   "saNoProjects": "Dieses Unternehmen hat noch keine Projekte.",
