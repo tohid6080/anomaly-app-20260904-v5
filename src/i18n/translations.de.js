@@ -5054,4 +5054,11 @@ export const de = {
   "pwsActiveExpertsTitle": "Im Unternehmen aktive Fachkräfte für dieses Projekt",
   "pwsTasksTitle": "Maßnahmen dieses Projekts",
   "pwsNoTasks": "Für dieses Projekt sind keine Korrekturmaßnahmen erfasst.",
+
+  "pfProjectLabel": "Projekt",
+  "pfErrProjectRequired": "Die Auswahl eines Projekts ist erforderlich",
+  "pfLoadingProjects": "Projektliste wird geladen …",
+  "scaffCodeManagerTitleProject": "Projekt-Gerüst-Tag-Codes",
+  "scaffCodeManagerDescProject": "Jedes Projekt benötigt einen zweistelligen Code, um ein Gerüst-Tag zu erhalten (z. B. Songun = SO). Solange dieser Code nicht festgelegt ist, kann dieses Projekt kein neues Tag beantragen.",
+  "scaffNoProjectsYet": "Es wurde noch kein Projekt im System registriert.",
 };

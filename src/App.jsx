@@ -5220,6 +5220,11 @@ function EmployerDashboard({ onLogout, currentUser }) {
   // Employer/Contractor، نه «مستقل/بدون‌پروژه» که اصلاً چند پروژه ندارد).
   const projectsOrgStructureType = useOrgStructureType(currentUser?.companyId);
   const canManageProjects = isSupervisor && projectsOrgStructureType === "standalone_multi_project";
+  // شرکت‌هایِ «مستقل» اصلاً پیمانکارِ واقعی ندارند — ماژولِ «ارزیابیِ عملکردِ
+  // HSEِ پیمانکاران» و تنظیماتش برایشان بی‌معناست (نه فقط بد-برچسب، بلکه
+  // خودِ مفهومِ کسب‌وکار اصلاً صدق نمی‌کند)، پس کامل مخفی می‌شود — نه فقط
+  // برایِ سرپرست، برایِ هر نقشی در این شرکت.
+  const isStandaloneCompany = projectsOrgStructureType === "standalone_no_project" || projectsOrgStructureType === "standalone_multi_project";
   const systemManagementEntry = isSupervisor && isModuleInPlan(planFeatures, "systemManagement") ? {
     key: "systemManagement", icon: Settings, label: t("moduleSystemManagement"),
     sub: [
@@ -5231,7 +5236,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       isModuleInPlan(planFeatures, "chatAccessManagement") && { key: "chatAccessManagement", label: t("subChatAccess") },
       isModuleInPlan(planFeatures, "hcmsMatrixManagement") && { key: "hcmsMatrixManagement", label: t("subHcmsMatrix") },
       isModuleInPlan(planFeatures, "effectivenessThresholds") && { key: "effectivenessThresholds", label: t("subEffectivenessThresholds") },
-      isModuleInPlan(planFeatures, "contractorEvalSettings") && { key: "contractorEvalSettings", label: t("subContractorEvalSettings") },
+      !isStandaloneCompany && isModuleInPlan(planFeatures, "contractorEvalSettings") && { key: "contractorEvalSettings", label: t("subContractorEvalSettings") },
       isModuleInPlan(planFeatures, "riskKnowledgeManagement") && { key: "riskKnowledgeManagement", label: t("subRiskKnowledge") },
       isModuleInPlan(planFeatures, "anomalyCategoryManagement") && { key: "anomalyCategoryManagement", label: t("subAnomalyCategories") },
     ].filter(Boolean),
@@ -5240,7 +5245,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
   // دقیقاً همان فیلتر مجوز+پلن که منوی موبایل استفاده می‌کند — فقط این‌بار
   // به‌شکل داده برای Sidebar، بدون تکرار منطق فیلترکردن.
   const sidebarModules = applyModuleConfig([
-    ...HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key)).map((mod) => ({
+    ...HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key) && !(mod.key === "contractorHseEvaluation" && isStandaloneCompany)).map((mod) => ({
       key: mod.key,
       icon: MODULE_ICON[mod.key] || LayoutGrid,
       label: mt(mod),
@@ -5286,7 +5291,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       {view === "modules" && (
         <MobileModuleList
           items={[
-            ...applyModuleConfig(HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key)), moduleConfig).map((mod) => ({
+            ...applyModuleConfig(HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key) && !(mod.key === "contractorHseEvaluation" && isStandaloneCompany)), moduleConfig).map((mod) => ({
               key: mod.key,
               icon: MODULE_ICON[mod.key] || LayoutGrid,
               label: mt(mod),
@@ -5436,7 +5441,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
           focusPersonnelName={assessmentContext?.personnelName}
         />
       )}
-      {view === "contractorHseEvaluation" && (
+      {!isStandaloneCompany && view === "contractorHseEvaluation" && (
         <ContractorEvalDashboard
           wide={isDesktop}
           role="EMPLOYER"
@@ -5653,7 +5658,12 @@ function ContractorDashboard({ onLogout, currentUser }) {
     </div>
   );
 
-  const sidebarModules = applyModuleConfig(HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key)).map((mod) => ({
+  // «ارزیابیِ عملکردِ HSEِ پیمانکاران» برایِ یک حسابِ CONTRACTOR در شرکتِ
+  // مستقل هم بی‌معناست — او خودش «HSE پروژه» است، نه یک پیمانکارِ واقعی که
+  // کارفرما قرار است ارزیابی‌اش کند.
+  const contractorOrgStructureType = useOrgStructureType(currentUser?.companyId);
+  const isStandaloneCompany = contractorOrgStructureType === "standalone_no_project" || contractorOrgStructureType === "standalone_multi_project";
+  const sidebarModules = applyModuleConfig(HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key) && !(mod.key === "contractorHseEvaluation" && isStandaloneCompany)).map((mod) => ({
     key: mod.key,
     icon: MODULE_ICON[mod.key] || LayoutGrid,
     label: mt(mod),
@@ -5691,7 +5701,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
       {/* موبایل: تبِ «ماژول‌ها» — جست‌وجوشونده و گروه‌بندی‌شده، همان ترتیبِ Sidebarِ دسکتاپ. */}
       {view === "modules" && (
         <MobileModuleList
-          items={applyModuleConfig(HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key)), moduleConfig).map((mod) => ({
+          items={applyModuleConfig(HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key) && !(mod.key === "contractorHseEvaluation" && isStandaloneCompany)), moduleConfig).map((mod) => ({
             key: mod.key,
             icon: MODULE_ICON[mod.key] || LayoutGrid,
             label: mt(mod),
@@ -5801,7 +5811,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
           focusPersonnelName={assessmentContext?.personnelName}
         />
       )}
-      {view === "contractorHseEvaluation" && (
+      {!isStandaloneCompany && view === "contractorHseEvaluation" && (
         <ContractorEvalDashboard
           wide={isDesktop}
           role="CONTRACTOR"

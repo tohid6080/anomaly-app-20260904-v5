@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import BackLink from "../shared/BackLink.jsx";
 import { AlertTriangle } from "lucide-react";
-import { styles, THEME, isValidMobile } from "../shared.js";
+import { styles, THEME, isValidMobile, useOrgStructureType } from "../shared.js";
 import { JalaliDateInput } from "./jalaliDate.jsx";
 import DocUploadField from "./DocUploadField.jsx";
 import DocumentViewerModal from "./DocumentViewerModal.jsx";
@@ -25,6 +25,12 @@ function isValidNationalCode(code) {
 
 export default function PersonnelForm({ onBack, onSaved, currentUser, wide, embedded }) {
   const { t, dir } = useLanguage();
+  // شرکت‌هایِ «مستقل» پیمانکارِ واقعی ندارند — این فیلد همان مکانیزمِ
+  // contractors را برایِ انتخابِ «پروژه» استفاده می‌کند (چون این‌جا هیچ
+  // project_id تازه‌ای تزریق نمی‌شود)، فقط برچسبش برایِ این نوع شرکت عوض
+  // می‌شود تا کاربر را گیج نکند.
+  const orgStructureType = useOrgStructureType(currentUser?.companyId);
+  const isStandaloneCompany = orgStructureType === "standalone_no_project" || orgStructureType === "standalone_multi_project";
   const [contractors, setContractors] = useState([]);
   const [loadingContractors, setLoadingContractors] = useState(true);
 
@@ -72,7 +78,7 @@ export default function PersonnelForm({ onBack, onSaved, currentUser, wide, embe
     if (!fullName.trim() || fullName.trim().length < 3) er.fullName = t("pfErrFullName");
     if (!nationalCode.trim()) er.nationalCode = t("pfErrNationalCodeRequired");
     else if (!isValidNationalCode(nationalCode.trim())) er.nationalCode = t("pfErrNationalCodeInvalid");
-    if (!contractorId) er.contractorId = t("pfErrContractorRequired");
+    if (!contractorId) er.contractorId = isStandaloneCompany ? t("pfErrProjectRequired") : t("pfErrContractorRequired");
     if (!jobTitle.trim()) er.jobTitle = t("pfErrJobTitleRequired");
     if (!phone.trim()) er.phone = t("pfErrPhoneRequired");
     else if (!isValidMobile(phone)) er.phone = t("pfErrPhoneInvalid");
@@ -157,11 +163,11 @@ export default function PersonnelForm({ onBack, onSaved, currentUser, wide, embe
 
         <div style={pairStyle}>
           <div>
-            <label style={styles.label}>{t("pfContractorCompany")}</label>
+            <label style={styles.label}>{isStandaloneCompany ? t("pfProjectLabel") : t("pfContractorCompany")}</label>
             {currentUser?.role === "CONTRACTOR" ? (
               <input style={{ ...styles.input, background: THEME.bg, color: THEME.text3 }} value={currentUser?.name || ""} disabled dir={dir} />
             ) : loadingContractors ? (
-              <p style={{ fontSize: 12.5, color: THEME.text3 }}>{t("pfLoadingContractors")}</p>
+              <p style={{ fontSize: 12.5, color: THEME.text3 }}>{isStandaloneCompany ? t("pfLoadingProjects") : t("pfLoadingContractors")}</p>
             ) : (
               <select style={styles.input} value={contractorId} onChange={(e) => setContractorId(e.target.value)} dir={dir}>
                 <option value="">{t("pfSelectPlaceholder")}</option>

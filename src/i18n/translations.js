@@ -3659,6 +3659,10 @@ export const translations = {
     "fa": "انتخاب شرکت پیمانکار الزامی است",
     "en": "Selecting a contractor company is required"
   },
+  "pfErrProjectRequired": {
+    "fa": "انتخاب پروژه الزامی است",
+    "en": "Selecting a project is required"
+  },
   "pfErrJobTitleRequired": {
     "fa": "عنوان شغلی الزامی است",
     "en": "Job title is required"
@@ -3715,9 +3719,17 @@ export const translations = {
     "fa": "شرکت پیمانکار",
     "en": "Contractor Company"
   },
+  "pfProjectLabel": {
+    "fa": "پروژه",
+    "en": "Project"
+  },
   "pfLoadingContractors": {
     "fa": "در حال بارگذاری لیست پیمانکاران...",
     "en": "Loading contractor list..."
+  },
+  "pfLoadingProjects": {
+    "fa": "در حال بارگذاری لیست پروژه‌ها...",
+    "en": "Loading project list..."
   },
   "pfSelectPlaceholder": {
     "fa": "— انتخاب کنید —",
@@ -6707,6 +6719,18 @@ export const translations = {
   "scaffNoContractorsYet": {
     "fa": "هنوز پیمانکاری در سامانه ثبت نشده است.",
     "en": "No contractor has been registered in the system yet."
+  },
+  "scaffCodeManagerTitleProject": {
+    "fa": "کد تگ داربست پروژه‌ها",
+    "en": "Project Scaffold Tag Codes"
+  },
+  "scaffCodeManagerDescProject": {
+    "fa": "هر پروژه برای اخذ تگ داربست به یک کد دوحرفی نیاز دارد (مثال: سونگون = SO). تا این کد تعریف نشود، آن پروژه نمی‌تواند تگ جدید درخواست کند.",
+    "en": "Each project needs a two-letter code to obtain a scaffold tag (e.g. Songun = SO). Until this code is defined, that project cannot request a new tag."
+  },
+  "scaffNoProjectsYet": {
+    "fa": "هنوز پروژه‌ای در سامانه ثبت نشده است.",
+    "en": "No project has been registered in the system yet."
   },
   "errScaffLocationDateRequired": {
     "fa": "محل برپایی و تاریخ برپایی الزامی است",
