@@ -125,3 +125,23 @@ export async function manageProjectHse(action, payload = {}) {
     return { error: true, message: tr("stokErrServerConn") };
   }
 }
+
+// دروازه‌ی خودسرویسِ سرپرست برایِ تعیینِ جانشینِ تأییدِ مجوزِ کار — فقط
+// برایِ شرکت‌هایِ «مستقل/بدونِ پروژه» (set-permit-substitute سمتِ سرور
+// دوباره همین را از رویِ companies.org_structure_type بررسی می‌کند).
+export async function setPermitSubstituteApproverRemote(substituteAccountId) {
+  const token = getSessionToken("customer");
+  if (!token) return { error: true, message: tr("stokErrInvalidSession") };
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/set-permit-substitute`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, apikey: SUPABASE_ANON_KEY },
+      body: JSON.stringify({ substituteAccountId: substituteAccountId || null }),
+    });
+    const data = await res.json();
+    if (!res.ok) return { error: true, message: data?.error || tr("stokErrServerConn") };
+    return data;
+  } catch {
+    return { error: true, message: tr("stokErrServerConn") };
+  }
+}

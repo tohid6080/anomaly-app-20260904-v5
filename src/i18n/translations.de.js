@@ -5061,4 +5061,13 @@ export const de = {
   "scaffCodeManagerTitleProject": "Projekt-Gerüst-Tag-Codes",
   "scaffCodeManagerDescProject": "Jedes Projekt benötigt einen zweistelligen Code, um ein Gerüst-Tag zu erhalten (z. B. Songun = SO). Solange dieser Code nicht festgelegt ist, kann dieses Projekt kein neues Tag beantragen.",
   "scaffNoProjectsYet": "Es wurde noch kein Projekt im System registriert.",
+
+  "pmGroupAuthorizedUser": "Autorisierter Benutzer",
+  "pmAddSignerAuthorizedUser": "Konten autorisierter Benutzer",
+  "pmApproverOnlyNote": "Nur der Vorgesetzte oder sein benannter Vertreter kann diesen Schritt ausführen.",
+  "pmPerformerConfirm": "Bestätigung der ausführenden Person",
+  "pmSupervisorConfirm": "Bestätigung des Vorgesetzten",
+  "pmSubstituteApproverTitle": "Vertretung für die Genehmigung von Erlaubnisscheinen",
+  "pmSubstituteApproverHint": "Wenn Sie nicht verfügbar sind, kann diese Person Erlaubnisscheine in Ihrem Namen genehmigen/ausstellen.",
+  "pmSubstituteApproverNone": "Keine Vertretung",
 };

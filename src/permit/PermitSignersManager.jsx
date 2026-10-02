@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import BackLink from "../shared/BackLink.jsx";
 import { UserCheck, UserX, Plus, Trash2, ShieldCheck } from "lucide-react";
-import { THEME, styles } from "../shared.js";
+import { THEME, styles, useOrgStructureType } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import {
   loadAllAuthorizedSigners, loadContractorSigners, loadContractorAccountsForSigning, loadEmployerAccountsForSigning,
@@ -24,7 +24,12 @@ const keyOf = (accountType, id) => `${accountType}:${id}`;
  */
 export default function PermitSignersManager({ currentUser, role, onBack, wide }) {
   const { t, dir } = useLanguage();
+  const orgStructureType = useOrgStructureType(currentUser?.companyId);
+  const isStandaloneNoProject = orgStructureType === "standalone_no_project";
   const isContractor = role === "CONTRACTOR";
+  // برایِ standalone_no_project، «کارفرما» معنایی ندارد — همه‌ی ردیف‌هایِ
+  // employer در واقع «کاربرِ مجاز» همین یک شرکت‌اند.
+  const groupLabelFor = (s) => (isStandaloneNoProject && s.accountType === "employer" ? t("pmGroupAuthorizedUser") : s.groupName);
   const [signers, setSigners] = useState(null);
   const [contractorAccounts, setContractorAccounts] = useState([]);
   const [employerAccounts, setEmployerAccounts] = useState([]);
@@ -153,7 +158,7 @@ export default function PermitSignersManager({ currentUser, role, onBack, wide }
                 </optgroup>
               )}
               {candidateEmployers.length > 0 && (
-                <optgroup label={t("pmAddSignerEmployer")}>
+                <optgroup label={isStandaloneNoProject ? t("pmAddSignerAuthorizedUser") : t("pmAddSignerEmployer")}>
                   {candidateEmployers.map((a) => (
                     <option key={keyOf("employer", a.id)} value={keyOf("employer", a.id)}>
                       {[a.fullName, a.jobTitle].filter(Boolean).join(" — ")}
@@ -191,7 +196,7 @@ export default function PermitSignersManager({ currentUser, role, onBack, wide }
               {signers.map((s) => (
                 <tr key={s.id} style={{ borderBottom: `1px solid ${THEME.borderSoft}` }}>
                   <td style={{ ...tdS, fontWeight: 700, color: THEME.text }}>{s.fullName || "—"}</td>
-                  <td style={tdS}>{s.groupName || "—"}</td>
+                  <td style={tdS}>{groupLabelFor(s) || "—"}</td>
                   <td style={tdS}>{s.jobTitle || "—"}</td>
                   <td style={tdS}>
                     <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 999, background: s.status === "active" ? THEME.okBg : THEME.warnBg, color: s.status === "active" ? THEME.ok : THEME.warn }}>

@@ -1,6 +1,7 @@
 import { sb, sbOk, uid, getCurrentCompanyId } from "../shared.js";
 import { offlineWrite } from "../offline/offlineWrite.js";
 import { translate, getCurrentLang } from "../i18n/translations.js";
+import { setPermitSubstituteApproverRemote } from "../sessionToken.js";
 import { SYSTEM_TEMPLATE, blankSchema } from "./permitModel.js";
 
 const tr = (k, p) => translate(getCurrentLang(), k, p);
@@ -269,5 +270,31 @@ export async function addRenewal(permit, { dayNo, renewedFor, contractorHse, emp
 export async function deletePermit(id) {
   const res = await offlineWrite({ module: MODULE, table: "permits", action: "delete", id });
   if (!res?.ok) return { __error: true, message: res?.error || tr("pmErrSave") };
+  return { ok: true };
+}
+
+/* ---------------- جانشینِ تأییدِ مجوز — فقط standalone_no_project ---------------- */
+// canPerformStep (permitModel.js) فقط «غیرِپیمانکار» را بررسی می‌کند — برایِ
+// شرکتی که اصلاً پیمانکار ندارد این به‌تنهایی کافی نیست (هر کارشناسی هم
+// می‌توانست تأیید کند). این تابع مجوزِ واقعیِ تأیید را برایِ این نوع شرکت
+// مشخص می‌کند: خودِ سرپرست، یا جانشینی که از پیش تعیین کرده.
+export async function isAuthorizedPermitApprover(currentUser, orgStructureType) {
+  if (currentUser?.role === "HSE_SUPERVISOR") return true;
+  if (orgStructureType !== "standalone_no_project" || !currentUser?.id) return false;
+  const companyId = getCurrentCompanyId();
+  const filter = companyId ? `&company_id=eq.${companyId}` : "";
+  const rows = await sb(`employer_accounts?role=eq.hse_supervisor&permit_substitute_approver_id=eq.${currentUser.id}&select=id&limit=1${filter}`);
+  return sbOk(rows) && rows.length > 0;
+}
+
+export async function loadMySubstituteApprover(supervisorAccountId) {
+  if (!supervisorAccountId) return "";
+  const rows = await sb(`employer_accounts?id=eq.${supervisorAccountId}&select=permit_substitute_approver_id`);
+  return sbOk(rows) && rows.length > 0 ? (rows[0].permit_substitute_approver_id || "") : "";
+}
+
+export async function setPermitSubstituteApprover(substituteAccountId) {
+  const result = await setPermitSubstituteApproverRemote(substituteAccountId);
+  if (result?.error) return { __error: true, message: result.message };
   return { ok: true };
 }

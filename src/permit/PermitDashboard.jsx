@@ -1,15 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
 import BackLink from "../shared/BackLink.jsx";
 import { Capacitor } from "@capacitor/core";
-import { Plus, FileSpreadsheet, Trash2, Layers, PenSquare, ShieldCheck } from "lucide-react";
-import { THEME, styles } from "../shared.js";
+import { Plus, FileSpreadsheet, Trash2, Layers, PenSquare, ShieldCheck, UserCog } from "lucide-react";
+import { THEME, styles, useOrgStructureType } from "../shared.js";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { STATUS_META } from "./permitModel.js";
 import {
   loadPermits, createPermit, deletePermit, loadPermitTemplates, cloneTemplateToCompany,
-  createBlankTemplate, deleteCompanyTemplate,
+  createBlankTemplate, deleteCompanyTemplate, loadMySubstituteApprover, setPermitSubstituteApprover,
 } from "./permitApi.js";
+import { loadExpertsForDropdown } from "../correctiveActions/correctiveActionsApi.js";
 import PermitWorkspace from "./PermitWorkspace.jsx";
 import PermitTemplateBuilder from "./PermitTemplateBuilder.jsx";
 import PermitSignersManager from "./PermitSignersManager.jsx";
@@ -23,6 +24,9 @@ const FILTERS = ["all", "open", "active", "closed"];
 
 export default function PermitDashboard({ currentUser, role, readOnly, onBack, wide }) {
   const { t, dir } = useLanguage();
+  const orgStructureType = useOrgStructureType(currentUser?.companyId);
+  const isStandaloneNoProject = orgStructureType === "standalone_no_project";
+  const isSupervisor = currentUser?.role === "HSE_SUPERVISOR";
   const [permits, setPermits] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,6 +39,11 @@ export default function PermitDashboard({ currentUser, role, readOnly, onBack, w
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
+  // جانشینِ تأییدِ مجوز — فقط سرپرستِ شرکت‌هایِ «مستقل/بدونِ پروژه» این را می‌بیند
+  const [experts, setExperts] = useState([]);
+  const [mySubstituteId, setMySubstituteId] = useState("");
+  const [savingSubstitute, setSavingSubstitute] = useState(false);
+
   const load = async () => {
     setLoading(true);
     const [p, tpl] = await Promise.all([loadPermits(), loadPermitTemplates()]);
@@ -42,6 +51,20 @@ export default function PermitDashboard({ currentUser, role, readOnly, onBack, w
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
+  useEffect(() => {
+    if (!isStandaloneNoProject || !isSupervisor) return;
+    loadExpertsForDropdown().then(setExperts);
+    loadMySubstituteApprover(currentUser?.id).then(setMySubstituteId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isStandaloneNoProject, isSupervisor]);
+
+  const handleChangeSubstitute = async (accountId) => {
+    setSavingSubstitute(true);
+    const result = await setPermitSubstituteApprover(accountId || null);
+    setSavingSubstitute(false);
+    if (result?.__error) { alert(result.message); return; }
+    setMySubstituteId(accountId);
+  };
 
   const shown = useMemo(() => permits.filter((p) => {
     if (filter === "open") return ["draft", "submitted", "under_review", "rejected", "issued"].includes(p.status);
@@ -123,9 +146,26 @@ export default function PermitDashboard({ currentUser, role, readOnly, onBack, w
       <p style={{ color: THEME.text3, fontSize: 12, margin: "2px 0 14px", lineHeight: 1.8 }}>{t("pmIntro")}</p>
       {err && <p style={styles.error}>{err}</p>}
 
-      <div style={{ display: "flex", marginBottom: 12 }}>
+      <div style={{ display: "flex", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
         <button type="button" onClick={() => setShowSigners(true)} style={{ ...styles.smallButton, background: THEME.surface2, color: THEME.text, display: "inline-flex", alignItems: "center", gap: 6 }}><ShieldCheck size={13} /> {t("pmSigners")}</button>
       </div>
+
+      {isStandaloneNoProject && isSupervisor && (
+        <div style={{ ...styles.cardWide, marginBottom: 14, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <UserCog size={15} color={THEME.tealDeep} />
+          <div style={{ flex: "1 1 220px" }}>
+            <b style={{ fontSize: 12, color: THEME.heading }}>{t("pmSubstituteApproverTitle")}</b>
+            <p style={{ fontSize: 10.5, color: THEME.text3, margin: "2px 0 0" }}>{t("pmSubstituteApproverHint")}</p>
+          </div>
+          <select
+            style={{ ...styles.filterSelect, minWidth: 180 }} dir={dir} value={mySubstituteId} disabled={savingSubstitute}
+            onChange={(e) => handleChangeSubstitute(e.target.value)}
+          >
+            <option value="">{t("pmSubstituteApproverNone")}</option>
+            {experts.filter((ex) => ex.id !== currentUser?.id).map((ex) => <option key={ex.id} value={ex.id}>{ex.name}</option>)}
+          </select>
+        </div>
+      )}
 
       {!readOnly && noPublished && (
         <div style={{ ...styles.cardWide, marginBottom: 14, textAlign: "center", color: THEME.text3, fontSize: 12.5 }}>
@@ -144,7 +184,7 @@ export default function PermitDashboard({ currentUser, role, readOnly, onBack, w
           {!contractorNeedsMobile && (
             <button type="button" onClick={() => setShowNew((v) => !v)} disabled={busy} style={{ ...styles.smallButton, display: "inline-flex", alignItems: "center", gap: 6 }}><Plus size={13} /> {t("pmNewPermit")}</button>
           )}
-          {!isContractor && <button type="button" onClick={() => setShowTpl((v) => !v)} style={{ ...styles.smallButton, background: THEME.surface2, color: THEME.text, display: "inline-flex", alignItems: "center", gap: 6 }}><Layers size={13} /> {t("pmTemplates")}</button>}
+          {!isContractor && (!isStandaloneNoProject || isSupervisor) && <button type="button" onClick={() => setShowTpl((v) => !v)} style={{ ...styles.smallButton, background: THEME.surface2, color: THEME.text, display: "inline-flex", alignItems: "center", gap: 6 }}><Layers size={13} /> {t("pmTemplates")}</button>}
         </div>
       )}
 
