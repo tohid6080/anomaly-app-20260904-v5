@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, Suspense, lazy } from "react";
 import BackLink from "./shared/BackLink.jsx";
-import { AlertTriangle, Plus, X, ChevronRight, ChevronLeft, ChevronDown, ChevronsRight, ChevronsLeft, LogOut, CheckCircle2, Clock, Camera, ImagePlus, Trash2, FileSpreadsheet, FileText, User, Users, ShieldCheck, LayoutGrid, BarChart3, Briefcase, Settings, Archive, Truck, Tag, MessageCircle, GraduationCap, ShieldOff, ShieldAlert, Database, Fingerprint, Info, Sliders, TrendingUp, Search, Home, Megaphone, Sparkles, Gift, Bell, ArrowUpRight, ClipboardList, MoreVertical, RefreshCw, GripVertical, Zap, Award } from "lucide-react";
+import { AlertTriangle, Plus, X, ChevronRight, ChevronLeft, ChevronDown, ChevronsRight, ChevronsLeft, LogOut, CheckCircle2, Clock, Camera, ImagePlus, Trash2, FileSpreadsheet, FileText, User, Users, ShieldCheck, LayoutGrid, BarChart3, Briefcase, Settings, Archive, Truck, Tag, MessageCircle, GraduationCap, ShieldOff, ShieldAlert, Database, Fingerprint, Info, Sliders, TrendingUp, Search, Home, Megaphone, Sparkles, Gift, Bell, ArrowUpRight, ClipboardList, MoreVertical, RefreshCw, GripVertical, Zap, Award, FolderKanban } from "lucide-react";
 // بارگذاری تنبلِ صفحه‌های ماژول — هرکدام چانکِ جدای خودش، فقط با باز شدنِ
 // آن ماژول بارگذاری می‌شود؛ از باندلِ اولیه‌ی سنگینِ App.jsx بیرون می‌مانند.
 const BowTieDashboard = lazy(() => import("./bowtie/BowTieDashboard.jsx"));
@@ -103,9 +103,10 @@ import LandingPage, { mergeLandingButtons } from "./LandingPage.jsx";
 import LiveChatWidget from "./livechat/LiveChatWidget.jsx";
 import PlatformSurveyPrompt from "./platformSurvey/PlatformSurveyPrompt.jsx";
 import MyActiveActionsPanel from "./correctiveActions/MyActiveActionsPanel.jsx";
+import ProjectsDashboard from "./projects/ProjectsDashboard.jsx";
 import { loadMyActiveCorrectiveActions, loadPendingReviewCorrectiveActions, isOverdue as isCorrectiveActionOverdue } from "./correctiveActions/correctiveActionsApi.js";
 import { checkEventSurvey } from "./platformSurvey/platformSurveyApi.js";
-import { APP_NAME, sb, sbOk, sbErrMsg, uid, todayISO, THEME, styles, usePersistedState, setCurrentCompanyId, getCurrentCompanyId, loadCurrentCompanyPlanFeatures, isModuleInPlan, filterSubByPlan, resizeImageFile } from "./shared.js";
+import { APP_NAME, sb, sbOk, sbErrMsg, uid, todayISO, THEME, styles, usePersistedState, setCurrentCompanyId, getCurrentCompanyId, loadCurrentCompanyPlanFeatures, isModuleInPlan, filterSubByPlan, resizeImageFile, useOrgStructureType } from "./shared.js";
 
 /**
  * اپلیکیشن کارفرما / پیمانکار / ادمین + ماژول ثبت و پیگیری آنومالی HSE
@@ -151,7 +152,7 @@ const ANOMALY_FORMATS = [
 // اگر ماژولی این‌جا sub گرفت و لازم بود شرکت‌ها بتوانند هرکدام از
 // زیرماژول‌هایش را جدا فعال/غیرفعال کنند، GATED_MODULE_SUBS در shared.js
 // را هم ببینید (توضیحِ کامل + چک‌لیستِ سه‌مرحله‌ای همان‌جاست).
-const HSE_MODULES = [
+export const HSE_MODULES = [
   { key: "chat", label: "چت", labelKey: "moduleChat" },
   { key: "archiveManagement", label: "آرشیو فایل‌ها", labelKey: "moduleArchive" },
   {
@@ -5215,6 +5216,10 @@ function EmployerDashboard({ onLogout, currentUser }) {
   // دقیقاً همان ۱۰ زیرماژول و همان gate بر پایه‌ی پلن (isModuleInPlan) را
   // دارد که قبلاً فقط در AdminDashboard وجود داشت.
   const isSupervisor = currentUser?.role === "HSE_SUPERVISOR";
+  // زیرساختِ Project — فقط برایِ سرپرستِ شرکت‌هایِ «مستقل/چندپروژه» (نه
+  // Employer/Contractor، نه «مستقل/بدون‌پروژه» که اصلاً چند پروژه ندارد).
+  const projectsOrgStructureType = useOrgStructureType(currentUser?.companyId);
+  const canManageProjects = isSupervisor && projectsOrgStructureType === "standalone_multi_project";
   const systemManagementEntry = isSupervisor && isModuleInPlan(planFeatures, "systemManagement") ? {
     key: "systemManagement", icon: Settings, label: t("moduleSystemManagement"),
     sub: [
@@ -5243,6 +5248,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       muted: mod.employerOnly && !canEdit,
       sub: mod.sub ? mod.sub.filter((s) => (canEdit || !s.employerOnly) && !(s.hideWhenEditable && canEdit) && subViewOnlyOk(s, mod, permMap) && isModuleInPlan(planFeatures, s.key)).map((s) => ({ key: s.key, label: mt(s) })) : undefined,
     })),
+    canManageProjects ? { key: "projects", icon: FolderKanban, label: t("projTitle") } : null,
     systemManagementEntry,
   ].filter(Boolean), moduleConfig);
 
@@ -5328,6 +5334,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       {isSupervisor && view === "effectivenessThresholds" && <EffectivenessThresholdsManager wide={isDesktop} onBack={() => setView("systemManagement")} currentUser={currentUser} />}
       {isSupervisor && view === "contractorEvalSettings" && <ContractorEvalSettingsManager wide={isDesktop} onBack={() => setView("systemManagement")} currentUser={currentUser} />}
       {isSupervisor && view === "anomalyCategoryManagement" && <AnomalyCategoryManager wide={isDesktop} onBack={() => setView("systemManagement")} />}
+      {canManageProjects && view === "projects" && <ProjectsDashboard currentUser={currentUser} wide={isDesktop} onBack={() => setView("menu")} />}
 
       {isDesktop && (view === "anomalyReport" || view === "anomalyForm" || view === "anomalyList") && anomalyWebCombined}
 

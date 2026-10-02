@@ -104,3 +104,24 @@ export async function changeMyPassword(oldPassword, newPassword, scope = "custom
     return { error: true, message: tr("stokErrServerConn") };
   }
 }
+
+// دروازه‌ی خودسرویسِ سرپرست برای مدیریتِ «HSE پروژه» (contractors در شرکت‌های
+// مستقل/چندپروژه) — دقیقاً همان الگویِ changeMyPassword: توکنِ خودِ کاربرِ
+// واردشده را می‌فرستد، manage-project-hse سمتِ سرور role/company_id را از
+// همان توکن می‌خواند، نه از چیزی که اینجا فرستاده می‌شود.
+export async function manageProjectHse(action, payload = {}) {
+  const token = getSessionToken("customer");
+  if (!token) return { error: true, message: tr("stokErrInvalidSession") };
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/manage-project-hse`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, apikey: SUPABASE_ANON_KEY },
+      body: JSON.stringify({ action, ...payload }),
+    });
+    const data = await res.json();
+    if (!res.ok) return { error: true, message: data?.error || tr("stokErrServerConn"), needsTransfer: data?.needsTransfer };
+    return data;
+  } catch {
+    return { error: true, message: tr("stokErrServerConn") };
+  }
+}
