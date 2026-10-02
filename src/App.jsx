@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, Suspense, lazy } from "react";
 import BackLink from "./shared/BackLink.jsx";
-import { AlertTriangle, Plus, X, ChevronRight, ChevronLeft, ChevronDown, ChevronsRight, ChevronsLeft, LogOut, CheckCircle2, Clock, Camera, ImagePlus, Trash2, FileSpreadsheet, FileText, User, Users, ShieldCheck, LayoutGrid, BarChart3, Briefcase, Settings, Archive, Truck, Tag, MessageCircle, GraduationCap, ShieldOff, ShieldAlert, Database, Fingerprint, Info, Sliders, TrendingUp, Search, Home, Megaphone, Sparkles, Gift, Bell, ArrowUpRight, ClipboardList, MoreVertical, RefreshCw, GripVertical, Zap, Award } from "lucide-react";
+import { AlertTriangle, Plus, X, ChevronRight, ChevronLeft, ChevronDown, ChevronsRight, ChevronsLeft, LogOut, CheckCircle2, Clock, Camera, ImagePlus, Trash2, FileSpreadsheet, FileText, User, Users, ShieldCheck, LayoutGrid, BarChart3, Briefcase, Settings, Archive, Truck, Tag, MessageCircle, GraduationCap, ShieldOff, ShieldAlert, Database, Fingerprint, Info, Sliders, TrendingUp, Search, Home, Megaphone, Sparkles, Gift, Bell, ArrowUpRight, ClipboardList, MoreVertical, RefreshCw, GripVertical, Zap, Award, FolderKanban } from "lucide-react";
 // بارگذاری تنبلِ صفحه‌های ماژول — هرکدام چانکِ جدای خودش، فقط با باز شدنِ
 // آن ماژول بارگذاری می‌شود؛ از باندلِ اولیه‌ی سنگینِ App.jsx بیرون می‌مانند.
 const BowTieDashboard = lazy(() => import("./bowtie/BowTieDashboard.jsx"));
@@ -103,9 +103,10 @@ import LandingPage, { mergeLandingButtons } from "./LandingPage.jsx";
 import LiveChatWidget from "./livechat/LiveChatWidget.jsx";
 import PlatformSurveyPrompt from "./platformSurvey/PlatformSurveyPrompt.jsx";
 import MyActiveActionsPanel from "./correctiveActions/MyActiveActionsPanel.jsx";
+import ProjectsDashboard from "./projects/ProjectsDashboard.jsx";
 import { loadMyActiveCorrectiveActions, loadPendingReviewCorrectiveActions, isOverdue as isCorrectiveActionOverdue } from "./correctiveActions/correctiveActionsApi.js";
 import { checkEventSurvey } from "./platformSurvey/platformSurveyApi.js";
-import { APP_NAME, sb, sbOk, sbErrMsg, uid, todayISO, THEME, styles, usePersistedState, setCurrentCompanyId, getCurrentCompanyId, loadCurrentCompanyPlanFeatures, isModuleInPlan, filterSubByPlan, resizeImageFile } from "./shared.js";
+import { APP_NAME, sb, sbOk, sbErrMsg, uid, todayISO, THEME, styles, usePersistedState, setCurrentCompanyId, getCurrentCompanyId, loadCurrentCompanyPlanFeatures, isModuleInPlan, filterSubByPlan, resizeImageFile, useOrgStructureType } from "./shared.js";
 
 /**
  * اپلیکیشن کارفرما / پیمانکار / ادمین + ماژول ثبت و پیگیری آنومالی HSE
@@ -151,7 +152,7 @@ const ANOMALY_FORMATS = [
 // اگر ماژولی این‌جا sub گرفت و لازم بود شرکت‌ها بتوانند هرکدام از
 // زیرماژول‌هایش را جدا فعال/غیرفعال کنند، GATED_MODULE_SUBS در shared.js
 // را هم ببینید (توضیحِ کامل + چک‌لیستِ سه‌مرحله‌ای همان‌جاست).
-const HSE_MODULES = [
+export const HSE_MODULES = [
   { key: "chat", label: "چت", labelKey: "moduleChat" },
   { key: "archiveManagement", label: "آرشیو فایل‌ها", labelKey: "moduleArchive" },
   {
@@ -5215,6 +5216,15 @@ function EmployerDashboard({ onLogout, currentUser }) {
   // دقیقاً همان ۱۰ زیرماژول و همان gate بر پایه‌ی پلن (isModuleInPlan) را
   // دارد که قبلاً فقط در AdminDashboard وجود داشت.
   const isSupervisor = currentUser?.role === "HSE_SUPERVISOR";
+  // زیرساختِ Project — فقط برایِ سرپرستِ شرکت‌هایِ «مستقل/چندپروژه» (نه
+  // Employer/Contractor، نه «مستقل/بدون‌پروژه» که اصلاً چند پروژه ندارد).
+  const projectsOrgStructureType = useOrgStructureType(currentUser?.companyId);
+  const canManageProjects = isSupervisor && projectsOrgStructureType === "standalone_multi_project";
+  // شرکت‌هایِ «مستقل» اصلاً پیمانکارِ واقعی ندارند — ماژولِ «ارزیابیِ عملکردِ
+  // HSEِ پیمانکاران» و تنظیماتش برایشان بی‌معناست (نه فقط بد-برچسب، بلکه
+  // خودِ مفهومِ کسب‌وکار اصلاً صدق نمی‌کند)، پس کامل مخفی می‌شود — نه فقط
+  // برایِ سرپرست، برایِ هر نقشی در این شرکت.
+  const isStandaloneCompany = projectsOrgStructureType === "standalone_no_project" || projectsOrgStructureType === "standalone_multi_project";
   const systemManagementEntry = isSupervisor && isModuleInPlan(planFeatures, "systemManagement") ? {
     key: "systemManagement", icon: Settings, label: t("moduleSystemManagement"),
     sub: [
@@ -5226,7 +5236,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       isModuleInPlan(planFeatures, "chatAccessManagement") && { key: "chatAccessManagement", label: t("subChatAccess") },
       isModuleInPlan(planFeatures, "hcmsMatrixManagement") && { key: "hcmsMatrixManagement", label: t("subHcmsMatrix") },
       isModuleInPlan(planFeatures, "effectivenessThresholds") && { key: "effectivenessThresholds", label: t("subEffectivenessThresholds") },
-      isModuleInPlan(planFeatures, "contractorEvalSettings") && { key: "contractorEvalSettings", label: t("subContractorEvalSettings") },
+      !isStandaloneCompany && isModuleInPlan(planFeatures, "contractorEvalSettings") && { key: "contractorEvalSettings", label: t("subContractorEvalSettings") },
       isModuleInPlan(planFeatures, "riskKnowledgeManagement") && { key: "riskKnowledgeManagement", label: t("subRiskKnowledge") },
       isModuleInPlan(planFeatures, "anomalyCategoryManagement") && { key: "anomalyCategoryManagement", label: t("subAnomalyCategories") },
     ].filter(Boolean),
@@ -5235,7 +5245,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
   // دقیقاً همان فیلتر مجوز+پلن که منوی موبایل استفاده می‌کند — فقط این‌بار
   // به‌شکل داده برای Sidebar، بدون تکرار منطق فیلترکردن.
   const sidebarModules = applyModuleConfig([
-    ...HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key)).map((mod) => ({
+    ...HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key) && !(mod.key === "contractorHseEvaluation" && isStandaloneCompany)).map((mod) => ({
       key: mod.key,
       icon: MODULE_ICON[mod.key] || LayoutGrid,
       label: mt(mod),
@@ -5243,6 +5253,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       muted: mod.employerOnly && !canEdit,
       sub: mod.sub ? mod.sub.filter((s) => (canEdit || !s.employerOnly) && !(s.hideWhenEditable && canEdit) && subViewOnlyOk(s, mod, permMap) && isModuleInPlan(planFeatures, s.key)).map((s) => ({ key: s.key, label: mt(s) })) : undefined,
     })),
+    canManageProjects ? { key: "projects", icon: FolderKanban, label: t("projTitle") } : null,
     systemManagementEntry,
   ].filter(Boolean), moduleConfig);
 
@@ -5280,7 +5291,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       {view === "modules" && (
         <MobileModuleList
           items={[
-            ...applyModuleConfig(HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key)), moduleConfig).map((mod) => ({
+            ...applyModuleConfig(HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key) && !(mod.key === "contractorHseEvaluation" && isStandaloneCompany)), moduleConfig).map((mod) => ({
               key: mod.key,
               icon: MODULE_ICON[mod.key] || LayoutGrid,
               label: mt(mod),
@@ -5328,6 +5339,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       {isSupervisor && view === "effectivenessThresholds" && <EffectivenessThresholdsManager wide={isDesktop} onBack={() => setView("systemManagement")} currentUser={currentUser} />}
       {isSupervisor && view === "contractorEvalSettings" && <ContractorEvalSettingsManager wide={isDesktop} onBack={() => setView("systemManagement")} currentUser={currentUser} />}
       {isSupervisor && view === "anomalyCategoryManagement" && <AnomalyCategoryManager wide={isDesktop} onBack={() => setView("systemManagement")} />}
+      {canManageProjects && view === "projects" && <ProjectsDashboard currentUser={currentUser} wide={isDesktop} onBack={() => setView("menu")} />}
 
       {isDesktop && (view === "anomalyReport" || view === "anomalyForm" || view === "anomalyList") && anomalyWebCombined}
 
@@ -5429,7 +5441,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
           focusPersonnelName={assessmentContext?.personnelName}
         />
       )}
-      {view === "contractorHseEvaluation" && (
+      {!isStandaloneCompany && view === "contractorHseEvaluation" && (
         <ContractorEvalDashboard
           wide={isDesktop}
           role="EMPLOYER"
@@ -5646,7 +5658,12 @@ function ContractorDashboard({ onLogout, currentUser }) {
     </div>
   );
 
-  const sidebarModules = applyModuleConfig(HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key)).map((mod) => ({
+  // «ارزیابیِ عملکردِ HSEِ پیمانکاران» برایِ یک حسابِ CONTRACTOR در شرکتِ
+  // مستقل هم بی‌معناست — او خودش «HSE پروژه» است، نه یک پیمانکارِ واقعی که
+  // کارفرما قرار است ارزیابی‌اش کند.
+  const contractorOrgStructureType = useOrgStructureType(currentUser?.companyId);
+  const isStandaloneCompany = contractorOrgStructureType === "standalone_no_project" || contractorOrgStructureType === "standalone_multi_project";
+  const sidebarModules = applyModuleConfig(HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key) && !(mod.key === "contractorHseEvaluation" && isStandaloneCompany)).map((mod) => ({
     key: mod.key,
     icon: MODULE_ICON[mod.key] || LayoutGrid,
     label: mt(mod),
@@ -5684,7 +5701,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
       {/* موبایل: تبِ «ماژول‌ها» — جست‌وجوشونده و گروه‌بندی‌شده، همان ترتیبِ Sidebarِ دسکتاپ. */}
       {view === "modules" && (
         <MobileModuleList
-          items={applyModuleConfig(HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key)), moduleConfig).map((mod) => ({
+          items={applyModuleConfig(HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key) && !(mod.key === "contractorHseEvaluation" && isStandaloneCompany)), moduleConfig).map((mod) => ({
             key: mod.key,
             icon: MODULE_ICON[mod.key] || LayoutGrid,
             label: mt(mod),
@@ -5794,7 +5811,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
           focusPersonnelName={assessmentContext?.personnelName}
         />
       )}
-      {view === "contractorHseEvaluation" && (
+      {!isStandaloneCompany && view === "contractorHseEvaluation" && (
         <ContractorEvalDashboard
           wide={isDesktop}
           role="CONTRACTOR"

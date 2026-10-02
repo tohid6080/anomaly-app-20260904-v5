@@ -2,16 +2,16 @@ import React, { useEffect, useMemo, useState } from "react";
 import BackLink from "../shared/BackLink.jsx";
 import { Capacitor } from "@capacitor/core";
 import { Save, Send, ShieldCheck, XCircle, FileCheck2, PlayCircle, PauseCircle, CheckCircle2, RotateCcw, Printer, History } from "lucide-react";
-import { THEME, styles } from "../shared.js";
+import { THEME, styles, useOrgStructureType } from "../shared.js";
 import { toJalaliDateTime, toJalaliSafe, JalaliDateTimeInput } from "../personnel/jalaliDate.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import PermitRuntime from "./PermitRuntime.jsx";
 import { STATUS_META, validateForm, collectBinds, canPerformStep, getStepApproval } from "./permitModel.js";
 import {
   loadPermit, loadPermitTemplate, savePermit, transitionPermit,
-  loadPermitAudit, loadRenewals, addRenewal,
+  loadPermitAudit, loadRenewals, addRenewal, isAuthorizedPermitApprover,
 } from "./permitApi.js";
-import { loadContractorSigners } from "./permitSignersApi.js";
+import { loadContractorSigners, loadEmployerSigner } from "./permitSignersApi.js";
 import { printPermit } from "./permitPrint.js";
 import { loadJobPositionTitle } from "../jobpositions/jobPositionsApi.js";
 import { loadBowtiesOfflineFirst } from "../bowtie/bowtieApi.js";
@@ -27,6 +27,9 @@ const chip = (tone) => ({
 
 export default function PermitWorkspace({ permitId, currentUser, readOnly, onBack, wide }) {
   const { t, dir } = useLanguage();
+  const orgStructureType = useOrgStructureType(currentUser?.companyId);
+  const isStandaloneNoProject = orgStructureType === "standalone_no_project";
+  const [isAuthApprover, setIsAuthApprover] = useState(false);
   const actor = currentUser?.name || currentUser?.username || "";
   const [permit, setPermit] = useState(null);
   const [template, setTemplate] = useState(null);
@@ -89,11 +92,27 @@ export default function PermitWorkspace({ permitId, currentUser, readOnly, onBac
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  useEffect(() => {
+    // برایِ standalone_no_project، «مجری» یک کارشناس است، نه پیمانکار — ولی
+    // باز هم باید بتواند همان امضایِ امنِ بیومتریک را بزند. isStandaloneNoProject
+    // ابتدا false است (هنوز نیامده)، پس این effect به تغییرِ آن هم واکنش می‌دهد.
+    if (isStandaloneNoProject && currentUser?.role !== "CONTRACTOR" && currentUser?.id) {
+      loadEmployerSigner(currentUser.id).then((rows) => setMySigner(rows[0] || null)).catch(() => setMySigner(null));
+    }
+    if (currentUser?.id) {
+      isAuthorizedPermitApprover(currentUser, orgStructureType).then(setIsAuthApprover).catch(() => setIsAuthApprover(false));
+    }
+  }, [isStandaloneNoProject, orgStructureType, currentUser?.id, currentUser?.role]);
   const isNativeApp = Capacitor.isNativePlatform();
 
   const editable = !readOnly && permit && (permit.status === "draft" || permit.status === "rejected");
-  const can = (stepId) => canPerformStep(template?.workflow, stepId, currentUser);
+  // canPerformStep فقط «غیرِپیمانکار» را بررسی می‌کند — برایِ standalone_no_project
+  // (که اصلاً پیمانکار ندارد) این به‌تنهایی کافی نیست، پس مجوزِ واقعی از
+  // isAuthorizedPermitApprover (سرپرست یا جانشینش) می‌آید. ساختارِ
+  // کارفرما/چندپیمانکار دقیقاً همان canPerformStep قبلی را دارد.
+  const can = (stepId) => (isStandaloneNoProject ? isAuthApprover : canPerformStep(template?.workflow, stepId, currentUser));
   const stepNote = (stepId) => {
+    if (isStandaloneNoProject) return can(stepId) ? null : t("pmApproverOnlyNote");
     const cfg = getStepApproval(template?.workflow, stepId);
     if (!cfg.jobPositionId || can(stepId)) return null;
     const a = posTitles[cfg.jobPositionId] || "—";
@@ -241,7 +260,7 @@ export default function PermitWorkspace({ permitId, currentUser, readOnly, onBac
           </div>
           <div style={{ overflowX: "auto", marginTop: 8 }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11.5 }}>
-              <thead><tr>{[t("pmDay"), t("pmDate"), t("pmContractorHse"), t("pmEmployerHse"), t("pmNote")].map((h) => <th key={h} style={thS}>{h}</th>)}</tr></thead>
+              <thead><tr>{[t("pmDay"), t("pmDate"), isStandaloneNoProject ? t("pmPerformerConfirm") : t("pmContractorHse"), isStandaloneNoProject ? t("pmSupervisorConfirm") : t("pmEmployerHse"), t("pmNote")].map((h) => <th key={h} style={thS}>{h}</th>)}</tr></thead>
               <tbody>
                 {renewals.length === 0 && <tr><td colSpan={5} style={{ ...tdS, textAlign: "center", color: THEME.text3 }}>—</td></tr>}
                 {renewals.map((r) => (

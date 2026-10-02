@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import BackLink from "../shared/BackLink.jsx";
 import { Tag } from "lucide-react";
-import { styles, THEME } from "../shared.js";
+import { styles, THEME, getCurrentCompanyId, useOrgStructureType } from "../shared.js";
 import { loadContractorsWithScaffoldCode, setContractorScaffoldCode } from "./scaffoldApi.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
@@ -10,9 +10,16 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
  * automatically (same table, just reading it) — the admin only needs to
  * assign the 2-letter code used in that contractor's tag numbers
  * (Md1-XX-SC-01). No separate contractor list to maintain.
+ *
+ * شرکت‌هایِ «مستقل» پیمانکارِ واقعی ندارند — همین ردیف‌ها در آن‌جا واقعاً
+ * «پروژه»اند (نگاه کن به src/projects/projectsApi.js)؛ مکانیزم (هر ردیف
+ * یک کدِ دوحرفی) بدونِ تغییر درست کار می‌کند، فقط عنوان/توضیح/حالتِ خالی
+ * برایِ این نوع شرکت برچسبِ درست می‌گیرند.
  */
 export default function ScaffoldTagCodeManager({ onBack, wide }) {
   const { t, dir } = useLanguage();
+  const orgStructureType = useOrgStructureType(getCurrentCompanyId());
+  const isStandaloneCompany = orgStructureType === "standalone_no_project" || orgStructureType === "standalone_multi_project";
   const [contractors, setContractors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [drafts, setDrafts] = useState({});
@@ -50,15 +57,15 @@ export default function ScaffoldTagCodeManager({ onBack, wide }) {
         <>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
             <Tag size={20} color={THEME.teal} />
-            <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{t("scaffCodeManagerTitle")}</h2>
+            <h2 style={{ margin: 0, fontSize: 19, color: THEME.heading, fontWeight: 700 }}>{isStandaloneCompany ? t("scaffCodeManagerTitleProject") : t("scaffCodeManagerTitle")}</h2>
           </div>
           <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 16 }}>
-            {t("scaffCodeManagerDesc")}
+            {isStandaloneCompany ? t("scaffCodeManagerDescProject") : t("scaffCodeManagerDesc")}
           </p>
         </>
       )}
 
-      {contractors.length === 0 && <p style={{ color: THEME.text3 }}>{t("scaffNoContractorsYet")}</p>}
+      {contractors.length === 0 && <p style={{ color: THEME.text3 }}>{isStandaloneCompany ? t("scaffNoProjectsYet") : t("scaffNoContractorsYet")}</p>}
 
       {contractors.map((c) => (
         <div key={c.id} style={{ ...styles.card, width: "auto", marginBottom: 8, padding: "12px 16px", display: "flex", alignItems: "center", gap: 10 }}>

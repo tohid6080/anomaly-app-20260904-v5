@@ -3659,6 +3659,10 @@ export const translations = {
     "fa": "انتخاب شرکت پیمانکار الزامی است",
     "en": "Selecting a contractor company is required"
   },
+  "pfErrProjectRequired": {
+    "fa": "انتخاب پروژه الزامی است",
+    "en": "Selecting a project is required"
+  },
   "pfErrJobTitleRequired": {
     "fa": "عنوان شغلی الزامی است",
     "en": "Job title is required"
@@ -3715,9 +3719,17 @@ export const translations = {
     "fa": "شرکت پیمانکار",
     "en": "Contractor Company"
   },
+  "pfProjectLabel": {
+    "fa": "پروژه",
+    "en": "Project"
+  },
   "pfLoadingContractors": {
     "fa": "در حال بارگذاری لیست پیمانکاران...",
     "en": "Loading contractor list..."
+  },
+  "pfLoadingProjects": {
+    "fa": "در حال بارگذاری لیست پروژه‌ها...",
+    "en": "Loading project list..."
   },
   "pfSelectPlaceholder": {
     "fa": "— انتخاب کنید —",
@@ -6708,6 +6720,18 @@ export const translations = {
     "fa": "هنوز پیمانکاری در سامانه ثبت نشده است.",
     "en": "No contractor has been registered in the system yet."
   },
+  "scaffCodeManagerTitleProject": {
+    "fa": "کد تگ داربست پروژه‌ها",
+    "en": "Project Scaffold Tag Codes"
+  },
+  "scaffCodeManagerDescProject": {
+    "fa": "هر پروژه برای اخذ تگ داربست به یک کد دوحرفی نیاز دارد (مثال: سونگون = SO). تا این کد تعریف نشود، آن پروژه نمی‌تواند تگ جدید درخواست کند.",
+    "en": "Each project needs a two-letter code to obtain a scaffold tag (e.g. Songun = SO). Until this code is defined, that project cannot request a new tag."
+  },
+  "scaffNoProjectsYet": {
+    "fa": "هنوز پروژه‌ای در سامانه ثبت نشده است.",
+    "en": "No project has been registered in the system yet."
+  },
   "errScaffLocationDateRequired": {
     "fa": "محل برپایی و تاریخ برپایی الزامی است",
     "en": "The erection location and date are required"
@@ -9395,6 +9419,14 @@ export const translations = {
   "pmSigners": { "fa": "لیستِ امضاهایِ مجاز", "en": "Authorized signers" },
   "pmSignersIntro": { "fa": "افرادِ مجاز به امضایِ «امضایِ مجری» در مجوزهایِ کار. امضا فقط از موبایل و با تأییدِ بیومتریکِ همان فرد ثبت می‌شود.", "en": "People authorized to sign the \"performer signature\" on work permits. A signature is only recorded from a mobile device with that person's own biometric verification." },
   "pmSignersIntroContractor": { "fa": "امضاکنندگانِ مجازِ ثبت‌شده برایِ مجموعه‌ی شما — مدیریتِ این فهرست فقط توسطِ سرپرستِ HSEِ کارفرما انجام می‌شود.", "en": "The authorized signers registered for your company — this list is managed only by the employer's HSE supervisor." },
+  "pmGroupAuthorizedUser": { "fa": "کاربرِ مجاز", "en": "Authorized User" },
+  "pmAddSignerAuthorizedUser": { "fa": "حساب‌هایِ کاربرانِ مجاز", "en": "Authorized user accounts" },
+  "pmApproverOnlyNote": { "fa": "فقط سرپرست یا جانشینِ تعیین‌شده‌ی او می‌تواند این مرحله را انجام دهد.", "en": "Only the Supervisor or their designated substitute can perform this step." },
+  "pmPerformerConfirm": { "fa": "تأییدِ مجری", "en": "Performer Confirmation" },
+  "pmSupervisorConfirm": { "fa": "تأییدِ سرپرست", "en": "Supervisor Confirmation" },
+  "pmSubstituteApproverTitle": { "fa": "جانشینِ تأییدِ مجوز", "en": "Permit Approval Substitute" },
+  "pmSubstituteApproverHint": { "fa": "وقتی شما در دسترس نیستید، این فرد می‌تواند به‌جایِ شما مجوزها را تأیید/صادر کند.", "en": "When you're unavailable, this person can approve/issue permits on your behalf." },
+  "pmSubstituteApproverNone": { "fa": "بدونِ جانشین", "en": "No substitute" },
   "pmSignersPickContractor": { "fa": "پیمانکار", "en": "Contractor" },
   "pmSignerFullName": { "fa": "نام و نام خانوادگی", "en": "Full name" },
   "pmSignerJobTitle": { "fa": "شغل", "en": "Job title" },
@@ -11155,7 +11187,45 @@ export const translations = {
   "scErrSaveMobileTabs": { "fa": "خطا در ذخیره‌ی چیدمان پیش‌فرض نوار پایین", "en": "Failed to save the default bottom-nav layout" },
 
   "lpApkBannerText": { "fa": "نسخه‌ی جدید اپلیکیشن اندروید IHMS ({version}) منتشر شد", "en": "A new version of the IHMS Android app ({version}) has been released" },
-  "lpApkBannerBtn": { "fa": "دانلود مستقیم APK", "en": "Download APK" }
+  "lpApkBannerBtn": { "fa": "دانلود مستقیم APK", "en": "Download APK" },
+
+  "projTitle": { "fa": "پروژه‌ها", "en": "Projects" },
+  "projAddBtn": { "fa": "پروژه‌ی تازه", "en": "New Project" },
+  "projCompareBtn": { "fa": "مقایسه‌ی پروژه‌ها", "en": "Compare Projects" },
+  "projNamePlaceholder": { "fa": "نام پروژه", "en": "Project name" },
+  "projDescPlaceholder": { "fa": "توضیحات (اختیاری)", "en": "Description (optional)" },
+  "projTemplateNone": { "fa": "بدون قالب", "en": "No template" },
+  "projCreateSubmit": { "fa": "ایجاد پروژه", "en": "Create Project" },
+  "projEmptyList": { "fa": "هنوز پروژه‌ای ثبت نشده است.", "en": "No projects yet." },
+  "projRenameTitle": { "fa": "تغییرنام", "en": "Rename" },
+  "projDeleteConfirm": { "fa": "پروژه‌ی «{name}» حذف شود؟", "en": "Delete project \"{name}\"?" },
+  "projErrNameRequired": { "fa": "نام پروژه الزامی است", "en": "Project name is required" },
+  "projErrCreate": { "fa": "خطا در ایجاد پروژه", "en": "Failed to create the project" },
+  "projErrRename": { "fa": "خطا در تغییرنام پروژه", "en": "Failed to rename the project" },
+  "projErrSaveProfile": { "fa": "خطا در ذخیره‌ی پروفایل پروژه", "en": "Failed to save the project profile" },
+  "projErrToggleStatus": { "fa": "خطا در تغییر وضعیت پروژه", "en": "Failed to change the project's status" },
+  "projErrDelete": { "fa": "خطا در حذف پروژه", "en": "Failed to delete the project" },
+  "projTplIndustrial": { "fa": "صنعتی", "en": "Industrial" },
+  "projTplConstruction": { "fa": "ساخت‌وساز", "en": "Construction" },
+  "projTplPowerPlant": { "fa": "نیروگاهی", "en": "Power Plant" },
+  "projTplOilGas": { "fa": "نفت و گاز", "en": "Oil & Gas" },
+  "projCompareTitle": { "fa": "مقایسه‌ی پروژه‌ها", "en": "Project Comparison" },
+  "projCompareColProject": { "fa": "پروژه", "en": "Project" },
+  "projCompareColTraining": { "fa": "آموزش", "en": "Training" },
+  "projCompareColRisk": { "fa": "ریسک", "en": "Risk" },
+  "projCompareNotAvailable": { "fa": "ثبت نشده", "en": "Not available" },
+  "projCompareFootnote": { "fa": "ستون‌های «آموزش» و «ریسک» منتظر اتصال عمیق‌تر ماژول‌ها در فازهای بعدی‌اند — به‌جای عدد ساختگی، همین‌جا صادقانه نشان داده می‌شوند.", "en": "The \"Training\" and \"Risk\" columns await deeper per-module integration in a later phase — shown honestly here instead of a fabricated number." },
+  "pwsErrHseFormRequired": { "fa": "نام‌کاربری و رمز عبور (حداقل ۸ کاراکتر) الزامی است", "en": "Username and password (at least 8 characters) are required" },
+  "pwsDeleteHseConfirm": { "fa": "حساب «{name}» حذف شود؟", "en": "Delete the account \"{name}\"?" },
+  "pwsDashboardTitle": { "fa": "داشبورد پروژه", "en": "Project Dashboard" },
+  "pwsKpiExpiredInspections": { "fa": "بازرسی منقضی‌شده", "en": "Expired Inspections" },
+  "pwsTemplateChecklistTitle": { "fa": "چک‌لیست مرجع ({template})", "en": "Reference Checklist ({template})" },
+  "pwsTemplateChecklistHint": { "fa": "این فهرست فقط نمایشی/مرجع است — هیچ ماژولی به‌صورت خودکار فعال نمی‌شود.", "en": "This list is reference-only — no module is activated automatically." },
+  "pwsHseTeamTitle": { "fa": "تیم HSE پروژه", "en": "Project HSE Team" },
+  "pwsNoHseYet": { "fa": "هنوز هیچ فردِ HSE برای این پروژه ثبت نشده است.", "en": "No HSE person has been added to this project yet." },
+  "pwsActiveExpertsTitle": { "fa": "کارشناسان شرکت فعال روی این پروژه", "en": "Company experts active on this project" },
+  "pwsTasksTitle": { "fa": "اقدام‌های این پروژه", "en": "This project's actions" },
+  "pwsNoTasks": { "fa": "هیچ اقدام اصلاحی‌ای برای این پروژه ثبت نشده است.", "en": "No corrective actions recorded for this project." }
 };
 
 // ---------- تزریقِ تنبلِ ترجمهٔ آلمانی ----------

@@ -74,6 +74,15 @@ export async function loadContractorSigners(contractorId) {
   return sbOk(rows) ? rows.map(signerFromRow) : [];
 }
 
+// معادلِ loadContractorSigners برایِ سمتِ کارفرما/کارشناس — برایِ شرکت‌هایِ
+// «مستقل/بدونِ پروژه» که «مجری» یک کارشناس است، نه پیمانکار، ولی باز هم
+// باید بتواند همان امضایِ امنِ بیومتریک را بزند («آیا من مجازم؟»).
+export async function loadEmployerSigner(employerAccountId) {
+  if (!employerAccountId) return [];
+  const rows = await sb(`${TABLE}?employer_account_id=eq.${employerAccountId}&select=${SELECT}`);
+  return sbOk(rows) ? rows.map(signerFromRow) : [];
+}
+
 // حساب‌های پیمانکاریِ ثبت‌شده در SuperAdmin (شرکتِ جاری) — برایِ پیکِ
 // «افزودنِ امضاکننده»: نامِ شخص/شرکت/شغل از همان حساب، نه ورودیِ آزاد.
 export async function loadContractorAccountsForSigning() {

@@ -238,6 +238,16 @@ export async function loadMyActiveCorrectiveActions(accountType, accountId) {
   return sbOk(rows) ? rows.map((r) => fromRow(r)) : [];
 }
 
+// اقدام‌هایِ یک پروژه‌ی مشخص (ستونِ متنیِ project_name موجود — بدونِ هیچ
+// project_id تازه) — برایِ بخشِ «اقدام‌هایِ این پروژه» در Project Workspace.
+export async function loadCorrectiveActionsForProject(projectName) {
+  if (!projectName) return [];
+  const companyId = getCurrentCompanyId();
+  const companyFilter = companyId ? `&company_id=eq.${companyId}` : "";
+  const rows = await sb(`corrective_actions?project_name=eq.${encodeURIComponent(projectName)}${companyFilter}&select=*&order=due_date.asc`);
+  return sbOk(rows) ? rows.map((r) => fromRow(r)) : [];
+}
+
 // اقدام‌هایِ «منتظرِ تأییدِ» سرپرست — فقط برایِ نقشِ HSE_SUPERVISOR استفاده
 // می‌شود (دقیقاً همان دروازه‌یِ isReviewer که تأیید/ردِ دستی هم دارد).
 export async function loadPendingReviewCorrectiveActions() {
