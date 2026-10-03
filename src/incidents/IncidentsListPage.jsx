@@ -8,6 +8,7 @@ import {
   INCIDENT_TYPES, INCIDENT_CATEGORIES, BODY_PARTS, INCIDENT_CAUSES, INCIDENT_MECHANISMS,
   INCIDENT_CONSEQUENCES, PPE_ITEMS, FORM_CODE, loadIncidents, createIncident, deleteIncident,
 } from "./incidentsApi.js";
+import { loadAllZonesForCompany } from "../siteZones/siteZonesApi.js";
 import IncidentDetailPage from "./IncidentDetailPage.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
@@ -20,7 +21,7 @@ const inputStyle = styles.input;
 // contractorOrg) دقیقاً با همان نام‌ها نگه داشته شده‌اند.
 function emptyForm() {
   return {
-    incidentNo: "", occurredAt: "", location: "", incidentType: "fatality", isDisabling: false,
+    incidentNo: "", occurredAt: "", location: "", zoneId: "", incidentType: "fatality", isDisabling: false,
     injuredPersonName: "", lostDays: "", financialCost: "", description: "", employerOrg: "", contractorOrg: "",
     workplaceName: "", occurredPhase: "", employerManagerName: "", activityType: "", workersCount: "", workplaceAddressPhone: "",
     incidentCategory: [], occurredTime: "",
@@ -50,6 +51,7 @@ export default function IncidentsListPage({ currentUser, role, readOnly, wide })
   const [error, setError] = useState("");
   const [selectedId, setSelectedId] = useState(null);
   const [uploadingSketch, setUploadingSketch] = useState(false);
+  const [zones, setZones] = useState([]);
 
   const load = async () => {
     setLoading(true);
@@ -57,6 +59,7 @@ export default function IncidentsListPage({ currentUser, role, readOnly, wide })
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
+  useEffect(() => { loadAllZonesForCompany().then(setZones); }, []);
 
   if (selectedId) {
     return <IncidentDetailPage incidentId={selectedId} currentUser={currentUser} role={role} readOnly={readOnly} onBack={() => { setSelectedId(null); load(); }} />;
@@ -151,6 +154,14 @@ export default function IncidentsListPage({ currentUser, role, readOnly, wide })
               <Field label={t("incOccurredAt")}><JalaliDateInput value={form.occurredAt} onChange={(v) => set({ occurredAt: v })} /></Field>
               <Field label={t("incOccurredTime")}><input type="time" style={inputStyle} value={form.occurredTime} onChange={(e) => set({ occurredTime: e.target.value })} dir="ltr" /></Field>
               <Field label={t("incLocation")}><input style={inputStyle} value={form.location} onChange={(e) => set({ location: e.target.value })} dir={dir} /></Field>
+              {zones.length > 0 && (
+                <Field label={t("incZone")}>
+                  <select style={inputStyle} value={form.zoneId} onChange={(e) => set({ zoneId: e.target.value })} dir={dir}>
+                    <option value="">{t("szLinkNone")}</option>
+                    {zones.map((z) => <option key={z.id} value={z.id}>{z.name}</option>)}
+                  </select>
+                </Field>
+              )}
               <Field label={t("incType")}>
                 <select style={inputStyle} value={form.incidentType} onChange={(e) => set({ incidentType: e.target.value })} dir={dir}>
                   {INCIDENT_TYPES.map((it) => <option key={it.value} value={it.value}>{t(it.labelKey)}</option>)}

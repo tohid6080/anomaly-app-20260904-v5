@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, Suspense, lazy } from "react";
 import BackLink from "./shared/BackLink.jsx";
-import { AlertTriangle, Plus, X, ChevronRight, ChevronLeft, ChevronDown, ChevronsRight, ChevronsLeft, LogOut, CheckCircle2, Clock, Camera, ImagePlus, Trash2, FileSpreadsheet, FileText, User, Users, ShieldCheck, LayoutGrid, BarChart3, Briefcase, Settings, Archive, Truck, Tag, MessageCircle, GraduationCap, ShieldOff, ShieldAlert, Database, Fingerprint, Info, Sliders, TrendingUp, Search, Home, Megaphone, Sparkles, Gift, Bell, ArrowUpRight, ClipboardList, MoreVertical, RefreshCw, GripVertical, Zap, Award, FolderKanban } from "lucide-react";
+import { AlertTriangle, Plus, X, ChevronRight, ChevronLeft, ChevronDown, ChevronsRight, ChevronsLeft, LogOut, CheckCircle2, Clock, Camera, ImagePlus, Trash2, FileSpreadsheet, FileText, User, Users, ShieldCheck, LayoutGrid, BarChart3, Briefcase, Settings, Archive, Truck, Tag, MessageCircle, GraduationCap, ShieldOff, ShieldAlert, Database, Fingerprint, Info, Sliders, TrendingUp, Search, Home, Megaphone, Sparkles, Gift, Bell, ArrowUpRight, ClipboardList, MoreVertical, RefreshCw, GripVertical, Zap, Award, FolderKanban, MapPin, Lightbulb, Flame, Boxes, Siren, Globe, UserCheck } from "lucide-react";
 // بارگذاری تنبلِ صفحه‌های ماژول — هرکدام چانکِ جدای خودش، فقط با باز شدنِ
 // آن ماژول بارگذاری می‌شود؛ از باندلِ اولیه‌ی سنگینِ App.jsx بیرون می‌مانند.
 const BowTieDashboard = lazy(() => import("./bowtie/BowTieDashboard.jsx"));
@@ -32,6 +32,9 @@ import { checkMyAccountActive } from "./subscriptionApi.js";
 import { AppearanceProvider, useAppearance } from "./shared/AppearanceContext.jsx";
 const PublicHseClimateSurvey = lazy(() => import("./proactiveIndicators/PublicHseClimateSurvey.jsx"));
 const PublicSurvey = lazy(() => import("./survey/PublicSurvey.jsx"));
+const PublicDrillCheckin = lazy(() => import("./evacuationDrill/PublicDrillCheckin.jsx"));
+const PublicSafetyMicrosite = lazy(() => import("./safetyMicrosite/PublicSafetyMicrosite.jsx"));
+const PublicGuestAuditorView = lazy(() => import("./guestAuditor/PublicGuestAuditorView.jsx"));
 const PublicSurveyResults = lazy(() => import("./survey/PublicSurveyResults.jsx"));
 const PublicSurveyResponse = lazy(() => import("./survey/PublicSurveyResponse.jsx"));
 const SurveyDashboard = lazy(() => import("./survey/SurveyDashboard.jsx"));
@@ -104,6 +107,14 @@ import LiveChatWidget from "./livechat/LiveChatWidget.jsx";
 import PlatformSurveyPrompt from "./platformSurvey/PlatformSurveyPrompt.jsx";
 import MyActiveActionsPanel from "./correctiveActions/MyActiveActionsPanel.jsx";
 import ProjectsDashboard from "./projects/ProjectsDashboard.jsx";
+import SuggestionBoxDashboard from "./suggestionBox/SuggestionBoxDashboard.jsx";
+import IncidentHeatmapDashboard from "./incidentHeatmap/IncidentHeatmapDashboard.jsx";
+import DigitalTwinDashboard from "./digitalTwin/DigitalTwinDashboard.jsx";
+import EvacuationDrillDashboard from "./evacuationDrill/EvacuationDrillDashboard.jsx";
+import SafetyMicrositeSettingsPanel from "./safetyMicrosite/SafetyMicrositeSettingsPanel.jsx";
+import GuestAuditorAccessPanel from "./guestAuditor/GuestAuditorAccessPanel.jsx";
+import SiteZonesEditor from "./siteZones/SiteZonesEditor.jsx";
+import { loadAllZonesForCompany } from "./siteZones/siteZonesApi.js";
 import { loadMyActiveCorrectiveActions, loadPendingReviewCorrectiveActions, isOverdue as isCorrectiveActionOverdue } from "./correctiveActions/correctiveActionsApi.js";
 import { checkEventSurvey } from "./platformSurvey/platformSurveyApi.js";
 import { APP_NAME, sb, sbOk, sbErrMsg, uid, todayISO, THEME, styles, usePersistedState, setCurrentCompanyId, getCurrentCompanyId, loadCurrentCompanyPlanFeatures, isModuleInPlan, filterSubByPlan, resizeImageFile, useOrgStructureType } from "./shared.js";
@@ -276,6 +287,30 @@ export const HSE_MODULES = [
     labelKey: "moduleQuickTools",
     icon: true,
   },
+  {
+    key: "safetySuggestionBox",
+    label: "صندوق پیشنهادات ایمنی",
+    labelKey: "moduleSuggestionBox",
+    icon: true,
+  },
+  {
+    key: "incidentHeatmap",
+    label: "نقشه حرارتی حوادث و آنومالی‌ها",
+    labelKey: "moduleIncidentHeatmap",
+    icon: true,
+  },
+  {
+    key: "siteDigitalTwin",
+    label: "دیجیتال توئین سایت",
+    labelKey: "moduleSiteDigitalTwin",
+    icon: true,
+  },
+  {
+    key: "evacuationDrill",
+    label: "تمرین تخلیه",
+    labelKey: "moduleEvacuationDrill",
+    icon: true,
+  },
 ];
 
 // ---------- لایه ذخیره‌سازی (Supabase REST API) ----------
@@ -429,6 +464,7 @@ function anomalyFromRow(r) {
     contractor: r.contractor || "",
     subContractor: r.sub_contractor || "",
     area: r.area || "",
+    zoneId: r.zone_id || "",
     date: r.date || "",
     time: r.time || "",
     riskLevel: r.risk_level || "Med",
@@ -459,6 +495,7 @@ function anomalyRecordToDb(record) {
     contractor: record.contractor,
     sub_contractor: record.subContractor,
     area: record.area,
+    zone_id: record.zoneId || null,
     date: record.date || null,
     time: record.time,
     risk_level: record.riskLevel,
@@ -830,6 +867,7 @@ async function insertAnomaly(record) {
     contractor: record.contractor,
     sub_contractor: record.subContractor,
     area: record.area,
+    zone_id: record.zoneId || null,
     date: record.date || null,
     time: record.time,
     risk_level: record.riskLevel,
@@ -2260,6 +2298,8 @@ function AnomalyForm({ onBack, currentUser, onSaved, embedded }) {
   const [contractor, setContractor] = useState("");
   const [subContractor, setSubContractor] = useState("");
   const [area, setArea] = useState("");
+  const [zoneId, setZoneId] = useState("");
+  const [zones, setZones] = useState([]);
   const [trackingNumber, setTrackingNumber] = useState("");
   const [date, setDate] = useState(todayISO());
   const [time, setTime] = useState(nowHM());
@@ -2348,6 +2388,8 @@ function AnomalyForm({ onBack, currentUser, onSaved, embedded }) {
     })();
   }, []);
 
+  useEffect(() => { loadAllZonesForCompany().then(setZones); }, []);
+
   useEffect(() => {
     (async () => {
       const cats = await loadActiveAnomalyCategories();
@@ -2402,6 +2444,7 @@ function AnomalyForm({ onBack, currentUser, onSaved, embedded }) {
       contractor: contractor.trim(),
       subContractor: subContractor.trim(),
       area: area.trim(),
+      zoneId,
       date,
       time,
       riskLevel,
@@ -2549,6 +2592,17 @@ function AnomalyForm({ onBack, currentUser, onSaved, embedded }) {
             <label style={styles.label}>{t("afDate")}</label>
             <JalaliDateInput value={date} onChange={setDate} />
           </div>
+          {zones.length > 0 && (
+            <div>
+              <label style={styles.label}>{t("afZone")}</label>
+              <select style={styles.input} value={zoneId} onChange={(e) => setZoneId(e.target.value)} dir={dir}>
+                <option value="">{t("szLinkNone")}</option>
+                {zones.map((z) => (
+                  <option key={z.id} value={z.id}>{z.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         <div style={afPair}>
@@ -3656,7 +3710,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
 }
 
 // ---------- پنل ادمین ----------
-const MODULE_ICON = { profile: User, chat: MessageCircle, anomalyReport: AlertTriangle, personnelAccess: Users, managementDashboard: BarChart3, operationalDashboard: ClipboardList, proactiveIndicators: TrendingUp, incidentManagement: ShieldAlert, quickTools: Zap, hseSurvey: ClipboardList, permitToWork: FileSpreadsheet, contractorHseEvaluation: Award };
+const MODULE_ICON = { profile: User, chat: MessageCircle, anomalyReport: AlertTriangle, personnelAccess: Users, managementDashboard: BarChart3, operationalDashboard: ClipboardList, proactiveIndicators: TrendingUp, incidentManagement: ShieldAlert, quickTools: Zap, hseSurvey: ClipboardList, permitToWork: FileSpreadsheet, contractorHseEvaluation: Award, safetySuggestionBox: Lightbulb, incidentHeatmap: Flame, siteDigitalTwin: Boxes, evacuationDrill: Siren };
 
 // اعمال «پیکربندی سامانه» (ترتیب + برچسب نمایشی، از پنل Super Admin) روی
 // لیست ماژول‌های از‌قبل فیلترشده‌ی هر داشبورد. آیکون/badge/muted/sub که از
@@ -4996,6 +5050,10 @@ function buildHomeNavigateHandler(setNavFilter, setView) {
     else if (target.module === "incidents") setView("incidentsList");
     else if (target.module === "proactiveIndicators") setView("proactiveIndicators");
     else if (target.module === "quickTools") setView("quickTools");
+    else if (target.module === "safetySuggestionBox") setView("safetySuggestionBox");
+    else if (target.module === "incidentHeatmap") setView("incidentHeatmap");
+    else if (target.module === "siteDigitalTwin") setView("siteDigitalTwin");
+    else if (target.module === "evacuationDrill") setView("evacuationDrill");
     else if (target.module === "hseGate") {
       const mk = target.moduleKey;
       if (mk === "anomalyReport") { setNavFilter({ module: "anomaly", recordId: target.targetRecordId }); setView("anomalyList"); }
@@ -5232,6 +5290,9 @@ function EmployerDashboard({ onLogout, currentUser }) {
       isModuleInPlan(planFeatures, "jobPositionManagement") && { key: "jobPositionManagement", label: t("subJobPositions") },
       isModuleInPlan(planFeatures, "archiveManagement") && { key: "archiveManagement", label: t("moduleArchive") },
       isModuleInPlan(planFeatures, "scaffoldCodeManagement") && { key: "scaffoldCodeManagement", label: t("subScaffoldCodes") },
+      isModuleInPlan(planFeatures, "siteZonesManagement") && { key: "siteZonesManagement", label: t("subSiteZones") },
+      isModuleInPlan(planFeatures, "safetyMicrosite") && { key: "safetyMicrosite", label: t("subSafetyMicrosite") },
+      isModuleInPlan(planFeatures, "guestAuditorAccess") && { key: "guestAuditorAccess", label: t("subGuestAuditor") },
       isModuleInPlan(planFeatures, "trainingManagement") && { key: "trainingManagement", label: t("subTraining") },
       isModuleInPlan(planFeatures, "chatAccessManagement") && { key: "chatAccessManagement", label: t("subChatAccess") },
       isModuleInPlan(planFeatures, "hcmsMatrixManagement") && { key: "hcmsMatrixManagement", label: t("subHcmsMatrix") },
@@ -5320,6 +5381,9 @@ function EmployerDashboard({ onLogout, currentUser }) {
             {isModuleInPlan(planFeatures, "jobPositionManagement") && <MenuRow icon={Briefcase} label={t("subJobPositions")} onClick={() => setView("jobPositionManagement")} />}
             {isModuleInPlan(planFeatures, "archiveManagement") && <MenuRow icon={Archive} label={t("moduleArchive")} onClick={() => setView("archiveManagement")} />}
             {isModuleInPlan(planFeatures, "scaffoldCodeManagement") && <MenuRow icon={Tag} label={t("subScaffoldCodes")} onClick={() => setView("scaffoldCodeManagement")} />}
+            {isModuleInPlan(planFeatures, "siteZonesManagement") && <MenuRow icon={MapPin} label={t("subSiteZones")} onClick={() => setView("siteZonesManagement")} />}
+            {isModuleInPlan(planFeatures, "safetyMicrosite") && <MenuRow icon={Globe} label={t("subSafetyMicrosite")} onClick={() => setView("safetyMicrosite")} />}
+            {isModuleInPlan(planFeatures, "guestAuditorAccess") && <MenuRow icon={UserCheck} label={t("subGuestAuditor")} onClick={() => setView("guestAuditorAccess")} />}
             {isModuleInPlan(planFeatures, "trainingManagement") && <MenuRow icon={GraduationCap} label={t("subTraining")} onClick={() => setView("trainingManagement")} />}
             {isModuleInPlan(planFeatures, "chatAccessManagement") && <MenuRow icon={ShieldOff} label={t("subChatAccess")} onClick={() => setView("chatAccessManagement")} />}
             {isModuleInPlan(planFeatures, "hcmsMatrixManagement") && <MenuRow icon={ShieldAlert} label={t("subHcmsMatrix")} onClick={() => setView("hcmsMatrixManagement")} />}
@@ -5333,6 +5397,9 @@ function EmployerDashboard({ onLogout, currentUser }) {
       {isSupervisor && view === "permissionManagement" && <PermissionManager wide={isDesktop} onBack={() => setView("systemManagement")} />}
       {isSupervisor && view === "jobPositionManagement" && <JobPositionManager wide={isDesktop} onBack={() => setView("systemManagement")} />}
       {isSupervisor && view === "scaffoldCodeManagement" && <ScaffoldTagCodeManager wide={isDesktop} onBack={() => setView("systemManagement")} />}
+      {isSupervisor && view === "siteZonesManagement" && <SiteZonesEditor wide={isDesktop} onBack={() => setView("systemManagement")} />}
+      {isSupervisor && view === "safetyMicrosite" && <SafetyMicrositeSettingsPanel wide={isDesktop} onBack={() => setView("systemManagement")} />}
+      {isSupervisor && view === "guestAuditorAccess" && <GuestAuditorAccessPanel wide={isDesktop} currentUser={currentUser} onBack={() => setView("systemManagement")} />}
       {isSupervisor && view === "trainingManagement" && <TrainingManager wide={isDesktop} onBack={() => setView("systemManagement")} />}
       {isSupervisor && view === "chatAccessManagement" && <ChatAccessManager wide={isDesktop} onBack={() => setView("systemManagement")} />}
       {isSupervisor && view === "hcmsMatrixManagement" && <HcmsMatrixManager wide={isDesktop} onBack={() => setView("systemManagement")} />}
@@ -5470,6 +5537,10 @@ function EmployerDashboard({ onLogout, currentUser }) {
       {view === "managementDashboard" && <HomeDashboard role="EMPLOYER" currentUser={currentUser} onNavigate={handleHomeNavigate} onBack={() => setView("menu")} />}
       {view === "operationalDashboard" && <OperationalDashboard role={currentUser?.role || "EMPLOYER"} currentUser={currentUser} onNavigate={handleHomeNavigate} onBack={() => setView("menu")} />}
       {view === "quickTools" && <QuickToolsDashboard wide={isDesktop} currentUser={currentUser} onBack={() => setView("menu")} initialToolId={navFilter?.module === "quickTools" ? navFilter.toolId : undefined} initialRecordId={navFilter?.module === "quickTools" ? navFilter.recordId : undefined} />}
+      {view === "safetySuggestionBox" && <SuggestionBoxDashboard wide={isDesktop} currentUser={currentUser} onBack={() => setView("menu")} />}
+      {view === "incidentHeatmap" && <IncidentHeatmapDashboard wide={isDesktop} onBack={() => setView("menu")} />}
+      {view === "siteDigitalTwin" && <DigitalTwinDashboard wide={isDesktop} onBack={() => setView("menu")} onNavigate={handleHomeNavigate} />}
+      {view === "evacuationDrill" && <EvacuationDrillDashboard wide={isDesktop} currentUser={currentUser} onBack={() => setView("menu")} />}
     </ResponsiveDashboardShell>
   );
 }
@@ -5837,6 +5908,10 @@ function ContractorDashboard({ onLogout, currentUser }) {
       {view === "managementDashboard" && <HomeDashboard role="CONTRACTOR" currentUser={currentUser} onNavigate={handleHomeNavigate} onBack={() => setView("menu")} />}
       {view === "operationalDashboard" && <OperationalDashboard role="CONTRACTOR" currentUser={currentUser} onNavigate={handleHomeNavigate} onBack={() => setView("menu")} />}
       {view === "quickTools" && <QuickToolsDashboard wide={isDesktop} currentUser={currentUser} onBack={() => setView("menu")} initialToolId={navFilter?.module === "quickTools" ? navFilter.toolId : undefined} initialRecordId={navFilter?.module === "quickTools" ? navFilter.recordId : undefined} />}
+      {view === "safetySuggestionBox" && <SuggestionBoxDashboard wide={isDesktop} currentUser={currentUser} onBack={() => setView("menu")} />}
+      {view === "incidentHeatmap" && <IncidentHeatmapDashboard wide={isDesktop} onBack={() => setView("menu")} />}
+      {view === "siteDigitalTwin" && <DigitalTwinDashboard wide={isDesktop} onBack={() => setView("menu")} onNavigate={handleHomeNavigate} />}
+      {view === "evacuationDrill" && <EvacuationDrillDashboard wide={isDesktop} currentUser={currentUser} onBack={() => setView("menu")} />}
     </ResponsiveDashboardShell>
   );
 }
@@ -6173,6 +6248,12 @@ export default function App() {
   const hseClimateSurveyMatch = typeof window !== "undefined" ? window.location.hash.match(/^#hse-climate-survey\/(.+)$/) : null;
   // مسیرِ عمومیِ «نظرسنجی و آزمون HSE» — همان الگو، با توکنِ عمومی؛ بدونِ ورود.
   const surveyMatch = typeof window !== "undefined" ? window.location.hash.match(/^#survey\/(.+)$/) : null;
+  // مسیرِ عمومیِ چک‌اینِ تمرینِ تخلیه — همان الگو، با توکنِ یک نقطه‌یِ تجمع؛ بدونِ ورود.
+  const drillCheckinMatch = typeof window !== "undefined" ? window.location.hash.match(/^#drill-checkin\/(.+)$/) : null;
+  // مسیرِ عمومیِ گزارشِ ایمنیِ شرکت — همان الگو، با توکنِ عمومیِ مایکروسایت؛ بدونِ ورود.
+  const safetyReportMatch = typeof window !== "undefined" ? window.location.hash.match(/^#safety-report\/(.+)$/) : null;
+  // مسیرِ عمومیِ «بازرسِ مهمان» — همان الگو، با توکنِ لینکِ موقت؛ بدونِ ورود.
+  const guestAuditorMatch = typeof window !== "undefined" ? window.location.hash.match(/^#guest-auditor\/(.+)$/) : null;
   const surveyResultsMatch = typeof window !== "undefined" ? window.location.hash.match(/^#survey-results\/(.+)$/) : null;
   // لینکِ نتیجه‌ی یک پاسخِ مشخص — برایِ فرستادن به خودِ همان شرکت‌کننده.
   const surveyResponseMatch = typeof window !== "undefined" ? window.location.hash.match(/^#survey-response\/(.+)$/) : null;
@@ -6195,6 +6276,12 @@ export default function App() {
           <LazyPanel><PublicHseClimateSurvey publicToken={hseClimateSurveyMatch[1]} /></LazyPanel>
         ) : surveyMatch ? (
           <LazyPanel><PublicSurvey publicToken={surveyMatch[1]} /></LazyPanel>
+        ) : drillCheckinMatch ? (
+          <LazyPanel><PublicDrillCheckin checkinToken={drillCheckinMatch[1]} /></LazyPanel>
+        ) : safetyReportMatch ? (
+          <LazyPanel><PublicSafetyMicrosite publicToken={safetyReportMatch[1]} /></LazyPanel>
+        ) : guestAuditorMatch ? (
+          <LazyPanel><PublicGuestAuditorView guestToken={guestAuditorMatch[1]} /></LazyPanel>
         ) : surveyResultsMatch ? (
           <LazyPanel><PublicSurveyResults resultsToken={surveyResultsMatch[1]} /></LazyPanel>
         ) : surveyResponseMatch ? (

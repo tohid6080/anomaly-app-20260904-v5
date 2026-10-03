@@ -1,17 +1,18 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { CalendarClock, FileText, Truck, HeartPulse, ListChecks } from "lucide-react";
+import { CalendarClock, FileText, Truck, HeartPulse, ListChecks, CheckCircle2 } from "lucide-react";
 import { THEME } from "../../shared.js";
 import { useLanguage } from "../../i18n/LanguageContext.jsx";
 import { toJalaliSafe } from "../../personnel/jalaliDate.jsx";
 import { WidgetCard, WidgetSkeleton, WidgetEmpty, WidgetError } from "./primitives.jsx";
 import { loadHseCalendarEvents } from "./hseCalendarApi.js";
 
-const KIND_ICON = { permit: FileText, machinery: Truck, personnel: HeartPulse, pssr: ListChecks };
+const KIND_ICON = { permit: FileText, machinery: Truck, personnel: HeartPulse, pssr: ListChecks, correctiveAction: CheckCircle2 };
 
 /**
  * ویجت «تقویم یکپارچهٔ HSE» — یک فهرستِ زمانیِ واحد از سررسیدهای واقعیِ
  * موجود در سامانه (انقضای مجوز کار، بیمه/بازرسیِ ماشین‌آلات، معایناتِ
- * شغلیِ پرسنل، اقداماتِ باز PSSR)، دسته‌بندی‌شده بر اساسِ فوریت. داده از
+ * شغلیِ پرسنل، اقداماتِ باز PSSR، سررسیدِ اقدام‌هایِ اصلاحی)، دسته‌بندی‌شده
+ * بر اساسِ فوریت. داده از
  * hseCalendarApi.js می‌آید — هیچ جدول/ستونِ جدیدی در دیتابیس لازم نبود.
  */
 function Chip({ overdue, daysUntil }) {

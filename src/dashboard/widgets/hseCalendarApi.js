@@ -2,14 +2,15 @@ import { loadPermits } from "../../permit/permitApi.js";
 import { loadMachineryListOfflineFirst } from "../../machinery/machineryApi.js";
 import { loadPersonnelList } from "../../personnel/personnelApi.js";
 import { loadOpenActionsForResponsible } from "../../pssr/pssrMeetingsApi.js";
+import { loadCorrectiveActions } from "../../correctiveActions/correctiveActionsApi.js";
 
 /**
- * لایهٔ دادهٔ ویجت «تقویم یکپارچهٔ HSE» — چهار منبعِ واقعیِ موجود را که
+ * لایهٔ دادهٔ ویجت «تقویم یکپارچهٔ HSE» — پنج منبعِ واقعیِ موجود را که
  * هرکدام از قبل تاریخِ سررسید/انقضا دارند یکجا جمع می‌کند: انقضای مجوزِ
- * کار، انقضای بیمه/بازرسیِ ماشین‌آلات، مهلتِ معاینات شغلیِ پرسنل، و
- * سررسیدِ اقداماتِ باز PSSR. هیچ جدول یا ستونِ جدیدی لازم نبود — همان
- * تاریخ‌هایی که زنگولهٔ اعلان هم از آن‌ها استفاده می‌کند، فقط این‌بار
- * به‌صورتِ یک فهرستِ زمانیِ تک‌تک (نه شمارشِ تجمیعی).
+ * کار، انقضای بیمه/بازرسیِ ماشین‌آلات، مهلتِ معاینات شغلیِ پرسنل، سررسیدِ
+ * اقداماتِ باز PSSR، و سررسیدِ اقدام‌هایِ اصلاحیِ باز. هیچ جدول یا ستونِ
+ * جدیدی لازم نبود — همان تاریخ‌هایی که زنگولهٔ اعلان هم از آن‌ها استفاده
+ * می‌کند، فقط این‌بار به‌صورتِ یک فهرستِ زمانیِ تک‌تک (نه شمارشِ تجمیعی).
  * فقط خواندن؛ هیچ نوشتنی. شکستِ یک منبع بقیه را از کار نمی‌اندازد.
  */
 
@@ -27,11 +28,12 @@ export async function loadHseCalendarEvents({ role, currentUser } = {}) {
   const isContractor = role === "CONTRACTOR";
   const myName = norm(currentUser?.name);
 
-  const [permitsRes, machineryRes, personnelRes, pssrRes] = await Promise.allSettled([
+  const [permitsRes, machineryRes, personnelRes, pssrRes, caRes] = await Promise.allSettled([
     loadPermits(),
     loadMachineryListOfflineFirst(),
     loadPersonnelList(),
     loadOpenActionsForResponsible(isContractor ? "contractor" : "employer", currentUser?.id),
+    loadCorrectiveActions(),
   ]);
 
   const events = [];
@@ -75,6 +77,19 @@ export async function loadHseCalendarEvents({ role, currentUser } = {}) {
   if (pssrRes.status === "fulfilled") {
     for (const a of pssrRes.value) {
       if (a.dueDate) events.push({ id: `pssr-${a.id}`, kind: "pssr", title: `اقدامِ PSSR — ${a.pssrReportNo || a.pssrId || ""}`, date: a.dueDate, nav: { module: "pssr" } });
+    }
+  }
+
+  // --- سررسیدِ اقدام‌هایِ اصلاحیِ باز ---
+  if (caRes.status === "fulfilled") {
+    let actions = caRes.value.filter((a) => a.dueDate && a.status !== "closed" && a.status !== "expired");
+    if (isContractor && myName) actions = actions.filter((a) => norm(a.responsibleContractorName) === myName);
+    for (const a of actions) {
+      events.push({
+        id: `ca-${a.id}`, kind: "correctiveAction",
+        title: `${a.actionNumber || "اقدام اصلاحی"}${a.nonconformanceDescription ? " — " + a.nonconformanceDescription.slice(0, 40) : ""}`,
+        date: a.dueDate, nav: { module: "correctiveActions" },
+      });
     }
   }
 

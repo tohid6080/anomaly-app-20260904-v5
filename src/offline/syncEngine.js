@@ -62,6 +62,14 @@ export const MODULE_TABLE_MAP = {
   contractorEvalCustomFields: { table: "contractor_eval_custom_fields", idField: "id" },
   contractorEvalPeriods: { table: "contractor_eval_periods", idField: "id" },
   contractorEvalRecords: { table: "contractor_eval_records", idField: "id" },
+  safetySuggestions: { table: "safety_suggestions", idField: "id" },
+  safetySuggestionVotes: { table: "safety_suggestion_votes", idField: "id" },
+  siteMaps: { table: "site_maps", idField: "id" },
+  siteZones: { table: "site_zones", idField: "id" },
+  evacuationDrills: { table: "evacuation_drills", idField: "id" },
+  evacuationMusterPoints: { table: "evacuation_muster_points", idField: "id" },
+  companySafetyMicrosites: { table: "company_safety_microsites", idField: "id" },
+  guestAuditorLinks: { table: "guest_auditor_links", idField: "id" },
   // future modules register here once built
 };
 
