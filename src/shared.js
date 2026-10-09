@@ -502,6 +502,8 @@ export const GATED_MODULE_SUBS = {
   riskAssessment: [
     { key: "bowtieDashboard", labelKey: "subBowtie" },
     { key: "hcmsDashboard", labelKey: "subHcms" },
+    { key: "jhaDashboard", labelKey: "subJha" },
+    { key: "fmeaDashboard", labelKey: "subFmea" },
     { key: "riskKnowledgeManagement", labelKey: "subRiskKnowledge" },
   ],
   personnelAccess: [

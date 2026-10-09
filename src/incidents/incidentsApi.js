@@ -119,6 +119,12 @@ function incidentFromRow(r) {
     hseSupervisorName: r.hse_supervisor_name || "",
     hseSupervisorDate: r.hse_supervisor_date || "",
     formCode: r.form_code || FORM_CODE,
+    // گیتِ تاییدِ شبه‌حادثه — فقط برایِ incident_type='near_miss' که توسطِ
+    // پیمانکار ثبت شده معنادار است؛ سایرِ رکوردها همیشه 'active' می‌مانند.
+    status: r.status || "active",
+    reviewedBy: r.reviewed_by || "",
+    reviewedAt: r.reviewed_at || "",
+    reviewNote: r.review_note || "",
   };
 }
 
@@ -187,13 +193,38 @@ export async function loadIncidentById(id) {
   return sbOk(rows) && rows.length > 0 ? incidentFromRow(rows[0]) : null;
 }
 
-export async function createIncident(rec, createdBy) {
+// isContractorSubmission: شبه‌حادثه‌ای که پیمانکار خودش ثبت می‌کند، تا
+// تاییدِ کارفرما/سرپرست در انتظار می‌ماند (طبقِ تاییدِ صریحِ کاربر — مثبت در
+// ارزیابی، ولی فقط بعدِ تایید). سایرِ انواعِ حادثه/ثبتِ کارفرما همیشه 'active'.
+export async function createIncident(rec, createdBy, isContractorSubmission = false) {
   if (!rec.incidentNo?.trim() || !rec.occurredAt) {
     return { __error: true, message: tr("incErrNoAndDateRequired") };
   }
-  const payload = { ...incidentToDb(rec), id: uid("inc"), company_id: getCurrentCompanyId(), created_by: createdBy || "" };
+  const status = rec.incidentType === "near_miss" && isContractorSubmission ? "pending_review" : "active";
+  const payload = { ...incidentToDb(rec), id: uid("inc"), company_id: getCurrentCompanyId(), created_by: createdBy || "", status };
   const rows = await sb("incidents", { method: "POST", body: JSON.stringify([payload]) });
   if (!sbOk(rows)) return { __error: true, message: tr("incErrCreate") };
+  return incidentFromRow(rows[0]);
+}
+
+// تاییدِ نهاییِ شبه‌حادثه — دقیقاً الگویِ approveHcmsAssessment در hcmsApi.js.
+export async function approveNearMiss(id, reviewedBy) {
+  const rows = await sb(`incidents?id=eq.${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status: "active", reviewed_by: reviewedBy || "", reviewed_at: new Date().toISOString() }),
+  });
+  if (!sbOk(rows)) return { __error: true, message: tr("incErrApprove") };
+  return incidentFromRow(rows[0]);
+}
+
+// رد — طبقِ همان قاعده‌ی رایجِ سامانه، یادداشتِ دلیل اجباری است.
+export async function rejectNearMiss(id, reviewedBy, note) {
+  if (!note || !note.trim()) return { __error: true, message: tr("incErrRejectReasonRequired") };
+  const rows = await sb(`incidents?id=eq.${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status: "rejected", review_note: note.trim(), reviewed_by: reviewedBy || "", reviewed_at: new Date().toISOString() }),
+  });
+  if (!sbOk(rows)) return { __error: true, message: tr("incErrApprove") };
   return incidentFromRow(rows[0]);
 }
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import BackLink from "../shared/BackLink.jsx";
-import { Truck, Plus, Trash2, FileText, Paperclip } from "lucide-react";
+import { Truck, Plus, Trash2, FileText, Paperclip, AlertTriangle } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import DataView, { StatusPill } from "../shared/DataView.jsx";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
@@ -13,7 +13,7 @@ import {
   MACHINE_TYPES, APPROVAL_STATUSES, MACHINERY_DOC_TYPES, approvalStatusMeta,
   loadMachineryListOfflineFirst, deleteMachineryDB, setMachineryApproval,
   requestMachineryDeletion, approveMachineryDeletion, rejectMachineryDeletion,
-  loadMachineryDocuments, daysUntil, EXPIRY_WARNING_DAYS,
+  loadMachineryDocuments, daysUntil, EXPIRY_WARNING_DAYS, createAnomalyFromMachineryDocIssue,
 } from "./machineryApi.js";
 import MachineryForm from "./MachineryForm.jsx";
 import {
@@ -209,6 +209,20 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
     if (result?.__error) { alert(result.message); return; }
     await load();
   };
+  // اقدامِ اصلیِ کاربر است (نه کمکی) — خطا باید واقعاً نمایش داده شود،
+  // طبق توضیح createAnomalyFromMachineryDocIssue در machineryApi.js.
+  const handleFlagAnomaly = async (m) => {
+    const description = prompt(t("mdFlagAnomalyPrompt"), m.reviewNote || "");
+    if (description === null) return;
+    if (!description.trim()) { alert(t("mdFlagAnomalyDescRequired")); return; }
+    const result = await createAnomalyFromMachineryDocIssue({
+      machineName: m.machineName, plateNumber: m.plateNumber, contractorName: m.contractorName,
+      description: description.trim(), createdBy: currentUser?.name,
+    });
+    if (result?.__error) { alert(result.message); return; }
+    alert(t("mdFlagAnomalySuccess"));
+  };
+
   const handleBulkDelete = async (ids) => {
     if (readOnly) { alert(t("errNoDeletePermission")); return; }
     if (!confirm(t("confirmDeleteCount", { count: ids.length }))) return;
@@ -322,6 +336,11 @@ export default function MachineryDashboard({ onBack, currentUser, role, initialA
         )}
         {isGatekeeper && !readOnly && m.approvalStatus !== "pending" && (
           <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => startReview(m)}>{t("mdChangeDecision")}</button>
+        )}
+        {isGatekeeper && !readOnly && (m.approvalStatus === "needs_correction" || m.approvalStatus === "rejected") && (
+          <button type="button" style={{ ...styles.smallButton, background: THEME.danger, display: "inline-flex", alignItems: "center", gap: 4 }} onClick={() => handleFlagAnomaly(m)}>
+            <AlertTriangle size={12} /> {t("mdFlagAnomaly")}
+          </button>
         )}
       </>
     );
