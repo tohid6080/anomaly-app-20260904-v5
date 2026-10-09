@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from "react";
 import BackLink from "../shared/BackLink.jsx";
-import { Clock, ShieldCheck, UserX } from "lucide-react";
+import { Clock, ShieldCheck, UserX, AlertTriangle } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { isoToJalaliDisplay, JalaliDateInput } from "./jalaliDate.jsx";
 import DocUploadField from "./DocUploadField.jsx";
 import DocumentViewerModal from "./DocumentViewerModal.jsx";
 import SyncStatusBadge from "../offline/SyncStatusBadge.jsx";
 import { loadRequiredTrainingsForJobTitle } from "../training/trainingApi.js";
+import { loadRequiredPpeForJobTitle, loadPpeDistributions, recordPpeDistribution } from "../ppe/ppeApi.js";
 import AccidentPronenessSection from "./AccidentPronenessSection.jsx";
 import {
   DOC_TYPES, docStatusMeta, personnelStatusMeta,
   loadPersonnelDocuments, upsertDocument, upsertTrainingDocument, reviewDocumentDB, deleteDocumentDB,
   updatePersonnelDB, progressPersonnelWorkflow, checkAndUpdateDeadlines,
-  EMPLOYMENT_STATUS, employmentStatusMeta, setEmploymentStatus,
+  EMPLOYMENT_STATUS, employmentStatusMeta, setEmploymentStatus, createAnomalyFromPersonnelDocIssue,
 } from "./personnelApi.js";
 import {
   loadGateStatusForRecord, loadCompanyStaffOptions, assignForReview, submitReview,
@@ -44,6 +45,14 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
   const [savingEmployment, setSavingEmployment] = useState(false);
   const [requiredTrainings, setRequiredTrainings] = useState([]);
   const [trainingsLoading, setTrainingsLoading] = useState(true);
+  // پیش‌نویسِ تاریخِ انقضایِ هر مدرکِ آموزشِ تخصصی، پیش از آپلود (طبقِ
+  // قاعده‌یِ local-draft-سپس-commit) — کلیدشده با trainingId.
+  const [trainingExpiryDraft, setTrainingExpiryDraft] = useState({});
+  const [requiredPpe, setRequiredPpe] = useState([]);
+  const [ppeLoading, setPpeLoading] = useState(true);
+  const [ppeDistributions, setPpeDistributions] = useState([]);
+  const [ppeRefusingFor, setPpeRefusingFor] = useState(null);
+  const [ppeRefuseNote, setPpeRefuseNote] = useState("");
 
   // گیت سرپرست/مدیر HSE — ارجاع بررسی این پرسنل به یک کارشناس، یا تأیید
   // مستقیم توسط خودِ سرپرست. دقیقاً همان زیرساخت مشترک آنومالی.
@@ -129,6 +138,32 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [personnel.jobTitle]);
 
+  const loadPpeSection = async () => {
+    const [items, dists] = await Promise.all([
+      loadRequiredPpeForJobTitle(personnel.jobTitle),
+      loadPpeDistributions(personnel.id),
+    ]);
+    setRequiredPpe(items);
+    setPpeDistributions(dists);
+    setPpeLoading(false);
+  };
+  useEffect(() => {
+    loadPpeSection();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [personnel.jobTitle, personnel.id]);
+
+  // اقدامِ استاندارد/فوری (مثلِ تایید/رد مدرک) — ثبتِ توزیع یک‌کلیکی، عدمِ
+  // ارائه با یادداشتِ اجباری (الگویِ دکمه‌هایِ رد در همین فایل).
+  const handleRecordPpeDistribution = async (ppeItemId, status, note) => {
+    const result = await recordPpeDistribution({
+      personnelId: personnel.id, contractorId: personnel.contractorId, contractorName: personnel.contractorName,
+      ppeItemId, status, note, createdBy: (currentUser?.name || currentUser?.username),
+    });
+    if (result?.__error) { alert(result.message); return; }
+    setPpeRefusingFor(null); setPpeRefuseNote("");
+    await loadPpeSection();
+  };
+
   // طبق تصمیم تأییدشده: بررسی/تأیید مدارک و صلاحیت پرسنل فقط برای
   // سرپرست/مدیر HSE و ادمین مجاز است، نه هر کارفرمایی معمولی. چون
   // role (prop) همیشه "EMPLOYER" است (حتی برای حساب سرپرست HSE — هر دو
@@ -192,7 +227,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
   // آپلودِ دوباره برای همان دوره، مدرکِ قبلیِ همان دوره را جایگزین می‌کند.
   const handleUploadTrainingDoc = async (trainingId, data, fileName, mimeType) => {
     if (!isContractor) { alert(t("errNoUploadPermission")); return { __error: true, message: "no permission" }; }
-    const doc = await upsertTrainingDocument(personnel.id, trainingId, data, fileName, mimeType, (currentUser?.name || currentUser?.username));
+    const doc = await upsertTrainingDocument(personnel.id, trainingId, data, fileName, mimeType, (currentUser?.name || currentUser?.username), trainingExpiryDraft[trainingId]);
     if (doc?.__error) return doc;
     const newDocs = [...documents.filter((d) => !(d.docType === "specialized_safety_training" && d.trainingId === trainingId)), doc];
     const updatedP = await progressPersonnelWorkflow(personnel, newDocs, (currentUser?.name || currentUser?.username));
@@ -207,6 +242,21 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
     const updatedP = await progressPersonnelWorkflow(personnel, newDocs, (currentUser?.name || currentUser?.username));
     setShowRejectFor(null);
     refreshAfterChange(updatedP, newDocs);
+  };
+
+  // اقدامِ اصلیِ کاربر است (نه کمکی) — خطا باید واقعاً نشان داده شود، دقیقاً
+  // توضیح createAnomalyFromPersonnelDocIssue در personnelApi.js.
+  const handleFlagAnomaly = async (docTypeLabel, defaultNote) => {
+    if (!isEmployer) { alert(t("errNoReviewPermission")); return; }
+    const description = prompt(t("pdetFlagAnomalyPrompt", { doc: docTypeLabel }), defaultNote || "");
+    if (description === null) return;
+    if (!description.trim()) { alert(t("pdetFlagAnomalyDescRequired")); return; }
+    const result = await createAnomalyFromPersonnelDocIssue({
+      fullName: personnel.fullName, contractorName: personnel.contractorName,
+      description: description.trim(), createdBy: (currentUser?.name || currentUser?.username),
+    });
+    if (result?.__error) { alert(result.message); return; }
+    alert(t("pdetFlagAnomalySuccess"));
   };
 
   const handleQualificationDecision = async (status) => {
@@ -350,6 +400,13 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
                 {dsm && <span style={{ ...styles.badge, color: dsm.color, background: dsm.bg }}>{t(dsm.labelKey)}</span>}
               </div>
 
+              {isContractor && (!doc || doc.status !== "approved") && (
+                <div style={{ marginTop: 8 }}>
+                  <label style={styles.label}>{t("pdetTrainingExpiryLabel")}</label>
+                  <JalaliDateInput value={trainingExpiryDraft[tr.id] ?? doc?.expiryDate ?? ""} onChange={(v) => setTrainingExpiryDraft((prev) => ({ ...prev, [tr.id]: v }))} />
+                </div>
+              )}
+
               <div style={{ marginTop: 8 }}>
                 {doc ? (
                   <DocUploadField
@@ -372,6 +429,7 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
                 )}
               </div>
 
+              {doc?.expiryDate && <p style={{ fontSize: 11.5, color: THEME.text3, marginTop: 6 }}><b>{t("pdetTrainingExpiryLabel")}</b> {isoToJalaliDisplay(doc.expiryDate)}</p>}
               {doc?.reviewNote && <p style={{ fontSize: 11.5, color: THEME.danger, marginTop: 6 }}><b>{t("pdetReviewNote")}</b> {doc.reviewNote}</p>}
 
               {isEmployer && doc && doc.status === "pending" && (
@@ -388,6 +446,56 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
                         <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => handleReviewDoc(doc, "rejected", reviewDraft[doc.id])}>{t("pdetReject")}</button>
                         <button type="button" style={{ ...styles.smallButton, background: THEME.warn }} onClick={() => handleReviewDoc(doc, "needs_correction", reviewDraft[doc.id])}>{t("pdetRejectNeedsCorrection")}</button>
                         <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setShowRejectFor(null)}>{t("commonCancel")}</button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+              {isEmployer && doc && (doc.status === "rejected" || doc.status === "needs_correction") && (
+                <button type="button" style={{ ...styles.smallButton, background: THEME.danger, marginTop: 8, display: "inline-flex", alignItems: "center", gap: 4 }} onClick={() => handleFlagAnomaly(tr.title, doc.reviewNote)}>
+                  <AlertTriangle size={12} /> {t("pdetFlagAnomaly")}
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div style={{ ...styles.card, width: "auto" }}>
+        <h3 style={{ fontSize: 14, color: THEME.heading, margin: "0 0 8px", fontWeight: 700 }}>{t("pdetRequiredPpe")}</h3>
+        {ppeLoading && <p style={{ fontSize: 12, color: THEME.text3 }}>{t("pdetCheckingEllipsis")}</p>}
+        {!ppeLoading && requiredPpe.length === 0 && (
+          <p style={{ fontSize: 12, color: THEME.text3 }}>{t("pdetNoPpeRequired", { job: personnel.jobTitle })}</p>
+        )}
+        {!ppeLoading && requiredPpe.map((item) => {
+          const dist = ppeDistributions.find((d) => d.ppeItemId === item.id);
+          const status = dist?.status || "pending";
+          const statusColor = status === "distributed" ? THEME.ok : status === "refused" ? THEME.danger : THEME.warn;
+          const statusBg = status === "distributed" ? THEME.okBg : status === "refused" ? THEME.dangerBg : THEME.warnBg;
+          const statusLabel = t(status === "distributed" ? "ppeStatusDistributed" : status === "refused" ? "ppeStatusNotProvided" : "ppeStatusPending");
+          return (
+            <div key={item.id} style={{ borderTop: `1px solid ${THEME.border}`, paddingTop: 12, marginTop: 12 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: THEME.text }}>{item.name}</span>
+                <span style={{ ...styles.badge, color: statusColor, background: statusBg }}>{statusLabel}</span>
+              </div>
+
+              {dist?.distributedAt && <p style={{ fontSize: 11.5, color: THEME.text3, marginTop: 6 }}>{t("pdetPpeDistributedAtLabel")} {isoToJalaliDisplay(dist.distributedAt)}</p>}
+              {status === "refused" && dist?.note && <p style={{ fontSize: 11.5, color: THEME.danger, marginTop: 6 }}><b>{t("pdetReviewNote")}</b> {dist.note}</p>}
+
+              {isContractor && (
+                <div style={{ marginTop: 8 }}>
+                  {ppeRefusingFor !== item.id ? (
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button type="button" style={{ ...styles.smallButton, padding: "6px 12px" }} onClick={() => handleRecordPpeDistribution(item.id, "distributed", "")}>{t("pdetPpeMarkDistributed")}</button>
+                      <button type="button" style={{ ...styles.smallButton, background: THEME.danger, padding: "6px 12px" }} onClick={() => { setPpeRefusingFor(item.id); setPpeRefuseNote(""); }}>{t("pdetPpeMarkNotProvided")}</button>
+                    </div>
+                  ) : (
+                    <>
+                      <textarea style={{ ...styles.input, minHeight: 50, fontFamily: "inherit", marginTop: 6 }} value={ppeRefuseNote} onChange={(e) => setPpeRefuseNote(e.target.value)} placeholder={t("pdetPpeNotProvidedReasonPlaceholder")} dir={dir} />
+                      <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                        <button type="button" style={{ ...styles.smallButton, background: THEME.danger }} onClick={() => handleRecordPpeDistribution(item.id, "refused", ppeRefuseNote)}>{t("commonConfirm")}</button>
+                        <button type="button" style={{ ...styles.smallButton, background: THEME.text3 }} onClick={() => setPpeRefusingFor(null)}>{t("commonCancel")}</button>
                       </div>
                     </>
                   )}
@@ -525,6 +633,16 @@ export default function PersonnelDetail({ personnel: initialPersonnel, role, cur
                     </>
                   )}
                 </div>
+              )}
+              {isEmployer && doc && (doc.status === "rejected" || doc.status === "needs_correction") && (
+                <button type="button" style={{ ...styles.smallButton, background: THEME.danger, marginTop: 8, display: "inline-flex", alignItems: "center", gap: 4 }} onClick={() => handleFlagAnomaly(t(dt.labelKey), doc.reviewNote)}>
+                  <AlertTriangle size={12} /> {t("pdetFlagAnomaly")}
+                </button>
+              )}
+              {isEmployer && !doc && (
+                <button type="button" style={{ ...styles.smallButton, background: THEME.danger, marginTop: 8, display: "inline-flex", alignItems: "center", gap: 4 }} onClick={() => handleFlagAnomaly(t(dt.labelKey), "")}>
+                  <AlertTriangle size={12} /> {t("pdetFlagAnomaly")}
+                </button>
               )}
             </div>
           );

@@ -77,7 +77,7 @@ export default function IncidentsListPage({ currentUser, role, readOnly, wide })
       return;
     }
     setSaving(true);
-    const result = await createIncident(form, currentUser?.name);
+    const result = await createIncident(form, currentUser?.name, role === "CONTRACTOR");
     setSaving(false);
     if (result?.__error) { setError(result.message); return; }
     setForm(emptyForm());

@@ -30,6 +30,8 @@ export const PLAN_FEATURES = [
     sub: [
       { key: "bowtieDashboard", labelKey: "pfBowtieDashboard" },
       { key: "hcmsDashboard", labelKey: "pfHcmsDashboard" },
+      { key: "jhaDashboard", labelKey: "pfJhaDashboard" },
+      { key: "fmeaDashboard", labelKey: "pfFmeaDashboard" },
       { key: "riskKnowledgeManagement", labelKey: "pfRiskKnowledgeManagement" },
     ],
   },
@@ -108,6 +110,7 @@ export const PLAN_FEATURES = [
       { key: "effectivenessThresholds", labelKey: "pfEffectivenessThresholds" },
       { key: "anomalyCategoryManagement", labelKey: "pfAnomalyCategoryManagement" },
       { key: "contractorEvalSettings", labelKey: "pfContractorEvalSettings" },
+      { key: "ppeManagement", labelKey: "pfPpeManagement" },
     ],
   },
 ];

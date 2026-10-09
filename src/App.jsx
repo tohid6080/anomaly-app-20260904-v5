@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef, useMemo, Suspense, lazy } from "react";
 import BackLink from "./shared/BackLink.jsx";
-import { AlertTriangle, Plus, X, ChevronRight, ChevronLeft, ChevronDown, ChevronsRight, ChevronsLeft, LogOut, CheckCircle2, Clock, Camera, ImagePlus, Trash2, FileSpreadsheet, FileText, User, Users, ShieldCheck, LayoutGrid, BarChart3, Briefcase, Settings, Archive, Truck, Tag, MessageCircle, GraduationCap, ShieldOff, ShieldAlert, Database, Fingerprint, Info, Sliders, TrendingUp, Search, Home, Megaphone, Sparkles, Gift, Bell, ArrowUpRight, ClipboardList, MoreVertical, RefreshCw, GripVertical, Zap, Award, FolderKanban, MapPin, Lightbulb, Flame, Boxes, Siren, Globe, UserCheck } from "lucide-react";
+import { AlertTriangle, Plus, X, ChevronRight, ChevronLeft, ChevronDown, ChevronsRight, ChevronsLeft, LogOut, CheckCircle2, Clock, Camera, ImagePlus, Trash2, FileSpreadsheet, FileText, User, Users, ShieldCheck, LayoutGrid, BarChart3, Briefcase, Settings, Archive, Truck, Tag, MessageCircle, GraduationCap, ShieldOff, ShieldAlert, Database, Fingerprint, Info, Sliders, TrendingUp, Search, Home, Megaphone, Sparkles, Gift, Bell, ArrowUpRight, ClipboardList, MoreVertical, RefreshCw, GripVertical, Zap, Award, FolderKanban, MapPin, Lightbulb, Flame, Boxes, Siren, Globe, UserCheck, HardHat } from "lucide-react";
 // بارگذاری تنبلِ صفحه‌های ماژول — هرکدام چانکِ جدای خودش، فقط با باز شدنِ
 // آن ماژول بارگذاری می‌شود؛ از باندلِ اولیه‌ی سنگینِ App.jsx بیرون می‌مانند.
 const BowTieDashboard = lazy(() => import("./bowtie/BowTieDashboard.jsx"));
 const HcmsDashboard = lazy(() => import("./hcms/HcmsDashboard.jsx"));
+const JhaDashboard = lazy(() => import("./riskAssessment/JhaDashboard.jsx"));
+const FmeaDashboard = lazy(() => import("./riskAssessment/FmeaDashboard.jsx"));
 const HcmsMatrixManager = lazy(() => import("./hcms/HcmsMatrixManager.jsx"));
 const ContractorEvalDashboard = lazy(() => import("./contractorEval/ContractorEvalDashboard.jsx"));
 const ContractorEvalSettingsManager = lazy(() => import("./contractorEval/ContractorEvalSettingsManager.jsx"));
@@ -13,7 +15,8 @@ const ContractorEvalSettingsManager = lazy(() => import("./contractorEval/Contra
 // و فقط هنگام باز شدنِ همان بخش بارگذاری می‌شوند.
 const RiskKnowledgeManager = lazy(() => import("./riskknowledge/RiskKnowledgeManager.jsx"));
 const AnomalyCategoryManager = lazy(() => import("./anomalycategories/AnomalyCategoryManager.jsx"));
-import { loadActiveAnomalyCategories } from "./anomalycategories/anomalyCategoriesApi.js";
+import { loadActiveAnomalyCategories, proposeAnomalyCategory } from "./anomalycategories/anomalyCategoriesApi.js";
+import { anomalyFromRow, anomalyRecordToDb, insertAnomaly } from "./anomalies/anomalyMapping.js";
 import { getOrCreateHcmsForAnomaly, createSuggestedHcmsFromAnomaly } from "./hcms/hcmsApi.js";
 import { loadBowtiesForLinking, loadBarriersForBowtie, linkAnomalyToBarriers, loadBarrierLinksForAnomaly } from "./bowtie/anomalyBarrierLinksApi.js";
 import { recalculateForLinkedBarriers, loadDegradedBarrierAlerts } from "./bowtie/effectivenessApi.js";
@@ -74,6 +77,7 @@ import { useAndroidBackButton } from "./backButtonHandler.js";
 import { issueSessionToken, clearSessionToken, changeMyPassword } from "./sessionToken.js";
 const ChatDashboard = lazy(() => import("./chat/ChatDashboard.jsx"));
 const TrainingManager = lazy(() => import("./training/TrainingManager.jsx"));
+const PpeRequirementsManager = lazy(() => import("./ppe/PpeRequirementsManager.jsx"));
 const ChatAccessManager = lazy(() => import("./chat/ChatAccessManager.jsx"));
 import { loadUnreadTotal } from "./chat/chatApi.js";
 import ChatThread from "./chat/ChatThread.jsx";
@@ -146,6 +150,11 @@ const RISK_LEVELS = [
   { value: "Low", labelKey: "riskLevelLow", color: "#16a34a", bg: THEME.okBg },
 ];
 
+// مقدارِ نگهدارنده‌ی گزینه‌ی «سایر» در dropdown دسته‌بندیِ آنومالی — هرگز
+// به دیتابیس ذخیره نمی‌شود؛ فقط برایِ نشان‌دادنِ فیلدِ متنیِ آزاد است
+// (ر.ک. AnomalyForm پایین‌تر و proposeAnomalyCategory در anomalyCategoriesApi.js).
+const OTHER_CATEGORY_VALUE = "__other__";
+
 const ANOMALY_FORMATS = [
   { value: "بازرسی", labelKey: "anomFormatInspection" },
   { value: "مدیریت تغییر", labelKey: "anomFormatMoc" },
@@ -190,6 +199,8 @@ export const HSE_MODULES = [
     sub: [
       { key: "bowtieDashboard", label: "BowTie Risk Analysis", labelKey: "subBowtie" },
       { key: "hcmsDashboard", label: "HCMS - سیستم مدیریت و کنترل خطرات", labelKey: "subHcms" },
+      { key: "jhaDashboard", label: "JHA - تحلیل خطر شغلی", labelKey: "subJha" },
+      { key: "fmeaDashboard", label: "FMEA - تحلیل حالات خرابی و اثرات آن", labelKey: "subFmea" },
       { key: "riskKnowledgeManagement", label: "بانک اطلاعاتی ارزیابی ریسک", labelKey: "subRiskKnowledge", employerOnly: true },
     ],
   },
@@ -454,64 +465,6 @@ async function updateEmployerAccountDB(id, patch) {
 }
 async function deleteEmployerAccountDB(id) {
   await sb(`employer_accounts?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" });
-}
-
-function anomalyFromRow(r) {
-  return {
-    id: r.id,
-    trackingNumber: r.tracking_number || "",
-    project: r.project || "",
-    contractor: r.contractor || "",
-    subContractor: r.sub_contractor || "",
-    area: r.area || "",
-    zoneId: r.zone_id || "",
-    date: r.date || "",
-    time: r.time || "",
-    riskLevel: r.risk_level || "Med",
-    category: r.category || "",
-    format: r.format || "",
-    description: r.description || "",
-    correctiveAction: r.corrective_action || "",
-    obstacles: r.obstacles || "",
-    follower: r.follower || "",
-    sender: r.sender || "",
-    status: r.status || "open",
-    closeDate: r.close_date || "",
-    effectiveness: r.effectiveness || "",
-    photoCount: r.photo_count || 0,
-    contractorAction: r.contractor_action || "",
-    reviewNote: r.review_note || "",
-    createdAt: r.created_at,
-    syncStatus: r.__syncStatus || "synced",
-  };
-}
-
-// نگاشت رکورد اپ به شکل ردیف دیتابیس (برای insert)
-function anomalyRecordToDb(record) {
-  return {
-    id: record.id,
-    tracking_number: record.trackingNumber,
-    project: record.project,
-    contractor: record.contractor,
-    sub_contractor: record.subContractor,
-    area: record.area,
-    zone_id: record.zoneId || null,
-    date: record.date || null,
-    time: record.time,
-    risk_level: record.riskLevel,
-    category: record.category,
-    format: record.format,
-    description: record.description,
-    corrective_action: record.correctiveAction,
-    obstacles: record.obstacles,
-    follower: record.follower,
-    sender: record.sender,
-    status: record.status,
-    close_date: record.closeDate || null,
-    effectiveness: record.effectiveness,
-    photo_count: record.photoCount,
-    company_id: getCurrentCompanyId(),
-  };
 }
 
 // نگاشت patch اپ به شکل patch دیتابیس (برای update)
@@ -857,36 +810,6 @@ function filterSmartItemsByConfig(items, notifTypes, role) {
       const pb = notifTypes.find((t) => t.typeKey === classifyNotificationKey(b.key))?.priority || "medium";
       return (PRIORITY_RANK[pa] ?? 1) - (PRIORITY_RANK[pb] ?? 1);
     });
-}
-
-async function insertAnomaly(record) {
-  const body = [{
-    id: record.id,
-    tracking_number: record.trackingNumber,
-    project: record.project,
-    contractor: record.contractor,
-    sub_contractor: record.subContractor,
-    area: record.area,
-    zone_id: record.zoneId || null,
-    date: record.date || null,
-    time: record.time,
-    risk_level: record.riskLevel,
-    category: record.category,
-    format: record.format,
-    description: record.description,
-    corrective_action: record.correctiveAction,
-    obstacles: record.obstacles,
-    follower: record.follower,
-    sender: record.sender,
-    status: record.status,
-    close_date: record.closeDate || null,
-    effectiveness: record.effectiveness,
-    photo_count: record.photoCount,
-    company_id: getCurrentCompanyId(),
-  }];
-  const rows = await sb("anomalies", { method: "POST", body: JSON.stringify(body) });
-  if (!sbOk(rows)) return { __error: true, message: sbErrMsg(rows) };
-  return rows[0];
 }
 
 async function updateAnomalyDB(id, patch) {
@@ -2306,6 +2229,7 @@ function AnomalyForm({ onBack, currentUser, onSaved, embedded }) {
   const [riskLevel, setRiskLevel] = useState("Med");
   const [category, setCategory] = useState("");
   const [categoryOptions, setCategoryOptions] = useState([]);
+  const [customCategory, setCustomCategory] = useState("");
   const [format, setFormat] = useState(ANOMALY_FORMATS[0].value);
   const [description, setDescription] = useState("");
   const [follower, setFollower] = useState("");
@@ -2330,9 +2254,9 @@ function AnomalyForm({ onBack, currentUser, onSaved, embedded }) {
   const [draftBannerVisible, setDraftBannerVisible] = useState(true);
   const draftValues = useMemo(() => ({
     project, contractor, subContractor, area, trackingNumber, date, time, riskLevel,
-    category, format, description, follower, needsRiskAssessment, identifiedHazard,
+    category, customCategory, format, description, follower, needsRiskAssessment, identifiedHazard,
     affectsBarrier, selectedBowtieId, selectedBarrierIds,
-  }), [project, contractor, subContractor, area, trackingNumber, date, time, riskLevel, category, format, description, follower, needsRiskAssessment, identifiedHazard, affectsBarrier, selectedBowtieId, selectedBarrierIds]);
+  }), [project, contractor, subContractor, area, trackingNumber, date, time, riskLevel, category, customCategory, format, description, follower, needsRiskAssessment, identifiedHazard, affectsBarrier, selectedBowtieId, selectedBarrierIds]);
   const { hasDraft, readDraft, discardDraft } = useFormDraft(draftKey, draftValues);
 
   const applyDraft = () => {
@@ -2347,6 +2271,7 @@ function AnomalyForm({ onBack, currentUser, onSaved, embedded }) {
       if (d.time !== undefined) setTime(d.time);
       if (d.riskLevel !== undefined) setRiskLevel(d.riskLevel);
       if (d.category !== undefined) setCategory(d.category);
+      if (d.customCategory !== undefined) setCustomCategory(d.customCategory);
       if (d.format !== undefined) setFormat(d.format);
       if (d.description !== undefined) setDescription(d.description);
       if (d.follower !== undefined) setFollower(d.follower);
@@ -2418,6 +2343,10 @@ function AnomalyForm({ onBack, currentUser, onSaved, embedded }) {
       setError(t("afErrAreaDescRequired"));
       return;
     }
+    if (category === OTHER_CATEGORY_VALUE && !customCategory.trim()) {
+      setError(t("afErrCustomCategoryRequired"));
+      return;
+    }
     if (needsRiskAssessment && !identifiedHazard.trim()) {
       setError(t("afErrHazardRequired"));
       return;
@@ -2432,6 +2361,11 @@ function AnomalyForm({ onBack, currentUser, onSaved, embedded }) {
     setSaving(true);
     setError("");
     try {
+    // اگر کاربر «سایر» را انتخاب کرده، خودِ آنومالی بلافاصله با همین متنِ
+    // آزاد ثبت می‌شود (ثبتِ آنومالی اقدامِ اصلی است، نباید منتظرِ تاییدِ
+    // دسته‌بندی بماند)؛ در همان زمان این دسته‌بندی برای تاییدِ دائمی به صفِ
+    // سرپرست پیشنهاد می‌شود (ر.ک. proposeAnomalyCategory/AnomalyCategoryManager.jsx).
+    const resolvedCategory = category === OTHER_CATEGORY_VALUE ? customCategory.trim() : category;
     const record = {
       id: uid("anomaly"),
       // شماره‌ی پیگیری اگر خالی بماند دیگر این‌جا حدس زده نمی‌شود — trigger
@@ -2448,7 +2382,7 @@ function AnomalyForm({ onBack, currentUser, onSaved, embedded }) {
       date,
       time,
       riskLevel,
-      category,
+      category: resolvedCategory,
       format,
       description: description.trim(),
       correctiveAction: "",
@@ -2467,6 +2401,9 @@ function AnomalyForm({ onBack, currentUser, onSaved, embedded }) {
     if (!result.ok) {
       setError(t("afErrSaveDetail", { detail: result?.message || t("afUnknown") }));
       return;
+    }
+    if (category === OTHER_CATEGORY_VALUE) {
+      proposeAnomalyCategory(resolvedCategory, currentUser?.name).catch(() => {});
     }
     if (affectsBarrier && selectedBarrierIds.length > 0) {
       const selections = selectedBarrierIds.map((barrierId) => {
@@ -2635,7 +2572,12 @@ function AnomalyForm({ onBack, currentUser, onSaved, embedded }) {
             <label style={styles.label}>{t("afCategory")}</label>
             <select style={styles.input} value={category} onChange={(e) => setCategory(e.target.value)} dir={dir}>
               {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+              <option value={OTHER_CATEGORY_VALUE}>{t("afCategoryOther")}</option>
             </select>
+            {category === OTHER_CATEGORY_VALUE && (
+              <input style={{ ...styles.input, marginTop: 8 }} placeholder={t("afCategoryOtherPlaceholder")}
+                value={customCategory} onChange={(e) => setCustomCategory(e.target.value)} dir={dir} />
+            )}
           </div>
           <div>
             <label style={styles.label}>{t("afFormat")}</label>
@@ -5300,6 +5242,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       !isStandaloneCompany && isModuleInPlan(planFeatures, "contractorEvalSettings") && { key: "contractorEvalSettings", label: t("subContractorEvalSettings") },
       isModuleInPlan(planFeatures, "riskKnowledgeManagement") && { key: "riskKnowledgeManagement", label: t("subRiskKnowledge") },
       isModuleInPlan(planFeatures, "anomalyCategoryManagement") && { key: "anomalyCategoryManagement", label: t("subAnomalyCategories") },
+      isModuleInPlan(planFeatures, "ppeManagement") && { key: "ppeManagement", label: t("subPpeManagement") },
     ].filter(Boolean),
   } : null;
 
@@ -5391,6 +5334,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
             {isModuleInPlan(planFeatures, "contractorEvalSettings") && <MenuRow icon={Award} label={t("subContractorEvalSettings")} onClick={() => setView("contractorEvalSettings")} />}
             {isModuleInPlan(planFeatures, "riskKnowledgeManagement") && <MenuRow icon={Database} label={t("subRiskKnowledge")} onClick={() => setView("riskKnowledgeManagement")} />}
             {isModuleInPlan(planFeatures, "anomalyCategoryManagement") && <MenuRow icon={Tag} label={t("subAnomalyCategories")} onClick={() => setView("anomalyCategoryManagement")} />}
+            {isModuleInPlan(planFeatures, "ppeManagement") && <MenuRow icon={HardHat} label={t("subPpeManagement")} onClick={() => setView("ppeManagement")} />}
           </div>
         </div>
       )}
@@ -5405,7 +5349,8 @@ function EmployerDashboard({ onLogout, currentUser }) {
       {isSupervisor && view === "hcmsMatrixManagement" && <HcmsMatrixManager wide={isDesktop} onBack={() => setView("systemManagement")} />}
       {isSupervisor && view === "effectivenessThresholds" && <EffectivenessThresholdsManager wide={isDesktop} onBack={() => setView("systemManagement")} currentUser={currentUser} />}
       {isSupervisor && view === "contractorEvalSettings" && <ContractorEvalSettingsManager wide={isDesktop} onBack={() => setView("systemManagement")} currentUser={currentUser} />}
-      {isSupervisor && view === "anomalyCategoryManagement" && <AnomalyCategoryManager wide={isDesktop} onBack={() => setView("systemManagement")} />}
+      {isSupervisor && view === "anomalyCategoryManagement" && <AnomalyCategoryManager wide={isDesktop} currentUser={currentUser} onBack={() => setView("systemManagement")} />}
+      {isSupervisor && view === "ppeManagement" && <PpeRequirementsManager wide={isDesktop} onBack={() => setView("systemManagement")} />}
       {canManageProjects && view === "projects" && <ProjectsDashboard currentUser={currentUser} wide={isDesktop} onBack={() => setView("menu")} />}
 
       {isDesktop && (view === "anomalyReport" || view === "anomalyForm" || view === "anomalyList") && anomalyWebCombined}
@@ -5494,6 +5439,8 @@ function EmployerDashboard({ onLogout, currentUser }) {
       {view === "correctiveActionsList" && <CorrectiveActionsDashboard wide={isDesktop} onBack={() => setView("anomalyReport")} currentUser={currentUser} />}
       {view === "bowtieDashboard" && <BowTieDashboard wide={isDesktop} role="EMPLOYER" onBack={() => setView("riskAssessment")} currentUser={currentUser} readOnly={!canEdit || getAccessLevel(permMap, "riskAssessment") === "view"} />}
       {view === "hcmsDashboard" && <HcmsDashboard wide={isDesktop} onBack={() => setView("riskAssessment")} currentUser={currentUser} />}
+      {view === "jhaDashboard" && <LazyPanel><JhaDashboard wide={isDesktop} role="EMPLOYER" onBack={() => setView("riskAssessment")} currentUser={currentUser} readOnly={!canEdit || getAccessLevel(permMap, "riskAssessment") === "view"} /></LazyPanel>}
+      {view === "fmeaDashboard" && <LazyPanel><FmeaDashboard wide={isDesktop} role="EMPLOYER" onBack={() => setView("riskAssessment")} currentUser={currentUser} readOnly={!canEdit || getAccessLevel(permMap, "riskAssessment") === "view"} /></LazyPanel>}
       {view === "archiveManagement" && <LazyPanel><ArchiveManager wide={isDesktop} onBack={() => setView("menu")} currentUser={currentUser} /></LazyPanel>}
       {!isDesktop && view === "personnelForm" && <PersonnelForm onBack={() => setView("personnelAccess")} currentUser={currentUser} onSaved={() => setView("personnelAccess")} />}
       {!isDesktop && view === "personnelDashboard" && <PersonnelDashboard onBack={() => setView("personnelAccess")} currentUser={currentUser} role="EMPLOYER" readOnly={!canEdit || getAccessLevel(permMap, "personnelAccess") === "view"} initialStatusFilter={navFilter?.module === "personnel" ? navFilter.statusFilter : undefined} initialContractorFilter={navFilter?.module === "personnel" ? navFilter.contractorFilter : undefined} onNavigateToAssessment={(ctx) => { setAssessmentContext(ctx); setView("proactiveIndicators"); }} initialSelectedPersonnelId={assessmentContext?.personnelId || (navFilter?.module === "personnel" ? navFilter.recordId : undefined)} />}
@@ -5866,6 +5813,8 @@ function ContractorDashboard({ onLogout, currentUser }) {
       {view === "chat" && <ChatDashboard onBack={() => setView("menu")} currentUser={currentUser} />}
       {view === "hcmsDashboard" && <HcmsDashboard wide={isDesktop} onBack={() => setView("riskAssessment")} currentUser={currentUser} />}
       {view === "bowtieDashboard" && <BowTieDashboard wide={isDesktop} role="CONTRACTOR" onBack={() => setView("riskAssessment")} currentUser={currentUser} readOnly={getAccessLevel(permMap, "riskAssessment") === "view"} />}
+      {view === "jhaDashboard" && <LazyPanel><JhaDashboard wide={isDesktop} role="CONTRACTOR" onBack={() => setView("riskAssessment")} currentUser={currentUser} readOnly={getAccessLevel(permMap, "riskAssessment") === "view"} /></LazyPanel>}
+      {view === "fmeaDashboard" && <LazyPanel><FmeaDashboard wide={isDesktop} role="CONTRACTOR" onBack={() => setView("riskAssessment")} currentUser={currentUser} readOnly={getAccessLevel(permMap, "riskAssessment") === "view"} /></LazyPanel>}
       {view === "archiveManagement" && <LazyPanel><ArchiveManager wide={isDesktop} onBack={() => setView("menu")} currentUser={currentUser} /></LazyPanel>}
       {!isDesktop && view === "anomalyList" && <AnomalyList onBack={() => setView("anomalyReport")} role="CONTRACTOR" currentUser={currentUser} readOnly={getAccessLevel(permMap, "anomalyReport") === "view"} initialStatusFilter={navFilter?.module === "anomaly" ? navFilter.statusFilter : undefined} initialRiskFilter={navFilter?.module === "anomaly" ? navFilter.riskFilter : undefined} />}
       {view === "correctiveActionsList" && <CorrectiveActionsDashboard wide={isDesktop} onBack={() => setView("anomalyReport")} currentUser={currentUser} />}

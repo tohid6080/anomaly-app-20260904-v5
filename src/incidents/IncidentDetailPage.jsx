@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import BackLink from "../shared/BackLink.jsx";
-import { AlertTriangle, GitBranch, Send } from "lucide-react";
+import { AlertTriangle, GitBranch, Send, Hourglass, CheckCircle2, XCircle } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { toJalaliSafe } from "../personnel/jalaliDate.jsx";
-import { INCIDENT_TYPES, loadIncidentById } from "./incidentsApi.js";
+import { INCIDENT_TYPES, loadIncidentById, approveNearMiss, rejectNearMiss } from "./incidentsApi.js";
 import { createOrGetAnalysis, loadAnalysisForIncident, requestTripodAnalysis, TRIPOD_STATUS_LABELS } from "../tripodBeta/tripodAnalysesApi.js";
 import { computeTripodCandidateFlag } from "../tripodBeta/incidentSource.js";
 import TripodAnalysisWorkspace from "../tripodBeta/TripodAnalysisWorkspace.jsx";
@@ -23,6 +23,9 @@ export default function IncidentDetailPage({ incidentId, currentUser, role, read
   const [requesting, setRequesting] = useState(false);
   const [error, setError] = useState("");
   const [openWorkspace, setOpenWorkspace] = useState(false);
+  const [rejectingNearMiss, setRejectingNearMiss] = useState(false);
+  const [nearMissRejectNote, setNearMissRejectNote] = useState("");
+  const [nearMissBusy, setNearMissBusy] = useState(false);
 
   const isEmployerSide = role === "EMPLOYER";
 
@@ -63,6 +66,26 @@ export default function IncidentDetailPage({ incidentId, currentUser, role, read
     setOpenWorkspace(true);
   };
 
+  // گیتِ تاییدِ شبه‌حادثه — فقط وقتی پیمانکار خودش ثبت کرده و هنوز تایید
+  // نشده (ر.ک. createIncident در incidentsApi.js). تاییدیهٔ کارفرما/سرپرست.
+  const isPendingNearMiss = incident.incidentType === "near_miss" && incident.status === "pending_review";
+  const isRejectedNearMiss = incident.incidentType === "near_miss" && incident.status === "rejected";
+  const handleApproveNearMiss = async () => {
+    setNearMissBusy(true);
+    const result = await approveNearMiss(incident.id, currentUser?.name);
+    setNearMissBusy(false);
+    if (result?.__error) { setError(result.message); return; }
+    await load();
+  };
+  const handleRejectNearMiss = async () => {
+    setNearMissBusy(true);
+    const result = await rejectNearMiss(incident.id, currentUser?.name, nearMissRejectNote);
+    setNearMissBusy(false);
+    if (result?.__error) { setError(result.message); return; }
+    setRejectingNearMiss(false); setNearMissRejectNote("");
+    await load();
+  };
+
   // دکمه‌ی درخواست فقط وقتی نشان داده می‌شود که هنوز تحلیلی درخواست نشده
   const showRequestButton = isEmployerSide && !readOnly && (!analysis || analysis.status === "NOT_REQUIRED" || analysis.status === "CANDIDATE");
   // اگر تحلیل از قبل درخواست/شروع شده، دکمه‌ی ورود به فضای کار نشان داده می‌شود
@@ -75,6 +98,43 @@ export default function IncidentDetailPage({ incidentId, currentUser, role, read
         <AlertTriangle size={20} color={THEME.teal} /> {t("incDetailHeading", { no: incident.incidentNo })}
       </h2>
       <p style={{ color: THEME.text3, fontSize: 12.5, marginBottom: 18 }}>{toJalaliSafe(incident.occurredAt)} — {typeLabel}</p>
+
+      {isPendingNearMiss && (
+        <div style={{ ...styles.card, width: "auto", marginBottom: 16, border: `1.5px solid ${THEME.warn}` }}>
+          <b style={{ fontSize: 12.5, color: THEME.heading, display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+            <Hourglass size={13} color={THEME.warn} /> {t("incNearMissPendingTitle")}
+          </b>
+          {isEmployerSide && !readOnly ? (
+            <>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                <button type="button" style={{ ...styles.smallButton, background: THEME.ok, display: "inline-flex", alignItems: "center", gap: 5 }} disabled={nearMissBusy} onClick={handleApproveNearMiss}>
+                  <CheckCircle2 size={12} /> {t("incNearMissApprove")}
+                </button>
+                <button type="button" style={{ ...styles.smallButton, background: THEME.danger, display: "inline-flex", alignItems: "center", gap: 5 }} disabled={nearMissBusy} onClick={() => { setRejectingNearMiss(!rejectingNearMiss); setNearMissRejectNote(""); }}>
+                  <XCircle size={12} /> {t("incNearMissReject")}
+                </button>
+              </div>
+              {rejectingNearMiss && (
+                <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${THEME.border}` }}>
+                  <textarea style={{ ...styles.input, minHeight: 50, resize: "vertical" }} placeholder={t("incNearMissRejectReasonPlaceholder")}
+                    value={nearMissRejectNote} onChange={(e) => setNearMissRejectNote(e.target.value)} />
+                  <button type="button" style={{ ...styles.smallButton, background: THEME.danger, marginTop: 6 }} disabled={nearMissBusy || !nearMissRejectNote.trim()} onClick={handleRejectNearMiss}>{t("incNearMissConfirmReject")}</button>
+                </div>
+              )}
+            </>
+          ) : (
+            <p style={{ fontSize: 12, color: THEME.text3, margin: 0 }}>{t("incNearMissPendingNote")}</p>
+          )}
+        </div>
+      )}
+      {isRejectedNearMiss && (
+        <div style={{ ...styles.card, width: "auto", marginBottom: 16, border: `1.5px solid ${THEME.danger}` }}>
+          <b style={{ fontSize: 12.5, color: THEME.danger, display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+            <XCircle size={13} /> {t("incNearMissRejectedTitle")}
+          </b>
+          {incident.reviewNote && <p style={{ fontSize: 12, color: THEME.text3, margin: 0 }}>{incident.reviewNote}</p>}
+        </div>
+      )}
 
       <div style={{ background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 18, marginBottom: 16 }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 14, fontSize: 13 }}>

@@ -1,4 +1,4 @@
-import { sb, sbOk, getCurrentCompanyId, uid, THEME } from "../shared.js";
+import { sb, sbOk, getCurrentCompanyId, uid, THEME, todayISO } from "../shared.js";
 import { offlineWrite } from "../offline/offlineWrite.js";
 import { daysUntil } from "../machinery/machineryApi.js";
 import { isOverdue as caIsOverdue } from "../correctiveActions/correctiveActionsApi.js";
@@ -87,9 +87,13 @@ export const DEFAULT_CATEGORIES = [
     label: { fa: "مدیریت حوادث + RCA", en: "Incidents + RCA", de: "Vorfälle + RCA" },
     source: "incidents / tripod_analyses",
     indicators: [
-      { key: "rca", label: { fa: "درصد تحلیل‌های RCA انجام‌شده", en: "RCA completion rate", de: "RCA-Abschlussquote" }, unit: "%", target: 100, coeff: 40 },
-      { key: "openTripodCA", label: { fa: "اقدامات اصلاحیِ ناشی از حادثه، باز", en: "Open incident-derived actions", de: "Offene vorfallbedingte Maßnahmen" }, unit: "count", target: 0, lowerBetter: true, penalty: 18, coeff: 35 },
-      { key: "delay", label: { fa: "میانگین تأخیر در تحلیل حادثه (روز)", en: "Average RCA delay (days)", de: "Durchschnittliche RCA-Verzögerung" }, unit: "days", target: 7, lowerBetter: true, penalty: 4, coeff: 25 },
+      { key: "rca", label: { fa: "درصد تحلیل‌های RCA انجام‌شده", en: "RCA completion rate", de: "RCA-Abschlussquote" }, unit: "%", target: 100, coeff: 35 },
+      { key: "openTripodCA", label: { fa: "اقدامات اصلاحیِ ناشی از حادثه، باز", en: "Open incident-derived actions", de: "Offene vorfallbedingte Maßnahmen" }, unit: "count", target: 0, lowerBetter: true, penalty: 18, coeff: 30 },
+      { key: "delay", label: { fa: "میانگین تأخیر در تحلیل حادثه (روز)", en: "Average RCA delay (days)", de: "Durchschnittliche RCA-Verzögerung" }, unit: "days", target: 7, lowerBetter: true, penalty: 4, coeff: 20 },
+      // مثبت است (بیشتر = بهتر) — طبقِ تاییدِ صریحِ کاربر: فرهنگ‌سازیِ
+      // گزارش‌دهیِ شبه‌حادثه، نه تنبیه. فقط گزارش‌هایِ تاییدشده (status='active')
+      // شمارش می‌شوند (ر.ک. gatherIncidentMetrics/approveNearMiss در incidentsApi.js).
+      { key: "nearMissReporting", label: { fa: "گزارش‌دهیِ شبه‌حادثه (تاییدشده)", en: "Near-miss reporting (approved)", de: "Beinahunfall-Meldungen (genehmigt)" }, unit: "count", target: 2, coeff: 15 },
     ],
   },
   {
@@ -119,6 +123,15 @@ export const DEFAULT_CATEGORIES = [
     indicators: [
       { key: "validTag", label: { fa: "درصد تگ‌های داربست در وضعیت مجاز", en: "Valid scaffold tag rate", de: "Gültige Gerüst-Tag-Quote" }, unit: "%", target: 90, coeff: 60 },
       { key: "revisit", label: { fa: "داربست‌های نیازمند بازدید مجدد", en: "Scaffolds needing re-inspection", de: "Gerüste mit erneuter Prüfung nötig" }, unit: "count", target: 0, lowerBetter: true, penalty: 20, coeff: 40 },
+    ],
+  },
+  {
+    key: "ppe", weight: 10, active: true,
+    label: { fa: "مدیریت تجهیزات حفاظت فردی (PPE)", en: "PPE Management", de: "PSA-Management" },
+    source: "ppe_requirements / ppe_distributions",
+    indicators: [
+      { key: "compliance", label: { fa: "درصد تحققِ توزیعِ PPE", en: "PPE distribution compliance", de: "PSA-Verteilungsquote" }, unit: "%", target: 90, coeff: 65 },
+      { key: "missing", label: { fa: "نفراتِ بدونِ PPE کامل", en: "Personnel without full PPE", de: "Mitarbeiter ohne vollständige PSA" }, unit: "count", target: 0, lowerBetter: true, penalty: 12, coeff: 35 },
     ],
   },
   {
@@ -495,10 +508,15 @@ async function gatherTrainingMetrics(companyId, contractorIds) {
 
   const personnelIds = personnelRows.map((p) => p.id);
   const docs = await sb(
-    `personnel_documents?personnel_id=in.(${personnelIds.join(",")})&doc_type=eq.specialized_safety_training&select=personnel_id,training_id,status`
+    `personnel_documents?personnel_id=in.(${personnelIds.join(",")})&doc_type=eq.specialized_safety_training&select=personnel_id,training_id,status,expiry_date`
   );
+  const today = todayISO();
+  // منقضی‌شده هم مثلِ ناقص است — طبقِ تاییدِ کاربر (ماتریسِ آموزش + تاثیرِ
+  // عدمِ تطبیقِ ناقص/منقضی در ارزیابی). expiry_date خالی یعنی بدونِ انقضا.
   const approvedByPersonTraining = new Set(
-    (sbOk(docs) ? docs : []).filter((d) => d.status === "approved").map((d) => `${d.personnel_id}::${d.training_id}`)
+    (sbOk(docs) ? docs : [])
+      .filter((d) => d.status === "approved" && (!d.expiry_date || d.expiry_date >= today))
+      .map((d) => `${d.personnel_id}::${d.training_id}`)
   );
 
   let required = 0, done = 0, untrainedPeople = new Set();
@@ -530,7 +548,7 @@ async function gatherMachineryMetrics(companyId, contractorIds) {
 }
 
 async function gatherIncidentMetrics(companyId, contractorName) {
-  const rows = await sb(`incidents?company_id=eq.${companyId}&select=id,occurred_at,is_disabling,lost_days,contractor_org`);
+  const rows = await sb(`incidents?company_id=eq.${companyId}&select=id,occurred_at,is_disabling,lost_days,contractor_org,incident_type,status`);
   const mine = sbOk(rows) ? rows.filter((r) => norm(r.contractor_org) === norm(contractorName)) : [];
   if (mine.length === 0) return null;
   const rcaRequired = mine.filter(computeTripodCandidateFlag);
@@ -553,7 +571,10 @@ async function gatherIncidentMetrics(companyId, contractorName) {
       openTripodCA = sbOk(tca) ? tca.filter((a) => a.status === "OPEN" || a.status === "IN_PROGRESS").length : 0;
     }
   }
-  return { rca, openTripodCA, delay };
+  // فقط شبه‌حادثه‌هایِ تاییدشده (status='active') شمارش می‌شوند — طبقِ گیتِ
+  // تاییدِ کارفرما/سرپرست در createIncident/approveNearMiss (incidentsApi.js).
+  const nearMissReporting = mine.filter((r) => r.incident_type === "near_miss" && (r.status || "active") === "active").length;
+  return { rca, openTripodCA, delay, nearMissReporting };
 }
 
 async function gatherProactiveMetrics(companyId, contractorIds, contractorName) {
@@ -612,6 +633,46 @@ async function gatherScaffoldMetrics(companyId, contractorIds) {
   return { validTag: Math.round((valid / rows.length) * 100), revisit };
 }
 
+// همان ساختارِ gatherTrainingMetrics، فقط بر پایه‌یِ ماتریسِ PPE
+// (ppe_requirements) و لاگِ توزیعِ تراکنشیِ (ppe_distributions) — فقط
+// status='distributed' «توزیع‌شده» شمارش می‌شود، نه pending/refused.
+async function gatherPpeMetrics(companyId, contractorIds) {
+  const personnelRows = await sb(`personnel?company_id=eq.${companyId}&contractor_id=in.(${contractorIds.join(",")})&employment_status=eq.active&select=id,job_title`);
+  if (!sbOk(personnelRows) || personnelRows.length === 0) return null;
+  const jobTitles = [...new Set(personnelRows.map((p) => p.job_title).filter(Boolean))];
+  if (jobTitles.length === 0) return null;
+  const posFilter = jobTitles.map((t) => `"${t.replace(/"/g, "")}"`).join(",");
+  const positions = await sb(`job_positions?company_id=eq.${companyId}&title=in.(${posFilter})&select=id,title`);
+  const posIds = sbOk(positions) ? positions.map((p) => p.id) : [];
+  if (posIds.length === 0) return null;
+  const reqs = await sb(`ppe_requirements?company_id=eq.${companyId}&job_position_id=in.(${posIds.join(",")})&select=job_position_id,ppe_item_id`);
+  if (!sbOk(reqs) || reqs.length === 0) return null;
+
+  const posByTitle = {};
+  for (const p of sbOk(positions) ? positions : []) posByTitle[p.title] = p.id;
+  const reqsByPos = {};
+  for (const r of reqs) (reqsByPos[r.job_position_id] ||= []).push(r.ppe_item_id);
+
+  const personnelIds = personnelRows.map((p) => p.id);
+  const dists = await sb(`ppe_distributions?personnel_id=in.(${personnelIds.join(",")})&select=personnel_id,ppe_item_id,status`);
+  const distributedSet = new Set(
+    (sbOk(dists) ? dists : []).filter((d) => d.status === "distributed").map((d) => `${d.personnel_id}::${d.ppe_item_id}`)
+  );
+
+  let required = 0, done = 0, missingPeople = new Set();
+  for (const p of personnelRows) {
+    const posId = posByTitle[p.job_title];
+    const need = posId ? reqsByPos[posId] || [] : [];
+    for (const ppeItemId of need) {
+      required += 1;
+      if (distributedSet.has(`${p.id}::${ppeItemId}`)) done += 1;
+      else missingPeople.add(p.id);
+    }
+  }
+  if (required === 0) return null;
+  return { compliance: Math.round((done / required) * 100), missing: missingPeople.size };
+}
+
 const GATHERERS = {
   anomaly: (ctx) => gatherAnomalyMetrics(ctx.companyId, ctx.contractorName),
   correctiveActions: (ctx) => gatherCorrectiveActionMetrics(ctx.companyId, ctx.contractorIds, ctx.contractorName),
@@ -622,6 +683,7 @@ const GATHERERS = {
   proactive: (ctx) => gatherProactiveMetrics(ctx.companyId, ctx.contractorIds, ctx.contractorName),
   pssr: (ctx) => gatherPssrMetrics(ctx.companyId, ctx.contractorIds),
   scaffold: (ctx) => gatherScaffoldMetrics(ctx.companyId, ctx.contractorIds),
+  ppe: (ctx) => gatherPpeMetrics(ctx.companyId, ctx.contractorIds),
 };
 
 // ================================================================

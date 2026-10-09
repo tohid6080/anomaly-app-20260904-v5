@@ -70,6 +70,11 @@ export const MODULE_TABLE_MAP = {
   evacuationMusterPoints: { table: "evacuation_muster_points", idField: "id" },
   companySafetyMicrosites: { table: "company_safety_microsites", idField: "id" },
   guestAuditorLinks: { table: "guest_auditor_links", idField: "id" },
+  ppeDistributions: { table: "ppe_distributions", idField: "id" },
+  jhaAssessments: { table: "jha_assessments", idField: "id" },
+  jhaSteps: { table: "jha_steps", idField: "id" },
+  fmeaAssessments: { table: "fmea_assessments", idField: "id" },
+  fmeaItems: { table: "fmea_items", idField: "id" },
   // future modules register here once built
 };
 

@@ -6,6 +6,7 @@ import { getRecordsByModule, putRecord } from "../offline/offlineDb.js";
 import { parseStorageUrl, deleteFromStorage } from "../offline/storageUpload.js";
 import { deleteGateItemsForRecord } from "../hseGateApi.js";
 import { translate, getCurrentLang } from "../i18n/translations.js";
+import { anomalyRecordToDb } from "../anomalies/anomalyMapping.js";
 
 /**
  * Personnel Access Management — data access layer.
@@ -279,6 +280,9 @@ function documentFromRow(r) {
     uploadedAt: r.uploaded_at,
     reviewedBy: r.reviewed_by || "",
     reviewedAt: r.reviewed_at || "",
+    // فقط برایِ doc_type='specialized_safety_training' معنادار است — ر.ک.
+    // gatherTrainingMetrics در contractorEvalApi.js.
+    expiryDate: r.expiry_date || "",
   };
 }
 
@@ -317,7 +321,7 @@ export async function upsertDocument(personnelId, docType, fileData, fileName, m
 // شغلی است، و آپلودِ دوباره برای همان دوره، مدرکِ قبلیِ همان دوره را
 // جایگزین می‌کند (مثلِ upsertDocument، ولی با کلیدِ سه‌تاییِ
 // personnel_id + doc_type + training_id).
-export async function upsertTrainingDocument(personnelId, trainingId, fileData, fileName, mimeType, performedBy) {
+export async function upsertTrainingDocument(personnelId, trainingId, fileData, fileName, mimeType, performedBy, expiryDate) {
   if (isOnline()) {
     const { allowed, storageMb } = await checkUploadAllowed();
     if (!allowed) {
@@ -334,7 +338,7 @@ export async function upsertTrainingDocument(personnelId, trainingId, fileData, 
   const result = await offlineWriteFile({
     module: "personnelDocuments", table: "personnel_documents", bucket: "personnel-documents", id,
     base64Data: fileData, contentType: mimeType, fileFieldName: "file_data",
-    extraFields: { personnel_id: personnelId, doc_type: "specialized_safety_training", training_id: trainingId, file_name: fileName, mime_type: mimeType, status: "pending" },
+    extraFields: { personnel_id: personnelId, doc_type: "specialized_safety_training", training_id: trainingId, file_name: fileName, mime_type: mimeType, status: "pending", expiry_date: expiryDate || null },
   });
   if (!result.ok) return { __error: true, message: translate(getCurrentLang(), "commonErrorSave") };
   insertAuditLog(personnelId, "doc_uploaded", "بارگذاری مدرک آموزش تخصصی", performedBy);
@@ -352,6 +356,39 @@ export async function reviewDocumentDB(id, status, reviewNote, reviewedBy) {
 
 export async function deleteDocumentDB(id) {
   await offlineWrite({ module: "personnelDocuments", table: "personnel_documents", action: "delete", id, payload: {} });
+}
+
+// ---------- ثبتِ مستقیمِ آنومالی از دلِ مغایرتِ مدارکِ پرسنل ----------
+// اقدامِ اصلیِ کاربر است (نه کمکی) — خطا باید واقعاً نشان داده شود، دقیقاً
+// الگویِ createAnomalyFromMachineryDocIssue در machineryApi.js. tracking_number
+// عمداً خالی می‌ماند، تریگرِ اتمیکِ DB آن را تعیین می‌کند.
+export async function createAnomalyFromPersonnelDocIssue({ fullName, contractorName, description, createdBy }) {
+  const record = {
+    id: uid("anomaly"),
+    trackingNumber: "",
+    project: "",
+    contractor: contractorName || "",
+    subContractor: "",
+    area: fullName || "",
+    zoneId: "",
+    date: todayISO(),
+    time: "",
+    riskLevel: "Med",
+    category: translate(getCurrentLang(), "anomCategoryPersonnelDocIssue"),
+    format: "بازرسی",
+    description: description || "",
+    correctiveAction: "",
+    obstacles: "",
+    follower: "",
+    sender: createdBy || "",
+    status: "open",
+    closeDate: "",
+    effectiveness: "",
+    photoCount: 0,
+  };
+  const result = await offlineWrite({ module: "anomalies", table: "anomalies", action: "insert", id: record.id, payload: anomalyRecordToDb(record) });
+  if (!result.ok) return { __error: true, message: result.error || translate(getCurrentLang(), "commonErrorSave") };
+  return { ok: true };
 }
 
 // ---------- Notifications ----------

@@ -6,6 +6,7 @@ import { checkUploadAllowed } from "../offline/dbSizeMonitor.js";
 import { parseStorageUrl, deleteFromStorage } from "../offline/storageUpload.js";
 import { deleteGateItemsForRecord } from "../hseGateApi.js";
 import { translate, getCurrentLang, listSep } from "../i18n/translations.js";
+import { anomalyRecordToDb } from "../anomalies/anomalyMapping.js";
 
 export const MACHINE_TYPES = [
   { value: "heavy", labelKey: "machineTypeHeavy" },
@@ -305,6 +306,40 @@ export async function uploadMachineryDocument(machineryId, docType, fileData, fi
 export async function deleteMachineryDocument(id) {
   const result = await offlineWrite({ module: "machineryDocuments", table: "machinery_documents", action: "delete", id, payload: {} });
   if (!result.ok) return { __error: true, message: result.error || translate(getCurrentLang(), "errDeleteDoc") };
+  return { ok: true };
+}
+
+// ---------- ثبتِ مستقیمِ آنومالی از دلِ مغایرتِ مدارکِ ماشین‌آلات ----------
+// اقدامِ اصلیِ کاربر است (نه یک نوشتنِ کمکیِ best-effort مثلِ
+// createSuggestedHcmsFromAnomaly در hcmsApi.js) — خطا باید واقعاً به او
+// نشان داده شود. tracking_number عمداً خالی می‌ماند، همان تریگرِ اتمیکِ DB
+// (ر.ک. anomalies_assign_tracking_number) آن را تعیین می‌کند.
+export async function createAnomalyFromMachineryDocIssue({ machineName, plateNumber, contractorName, description, createdBy }) {
+  const record = {
+    id: uid("anomaly"),
+    trackingNumber: "",
+    project: "",
+    contractor: contractorName || "",
+    subContractor: "",
+    area: `${machineName || ""} — ${plateNumber || ""}`.trim(),
+    zoneId: "",
+    date: todayISO(),
+    time: "",
+    riskLevel: "Med",
+    category: translate(getCurrentLang(), "anomCategoryMachineryDocIssue"),
+    format: "بازرسی",
+    description: description || "",
+    correctiveAction: "",
+    obstacles: "",
+    follower: "",
+    sender: createdBy || "",
+    status: "open",
+    closeDate: "",
+    effectiveness: "",
+    photoCount: 0,
+  };
+  const result = await offlineWrite({ module: "anomalies", table: "anomalies", action: "insert", id: record.id, payload: anomalyRecordToDb(record) });
+  if (!result.ok) return { __error: true, message: result.error || translate(getCurrentLang(), "commonErrorSave") };
   return { ok: true };
 }
 
