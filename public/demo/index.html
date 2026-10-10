@@ -1,4 +1,4 @@
-<title>IHMS دمو عملیاتی</title>
+<title>IHMS | مرکز دموی تعاملی</title>
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -391,6 +391,65 @@ body.phone-preview{height:100dvh; overflow:hidden; display:flex; align-items:cen
   .form-grid{grid-template-columns:1fr}
   .kpi-value{font-size:20px}
 }
+
+/* ---------- مرکز دمو: معرفی / انتخاب‌نقش / فهرستِ ماژول‌ها / CTA ---------- */
+.dc-screen{min-height:100dvh; padding:40px 20px 60px}
+.dc-wrap{max-width:860px; margin:0 auto}
+.dc-h1{font-size:clamp(20px,3.2vw,28px); font-weight:800; color:var(--text); line-height:1.5; margin:0 0 14px}
+.dc-h2{font-size:20px; font-weight:800; color:var(--text); margin:0 0 6px}
+.dc-lead{font-size:13.5px; color:var(--text2); line-height:2; margin:0 0 20px; max-width:620px}
+.dc-sub{font-size:12.5px; color:var(--text3); margin:0 0 22px; line-height:1.9}
+.dc-hero{padding:clamp(24px,5vw,44px)}
+.dc-chip-row{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:26px}
+.dc-chip{font-size:11px; font-weight:700; padding:6px 13px; border-radius:999px; background:var(--teal-soft); color:var(--teal); border:1px solid rgba(20,184,166,.25)}
+.dc-btn-lg{display:inline-flex; width:auto; padding:14px 30px; margin-top:0; font-size:14.5px}
+.dc-skip-link{display:block; background:none; border:none; color:var(--text3); font-size:11.5px; font-family:inherit; margin-top:16px; cursor:pointer; text-decoration:underline; padding:0}
+.dc-skip-link:hover{color:var(--text2)}
+.dc-back{margin-bottom:18px}
+
+.dc-role-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:14px}
+@media (max-width:680px){.dc-role-grid{grid-template-columns:1fr}}
+.dc-role-card{padding:22px; cursor:pointer; text-align:start; border:1px solid var(--border-strong); transition:border-color .15s, transform .15s}
+.dc-role-card:hover{border-color:var(--teal); transform:translateY(-2px)}
+.dc-role-icon{width:44px; height:44px; border-radius:12px; background:var(--teal-soft); color:var(--teal); display:flex; align-items:center; justify-content:center; margin-bottom:14px}
+.dc-role-title{font-size:15px; font-weight:800; color:var(--text); margin-bottom:5px}
+.dc-role-desc{font-size:12px; color:var(--text3); line-height:1.8}
+
+.dc-hub-head{display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:22px}
+.dc-hub-progress{text-align:end; flex-shrink:0}
+.dc-hub-progress span{font-size:11.5px; color:var(--text3); display:block; margin-bottom:8px}
+.dc-module-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:14px}
+.dc-module-card{padding:18px; display:flex; flex-direction:column; gap:10px; position:relative; cursor:pointer}
+.dc-module-card.visited{border-color:rgba(34,197,94,.4)}
+.dc-module-check{position:absolute; top:14px; inset-inline-end:14px; color:var(--ok)}
+.dc-module-icon{width:36px; height:36px; border-radius:10px; background:var(--teal-soft); color:var(--teal); display:flex; align-items:center; justify-content:center}
+.dc-module-title{font-size:13.5px; font-weight:700; color:var(--text)}
+.dc-module-desc{font-size:11.5px; color:var(--text3); line-height:1.8; flex:1}
+.dc-module-btn{align-self:flex-start; background:var(--surface2); color:var(--teal); border:1px solid rgba(20,184,166,.3); border-radius:8px; padding:7px 14px; font-size:11.5px; font-weight:700; cursor:pointer; font-family:inherit}
+
+.dc-cta-card{padding:clamp(24px,5vw,40px); text-align:center}
+.dc-cta-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:24px}
+@media (max-width:760px){.dc-cta-grid{grid-template-columns:1fr}}
+.dc-cta-btn{display:flex; flex-direction:column; gap:6px; padding:18px 16px; border-radius:12px; background:var(--surface2); border:1.5px solid var(--border); text-align:start}
+.dc-cta-btn b{font-size:13.5px; color:var(--text)}
+.dc-cta-btn span{font-size:11px; color:var(--text3); line-height:1.7}
+.dc-cta-btn.dc-cta-primary{background:linear-gradient(180deg,var(--teal),var(--teal-deep)); border-color:transparent}
+.dc-cta-btn.dc-cta-primary b, .dc-cta-btn.dc-cta-primary span{color:#04201c}
+
+/* ---------- تورِ گام‌به‌گامِ هر ماژول (اسپاتلایت + پنلِ راهنما) ---------- */
+.tour-highlight{position:relative; z-index:150; border-radius:10px; box-shadow:0 0 0 5000px rgba(4,9,13,.6), 0 0 0 3px var(--teal); transition:box-shadow .2s}
+.tour-panel{position:fixed; bottom:20px; left:50%; transform:translateX(-50%); width:min(460px,92vw); z-index:300; padding:16px 18px}
+.wrap.mode-mobile .tour-panel{position:absolute}
+.tour-panel-head{display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:10px}
+.tour-panel-title{font-size:13px; font-weight:800; color:var(--text); margin-top:2px}
+.tour-panel-close{background:none; border:none; color:var(--text3); cursor:pointer; padding:2px; flex-shrink:0}
+.tour-panel-desc{font-size:12px; color:var(--text2); line-height:1.9; margin-bottom:14px}
+.tour-progress-track{height:5px; border-radius:999px; background:var(--border-soft); overflow:hidden; margin-bottom:14px}
+.tour-progress-fill{height:100%; background:linear-gradient(90deg,var(--teal-deep),var(--teal)); border-radius:999px; transition:width .2s}
+.tour-panel-actions{display:flex; gap:8px}
+.tour-panel-actions .btn{flex:1; padding:9px; font-size:12px; margin-top:0}
+.tour-panel-actions .btn:disabled{opacity:.45; cursor:not-allowed}
+.tour-step-label{font-size:10.5px; color:var(--text3); margin-bottom:2px}
 </style>
 
 <div class="wrap" id="wrap-root">
@@ -398,8 +457,100 @@ body.phone-preview{height:100dvh; overflow:hidden; display:flex; align-items:cen
   <span class="btn-nub vol-up"></span>
   <span class="btn-nub vol-down"></span>
 
-  <!-- ======================= ورود ======================= -->
-  <div class="login-screen" id="screen-login">
+  <!-- ======================= مرکز دمو: معرفی ======================= -->
+  <div class="dc-screen" id="screen-intro">
+    <div class="dc-wrap">
+      <div class="dc-hero glass">
+        <div class="brand-row" style="margin-bottom:18px">
+          <div class="brand-badge" style="width:54px; height:54px">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#04201c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-3Z"/><path d="M9 12l2 2 4-4"/></svg>
+          </div>
+          <div>
+            <div class="brand-name" style="font-size:18px">Integrated HSE Management System</div>
+            <div class="brand-sub">سامانه یکپارچه مدیریت HSE پروژه <span class="demo-pill">مرکز دموی تعاملی</span></div>
+          </div>
+        </div>
+        <h1 class="dc-h1">همه‌چیز را پیش از خرید، با دستِ خودتان تجربه کنید</h1>
+        <p class="dc-lead">IHMS سامانه‌ای یکپارچه برایِ مدیریتِ ایمنی، بهداشت و محیط‌زیست (HSE) در پروژه‌هایِ صنعتی و پیمانکاری است — از ثبتِ آنومالی و مجوزِ کار تا ارزیابیِ ریسک، آموزش و ارزیابیِ عملکردِ پیمانکاران، همه در یک بستر. در این دمو، بر اساسِ نقشِ خودتان، قدم‌به‌قدم با امکاناتِ واقعیِ سامانه آشنا می‌شوید.</p>
+        <div class="dc-chip-row">
+          <span class="dc-chip">مدیریت آنومالی</span>
+          <span class="dc-chip">ارزیابی ریسک</span>
+          <span class="dc-chip">مجوز کار</span>
+          <span class="dc-chip">پرسنل و آموزش</span>
+          <span class="dc-chip">ماشین‌آلات و داربست</span>
+          <span class="dc-chip">حوادث</span>
+          <span class="dc-chip">و ۱۰+ ماژول دیگر</span>
+        </div>
+        <button type="button" class="btn btn-primary dc-btn-lg" id="dc-start-btn">شروع دموی تعاملی</button>
+        <button type="button" class="dc-skip-link" id="dc-skip-btn">ورود مستقیم به محیط نمایشی، بدون راهنما ←</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================= مرکز دمو: انتخاب نقش ======================= -->
+  <div class="dc-screen" id="screen-role" hidden>
+    <div class="dc-wrap">
+      <button type="button" class="content-back dc-back" id="dc-role-back">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
+        <span>بازگشت</span>
+      </button>
+      <h2 class="dc-h2">شما با چه نقشی وارد می‌شوید؟</h2>
+      <p class="dc-sub">مسیرِ دمو بر اساسِ انتخابِ شما شخصی‌سازی می‌شود — ماژول‌ها و توضیحات، متناسب با نیازِ همان نقش نشان داده می‌شود.</p>
+      <div class="dc-role-grid" id="dc-role-grid"></div>
+    </div>
+  </div>
+
+  <!-- ======================= مرکز دمو: فهرست ماژول‌ها ======================= -->
+  <div class="dc-screen" id="screen-modulehub" hidden>
+    <div class="dc-wrap">
+      <button type="button" class="content-back dc-back" id="dc-hub-back-role">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
+        <span>بازگشت به انتخاب نقش</span>
+      </button>
+      <div class="dc-hub-head">
+        <div>
+          <h2 class="dc-h2" id="dc-hub-title">ماژول‌های این دمو</h2>
+          <p class="dc-sub" id="dc-hub-intro" style="margin-bottom:0"></p>
+        </div>
+        <div class="dc-hub-progress">
+          <span id="dc-hub-progress-text"></span>
+          <button type="button" class="btn btn-primary" id="dc-hub-finish-btn" style="margin-top:0">پایانِ دمو</button>
+        </div>
+      </div>
+      <div class="dc-module-grid" id="dc-module-grid"></div>
+    </div>
+  </div>
+
+  <!-- ======================= مرکز دمو: دعوت به اقدام ======================= -->
+  <div class="dc-screen" id="screen-cta" hidden>
+    <div class="dc-wrap">
+      <button type="button" class="content-back dc-back" id="dc-cta-back">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
+        <span>بازگشت به فهرست ماژول‌ها</span>
+      </button>
+      <div class="dc-cta-card glass">
+        <h2 class="dc-h2">دمو را دیدید — حالا نوبتِ شماست</h2>
+        <p class="dc-sub" id="dc-cta-summary" style="margin-bottom:0"></p>
+        <div class="dc-cta-grid">
+          <a class="dc-cta-btn" id="dc-cta-consult" href="https://t.me/ihmsapp" target="_blank" rel="noopener noreferrer">
+            <b>درخواست مشاوره</b>
+            <span>گفتگوی مستقیم با تیمِ IHMS در تلگرام</span>
+          </a>
+          <a class="dc-cta-btn dc-cta-primary" id="dc-cta-signup" href="https://ihmsapp.ir/#start-free" target="_blank" rel="noopener noreferrer">
+            <b>ثبت‌نام رایگان</b>
+            <span>شروعِ دورهٔ آزمایشیِ رایگان برایِ شرکتِ شما</span>
+          </a>
+          <a class="dc-cta-btn" id="dc-cta-login" href="https://ihmsapp.ir/#login" target="_blank" rel="noopener noreferrer">
+            <b>ورود به سامانه</b>
+            <span>برایِ کاربرانی که از قبل حساب دارند</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================= ورود (مسیرِ آزاد/بدون راهنما) ======================= -->
+  <div class="login-screen" id="screen-login" hidden>
     <div class="login-card glass">
       <div class="brand-row">
         <div class="brand-badge">
@@ -948,6 +1099,25 @@ body.phone-preview{height:100dvh; overflow:hidden; display:flex; align-items:cen
         <b style="color:var(--text)">Integrated HSE Management System (IHMS)</b> — سامانه‌ی یکپارچه‌ی مدیریت HSE برای پروژه‌های صنعتی: مدیریت عدم‌انطباق‌ها، ریسک، پرسنل، مجوز کار، ماشین‌آلات، داربست، حوادث و شاخص‌های ایمنی، همه در یک بستر.
       </p>
       <p style="font-size:11px; color:var(--text3); margin:0" data-i18n="aboutIhmsVersion">نسخه‌ی دمو &nbsp;·&nbsp; محیط نمایشی، بدون اتصال به داده‌ی واقعی</p>
+    </div>
+  </div>
+
+  <div class="tour-panel glass" id="tour-panel" hidden>
+    <div class="tour-panel-head">
+      <div>
+        <div class="tour-step-label" id="tour-step-label"></div>
+        <div class="tour-panel-title" id="tour-panel-title"></div>
+      </div>
+      <button type="button" class="tour-panel-close" id="tour-panel-close" title="پایانِ تور">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="tour-progress-track"><div class="tour-progress-fill" id="tour-progress-fill"></div></div>
+    <div class="tour-panel-desc" id="tour-panel-desc"></div>
+    <div class="tour-panel-actions">
+      <button type="button" class="btn btn-ghost" id="tour-prev-btn">قبلی</button>
+      <button type="button" class="btn btn-primary" id="tour-next-btn" style="margin-top:0">بعدی</button>
+      <button type="button" class="btn btn-primary" id="tour-finish-btn" style="margin-top:0" hidden>پایان</button>
     </div>
   </div>
 
@@ -2373,6 +2543,7 @@ document.getElementById("overlay").addEventListener("click", function(){ closeDe
 
 /* ============================================================ مسیریابی نما ============================================================ */
 function showView(id){
+  if (dcTour.active && id !== dcTour.moduleKey) dcEndTour(false);
   Array.prototype.forEach.call(document.querySelectorAll(".view"), function(v){ v.hidden = v.id !== "view-"+id; });
   Array.prototype.forEach.call(document.querySelectorAll(".nav-item[data-view]"), function(n){ n.classList.toggle("active", n.dataset.view===id); });
   Array.prototype.forEach.call(document.querySelectorAll(".mtab"), function(n){ n.classList.toggle("active", n.dataset.view===id); });
@@ -2398,10 +2569,14 @@ document.getElementById("login-form").addEventListener("submit", function(e){
   toast(t("homeWelcome")+" "+IDENTITIES[currentRole].name);
 });
 function doLogout(){
-  document.getElementById("app-shell").hidden = true;
-  document.getElementById("screen-login").hidden = false;
   document.getElementById("wrap-root").classList.remove("mode-mobile");
   document.body.classList.remove("phone-preview");
+  if (dcDemoCenterActive){
+    dcExitToHub();
+  } else {
+    document.getElementById("app-shell").hidden = true;
+    document.getElementById("screen-login").hidden = false;
+  }
 }
 document.getElementById("btn-logout").addEventListener("click", doLogout);
 document.getElementById("tb-more-logout").addEventListener("click", doLogout);
@@ -3131,6 +3306,268 @@ function renderHomeTasks(){
     r.addEventListener("click", function(){ showView(r.dataset.goto); });
   });
 }
+
+/* ============================================================ مرکز دموی تعاملی (معرفی / انتخاب‌نقش / فهرستِ ماژول‌ها / تورِ گام‌به‌گام / CTA) ============================================================ */
+var ICON_ROLE_EMPLOYER = svgIcon('<path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/>');
+var ICON_ROLE_CONTRACTOR = svgIcon('<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>');
+var ICON_ROLE_INDEPENDENT = svgIcon('<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12h8"/><path d="M12 8v8"/>');
+var ICON_ROLE_EXPERT = svgIcon('<circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/>');
+
+var PERSONAS = [
+  {key:"employer", role:"employer", icon:ICON_ROLE_EMPLOYER, title:"کارفرما", sub:"سرپرست HSE یا مدیرِ پروژه در شرکتِ کارفرما",
+    desc:"نظارت، تاییدِ عملکرد و مدیریتِ یکپارچهٔ HSE برایِ همهٔ پیمانکارانِ پروژه، از یک پنل.",
+    intro:"به‌عنوانِ کارفرما، در این دمو می‌بینید چطور می‌توانید وضعیتِ ایمنیِ همهٔ پیمانکارانِ پروژه را از یک پنل رصد، آنومالی و حادثه را تایید، و عملکردِ هرکدام را ارزیابی کنید.",
+    order:["dashboard","anomaly","incident","permit","risk","personnel","machinery","scaffold","pssr","proactive","survey","workdash","tools","archive","chat","systemManagement"]},
+  {key:"contractor", role:"contractor", icon:ICON_ROLE_CONTRACTOR, title:"پیمانکار", sub:"نمایندهٔ HSE یا سرپرستِ کارگاهِ شرکتِ پیمانکاری",
+    desc:"ثبتِ آنومالی، دریافتِ مجوزِ کار و مدیریتِ پرسنل و ماشین‌آلاتِ خودتان — مستقیم و بدونِ واسطه.",
+    intro:"به‌عنوانِ پیمانکار، در این دمو می‌بینید چطور آنومالی ثبت می‌کنید، مجوزِ کار می‌گیرید، وضعیتِ پرسنل و ماشین‌آلاتِ خودتان را مدیریت می‌کنید و مستقیم با کارفرما در ارتباط می‌مانید.",
+    order:["anomaly","permit","personnel","machinery","scaffold","incident","survey","workdash","tools","archive","chat","dashboard","risk","proactive","pssr","systemManagement"]},
+  {key:"independent", role:"employer", icon:ICON_ROLE_INDEPENDENT, title:"شرکتِ مستقل", sub:"شرکتی که بدونِ زنجیرهٔ پیمانکاری، HSEِ خودش را مدیریت می‌کند",
+    desc:"کلِ چرخهٔ HSE — پرسنل، ماشین‌آلات، ریسک، حادثه و ممیزی — بدونِ نیاز به لایهٔ جدایِ پیمانکاری.",
+    intro:"به‌عنوانِ یک شرکتِ مستقل، کلِ چرخهٔ HSE را — از ثبتِ پرسنل و ماشین‌آلات تا ریسک، حادثه و ممیزی — در یک پنلِ واحد و بدونِ نیاز به مدیریتِ چندین پیمانکار مدیریت می‌کنید.",
+    order:["personnel","machinery","scaffold","anomaly","incident","permit","risk","pssr","proactive","dashboard","survey","workdash","tools","archive","chat","systemManagement"]},
+  {key:"expert", role:"employer", icon:ICON_ROLE_EXPERT, title:"کارشناسِ HSE", sub:"کارشناسِ ارزیابیِ ریسک، ممیزی و شاخص‌هایِ پیشگیرانه",
+    desc:"ابزارهایِ تحلیلی: ارزیابیِ ریسک، PSSR، شاخص‌هایِ Proactive و ابزارهایِ محاسباتیِ ایمنی.",
+    intro:"به‌عنوانِ کارشناسِ HSE، تمرکزِ شما روی ابزارهایِ تحلیلی و پیشگیرانهٔ سامانه است: ارزیابیِ ریسک، PSSR، شاخص‌هایِ Proactive، نظرسنجی و ابزارهایِ محاسباتیِ ایمنی.",
+    order:["risk","proactive","pssr","survey","tools","incident","anomaly","dashboard","personnel","machinery","scaffold","permit","workdash","archive","chat","systemManagement"]}
+];
+
+var TOUR_META = {
+  dashboard:{desc:"نمایِ کلیِ لحظه‌ایِ وضعیتِ HSEِ پروژه: شاخص‌هایِ کلیدی، روندِ آنومالی‌ها و رویدادهایِ اخیر.",
+    steps:[
+      {sel:"#kpi-grid", title:"شاخص‌هایِ کلیدی", desc:"مهم‌ترین شاخص‌هایِ HSEِ پروژه را در یک نگاه می‌بینید."},
+      {sel:"#chart-trend", title:"روندِ ثبتِ آنومالی", desc:"نمودارِ روندِ ۶ ماههٔ اخیر، بهتر یا بدترشدنِ وضعیتِ پروژه را نشان می‌دهد."},
+      {sel:"#activity-feed", title:"رویدادهایِ اخیر", desc:"آخرین رویدادهایِ ثبت‌شده در تمامِ ماژول‌ها، به ترتیبِ زمان."}
+    ]},
+  anomaly:{desc:"ثبت، دسته‌بندی و پیگیریِ عدم‌انطباق‌ها تا بسته‌شدن با اقدامِ اصلاحیِ مشخص.",
+    steps:[
+      {sel:"#btn-new-anomaly", title:"ثبتِ آنومالیِ جدید", desc:"با این دکمه یک موردِ عدم‌انطباقِ جدید با عکس و شرحِ کامل ثبت کنید — همین الان امتحانش کنید."},
+      {sel:"#anomaly-status-filter", title:"فیلتر بر اساسِ وضعیت", desc:"آنومالی‌ها را بر اساسِ وضعیت (باز، در حالِ بررسی، اقدامِ اصلاحی، بسته‌شده) فیلتر کنید."},
+      {sel:"#anomaly-tbody", title:"جزئیاتِ هر مورد", desc:"روی هر ردیف کلیک کنید تا جزئیاتِ کامل، مراحلِ اقدامِ اصلاحی و تاریخچهٔ آن باز شود."}
+    ]},
+  risk:{desc:"ماتریسِ ریسک و فهرستِ ریسک‌هایِ کلیدیِ سایت بر اساسِ روشِ BowTie/HCMS.",
+    steps:[
+      {sel:"#risk-matrix", title:"ماتریسِ ریسک", desc:"ریسک‌هایِ سایت بر اساسِ احتمال × شدت، در یک ماتریسِ رنگی نمایش داده می‌شوند."},
+      {sel:"#risk-tbody", title:"فهرستِ ریسک‌هایِ کلیدی", desc:"برایِ هر ریسک، امتیاز و اقدامِ کنترلیِ در نظر گرفته‌شده را ببینید."}
+    ]},
+  personnel:{desc:"مدیریتِ ورود، آموزش و وضعیتِ ترددِ پرسنلِ شاغل در سایت.",
+    steps:[
+      {sel:"#personnel-search", title:"جستجو و فیلتر", desc:"پرسنل را بر اساسِ نام، سمت یا وضعیتِ فعال/غیرفعال جستجو کنید."},
+      {sel:"#personnel-tbody", title:"وضعیتِ آموزشِ هر نفر", desc:"روی هر ردیف کلیک کنید تا وضعیتِ آموزشِ HSE و تاریخِ شروعِ همکاریِ آن فرد را ببینید."}
+    ]},
+  permit:{desc:"صدور و پیگیریِ مجوزِ کار (PTW) برایِ کارهایِ پرخطر مانندِ کارِ گرم، ارتفاع و فضایِ محصور.",
+    steps:[
+      {sel:"#btn-new-permit", title:"صدورِ مجوزِ جدید", desc:"برایِ شروعِ یک کارِ پرخطر، از همین‌جا مجوز صادر کنید."},
+      {sel:"#permit-tbody", title:"پیگیریِ مجوزها", desc:"وضعیتِ تمامِ مجوزهایِ صادرشده را از «در حالِ اجرا» تا «بسته‌شده» پیگیری کنید."}
+    ]},
+  incident:{desc:"ثبت و پیگیریِ حوادث و شبه‌حادثه‌ها همراه با تحلیلِ ریشه‌ای.",
+    steps:[
+      {sel:"#incident-tbody", title:"ثبتِ حوادث", desc:"هر حادثه یا شبه‌حادثه با نوع، شرح و وضعیت ثبت می‌شود؛ روی یک ردیف کلیک کنید تا تحلیلِ ریشه‌ای را ببینید."}
+    ]},
+  machinery:{desc:"پیگیریِ وضعیتِ بازرسیِ دوره‌ایِ ماشین‌آلات و تجهیزاتِ سایت.",
+    steps:[
+      {sel:"#machinery-status-filter", title:"فیلترِ وضعیت", desc:"ماشین‌آلات را بر اساسِ «سالم»، «نیاز به بازرسی» یا «متوقف از کار» فیلتر کنید."},
+      {sel:"#machinery-tbody", title:"برنامهٔ بازرسی", desc:"تاریخِ آخرین و بعدیِ بازرسیِ هر تجهیز را ببینید."}
+    ]},
+  scaffold:{desc:"مدیریتِ تگ‌هایِ رنگیِ داربست (سبز/زرد/قرمز) و وضعیتِ بازرسیِ آن‌ها.",
+    steps:[
+      {sel:"#scaffold-status-filter", title:"وضعیتِ رنگیِ تگ‌ها", desc:"تگ‌هایِ داربست با رنگِ سبز (ایمن)، زرد (محدود) و قرمز (ممنوع) کدگذاری می‌شوند."},
+      {sel:"#scaffold-tbody", title:"تاریخِ بازرسی", desc:"بازرس و تاریخِ آخرینِ بازرسیِ هر تگ را ببینید."}
+    ]},
+  tools:{desc:"محاسبه‌گرهایِ آمادهٔ شاخص‌هایِ پرکاربردِ ایمنی — از ریسکِ بالابری تا مدیریتِ انرژی.",
+    steps:[
+      {sel:"#tools-cat-chips", title:"دسته‌بندیِ ابزارها", desc:"بیش از ۲۰ ابزارِ محاسباتیِ HSE در دسته‌هایِ مختلف."},
+      {sel:"#tools-grid", title:"یک ابزار را امتحان کنید", desc:"روی یکی از کارت‌ها کلیک کنید تا فرمِ محاسبه باز شود و نتیجه را آنی ببینید."}
+    ]},
+  workdash:{desc:"فهرستِ یکپارچهٔ کارهایِ در انتظارِ اقدامِ شما، با لینکِ مستقیم به بخشِ مربوطه.",
+    steps:[
+      {sel:"#workdash-list", title:"کارهایِ در انتظارِ شما", desc:"همهٔ کارهایی که منتظرِ اقدامِ شما هستند، با لینکِ مستقیم به بخشِ مربوطه."}
+    ]},
+  survey:{desc:"برگزاریِ نظرسنجی و آزمونِ آنلاینِ HSE با نتیجه و کلیدِ پاسخِ آنیِ شرکت‌کننده.",
+    steps:[
+      {sel:"#survey-tbody", title:"نظرسنجی و آزمون", desc:"نظرسنجی‌ها و آزمون‌هایِ فعال را با تعدادِ پاسخ و میانگینِ نمره ببینید."},
+      {sel:"#survey-sample-review", title:"نتیجهٔ فردی", desc:"نمونهٔ نتیجهٔ یک شرکت‌کننده به همراهِ کلیدِ پاسخ، دقیقاً مثلِ چیزی که در IHMSِ واقعی می‌بینید."}
+    ]},
+  proactive:{desc:"اندازه‌گیریِ شاخص‌هایِ پیشگیرانه (Proactive) پیش از وقوعِ حادثه.",
+    steps:[
+      {sel:"#indicator-grid", title:"شاخص‌هایِ پیشگیرانه", desc:"شاخص‌هایی که پیش از وقوعِ حادثه هشدار می‌دهند — مثلِ نرخِ مشاهداتِ ایمنی یا تکمیلِ آموزش."}
+    ]},
+  pssr:{desc:"بازبینیِ ایمنیِ پیش از راه‌اندازیِ تجهیز یا واحد (PSSR) با چک‌لیستِ استاندارد.",
+    steps:[
+      {sel:"#pssr-tbody", title:"درصدِ آمادگی", desc:"درصدِ تکمیلِ بازبینیِ ایمنیِ هر واحد یا تجهیز پیش از راه‌اندازی."},
+      {sel:"#pssr-checklist", title:"چک‌لیستِ استاندارد", desc:"یک نمونه از چک‌لیستِ PSSR با آیتم‌هایِ تکمیل‌شده و باقی‌مانده."}
+    ]},
+  archive:{desc:"آرشیوِ یکجایِ مستندات و مدارکِ تمامِ ماژول‌ها، قابل‌فیلتر بر اساسِ نوع.",
+    steps:[
+      {sel:"#archive-tabs", title:"آرشیو بر اساسِ ماژول", desc:"مستنداتِ هر ماژول به‌صورتِ جدا آرشیو می‌شود."},
+      {sel:"#archive-files", title:"فهرستِ فایل‌ها", desc:"فایل‌ها به همراهِ تاریخ و اندازه قابل‌مشاهده و دانلودند."}
+    ]},
+  chat:{desc:"گفتگویِ سریع و مستقیم بینِ کارفرما و تیمِ پیمانکاران.",
+    steps:[
+      {sel:"#chat-threads", title:"گفتگوهایِ جاری", desc:"گفتگو با هر پیمانکار یا عضوِ تیم به‌صورتِ جدا نمایش داده می‌شود."},
+      {sel:"#chat-input", title:"ارسالِ پیام", desc:"یک پیام بنویسید و دکمهٔ ارسال را بزنید — امتحانش کنید!"}
+    ]},
+  systemManagement:{desc:"پیکربندیِ سطحِ شرکت: دسترسی‌ها، عنوان‌هایِ شغلی، بانکِ ریسک و آستانه‌هایِ هشدار.",
+    steps:[
+      {sel:"#sysmgmt-list", title:"پیکربندیِ سطحِ شرکت", desc:"دسترسی‌ها، عنوان‌هایِ شغلی، بانکِ ریسک و آستانه‌هایِ هشدار از همین‌جا قابل‌تنظیم‌اند — ویژهٔ سرپرستِ HSE."}
+    ]}
+};
+
+var dcSelectedPersona = null;
+var dcDemoCenterActive = false;
+var dcVisited = {};
+var dcTour = {active:false, moduleKey:null, stepIndex:0};
+
+function dcShowScreen(id){
+  document.getElementById("screen-intro").hidden = id !== "intro";
+  document.getElementById("screen-role").hidden = id !== "role";
+  document.getElementById("screen-modulehub").hidden = id !== "modulehub";
+  document.getElementById("screen-cta").hidden = id !== "cta";
+  document.getElementById("screen-login").hidden = id !== "login";
+  document.getElementById("app-shell").hidden = id !== "app";
+  if (id !== "app") document.getElementById("tour-panel").hidden = true;
+  window.scrollTo(0, 0);
+}
+
+function dcRenderRoleGrid(){
+  document.getElementById("dc-role-grid").innerHTML = PERSONAS.map(function(p){
+    return '<div class="dc-role-card glass" data-persona="'+p.key+'">'+
+      '<div class="dc-role-icon">'+p.icon+'</div>'+
+      '<div class="dc-role-title">'+esc(p.title)+'</div>'+
+      '<div class="dc-role-desc" style="margin-bottom:8px; color:var(--text2); font-weight:600">'+esc(p.sub)+'</div>'+
+      '<div class="dc-role-desc">'+esc(p.desc)+'</div>'+
+      '</div>';
+  }).join("");
+  Array.prototype.forEach.call(document.querySelectorAll(".dc-role-card"), function(c){
+    c.addEventListener("click", function(){ dcSelectPersona(c.dataset.persona); });
+  });
+}
+
+function dcSelectPersona(key){
+  dcSelectedPersona = PERSONAS.filter(function(p){ return p.key===key; })[0];
+  if (!dcSelectedPersona) return;
+  currentRole = dcSelectedPersona.role;
+  dcDemoCenterActive = true;
+  dcRenderModuleHub();
+  dcShowScreen("modulehub");
+}
+
+function dcRenderModuleHub(){
+  var p = dcSelectedPersona;
+  if (!p) return;
+  document.getElementById("dc-hub-title").textContent = "ماژول‌هایِ این دمو برایِ «"+p.title+"»";
+  document.getElementById("dc-hub-intro").textContent = p.intro;
+  var keys = p.order.filter(moduleAllowed);
+  var visitedCount = keys.filter(function(k){ return dcVisited[k]; }).length;
+  document.getElementById("dc-hub-progress-text").textContent = visitedCount+" از "+keys.length+" ماژول مشاهده شد";
+  document.getElementById("dc-module-grid").innerHTML = keys.map(function(key){
+    var mod = MODULES.filter(function(m){ return m.key===key; })[0];
+    var meta = TOUR_META[key];
+    if (!mod || !meta) return "";
+    var visited = !!dcVisited[key];
+    return '<div class="dc-module-card glass'+(visited?" visited":"")+'" data-module="'+key+'">'+
+      (visited?'<span class="dc-module-check">'+icon("check")+'</span>':"")+
+      '<div class="dc-module-icon">'+mod.icon+'</div>'+
+      '<div class="dc-module-title">'+esc(t(mod.labelKey))+'</div>'+
+      '<div class="dc-module-desc">'+esc(meta.desc)+'</div>'+
+      '<button type="button" class="dc-module-btn" data-module="'+key+'">مشاهدهٔ دموی این ماژول</button>'+
+      '</div>';
+  }).join("");
+  Array.prototype.forEach.call(document.querySelectorAll(".dc-module-btn"), function(b){
+    b.addEventListener("click", function(e){ e.stopPropagation(); dcEnterModuleDemo(b.dataset.module); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".dc-module-card"), function(c){
+    c.addEventListener("click", function(){ dcEnterModuleDemo(c.dataset.module); });
+  });
+}
+
+function dcEnterModuleDemo(moduleKey){
+  applyIdentity();
+  renderAll();
+  dcShowScreen("app");
+  document.getElementById("app-shell").hidden = false;
+  showView(moduleKey);
+  dcStartTour(moduleKey);
+}
+
+function dcStartTour(moduleKey){
+  var meta = TOUR_META[moduleKey];
+  if (!meta || !meta.steps || !meta.steps.length) return;
+  dcTour = {active:true, moduleKey:moduleKey, stepIndex:0};
+  document.getElementById("tour-panel").hidden = false;
+  dcRenderTourStep();
+}
+
+function dcClearHighlight(){
+  Array.prototype.forEach.call(document.querySelectorAll(".tour-highlight"), function(el){ el.classList.remove("tour-highlight"); });
+}
+
+function dcRenderTourStep(){
+  dcClearHighlight();
+  var meta = TOUR_META[dcTour.moduleKey];
+  var step = meta.steps[dcTour.stepIndex];
+  var target = step.sel ? document.querySelector(step.sel) : null;
+  if (target){
+    target.classList.add("tour-highlight");
+    target.scrollIntoView({behavior:"smooth", block:"center"});
+  }
+  document.getElementById("tour-step-label").textContent = "گامِ "+(dcTour.stepIndex+1)+" از "+meta.steps.length;
+  document.getElementById("tour-panel-title").textContent = step.title;
+  document.getElementById("tour-panel-desc").textContent = step.desc;
+  document.getElementById("tour-progress-fill").style.width = Math.round(((dcTour.stepIndex+1)/meta.steps.length)*100)+"%";
+  document.getElementById("tour-prev-btn").disabled = dcTour.stepIndex===0;
+  var isLast = dcTour.stepIndex === meta.steps.length-1;
+  document.getElementById("tour-next-btn").hidden = isLast;
+  document.getElementById("tour-finish-btn").hidden = !isLast;
+}
+
+function dcEndTour(markVisited){
+  dcClearHighlight();
+  var panel = document.getElementById("tour-panel");
+  if (panel) panel.hidden = true;
+  if (markVisited && dcTour.moduleKey) dcVisited[dcTour.moduleKey] = true;
+  dcTour = {active:false, moduleKey:null, stepIndex:0};
+}
+
+function dcExitToHub(){
+  dcEndTour(false);
+  document.getElementById("app-shell").hidden = true;
+  dcRenderModuleHub();
+  dcShowScreen("modulehub");
+}
+
+function dcShowCta(){
+  var p = dcSelectedPersona;
+  var keys = p ? p.order.filter(moduleAllowed) : [];
+  var visitedCount = keys.filter(function(k){ return dcVisited[k]; }).length;
+  document.getElementById("dc-cta-summary").textContent = visitedCount > 0
+    ? ("شما "+visitedCount+" از "+keys.length+" ماژولِ IHMS را در این دمو مشاهده کردید. برایِ ادامه، یکی از گزینه‌هایِ زیر را انتخاب کنید.")
+    : "برایِ شروعِ همکاری با IHMS، یکی از گزینه‌هایِ زیر را انتخاب کنید.";
+  dcShowScreen("cta");
+}
+
+document.getElementById("dc-start-btn").addEventListener("click", function(){
+  dcRenderRoleGrid();
+  dcShowScreen("role");
+});
+document.getElementById("dc-skip-btn").addEventListener("click", function(){
+  dcDemoCenterActive = false;
+  dcShowScreen("login");
+});
+document.getElementById("dc-role-back").addEventListener("click", function(){ dcShowScreen("intro"); });
+document.getElementById("dc-hub-back-role").addEventListener("click", function(){ dcRenderRoleGrid(); dcShowScreen("role"); });
+document.getElementById("dc-hub-finish-btn").addEventListener("click", dcShowCta);
+document.getElementById("dc-cta-back").addEventListener("click", function(){ dcRenderModuleHub(); dcShowScreen("modulehub"); });
+
+document.getElementById("tour-prev-btn").addEventListener("click", function(){
+  if (dcTour.stepIndex>0){ dcTour.stepIndex--; dcRenderTourStep(); }
+});
+document.getElementById("tour-next-btn").addEventListener("click", function(){
+  var meta = TOUR_META[dcTour.moduleKey];
+  if (dcTour.stepIndex < meta.steps.length-1){ dcTour.stepIndex++; dcRenderTourStep(); }
+});
+document.getElementById("tour-finish-btn").addEventListener("click", function(){ dcEndTour(true); dcExitToHub(); });
+document.getElementById("tour-panel-close").addEventListener("click", function(){ dcEndTour(false); dcExitToHub(); });
 
 /* ============================================================ راه‌اندازی ============================================================ */
 function renderAll(){
