@@ -1327,6 +1327,28 @@ var STR = {
   st_medium:{fa:"متوسط", en:"Medium", de:"Mittel"},
   st_high:{fa:"بالا", en:"High", de:"Hoch"},
   st_critical:{fa:"بحرانی", en:"Critical", de:"Kritisch"},
+  st_pendingEmployerReview:{fa:"در انتظار تأیید کارفرما", en:"Pending employer approval", de:"Ausstehende Genehmigung des Auftraggebers"},
+  st_rejected:{fa:"رد شده", en:"Rejected", de:"Abgelehnt"},
+  incNearMissGateNote:{fa:"این شبه‌حادثه را خودِ پیمانکار گزارش کرده است. طبقِ فرهنگِ گزارش‌دهیِ بدونِ تنبیه، تا تأییدِ کارفرما/سرپرستِ HSE در آمارِ رسمی ثبت نمی‌شود — اما خودِ گزارش‌دادن، امتیازِ مثبت در ارزیابیِ HSEِ آن پیمانکار دارد.", en:"This near-miss was self-reported by the contractor. Per the no-blame reporting culture, it is not counted in official statistics until the employer/HSE supervisor approves it — but the act of reporting itself earns the contractor a positive point in their HSE evaluation.", de:"Dieser Beinahe-Unfall wurde vom Auftragnehmer selbst gemeldet. Gemäß der schuldfreien Meldekultur wird er erst nach Genehmigung durch den Auftraggeber/HSE-Verantwortlichen in die offizielle Statistik aufgenommen — die Meldung selbst bringt dem Auftragnehmer jedoch einen positiven Punkt in seiner HSE-Bewertung."},
+  btnApproveNearMiss:{fa:"تأیید و ثبتِ نهایی", en:"Approve & finalize", de:"Genehmigen & abschließen"},
+  btnRejectNearMiss:{fa:"رد با یادداشت", en:"Reject with a note", de:"Mit Anmerkung ablehnen"},
+  incNearMissApprovedToast:{fa:"شبه‌حادثه تأیید شد و در آمارِ رسمی ثبت شد.", en:"The near-miss was approved and recorded in official statistics.", de:"Der Beinahe-Unfall wurde genehmigt und in der offiziellen Statistik erfasst."},
+  incNearMissRejectNotePrompt:{fa:"دلیلِ رد را بنویسید:", en:"Enter the reason for rejection:", de:"Bitte den Ablehnungsgrund eingeben:"},
+  incNearMissRejectedToast:{fa:"شبه‌حادثه رد شد.", en:"The near-miss was rejected.", de:"Der Beinahe-Unfall wurde abgelehnt."},
+  incRejectNoteLabel:{fa:"یادداشتِ رد: ", en:"Rejection note: ", de:"Ablehnungsvermerk: "},
+  sbStatusPending:{fa:"در انتظار", en:"Pending", de:"Ausstehend"},
+  sbStatusActioned:{fa:"در حال اقدام", en:"In progress", de:"In Bearbeitung"},
+  sbStatusDone:{fa:"انجام‌شد", en:"Done", de:"Erledigt"},
+  sbStatusRejected:{fa:"رد شده", en:"Rejected", de:"Abgelehnt"},
+  sbVoteBtn:{fa:"رأی دادن", en:"Vote", de:"Abstimmen"},
+  sbUnvoteBtn:{fa:"لغوِ رأی", en:"Remove vote", de:"Stimme zurückziehen"},
+  sbActionBtn:{fa:"اقدام", en:"Act on it", de:"Bearbeiten"},
+  sbRejectBtn:{fa:"رد", en:"Reject", de:"Ablehnen"},
+  sbMarkDoneBtn:{fa:"علامت‌گذاری به‌عنوانِ انجام‌شده", en:"Mark as done", de:"Als erledigt markieren"},
+  sbRejectNotePrompt:{fa:"دلیلِ رد را بنویسید (اجباری):", en:"Enter the rejection reason (required):", de:"Bitte den Ablehnungsgrund eingeben (erforderlich):"},
+  sbActionNoteLabel:{fa:"یادداشتِ اقدام: ", en:"Action note: ", de:"Bearbeitungsvermerk: "},
+  sbByLabel:{fa:"ثبت‌کننده", en:"Submitted by", de:"Eingereicht von"},
+  sbCategoryLabel:{fa:"دسته‌بندی", en:"Category", de:"Kategorie"},
   cat_safety:{fa:"ایمنی", en:"Safety", de:"Sicherheit"},
   cat_health:{fa:"بهداشت", en:"Health", de:"Gesundheit"},
   cat_environment:{fa:"محیط‌زیست", en:"Environment", de:"Umwelt"},
@@ -1639,6 +1661,16 @@ var STR = {
   sysSubThresholds:{fa:"آستانه‌های اثربخشیِ اقدام اصلاحی", en:"Corrective action effectiveness thresholds", de:"Wirksamkeitsschwellen für Korrekturmaßnahmen"},
   sysSubRiskBank:{fa:"بانک اطلاعاتی ارزیابی ریسک", en:"Risk assessment knowledge base", de:"Wissensdatenbank Risikobewertung"},
   sysSubAnomalyCategories:{fa:"دسته‌بندی آنومالی‌ها", en:"Anomaly categories", de:"Anomalie-Kategorien"},
+  sysSubSiteZones:{fa:"مدیریت Zoneهای سایت", en:"Site zones management", de:"Verwaltung der Standortzonen"},
+  sysSubSafetyMicrosite:{fa:"میکروسایت گزارش ایمنی", en:"Public safety-report microsite", de:"Öffentliche Sicherheitsbericht-Microsite"},
+  sysSubGuestAuditor:{fa:"دسترسی مهمان/ ممیز", en:"Guest / auditor access", de:"Gast-/Auditor-Zugriff"},
+  sysSubContractorEvalSettings:{fa:"تنظیماتِ ارزیابیِ پیمانکاران", en:"Contractor evaluation settings", de:"Einstellungen zur Bewertung von Auftragnehmern"},
+  sysSubPpe:{fa:"مدیریتِ تجهیزاتِ حفاظتِ فردی (PPE)", en:"PPE management", de:"PSA-Verwaltung"},
+  sysSiteZonesNote:{fa:"نقشه‌ی سایت و Zoneهای تعریف‌شده روی آن، مبنایِ نقشه‌ی حرارتی، دیجیتال توئین و نقاطِ تجمعِ تمرینِ تخلیه‌اند.", en:"The site map and the zones defined on it are the shared basis for the incident heatmap, the digital twin and evacuation-drill muster points.", de:"Die Standortkarte und die darauf definierten Zonen sind die gemeinsame Grundlage für die Vorfall-Heatmap, den digitalen Zwilling und die Sammelpunkte der Evakuierungsübung."},
+  sysMicrositeNote:{fa:"با فعال‌کردنِ این گزینه، یک صفحه‌ی عمومیِ گزارشِ ایمنیِ شرکت (بدون نیاز به ورود) ساخته می‌شود که می‌توانید لینکش را با کارفرمایانِ بالادستی یا بازرسان به اشتراک بگذارید.", en:"Turning this on creates a public, no-login safety-report page for the company whose link can be shared with upstream clients or inspectors.", de:"Durch Aktivieren wird eine öffentliche, anmeldefreie Sicherheitsbericht-Seite des Unternehmens erstellt, deren Link mit vorgelagerten Auftraggebern oder Prüfern geteilt werden kann."},
+  sysGuestAuditorNote:{fa:"لینک‌هایِ موقتِ فقط‌خواندنی برایِ ممیزان یا بازرسانِ بیرونی بسازید تا بدونِ حسابِ کاربری، بخشِ مشخصی از داده‌ها را ببینند.", en:"Create temporary, read-only links for external auditors or inspectors to view a defined slice of data without a user account.", de:"Erstellen Sie temporäre, schreibgeschützte Links für externe Auditoren oder Inspektoren, damit sie ohne Benutzerkonto einen bestimmten Datenausschnitt einsehen können."},
+  sysPpeNote:{fa:"فهرستِ اقلامِ PPEِ موردنیاز برایِ هر عنوانِ شغلی را تعریف کنید؛ همین ماتریس در پرونده‌ی هر نفرِ پرسنل و در امتیازِ ارزیابیِ HSEِ پیمانکار استفاده می‌شود.", en:"Define which PPE items are required for each job title; this same matrix is used in every personnel file and in the contractor HSE-evaluation score.", de:"Legen Sie fest, welche PSA-Artikel für jede Stellenbezeichnung erforderlich sind; dieselbe Matrix wird in jeder Personalakte und in der HSE-Bewertung des Auftragnehmers verwendet."},
+  sysContractorEvalSettingsNote:{fa:"وزن و هدفِ هرکدام از ۱۰ دسته‌یِ ارزیابیِ HSEِ پیمانکاران را برایِ شرکتِ خودتان شخصی‌سازی کنید؛ همین وزن‌ها در صفحه‌یِ «ارزیابیِ عملکرد HSE پیمانکاران» برایِ محاسبه‌یِ امتیازِ نهایی استفاده می‌شوند.", en:"Customize the weight and target of each of the 10 contractor HSE-evaluation categories for your company; these same weights are used on the Contractor HSE Evaluation page to compute the final score.", de:"Passen Sie Gewichtung und Zielwert jeder der 10 Kategorien der HSE-Bewertung von Auftragnehmern für Ihr Unternehmen an; dieselben Gewichtungen werden auf der Seite „HSE-Bewertung der Auftragnehmer“ zur Berechnung des Gesamtergebnisses verwendet."},
   sysColUser:{fa:"کاربر", en:"User", de:"Benutzer"},
   sysColSysRole:{fa:"نقش", en:"Role", de:"Rolle"},
   sysColAccessLevel:{fa:"سطح دسترسی", en:"Access level", de:"Zugriffsebene"},
@@ -1833,7 +1865,18 @@ var SYSMGMT_SUBS = [
     '<div style="display:flex; flex-direction:column; gap:10px">'+
     [["cat_safety",65],["cat_environment",15],["cat_health",10],["cat_quality",10]].map(function(r){
       return '<div><div style="display:flex; justify-content:space-between; font-size:11.5px; color:var(--text2); margin-bottom:4px"><span>'+t(r[0])+'</span><b style="color:var(--text)">'+r[1]+'%</b></div><div class="gauge-track"><div class="gauge-fill" style="width:'+r[1]+'%"></div></div></div>';
-    }).join("")+'</div>'); }}
+    }).join("")+'</div>'); }},
+  {labelKey:"sysSubSiteZones", body: function(){ return (
+    '<div class="detail-desc" style="margin-bottom:10px">'+t("sysSiteZonesNote")+'</div><div style="display:flex; flex-direction:column; gap:6px">'+
+    state.siteZones.map(function(z){ return '<div class="file-row"><span class="cell-main" style="font-size:12.5px">'+esc(z.name)+'</span></div>'; }).join("")+'</div>'); }},
+  {labelKey:"sysSubSafetyMicrosite", body: function(){ return '<div class="detail-desc">'+t("sysMicrositeNote")+'</div>'; }},
+  {labelKey:"sysSubGuestAuditor", body: function(){ return '<div class="detail-desc">'+t("sysGuestAuditorNote")+'</div>'; }},
+  {labelKey:"sysSubContractorEvalSettings", body: function(){ return (
+    '<div class="detail-desc" style="margin-bottom:10px">'+t("sysContractorEvalSettingsNote")+'</div><div style="display:flex; flex-direction:column; gap:10px">'+
+    CONTRACTOR_EVAL_CATEGORIES.map(function(c){
+      return '<div><div style="display:flex; justify-content:space-between; font-size:11.5px; color:var(--text2); margin-bottom:4px"><span>'+esc(L(c.title))+'</span><b style="color:var(--text)">'+c.weight+'%</b></div><div class="gauge-track"><div class="gauge-fill" style="width:'+(c.weight*4)+'%"></div></div></div>';
+    }).join("")+'</div>'); }},
+  {labelKey:"sysSubPpe", body: function(){ return '<div class="detail-desc">'+t("sysPpeNote")+'</div>'; }}
 ];
 function visibleModules(){ return REAL_MODULES.filter(function(m){ return moduleAllowed(m.key); }); }
 var sidebarActiveKey = null;
@@ -2041,6 +2084,7 @@ var state = {
     {tag:"SC-123", location:{fa:"ساختمان برق سایت ۳",en:"Site 3 electrical building",de:"Elektrogebäude Standort 3"}, status:"زرد", inspector:"مهدی طاهری", date:"۳ روز پیش"}
   ],
   incidents: [
+    {id:"INC-015", type:"نزدیک‌به‌حادثه", desc:{fa:"رهاشدنِ لحظه‌ایِ بارِ آویزان از قلابِ جرثقیل (بدون آسیب)",en:"Momentary release of a suspended load from the crane hook (no injury)",de:"Kurzzeitiges Lösen einer hängenden Last vom Kranhaken (keine Verletzung)"}, location:{fa:"محوطه اسکله بارگیری",en:"Loading dock area",de:"Verladebereich"}, date:"اکنون", status:"در انتظار تأیید کارفرما", reporter:"ناصر قربانی (شرکتِ حمل‌ونقل و ماشین‌آلات راهسازی البرز)", reportedByContractor:true, tripod:null},
     {id:"INC-014", type:"نزدیک‌به‌حادثه", desc:{fa:"سقوط ابزار از ارتفاع (بدون آسیب)",en:"Tool dropped from height (no injury)",de:"Werkzeug aus der Höhe gefallen (keine Verletzung)"}, location:{fa:"بلوک A",en:"Block A",de:"Block A"}, date:"امروز", status:"در حال بررسی", reporter:"علی‌اصغر نجفی", tripod:null},
     {id:"INC-013", type:"جزئی", desc:{fa:"بریدگی سطحی دست حین کار با ورق فلزی",en:"Superficial hand cut while working with sheet metal",de:"Oberflächlicher Handschnitt bei der Arbeit mit Blech"}, location:{fa:"کارگاه برشکاری",en:"Cutting workshop",de:"Zuschnittwerkstatt"}, date:"۳ روز پیش", status:"بسته‌شده", reporter:"محمدرضا کریمی", investigator:"سعید وفائی", tripod:[
       {brf:"آموزش (Training)", finding:{fa:"آموزش کار ایمن با ورق فلزی و استفاده از دستکش مناسب به‌طور کامل اجرا نشده بود.",en:"Training on safe sheet-metal handling and proper glove use had not been fully delivered.",de:"Die Schulung zum sicheren Umgang mit Blech und zur richtigen Handschuhnutzung war nicht vollständig durchgeführt worden."}},
@@ -2064,10 +2108,10 @@ var state = {
     {title:{fa:"برق‌گرفتگی حین کار روی تابلوهای فشار متوسط",en:"Electric shock while working on medium-voltage panels",de:"Stromschlag bei Arbeiten an Mittelspannungsschaltschränken"}, l:2, s:5, control:{fa:"قفل و برچسب (LOTO) + کارت مجوز کار الکتریکی",en:"Lockout/tagout (LOTO) + electrical work permit card",de:"Lockout/Tagout (LOTO) + Erlaubnisschein für Elektroarbeiten"}}
   ],
   suggestions: [
-    {title:"نصب حفاظ اضافه روی نردبان‌های ثابتِ تانک فارم", by:"ناصر قربانی (حمل‌ونقل و ماشین‌آلات راهسازی البرز)", votes:18, status:"تایید شده"},
-    {title:"تعبیه ایستگاه شست‌وشوی چشم نزدیک‌تر به واحد کمپرسور", by:"سارا احمدپور (شرکت پیش‌فرض)", votes:12, status:"در حال بررسی"},
-    {title:"نصب دوربین مداربسته در مسیر تردد لیفتراک انبار مرکزی", by:"علی محمدی (فولاد گستر آریا)", votes:9, status:"در حال بررسی"},
-    {title:"برگزاری دوره‌ی بازآموزی فضای محصور هر ۶ ماه به‌جای سالانه", by:"محمدرضا کریمی (فولاد گستر آریا)", votes:7, status:"رد شده"}
+    {title:"نصب حفاظ اضافه روی نردبان‌های ثابتِ تانک فارم", category:"تجهیزاتِ ایمنی", by:"ناصر قربانی (حمل‌ونقل و ماشین‌آلات راهسازی البرز)", votes:18, status:"انجام‌شد", actionNote:"حفاظِ استانداردِ نردبان روی هر سه نردبانِ ثابتِ تانک فارم نصب و بازرسی شد."},
+    {title:"تعبیه ایستگاه شست‌وشوی چشم نزدیک‌تر به واحد کمپرسور", category:"بهداشت", by:"سارا احمدپور (شرکت پیش‌فرض)", votes:12, status:"در حال اقدام"},
+    {title:"نصب دوربین مداربسته در مسیر تردد لیفتراک انبار مرکزی", category:"نظارتِ تصویری", by:"علی محمدی (فولاد گستر آریا)", votes:9, status:"در انتظار"},
+    {title:"برگزاری دوره‌ی بازآموزی فضای محصور هر ۶ ماه به‌جای سالانه", category:"آموزش", by:"محمدرضا کریمی (فولاد گستر آریا)", votes:7, status:"رد شده", rejectNote:"بازه‌ی سالانه مطابقِ الزاماتِ قانونیِ فعلی کافی است؛ در صورتِ تغییرِ مقررات بازبینی می‌شود."}
   ],
   siteZones: [
     {name:"محوطه اسکله بارگیری", incidents:5, anomalies:9, level:"بالا"},
@@ -2078,6 +2122,15 @@ var state = {
     {name:"انبار مرکزی", incidents:0, anomalies:1, level:"کم"},
     {name:"سوله مونتاژ سایت ۳", incidents:1, anomalies:3, level:"متوسط"},
     {name:"ایستگاه گاز جوشکاری", incidents:0, anomalies:2, level:"کم"}
+  ],
+  digitalTwinZones: [
+    {name:"محوطه اسکله بارگیری", linkType:"permit", linkLabel:"PTW-1038 — کار سرد", status:"بسته‌شده"},
+    {name:"بلوک B - خط لوله", linkType:"permit", linkLabel:"PTW-1039 — کار الکتریکی", status:"بسته‌شده"},
+    {name:"داربست بلوک A - طبقه ۳", linkType:"scaffold", linkLabel:"تگ SC-118", status:"سبز"},
+    {name:"تانک فارم", linkType:"scaffold", linkLabel:"تگ SC-121", status:"قرمز"},
+    {name:"ایستگاه گاز جوشکاری", linkType:"hazard", linkLabel:"", status:""},
+    {name:"نقطه تجمع A - نزدیک درب اصلی", linkType:"muster", linkLabel:"", status:""},
+    {name:"واحد کمپرسور هوا", linkType:"general", linkLabel:"", status:""}
   ],
   drills: [
     {date:"۱۴۰۵/۰۶/۱۰", point:"نقطه تجمع A - نزدیک درب اصلی", present:132, total:138, duration:"۴ دقیقه و ۲۰ ثانیه", status:"موفق"},
@@ -2100,6 +2153,8 @@ function badgeClassSeverity(s){ return s==="بحرانی"?"badge-danger": s==="�
 function badgeClassStatus(s){
   if (s==="باز") return "badge-danger";
   if (s==="در حال بررسی"||s==="در حال اجرا") return "badge-warn";
+  if (s==="در انتظار تأیید کارفرما") return "badge-warn";
+  if (s==="رد شده") return "badge-danger";
   if (s==="اقدام اصلاحی") return "badge-info";
   if (s==="بسته‌شده") return "badge-ok";
   if (s==="صادر شده") return "badge-info";
@@ -2112,7 +2167,7 @@ function scaffoldLabel(s){ return t(SCAFFOLD_STATUS_KEY[s] || "st_green"); }
 
 /* ---------- نگاشتِ مقادیرِ enum فارسی (کانونیک/برای مقایسه) به کلیدهای STR (برای نمایشِ چندزبانه) ---------- */
 var SEVERITY_KEY = {"کم":"st_low","متوسط":"st_medium","بالا":"st_high","بحرانی":"st_critical"};
-var STATUS_KEY = {"باز":"st_open","در حال بررسی":"st_review","اقدام اصلاحی":"st_corrective","بسته‌شده":"st_closed","صادر شده":"st_issued","در حال اجرا":"st_inprogress","باطل‌شده":"st_cancelled","تکمیل‌شده":"st_completed","فعال":"st_active"};
+var STATUS_KEY = {"باز":"st_open","در حال بررسی":"st_review","اقدام اصلاحی":"st_corrective","بسته‌شده":"st_closed","صادر شده":"st_issued","در حال اجرا":"st_inprogress","باطل‌شده":"st_cancelled","تکمیل‌شده":"st_completed","فعال":"st_active","در انتظار تأیید کارفرما":"st_pendingEmployerReview","رد شده":"st_rejected"};
 var CATEGORY_KEY = {"ایمنی":"cat_safety","بهداشت":"cat_health","محیط‌زیست":"cat_environment","کیفیت":"cat_quality"};
 var TRAINING_KEY = {"دارد":"st_has","ندارد":"st_none","در حال انقضا":"st_expiring"};
 var PERSONNEL_STATUS_KEY = {"فعال":"st_active","غیرفعال":"st_inactive"};
@@ -2459,6 +2514,15 @@ function renderIncidents(){
 }
 function openIncidentDetail(idx){
   var inc = state.incidents[idx];
+  var gateHtml = "";
+  if (inc.status==="در انتظار تأیید کارفرما"){
+    gateHtml = '<div class="action-box" style="margin-top:14px"><div class="panel-title" style="margin-bottom:8px; color:var(--warn)">'+esc(t("st_pendingEmployerReview"))+'</div>'+
+      '<div class="detail-desc" style="margin-bottom:12px">'+esc(t("incNearMissGateNote"))+'</div>'+
+      (inc.reviewNote ? '<div class="detail-desc" style="margin-bottom:12px; color:var(--danger)">'+esc(t("incRejectNoteLabel"))+esc(inc.reviewNote)+'</div>' :
+        '<div style="display:flex; gap:10px"><button class="btn btn-primary" id="inc-approve-nm" style="margin-top:0">'+esc(t("btnApproveNearMiss"))+'</button>'+
+        '<button class="btn" id="inc-reject-nm" style="margin-top:0; background:var(--danger-bg); color:var(--danger); border:1px solid rgba(239,68,68,.3)">'+esc(t("btnRejectNearMiss"))+'</button></div>')+
+      '</div>';
+  }
   var tripodHtml;
   if (!inc.tripod){
     tripodHtml = '<div class="detail-desc">'+esc(t("tripodPending"))+'</div>';
@@ -2466,11 +2530,21 @@ function openIncidentDetail(idx){
     tripodHtml = '<div class="tripod-root">'+esc(L(inc.desc))+'</div><div class="tripod-line"></div>'+
       inc.tripod.map(function(tp){ return '<div class="tripod-brf"><b>'+esc(trBrf(tp.brf))+'</b><p>'+esc(L(tp.finding))+'</p></div>'; }).join("");
   }
-  var body = '<div class="action-box" style="margin-top:14px; padding-top:14px"><div class="panel-title" style="margin-bottom:10px">'+esc(t("tripodTitle"))+'</div>'+tripodHtml+'</div>';
+  var body = gateHtml+'<div class="action-box" style="margin-top:14px; padding-top:14px"><div class="panel-title" style="margin-bottom:10px">'+esc(t("tripodTitle"))+'</div>'+tripodHtml+'</div>';
   openInfoDetail({title:L(inc.desc), code:inc.id, meta:[
     {label:tc("colType"), value:tv(INCIDENT_TYPE_KEY,inc.type)}, {label:tc("colLocation"), value:L(inc.location)}, {label:tc("metaReporterInc"), value:inc.reporter},
-    {label:tc("metaInvestigator"), value:inc.investigator||"—"}, {label:tc("colDate"), value:rt(inc.date)}
+    {label:tc("metaInvestigator"), value:inc.investigator||"—"}, {label:tc("colDate"), value:rt(inc.date)}, {label:"وضعیت", value:tv(STATUS_KEY,inc.status)}
   ], body:body});
+  var apBtn = document.getElementById("inc-approve-nm");
+  if (apBtn) apBtn.addEventListener("click", function(){
+    inc.status = "فعال"; toast(t("incNearMissApprovedToast")); renderIncidents(); openIncidentDetail(idx);
+  });
+  var rjBtn = document.getElementById("inc-reject-nm");
+  if (rjBtn) rjBtn.addEventListener("click", function(){
+    var note = prompt(t("incNearMissRejectNotePrompt"));
+    if (!note) return;
+    inc.status = "رد شده"; inc.reviewNote = note; toast(t("incNearMissRejectedToast")); renderIncidents(); openIncidentDetail(idx);
+  });
 }
 
 /* ============================================================ رندر: چت ============================================================ */
@@ -2540,30 +2614,52 @@ function renderArchive(){
 }
 
 /* ============================================================ رندر: شاخص‌های Proactive HSE ============================================================ */
+// سطح‌بندیِ «استعداد حادثه‌پذیری» عیناً مطابقِ accidentPronenessLevel در
+// src/proactiveIndicators/proactiveIndicatorsApi.js (بازه‌ی واقعی ۳۹..۱۹۵):
+// ۳۹-۷۸ پایین، ۷۹-۱۱۷ متوسط، ۱۱۸-۱۵۶ بالا، ۱۵۷-۱۹۵ بسیار بالا.
+function accidentPronenessLevel(score){
+  if (score>=157) return {label:"بسیار بالا", color:"#f87171", bg:"var(--danger-bg)"};
+  if (score>=118) return {label:"بالا", color:"#fb923c", bg:"#3a2410"};
+  if (score>=79) return {label:"متوسط", color:"#60a5fa", bg:"#15233a"};
+  return {label:"پایین", color:"#4ade80", bg:"var(--ok-bg)"};
+}
 var indicators = [
-  {key:"climate", title:{fa:"شاخص فرهنگ HSE (HSE Climate)",en:"HSE Climate Index",de:"HSE-Klimaindex"}, desc:{fa:"میانگین امتیاز نظرسنجی ۴۳-سؤالی فرهنگ ایمنی پرسنل",en:"Average score of the 43-question personnel safety-culture survey",de:"Durchschnittliche Punktzahl der 43-Fragen-Umfrage zur Sicherheitskultur"}, value:78,
-    breakdown:[{label:{fa:"تعهد و حمایت مدیریت",en:"Management commitment & support",de:"Engagement und Unterstützung des Managements"}, value:82},{label:{fa:"مشارکت کارکنان",en:"Employee involvement",de:"Mitarbeiterbeteiligung"}, value:75},{label:{fa:"آموزش و شایستگی",en:"Training & competence",de:"Schulung und Kompetenz"}, value:80},{label:{fa:"ارتباطات ایمنی",en:"Safety communication",de:"Sicherheitskommunikation"}, value:70},{label:{fa:"یادگیری از حوادث",en:"Learning from incidents",de:"Lernen aus Vorfällen"}, value:83}]},
-  {key:"sbs", title:{fa:"مشاهدات رفتاری ایمن (SBS)",en:"Safety Behaviour Sampling (SBS)",de:"Sicherheitsverhaltensbeobachtung (SBS)"}, desc:{fa:"درصد رفتارهای ایمن از کل مشاهدات ثبت‌شده این ماه",en:"Percentage of safe behaviours out of all observations recorded this month",de:"Anteil sicherer Verhaltensweisen an allen diesen Monat erfassten Beobachtungen"}, value:88,
-    observations:[
-      {observer:"علی‌اصغر نجفی", date:"امروز", kind:"ایمن", note:{fa:"استفاده‌ی صحیح از هارنس روی داربست بلوک A",en:"Correct harness use on the Block A scaffold",de:"Korrekte Gurtnutzung auf dem Gerüst in Block A"}},
-      {observer:"مهدی طاهری", date:"دیروز", kind:"پرخطر", note:{fa:"عدم استفاده از عینک ایمنی حین سنگ‌زنی",en:"Safety glasses not worn while grinding",de:"Keine Schutzbrille beim Schleifen getragen"}},
-      {observer:"زهرا مرادی", date:"دیروز", kind:"ایمن", note:{fa:"چیدمان صحیح تجهیزات در انبار مرکزی",en:"Correct equipment layout in the central warehouse",de:"Korrekte Anordnung der Ausrüstung im Zentrallager"}},
-      {observer:"محمدرضا کریمی", date:"۲ روز پیش", kind:"ایمن", note:{fa:"استفاده از قفل و برچسب (LOTO) پیش از تعمیر",en:"Lockout/tagout (LOTO) used before the repair",de:"Lockout/Tagout (LOTO) vor der Reparatur angewendet"}},
-      {observer:"علی‌اصغر نجفی", date:"۳ روز پیش", kind:"پرخطر", note:{fa:"عبور از مسیر غیرمجاز نزدیک محوطه‌ی لیفتراک",en:"Walking an unauthorised route near the forklift area",de:"Unerlaubter Weg in der Nähe des Gabelstaplerbereichs benutzt"}}
+  {key:"proneness", title:{fa:"استعداد حادثه‌پذیریِ پرسنل (مشاغل حساس)",en:"Personnel Accident Proneness (critical jobs)",de:"Unfallanfälligkeit des Personals (kritische Berufe)"},
+    desc:{fa:"ارزیابیِ روان‌سنجیِ ۳۹ تا ۱۹۵، ویژه‌ی مشاغلی مثل برقکار، ریگر، اپراتور جرثقیل و داربست‌بند",en:"A 39–195 psychometric assessment for critical jobs like electricians, riggers, crane operators and scaffolders",de:"Eine psychometrische Bewertung von 39–195 für kritische Berufe wie Elektriker, Rigger, Kranführer und Gerüstbauer"},
+    cardStat:"۲ نفر در سطحِ بالا", cardNote:{fa:"از ۴ ارزیابیِ تکمیل‌شده",en:"out of 4 completed assessments",de:"von 4 abgeschlossenen Bewertungen"},
+    assessments:[
+      {name:"ناصر قربانی", job:"اپراتور جرثقیل", date:"۱۴۰۵/۰۶/۱۰", assessor:"سارا احمدپور", score:142},
+      {name:"امیر صادقی", job:"ریگر", date:"۱۴۰۵/۰۴/۰۸", assessor:"سعید وفائی", score:163},
+      {name:"رضا کاظمی", job:"برقکار", date:"۱۴۰۵/۰۵/۲۲", assessor:"سارا احمدپور", score:95},
+      {name:"حسین رستمی", job:"داربست‌بند", date:"۱۴۰۵/۰۳/۱۵", assessor:"سارا احمدپور", score:61}
     ]},
-  {key:"proneness", title:{fa:"حساسیت به حادثه (Accident Proneness)",en:"Accident Proneness",de:"Unfallanfälligkeit"}, desc:{fa:"نمره ریسک واحدها بر اساس سابقه — هرچه کمتر بهتر",en:"Unit risk score based on history — lower is better",de:"Risikowert der Einheiten basierend auf der Historie — niedriger ist besser"}, value:34,
-    ranked:[
-      {name:{fa:"واحد داربست‌بندی",en:"Scaffolding unit",de:"Gerüstbaueinheit"}, score:58, factor:{fa:"بالاترین نرخ نزدیک‌به‌حادثه در ۳ ماه اخیر",en:"Highest near-miss rate in the last 3 months",de:"Höchste Beinaheunfallrate in den letzten 3 Monaten"}},
-      {name:{fa:"واحد جوشکاری",en:"Welding unit",de:"Schweißeinheit"}, score:41, factor:{fa:"دو مورد آسیب جزئی ثبت‌شده",en:"Two minor injuries recorded",de:"Zwei leichte Verletzungen erfasst"}},
-      {name:{fa:"واحد حمل‌ونقل داخلی",en:"Internal transport unit",de:"Interne Transporteinheit"}, score:34, factor:{fa:"نزدیک‌به‌حادثه‌ی لیفتراک",en:"Forklift near miss",de:"Beinaheunfall mit Gabelstapler"}},
-      {name:{fa:"واحد برق",en:"Electrical unit",de:"Elektroeinheit"}, score:19, factor:{fa:"بدون سابقه‌ی قابل‌توجه",en:"No notable history",de:"Keine nennenswerte Historie"}},
-      {name:{fa:"واحد مکانیک",en:"Mechanical unit",de:"Mechanikeinheit"}, score:12, factor:{fa:"بدون سابقه‌ی قابل‌توجه",en:"No notable history",de:"Keine nennenswerte Historie"}}
+  {key:"climate", title:{fa:"جوّ ایمنیِ سازمان (HSE Climate)",en:"Organizational HSE Climate",de:"Betriebliches HSE-Klima"}, desc:{fa:"نظرسنجیِ ناشناسِ ۴۳-سؤالی روی ۹ بُعدِ فرهنگِ ایمنی — هر بُعد ۰ تا ۱۰، جمعِ کل ۰ تا ۹۰",en:"An anonymous 43-question survey across 9 safety-culture dimensions — each 0–10, total 0–90",de:"Eine anonyme 43-Fragen-Umfrage zu 9 Sicherheitskultur-Dimensionen — jede 0–10, Gesamt 0–90"},
+    cardStat:"۶۷ از ۹۰", cardNote:{fa:"سطحِ کلی: متوسط",en:"Overall level: medium",de:"Gesamtniveau: mittel"},
+    dims:[
+      {label:{fa:"تعهد و حمایتِ مدیریت",en:"Management commitment & support",de:"Engagement und Unterstützung des Managements"}, value:8},
+      {label:{fa:"مشارکتِ کارکنان",en:"Employee involvement",de:"Mitarbeiterbeteiligung"}, value:7},
+      {label:{fa:"آموزش و شایستگی",en:"Training & competence",de:"Schulung und Kompetenz"}, value:8},
+      {label:{fa:"ارتباطاتِ ایمنی",en:"Safety communication",de:"Sicherheitskommunikation"}, value:6},
+      {label:{fa:"رویه‌ها و دستورالعمل‌های ایمنی",en:"Safety rules & procedures",de:"Sicherheitsregeln und -verfahren"}, value:7},
+      {label:{fa:"گزارش‌دهیِ بدونِ سرزنش (Just Culture)",en:"Blame-free reporting (Just Culture)",de:"Schuldfreies Melden (Just Culture)"}, value:5},
+      {label:{fa:"یادگیری از حوادث",en:"Learning from incidents",de:"Lernen aus Vorfällen"}, value:7},
+      {label:{fa:"تخصیصِ منابعِ ایمنی",en:"Safety resource allocation",de:"Zuweisung von Sicherheitsressourcen"}, value:8},
+      {label:{fa:"بهبودِ مستمر و پایشِ عملکرد",en:"Continuous improvement & performance monitoring",de:"Kontinuierliche Verbesserung und Leistungsüberwachung"}, value:6}
+    ]},
+  {key:"sbs", title:{fa:"نمونه‌برداریِ رفتارِ ایمن (SBS)",en:"Safety Behaviour Sampling (SBS)",de:"Sicherheitsverhaltensbeobachtung (SBS)"}, desc:{fa:"مشاهداتِ میدانیِ ایمن/پرخطر در ۱۲ دسته (مثلِ PPE، ارگونومی، نظم محیط کار)، با تحلیلِ فصلی",en:"Field safe/at-risk observations across 12 categories (PPE, ergonomics, housekeeping, …), with seasonal analysis",de:"Beobachtungen vor Ort (sicher/riskant) in 12 Kategorien (PSA, Ergonomie, Ordnung …), mit saisonaler Analyse"},
+    cardStat:"۸۸٪ ایمن", cardNote:{fa:"از ۵ مشاهده‌ی فصلِ جاری",en:"out of 5 observations this season",de:"von 5 Beobachtungen in dieser Saison"},
+    observations:[
+      {observer:"علی‌اصغر نجفی", date:"امروز", kind:"ایمن", category:{fa:"استفاده از وسایل حفاظت فردی (PPE)",en:"PPE use",de:"PSA-Nutzung"}, note:{fa:"استفاده‌ی صحیح از هارنس روی داربست بلوک A",en:"Correct harness use on the Block A scaffold",de:"Korrekte Gurtnutzung auf dem Gerüst in Block A"}},
+      {observer:"مهدی طاهری", date:"دیروز", kind:"پرخطر", category:{fa:"استفاده از وسایل حفاظت فردی (PPE)",en:"PPE use",de:"PSA-Nutzung"}, note:{fa:"عدم استفاده از عینک ایمنی حین سنگ‌زنی",en:"Safety glasses not worn while grinding",de:"Keine Schutzbrille beim Schleifen getragen"}},
+      {observer:"زهرا مرادی", date:"دیروز", kind:"ایمن", category:{fa:"نظم و ترتیبِ محلِ کار",en:"Housekeeping",de:"Ordnung am Arbeitsplatz"}, note:{fa:"چیدمان صحیح تجهیزات در انبار مرکزی",en:"Correct equipment layout in the central warehouse",de:"Korrekte Anordnung der Ausrüstung im Zentrallager"}},
+      {observer:"محمدرضا کریمی", date:"۲ روز پیش", kind:"ایمن", category:{fa:"رویه‌های قفل و برچسب (LOTO)",en:"Lockout/tagout procedures",de:"Lockout/Tagout-Verfahren"}, note:{fa:"استفاده از قفل و برچسب (LOTO) پیش از تعمیر",en:"Lockout/tagout (LOTO) used before the repair",de:"Lockout/Tagout (LOTO) vor der Reparatur angewendet"}},
+      {observer:"علی‌اصغر نجفی", date:"۳ روز پیش", kind:"پرخطر", category:{fa:"مسیرهای تردد و دسترسی",en:"Access & walking routes",de:"Zugangs- und Gehwege"}, note:{fa:"عبور از مسیر غیرمجاز نزدیک محوطه‌ی لیفتراک",en:"Walking an unauthorised route near the forklift area",de:"Unerlaubter Weg in der Nähe des Gabelstaplerbereichs benutzt"}}
     ]}
 ];
 function renderIndicators(){
   document.getElementById("indicator-grid").innerHTML = indicators.map(function(i){
     return '<div class="tool-card glass indicator-card" data-key="'+i.key+'" style="cursor:pointer"><div class="i-title">'+esc(L(i.title))+'</div><div class="i-desc">'+esc(L(i.desc))+'</div>'+
-      '<div class="gauge-row"><div class="gauge-track"><div class="gauge-fill" style="width:'+i.value+'%"></div></div><div class="gauge-val">'+i.value+'%</div></div></div>';
+      '<div class="tool-result" style="margin-top:12px"><div class="val" style="font-size:19px">'+esc(i.cardStat)+'</div><div class="lbl">'+esc(L(i.cardNote))+'</div></div></div>';
   }).join("");
   Array.prototype.forEach.call(document.querySelectorAll("#indicator-grid .indicator-card"), function(c){
     c.addEventListener("click", function(){ openIndicatorDetail(c.dataset.key); });
@@ -2572,25 +2668,28 @@ function renderIndicators(){
 function openIndicatorDetail(key){
   var ind = indicators.find(function(x){ return x.key===key; });
   var body = "";
-  if (ind.breakdown){
+  if (ind.assessments){
+    body = '<div class="glass table-wrap" style="margin:0"><table class="data-table"><thead><tr><th>پرسنل</th><th>سمت</th><th>تاریخ</th><th>ارزیاب</th><th>نمره</th><th>سطح</th></tr></thead><tbody>'+
+      ind.assessments.map(function(a){
+        var lv = accidentPronenessLevel(a.score);
+        return '<tr><td class="cell-main">'+esc(a.name)+'</td><td>'+esc(a.job)+'</td><td class="mono">'+a.date+'</td><td>'+esc(a.assessor)+'</td>'+
+          '<td class="mono" style="text-align:center; font-weight:700">'+a.score+'</td>'+
+          '<td style="text-align:center"><span style="font-size:10.5px; padding:3px 10px; border-radius:999px; background:'+lv.bg+'; color:'+lv.color+'; font-weight:700">'+lv.label+'</span></td></tr>';
+      }).join("")+'</tbody></table></div>'+
+      '<p style="font-size:10.5px; color:var(--text3); margin-top:10px; line-height:1.8">بازه‌ی نمره: ۳۹ (کمترین ریسک) تا ۱۹۵ (بیشترین ریسک) — فقط برایِ مشاغلی که ورودشان به سایت نیازمندِ این ارزیابی است (برقکار، نصاب، داربست‌بند، راننده‌ی ماشین‌آلات، اپراتور جرثقیل، ریگر و...).</p>';
+  } else if (ind.dims){
     body = '<div class="detail-desc" style="padding:12px"><div style="display:flex; flex-direction:column; gap:12px">'+
-      ind.breakdown.map(function(b){
-        return '<div><div style="display:flex; justify-content:space-between; font-size:11.5px; color:var(--text2); margin-bottom:4px"><span>'+esc(L(b.label))+'</span><b style="color:var(--text)">'+b.value+'%</b></div>'+
-          '<div class="gauge-track"><div class="gauge-fill" style="width:'+b.value+'%"></div></div></div>';
+      ind.dims.map(function(b){
+        return '<div><div style="display:flex; justify-content:space-between; font-size:11.5px; color:var(--text2); margin-bottom:4px"><span>'+esc(L(b.label))+'</span><b style="color:var(--text)">'+b.value+' از ۱۰</b></div>'+
+          '<div class="gauge-track"><div class="gauge-fill" style="width:'+(b.value*10)+'%"></div></div></div>';
       }).join("")+'</div></div>';
   } else if (ind.observations){
     body = '<div style="display:flex; flex-direction:column; gap:8px">'+ind.observations.map(function(o){
       return '<div class="file-row"><span class="badge '+(o.kind==="ایمن"?"badge-ok":"badge-danger")+'" style="flex-shrink:0">'+esc(tv(OBS_KIND_KEY,o.kind))+'</span>'+
-        '<span><div class="cell-main" style="font-size:12px">'+esc(L(o.note))+'</div><div class="file-meta">'+esc(o.observer)+' — '+esc(rt(o.date))+'</div></span></div>';
+        '<span><div class="cell-main" style="font-size:12px">'+esc(L(o.note))+'</div><div class="file-meta">'+esc(L(o.category))+' — '+esc(o.observer)+' — '+esc(rt(o.date))+'</div></span></div>';
     }).join("")+'</div>';
-  } else if (ind.ranked){
-    body = '<div class="glass table-wrap" style="margin:0"><table class="data-table"><thead><tr><th>'+esc(t("colUnit"))+'</th><th>'+esc(t("colScore"))+'</th><th>'+esc(t("colControl"))+'</th></tr></thead><tbody>'+
-      ind.ranked.map(function(r){
-        var cls = r.score>=50?"badge-danger":r.score>=25?"badge-warn":"badge-ok";
-        return '<tr><td class="cell-main">'+esc(L(r.name))+'</td><td><span class="badge '+cls+'">'+r.score+'</span></td><td class="cell-sub">'+esc(L(r.factor))+'</td></tr>';
-      }).join("")+'</tbody></table></div>';
   }
-  openInfoDetail({title:L(ind.title), code:ind.value+"%", meta:[{label:tc("indicatorDescLabel"), value:L(ind.desc)}], body:body});
+  openInfoDetail({title:L(ind.title), code:ind.cardStat, meta:[{label:tc("indicatorDescLabel"), value:L(ind.desc)}], body:body});
 }
 
 /* ============================================================ رندر: نظرسنجی و آزمون HSE ============================================================ */
@@ -3562,103 +3661,136 @@ var PERSONAS = [
 ];
 
 var TOUR_META = {
-  managementDashboard:{desc:"نمایِ کلیِ لحظه‌ایِ وضعیتِ HSEِ پروژه: شاخص‌هایِ کلیدی، روندِ آنومالی‌ها و رویدادهایِ اخیر.",
+  managementDashboard:{desc:"داشبوردِ ثابتِ مدیریتی: تصویرِ کلانِ عملکردِ HSEِ کلِ پروژه — مقایسه‌یِ پیمانکاران، هشدارهایِ فوری و روندهایِ ماهانه، ویژه‌یِ کارفرما/سرپرست HSE.",
     steps:[
-      {sel:"#kpi-grid", title:"شاخص‌هایِ کلیدی", desc:"مهم‌ترین شاخص‌هایِ HSEِ پروژه را در یک نگاه می‌بینید."},
-      {sel:"#chart-trend", title:"روندِ ثبتِ آنومالی", desc:"نمودارِ روندِ ۶ ماههٔ اخیر، بهتر یا بدترشدنِ وضعیتِ پروژه را نشان می‌دهد."},
-      {sel:"#activity-feed", title:"رویدادهایِ اخیر", desc:"آخرین رویدادهایِ ثبت‌شده در تمامِ ماژول‌ها، به ترتیبِ زمان."}
+      {sel:"#kpi-grid", title:"۱۳ شاخصِ کلیدیِ پروژه", desc:"در نسخه‌یِ واقعی این ردیف تا ۱۳ شاخص دارد: تعدادِ پیمانکاران، پرسنلِ فعال، آنومالیِ باز/بحرانی، حوادثِ ۱۲ ماهِ اخیر، اقداماتِ اصلاحیِ بازمانده/معوق، ماشین‌آلات و داربستِ فعال، بریرهایِ ضعیف/ناموفقِ BowTie، مجوزهایِ روبه‌انقضا و مدارکِ در انتظارِ تایید — همه در یک نگاه، بدونِ بازکردنِ هیچ ماژولِ دیگر."},
+      {sel:"#chart-trend", title:"روندِ ماهانه", desc:"روندِ آنومالی، حادثه و شاخص‌هایِ پیشرو را ماه‌به‌ماه مقایسه می‌کند تا مشخص شود وضعیتِ ایمنیِ پروژه در حالِ بهبود است یا بدترشدن."},
+      {sel:"#chart-donut", title:"نمودارهایِ ترکیبی", desc:"کنارِ این نمودار، نسخه‌یِ واقعی نمودارهایِ دایره‌ایِ وضعیتِ سلامتِ ماشین‌آلات، آنومالی بر اساسِ سطحِ ریسک و هرمِ انواعِ حادثه را هم نشان می‌دهد."},
+      {sel:"#activity-feed", title:"رویدادهایِ اخیرِ کلِ سامانه", desc:"آخرین رویدادهایِ ثبت‌شده در تمامِ ماژول‌ها (نه فقط یکی)، به ترتیبِ زمان — یک فیدِ واحد برایِ این‌که مدیر لازم نباشد تک‌تک ماژول‌ها را سر بزند."},
+      {sel:null, title:"مقایسه‌یِ پیمانکاران، هشدارِ فوری و تحلیلِ هوشمند", desc:"در IHMSِ واقعی، کارفرما/سرپرستِ HSE علاوه‌براین، یک جدولِ کاملِ مقایسه‌یِ پیمانکاران (امتیازِ HSE، آنومالیِ باز، نیازمندیِ طبِ‌کار، ماشین‌آلاتِ معیوب، اقدامِ اصلاحیِ معوق — رتبه‌بندی‌شده از ضعیف‌ترین) + یک خروجیِ اکسل، یک پنلِ «هشدارهایِ فوری» (۶ موردِ جدی‌ترِ لحظه‌ای) و یک پنلِ «تحلیلِ هوشمند» (یافته‌هایِ ساده‌یِ متنی مثلِ «فلان پیمانکار بیشترین آنومالیِ باز را دارد») می‌بیند؛ اگر کاربر نقشِ پیمانکار داشته باشد، این پنل‌ها اصلاً نمایش داده نمی‌شوند و او فقط آمارِ شرکتِ خودش را می‌بیند."}
     ]},
-  anomalyReport:{desc:"ثبت، دسته‌بندی و پیگیریِ عدم‌انطباق‌ها تا بسته‌شدن با اقدامِ اصلاحیِ مشخص.",
+  anomalyReport:{desc:"ثبتِ هر ناهنجاری یا شرایطِ ناایمن — از یک کابلِ برهنه تا رفتارِ پرخطر — و پیگیریِ آن تا بسته‌شدن، طیِ چرخه‌یِ ثبت → اقدامِ اصلاحی → تاییدِ سرپرست.",
     steps:[
-      {sel:"#btn-new-anomaly", title:"ثبتِ آنومالیِ جدید", desc:"با این دکمه یک موردِ عدم‌انطباقِ جدید با عکس و شرحِ کامل ثبت کنید — همین الان امتحانش کنید."},
-      {sel:"#anomaly-status-filter", title:"فیلتر بر اساسِ وضعیت", desc:"آنومالی‌ها را بر اساسِ وضعیت (باز، در حالِ بررسی، اقدامِ اصلاحی، بسته‌شده) فیلتر کنید."},
-      {sel:"#anomaly-tbody", title:"جزئیاتِ هر مورد", desc:"روی هر ردیف کلیک کنید تا جزئیاتِ کامل، مراحلِ اقدامِ اصلاحی و تاریخچهٔ آن باز شود."}
+      {sel:"#btn-new-anomaly", title:"ثبتِ آنومالیِ جدید", desc:"فرمِ واقعی شاملِ پروژه، پیمانکار/پیمانکارِ فرعی، منطقه، سطحِ ریسک (کم/متوسط/بالا)، دسته‌بندی (با گزینه‌یِ «سایر» برایِ دسته‌هایِ تازه)، شرحِ کامل، نیازِ احتمالی به ارزیابیِ ریسک، اثرگذاری بر بریرِ BowTie و تا ۲ عکس است؛ شماره‌یِ پیگیری به‌صورتِ خودکار از سمتِ سرور تخصیص می‌یابد — همین حالا امتحانش کنید."},
+      {sel:"#anomaly-status-filter", title:"چهار وضعیتِ گردشِ کار", desc:"باز → در حالِ بررسی → اقدامِ اصلاحی → بسته‌شده. اگر ثبت‌کننده کارفرما باشد (نه ادمین/سرپرست)، مورد ابتدا واردِ یک گیتِ تاییدِ داخلی می‌شود و تا تاییدِ آن، پیمانکار آن را نمی‌بیند."},
+      {sel:"#anomaly-tbody", title:"چرخه‌یِ گام‌به‌گام", desc:"روی هر ردیف کلیک کنید: پیمانکار اقدامِ اصلاحی را می‌نویسد و «ارسال برای بازبینی» می‌زند؛ سرپرستِ HSE یا تایید می‌کند (بسته‌شده) یا با یادداشتِ اجباری رد می‌کند و مورد دوباره باز می‌شود — این همان چرخه‌یِ واقعیِ ثبت-اصلاح-تاییدِ IHMS است."},
+      {sel:null, title:"دسته‌بندیِ «سایر» با تاییدِ سرپرست", desc:"اگر کاربر دسته‌بندیِ موجود را کافی نداند، می‌تواند یک دسته‌یِ تازه را به‌صورتِ متنِ آزاد پیشنهاد دهد؛ خودِ آنومالی بلافاصله ثبت می‌شود، اما دسته‌یِ پیشنهادی تا تاییدِ سرپرستِ HSE وارد فهرستِ دسته‌بندیِ رسمی نمی‌شود."}
     ]},
-  riskAssessment:{desc:"ماتریسِ ریسک و فهرستِ ریسک‌هایِ کلیدیِ سایت بر اساسِ روشِ BowTie/HCMS/JHA/FMEA.",
+  riskAssessment:{desc:"زیرِ این یک ماژول در IHMSِ واقعی پنج ابزارِ کاملاً متفاوتِ ارزیابیِ ریسک قرار دارد: BowTie، HCMS، JHA، FMEA و بانکِ دانشِ ریسک — این دمو مفهومِ مشترکشان را در یک ماتریسِ ساده نشان می‌دهد.",
     steps:[
-      {sel:"#risk-matrix", title:"ماتریسِ ریسک", desc:"ریسک‌هایِ سایت بر اساسِ احتمال × شدت، در یک ماتریسِ رنگی نمایش داده می‌شوند."},
-      {sel:"#risk-tbody", title:"فهرستِ ریسک‌هایِ کلیدی", desc:"برایِ هر ریسک، امتیاز و اقدامِ کنترلیِ در نظر گرفته‌شده را ببینید."}
+      {sel:"#risk-matrix", title:"ماتریسِ احتمال × شدت", desc:"هر ریسک بر اساسِ احتمالِ وقوع و شدتِ پیامد در یک ماتریسِ ۵×۵ رنگی جای می‌گیرد — این مفهوم، معادلِ ساده‌شده‌یِ امتیازِ RPNِ موجود در HCMS است."},
+      {sel:"#risk-tbody", title:"فهرستِ ریسک‌هایِ کلیدی", desc:"برایِ هر ریسک، امتیاز و کنترلِ در نظرگرفته‌شده دیده می‌شود؛ در HCMSِ واقعی این فهرست علاوه‌براین، ریسکِ پسماند (بعد از اعمالِ کنترل) را هم جدا نشان می‌دهد و پیشنهادِ کنترل از یک «بانکِ دانشِ ریسک» خودآموز گرفته می‌شود."},
+      {sel:null, title:"BowTie: دیاگرامِ مدیریتِ بریر", desc:"BowTie یک دیاگرامِ بصریِ کشیدنی-رهاکردنی است: سمتِ چپ تهدیدها با بریرهایِ پیشگیرانه به «رویدادِ اصلی» در مرکز می‌رسند، سمتِ راست پیامدها با بریرهایِ بازیابی از آن خارج می‌شوند. یک زیرماژولِ جداگانه (DBEE) اثربخشیِ هر بریر را زنده و خودکار از رویِ آنومالی‌هایِ واقعیِ مرتبط امتیاز می‌دهد."},
+      {sel:null, title:"HCMS: رجیستریِ ریسکِ فعالیت‌ها", desc:"برخلافِ BowTie که دیاگرام است، HCMS یک فرمِ مسطح است: یک رکورد به‌ازایِ هر فعالیت، با کدِ RPN (مثلِ «۴C») در چهار دسته‌یِ انسانی/تجهیزاتی/محیط‌زیستی/اعتباری، هم قبل و هم بعدِ کنترل — و اگر پیمانکار ثبت کند، تا تاییدِ کارفرما در وضعیتِ «در انتظار» می‌ماند."},
+      {sel:null, title:"JHA و FMEA", desc:"JHA، خطرِ هر گامِ یک کار را به‌ترتیبِ اجرا تحلیل می‌کند. FMEA برایِ تجهیزات/فرایندها، هر «حالتِ خرابی» را با سه عددِ ۱ تا ۱۰ (شدت×وقوع×قابلیتِ‌تشخیص) امتیاز می‌دهد و عددِ RPN را خودکار محاسبه می‌کند."}
     ]},
-  personnelAccess:{desc:"مدیریتِ ورود، آموزش و وضعیتِ ترددِ پرسنلِ شاغل در سایت.",
+  personnelAccess:{desc:"پرونده‌یِ کاملِ هر نفرِ پرسنلِ پیمانکار از لحظه‌یِ ورود به کارگاه: مدارکِ آموزشی، طبِ‌کار، تاییدِ صلاحیتِ مشاغلِ حساس و توزیعِ PPE — همه در یک پرونده.",
     steps:[
-      {sel:"#personnel-search", title:"جستجو و فیلتر", desc:"پرسنل را بر اساسِ نام، سمت یا وضعیتِ فعال/غیرفعال جستجو کنید."},
-      {sel:"#personnel-tbody", title:"وضعیتِ آموزشِ هر نفر", desc:"روی هر ردیف کلیک کنید تا وضعیتِ آموزشِ HSE و تاریخِ شروعِ همکاریِ آن فرد را ببینید."}
+      {sel:"#personnel-search", title:"جستجو و فیلترِ وضعیت", desc:"نسخه‌یِ واقعی تا ۶ وضعیتِ جدا دارد: فعال، در انتظارِ بارگذاریِ مدارک، در انتظارِ تاییدِ صلاحیت، در انتظارِ مراجعه به طبِ‌کار، در انتظارِ نتیجه طبِ‌کار و طبِ‌کارِ منقضی‌شده."},
+      {sel:"#personnel-tbody", title:"چک‌لیستِ مدارکِ هر نفر", desc:"روی هر ردیف کلیک کنید. در نسخه‌یِ واقعی، به‌ازایِ هر دوره‌یِ آموزشیِ الزامیِ همان عنوانِ شغلی یک مدرکِ جدا بارگذاری و تایید/رد می‌شود؛ رد یا نیاز-به-اصلاح می‌تواند مستقیماً از همان‌جا یک آنومالیِ «مغایرتِ مدرکِ پرسنل» بسازد."},
+      {sel:null, title:"طبِ‌کار و تاییدِ صلاحیتِ مشاغلِ حساس", desc:"پرسنل یا گواهیِ طبِ‌کارِ معتبر دارد یا واردِ یک مسیرِ زمان‌بندی‌شده می‌شود: ۳ روز برایِ مراجعه، ۷ روز برایِ ارسالِ نتیجه. برایِ مشاغلِ حساس (داربست‌بند، اپراتورِ جرثقیل، ریگر، نصاب، برقکار) یک گامِ جداگانه‌یِ تاییدِ صلاحیت هم اجباری است."},
+      {sel:null, title:"توزیعِ PPE و انقضایِ آموزش (تازه)", desc:"به‌ازایِ هر قلم از PPEِ موردنیازِ عنوانِ شغلیِ فرد، پیمانکار «توزیع شد» یا «ارائه نشده» (با یادداشتِ اجباری) ثبت می‌کند. تاریخِ انقضایِ هر مدرکِ آموزشی هم اکنون ثبت می‌شود و اگر بگذرد، در ارزیابیِ HSEِ آن پیمانکار به‌عنوانِ «غیرمنطبق» حساب می‌شود."}
     ]},
-  permitToWork:{desc:"صدور و پیگیریِ مجوزِ کار (PTW) برایِ کارهایِ پرخطر مانندِ کارِ گرم، ارتفاع و فضایِ محصور.",
+  permitToWork:{desc:"صدورِ مجوزِ کار (PTW) برایِ کارهایِ پرخطر مثلِ کارِ گرم، ارتفاع، فضایِ محصور و گودبرداری — پیش از شروعِ کار، نه بعد از آن.",
     steps:[
-      {sel:"#btn-new-permit", title:"صدورِ مجوزِ جدید", desc:"برایِ شروعِ یک کارِ پرخطر، از همین‌جا مجوز صادر کنید."},
-      {sel:"#permit-tbody", title:"پیگیریِ مجوزها", desc:"وضعیتِ تمامِ مجوزهایِ صادرشده را از «در حالِ اجرا» تا «بسته‌شده» پیگیری کنید."}
+      {sel:"#btn-new-permit", title:"صدور از رویِ قالب", desc:"در نسخه‌یِ واقعی، مجوز از رویِ یک قالبِ از-پیش‌تعریف‌شده (قابلِ‌شخصی‌سازی برایِ هر شرکت) ساخته می‌شود: شرحِ کار، نفرات و تجهیزات، کنترل‌هایِ ویژه‌یِ HSE (پرتونگاری، داربست، گودبرداری، کارِ گرم، فضایِ محصور، ایزولاسیون) و بخشِ امضاها."},
+      {sel:"#permit-tbody", title:"گردشِ کارِ ۸ مرحله‌ای", desc:"پیش‌نویس → ارسال‌شده → در حالِ بررسی → (صادرشده | ردشده) → صادرشده → فعال → (معلق | بسته‌شده | منقضی). در این دمو برایِ سادگی فقط ۳ مرحله‌یِ اصلی نشان داده شده."},
+      {sel:null, title:"لیستِ امضاهایِ مجاز", desc:"فقط افرادی که از پیش در «لیستِ امضاهایِ مجاز» ثبت شده‌اند می‌توانند به‌عنوانِ مجری/سرپرستِ HSE/صادرکننده امضا کنند — این لیست را کارفرما/سرپرستِ HSE از رویِ حسابِ کاربرانِ واقعی می‌سازد، نه متنِ آزاد."},
+      {sel:null, title:"جانشینِ تاییدکننده (تازه)", desc:"اگر تاییدکننده‌یِ اصلی در دسترس نباشد، یک جانشینِ از‌پیش‌تعیین‌شده — در سطحِ هر امضاکننده، هر گامِ گردشِ کار، یا در سطحِ کلِ شرکت برایِ شرکت‌هایِ مستقل — می‌تواند به‌جایِ او تایید کند تا کار بی‌دلیل متوقف نماند."}
     ]},
-  incidentManagement:{desc:"ثبت و پیگیریِ حوادث و شبه‌حادثه‌ها همراه با تحلیلِ ریشه‌ای.",
+  incidentManagement:{desc:"ثبتِ رسمیِ هر حادثه، شبه‌حادثه یا آسیب طبقِ فرمِ استانداردِ شرکت، همراه با گیتِ تاییدِ شبه‌حادثه و تحلیلِ ریشه‌ایِ Tripod Beta.",
     steps:[
-      {sel:"#incident-tbody", title:"ثبتِ حوادث", desc:"هر حادثه یا شبه‌حادثه با نوع، شرح و وضعیت ثبت می‌شود؛ روی یک ردیف کلیک کنید تا تحلیلِ ریشه‌ای را ببینید."}
+      {sel:"#incident-tbody", title:"فرمِ رسمیِ ۱۲ بخشی", desc:"فرمِ واقعی (کدِ MD1QM-FSW22/01-01) شاملِ مشخصاتِ محل، نوعِ حادثه (فوتی/غیرفعال‌کننده/درمانی/کمک‌هایِ اولیه/شبه‌حادثه/خسارتِ مالی)، علل، مکانیزم، پیامدها، PPEِ استفاده‌شده، شاهدین و امضاهاست — روی یک ردیف کلیک کنید تا جزئیات باز شود."},
+      {sel:null, title:"گیتِ تاییدِ شبه‌حادثه (تازه)", desc:"ردیفِ بالایِ جدول را باز کنید: وقتی پیمانکار خودش یک شبه‌حادثه گزارش می‌دهد، تا تاییدِ کارفرما/سرپرستِ HSE در آمارِ رسمی ثبت نمی‌شود — این دقیقاً همان دکمه‌هایِ تایید/رد را نشان می‌دهد. امتیازدهیِ این بخش عمداً «مثبت» است (فرهنگِ گزارش‌دهیِ بدونِ تنبیه)، نه تنبیهی."},
+      {sel:null, title:"تحلیلِ ریشه‌ای با Tripod Beta", desc:"حوادثِ مهم‌تر به‌صورتِ خودکار «کاندیدِ تحلیل» علامت می‌خورند؛ تیمِ HSE می‌تواند یک فضایِ کاریِ کاملِ Tripod Beta باز کند تا علتِ واقعیِ پشتِ حادثه (آموزش، سخت‌افزار، رویه‌ها، طراحی، ارتباطات، سازمان، نظم‌وترتیب...) را پیدا و مستند کند — نمونه‌ای از این تحلیل را در جزئیاتِ یکی از حوادثِ بسته‌شده ببینید."}
     ]},
-  machineryManagement:{desc:"پیگیریِ وضعیتِ بازرسیِ دوره‌ایِ ماشین‌آلات و تجهیزاتِ سایت.",
+  machineryManagement:{desc:"کنترلِ همه‌یِ ماشین‌آلات و خودروهایِ پیمانکاران پیش از ورود به سایت: کارتِ ماشین، بیمه، معاینه‌یِ فنی و گواهینامه‌یِ راننده.",
     steps:[
-      {sel:"#machinery-status-filter", title:"فیلترِ وضعیت", desc:"ماشین‌آلات را بر اساسِ «سالم»، «نیاز به بازرسی» یا «متوقف از کار» فیلتر کنید."},
-      {sel:"#machinery-tbody", title:"برنامهٔ بازرسی", desc:"تاریخِ آخرین و بعدیِ بازرسیِ هر تجهیز را ببینید."}
+      {sel:"#machinery-status-filter", title:"فیلترِ وضعیت", desc:"ماشین‌آلات را بر اساسِ «سالم»، «نیاز به بازرسی» یا «متوقف از کار» فیلتر کنید؛ در نسخه‌یِ واقعی، ماشینِ تازه‌ثبت‌شده تا تکمیلِ مدارکِ الزامی در حالتِ «پیش‌نویس» و نامرئی برایِ کارفرماست."},
+      {sel:"#machinery-tbody", title:"بازرسیِ دوره‌ای و هشدارِ انقضا", desc:"تاریخِ آخرین و بعدیِ بازرسی را ببینید. نسخه‌یِ واقعی ۳۰ روز پیش از انقضایِ بیمه، معاینه‌یِ فنی، گواهیِ سلامت یا گواهینامه‌یِ راننده، هشدارِ بصری نشان می‌دهد تا هیچ ماشینی با مدارکِ منقضی واردِ سایت نشود."},
+      {sel:null, title:"ثبتِ آنومالی از دلِ پرونده‌یِ ماشین (تازه)", desc:"اگر مدرکی ناقص یا مشکوک باشد، سرپرستِ HSE هنگامِ رد یا درخواستِ اصلاحِ آن مدرک می‌تواند مستقیماً یک آنومالیِ «مغایرتِ مدرکِ ماشین‌آلات» بسازد، بدونِ خروج از همین پرونده."}
     ]},
-  scaffoldManagement:{desc:"مدیریتِ تگ‌هایِ رنگیِ داربست (سبز/زرد/قرمز) و وضعیتِ بازرسیِ آن‌ها.",
+  scaffoldManagement:{desc:"گردشِ کارِ تگ‌گذاریِ داربست از درخواست تا برچیدن — همان سیستمِ رایجِ تگِ سبز/قرمزِ صنعتی، دیجیتالی‌شده و قابلِ‌چاپ.",
     steps:[
-      {sel:"#scaffold-status-filter", title:"وضعیتِ رنگیِ تگ‌ها", desc:"تگ‌هایِ داربست با رنگِ سبز (ایمن)، زرد (محدود) و قرمز (ممنوع) کدگذاری می‌شوند."},
-      {sel:"#scaffold-tbody", title:"تاریخِ بازرسی", desc:"بازرس و تاریخِ آخرینِ بازرسیِ هر تگ را ببینید."}
+      {sel:"#scaffold-status-filter", title:"سه رنگِ تگ", desc:"سبز = ایمن برایِ استفاده، زرد = محدود/درحالِ‌بررسی، قرمز = ممنوعِ استفاده تا رفعِ ایراد. در نسخه‌یِ واقعی این مفهوم به ۶ وضعیتِ جدا تفکیک می‌شود: در انتظارِ تاییدِ اولیه → در انتظارِ نصب → (نیاز به اصلاح ⟲) → تگ صادر شد → درخواستِ برچیدن → برچیده شد."},
+      {sel:"#scaffold-tbody", title:"شماره‌یِ تگ و تاریخِ بازرسی", desc:"هر داربست یک شماره‌یِ تگِ یکتا به‌فرمِ Md1-XX-SC-01 می‌گیرد (XX کدِ دوحرفیِ همان پیمانکار است) و قابلِ‌چاپ به‌صورتِ یک برگه‌یِ فیزیکی برایِ نصب رویِ داربست است."},
+      {sel:null, title:"چرخه‌یِ اصلاح تا صدورِ تگِ سبز", desc:"اگر بازرسیِ کارفرما ایرادی پیدا کند، وضعیت «نیاز به اصلاح» (قرمز) می‌شود، با شرحِ ایراد و مهلتِ رفع؛ پیمانکار رفع می‌کند و «درخواستِ بازدیدِ مجدد» می‌زند تا دوباره بازرسی و در نهایت تگِ سبز صادر شود."}
     ]},
-  quickTools:{desc:"محاسبه‌گرهایِ آمادهٔ شاخص‌هایِ پرکاربردِ ایمنی — از ریسکِ بالابری تا مدیریتِ انرژی.",
+  quickTools:{desc:"بیش از ۲۰ ماشین‌حسابِ آماده‌یِ HSE — از LTIFR و TRIR تا زاویه‌یِ اسلینگ، فشارِ زمین زیرِ جرثقیل و شعاعِ نواحیِ رادیوگرافی — بدونِ اتصال به داده‌هایِ سازمانی.",
     steps:[
-      {sel:"#tools-cat-chips", title:"دسته‌بندیِ ابزارها", desc:"بیش از ۲۰ ابزارِ محاسباتیِ HSE در دسته‌هایِ مختلف."},
-      {sel:"#tools-grid", title:"یک ابزار را امتحان کنید", desc:"روی یکی از کارت‌ها کلیک کنید تا فرمِ محاسبه باز شود و نتیجه را آنی ببینید."}
+      {sel:"#tools-cat-chips", title:"۱۰ دسته‌یِ واقعی", desc:"محاسباتِ HSE، جرثقیل و لیفتینگ، حریق، موادِ شیمیایی، برق، گازها، رادیوگرافی، PPE، محیط‌زیست و ابزارهایِ عمومی — جمعاً ۲۳ ابزارِ واقعی، هرکدام با فرمول/مرجعِ محاسبه و تذکرِ ایمنی."},
+      {sel:"#tools-grid", title:"یک ابزار را امتحان کنید", desc:"روی هر کارت کلیک کنید تا یک فرمِ چند-ورودی باز شود و نتیجه را آنی، با رنگِ هشدار (سبز/زرد/قرمز) بر اساسِ آستانه‌یِ ریسک، ببینید."},
+      {sel:null, title:"ابزارهایِ «میان‌بر به ماژولِ کامل»", desc:"چند ابزار (طراحیِ نقشه‌یِ لیفتینگ، گودبرداری، مصرفِ برق، مصرفِ سوختِ ناوگان) فقط یک محاسبه‌یِ آنی نیستند — مستقیماً به فضایِ کاریِ کاملِ همان ماژول (با ذخیره‌سازی و تاریخچه) متصل می‌شوند."}
     ]},
-  operationalDashboard:{desc:"فهرستِ یکپارچهٔ کارهایِ در انتظارِ اقدامِ شما، با لینکِ مستقیم به بخشِ مربوطه.",
+  operationalDashboard:{desc:"داشبوردِ کاریِ شخصیِ هر کاربر: کارتابلِ یکپارچه‌یِ تاییدها، اقداماتِ اصلاحیِ سررسیدشده و آنومالی‌هایِ پرخطر — کاملاً قابلِ‌شخصی‌سازی.",
     steps:[
-      {sel:"#workdash-list", title:"کارهایِ در انتظارِ شما", desc:"همهٔ کارهایی که منتظرِ اقدامِ شما هستند، با لینکِ مستقیم به بخشِ مربوطه."}
+      {sel:"#workdash-list", title:"کارتابلِ من", desc:"هر ردیف یک کارِ واقعی است که منتظرِ شماست — با لینکِ مستقیم به همان بخش. در نسخه‌یِ واقعی این لیست از تاییدهایِ معلق، اقداماتِ اصلاحیِ سررسیدشده/معوق و آنومالی‌هایِ پرخطر جمع می‌شود."},
+      {sel:null, title:"داشبوردِ کشیدنی-رهاکردنیِ قابلِ‌شخصی‌سازی", desc:"نسخه‌یِ واقعی یک ویجت‌بوردِ ۱۲-ستونی است: می‌توانید ویجت جابه‌جا، مخفی، تکرار یا حذف کنید و از یک کشوی «افزودنِ ویجت» (شمارنده‌هایِ KPI، ماتریسِ ریسکِ HCMS، سلامتِ بریرهایِ BowTie، شاخص‌هایِ Proactive، تقویمِ HSE، نقشه‌یِ حرارتیِ ریسکِ پیمانکار) انتخاب کنید — چیدمان برایِ هر کاربر جداگانه ذخیره می‌شود."}
     ]},
-  hseSurvey:{desc:"برگزاریِ نظرسنجی و آزمونِ آنلاینِ HSE با نتیجه و کلیدِ پاسخِ آنیِ شرکت‌کننده.",
+  hseSurvey:{desc:"هم نظرسنجی‌هایِ معمولی (مثلِ فرهنگِ ایمنی) و هم آزمون‌هایِ نمره‌دار با پاسخِ صحیح، زمان‌سنج و نمره‌یِ قبولی — بدونِ کاغذبازی.",
     steps:[
-      {sel:"#survey-tbody", title:"نظرسنجی و آزمون", desc:"نظرسنجی‌ها و آزمون‌هایِ فعال را با تعدادِ پاسخ و میانگینِ نمره ببینید."},
-      {sel:"#survey-sample-review", title:"نتیجهٔ فردی", desc:"نمونهٔ نتیجهٔ یک شرکت‌کننده به همراهِ کلیدِ پاسخ، دقیقاً مثلِ چیزی که در IHMSِ واقعی می‌بینید."}
+      {sel:"#survey-tbody", title:"نظرسنجی در برابرِ آزمون", desc:"۱۱ نوع سؤال (متنِ کوتاه/بلند، تک/چندگزینه‌ای، طیفِ خطی، بله/خیر، امتیازدهی...) پشتیبانی می‌شود؛ تنها در «حالتِ آزمون» سؤال‌ها نمره و پاسخِ صحیح هم می‌گیرند."},
+      {sel:"#survey-sample-review", title:"بازبینیِ سؤال‌به‌سؤال", desc:"در پایانِ آزمونِ واقعی، شرکت‌کننده (اگر فعال باشد) درصدِ نمره، وضعیتِ قبولی و یک بازبینیِ سؤال‌به‌سؤال (پاسخِ خودش در برابرِ پاسخِ صحیح) می‌بیند — نمونه‌اش همین‌جاست."},
+      {sel:null, title:"درخواستِ نظرسنجی توسطِ پیمانکار", desc:"پیمانکار هم می‌تواند یک نظرسنجی/آزمونِ تازه «درخواست» کند؛ تا کارفرما آن را تایید نکند (یا با یادداشتِ اجباری رد نکند)، قابلِ‌ویرایش یا انتشار نیست."}
     ]},
-  proactiveIndicators:{desc:"اندازه‌گیریِ شاخص‌هایِ پیشگیرانه (Proactive) پیش از وقوعِ حادثه.",
+  proactiveIndicators:{desc:"سه شاخصِ پیشگیرانه‌یِ کاملاً متفاوت که پیش از وقوعِ حادثه هشدار می‌دهند: استعدادِ حادثه‌پذیریِ فردی، جوِّ ایمنیِ سازمان و نمونه‌برداریِ رفتارِ ایمن.",
     steps:[
-      {sel:"#indicator-grid", title:"شاخص‌هایِ پیشگیرانه", desc:"شاخص‌هایی که پیش از وقوعِ حادثه هشدار می‌دهند — مثلِ نرخِ مشاهداتِ ایمنی یا تکمیلِ آموزش."}
+      {sel:"#indicator-grid", title:"سه ابزار، سه ساختارِ دیتایِ متفاوت", desc:"این سه کارت، سه چیزِ کاملاً جدا هستند — نه سه نمایشِ یک عددِ مشابه: یک ارزیابیِ روان‌سنجیِ فردی، یک نظرسنجیِ سازمانی و یک برنامه‌یِ مشاهده‌یِ میدانی."},
+      {sel:null, title:"استعدادِ حادثه‌پذیری (مشاغلِ حساس)", desc:"ارزیابیِ روان‌سنجیِ ۳۹ تا ۱۹۵، فقط برایِ مشاغلی مثلِ برقکار، ریگر، اپراتورِ جرثقیل و داربست‌بند — هرچه عدد بالاتر، ریسکِ فردیِ بالاتر (۳۹–۷۸ پایین، ۷۹–۱۱۷ متوسط، ۱۱۸–۱۵۶ بالا، ۱۵۷–۱۹۵ بسیار بالا). روی کارتِ اول کلیک کنید تا فهرستِ واقعیِ ارزیابی‌ها را ببینید."},
+      {sel:null, title:"جوِّ ایمنیِ سازمان (HSE Climate)", desc:"یک نظرسنجیِ ناشناسِ ۴۳-سؤالی که ۹ بُعدِ فرهنگِ ایمنی (تعهدِ مدیریت، مشارکتِ کارکنان، گزارش‌دهیِ بدونِ سرزنش، یادگیری از حوادث و...) را هرکدام از ۰ تا ۱۰ امتیاز می‌دهد."},
+      {sel:null, title:"نمونه‌برداریِ رفتارِ ایمن (SBS)", desc:"مشاهداتِ میدانیِ ایمن/پرخطر در ۱۲ دسته (PPE، نظمِ محیطِ کار، LOTO، مسیرهایِ تردد و...) با تحلیلِ فصلی — فرهنگِ مشاهده و بازخورد، نه بازرسیِ تنبیهی."}
     ]},
-  pssrManagement:{desc:"بازبینیِ ایمنیِ پیش از راه‌اندازیِ تجهیز یا واحد (PSSR) با چک‌لیستِ استاندارد.",
+  pssrManagement:{desc:"بازبینیِ ایمنیِ پیش از راه‌اندازی (PSSR) با ۹ چک‌لیستِ تخصصی و جلساتِ تیمیِ زنده — هر «خیر» خودکار یک اقدامِ اصلاحی می‌سازد.",
     steps:[
-      {sel:"#pssr-tbody", title:"درصدِ آمادگی", desc:"درصدِ تکمیلِ بازبینیِ ایمنیِ هر واحد یا تجهیز پیش از راه‌اندازی."},
-      {sel:"#pssr-checklist", title:"چک‌لیستِ استاندارد", desc:"یک نمونه از چک‌لیستِ PSSR با آیتم‌هایِ تکمیل‌شده و باقی‌مانده."}
+      {sel:"#pssr-tbody", title:"درصدِ آمادگیِ هر واحد", desc:"درصدِ تکمیلِ بازبینیِ ایمنیِ هر واحد یا تجهیز پیش از راه‌اندازی. نسخه‌یِ واقعی برایِ هر PSSR یک تیمِ ۹ تخصصی (HSE، برق، ابزارِ دقیق، لوله‌کشی، مکانیکِ ثابت/دوار، عمران، سیستمِ کنترل، مخابرات) تعریف می‌کند و یک «مسئول» برایِ هر تخصص مشخص می‌کند."},
+      {sel:"#pssr-checklist", title:"چک‌لیستِ زنده و گروهی", desc:"تیم در یک جلسه، هر بندِ چک‌لیست را Yes/No/N.A پاسخ می‌دهد — به‌صورتِ هم‌زمان و آنلاین با چند کاربرِ دیگر (با نمایشِ این‌که چه کسی الان آنلاین است)."},
+      {sel:null, title:"هر «No» خودکار یک اقدامِ اصلاحی می‌سازد", desc:"هر پاسخِ «No» بلافاصله یک آیتمِ اقدامِ اصلاحی با دسته‌بندیِ اهمیت (CAT A = مانعِ شروعِ کار، CAT B = مانع با راهِ‌حلِ موقت، CAT C = غیرمانع ولی با مهلت) و فردِ مسئول می‌سازد — تا بسته‌نشدنِ همه‌یِ این موارد، واحد آماده‌یِ راه‌اندازی تلقی نمی‌شود."}
     ]},
-  archiveManagement:{desc:"آرشیوِ یکجایِ مستندات و مدارکِ تمامِ ماژول‌ها، قابل‌فیلتر بر اساسِ نوع.",
+  archiveManagement:{desc:"بسته‌بندیِ یکجایِ رکوردهایِ تاییدشده‌یِ ۶ ماژول (پرسنل، آنومالی، BowTie، ماشین‌آلات، داربست، HCMS) همراه با تمامِ فایل‌هایِ پیوست، در یک اکسل+زیپِ قابلِ‌دانلود.",
     steps:[
-      {sel:"#archive-tabs", title:"آرشیو بر اساسِ ماژول", desc:"مستنداتِ هر ماژول به‌صورتِ جدا آرشیو می‌شود."},
-      {sel:"#archive-files", title:"فهرستِ فایل‌ها", desc:"فایل‌ها به همراهِ تاریخ و اندازه قابل‌مشاهده و دانلودند."}
+      {sel:"#archive-tabs", title:"۶ دسته‌یِ واقعی", desc:"فقط رکوردهایِ تاییدشده/بسته‌شده‌یِ هر ماژول قابلِ‌آرشیو است (مثلاً آنومالیِ بسته‌شده یا ماشینِ تاییدشده) — نه هرچیزِ بازی که هنوز در گردشِ کار است."},
+      {sel:"#archive-files", title:"فایل‌هایِ واقعی، نه فقط اسامی", desc:"دکمه‌یِ «ساخت و دانلودِ اکسل» در نسخه‌یِ واقعی بایت‌هایِ واقعیِ همه‌یِ پیوست‌ها را هم دانلود می‌کند و یک بسته‌یِ اکسل+زیپِ کاملاً آفلاین‌خوان می‌سازد — با ثبتِ کاملِ تاریخچه‌یِ هر بار آرشیو (چه کسی، چند رکورد، چه حجمی)."},
+      {sel:null, title:"حذفِ ایمن پس از آرشیو + خروجی‌هایِ گزارشِ جدا", desc:"سرپرستِ HSE می‌تواند بعدِ آرشیوِ موفق، همان رکوردها را از سرور پاک کند تا فضا آزاد شود. جدا از این، ۴ دکمه‌یِ خروجیِ آماده هم هست: HSE Climate، SBS، استعدادِ حادثه‌پذیری و حوادث."}
     ]},
-  chat:{desc:"گفتگویِ سریع و مستقیم بینِ کارفرما و تیمِ پیمانکاران.",
+  chat:{desc:"گفتگویِ مستقیم یا گروهی بینِ کارفرما، پیمانکاران و پرسنل — با پاسخ‌دادن، سنجاق‌کردن، گزارشِ خواندن و یک دستیارِ هوشِ‌مصنوعیِ آموزشِ HSE.",
     steps:[
-      {sel:"#chat-threads", title:"گفتگوهایِ جاری", desc:"گفتگو با هر پیمانکار یا عضوِ تیم به‌صورتِ جدا نمایش داده می‌شود."},
-      {sel:"#chat-input", title:"ارسالِ پیام", desc:"یک پیام بنویسید و دکمهٔ ارسال را بزنید — امتحانش کنید!"}
+      {sel:"#chat-threads", title:"مکالماتِ مستقیم و گروهی", desc:"هر مکالمه با پیمانکار یا عضوِ تیم جدا نمایش داده می‌شود. نسخه‌یِ واقعی مکالماتِ گروهی هم دارد (ساخت/تغییرِ نام/افزودن-حذفِ عضو، فقط برایِ سرپرستِ HSE) و یک کارتِ ثابتِ «دستیارِ هوشِ‌مصنوعیِ آموزشِ HSE» همیشه بالایِ لیست سنجاق‌شده است."},
+      {sel:"#chat-input", title:"ارسالِ پیام", desc:"یک پیام بنویسید و دکمه‌یِ ارسال را بزنید. نسخه‌یِ واقعی هر پیام را قابلِ «پاسخ‌دادن» (quote) و «سنجاق‌کردن» (pin یک پیامِ مهم بالایِ گفتگو) می‌کند و پیوستِ عکس/PDF هم می‌پذیرد."},
+      {sel:null, title:"رسیدِ خواندن و اعلانِ فوری", desc:"هر پیام یک تیکِ تک/دوتایی (خوانده‌شدن توسطِ طرفِ مقابل) دارد و با هر پیامِ تازه یک Push Notification هم به اپِ موبایلِ گیرنده ارسال می‌شود — پس چیزی در این گفتگوها گم نمی‌شود."}
     ]},
-  contractorHseEvaluation:{desc:"امتیازِ کلی و روندِ عملکردِ هر پیمانکار بر اساسِ شاخص‌های HSE.",
+  contractorHseEvaluation:{desc:"امتیازِ وزن‌دارِ HSEِ هر پیمانکار از ۱۰ شاخصِ واقعی — از آنومالی و اقدامِ اصلاحی تا آموزش، PPE و حوادث — به‌صورتِ کاملاً خودکار.",
     steps:[
-      {sel:"#contractoreval-list", title:"رتبه‌بندیِ پیمانکاران", desc:"امتیازِ کلی و روندِ (صعودی/ثابت/نزولی) هر پیمانکار را در یک نگاه ببینید."}
+      {sel:"#contractoreval-list", title:"رتبه‌بندیِ پیمانکاران", desc:"امتیازِ کلی (۰ تا ۱۰۰) و روندِ (صعودی/ثابت/نزولی) هر پیمانکار؛ عددِ کلی از میانگینِ وزن‌دارِ ۱۰ دسته محاسبه می‌شود، نه یک ارزیابیِ دستی."},
+      {sel:"#contractoreval-list", title:"تفکیکِ دسته‌بندی‌ها (رویِ یک پیمانکار کلیک کنید)", desc:"هر دسته — آنومالی، اقداماتِ اصلاحی، طبِ‌کار، آموزشِ HSE، ماشین‌آلات، حوادث+RCA، شاخص‌هایِ پیشرو، PSSR، داربست، PPE — وزنِ خودش را دارد و داده‌اش خودکار از همان ماژولِ اصلی جمع می‌شود؛ هیچ عددی دستی وارد نمی‌شود."},
+      {sel:null, title:"وزن‌ها قابلِ‌تنظیم‌اند", desc:"کارفرما/سرپرستِ HSE می‌تواند وزن و هدفِ هر شاخص را از «تنظیماتِ ارزیابیِ پیمانکاران» (زیرِ مدیریتِ سیستم) برایِ شرکتِ خودش شخصی‌سازی کند."}
     ]},
-  safetySuggestionBox:{desc:"ایده‌ها و پیشنهادهای ایمنیِ پرسنل و پیمانکاران، با امکانِ رأی‌گیری.",
+  safetySuggestionBox:{desc:"جایی که هر کارمند یا پیمانکار می‌تواند ایده‌یِ بهبودِ ایمنی ثبت کند؛ همکاران رأی می‌دهند تا پراهمیت‌ترین پیشنهادها بالاتر دیده شوند.",
     steps:[
-      {sel:"#suggestion-list", title:"پیشنهادهایِ ثبت‌شده", desc:"هر پیشنهاد با نامِ ثبت‌کننده، تعدادِ رأی و وضعیتِ بررسی نمایش داده می‌شود."}
+      {sel:"#suggestion-list", title:"چهار وضعیتِ واقعی", desc:"در انتظار (آبی) → در حالِ اقدام (زرد) → انجام‌شد (سبز)، یا رد شده (خاکستری، با یادداشتِ اجباری). لیست بر اساسِ تعدادِ رأی مرتب می‌شود."},
+      {sel:"#suggestion-list", title:"رأی‌دهیِ تاگل‌پذیر", desc:"روی یک پیشنهاد کلیک و دکمه‌یِ رأی را امتحان کنید — هر کاربر می‌تواند رأیِ خودش را هر وقت پس بگیرد (کلیکِ دوباره)."},
+      {sel:null, title:"بررسیِ سرپرست/کارفرما", desc:"فقط سرپرستِ HSE یا کارفرما می‌تواند یک پیشنهادِ «در انتظار» را به «در حالِ اقدام» ببرد یا با دلیل رد کند، و بعداً آن را «انجام‌شد» علامت بزند — با یک یادداشتِ اقدام که برایِ همه قابلِ‌مشاهده می‌ماند."}
     ]},
-  incidentHeatmap:{desc:"تراکمِ حوادث و آنومالی‌ها به تفکیکِ محدودهٔ سایت.",
+  incidentHeatmap:{desc:"تراکمِ واقعیِ آنومالی و حادثه، رویِ همان Zoneهایِ ثبت‌شده در نقشه‌یِ سایت — تا محدوده‌هایِ پرخطر در یک نگاه مشخص شوند.",
     steps:[
-      {sel:"#heatmap-grid", title:"محدوده‌هایِ پرخطر", desc:"محدوده‌هایی با بیشترین تراکمِ رویداد، رنگِ قرمز/زرد می‌گیرند تا در نگاهِ اول مشخص باشند."}
+      {sel:"#heatmap-grid", title:"اندازه و رنگ، هر دو با تراکم رشد می‌کنند", desc:"این دقیقاً همان مفهومِ heat-map است: هرچه دایره بزرگ‌تر و قرمزتر، آن منطقه پرحادثه‌تر/پرآنومالی‌تر است. نسخه‌یِ واقعی این دایره‌ها را رویِ تصویرِ واقعیِ نقشه‌یِ سایت می‌چسباند، نه یک لیستِ کارت."},
+      {sel:null, title:"صرفاً نمایشی، بدونِ ویرایش", desc:"این صفحه فقط‌خواندنی است — روی نقطه‌ای کلیک نمی‌شود که چیزی تغییر کند؛ برایِ ویرایشِ خودِ آنومالی/حادثه باید به همان ماژولِ اصلی رفت."}
     ]},
-  siteDigitalTwin:{desc:"نمایِ زنده‌ی وضعیتِ هر محدوده از سایت.",
+  siteDigitalTwin:{desc:"برخلافِ نقشه‌یِ حرارتی (تراکمِ تاریخی)، اینجا رنگِ هر Zone وضعیتِ زنده‌یِ مجوزِ کار یا تگِ داربستِ متصل‌شده به آن را نشان می‌دهد.",
     steps:[
-      {sel:"#digitaltwin-grid", title:"وضعیتِ هر محدوده", desc:"برایِ هر محدوده، تعدادِ آنومالیِ باز و حوادثِ اخیر به‌صورتِ زنده نمایش داده می‌شود."}
+      {sel:"#digitaltwin-grid", title:"رنگِ زنده، نه رنگِ تاریخی", desc:"یک Zoneِ متصل به مجوزِ کار، رنگِ وضعیتِ همان مجوز را می‌گیرد؛ یک Zoneِ متصل به داربست، رنگِ تگِ همان داربست را. نقاطِ خطرِ ثابت همیشه قرمز و نقاطِ تجمعِ تخلیه همیشه آبی‌اند."},
+      {sel:"#digitaltwin-grid", title:"کلیک کنید و مستقیم به ماژولِ مربوطه بروید", desc:"روی یک کارتِ متصل به مجوز یا داربست کلیک کنید — دکمه‌یِ «مشاهده در ماژولِ ...» شما را مستقیماً به همان رکوردِ واقعی می‌برد؛ این همان رفتارِ دیجیتال‌توئینِ واقعی است."}
     ]},
-  evacuationDrill:{desc:"پیگیریِ چک‌این حضور پرسنل در نقاطِ تجمع هنگامِ تمرینِ تخلیه.",
+  evacuationDrill:{desc:"برنامه‌ریزی و اجرایِ واقعیِ تمرینِ تخلیه: برایِ هر نقطه‌یِ تجمع یک کدِ QR ساخته می‌شود و پرسنل با اسکن و واردکردنِ نام، بدونِ حساب کاربری چک‌این می‌کنند.",
     steps:[
-      {sel:"#drill-tbody", title:"سابقهٔ تمرین‌ها", desc:"تعدادِ حاضرشده از کلِ پرسنل و مدت‌زمانِ هر تمرینِ تخلیه را ببینید."}
+      {sel:"#drill-tbody", title:"سابقه‌یِ تمرین‌ها", desc:"تعدادِ حاضرشده از کلِ پرسنل، مدت‌زمانِ کاملِ تخلیه و وضعیتِ هر تمرین؛ زیرِ آستانه‌یِ موردِ انتظار، وضعیت «نیاز به بازبینی» می‌خورد."},
+      {sel:null, title:"QR اختصاصی برایِ هر نقطه‌یِ تجمع", desc:"هر نقطه‌یِ تجمعِ تعریف‌شده یک QR/لینکِ یکتا می‌گیرد که در محلِ فیزیکی چاپ می‌شود؛ هنگامِ تمرین، هرکس با موبایلِ خودش اسکن و نامش را وارد می‌کند — بدونِ لاگین."},
+      {sel:null, title:"رسترِ زنده", desc:"سرپرست هم‌زمان با اجرایِ تمرین، لیستِ حاضرشده‌ها را به‌تفکیکِ هر نقطه‌یِ تجمع و به‌صورتِ زنده (هر ۷ ثانیه به‌روزرسانی) می‌بیند — نه فقط یک گزارشِ بعد از پایانِ تمرین."}
     ]},
-  systemManagement:{desc:"پیکربندیِ سطحِ شرکت: دسترسی‌ها، عنوان‌هایِ شغلی، بانکِ ریسک و آستانه‌هایِ هشدار.",
+  systemManagement:{desc:"مرکزِ تنظیماتِ سطحِ شرکت برایِ سرپرست/مدیرِ HSE — ۱۵ زیربخشِ مستقل، هرکدام فقط اگر در پلنِ شرکت فعال باشد نمایش داده می‌شود.",
     steps:[
-      {sel:"#sysmgmt-list", title:"پیکربندیِ سطحِ شرکت", desc:"دسترسی‌ها، عنوان‌هایِ شغلی، بانکِ ریسک و آستانه‌هایِ هشدار از همین‌جا قابل‌تنظیم‌اند — ویژهٔ سرپرستِ HSE."}
+      {sel:"#sysmgmt-list", title:"۱۵ زیربخشِ واقعی", desc:"از مجوزهایِ دسترسی و عنوان‌هایِ شغلی تا کدهایِ تگِ داربست، آموزش، دسترسیِ چت، ماتریسِ HCMS، آستانه‌هایِ اثربخشی، بانکِ دانشِ ریسک، دسته‌بندیِ آنومالی، Zoneهایِ سایت، میکروسایتِ عمومیِ گزارشِ ایمنی، دسترسیِ مهمان/ممیز، تنظیماتِ ارزیابیِ پیمانکاران، آرشیو و مدیریتِ PPE."},
+      {sel:"#sysmgmt-list", title:"رویِ چند مورد کلیک کنید", desc:"مثلاً «تنظیماتِ ارزیابیِ پیمانکاران» همان ۱۰ دسته‌یِ وزن‌دارِ ماژولِ ارزیابیِ HSE را نشان می‌دهد — چون این صفحه دقیقاً همان‌جایی است که وزن‌ها تنظیم می‌شوند."},
+      {sel:null, title:"بانکِ دانشِ ریسک و ماتریسِ HCMS", desc:"این دو بخش، موتورِ یادگیرنده‌یِ پیشنهادهایِ خودکارِ ماژولِ HCMS را تغذیه می‌کنند: هرچه ارزیابیِ ریسکِ بیشتری تایید شود، پیشنهادهایِ آینده دقیق‌تر می‌شوند."}
     ]}
 };
 
@@ -3821,51 +3953,169 @@ document.getElementById("tour-panel-close").addEventListener("click", function()
 
 /* ============================================================ راه‌اندازی ============================================================ */
 /* ============================================================ رندر: ۵ ماژولِ تازه (ارزیابیِ پیمانکاران / صندوقِ پیشنهادات / نقشهٔ حرارتی / دیجیتال توئین / تمرینِ تخلیه) ============================================================ */
+/* ۱۰ دسته‌یِ واقعیِ وزن‌دارِ ارزیابیِ HSEِ پیمانکار (contractorEval/contractorEvalApi.js's DEFAULT_CATEGORIES) —
+   هر دسته‌ای از شاخص‌هایِ واقعیِ ماژول‌هایِ دیگر (آنومالی، اقدامِ اصلاحی، طبِ‌کار، آموزش و ...) خودکار جمع می‌شود،
+   نه یک عددِ دستی. وزن‌ها/آستانه‌ها از همین صفحه (تنظیماتِ ارزیابیِ پیمانکاران، زیرِ مدیریتِ سیستم) قابلِ‌تغییرند. */
+var CONTRACTOR_EVAL_CATEGORIES = [
+  {key:"anomaly", title:{fa:"آنومالی (شرایط/اعمالِ ناایمن)",en:"Anomalies (unsafe conditions/acts)",de:"Anomalien (unsichere Zustände/Handlungen)"}, weight:15},
+  {key:"corrective", title:{fa:"اقداماتِ اصلاحی",en:"Corrective actions",de:"Korrekturmaßnahmen"}, weight:15},
+  {key:"occHealth", title:{fa:"طبِ‌کار و سلامتِ شغلی",en:"Occupational health",de:"Arbeitsmedizin"}, weight:10},
+  {key:"training", title:{fa:"آموزشِ HSE",en:"HSE training",de:"HSE-Schulung"}, weight:10},
+  {key:"machinery", title:{fa:"مدیریتِ ماشین‌آلات و تجهیزات",en:"Machinery & equipment management",de:"Maschinen- und Gerätemanagement"}, weight:10},
+  {key:"incidents", title:{fa:"مدیریتِ حوادث + RCA (شامل شبه‌حادثه، مثبت)",en:"Incident management + RCA (incl. near-miss reporting, positive)",de:"Vorfallmanagement + RCA (inkl. Beinahe-Unfallmeldung, positiv)"}, weight:10},
+  {key:"leading", title:{fa:"شاخص‌هایِ پیشرو (Climate / SBS / استعدادِ حادثه)",en:"Leading indicators (Climate / SBS / Accident proneness)",de:"Frühindikatoren (Climate / SBS / Unfallanfälligkeit)"}, weight:10},
+  {key:"pssr", title:{fa:"PSSR",en:"PSSR",de:"PSSR"}, weight:10},
+  {key:"scaffold", title:{fa:"مدیریتِ داربست",en:"Scaffold management",de:"Gerüstmanagement"}, weight:5},
+  {key:"ppe", title:{fa:"مدیریتِ PPE",en:"PPE management",de:"PSA-Management"}, weight:10}
+];
+var CONTRACTOR_EVAL_CATEGORY_OFFSETS = [6,-9,10,3,-14,8,-4,12,15,-18];
+function contractorEvalBreakdown(baseScore){
+  return CONTRACTOR_EVAL_CATEGORIES.map(function(c, i){
+    return {title:c.title, weight:c.weight, achievement: Math.max(28, Math.min(100, baseScore + CONTRACTOR_EVAL_CATEGORY_OFFSETS[i]))};
+  });
+}
 function renderContractorEval(){
   var sorted = state.contractorEvals.slice().sort(function(a,b){ return b.score-a.score; });
   document.getElementById("contractoreval-list").innerHTML = sorted.map(function(c){
     var color = c.score>=80 ? "var(--ok)" : c.score>=65 ? "var(--warn)" : "var(--danger)";
     var trendBadge = c.trend==="صعودی" ? "badge-ok" : c.trend==="نزولی" ? "badge-danger" : "badge-muted";
-    return '<div class="panel glass" style="display:flex; align-items:center; gap:14px">'+
+    return '<div class="panel glass contractoreval-row" data-name="'+esc(c.name)+'" style="display:flex; align-items:center; gap:14px; cursor:pointer">'+
       '<div style="width:46px; height:46px; border-radius:50%; border:3px solid '+color+'; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; color:'+color+'; flex-shrink:0">'+c.score+'</div>'+
       '<div style="flex:1; min-width:0"><div class="cell-main" style="font-size:13px">'+esc(c.name)+'</div><div class="gauge-track" style="margin-top:6px"><div class="gauge-fill" style="width:'+c.score+'%"></div></div></div>'+
       '<span class="badge '+trendBadge+'">'+esc(c.trend)+'</span>'+
       '</div>';
   }).join("");
+  Array.prototype.forEach.call(document.querySelectorAll(".contractoreval-row"), function(r){
+    r.addEventListener("click", function(){ openContractorEvalDetail(r.dataset.name); });
+  });
 }
+function openContractorEvalDetail(name){
+  var c = state.contractorEvals.find(function(x){ return x.name===name; });
+  if (!c) return;
+  var breakdown = contractorEvalBreakdown(c.score);
+  var body = '<div style="display:flex; flex-direction:column; gap:12px">'+
+    breakdown.map(function(b){
+      var col = b.achievement>=80?"var(--ok)":b.achievement>=60?"var(--warn)":"var(--danger)";
+      return '<div><div style="display:flex; justify-content:space-between; font-size:11.5px; color:var(--text2); margin-bottom:4px"><span>'+esc(L(b.title))+' <span style="color:var(--text3)">(وزن '+b.weight+'٪)</span></span><b style="color:'+col+'">'+b.achievement+'٪</b></div>'+
+        '<div class="gauge-track"><div class="gauge-fill" style="width:'+b.achievement+'%; background:'+col+'"></div></div></div>';
+    }).join("")+
+    '</div><p style="font-size:10.5px; color:var(--text3); margin-top:14px; line-height:1.9">امتیازِ کل از میانگینِ وزن‌دارِ همین ۱۰ دسته محاسبه می‌شود؛ هر دسته خودکار از داده‌هایِ واقعیِ همان ماژول (آنومالی، اقدامِ اصلاحی، طبِ‌کار، آموزش، ماشین‌آلات، حوادث، شاخص‌هایِ پیشرو، PSSR، داربست، PPE) جمع می‌شود. یک دسته‌یِ یازدهمِ «مدیریتِ ریسکِ HCMS/BowTie» (وزن ۵٪) هم در سامانه تعریف شده اما به‌صورتِ پیش‌فرض غیرفعال و به پیمانکاران متصل نیست.</p>';
+  openInfoDetail({title:c.name, code:c.score+" از ۱۰۰", meta:[{label:"روند", value:c.trend}], body:body});
+}
+var SUGGESTION_STATUS_KEY = {"در انتظار":"sbStatusPending","در حال اقدام":"sbStatusActioned","انجام‌شد":"sbStatusDone","رد شده":"sbStatusRejected"};
+function suggestionBadgeClass(s){ return s==="انجام‌شد"?"badge-ok": s==="در حال اقدام"?"badge-warn": s==="رد شده"?"badge-muted":"badge-info"; }
 function renderSuggestionBox(){
-  document.getElementById("suggestion-list").innerHTML = state.suggestions.map(function(s){
-    return '<div class="panel glass" style="display:flex; align-items:center; gap:14px">'+
+  var sorted = state.suggestions.slice().sort(function(a,b){ return b.votes-a.votes; });
+  document.getElementById("suggestion-list").innerHTML = sorted.map(function(s, i){
+    var idx = state.suggestions.indexOf(s);
+    return '<div class="panel glass suggestion-row" data-idx="'+idx+'" style="display:flex; align-items:center; gap:14px; cursor:pointer">'+
       '<div style="width:46px; height:46px; border-radius:10px; background:var(--teal-soft); color:var(--teal); display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0">'+
-        '<b style="font-size:14px">'+s.votes+'</b><span style="font-size:9px">رأی</span></div>'+
-      '<div style="flex:1; min-width:0"><div class="cell-main" style="font-size:12.5px">'+esc(s.title)+'</div><div class="cell-sub" style="margin-top:3px">'+esc(s.by)+'</div></div>'+
-      '<span class="badge '+(s.status==="تایید شده"?"badge-ok":s.status==="رد شده"?"badge-danger":"badge-warn")+'">'+esc(s.status)+'</span>'+
+        '<b style="font-size:14px">👍 '+s.votes+'</b></div>'+
+      '<div style="flex:1; min-width:0"><div class="cell-main" style="font-size:12.5px">'+esc(s.title)+'</div>'+
+      '<div class="cell-sub" style="margin-top:3px">'+esc(s.category)+' — '+esc(s.by)+'</div></div>'+
+      '<span class="badge '+suggestionBadgeClass(s.status)+'">'+esc(t(SUGGESTION_STATUS_KEY[s.status]||s.status))+'</span>'+
       '</div>';
   }).join("");
+  Array.prototype.forEach.call(document.querySelectorAll(".suggestion-row"), function(r){
+    r.addEventListener("click", function(){ openSuggestionDetail(Number(r.dataset.idx)); });
+  });
+}
+function openSuggestionDetail(idx){
+  var s = state.suggestions[idx];
+  var voteBtnHtml = '<button class="btn" id="sb-vote-btn" style="margin-top:0">'+(s._voted?esc(t("sbUnvoteBtn")):esc(t("sbVoteBtn")))+' ('+s.votes+')</button>';
+  var actionsHtml = "";
+  if (s.status==="در انتظار" || s.status==="در حال اقدام"){
+    actionsHtml = '<div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px">'+
+      (s.status==="در انتظار" ? '<button class="btn btn-primary" id="sb-act-btn" style="margin-top:0">'+esc(t("sbActionBtn"))+'</button>' :
+        '<button class="btn btn-primary" id="sb-done-btn" style="margin-top:0">'+esc(t("sbMarkDoneBtn"))+'</button>')+
+      '<button class="btn" id="sb-reject-btn" style="margin-top:0; background:var(--danger-bg); color:var(--danger); border:1px solid rgba(239,68,68,.3)">'+esc(t("sbRejectBtn"))+'</button>'+
+      '</div>';
+  } else if (s.status==="انجام‌شد" && s.actionNote){
+    actionsHtml = '<div class="detail-desc" style="margin-top:12px">'+esc(t("sbActionNoteLabel"))+esc(s.actionNote)+'</div>';
+  } else if (s.status==="رد شده" && s.rejectNote){
+    actionsHtml = '<div class="detail-desc" style="margin-top:12px; color:var(--danger)">'+esc(t("incRejectNoteLabel"))+esc(s.rejectNote)+'</div>';
+  }
+  var body = '<div class="action-box" style="margin-top:14px">'+voteBtnHtml+actionsHtml+'</div>';
+  openInfoDetail({title:s.title, code:t(SUGGESTION_STATUS_KEY[s.status]||s.status), meta:[
+    {label:t("sbCategoryLabel"), value:s.category}, {label:t("sbByLabel"), value:s.by}
+  ], body:body});
+  var voteBtn = document.getElementById("sb-vote-btn");
+  if (voteBtn) voteBtn.addEventListener("click", function(){ s._voted = !s._voted; s.votes += s._voted?1:-1; renderSuggestionBox(); openSuggestionDetail(idx); });
+  var actBtn = document.getElementById("sb-act-btn");
+  if (actBtn) actBtn.addEventListener("click", function(){ s.status = "در حال اقدام"; renderSuggestionBox(); openSuggestionDetail(idx); });
+  var doneBtn = document.getElementById("sb-done-btn");
+  if (doneBtn) doneBtn.addEventListener("click", function(){
+    s.status = "انجام‌شد"; s.actionNote = prompt(t("sbActionNoteLabel")) || "";
+    renderSuggestionBox(); openSuggestionDetail(idx);
+  });
+  var rejBtn = document.getElementById("sb-reject-btn");
+  if (rejBtn) rejBtn.addEventListener("click", function(){
+    var note = prompt(t("sbRejectNotePrompt"));
+    if (!note) return;
+    s.status = "رد شده"; s.rejectNote = note;
+    renderSuggestionBox(); openSuggestionDetail(idx);
+  });
+}
+/* نقشه‌یِ حرارتی: تراکمِ واقعیِ آنومالی+حادثه در هر Zone (از همان رجیستریِ Site Zones)؛
+   اندازه و رنگِ دایره هر دو با امتیازِ تراکم رشد می‌کنند — دقیقاً مثلِ heatLevel() در incidentHeatmapApi.js. */
+function heatLevel(score){
+  if (score<=0) return {label:"بدونِ ثبت", color:"#6b7280", size:34};
+  if (score<=3) return {label:"کم", color:"#22c55e", size:40};
+  if (score<=7) return {label:"متوسط", color:"#f59e0b", size:48};
+  return {label:"بالا", color:"#ef4444", size:58};
 }
 function renderHeatmap(){
-  document.getElementById("heatmap-grid").innerHTML = state.siteZones.map(function(z){
-    var color = z.level==="بالا" ? "#ef4444" : z.level==="متوسط" ? "#f59e0b" : "#22c55e";
-    return '<div class="tool-card glass" style="border-inline-start:4px solid '+color+'">'+
-      '<div class="cell-main" style="font-size:12.5px; margin-bottom:8px">'+esc(z.name)+'</div>'+
-      '<div style="display:flex; gap:16px; font-size:11px; color:var(--text2)">'+
-      '<span>حادثه: <b style="color:var(--text)">'+z.incidents+'</b></span>'+
-      '<span>آنومالی: <b style="color:var(--text)">'+z.anomalies+'</b></span>'+
-      '</div></div>';
-  }).join("");
-}
-function renderDigitalTwin(){
-  document.getElementById("digitaltwin-grid").innerHTML = state.siteZones.map(function(z){
-    var openCount = z.anomalies;
-    var statusColor = openCount>=6 ? "var(--danger)" : openCount>=3 ? "var(--warn)" : "var(--ok)";
-    return '<div class="tool-card glass">'+
-      '<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px">'+
-      '<div class="cell-main" style="font-size:12.5px">'+esc(z.name)+'</div>'+
-      '<span class="dot" style="background:'+statusColor+'"></span>'+
-      '</div>'+
-      '<div class="tool-result" style="margin-top:0"><div class="val">'+openCount+'</div><div class="lbl">آنومالیِ باز</div></div>'+
+  var sorted = state.siteZones.slice().sort(function(a,b){ return (b.incidents+b.anomalies)-(a.incidents+a.anomalies); });
+  document.getElementById("heatmap-grid").innerHTML = sorted.map(function(z){
+    var score = z.incidents + z.anomalies;
+    var lv = heatLevel(score);
+    return '<div class="tool-card glass" style="display:flex; align-items:center; gap:14px">'+
+      '<span style="flex-shrink:0; border-radius:50%; display:inline-block; width:'+lv.size+'px; height:'+lv.size+'px; background:'+lv.color+'; opacity:.8; border:2px solid #fff3"></span>'+
+      '<div style="flex:1; min-width:0"><div class="cell-main" style="font-size:12.5px">'+esc(z.name)+'</div>'+
+      '<div style="font-size:11px; color:var(--text2); margin-top:4px">'+z.anomalies+' آنومالی / '+z.incidents+' حادثه — تراکم: <b style="color:'+lv.color+'">'+lv.label+'</b></div></div>'+
       '</div>';
   }).join("");
+}
+
+/* دیجیتال توئین: برخلافِ نقشه‌یِ حرارتی (که تراکمِ تاریخیِ رویدادهاست)، اینجا رنگِ هر Zone
+   وضعیتِ زنده‌یِ همان مجوزِ کار/تگِ داربستِ متصل‌شده به آن است — دقیقاً مثلِ DigitalTwinDashboard.jsx واقعی. */
+function digitalTwinColor(z){
+  if (z.linkType==="permit") return z.status==="در حال اجرا" ? "#f59e0b" : z.status==="صادر شده" ? "#3b82f6" : "#6b7280";
+  if (z.linkType==="scaffold") return scaffoldDot(z.status);
+  if (z.linkType==="hazard") return "#ef4444";
+  if (z.linkType==="muster") return "#3b82f6";
+  return "#6b7280";
+}
+function digitalTwinTypeLabel(z){
+  if (z.linkType==="permit") return "متصل به مجوزِ کار";
+  if (z.linkType==="scaffold") return "متصل به تگِ داربست";
+  if (z.linkType==="hazard") return "نقطه‌یِ خطرِ ثابت";
+  if (z.linkType==="muster") return "نقطه‌یِ تجمعِ تخلیه";
+  return "بدونِ اتصالِ زنده";
+}
+function renderDigitalTwin(){
+  document.getElementById("digitaltwin-grid").innerHTML = state.digitalTwinZones.map(function(z, i){
+    var color = digitalTwinColor(z);
+    return '<div class="tool-card glass digitaltwin-card" data-idx="'+i+'" style="cursor:pointer">'+
+      '<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px">'+
+      '<div class="cell-main" style="font-size:12.5px">'+esc(z.name)+'</div>'+
+      '<span class="dot" style="background:'+color+'"></span>'+
+      '</div>'+
+      '<div class="tool-result" style="margin-top:0"><div class="val" style="font-size:12.5px">'+esc(digitalTwinTypeLabel(z))+'</div><div class="lbl">'+esc(z.linkLabel || "—")+'</div></div>'+
+      '</div>';
+  }).join("");
+  Array.prototype.forEach.call(document.querySelectorAll(".digitaltwin-card"), function(c){
+    c.addEventListener("click", function(){ openDigitalTwinDetail(Number(c.dataset.idx)); });
+  });
+}
+function openDigitalTwinDetail(idx){
+  var z = state.digitalTwinZones[idx];
+  var gotoKey = z.linkType==="permit" ? "permitToWork" : z.linkType==="scaffold" ? "scaffoldManagement" : null;
+  var body = '<div class="detail-desc" style="margin-bottom:12px">این رنگ وضعیتِ زنده‌یِ همان رکوردِ متصل‌شده را نشان می‌دهد؛ با تغییرِ وضعیتِ مجوز یا تگِ داربست در ماژولِ اصلی، رنگِ این نقطه هم بدونِ هیچ کارِ دستی عوض می‌شود — این دقیقاً تفاوتِ دیجیتال توئین با نقشه‌یِ حرارتی است که فقط تراکمِ رویدادهایِ گذشته را نشان می‌دهد.</div>'+
+    (gotoKey ? '<button class="btn btn-primary" id="dt-goto-btn">مشاهده در ماژولِ '+(gotoKey==="permitToWork"?"صدورِ مجوزِ کار":"مدیریتِ داربست")+'</button>' : '');
+  openInfoDetail({title:z.name, code:digitalTwinTypeLabel(z), meta:[{label:"برچسبِ متصل", value:z.linkLabel||"—"},{label:"وضعیت", value:z.status||"—"}], body:body});
+  var btn = document.getElementById("dt-goto-btn");
+  if (btn) btn.addEventListener("click", function(){ closeDetailPanel(); showView(gotoKey); });
 }
 function renderDrills(){
   document.getElementById("drill-tbody").innerHTML = state.drills.map(function(d){
