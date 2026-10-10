@@ -116,6 +116,18 @@ input,select,textarea{font-family:inherit}
 .sidebar.collapsed .nav-item{justify-content:center; padding:11px 0}
 .nav-badge{background:var(--danger); color:#fff; font-size:10px; font-weight:700; border-radius:999px; min-width:17px; height:17px; display:inline-flex; align-items:center; justify-content:center; padding:0 5px; margin-inline-start:auto}
 
+/* ---------- آکاردئونِ دوسطحیِ سایدبار (عیناً مثلِ SidebarItemِ واقعی) ---------- */
+.nav-group{display:flex; flex-direction:column}
+.nav-chevron{flex-shrink:0; opacity:.7; margin-inline-start:auto; transition:transform .15s}
+.nav-group.open .nav-chevron{transform:rotate(180deg)}
+.nav-group-head.active-leaf{background:rgba(13,143,138,.16); color:#5eead4; border-inline-start:3px solid var(--teal); font-weight:700}
+.nav-group-head.active-parent{background:rgba(255,255,255,.06); font-weight:700}
+.nav-sublist{display:flex; flex-direction:column; gap:2px; padding-inline-start:30px; margin-top:2px; margin-bottom:4px}
+.nav-subitem{padding:8px 12px; border-radius:7px; cursor:pointer; font-size:12.5px; font-weight:500; color:#cbd5e1; border-inline-start:2px solid transparent}
+.nav-subitem:hover{background:rgba(255,255,255,.06)}
+.nav-subitem.active{background:rgba(13,143,138,.16); color:#5eead4; font-weight:700; border-inline-start-color:var(--teal)}
+.sidebar.collapsed .nav-chevron,.sidebar.collapsed .nav-sublist{display:none}
+
 /* ---------- نوار تبِ پایینِ موبایل ---------- */
 .mobile-tabbar{display:none}
 .mtab{flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:8px 2px 10px; background:transparent; border:none; color:rgba(255,255,255,.55); font-size:9.5px; font-weight:500}
@@ -634,15 +646,16 @@ body.phone-preview{height:100dvh; overflow:hidden; display:flex; align-items:cen
           </div>
         </div>
         <div class="tb-icons">
+          <button class="tb-icon-btn tb-about-btn" id="tb-about-btn" title="درباره IHMS">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16.5"/><circle cx="12" cy="7.5" r="0.6" fill="currentColor" stroke="none"/></svg>
+            <span class="lbl" data-i18n="aboutIhms">درباره IHMS</span>
+          </button>
           <div style="position:relative">
-            <button class="tb-icon-btn" id="tb-more-btn" title="بیشتر">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+            <button class="tb-icon-btn" id="tb-notif-btn" title="اعلان‌ها">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+              <span class="notif-badge" id="notif-badge">4</span>
             </button>
-            <div class="tb-dropdown" id="tb-more-dropdown" hidden>
-              <div class="tb-dropdown-item" id="tb-more-settings"><b data-i18n="moreSettings">تنظیمات</b><span class="d-sub" data-i18n="moreSettingsSub">پروفایل و ترجیحات</span></div>
-              <div class="tb-dropdown-item" id="tb-more-report"><b data-i18n="moreReport">گزارش خطا</b><span class="d-sub" data-i18n="moreReportSub">مشکلی دیدید؟ اطلاع دهید</span></div>
-              <div class="tb-dropdown-item" id="tb-more-logout"><b data-i18n="moreLogout">خروج</b><span class="d-sub" data-i18n="moreLogoutSub">خروج از دموی IHMS</span></div>
-            </div>
+            <div class="tb-dropdown" id="notif-dropdown" hidden></div>
           </div>
           <div style="position:relative">
             <button class="tb-icon-btn" id="tb-lang-btn" title="زبان"><span id="tb-lang-current">🇮🇷 <span class="lbl">فارسی</span></span>
@@ -655,16 +668,15 @@ body.phone-preview{height:100dvh; overflow:hidden; display:flex; align-items:cen
             </div>
           </div>
           <div style="position:relative">
-            <button class="tb-icon-btn" id="tb-notif-btn" title="اعلان‌ها">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
-              <span class="notif-badge" id="notif-badge">4</span>
+            <button class="tb-icon-btn" id="tb-more-btn" title="بیشتر">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
             </button>
-            <div class="tb-dropdown" id="notif-dropdown" hidden></div>
+            <div class="tb-dropdown" id="tb-more-dropdown" hidden>
+              <div class="tb-dropdown-item" id="tb-more-settings"><b data-i18n="moreSettings">تنظیمات</b><span class="d-sub" data-i18n="moreSettingsSub">پروفایل و ترجیحات</span></div>
+              <div class="tb-dropdown-item" id="tb-more-report"><b data-i18n="moreReport">گزارش خطا</b><span class="d-sub" data-i18n="moreReportSub">مشکلی دیدید؟ اطلاع دهید</span></div>
+              <div class="tb-dropdown-item" id="tb-more-logout"><b data-i18n="moreLogout">خروج</b><span class="d-sub" data-i18n="moreLogoutSub">خروج از دموی IHMS</span></div>
+            </div>
           </div>
-          <button class="tb-icon-btn tb-about-btn" id="tb-about-btn" title="درباره IHMS">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16.5"/><circle cx="12" cy="7.5" r="0.6" fill="currentColor" stroke="none"/></svg>
-            <span class="lbl" data-i18n="aboutIhms">درباره IHMS</span>
-          </button>
         </div>
       </div>
 
@@ -994,6 +1006,59 @@ body.phone-preview{height:100dvh; overflow:hidden; display:flex; align-items:cen
             <div><div class="view-title" data-i18n="viewSysmgmtTitle">مدیریت سیستم</div><div class="view-desc" data-i18n="viewSysmgmtDesc">تنظیمات و پیکربندی سطح شرکت — فقط سرپرست HSE</div></div>
           </div>
           <div class="glass" style="padding:4px 14px" id="sysmgmt-list"></div>
+        </section>
+
+        <!-- ============ صندوق پیشنهادات ایمنی ============ -->
+        <section class="view" id="view-suggestionBox" hidden>
+          <div class="view-head">
+            <div><div class="view-title">صندوق پیشنهادات ایمنی</div><div class="view-desc">ایده‌ها و پیشنهادهای ایمنیِ پرسنل و پیمانکاران، با امکانِ رأی‌گیری</div></div>
+          </div>
+          <div id="suggestion-list" style="display:flex; flex-direction:column; gap:10px"></div>
+        </section>
+
+        <!-- ============ نقشه حرارتی حوادث و آنومالی‌ها ============ -->
+        <section class="view" id="view-heatmap" hidden>
+          <div class="view-head">
+            <div><div class="view-title">نقشه حرارتی حوادث و آنومالی‌ها</div><div class="view-desc">تراکمِ رویدادها به تفکیکِ محدودهٔ سایت — ۹۰ روز اخیر</div></div>
+          </div>
+          <div class="panel glass">
+            <div class="panel-title">محدوده‌های سایت</div>
+            <div id="heatmap-grid" class="tool-grid"></div>
+            <div class="risk-legend">
+              <span><i class="dot" style="background:#22c55e"></i> کم</span>
+              <span><i class="dot" style="background:#f59e0b"></i> متوسط</span>
+              <span><i class="dot" style="background:#ef4444"></i> بالا</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ دیجیتال توئین سایت ============ -->
+        <section class="view" id="view-digitalTwin" hidden>
+          <div class="view-head">
+            <div><div class="view-title">دیجیتال توئین سایت</div><div class="view-desc">نمایِ زنده‌ی وضعیتِ هر محدوده از سایت</div></div>
+          </div>
+          <div id="digitaltwin-grid" class="tool-grid"></div>
+        </section>
+
+        <!-- ============ تمرین تخلیه ============ -->
+        <section class="view" id="view-evacuationDrill" hidden>
+          <div class="view-head">
+            <div><div class="view-title">تمرین تخلیه</div><div class="view-desc">پیگیریِ چک‌این حضور پرسنل در نقاطِ تجمع هنگامِ تمرین</div></div>
+          </div>
+          <div class="glass table-wrap">
+            <table class="data-table">
+              <thead><tr><th>تاریخ</th><th>نقطه تجمع</th><th>حاضر / کل</th><th>مدت‌زمان</th><th>وضعیت</th></tr></thead>
+              <tbody id="drill-tbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ============ ارزیابی عملکرد HSE پیمانکاران ============ -->
+        <section class="view" id="view-contractorEval" hidden>
+          <div class="view-head">
+            <div><div class="view-title">ارزیابی عملکرد HSE پیمانکاران</div><div class="view-desc">امتیازِ کلی و روندِ عملکردِ هر پیمانکار بر اساسِ شاخص‌های HSE</div></div>
+          </div>
+          <div id="contractoreval-list" style="display:flex; flex-direction:column; gap:10px"></div>
         </section>
 
         <!-- ============ ماژول‌ها (فهرستِ گروه‌بندی‌شده — موبایل) ============ -->
@@ -1656,28 +1721,75 @@ function svgIcon(inner){
 }
 var ICON_GRID = svgIcon('<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>');
 var ICON_SETTINGS = svgIcon('<circle cx="12" cy="12" r="3.2"/><circle cx="12" cy="12" r="8.5" stroke-dasharray="2.4 2.6"/>');
-var MODULES = [
-  {key:"chat", labelKey:"modChat", icon: svgIcon('<path d="M4 5h16v11H8l-4 4Z"/>'), badge:3},
-  {key:"archive", labelKey:"modArchive", icon: ICON_GRID},
-  {key:"anomaly", labelKey:"modAnomaly", icon: svgIcon('<path d="M12 3 22 20H2Z"/><line x1="12" y1="9" x2="12" y2="14"/><circle cx="12" cy="17" r="0.6" fill="currentColor" stroke="none"/>')},
-  {key:"risk", labelKey:"modRisk", icon: ICON_GRID, roles:["employer"]},
-  {key:"personnel", labelKey:"modPersonnel", icon: svgIcon('<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.3 14.2c2.6.5 4.4 2.7 4.4 5.8"/>')},
-  {key:"proactive", labelKey:"modProactive", icon: svgIcon('<polyline points="3 17 9 11 13 15 21 6"/><polyline points="15 6 21 6 21 12"/>'), roles:["employer"]},
-  {key:"survey", labelKey:"modSurvey", icon: svgIcon('<rect x="6" y="3" width="12" height="18" rx="2"/><path d="M9 3h6v2a1 1 0 0 1-1 1H10a1 1 0 0 1-1-1Z"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="13" y2="15"/>')},
-  {key:"permit", labelKey:"modPermit", icon: svgIcon('<path d="M6 2h9l4 4v16H6Z"/><path d="M15 2v4h4"/><path d="M9 13l2 2 4-4"/>')},
-  {key:"incident", labelKey:"modIncident", icon: svgIcon('<path d="M8 2h8l6 6v8l-6 6H8l-6-6V8Z"/><line x1="12" y1="8" x2="12" y2="13"/><circle cx="12" cy="16" r="0.6" fill="currentColor" stroke="none"/>')},
-  {key:"pssr", labelKey:"modPssr", icon: ICON_GRID, roles:["employer"]},
-  {key:"machinery", labelKey:"modMachinery", icon: ICON_GRID},
-  {key:"scaffold", labelKey:"modScaffold", icon: ICON_GRID},
-  {key:"dashboard", labelKey:"modDashboard", icon: svgIcon('<line x1="6" y1="20" x2="6" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="14"/>'), roles:["employer"]},
-  {key:"workdash", labelKey:"modWorkdash", icon: svgIcon('<line x1="9" y1="6" x2="20" y2="6"/><polyline points="3 6 4 7 6 5"/><line x1="9" y1="12" x2="20" y2="12"/><polyline points="3 12 4 13 6 11"/><line x1="9" y1="18" x2="20" y2="18"/><polyline points="3 18 4 19 6 17"/>')},
-  {key:"tools", labelKey:"modTools", icon: svgIcon('<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>')},
-  {key:"systemManagement", labelKey:"modSysmgmt", icon: ICON_SETTINGS, roles:["employer"]}
+var ICON_CLIPBOARD = svgIcon('<rect x="6" y="3" width="12" height="18" rx="2"/><path d="M9 3h6v2a1 1 0 0 1-1 1H10a1 1 0 0 1-1-1Z"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="13" y2="15"/>');
+var ICON_CHAT = svgIcon('<path d="M4 5h16v11H8l-4 4Z"/>');
+var ICON_ANOMALY = svgIcon('<path d="M12 3 22 20H2Z"/><line x1="12" y1="9" x2="12" y2="14"/><circle cx="12" cy="17" r="0.6" fill="currentColor" stroke="none"/>');
+var ICON_PERSONNEL = svgIcon('<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.3 14.2c2.6.5 4.4 2.7 4.4 5.8"/>');
+var ICON_PROACTIVE = svgIcon('<polyline points="3 17 9 11 13 15 21 6"/><polyline points="15 6 21 6 21 12"/>');
+var ICON_PERMIT = svgIcon('<path d="M6 2h9l4 4v16H6Z"/><path d="M15 2v4h4"/><path d="M9 13l2 2 4-4"/>');
+var ICON_INCIDENT = svgIcon('<path d="M12 2 4 5v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V5Z"/><line x1="12" y1="8" x2="12" y2="13"/><circle cx="12" cy="16" r="0.6" fill="currentColor" stroke="none"/>');
+var ICON_AWARD = svgIcon('<circle cx="12" cy="8" r="5"/><path d="M8.5 12.5 7 22l5-3 5 3-1.5-9.5"/>');
+var ICON_BARCHART = svgIcon('<line x1="6" y1="20" x2="6" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="14"/>');
+var ICON_ZAP = svgIcon('<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>');
+var ICON_LIGHTBULB = svgIcon('<path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2Z"/>');
+var ICON_FLAME = svgIcon('<path d="M12 2c2 3-1 4-1 7a3 3 0 0 0 6 0c0-1-.5-2-1-3 2 1 3 3 3 6a7 7 0 0 1-14 0c0-5 4-7 7-10Z"/>');
+var ICON_BOXES = svgIcon('<path d="M12 2 3 7v10l9 5 9-5V7Z"/><path d="M3 7l9 5 9-5"/><path d="M12 12v9"/>');
+var ICON_SIREN = svgIcon('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
+
+// عیناً همان آرایه‌ی HSE_MODULES در src/App.jsx: ترتیب، برچسب‌ها، زیرماژول‌ها
+// و قاعده‌ی «فقط کارفرما» — کلمه‌به‌کلمه، تا سایدبارِ دمو هیچ تفاوتی با
+// سایدبارِ واقعیِ سامانه نداشته باشد. contentView همان section محتوایی‌ است
+// که با کلیک روی این ردیف (یا زیرردیف) نشان داده می‌شود.
+var REAL_MODULES = [
+  {key:"chat", label:"چت", icon:ICON_CHAT, contentView:"chat", badge:3},
+  {key:"archiveManagement", label:"آرشیو فایل‌ها", icon:ICON_GRID, contentView:"archive"},
+  {key:"anomalyReport", label:"مدیریت عدم انطباق‌ها", icon:ICON_ANOMALY, contentView:"anomaly",
+    sub:[
+      {key:"anomalyForm", label:"ثبت آنومالی", contentView:"anomaly"},
+      {key:"correctiveActionsList", label:"لیست اقدامات اصلاحی", contentView:"anomaly"}
+    ]},
+  {key:"riskAssessment", label:"مدیریت ارزیابی ریسک", icon:ICON_GRID, contentView:"risk", employerOnly:true,
+    sub:[
+      {key:"bowtieDashboard", label:"BowTie Risk Analysis", contentView:"risk"},
+      {key:"hcmsDashboard", label:"HCMS - سیستم مدیریت و کنترل خطرات", contentView:"risk"},
+      {key:"jhaDashboard", label:"JHA - تحلیل خطر شغلی", contentView:"risk"},
+      {key:"fmeaDashboard", label:"FMEA - تحلیل حالات خرابی و اثرات آن", contentView:"risk"},
+      {key:"riskKnowledgeManagement", label:"بانک اطلاعاتی ارزیابی ریسک", contentView:"risk", employerOnly:true}
+    ]},
+  {key:"personnelAccess", label:"مدیریت ورود و تردد پرسنل", icon:ICON_PERSONNEL, contentView:"personnel",
+    sub:[{key:"personnelForm", label:"ثبت پرسنل جدید", contentView:"personnel"}]},
+  {key:"proactiveIndicators", label:"اندازه‌گیری شاخص‌های Proactive HSE", icon:ICON_PROACTIVE, contentView:"proactive", employerOnly:true},
+  {key:"hseSurvey", label:"نظرسنجی و آزمون HSE", icon:ICON_CLIPBOARD, contentView:"survey"},
+  {key:"permitToWork", label:"صدور مجوز کار", icon:ICON_PERMIT, contentView:"permit"},
+  {key:"incidentManagement", label:"مدیریت حوادث", icon:ICON_INCIDENT, contentView:"incident",
+    sub:[{key:"incidentsList", label:"فهرست حوادث", contentView:"incident"}]},
+  {key:"pssrManagement", label:"بازبینی ایمنی پیش از راه‌اندازی (PSSR)", icon:ICON_GRID, contentView:"pssr", employerOnly:true,
+    sub:[{key:"pssrList", label:"لیست PSSR", contentView:"pssr"}]},
+  {key:"contractorHseEvaluation", label:"ارزیابی عملکرد HSE پیمانکاران", icon:ICON_AWARD, contentView:"contractorEval", employerOnly:true, hideForIndependent:true},
+  {key:"machineryManagement", label:"مدیریت ماشین‌آلات", icon:ICON_GRID, contentView:"machinery",
+    sub:[{key:"machineryDashboard", label:"لیست ماشین‌آلات", contentView:"machinery"}]},
+  {key:"scaffoldManagement", label:"مدیریت داربست", icon:ICON_GRID, contentView:"scaffold",
+    sub:[{key:"scaffoldDashboard", label:"لیست تگ داربست", contentView:"scaffold"}]},
+  {key:"managementDashboard", label:"داشبورد مدیریتی و گزارش‌های تحلیلی", icon:ICON_BARCHART, contentView:"dashboard", employerOnly:true},
+  {key:"operationalDashboard", label:"داشبورد کاری", icon:ICON_CLIPBOARD, contentView:"workdash"},
+  {key:"quickTools", label:"ابزارهای سریع HSE", icon:ICON_ZAP, contentView:"tools"},
+  {key:"safetySuggestionBox", label:"صندوق پیشنهادات ایمنی", icon:ICON_LIGHTBULB, contentView:"suggestionBox"},
+  {key:"incidentHeatmap", label:"نقشه حرارتی حوادث و آنومالی‌ها", icon:ICON_FLAME, contentView:"heatmap", employerOnly:true},
+  {key:"siteDigitalTwin", label:"دیجیتال توئین سایت", icon:ICON_BOXES, contentView:"digitalTwin", employerOnly:true},
+  {key:"evacuationDrill", label:"تمرین تخلیه", icon:ICON_SIREN, contentView:"evacuationDrill"},
+  {key:"systemManagement", label:"مدیریت سیستم", icon:ICON_SETTINGS, contentView:"systemManagement", employerOnly:true}
 ];
+var CONTENT_VIEW_OF = {};
+var DEFAULT_NAV_KEY_OF_CONTENT = {};
+REAL_MODULES.forEach(function(m){
+  CONTENT_VIEW_OF[m.key] = m.contentView;
+  if (!(m.contentView in DEFAULT_NAV_KEY_OF_CONTENT)) DEFAULT_NAV_KEY_OF_CONTENT[m.contentView] = m.key;
+  (m.sub||[]).forEach(function(s){ CONTENT_VIEW_OF[s.key] = s.contentView || m.contentView; });
+});
 var MOBILE_GROUP_OF = {
-  anomaly:"safety", risk:"safety", proactive:"safety", incident:"safety", survey:"safety", permit:"safety",
-  personnel:"operations", machinery:"operations", scaffold:"operations", chat:"operations",
-  dashboard:"management", workdash:"management", archive:"management", tools:"management",
+  anomalyReport:"safety", riskAssessment:"safety", proactiveIndicators:"safety", incidentManagement:"safety", hseSurvey:"safety", permitToWork:"safety", incidentHeatmap:"safety", evacuationDrill:"safety",
+  personnelAccess:"operations", machineryManagement:"operations", scaffoldManagement:"operations", chat:"operations", safetySuggestionBox:"operations",
+  managementDashboard:"management", operationalDashboard:"management", archiveManagement:"management", quickTools:"management", contractorHseEvaluation:"management", siteDigitalTwin:"management",
   systemManagement:"system"
 };
 var MOBILE_GROUPS = [["safety","groupSafety"],["operations","groupOperations"],["management","groupManagement"],["system","groupSystem"]];
@@ -1723,21 +1835,65 @@ var SYSMGMT_SUBS = [
       return '<div><div style="display:flex; justify-content:space-between; font-size:11.5px; color:var(--text2); margin-bottom:4px"><span>'+t(r[0])+'</span><b style="color:var(--text)">'+r[1]+'%</b></div><div class="gauge-track"><div class="gauge-fill" style="width:'+r[1]+'%"></div></div></div>';
     }).join("")+'</div>'); }}
 ];
-function visibleModules(){ return MODULES.filter(function(m){ return !m.roles || m.roles.indexOf(currentRole) !== -1; }); }
+function visibleModules(){ return REAL_MODULES.filter(function(m){ return moduleAllowed(m.key); }); }
+var sidebarActiveKey = null;
 function renderModulesNav(){
   var visible = visibleModules();
   document.getElementById("sidebar-nav").innerHTML = visible.map(function(m){
-    return '<button class="nav-item" data-view="'+m.key+'">'+m.icon+'<span>'+esc(t(m.labelKey))+'</span>'+(m.badge>0?'<span class="nav-badge">'+m.badge+'</span>':'')+'</button>';
+    var hasSub = m.sub && m.sub.length > 0;
+    var subItems = hasSub ? m.sub.filter(function(s){ return !s.employerOnly || currentRole==="employer"; }) : [];
+    return '<div class="nav-group" data-key="'+m.key+'">'+
+      '<div class="nav-item nav-group-head" data-key="'+m.key+'" data-has-sub="'+(subItems.length?1:0)+'">'+
+        m.icon+'<span class="nav-label">'+esc(m.label)+'</span>'+
+        (m.badge>0?'<span class="nav-badge">'+m.badge+'</span>':'')+
+        (subItems.length?'<svg class="nav-chevron" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>':'')+
+      '</div>'+
+      (subItems.length ? '<div class="nav-sublist" data-parent="'+m.key+'" hidden>'+
+        subItems.map(function(s){ return '<div class="nav-subitem" data-key="'+s.key+'">'+esc(s.label)+'</div>'; }).join("")+
+      '</div>' : '')+
+    '</div>';
   }).join("");
-  Array.prototype.forEach.call(document.querySelectorAll("#sidebar-nav .nav-item"), function(b){
-    b.addEventListener("click", function(){ showView(b.dataset.view); });
+
+  Array.prototype.forEach.call(document.querySelectorAll("#sidebar-nav .nav-group-head"), function(el){
+    el.addEventListener("click", function(){
+      var key = el.dataset.key;
+      var mod = REAL_MODULES.find(function(x){ return x.key===key; });
+      var hasSub = el.dataset.hasSub === "1";
+      if (!hasSub){ showView(key); return; }
+      if (document.getElementById("sidebar").classList.contains("collapsed")){
+        var first = mod.sub[0];
+        sidebarActiveKey = first.key;
+        var contentId = first.contentView || mod.contentView;
+        Array.prototype.forEach.call(document.querySelectorAll(".view"), function(v){ v.hidden = v.id !== "view-"+contentId; });
+        syncSidebarActiveState();
+        return;
+      }
+      var group = el.parentElement;
+      var willOpen = !group.classList.contains("open");
+      Array.prototype.forEach.call(document.querySelectorAll("#sidebar-nav .nav-group"), function(g){
+        g.classList.remove("open");
+        var sl = g.querySelector(".nav-sublist");
+        if (sl) sl.hidden = true;
+      });
+      if (willOpen){
+        group.classList.add("open");
+        var sl2 = group.querySelector(".nav-sublist");
+        if (sl2) sl2.hidden = false;
+      }
+    });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll("#sidebar-nav .nav-subitem"), function(el){
+    el.addEventListener("click", function(e){
+      e.stopPropagation();
+      showView(el.dataset.key);
+    });
   });
 
   document.getElementById("modules-grouped-list").innerHTML = MOBILE_GROUPS.map(function(g){
     var items = visible.filter(function(m){ return MOBILE_GROUP_OF[m.key] === g[0]; });
     if (!items.length) return "";
     return '<div class="mgroup-head">'+esc(t(g[1]))+'</div>'+items.map(function(m){
-      return '<button class="nav-item" data-view="'+m.key+'" style="margin-bottom:2px">'+m.icon+'<span>'+esc(t(m.labelKey))+'</span>'+(m.badge>0?'<span class="nav-badge">'+m.badge+'</span>':'')+'</button>';
+      return '<button class="nav-item" data-view="'+m.contentView+'" style="margin-bottom:2px">'+m.icon+'<span>'+esc(m.label)+'</span>'+(m.badge>0?'<span class="nav-badge">'+m.badge+'</span>':'')+'</button>';
     }).join("");
   }).join("");
   Array.prototype.forEach.call(document.querySelectorAll("#modules-grouped-list .nav-item"), function(b){
@@ -1756,6 +1912,32 @@ function renderModulesNav(){
       openInfoDetail({title:t(s.labelKey), body:s.body ? s.body() : ""});
     });
   });
+  syncSidebarActiveState();
+}
+// هایلایتِ سایدبار مطابقِ رفتارِ واقعیِ SidebarItem: فقط گروهی که ردیفِ
+// فعال در آن است باز می‌ماند (آکاردئون)؛ باز نگه‌داشتنِ دستیِ کاربر برای
+// مرور یک گروهِ دیگر (بدونِ ناوبری) جداگانه در کلیک‌هندلرِ بالا مدیریت می‌شود.
+function syncSidebarActiveState(){
+  var home = document.getElementById("nav-home-item");
+  if (home) home.classList.toggle("active", sidebarActiveKey === "menu");
+  Array.prototype.forEach.call(document.querySelectorAll("#sidebar-nav .nav-group"), function(g){
+    var key = g.dataset.key;
+    var mod = REAL_MODULES.find(function(x){ return x.key===key; });
+    var headEl = g.querySelector(".nav-group-head");
+    var hasSub = mod && mod.sub && mod.sub.length>0;
+    var subActive = hasSub && mod.sub.some(function(s){ return s.key===sidebarActiveKey; });
+    var leafActive = !hasSub && key===sidebarActiveKey;
+    headEl.classList.toggle("active-leaf", leafActive);
+    headEl.classList.toggle("active-parent", subActive);
+    if (subActive){
+      g.classList.add("open");
+      var sl = g.querySelector(".nav-sublist");
+      if (sl) sl.hidden = false;
+    }
+    Array.prototype.forEach.call(g.querySelectorAll(".nav-subitem"), function(si){
+      si.classList.toggle("active", si.dataset.key === sidebarActiveKey);
+    });
+  });
 }
 function toggleCollapse(){
   document.getElementById("sidebar").classList.toggle("collapsed");
@@ -1768,6 +1950,7 @@ var IDENTITIES = {
 };
 var currentRole = "employer";
 var deviceMode = "web";
+var dcIsIndependent = false;
 Array.prototype.forEach.call(document.querySelectorAll("#role-toggle .seg-btn"), function(b){
   b.addEventListener("click", function(){
     currentRole = b.dataset.role;
@@ -1788,8 +1971,11 @@ Array.prototype.forEach.call(document.querySelectorAll("#lang-toggle .seg-btn"),
   });
 });
 function moduleAllowed(key){
-  var m = MODULES.find(function(x){ return x.key===key; });
-  return !m || !m.roles || m.roles.indexOf(currentRole) !== -1;
+  var m = REAL_MODULES.find(function(x){ return x.key===key; });
+  if (!m) return true;
+  if (m.employerOnly && currentRole !== "employer") return false;
+  if (m.hideForIndependent && dcIsIndependent) return false;
+  return true;
 }
 function applyIdentity(){
   var id = IDENTITIES[currentRole];
@@ -1876,6 +2062,34 @@ var state = {
     {title:{fa:"آتش‌سوزی حین عملیات کار گرم",en:"Fire during hot-work operations",de:"Brand während Heißarbeiten"}, l:3, s:4, control:{fa:"مجوز کار گرم + کپسول آتش‌نشانی آماده",en:"Hot-work permit + fire extinguisher on standby",de:"Heißarbeitserlaubnis + bereitstehender Feuerlöscher"}},
     {title:{fa:"نشت گاز در فضای محصور",en:"Gas leak in a confined space",de:"Gasleck in einem engen Raum"}, l:2, s:4, control:{fa:"مانیتورینگ گاز + مجوز ورود فضای محصور",en:"Gas monitoring + confined-space entry permit",de:"Gasüberwachung + Erlaubnis für den Zutritt zu engen Räumen"}},
     {title:{fa:"برق‌گرفتگی حین کار روی تابلوهای فشار متوسط",en:"Electric shock while working on medium-voltage panels",de:"Stromschlag bei Arbeiten an Mittelspannungsschaltschränken"}, l:2, s:5, control:{fa:"قفل و برچسب (LOTO) + کارت مجوز کار الکتریکی",en:"Lockout/tagout (LOTO) + electrical work permit card",de:"Lockout/Tagout (LOTO) + Erlaubnisschein für Elektroarbeiten"}}
+  ],
+  suggestions: [
+    {title:"نصب حفاظ اضافه روی نردبان‌های ثابتِ تانک فارم", by:"ناصر قربانی (حمل‌ونقل و ماشین‌آلات راهسازی البرز)", votes:18, status:"تایید شده"},
+    {title:"تعبیه ایستگاه شست‌وشوی چشم نزدیک‌تر به واحد کمپرسور", by:"سارا احمدپور (شرکت پیش‌فرض)", votes:12, status:"در حال بررسی"},
+    {title:"نصب دوربین مداربسته در مسیر تردد لیفتراک انبار مرکزی", by:"علی محمدی (فولاد گستر آریا)", votes:9, status:"در حال بررسی"},
+    {title:"برگزاری دوره‌ی بازآموزی فضای محصور هر ۶ ماه به‌جای سالانه", by:"محمدرضا کریمی (فولاد گستر آریا)", votes:7, status:"رد شده"}
+  ],
+  siteZones: [
+    {name:"محوطه اسکله بارگیری", incidents:5, anomalies:9, level:"بالا"},
+    {name:"بلوک B - خط لوله", incidents:2, anomalies:6, level:"متوسط"},
+    {name:"داربست بلوک A", incidents:1, anomalies:4, level:"متوسط"},
+    {name:"تانک فارم", incidents:3, anomalies:5, level:"بالا"},
+    {name:"واحد کمپرسور هوا", incidents:0, anomalies:2, level:"کم"},
+    {name:"انبار مرکزی", incidents:0, anomalies:1, level:"کم"},
+    {name:"سوله مونتاژ سایت ۳", incidents:1, anomalies:3, level:"متوسط"},
+    {name:"ایستگاه گاز جوشکاری", incidents:0, anomalies:2, level:"کم"}
+  ],
+  drills: [
+    {date:"۱۴۰۵/۰۶/۱۰", point:"نقطه تجمع A - نزدیک درب اصلی", present:132, total:138, duration:"۴ دقیقه و ۲۰ ثانیه", status:"موفق"},
+    {date:"۱۴۰۵/۰۳/۰۵", point:"نقطه تجمع B - محوطه پارکینگ", present:119, total:134, duration:"۶ دقیقه و ۱۰ ثانیه", status:"نیاز به بازبینی"},
+    {date:"۱۴۰۴/۱۲/۰۱", point:"نقطه تجمع A - نزدیک درب اصلی", present:128, total:130, duration:"۳ دقیقه و ۵۰ ثانیه", status:"موفق"}
+  ],
+  contractorEvals: [
+    {name:"شرکت پیمانکاری فولاد گستر آریا", score:88, trend:"صعودی"},
+    {name:"شرکت داربست‌سازان ایمن پارس", score:74, trend:"ثابت"},
+    {name:"شرکت برق و ابزار دقیق پرتو", score:81, trend:"صعودی"},
+    {name:"شرکت خدمات صنعتی نگین پارس", score:63, trend:"نزولی"},
+    {name:"شرکت حمل‌ونقل و ماشین‌آلات راهسازی البرز", score:69, trend:"ثابت"}
   ]
 };
 
@@ -2441,10 +2655,10 @@ var workTasks = [
   {goto:"scaffold", color:"var(--danger)", bg:"var(--danger-bg)", text:{fa:"تگ داربست SC-121 در وضعیت قرمز است",en:"Scaffold tag SC-121 is in red status",de:"Gerüst-Tag SC-121 hat roten Status"}, sub:{fa:"تانک فارم — نیاز به اصلاح فوری",en:"Tank farm — needs immediate correction",de:"Tanklager — sofortige Korrektur erforderlich"}}
 ];
 function renderWorkDashboard(){
-  var tasks = workTasks.filter(function(wt){ return moduleAllowed(wt.goto); });
+  var tasks = workTasks.filter(function(wt){ return moduleAllowed(DEFAULT_NAV_KEY_OF_CONTENT[wt.goto] || wt.goto); });
   document.getElementById("workdash-count").textContent = tasks.length+" "+t("workdashUnit");
   document.getElementById("workdash-list").innerHTML = tasks.map(function(wt){
-    var mi = MODULES.find(function(m){return m.key===wt.goto;});
+    var mi = REAL_MODULES.filter(function(m){return m.contentView===wt.goto;})[0];
     return '<div class="task-row" data-goto="'+wt.goto+'">'+
       '<span class="task-icon" style="background:'+wt.bg+';color:'+wt.color+'">'+(mi?mi.icon:"")+'</span>'+
       '<span><span class="task-text">'+esc(L(wt.text))+'</span><div class="task-sub">'+esc(L(wt.sub))+'</div></span>'+
@@ -2544,13 +2758,19 @@ document.getElementById("overlay").addEventListener("click", function(){ closeDe
 /* ============================================================ مسیریابی نما ============================================================ */
 function showView(id){
   if (dcTour.active && id !== dcTour.moduleKey) dcEndTour(false);
-  Array.prototype.forEach.call(document.querySelectorAll(".view"), function(v){ v.hidden = v.id !== "view-"+id; });
-  Array.prototype.forEach.call(document.querySelectorAll(".nav-item[data-view]"), function(n){ n.classList.toggle("active", n.dataset.view===id); });
-  Array.prototype.forEach.call(document.querySelectorAll(".mtab"), function(n){ n.classList.toggle("active", n.dataset.view===id); });
+  // id ممکن است یک کلیدِ سایدبار (مثلاً "anomalyReport" یا زیرماژولِ
+  // "bowtieDashboard") باشد یا مستقیماً یک شناسه‌ی محتوایی (مثلاً از
+  // کارهای صفحه‌ی اصلی/تورِ دمو) — هر دو را از روی CONTENT_VIEW_OF حل می‌کنیم.
+  var contentId = CONTENT_VIEW_OF[id] || id;
+  sidebarActiveKey = (id in CONTENT_VIEW_OF) ? id : (DEFAULT_NAV_KEY_OF_CONTENT[id] || id);
+  Array.prototype.forEach.call(document.querySelectorAll(".view"), function(v){ v.hidden = v.id !== "view-"+contentId; });
+  Array.prototype.forEach.call(document.querySelectorAll(".nav-item[data-view]"), function(n){ n.classList.toggle("active", n.dataset.view===contentId); });
+  Array.prototype.forEach.call(document.querySelectorAll(".mtab"), function(n){ n.classList.toggle("active", n.dataset.view===contentId); });
+  syncSidebarActiveState();
   var back = document.getElementById("content-back-btn");
   if (back) back.hidden = id === "menu";
   closeDetailPanel();
-  if (id==="tools") closeToolPanel();
+  if (contentId==="tools") closeToolPanel();
   window.scrollTo(0, 0);
   var shell = document.getElementById("app-shell");
   if (shell) shell.scrollTop = 0;
@@ -2591,6 +2811,15 @@ function wireNavSearch(inputId, listContainerId, isGrouped){
   document.getElementById(inputId).addEventListener("input", function(){
     var q = this.value.trim().toLowerCase();
     var container = document.getElementById(listContainerId);
+    if (listContainerId === "sidebar-nav"){
+      // سایدبارِ دوسطحی: کلِ گروه را نشان بده اگر خودِ ماژول یا هر کدام
+      // از زیرماژول‌هایش با عبارتِ جست‌وجو تطابق داشته باشد.
+      Array.prototype.forEach.call(container.querySelectorAll(".nav-group"), function(g){
+        var label = (g.textContent||"").toLowerCase();
+        g.hidden = !!q && label.indexOf(q) === -1;
+      });
+      return;
+    }
     Array.prototype.forEach.call(container.querySelectorAll(".nav-item"), function(b){
       var label = (b.textContent||"").toLowerCase();
       b.hidden = !!q && label.indexOf(q) === -1;
@@ -3317,87 +3546,87 @@ var PERSONAS = [
   {key:"employer", role:"employer", icon:ICON_ROLE_EMPLOYER, title:"کارفرما", sub:"سرپرست HSE یا مدیرِ پروژه در شرکتِ کارفرما",
     desc:"نظارت، تاییدِ عملکرد و مدیریتِ یکپارچهٔ HSE برایِ همهٔ پیمانکارانِ پروژه، از یک پنل.",
     intro:"به‌عنوانِ کارفرما، در این دمو می‌بینید چطور می‌توانید وضعیتِ ایمنیِ همهٔ پیمانکارانِ پروژه را از یک پنل رصد، آنومالی و حادثه را تایید، و عملکردِ هرکدام را ارزیابی کنید.",
-    order:["dashboard","anomaly","incident","permit","risk","personnel","machinery","scaffold","pssr","proactive","survey","workdash","tools","archive","chat","systemManagement"]},
+    order:["managementDashboard","anomalyReport","incidentManagement","permitToWork","riskAssessment","personnelAccess","machineryManagement","scaffoldManagement","pssrManagement","proactiveIndicators","contractorHseEvaluation","incidentHeatmap","siteDigitalTwin","hseSurvey","safetySuggestionBox","evacuationDrill","operationalDashboard","quickTools","archiveManagement","chat","systemManagement"]},
   {key:"contractor", role:"contractor", icon:ICON_ROLE_CONTRACTOR, title:"پیمانکار", sub:"نمایندهٔ HSE یا سرپرستِ کارگاهِ شرکتِ پیمانکاری",
     desc:"ثبتِ آنومالی، دریافتِ مجوزِ کار و مدیریتِ پرسنل و ماشین‌آلاتِ خودتان — مستقیم و بدونِ واسطه.",
     intro:"به‌عنوانِ پیمانکار، در این دمو می‌بینید چطور آنومالی ثبت می‌کنید، مجوزِ کار می‌گیرید، وضعیتِ پرسنل و ماشین‌آلاتِ خودتان را مدیریت می‌کنید و مستقیم با کارفرما در ارتباط می‌مانید.",
-    order:["anomaly","permit","personnel","machinery","scaffold","incident","survey","workdash","tools","archive","chat","dashboard","risk","proactive","pssr","systemManagement"]},
+    order:["anomalyReport","permitToWork","personnelAccess","machineryManagement","scaffoldManagement","incidentManagement","hseSurvey","safetySuggestionBox","evacuationDrill","operationalDashboard","quickTools","archiveManagement","chat","managementDashboard","riskAssessment","proactiveIndicators","pssrManagement","contractorHseEvaluation","incidentHeatmap","siteDigitalTwin","systemManagement"]},
   {key:"independent", role:"employer", icon:ICON_ROLE_INDEPENDENT, title:"شرکتِ مستقل", sub:"شرکتی که بدونِ زنجیرهٔ پیمانکاری، HSEِ خودش را مدیریت می‌کند",
     desc:"کلِ چرخهٔ HSE — پرسنل، ماشین‌آلات، ریسک، حادثه و ممیزی — بدونِ نیاز به لایهٔ جدایِ پیمانکاری.",
     intro:"به‌عنوانِ یک شرکتِ مستقل، کلِ چرخهٔ HSE را — از ثبتِ پرسنل و ماشین‌آلات تا ریسک، حادثه و ممیزی — در یک پنلِ واحد و بدونِ نیاز به مدیریتِ چندین پیمانکار مدیریت می‌کنید.",
-    order:["personnel","machinery","scaffold","anomaly","incident","permit","risk","pssr","proactive","dashboard","survey","workdash","tools","archive","chat","systemManagement"]},
+    order:["personnelAccess","machineryManagement","scaffoldManagement","anomalyReport","incidentManagement","permitToWork","riskAssessment","pssrManagement","proactiveIndicators","incidentHeatmap","siteDigitalTwin","managementDashboard","hseSurvey","safetySuggestionBox","evacuationDrill","operationalDashboard","quickTools","archiveManagement","chat","contractorHseEvaluation","systemManagement"]},
   {key:"expert", role:"employer", icon:ICON_ROLE_EXPERT, title:"کارشناسِ HSE", sub:"کارشناسِ ارزیابیِ ریسک، ممیزی و شاخص‌هایِ پیشگیرانه",
     desc:"ابزارهایِ تحلیلی: ارزیابیِ ریسک، PSSR، شاخص‌هایِ Proactive و ابزارهایِ محاسباتیِ ایمنی.",
     intro:"به‌عنوانِ کارشناسِ HSE، تمرکزِ شما روی ابزارهایِ تحلیلی و پیشگیرانهٔ سامانه است: ارزیابیِ ریسک، PSSR، شاخص‌هایِ Proactive، نظرسنجی و ابزارهایِ محاسباتیِ ایمنی.",
-    order:["risk","proactive","pssr","survey","tools","incident","anomaly","dashboard","personnel","machinery","scaffold","permit","workdash","archive","chat","systemManagement"]}
+    order:["riskAssessment","proactiveIndicators","pssrManagement","incidentHeatmap","siteDigitalTwin","hseSurvey","quickTools","incidentManagement","anomalyReport","contractorHseEvaluation","managementDashboard","personnelAccess","machineryManagement","scaffoldManagement","permitToWork","safetySuggestionBox","evacuationDrill","operationalDashboard","archiveManagement","chat","systemManagement"]}
 ];
 
 var TOUR_META = {
-  dashboard:{desc:"نمایِ کلیِ لحظه‌ایِ وضعیتِ HSEِ پروژه: شاخص‌هایِ کلیدی، روندِ آنومالی‌ها و رویدادهایِ اخیر.",
+  managementDashboard:{desc:"نمایِ کلیِ لحظه‌ایِ وضعیتِ HSEِ پروژه: شاخص‌هایِ کلیدی، روندِ آنومالی‌ها و رویدادهایِ اخیر.",
     steps:[
       {sel:"#kpi-grid", title:"شاخص‌هایِ کلیدی", desc:"مهم‌ترین شاخص‌هایِ HSEِ پروژه را در یک نگاه می‌بینید."},
       {sel:"#chart-trend", title:"روندِ ثبتِ آنومالی", desc:"نمودارِ روندِ ۶ ماههٔ اخیر، بهتر یا بدترشدنِ وضعیتِ پروژه را نشان می‌دهد."},
       {sel:"#activity-feed", title:"رویدادهایِ اخیر", desc:"آخرین رویدادهایِ ثبت‌شده در تمامِ ماژول‌ها، به ترتیبِ زمان."}
     ]},
-  anomaly:{desc:"ثبت، دسته‌بندی و پیگیریِ عدم‌انطباق‌ها تا بسته‌شدن با اقدامِ اصلاحیِ مشخص.",
+  anomalyReport:{desc:"ثبت، دسته‌بندی و پیگیریِ عدم‌انطباق‌ها تا بسته‌شدن با اقدامِ اصلاحیِ مشخص.",
     steps:[
       {sel:"#btn-new-anomaly", title:"ثبتِ آنومالیِ جدید", desc:"با این دکمه یک موردِ عدم‌انطباقِ جدید با عکس و شرحِ کامل ثبت کنید — همین الان امتحانش کنید."},
       {sel:"#anomaly-status-filter", title:"فیلتر بر اساسِ وضعیت", desc:"آنومالی‌ها را بر اساسِ وضعیت (باز، در حالِ بررسی، اقدامِ اصلاحی، بسته‌شده) فیلتر کنید."},
       {sel:"#anomaly-tbody", title:"جزئیاتِ هر مورد", desc:"روی هر ردیف کلیک کنید تا جزئیاتِ کامل، مراحلِ اقدامِ اصلاحی و تاریخچهٔ آن باز شود."}
     ]},
-  risk:{desc:"ماتریسِ ریسک و فهرستِ ریسک‌هایِ کلیدیِ سایت بر اساسِ روشِ BowTie/HCMS.",
+  riskAssessment:{desc:"ماتریسِ ریسک و فهرستِ ریسک‌هایِ کلیدیِ سایت بر اساسِ روشِ BowTie/HCMS/JHA/FMEA.",
     steps:[
       {sel:"#risk-matrix", title:"ماتریسِ ریسک", desc:"ریسک‌هایِ سایت بر اساسِ احتمال × شدت، در یک ماتریسِ رنگی نمایش داده می‌شوند."},
       {sel:"#risk-tbody", title:"فهرستِ ریسک‌هایِ کلیدی", desc:"برایِ هر ریسک، امتیاز و اقدامِ کنترلیِ در نظر گرفته‌شده را ببینید."}
     ]},
-  personnel:{desc:"مدیریتِ ورود، آموزش و وضعیتِ ترددِ پرسنلِ شاغل در سایت.",
+  personnelAccess:{desc:"مدیریتِ ورود، آموزش و وضعیتِ ترددِ پرسنلِ شاغل در سایت.",
     steps:[
       {sel:"#personnel-search", title:"جستجو و فیلتر", desc:"پرسنل را بر اساسِ نام، سمت یا وضعیتِ فعال/غیرفعال جستجو کنید."},
       {sel:"#personnel-tbody", title:"وضعیتِ آموزشِ هر نفر", desc:"روی هر ردیف کلیک کنید تا وضعیتِ آموزشِ HSE و تاریخِ شروعِ همکاریِ آن فرد را ببینید."}
     ]},
-  permit:{desc:"صدور و پیگیریِ مجوزِ کار (PTW) برایِ کارهایِ پرخطر مانندِ کارِ گرم، ارتفاع و فضایِ محصور.",
+  permitToWork:{desc:"صدور و پیگیریِ مجوزِ کار (PTW) برایِ کارهایِ پرخطر مانندِ کارِ گرم، ارتفاع و فضایِ محصور.",
     steps:[
       {sel:"#btn-new-permit", title:"صدورِ مجوزِ جدید", desc:"برایِ شروعِ یک کارِ پرخطر، از همین‌جا مجوز صادر کنید."},
       {sel:"#permit-tbody", title:"پیگیریِ مجوزها", desc:"وضعیتِ تمامِ مجوزهایِ صادرشده را از «در حالِ اجرا» تا «بسته‌شده» پیگیری کنید."}
     ]},
-  incident:{desc:"ثبت و پیگیریِ حوادث و شبه‌حادثه‌ها همراه با تحلیلِ ریشه‌ای.",
+  incidentManagement:{desc:"ثبت و پیگیریِ حوادث و شبه‌حادثه‌ها همراه با تحلیلِ ریشه‌ای.",
     steps:[
       {sel:"#incident-tbody", title:"ثبتِ حوادث", desc:"هر حادثه یا شبه‌حادثه با نوع، شرح و وضعیت ثبت می‌شود؛ روی یک ردیف کلیک کنید تا تحلیلِ ریشه‌ای را ببینید."}
     ]},
-  machinery:{desc:"پیگیریِ وضعیتِ بازرسیِ دوره‌ایِ ماشین‌آلات و تجهیزاتِ سایت.",
+  machineryManagement:{desc:"پیگیریِ وضعیتِ بازرسیِ دوره‌ایِ ماشین‌آلات و تجهیزاتِ سایت.",
     steps:[
       {sel:"#machinery-status-filter", title:"فیلترِ وضعیت", desc:"ماشین‌آلات را بر اساسِ «سالم»، «نیاز به بازرسی» یا «متوقف از کار» فیلتر کنید."},
       {sel:"#machinery-tbody", title:"برنامهٔ بازرسی", desc:"تاریخِ آخرین و بعدیِ بازرسیِ هر تجهیز را ببینید."}
     ]},
-  scaffold:{desc:"مدیریتِ تگ‌هایِ رنگیِ داربست (سبز/زرد/قرمز) و وضعیتِ بازرسیِ آن‌ها.",
+  scaffoldManagement:{desc:"مدیریتِ تگ‌هایِ رنگیِ داربست (سبز/زرد/قرمز) و وضعیتِ بازرسیِ آن‌ها.",
     steps:[
       {sel:"#scaffold-status-filter", title:"وضعیتِ رنگیِ تگ‌ها", desc:"تگ‌هایِ داربست با رنگِ سبز (ایمن)، زرد (محدود) و قرمز (ممنوع) کدگذاری می‌شوند."},
       {sel:"#scaffold-tbody", title:"تاریخِ بازرسی", desc:"بازرس و تاریخِ آخرینِ بازرسیِ هر تگ را ببینید."}
     ]},
-  tools:{desc:"محاسبه‌گرهایِ آمادهٔ شاخص‌هایِ پرکاربردِ ایمنی — از ریسکِ بالابری تا مدیریتِ انرژی.",
+  quickTools:{desc:"محاسبه‌گرهایِ آمادهٔ شاخص‌هایِ پرکاربردِ ایمنی — از ریسکِ بالابری تا مدیریتِ انرژی.",
     steps:[
       {sel:"#tools-cat-chips", title:"دسته‌بندیِ ابزارها", desc:"بیش از ۲۰ ابزارِ محاسباتیِ HSE در دسته‌هایِ مختلف."},
       {sel:"#tools-grid", title:"یک ابزار را امتحان کنید", desc:"روی یکی از کارت‌ها کلیک کنید تا فرمِ محاسبه باز شود و نتیجه را آنی ببینید."}
     ]},
-  workdash:{desc:"فهرستِ یکپارچهٔ کارهایِ در انتظارِ اقدامِ شما، با لینکِ مستقیم به بخشِ مربوطه.",
+  operationalDashboard:{desc:"فهرستِ یکپارچهٔ کارهایِ در انتظارِ اقدامِ شما، با لینکِ مستقیم به بخشِ مربوطه.",
     steps:[
       {sel:"#workdash-list", title:"کارهایِ در انتظارِ شما", desc:"همهٔ کارهایی که منتظرِ اقدامِ شما هستند، با لینکِ مستقیم به بخشِ مربوطه."}
     ]},
-  survey:{desc:"برگزاریِ نظرسنجی و آزمونِ آنلاینِ HSE با نتیجه و کلیدِ پاسخِ آنیِ شرکت‌کننده.",
+  hseSurvey:{desc:"برگزاریِ نظرسنجی و آزمونِ آنلاینِ HSE با نتیجه و کلیدِ پاسخِ آنیِ شرکت‌کننده.",
     steps:[
       {sel:"#survey-tbody", title:"نظرسنجی و آزمون", desc:"نظرسنجی‌ها و آزمون‌هایِ فعال را با تعدادِ پاسخ و میانگینِ نمره ببینید."},
       {sel:"#survey-sample-review", title:"نتیجهٔ فردی", desc:"نمونهٔ نتیجهٔ یک شرکت‌کننده به همراهِ کلیدِ پاسخ، دقیقاً مثلِ چیزی که در IHMSِ واقعی می‌بینید."}
     ]},
-  proactive:{desc:"اندازه‌گیریِ شاخص‌هایِ پیشگیرانه (Proactive) پیش از وقوعِ حادثه.",
+  proactiveIndicators:{desc:"اندازه‌گیریِ شاخص‌هایِ پیشگیرانه (Proactive) پیش از وقوعِ حادثه.",
     steps:[
       {sel:"#indicator-grid", title:"شاخص‌هایِ پیشگیرانه", desc:"شاخص‌هایی که پیش از وقوعِ حادثه هشدار می‌دهند — مثلِ نرخِ مشاهداتِ ایمنی یا تکمیلِ آموزش."}
     ]},
-  pssr:{desc:"بازبینیِ ایمنیِ پیش از راه‌اندازیِ تجهیز یا واحد (PSSR) با چک‌لیستِ استاندارد.",
+  pssrManagement:{desc:"بازبینیِ ایمنیِ پیش از راه‌اندازیِ تجهیز یا واحد (PSSR) با چک‌لیستِ استاندارد.",
     steps:[
       {sel:"#pssr-tbody", title:"درصدِ آمادگی", desc:"درصدِ تکمیلِ بازبینیِ ایمنیِ هر واحد یا تجهیز پیش از راه‌اندازی."},
       {sel:"#pssr-checklist", title:"چک‌لیستِ استاندارد", desc:"یک نمونه از چک‌لیستِ PSSR با آیتم‌هایِ تکمیل‌شده و باقی‌مانده."}
     ]},
-  archive:{desc:"آرشیوِ یکجایِ مستندات و مدارکِ تمامِ ماژول‌ها، قابل‌فیلتر بر اساسِ نوع.",
+  archiveManagement:{desc:"آرشیوِ یکجایِ مستندات و مدارکِ تمامِ ماژول‌ها، قابل‌فیلتر بر اساسِ نوع.",
     steps:[
       {sel:"#archive-tabs", title:"آرشیو بر اساسِ ماژول", desc:"مستنداتِ هر ماژول به‌صورتِ جدا آرشیو می‌شود."},
       {sel:"#archive-files", title:"فهرستِ فایل‌ها", desc:"فایل‌ها به همراهِ تاریخ و اندازه قابل‌مشاهده و دانلودند."}
@@ -3406,6 +3635,26 @@ var TOUR_META = {
     steps:[
       {sel:"#chat-threads", title:"گفتگوهایِ جاری", desc:"گفتگو با هر پیمانکار یا عضوِ تیم به‌صورتِ جدا نمایش داده می‌شود."},
       {sel:"#chat-input", title:"ارسالِ پیام", desc:"یک پیام بنویسید و دکمهٔ ارسال را بزنید — امتحانش کنید!"}
+    ]},
+  contractorHseEvaluation:{desc:"امتیازِ کلی و روندِ عملکردِ هر پیمانکار بر اساسِ شاخص‌های HSE.",
+    steps:[
+      {sel:"#contractoreval-list", title:"رتبه‌بندیِ پیمانکاران", desc:"امتیازِ کلی و روندِ (صعودی/ثابت/نزولی) هر پیمانکار را در یک نگاه ببینید."}
+    ]},
+  safetySuggestionBox:{desc:"ایده‌ها و پیشنهادهای ایمنیِ پرسنل و پیمانکاران، با امکانِ رأی‌گیری.",
+    steps:[
+      {sel:"#suggestion-list", title:"پیشنهادهایِ ثبت‌شده", desc:"هر پیشنهاد با نامِ ثبت‌کننده، تعدادِ رأی و وضعیتِ بررسی نمایش داده می‌شود."}
+    ]},
+  incidentHeatmap:{desc:"تراکمِ حوادث و آنومالی‌ها به تفکیکِ محدودهٔ سایت.",
+    steps:[
+      {sel:"#heatmap-grid", title:"محدوده‌هایِ پرخطر", desc:"محدوده‌هایی با بیشترین تراکمِ رویداد، رنگِ قرمز/زرد می‌گیرند تا در نگاهِ اول مشخص باشند."}
+    ]},
+  siteDigitalTwin:{desc:"نمایِ زنده‌ی وضعیتِ هر محدوده از سایت.",
+    steps:[
+      {sel:"#digitaltwin-grid", title:"وضعیتِ هر محدوده", desc:"برایِ هر محدوده، تعدادِ آنومالیِ باز و حوادثِ اخیر به‌صورتِ زنده نمایش داده می‌شود."}
+    ]},
+  evacuationDrill:{desc:"پیگیریِ چک‌این حضور پرسنل در نقاطِ تجمع هنگامِ تمرینِ تخلیه.",
+    steps:[
+      {sel:"#drill-tbody", title:"سابقهٔ تمرین‌ها", desc:"تعدادِ حاضرشده از کلِ پرسنل و مدت‌زمانِ هر تمرینِ تخلیه را ببینید."}
     ]},
   systemManagement:{desc:"پیکربندیِ سطحِ شرکت: دسترسی‌ها، عنوان‌هایِ شغلی، بانکِ ریسک و آستانه‌هایِ هشدار.",
     steps:[
@@ -3447,6 +3696,7 @@ function dcSelectPersona(key){
   dcSelectedPersona = PERSONAS.filter(function(p){ return p.key===key; })[0];
   if (!dcSelectedPersona) return;
   currentRole = dcSelectedPersona.role;
+  dcIsIndependent = key === "independent";
   dcDemoCenterActive = true;
   dcRenderModuleHub();
   dcShowScreen("modulehub");
@@ -3461,14 +3711,14 @@ function dcRenderModuleHub(){
   var visitedCount = keys.filter(function(k){ return dcVisited[k]; }).length;
   document.getElementById("dc-hub-progress-text").textContent = visitedCount+" از "+keys.length+" ماژول مشاهده شد";
   document.getElementById("dc-module-grid").innerHTML = keys.map(function(key){
-    var mod = MODULES.filter(function(m){ return m.key===key; })[0];
+    var mod = REAL_MODULES.filter(function(m){ return m.key===key; })[0];
     var meta = TOUR_META[key];
     if (!mod || !meta) return "";
     var visited = !!dcVisited[key];
     return '<div class="dc-module-card glass'+(visited?" visited":"")+'" data-module="'+key+'">'+
       (visited?'<span class="dc-module-check">'+icon("check")+'</span>':"")+
       '<div class="dc-module-icon">'+mod.icon+'</div>'+
-      '<div class="dc-module-title">'+esc(t(mod.labelKey))+'</div>'+
+      '<div class="dc-module-title">'+esc(mod.label)+'</div>'+
       '<div class="dc-module-desc">'+esc(meta.desc)+'</div>'+
       '<button type="button" class="dc-module-btn" data-module="'+key+'">مشاهدهٔ دموی این ماژول</button>'+
       '</div>';
@@ -3570,12 +3820,67 @@ document.getElementById("tour-finish-btn").addEventListener("click", function(){
 document.getElementById("tour-panel-close").addEventListener("click", function(){ dcEndTour(false); dcExitToHub(); });
 
 /* ============================================================ راه‌اندازی ============================================================ */
+/* ============================================================ رندر: ۵ ماژولِ تازه (ارزیابیِ پیمانکاران / صندوقِ پیشنهادات / نقشهٔ حرارتی / دیجیتال توئین / تمرینِ تخلیه) ============================================================ */
+function renderContractorEval(){
+  var sorted = state.contractorEvals.slice().sort(function(a,b){ return b.score-a.score; });
+  document.getElementById("contractoreval-list").innerHTML = sorted.map(function(c){
+    var color = c.score>=80 ? "var(--ok)" : c.score>=65 ? "var(--warn)" : "var(--danger)";
+    var trendBadge = c.trend==="صعودی" ? "badge-ok" : c.trend==="نزولی" ? "badge-danger" : "badge-muted";
+    return '<div class="panel glass" style="display:flex; align-items:center; gap:14px">'+
+      '<div style="width:46px; height:46px; border-radius:50%; border:3px solid '+color+'; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; color:'+color+'; flex-shrink:0">'+c.score+'</div>'+
+      '<div style="flex:1; min-width:0"><div class="cell-main" style="font-size:13px">'+esc(c.name)+'</div><div class="gauge-track" style="margin-top:6px"><div class="gauge-fill" style="width:'+c.score+'%"></div></div></div>'+
+      '<span class="badge '+trendBadge+'">'+esc(c.trend)+'</span>'+
+      '</div>';
+  }).join("");
+}
+function renderSuggestionBox(){
+  document.getElementById("suggestion-list").innerHTML = state.suggestions.map(function(s){
+    return '<div class="panel glass" style="display:flex; align-items:center; gap:14px">'+
+      '<div style="width:46px; height:46px; border-radius:10px; background:var(--teal-soft); color:var(--teal); display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0">'+
+        '<b style="font-size:14px">'+s.votes+'</b><span style="font-size:9px">رأی</span></div>'+
+      '<div style="flex:1; min-width:0"><div class="cell-main" style="font-size:12.5px">'+esc(s.title)+'</div><div class="cell-sub" style="margin-top:3px">'+esc(s.by)+'</div></div>'+
+      '<span class="badge '+(s.status==="تایید شده"?"badge-ok":s.status==="رد شده"?"badge-danger":"badge-warn")+'">'+esc(s.status)+'</span>'+
+      '</div>';
+  }).join("");
+}
+function renderHeatmap(){
+  document.getElementById("heatmap-grid").innerHTML = state.siteZones.map(function(z){
+    var color = z.level==="بالا" ? "#ef4444" : z.level==="متوسط" ? "#f59e0b" : "#22c55e";
+    return '<div class="tool-card glass" style="border-inline-start:4px solid '+color+'">'+
+      '<div class="cell-main" style="font-size:12.5px; margin-bottom:8px">'+esc(z.name)+'</div>'+
+      '<div style="display:flex; gap:16px; font-size:11px; color:var(--text2)">'+
+      '<span>حادثه: <b style="color:var(--text)">'+z.incidents+'</b></span>'+
+      '<span>آنومالی: <b style="color:var(--text)">'+z.anomalies+'</b></span>'+
+      '</div></div>';
+  }).join("");
+}
+function renderDigitalTwin(){
+  document.getElementById("digitaltwin-grid").innerHTML = state.siteZones.map(function(z){
+    var openCount = z.anomalies;
+    var statusColor = openCount>=6 ? "var(--danger)" : openCount>=3 ? "var(--warn)" : "var(--ok)";
+    return '<div class="tool-card glass">'+
+      '<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px">'+
+      '<div class="cell-main" style="font-size:12.5px">'+esc(z.name)+'</div>'+
+      '<span class="dot" style="background:'+statusColor+'"></span>'+
+      '</div>'+
+      '<div class="tool-result" style="margin-top:0"><div class="val">'+openCount+'</div><div class="lbl">آنومالیِ باز</div></div>'+
+      '</div>';
+  }).join("");
+}
+function renderDrills(){
+  document.getElementById("drill-tbody").innerHTML = state.drills.map(function(d){
+    return '<tr><td class="mono">'+d.date+'</td><td>'+esc(d.point)+'</td><td class="mono">'+d.present+' / '+d.total+'</td><td class="mono">'+d.duration+'</td>'+
+      '<td><span class="badge '+(d.status==="موفق"?"badge-ok":"badge-warn")+'">'+esc(d.status)+'</span></td></tr>';
+  }).join("");
+}
+
 function renderAll(){
   renderModulesNav();
   renderKpis(); renderTrendChart(); renderDonutChart(); renderActivity();
   renderAnomalyTable(); renderPermitTable(); renderPersonnel();
   renderMachinery(); renderScaffold(); renderIncidents(); renderRiskMatrix();
   renderChat(); renderArchive(); renderIndicators(); renderSurveyModule(); renderPssr(); renderWorkDashboard();
+  renderContractorEval(); renderSuggestionBox(); renderHeatmap(); renderDigitalTwin(); renderDrills();
   renderHomeTasks();
   renderNotifications();
   renderToolsGrid();
