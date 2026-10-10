@@ -1217,6 +1217,15 @@ function LoginScreen({ onLogin }) {
   const landingButtons = useMemo(() => mergeLandingButtons(landingOverride?.buttons), [landingOverride]);
   const [showLogin, setShowLogin] = useState(false);
   const [showPlans, setShowPlans] = useState(false);
+  // لینکِ عمیقِ هش برایِ دکمه‌هایِ دعوت‌به‌اقدامِ مرکزِ دمو (public/demo/index.html)
+  // — فقط باز کردنِ مودالِ ورود/ثبت‌نامِ همین صفحه، بدونِ هیچ تغییری در
+  // احراز هویت یا مسیریابیِ سطحِ بالا (آن مسیرها در App() با window.location.hash
+  // مدیریت می‌شوند، این یکی داخلِ همین کامپوننت است).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.location.hash === "#start-free") setShowTrialRequest(true);
+    else if (window.location.hash === "#login") setShowLogin(true);
+  }, []);
   const isDesktop = useIsDesktop();
   // اطلاعیه‌ی صفحه‌ی ورود همین‌جا (نه داخل خودِ پنل) بارگذاری می‌شود تا
   // بخش «ورود» و «اطلاعیه» یکجا و همزمان رندر شوند — نه اینکه اطلاعیه
