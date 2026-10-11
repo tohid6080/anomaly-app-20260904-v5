@@ -181,5 +181,6 @@ export function describeAiErrorKind(kind, t) {
   if (kind === "invalid_key") return t("aiErrInvalidKey");
   if (kind === "quota") return t("aiErrQuota");
   if (kind === "network") return t("aiErrNetwork");
+  if (kind === "blocked") return t("aiErrBlocked");
   return t("aiErrUnknown");
 }

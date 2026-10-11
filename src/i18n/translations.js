@@ -7347,6 +7347,7 @@ export const translations = {
   "aiErrQuota": { "fa": "سهمیهٔ استفاده از این کلید تمام شده است.", "en": "This key's usage quota has been exhausted." },
   "aiErrNetwork": { "fa": "ارتباط با سرویسِ هوشِ مصنوعی برقرار نشد — اتصالِ اینترنتِ خود را بررسی کنید.", "en": "Could not reach the AI service — check your internet connection." },
   "aiErrUnknown": { "fa": "خطایِ نامشخص در اتصال به سرویسِ هوشِ مصنوعی.", "en": "An unknown error occurred while connecting to the AI service." },
+  "aiErrBlocked": { "fa": "پاسخ توسطِ فیلترهایِ ایمنیِ خودِ ارائه‌دهنده مسدود شد — لطفاً سؤال را به شکلِ دیگری بپرسید.", "en": "The response was blocked by the provider's own safety filters — please try rephrasing your question." },
   "aiPrivacyNote": { "fa": "کلیدِ API شما هرگز در دیتابیسِ IHMS ذخیره یا در گزارش‌ها/لاگ‌ها ثبت نمی‌شود؛ تمامِ درخواست‌ها مستقیماً از مرورگرِ شما به سرویسِ ارائه‌دهنده ارسال می‌شوند.", "en": "Your API key is never stored in IHMS's database or recorded in logs/reports; all requests go directly from your browser to the provider's service." },
   "aiNoKeyHint": { "fa": "برای دریافتِ پاسخِ هوشِ مصنوعیِ واقعی، کلیدِ API شخصیِ خود را در تنظیمات وارد کنید.", "en": "To get real AI-generated answers, enter your personal API key in settings." },
   "aiOpenSettingsBtn": { "fa": "تنظیمِ اتصال", "en": "Set up connection" },

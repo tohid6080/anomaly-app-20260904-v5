@@ -32,7 +32,11 @@ export const AI_PROVIDERS = [
     nameKey: "aiProviderGemini",
     getKeyUrl: "https://aistudio.google.com/app/apikey",
     guideKey: "aiProviderGeminiGuide",
-    model: "gemini-3-flash-preview",
+    // این فقط یک پیش‌فرضِ احتیاطی است، نه نامِ قطعیِ مدل — نامِ مدلِ واقعی
+    // از رویِ فهرستِ مدل‌هایِ خودِ حسابِ کاربر (ListModels) تشخیص داده می‌شود،
+    // چون نامِ دقیقِ مدل‌هایِ Gemini بین حساب‌ها/نسخه‌ها فرق می‌کند و یک نامِ
+    // ثابت می‌تواند با ۴۰۴ (مدلِ یافت‌نشده) روبه‌رو شود. ببینید resolveGeminiModel.
+    model: "gemini-flash-latest",
     family: "gemini",
   },
   {
@@ -134,9 +138,39 @@ function classifyHttpError(status) {
 
 function probeRequest(meta, key) {
   if (meta.family === "gemini") {
-    return { url: `${GEMINI_BASE}/models?pageSize=1`, headers: { "x-goog-api-key": key } };
+    return { url: `${GEMINI_BASE}/models?pageSize=100`, headers: { "x-goog-api-key": key } };
   }
   return { url: `${meta.apiBase}/models`, headers: { Authorization: `Bearer ${key}` } };
+}
+
+// نامِ دقیقِ مدل‌هایِ Gemini که با یک کلید کار می‌کنند، بین حساب‌ها/زمان‌ها
+// فرق می‌کند (نسخه‌هایِ preview منقضی می‌شوند، دسترسی به مدل‌هایِ جدید
+// تدریجی است). به‌جایِ یک نامِ ثابت که ممکن است ۴۰۴ بدهد، فهرستِ واقعیِ
+// مدل‌هایِ خودِ همین کلید را می‌خوانیم و یکی که generateContent را پشتیبانی
+// می‌کند انتخاب می‌کنیم — فقط در همین نشست، برایِ همان کلید، کش می‌شود.
+const _geminiModelCache = new Map();
+
+function pickGeminiModelFromList(data) {
+  const models = Array.isArray(data?.models) ? data.models : [];
+  const usable = models.filter((m) => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes("generateContent"));
+  const flashStable = usable.find((m) => /flash/i.test(m.name) && !/-(exp|preview|thinking)/i.test(m.name));
+  const anyStable = usable.find((m) => !/-(exp|preview|thinking)/i.test(m.name));
+  const pick = flashStable || anyStable || usable[0];
+  return pick ? pick.name.replace(/^models\//, "") : null;
+}
+
+async function resolveGeminiModel(key) {
+  if (_geminiModelCache.has(key)) return _geminiModelCache.get(key);
+  try {
+    const res = await fetch(`${GEMINI_BASE}/models?pageSize=100`, { headers: { "x-goog-api-key": key } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const name = pickGeminiModelFromList(data);
+    if (name) _geminiModelCache.set(key, name);
+    return name;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -180,8 +214,16 @@ export async function testAiConnection({ provider, apiKey }) {
   try {
     const { url, headers } = probeRequest(meta, key);
     const res = await fetch(url, { method: "GET", headers });
-    if (res.ok) return { ok: true };
-    return { ok: false, kind: classifyHttpError(res.status), httpStatus: res.status };
+    if (!res.ok) return { ok: false, kind: classifyHttpError(res.status), httpStatus: res.status };
+    if (meta.family === "gemini") {
+      // همین پاسخِ فهرستِ مدل‌ها را برایِ تشخیصِ نامِ واقعیِ مدل هم استفاده
+      // می‌کنیم — تا تستِ اتصال و پیامِ واقعی هر دو رویِ یک مدلِ واقعاً
+      // در دسترس کار کنند، نه یک نامِ ثابتِ احتمالاً نامعتبر.
+      const data = await res.json();
+      const name = pickGeminiModelFromList(data);
+      if (name) _geminiModelCache.set(key, name);
+    }
+    return { ok: true };
   } catch {
     return { ok: false, kind: "network" };
   }
@@ -204,19 +246,26 @@ export async function generateAiReply({ provider, apiKey, systemPrompt, history,
   if (!recent.length) return { ok: false, kind: "unknown" };
 
   if (meta.family === "gemini") {
+    const model = (await resolveGeminiModel(key)) || meta.model;
     const contents = recent.map((m, i) => {
       const isLast = i === recent.length - 1;
       const text = isLast && contextText ? `${contextText}\n\n${m.text}` : m.text;
       return { role: m.who === "mine" ? "user" : "model", parts: [{ text }] };
     });
     const result = await postJsonWithRetry(
-      `${GEMINI_BASE}/models/${meta.model}:generateContent`,
+      `${GEMINI_BASE}/models/${model}:generateContent`,
       { "x-goog-api-key": key },
       { contents, systemInstruction: { parts: [{ text: systemPrompt }] } },
     );
     if (!result.ok) return result;
-    const text = result.data?.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("") || "";
-    if (!text) return { ok: false, kind: "unknown" };
+    const candidate = result.data?.candidates?.[0];
+    const text = candidate?.content?.parts?.map((p) => p.text || "").join("") || "";
+    if (!text) {
+      // پاسخِ خالی معمولاً به‌معنیِ فیلترِ ایمنیِ خودِ Gemini است (مثلاً
+      // موضوعاتِ حساسِ ایمنی/شیمیایی)، نه خطایِ واقعاً نامشخص.
+      const blocked = result.data?.promptFeedback?.blockReason || candidate?.finishReason === "SAFETY";
+      return { ok: false, kind: blocked ? "blocked" : "unknown" };
+    }
     return { ok: true, text };
   }
 
