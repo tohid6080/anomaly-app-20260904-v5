@@ -1,9 +1,9 @@
 // تنظیمات هوشِ مصنوعیِ شخصیِ هر کاربر — برایِ «دستیار آموزشی HSE» (ماژولِ
 // چت). هر کاربر کلیدِ API خودش را واردِ سامانه می‌کند؛ این کلید هرگز به
 // بک‌اند/دیتابیسِ IHMS فرستاده یا در جایی ثبت نمی‌شود — تمامِ درخواست‌ها
-// مستقیماً از مرورگرِ خودِ کاربر به سرویسِ ارائه‌دهنده (Google Gemini) ارسال
-// می‌شوند. هزینه و مسئولیتِ استفاده از کلید، کاملاً بر عهدهٔ خودِ کاربر و
-// ارائه‌دهندهٔ هوشِ مصنوعی است.
+// مستقیماً از مرورگرِ خودِ کاربر به سرویسِ ارائه‌دهنده (Gemini، ChatGPT یا
+// DeepSeek) ارسال می‌شوند. هزینه و مسئولیتِ استفاده از کلید، کاملاً بر عهدهٔ
+// خودِ کاربر و ارائه‌دهندهٔ هوشِ مصنوعی است.
 //
 // دو لایهٔ ذخیره‌سازی (طبقِ قاعدهٔ صریحِ کاربر — پیش‌فرض موقت است):
 //   ۱) نشست (session) — فقط در حافظهٔ جاوااسکریپتِ همین تبِ باز، با بستنِ
@@ -33,6 +33,25 @@ export const AI_PROVIDERS = [
     getKeyUrl: "https://aistudio.google.com/app/apikey",
     guideKey: "aiProviderGeminiGuide",
     model: "gemini-3-flash-preview",
+    family: "gemini",
+  },
+  {
+    key: "openai",
+    nameKey: "aiProviderOpenai",
+    getKeyUrl: "https://platform.openai.com/api-keys",
+    guideKey: "aiProviderOpenaiGuide",
+    model: "gpt-4o-mini",
+    family: "openai",
+    apiBase: "https://api.openai.com/v1",
+  },
+  {
+    key: "deepseek",
+    nameKey: "aiProviderDeepseek",
+    getKeyUrl: "https://platform.deepseek.com/api_keys",
+    guideKey: "aiProviderDeepseekGuide",
+    model: "deepseek-chat",
+    family: "openai",
+    apiBase: "https://api.deepseek.com",
   },
 ];
 
@@ -97,9 +116,12 @@ export function getLastVerifiedStatus(username) {
 }
 
 /* ============================================================
- * اتصالِ مستقیمِ مرورگر به Gemini — بدونِ هیچ واسطِ بک‌اندی. کلید فقط در
- * هدرِ درخواست (x-goog-api-key) ارسال می‌شود، نه در URL — تا هیچ‌جا
- * (تاریخچهٔ مرورگر، لاگِ پراکسی، پیامِ خطا) دیده نشود.
+ * اتصالِ مستقیمِ مرورگر به سرویسِ ارائه‌دهنده — بدونِ هیچ واسطِ بک‌اندی.
+ * Gemini با هدرِ x-goog-api-key، و ChatGPT/DeepSeek (هر دو با فرمتِ
+ * یکسانِ OpenAI-compatible: chat/completions) با هدرِ
+ * Authorization: Bearer احرازِ هویت می‌شوند — در هر دو حالت کلید فقط در
+ * هدرِ درخواست است، نه در URL — تا هیچ‌جا (تاریخچهٔ مرورگر، لاگِ پراکسی،
+ * پیامِ خطا) دیده نشود.
  * ============================================================ */
 
 const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta";
@@ -110,18 +132,54 @@ function classifyHttpError(status) {
   return "unknown";
 }
 
+function probeRequest(meta, key) {
+  if (meta.family === "gemini") {
+    return { url: `${GEMINI_BASE}/models?pageSize=1`, headers: { "x-goog-api-key": key } };
+  }
+  return { url: `${meta.apiBase}/models`, headers: { Authorization: `Bearer ${key}` } };
+}
+
+/**
+ * یک درخواستِ POST با تلاشِ مجددِ نماییِ‌تاخیر (تا ۳ بار)؛ رویِ خطایِ کلید
+ * یا سهمیه، تلاشِ مجدد بی‌فایده است و همان لحظه برمی‌گردد.
+ */
+async function postJsonWithRetry(url, headers, body) {
+  let delay = 900;
+  const maxAttempts = 3;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return { ok: true, data };
+      }
+      const kind = classifyHttpError(res.status);
+      if (kind === "invalid_key" || kind === "quota") return { ok: false, kind, httpStatus: res.status };
+      if (attempt === maxAttempts) return { ok: false, kind: "unknown", httpStatus: res.status };
+    } catch {
+      if (attempt === maxAttempts) return { ok: false, kind: "network" };
+    }
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    delay *= 2;
+  }
+  return { ok: false, kind: "network" };
+}
+
 /**
  * یک درخواستِ سبک (فهرستِ مدل‌ها، بدونِ مصرفِ سهمیهٔ تولیدِ محتوا) برایِ
  * تاییدِ واقعیِ اعتبارِ کلید — نه صرفاً ذخیره‌شدنِ آن.
  */
 export async function testAiConnection({ provider, apiKey }) {
   const meta = getProviderMeta(provider);
-  if (!apiKey || !apiKey.trim()) return { ok: false, kind: "invalid_key" };
+  const key = (apiKey || "").trim();
+  if (!key) return { ok: false, kind: "invalid_key" };
   try {
-    const res = await fetch(`${GEMINI_BASE}/models?pageSize=1`, {
-      method: "GET",
-      headers: { "x-goog-api-key": apiKey.trim() },
-    });
+    const { url, headers } = probeRequest(meta, key);
+    const res = await fetch(url, { method: "GET", headers });
     if (res.ok) return { ok: true };
     return { ok: false, kind: classifyHttpError(res.status), httpStatus: res.status };
   } catch {
@@ -133,50 +191,49 @@ export async function testAiConnection({ provider, apiKey }) {
  * ساختِ پاسخِ واقعیِ هوشِ مصنوعی با حفظِ زمینهٔ مکالمه (چندنوبتی). `history`
  * آرایه‌ای از پیام‌هایِ قبلیِ همین گفت‌وگوست ({who:"mine"|"ai", text}).
  * `contextText` در صورتِ وجود (مثلاً محتوایِ مرتبطِ بانکِ دانشِ محلی)، به‌عنوانِ
- * زمینهٔ اضافی به آخرین پیامِ کاربر افزوده می‌شود.
+ * زمینهٔ اضافی به آخرین پیامِ کاربر افزوده می‌شود. فرمتِ درخواست بر اساسِ
+ * `meta.family` ارائه‌دهنده انتخاب می‌شود (gemini یا openai-compatible).
  */
 export async function generateAiReply({ provider, apiKey, systemPrompt, history, contextText }) {
   const meta = getProviderMeta(provider);
-  if (!apiKey || !apiKey.trim()) return { ok: false, kind: "invalid_key" };
+  const key = (apiKey || "").trim();
+  if (!key) return { ok: false, kind: "invalid_key" };
 
   // فقط چند نوبتِ آخر برایِ محدودکردنِ حجم/هزینهٔ هر درخواست.
   const recent = (history || []).slice(-16);
-  const contents = recent.map((m, i) => {
-    const isLast = i === recent.length - 1;
-    const text = isLast && contextText ? `${contextText}\n\n${m.text}` : m.text;
-    return { role: m.who === "mine" ? "user" : "model", parts: [{ text }] };
-  });
-  if (!contents.length) return { ok: false, kind: "unknown" };
+  if (!recent.length) return { ok: false, kind: "unknown" };
 
-  const body = {
-    contents,
-    systemInstruction: { parts: [{ text: systemPrompt }] },
-  };
-
-  let delay = 900;
-  const maxAttempts = 3;
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      const res = await fetch(`${GEMINI_BASE}/models/${meta.model}:generateContent`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey.trim() },
-        body: JSON.stringify(body),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const text = data?.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("") || "";
-        if (!text) return { ok: false, kind: "unknown" };
-        return { ok: true, text };
-      }
-      const kind = classifyHttpError(res.status);
-      // روی خطایِ کلید یا سهمیه، تلاشِ مجدد بی‌فایده است — همان لحظه برگردان.
-      if (kind === "invalid_key" || kind === "quota") return { ok: false, kind, httpStatus: res.status };
-      if (attempt === maxAttempts) return { ok: false, kind: "unknown", httpStatus: res.status };
-    } catch {
-      if (attempt === maxAttempts) return { ok: false, kind: "network" };
-    }
-    await new Promise((resolve) => setTimeout(resolve, delay));
-    delay *= 2;
+  if (meta.family === "gemini") {
+    const contents = recent.map((m, i) => {
+      const isLast = i === recent.length - 1;
+      const text = isLast && contextText ? `${contextText}\n\n${m.text}` : m.text;
+      return { role: m.who === "mine" ? "user" : "model", parts: [{ text }] };
+    });
+    const result = await postJsonWithRetry(
+      `${GEMINI_BASE}/models/${meta.model}:generateContent`,
+      { "x-goog-api-key": key },
+      { contents, systemInstruction: { parts: [{ text: systemPrompt }] } },
+    );
+    if (!result.ok) return result;
+    const text = result.data?.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("") || "";
+    if (!text) return { ok: false, kind: "unknown" };
+    return { ok: true, text };
   }
-  return { ok: false, kind: "network" };
+
+  // خانوادهٔ سازگار با OpenAI (ChatGPT، DeepSeek) — فرمتِ chat/completions مشترک.
+  const messages = [{ role: "system", content: systemPrompt }];
+  recent.forEach((m, i) => {
+    const isLast = i === recent.length - 1;
+    const content = isLast && contextText ? `${contextText}\n\n${m.text}` : m.text;
+    messages.push({ role: m.who === "mine" ? "user" : "assistant", content });
+  });
+  const result = await postJsonWithRetry(
+    `${meta.apiBase}/chat/completions`,
+    { Authorization: `Bearer ${key}` },
+    { model: meta.model, messages },
+  );
+  if (!result.ok) return result;
+  const text = result.data?.choices?.[0]?.message?.content || "";
+  if (!text) return { ok: false, kind: "unknown" };
+  return { ok: true, text };
 }
