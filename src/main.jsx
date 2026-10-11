@@ -111,7 +111,13 @@ function looksLikeStaleChunk(err) {
     /Failed to fetch dynamically imported module/i.test(msg) ||
     /error loading dynamically imported module/i.test(msg) ||
     /Importing a module script failed/i.test(msg) ||
-    /'?text\/html'? is not a valid JavaScript MIME type/i.test(msg)
+    /'?text\/html'? is not a valid JavaScript MIME type/i.test(msg) ||
+    // وقتی preventDefault() رویِ vite:preloadError صدا زده می‌شود (دقیقاً
+    // همین‌جا، در هندلرِ پایین)، خودِ Vite بجای reject کردنِ import()، آن را
+    // به undefined resolve می‌کند؛ و React.lazy با خواندنِ ".default" از
+    // آن undefined دقیقاً همین ارور را می‌دهد — یک حالتِ دیگر از همان
+    // «chunkِ قدیمیِ بعد از دیپلویِ تازه»، نه یک باگِ جداگانه.
+    /Cannot read propert(?:y|ies) of undefined \(reading ['"]default['"]\)/i.test(msg)
   );
 }
 function recoverFromStaleChunk(err) {
