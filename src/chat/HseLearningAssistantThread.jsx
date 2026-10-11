@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import BackLink from "../shared/BackLink.jsx";
-import { Sparkles, Send, Target } from "lucide-react";
+import { Sparkles, Send, Target, Settings } from "lucide-react";
 import { styles, THEME } from "../shared.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { getCurrentLang } from "../i18n/translations.js";
@@ -8,6 +8,9 @@ import { loadRecentAnomalyBrief } from "./hseLearningApi.js";
 import { loadSurveys, buildSurveyLink } from "../survey/surveyApi.js";
 import { pickRecommendedTopic, matchSurveyForTopic, answerQuestion } from "./hseLearningEngine.js";
 import { TOPICS_BY_KEY } from "./hseLearningContent.js";
+import { getAiSettings, generateAiReply, setLastVerifiedStatus } from "./aiAssistantSettings.js";
+import { buildHseAssistantSystemPrompt } from "./hseAssistantPrompt.js";
+import AiAssistantSettingsPanel, { describeAiErrorKind } from "./AiAssistantSettingsPanel.jsx";
 
 function nowLabel() {
   const locale = getCurrentLang() === "fa" ? "fa-IR" : "en-US";
@@ -34,7 +37,10 @@ export default function HseLearningAssistantThread({ currentUser, onBack }) {
   const [recommendedSurvey, setRecommendedSurvey] = useState(null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const [showSettings, setShowSettings] = useState(false);
+  const [aiThinking, setAiThinking] = useState(false);
   const bottomRef = useRef(null);
+  const aiSettings = getAiSettings(currentUser?.username);
 
   useEffect(() => {
     let alive = true;
@@ -58,14 +64,38 @@ export default function HseLearningAssistantThread({ currentUser, onBack }) {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleAsk = (question) => {
+  const handleAsk = async (question) => {
     const q = (question || "").trim();
     if (!q) return;
     const mine = { who: "mine", text: q, time: nowLabel() };
-    const { text: ruleText } = answerQuestion(q);
-    const reply = { who: "ai", text: ruleText || t("hlaFallbackReply"), time: nowLabel() };
-    setMessages((prev) => [...prev, mine, reply]);
     setInput("");
+
+    // بدونِ کلیدِ شخصیِ هوشِ مصنوعی، دقیقاً مثلِ نسخهٔ قبل: موتورِ قانونِ محلی.
+    if (!aiSettings?.apiKey) {
+      const { text: ruleText } = answerQuestion(q);
+      setMessages((prev) => [...prev, mine, { who: "ai", text: ruleText || t("hlaFallbackReply"), time: nowLabel() }]);
+      return;
+    }
+
+    const historyForAi = [...messages, mine];
+    setMessages(historyForAi);
+    setAiThinking(true);
+    const { text: ruleTopicContext } = answerQuestion(q);
+    const result = await generateAiReply({
+      provider: aiSettings.provider,
+      apiKey: aiSettings.apiKey,
+      systemPrompt: buildHseAssistantSystemPrompt(getCurrentLang()),
+      history: historyForAi,
+      contextText: ruleTopicContext ? `(${t("aiLocalContextLabel")}: ${ruleTopicContext})` : "",
+    });
+    setAiThinking(false);
+    setLastVerifiedStatus(currentUser?.username, result.ok ? "connected" : "error");
+
+    if (result.ok) {
+      setMessages((prev) => [...prev, { who: "ai", text: result.text, time: nowLabel() }]);
+    } else {
+      setMessages((prev) => [...prev, { who: "ai", text: `${t("aiErrorPrefix")} ${describeAiErrorKind(result.kind, t)}`, time: nowLabel(), isAiError: true }]);
+    }
   };
 
   if (loading) {
@@ -74,6 +104,10 @@ export default function HseLearningAssistantThread({ currentUser, onBack }) {
         {t("commonLoading")}
       </div>
     );
+  }
+
+  if (showSettings) {
+    return <AiAssistantSettingsPanel currentUser={currentUser} onBack={() => setShowSettings(false)} />;
   }
 
   return (
@@ -86,20 +120,43 @@ export default function HseLearningAssistantThread({ currentUser, onBack }) {
           </div>
           <span style={{ fontWeight: 700, color: THEME.heading, fontSize: 14.5 }}>{t("hlaTitle")}</span>
         </div>
+        <button
+          type="button" onClick={() => setShowSettings(true)} title={t("aiSettingsTitle")}
+          style={{ background: "none", border: `1px solid ${THEME.border}`, borderRadius: 8, width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: THEME.text3, flexShrink: 0 }}
+        >
+          <Settings size={15} />
+        </button>
       </div>
+
+      {!aiSettings?.apiKey && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, background: THEME.tealSoft, border: `1px solid ${THEME.teal}`, borderRadius: 9, padding: "8px 12px", marginBottom: 10, flexWrap: "wrap" }}>
+          <span style={{ fontSize: 11.5, color: THEME.tealDeep, lineHeight: 1.7 }}>{t("aiNoKeyHint")}</span>
+          <button
+            type="button" onClick={() => setShowSettings(true)}
+            style={{ background: THEME.teal, color: "#fff", border: "none", borderRadius: 7, padding: "6px 12px", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: THEME.font, flexShrink: 0 }}
+          >
+            {t("aiOpenSettingsBtn")}
+          </button>
+        </div>
+      )}
 
       <div style={{ flex: 1, overflowY: "auto", background: THEME.bg, borderRadius: 10, padding: 14, marginBottom: 10 }}>
         {messages.map((m, i) => (
           <MessageBubble key={i} m={m} t={t} onOpenExam={(survey) => window.open(buildSurveyLink(survey.publicToken), "_blank", "noopener")} onAsk={handleAsk} />
         ))}
+        {aiThinking && (
+          <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 11.5, color: THEME.text3, marginBottom: 12 }}>
+            <Sparkles size={11} color={THEME.teal} style={{ animation: "ihms-spin 1.4s linear infinite" }} /> {t("aiThinking")}
+          </div>
+        )}
         <div ref={bottomRef} />
       </div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
         {Object.values(TOPICS_BY_KEY).filter((tp) => tp.key !== "general").map((tp) => (
           <button
-            key={tp.key} type="button" onClick={() => handleAsk(tp.sampleQuestion)}
-            style={{ background: THEME.tealSoft, color: THEME.tealDeep, border: `1px solid ${THEME.teal}`, borderRadius: 999, padding: "5px 11px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: THEME.font }}
+            key={tp.key} type="button" onClick={() => handleAsk(tp.sampleQuestion)} disabled={aiThinking}
+            style={{ background: THEME.tealSoft, color: THEME.tealDeep, border: `1px solid ${THEME.teal}`, borderRadius: 999, padding: "5px 11px", fontSize: 11, fontWeight: 600, cursor: aiThinking ? "default" : "pointer", fontFamily: THEME.font, opacity: aiThinking ? 0.6 : 1 }}
           >
             {tp.sampleQuestion}
           </button>
@@ -108,13 +165,14 @@ export default function HseLearningAssistantThread({ currentUser, onBack }) {
 
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
         <input
-          style={{ ...styles.input, flex: 1 }} placeholder={t("hlaComposerPlaceholder")} value={input}
+          style={{ ...styles.input, flex: 1 }} placeholder={t("hlaComposerPlaceholder")} value={input} disabled={aiThinking}
           onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleAsk(input)} dir={dir}
         />
-        <button type="button" style={{ ...styles.smallButton, padding: "9px 14px" }} onClick={() => handleAsk(input)} disabled={!input.trim()}>
+        <button type="button" style={{ ...styles.smallButton, padding: "9px 14px" }} onClick={() => handleAsk(input)} disabled={!input.trim() || aiThinking}>
           <Send size={15} />
         </button>
       </div>
+      <style>{`@keyframes ihms-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
