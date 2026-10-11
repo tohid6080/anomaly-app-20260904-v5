@@ -5894,7 +5894,12 @@ class ErrorBoundary extends React.Component {
       /Failed to fetch dynamically imported module/i.test(msg) ||
       /error loading dynamically imported module/i.test(msg) ||
       /Importing a module script failed/i.test(msg) ||
-      /is not a valid JavaScript MIME type/i.test(msg);
+      /is not a valid JavaScript MIME type/i.test(msg) ||
+      // همان حالتی که main.jsx's looksLikeStaleChunk() توضیح می‌دهد: وقتی
+      // preventDefault() رویِ vite:preloadError صدا زده می‌شود، Vite بجای
+      // reject کردنِ import()، آن را به undefined resolve می‌کند و
+      // React.lazy با خواندنِ ".default" از آن همین ارور را می‌دهد.
+      /Cannot read propert(?:y|ies) of undefined \(reading ['"]default['"]\)/i.test(msg);
     if (staleChunk) {
       try {
         const KEY = "ihms_chunk_reloaded_at";
