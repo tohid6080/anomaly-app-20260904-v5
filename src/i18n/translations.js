@@ -11035,6 +11035,7 @@ export const translations = {
   "lpBtn_login": { "fa": "ورودِ کاربران (هدر + فوتر)", "en": "Sign In (header + footer)" },
   "lpBtn_scBtn": { "fa": "مشاهده‌ی محیطِ سامانه (بخشِ نمایشِ محیطِ سامانه)", "en": "See Product (product showcase section)" },
   "lpBtn_loginTrialRequest": { "fa": "درخواستِ ارزیابی و پلنِ آزمایشیِ رایگان (داخلِ پنجره‌ی ورود)", "en": "Request free assessment & trial plan (inside the sign-in dialog)" },
+  "lpBtn_proposalBtn": { "fa": "پرپوزالِ معرفیِ IHMS (بخشِ اصلی)", "en": "IHMS Proposal (hero)" },
   "scErrSaveLanding": { "fa": "خطا در ذخیره‌ی صفحه اصلی سامانه.", "en": "Error saving the system homepage." },
   "arNote": { "fa": "از این بخش نسخه‌های جدید اپ موبایل (APK) را ثبت و منتشر کنید. اپ موبایل کاربران، آخرین نسخه‌ی «منتشرشده» را با نسخه‌ی نصب‌شده مقایسه می‌کند و در صورت جدیدتر بودن، پیام «نسخه جدید موجود است» را نشان می‌دهد.", "en": "Register and publish new mobile app releases (APK) here. Each user's mobile app compares the latest published release with the installed one and shows a \"new version available\" message when it is newer." },
   "arCurrentBuildVersion": { "fa": "نسخه‌ی این بیلد", "en": "This build's version" },
