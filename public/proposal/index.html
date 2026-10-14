@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="fa" dir="rtl" data-lang="fa">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="IHMS — سامانه هوشمند مدیریت HSE برای کارفرمایان، پیمانکاران، شرکت‌های مستقل و کارشناسان ایمنی، بهداشت و محیط‌زیست.">
+<title>پرپوزال IHMS — سامانه هوشمند مدیریت HSE</title>
+<link rel="icon" href="/favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0c2233; --ink2:#33566b; --ink3:#6a8698;
+  --navy:#0e2c3f; --navy-deep:#081a27;
+  --teal:#12b5a6; --teal-deep:#0e8f86; --teal-soft:#e6f6f4;
+  --line:#e4ecf1; --line-soft:#eef3f6;
+  --bg:#ffffff; --bg-soft:#f5f9fb; --bg-tint:#f0f7f8;
+  --amber:#e8a13a; --good:#1e9e6a; --danger:#d1453b;
+  --font:'Vazirmatn',Tahoma,Arial,sans-serif;
+  --maxw:1180px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; font-family:var(--font); color:var(--ink); background:var(--bg);
+  line-height:1.8; -webkit-font-smoothing:antialiased;
+}
+img{max-width:100%; display:block}
+a{color:inherit; text-decoration:none}
+button{font-family:inherit; cursor:pointer}
+input,select,textarea{font-family:inherit}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 20px}
+section{padding:68px 0}
+section.alt{background:var(--bg-soft)}
+.eyebrow{display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:700; color:var(--teal-deep); background:var(--teal-soft); padding:6px 14px; border-radius:999px; margin-bottom:16px}
+h1,h2,h3,h4{margin:0; color:var(--navy); font-weight:800}
+h2.sec-title{font-size:clamp(22px,3.4vw,32px); margin-bottom:10px}
+p.sec-sub{color:var(--ink2); font-size:15px; max-width:680px; margin:0 0 36px}
+.grid{display:grid; gap:20px}
+.grid-2{grid-template-columns:repeat(2,1fr)}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+.card{background:#fff; border:1px solid var(--line); border-radius:16px; padding:24px}
+.card-soft{background:var(--bg-soft); border:1px solid var(--line)}
+.icon-badge{width:46px; height:46px; border-radius:12px; display:flex; align-items:center; justify-content:center; background:var(--teal-soft); color:var(--teal-deep); flex-shrink:0}
+.icon-badge svg{width:22px; height:22px}
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; border:none; border-radius:11px; font-weight:700; font-size:14.5px; padding:13px 24px; transition:transform .15s, box-shadow .15s}
+.btn-primary{background:linear-gradient(180deg,var(--teal),var(--teal-deep)); color:#fff; box-shadow:0 10px 24px -10px rgba(14,143,134,.55)}
+.btn-primary:hover{transform:translateY(-1px)}
+.btn-ghost{background:#fff; color:var(--navy); border:1.5px solid var(--line)}
+.btn-ghost:hover{border-color:var(--teal)}
+.btn-outline-light{background:rgba(255,255,255,.08); color:#fff; border:1.5px solid rgba(255,255,255,.4)}
+.btn-sm{padding:9px 16px; font-size:13px; border-radius:9px}
+.btn:disabled{opacity:.55; cursor:default; transform:none}
+
+/* ---------- هدر ---------- */
+header.site{
+  position:sticky; top:0; z-index:60; background:rgba(255,255,255,.92); backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.hdr-row{display:flex; align-items:center; gap:16px; padding:12px 0}
+.brand{display:flex; align-items:center; gap:10px; font-weight:800; color:var(--navy); font-size:16px}
+.brand img{width:32px; height:32px; border-radius:8px}
+nav.hdr-nav{display:flex; gap:4px; margin-inline-start:auto; flex-wrap:wrap}
+nav.hdr-nav a{font-size:13px; font-weight:600; color:var(--ink2); padding:8px 12px; border-radius:8px}
+nav.hdr-nav a:hover{background:var(--bg-soft); color:var(--navy)}
+.hdr-tools{display:flex; align-items:center; gap:8px; margin-inline-start:12px}
+.icon-btn{width:36px; height:36px; border-radius:9px; border:1px solid var(--line); background:#fff; display:flex; align-items:center; justify-content:center; color:var(--ink2); position:relative}
+.icon-btn:hover{border-color:var(--teal); color:var(--teal-deep)}
+.icon-btn svg{width:16px; height:16px}
+.lang-btn{font-size:12px; font-weight:700; width:auto; padding:0 10px}
+.share-menu{position:absolute; inset-inline-end:0; top:calc(100% + 8px); background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:0 18px 38px -16px rgba(12,34,51,.25); padding:8px; min-width:190px; display:none; flex-direction:column; gap:2px; z-index:70}
+.share-menu.open{display:flex}
+.share-menu button, .share-menu a{display:flex; align-items:center; gap:10px; font-size:13px; padding:9px 10px; border-radius:8px; border:none; background:none; color:var(--ink); text-align:start; width:100%}
+.share-menu button:hover, .share-menu a:hover{background:var(--bg-soft)}
+
+/* ---------- ۰۱ جلد ---------- */
+.hero{padding:64px 0 54px; background:
+  radial-gradient(900px 420px at 85% -10%, rgba(18,181,166,.10), transparent 60%),
+  linear-gradient(180deg,#fff, var(--bg-soft) 120%);
+}
+.hero-grid{display:grid; grid-template-columns:1.1fr .9fr; gap:48px; align-items:center}
+.hero h1{font-size:clamp(28px,4.4vw,44px); line-height:1.35; margin-bottom:18px}
+.hero h1 span{color:var(--teal-deep)}
+.hero p.lead{font-size:16px; color:var(--ink2); max-width:540px; margin-bottom:28px}
+.hero .cta-row{display:flex; gap:12px; flex-wrap:wrap}
+.phone-frame{
+  width:260px; margin:0 auto; border:10px solid var(--navy); border-radius:34px;
+  box-shadow:0 30px 60px -24px rgba(12,34,51,.35); overflow:hidden; background:var(--navy);
+}
+.phone-frame img{border-radius:22px}
+.hero-stats{display:flex; gap:22px; margin-top:28px; flex-wrap:wrap}
+.hero-stat b{display:block; font-size:19px; color:var(--navy)}
+.hero-stat span{font-size:12px; color:var(--ink3)}
+
+/* ---------- ۰۲ چالش‌ها ---------- */
+.challenge-item{display:flex; gap:14px; align-items:flex-start}
+.challenge-item p{margin:4px 0 0; color:var(--ink2); font-size:13.5px}
+.challenge-item h4{font-size:14.5px}
+
+/* ---------- ۰۳ راهکار ---------- */
+.solution-card h4{font-size:14.5px; margin:14px 0 6px}
+.solution-card p{color:var(--ink2); font-size:13px; margin:0}
+
+/* ---------- ۰۴ دمو ---------- */
+.feature-mini{display:flex; gap:10px; align-items:flex-start; padding:14px; border:1px solid var(--line); border-radius:12px; background:#fff}
+.feature-mini .icon-badge{width:36px; height:36px; border-radius:9px}
+.feature-mini .icon-badge svg{width:17px; height:17px}
+.feature-mini h5{font-size:13px; margin:0 0 3px}
+.feature-mini p{font-size:11.5px; color:var(--ink3); margin:0}
+.demo-frame-wrap{border:1px solid var(--line); border-radius:18px; overflow:hidden; box-shadow:0 24px 48px -26px rgba(12,34,51,.28); background:var(--navy-deep)}
+.demo-frame-bar{display:flex; align-items:center; gap:8px; padding:10px 14px; background:var(--navy)}
+.demo-frame-bar .dot{width:9px; height:9px; border-radius:50%; background:rgba(255,255,255,.25)}
+.demo-frame-bar span{color:rgba(255,255,255,.65); font-size:11.5px; margin-inline-start:8px}
+.demo-frame-bar a{margin-inline-start:auto; color:#fff; font-size:12px; font-weight:700; display:flex; align-items:center; gap:6px}
+iframe.demo-frame{width:100%; height:560px; border:none; display:block; background:#fff}
+
+/* ---------- ۰۵ مخاطبان ---------- */
+.audience-tabs{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:28px}
+.aud-tab{padding:11px 18px; border-radius:11px; border:1.5px solid var(--line); background:#fff; font-weight:700; font-size:13.5px; color:var(--ink2); display:flex; align-items:center; gap:8px}
+.aud-tab.active{border-color:var(--teal); background:var(--teal-soft); color:var(--teal-deep)}
+.aud-panel{display:none}
+.aud-panel.active{display:block}
+.aud-feature{display:flex; gap:12px; align-items:flex-start; padding:16px; border:1px solid var(--line); border-radius:13px; background:#fff}
+.aud-feature h5{font-size:13.5px; margin:0 0 4px}
+.aud-feature p{font-size:12.5px; color:var(--ink2); margin:0}
+.aud-note{margin-top:22px; padding:16px 18px; border-radius:12px; background:var(--bg-tint); border:1px dashed var(--line); font-size:12.5px; color:var(--ink2)}
+
+/* ---------- ۰۶ ارزش اقتصادی ---------- */
+.calc-grid{display:grid; grid-template-columns:1fr 1fr; gap:28px; align-items:start}
+.calc-field{margin-bottom:18px}
+.calc-field label{display:block; font-size:12.5px; font-weight:700; color:var(--ink2); margin-bottom:7px}
+.calc-field input[type=number]{width:100%; padding:11px 13px; border:1.5px solid var(--line); border-radius:9px; font-size:14px; color:var(--ink)}
+.calc-field input[type=range]{width:100%}
+.calc-field .range-val{font-size:12.5px; font-weight:700; color:var(--teal-deep)}
+.calc-result{background:linear-gradient(165deg,var(--navy),var(--navy-deep)); color:#fff; border-radius:16px; padding:26px}
+.calc-result .big{font-size:30px; font-weight:800; color:#fff}
+.calc-result .unit{font-size:13px; color:rgba(255,255,255,.65)}
+.calc-result .row{display:flex; justify-content:space-between; font-size:12.5px; color:rgba(255,255,255,.75); padding:7px 0; border-top:1px solid rgba(255,255,255,.12)}
+.calc-disclaimer{font-size:11px; color:rgba(255,255,255,.55); margin-top:16px; line-height:1.9}
+
+/* ---------- ۰۷ مراحل ---------- */
+.steps{display:flex; flex-direction:column; gap:0}
+.step-item{display:flex; gap:18px; position:relative; padding-bottom:34px}
+.step-item:last-child{padding-bottom:0}
+.step-num{flex-shrink:0; width:38px; height:38px; border-radius:50%; background:var(--teal); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; position:relative; z-index:1}
+.step-item:not(:last-child)::before{content:""; position:absolute; inset-inline-start:19px; top:38px; bottom:0; width:2px; background:var(--line)}
+.step-body h4{font-size:14.5px; margin-bottom:4px}
+.step-body p{font-size:13px; color:var(--ink2); margin:0}
+
+/* ---------- ۰۸ CTA + فرم ---------- */
+.cta-banner{background:linear-gradient(160deg,var(--navy),var(--navy-deep)); border-radius:22px; padding:44px 36px; text-align:center; color:#fff}
+.cta-banner h2{color:#fff; font-size:clamp(20px,3vw,27px); margin-bottom:10px}
+.cta-banner p{color:rgba(255,255,255,.72); max-width:520px; margin:0 auto 26px; font-size:14px}
+.cta-btn-grid{display:flex; gap:12px; justify-content:center; flex-wrap:wrap}
+.lead-form-wrap{max-width:640px; margin:46px auto 0; background:#fff; border:1px solid var(--line); border-radius:18px; padding:30px; box-shadow:0 24px 50px -30px rgba(12,34,51,.3)}
+.lf-row{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+.lf-field{margin-bottom:14px}
+.lf-field label{display:block; font-size:12.5px; font-weight:700; color:var(--ink2); margin-bottom:6px}
+.lf-field input, .lf-field select, .lf-field textarea{
+  width:100%; padding:11px 13px; border:1.5px solid var(--line); border-radius:9px; font-size:14px; color:var(--ink); background:#fff;
+}
+.lf-field input:focus, .lf-field select:focus, .lf-field textarea:focus{outline:none; border-color:var(--teal)}
+.lf-field textarea{resize:vertical; min-height:70px}
+.req-type-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:18px}
+.req-type-opt{border:1.5px solid var(--line); border-radius:10px; padding:10px 12px; font-size:12.5px; font-weight:600; color:var(--ink2); text-align:center; cursor:pointer}
+.req-type-opt.active{border-color:var(--teal); background:var(--teal-soft); color:var(--teal-deep)}
+.req-type-opt input{display:none}
+#cf-turnstile-container{margin:14px 0}
+.lf-msg{font-size:13px; padding:12px 14px; border-radius:10px; margin-top:14px; display:none}
+.lf-msg.ok{display:block; background:#e9f8f1; color:var(--good)}
+.lf-msg.err{display:block; background:#fdeceb; color:var(--danger)}
+.lf-submit{width:100%; margin-top:6px}
+
+/* ---------- فوتر ---------- */
+footer.site{border-top:1px solid var(--line); padding:30px 0; background:var(--bg-soft)}
+.ftr-row{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px}
+.ftr-row small{color:var(--ink3); font-size:12px}
+.ftr-links{display:flex; gap:16px; flex-wrap:wrap}
+.ftr-links a{font-size:12.5px; color:var(--ink2); display:flex; align-items:center; gap:6px}
+.ftr-links a:hover{color:var(--teal-deep)}
+
+/* ---------- واکنش‌گرایی ---------- */
+@media (max-width:980px){
+  .hero-grid{grid-template-columns:1fr; text-align:center}
+  .hero .cta-row{justify-content:center}
+  .phone-frame{margin-top:24px}
+  .hero-stats{justify-content:center}
+  .grid-4{grid-template-columns:repeat(2,1fr)}
+  .grid-3{grid-template-columns:repeat(2,1fr)}
+  .calc-grid{grid-template-columns:1fr}
+}
+@media (max-width:720px){
+  nav.hdr-nav{display:none}
+  .grid-2,.grid-3,.grid-4{grid-template-columns:1fr}
+  .lf-row{grid-template-columns:1fr}
+  .req-type-grid{grid-template-columns:1fr 1fr}
+  section{padding:46px 0}
+  .cta-banner{padding:30px 18px}
+  iframe.demo-frame{height:440px}
+}
+@media (max-width:460px){
+  .audience-tabs{flex-direction:column}
+  .aud-tab{width:100%}
+}
+
+/* ---------- چاپ / PDF ---------- */
+@media print{
+  @page{ size:A4; margin:14mm; }
+  body{background:#fff; color:#000}
+  .no-print{display:none !important}
+  header.site{position:static}
+  section{padding:18px 0; break-inside:avoid}
+  .hero{padding-top:0}
+  .demo-frame-wrap{display:none}
+  .aud-panel{display:block !important; page-break-inside:avoid; margin-bottom:18px; border-top:1px solid #ddd; padding-top:12px}
+  .aud-tabs-print-label{display:block !important; font-weight:800; margin-bottom:8px}
+  .lead-form-wrap{display:none}
+  .print-contact-block{display:block !important; border:1px solid #ccc; border-radius:10px; padding:14px; margin-top:16px}
+  a{color:#0e2c3f}
+}
+.print-contact-block{display:none}
+.aud-tabs-print-label{display:none}
+</style>
+</head>
+<body>
+
+<header class="site no-print">
+  <div class="wrap hdr-row">
+    <a href="#top" class="brand"><img src="/logo.png" alt="IHMS"> IHMS</a>
+    <nav class="hdr-nav">
+      <a href="#challenges" data-i18n="navChallenges">چالش‌ها</a>
+      <a href="#solution" data-i18n="navSolution">راهکار</a>
+      <a href="#demo" data-i18n="navDemo">دمو</a>
+      <a href="#audience" data-i18n="navAudience">مخاطبان</a>
+      <a href="#value" data-i18n="navValue">ارزش اقتصادی</a>
+      <a href="#start" data-i18n="navStart">شروع همکاری</a>
+    </nav>
+    <div class="hdr-tools">
+      <button class="icon-btn lang-btn" id="langToggle" type="button" aria-label="Language">EN</button>
+      <button class="icon-btn" id="printBtn" type="button" aria-label="Print" title="چاپ / PDF">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      </button>
+      <div style="position:relative">
+        <button class="icon-btn" id="shareBtn" type="button" aria-label="Share">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>
+        </button>
+        <div class="share-menu" id="shareMenu">
+          <button id="shareCopy" type="button">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span data-i18n="shareCopy">کپیِ لینک</span>
+          </button>
+          <a id="shareLinkedin" target="_blank" rel="noopener">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+            <span>LinkedIn</span>
+          </a>
+          <a id="shareMail">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="m22 6-10 7L2 6"/></svg>
+            <span data-i18n="shareEmail">ارسال با ایمیل</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ================= ۰۱ جلد ================= -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow" data-i18n="heroEyebrow">سامانهٔ هوشمند مدیریت HSE</span>
+      <h1 data-i18n-html="heroTitle">یکپارچه‌سازیِ ایمنی، بهداشت و محیط‌زیست در <span>یک سامانهٔ واحد</span></h1>
+      <p class="lead" data-i18n="heroLead">IHMS اطلاعات، فرایندها و پیگیری‌هایِ HSE را — از ثبتِ یک آنومالی تا ارزیابیِ عملکردِ پیمانکاران — در یک بسترِ واحد، آفلاین-محور و چندشرکتی کنار هم می‌آورد.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://ihmsapp.ir/demo/" target="_blank" rel="noopener">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <span data-i18n="heroCtaDemo">مشاهده دمو</span>
+        </a>
+        <a class="btn btn-ghost" href="#start" data-request-type="consultation">
+          <span data-i18n="heroCtaConsult">درخواست مشاوره</span>
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat"><b>۲۰+</b><span data-i18n="heroStat1">ماژولِ عملیاتیِ فعال</span></div>
+        <div class="hero-stat"><b data-i18n="heroStat2Big">آفلاین</b><span data-i18n="heroStat2">ثبتِ اطلاعات بدونِ نیاز به اینترنتِ پیوسته</span></div>
+        <div class="hero-stat"><b data-i18n="heroStat3Big">چندشرکتی</b><span data-i18n="heroStat3">جداسازیِ کاملِ اطلاعاتِ هر شرکت</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="phone-frame">
+        <img src="/mobile-app-preview.png" alt="IHMS mobile app">
+      </div>
+      <p style="text-align:center; font-size:11.5px; color:var(--ink3); margin-top:12px" data-i18n="heroImageCaption">نمایی واقعی از اپلیکیشنِ موبایلِ IHMS</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ۰۲ چالش‌ها ================= -->
+<section id="challenges">
+  <div class="wrap">
+    <span class="eyebrow" data-i18n="chEyebrow">چالش‌های سازمان‌ها</span>
+    <h2 class="sec-title" data-i18n="chTitle">مدیریتِ HSE، بدونِ یک سامانهٔ یکپارچه، کجا پیچیده می‌شود؟</h2>
+    <p class="sec-sub" data-i18n="chSub">این‌ها مسائلی هستند که اغلب سازمان‌هایِ صنعتی و پروژه‌محور، با هر سطحِ بلوغِ HSE، کم‌وبیش با آن‌ها مواجه‌اند.</p>
+    <div class="grid grid-3" id="challengeGrid"></div>
+  </div>
+</section>
+
+<!-- ================= ۰۳ راهکار ================= -->
+<section id="solution" class="alt">
+  <div class="wrap">
+    <span class="eyebrow" data-i18n="solEyebrow">راهکار IHMS</span>
+    <h2 class="sec-title" data-i18n="solTitle">یک بسترِ واحد برایِ کلِ گردشِ کارِ HSE</h2>
+    <p class="sec-sub" data-i18n="solSub">به‌جایِ فایل‌هایِ پراکنده و پیگیریِ تلفنی، هر مرحله — از ثبت تا تاییدِ نهایی — در یک سامانه با نقش و دسترسیِ مشخص انجام می‌شود.</p>
+    <div class="grid grid-4" id="solutionGrid"></div>
+  </div>
+</section>
+
+<!-- ================= ۰۴ دموی واقعی ================= -->
+<section id="demo">
+  <div class="wrap">
+    <span class="eyebrow" data-i18n="demoEyebrow">دموی واقعی سامانه</span>
+    <h2 class="sec-title" data-i18n="demoTitle">با امکاناتِ واقعی و فعالِ IHMS آشنا شوید</h2>
+    <p class="sec-sub" data-i18n="demoSub">دموی زیر همان مرکزِ دموی زنده و تعاملیِ IHMS است — با اطلاعاتِ نمونه، بدونِ نمایشِ هیچ دادهٔ واقعیِ کاربران. می‌توانید مستقیماً از همین‌جا پیمانکار/کارفرما/شرکتِ مستقل/کارشناسِ HSE را انتخاب کنید و ماژول‌ها را قدم‌به‌قدم ببینید.</p>
+
+    <div class="grid grid-4" id="demoFeatureGrid" style="margin-bottom:28px"></div>
+
+    <div class="demo-frame-wrap no-print">
+      <div class="demo-frame-bar">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span data-i18n="demoFrameLabel">ihmsapp.ir/demo</span>
+        <a href="https://ihmsapp.ir/demo/" target="_blank" rel="noopener">
+          <span data-i18n="demoOpenFull">باز کردن در صفحهٔ کامل</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+      </div>
+      <iframe class="demo-frame" src="https://ihmsapp.ir/demo/" loading="lazy" title="IHMS live demo"></iframe>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ۰۵ مخاطبان ================= -->
+<section id="audience" class="alt">
+  <div class="wrap">
+    <span class="eyebrow" data-i18n="audEyebrow">ارزش IHMS برای هر گروه</span>
+    <h2 class="sec-title" data-i18n="audTitle">هر نقش، مسیرِ کاربردیِ خودش را می‌بیند</h2>
+    <p class="sec-sub" data-i18n="audSub">یکی از چهار مسیر را انتخاب کنید تا امکاناتِ فعالِ مرتبط با همان نقش را ببینید.</p>
+    <div class="audience-tabs no-print" id="audienceTabs"></div>
+    <div id="audiencePanels"></div>
+  </div>
+</section>
+
+<!-- ================= ۰۶ ارزش اقتصادی ================= -->
+<section id="value">
+  <div class="wrap">
+    <span class="eyebrow" data-i18n="valEyebrow">ارزش اقتصادی و مزایای سازمانی</span>
+    <h2 class="sec-title" data-i18n="valTitle">برآوردِ زمانِ قابلِ صرفه‌جویی — بر اساسِ ورودی‌هایِ خودِ شما</h2>
+    <p class="sec-sub" data-i18n="valSub">این ابزار فقط یک محاسبه‌گرِ شفاف است: هر عدد و هر فرض، مستقیماً از رویِ ورودی‌هایِ شما ساخته می‌شود — نه یک آمارِ ثابت یا تاییدنشده.</p>
+    <div class="calc-grid">
+      <div class="card">
+        <div class="calc-field">
+          <label data-i18n="valF1">تعدادِ پیمانکاران/واحدهایِ فعال</label>
+          <input type="number" id="calcContractors" min="0" step="1" placeholder="۵">
+        </div>
+        <div class="calc-field">
+          <label data-i18n="valF2">ساعاتِ هفتگیِ صرف‌شده برایِ پیگیریِ دستیِ اطلاعاتِ HSE (توسطِ کارشناس/سرپرست)</label>
+          <input type="number" id="calcHours" min="0" step="0.5" placeholder="۸">
+        </div>
+        <div class="calc-field">
+          <label data-i18n="valF3">هزینهٔ ساعتیِ تقریبیِ کارشناس/سرپرست HSE (اختیاری، برایِ برآوردِ ریالی)</label>
+          <input type="number" id="calcRate" min="0" step="1" placeholder="—">
+        </div>
+        <div class="calc-field">
+          <label><span data-i18n="valF4">فرضِ شما: چه درصدی از این پیگیریِ دستی با یکپارچه‌سازیِ اطلاعات کاهش می‌یابد؟</span> — <span class="range-val" id="calcPctLabel">۲۰٪</span></label>
+          <input type="range" id="calcPct" min="0" max="60" step="5" value="20">
+        </div>
+      </div>
+      <div class="calc-result">
+        <div class="unit" data-i18n="valResultLabel">برآوردِ زمانِ آزادشدهٔ کارشناس/سرپرست در ماه</div>
+        <div class="big" id="calcResultHours">۰ ساعت</div>
+        <div class="row"><span data-i18n="valResultCost">برآوردِ ارزشِ ریالی (در صورتِ واردکردنِ نرخِ ساعتی)</span><b id="calcResultCost">—</b></div>
+        <div class="calc-disclaimer" data-i18n="valDisclaimer">این عدد صرفاً یک برآورد بر پایهٔ ورودی‌ها و فرضِ انتخابیِ شماست، نه یک آمارِ تاییدشده یا وعدهٔ قطعیِ IHMS. نتیجهٔ واقعی در هر سازمان متفاوت است.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ۰۷ نحوه شروع ================= -->
+<section id="start" class="alt">
+  <div class="wrap">
+    <span class="eyebrow" data-i18n="stepsEyebrow">نحوهٔ شروعِ همکاری</span>
+    <h2 class="sec-title" data-i18n="stepsTitle">فرایندِ شروعِ استفاده از IHMS</h2>
+    <p class="sec-sub" data-i18n="stepsSub">همان مسیری که امروز هم برایِ شرکت‌هایِ جدید فعال است — بدونِ هیچ مرحلهٔ فرضی یا ارائه‌نشده.</p>
+    <div class="grid grid-2" style="align-items:start; gap:40px">
+      <div class="steps" id="stepsList"></div>
+      <div class="card card-soft">
+        <h4 style="margin-bottom:10px" data-i18n="stepsCardTitle">دسترسیِ مستقیم به دورهٔ آزمایشیِ ۳۰روزه</h4>
+        <p style="color:var(--ink2); font-size:13px; margin-bottom:18px" data-i18n="stepsCardBody">ثبت‌نامِ خودسرویس در وب‌سایتِ اصلیِ IHMS، یک شرکتِ آزمایشیِ ۳۰روزه با دسترسیِ کاملِ ماژول‌هایِ فعال برایِ شما می‌سازد — بدونِ نیاز به تاییدِ دستیِ ما.</p>
+        <a class="btn btn-primary" href="https://ihmsapp.ir/#start-free" target="_blank" rel="noopener" style="width:100%">
+          <span data-i18n="stepsCardCta">شروعِ ثبت‌نامِ رایگان</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ۰۸ CTA + فرم ================= -->
+<section id="cta">
+  <div class="wrap">
+    <div class="cta-banner">
+      <h2 data-i18n="ctaTitle">آمادهٔ شروعِ همکاری با IHMS هستید؟</h2>
+      <p data-i18n="ctaSub">همین حالا دمو را ببینید، یا یکی از درخواست‌هایِ زیر را ثبت کنید — تیمِ IHMS در کوتاه‌ترین زمان با شما در ارتباط خواهد بود.</p>
+      <div class="cta-btn-grid no-print">
+        <a class="btn btn-outline-light" href="https://ihmsapp.ir/demo/" target="_blank" rel="noopener" data-i18n="ctaBtnDemo">مشاهدهٔ دمو</a>
+        <button class="btn btn-outline-light" type="button" data-request-type="consultation" data-i18n="ctaBtnConsult">درخواستِ جلسهٔ معرفی</button>
+        <button class="btn btn-outline-light" type="button" data-request-type="partnership" data-i18n="ctaBtnPartner">ثبتِ درخواستِ همکاری</button>
+        <button class="btn btn-outline-light" type="button" data-request-type="pricing" data-i18n="ctaBtnPricing">دریافتِ پیشنهادِ قیمت</button>
+      </div>
+    </div>
+
+    <form class="lead-form-wrap no-print" id="leadForm" novalidate>
+      <h3 style="font-size:16px; margin-bottom:4px" data-i18n="lfTitle">ثبتِ درخواست</h3>
+      <p style="font-size:12.5px; color:var(--ink3); margin:0 0 18px" data-i18n="lfSub">اطلاعاتِ شما فقط برایِ پیگیریِ همین درخواست استفاده می‌شود.</p>
+
+      <div class="req-type-grid" id="reqTypeGrid">
+        <label class="req-type-opt" data-val="demo"><input type="radio" name="requestType" value="demo"><span data-i18n="rtDemo">مشاهدهٔ دمو</span></label>
+        <label class="req-type-opt" data-val="consultation"><input type="radio" name="requestType" value="consultation"><span data-i18n="rtConsult">جلسهٔ معرفی</span></label>
+        <label class="req-type-opt" data-val="partnership"><input type="radio" name="requestType" value="partnership"><span data-i18n="rtPartner">درخواستِ همکاری</span></label>
+        <label class="req-type-opt" data-val="pricing"><input type="radio" name="requestType" value="pricing"><span data-i18n="rtPricing">پیشنهادِ قیمت</span></label>
+      </div>
+
+      <div class="lf-row">
+        <div class="lf-field">
+          <label data-i18n="lfName">نام و نام خانوادگی *</label>
+          <input type="text" id="lfFullName" required>
+        </div>
+        <div class="lf-field">
+          <label data-i18n="lfCompany">نامِ سازمان *</label>
+          <input type="text" id="lfCompanyName" required>
+        </div>
+      </div>
+      <div class="lf-row">
+        <div class="lf-field">
+          <label data-i18n="lfPosition">سمت</label>
+          <input type="text" id="lfPosition">
+        </div>
+        <div class="lf-field">
+          <label data-i18n="lfAudience">نوعِ مخاطب</label>
+          <select id="lfAudience">
+            <option value="" data-i18n="lfAudSelect">انتخاب کنید</option>
+            <option value="employer" data-i18n="lfAudEmployer">کارفرما</option>
+            <option value="contractor" data-i18n="lfAudContractor">پیمانکار</option>
+            <option value="standalone" data-i18n="lfAudStandalone">شرکتِ مستقل</option>
+            <option value="hse_expert" data-i18n="lfAudHse">کارشناسِ HSE</option>
+          </select>
+        </div>
+      </div>
+      <div class="lf-row">
+        <div class="lf-field">
+          <label data-i18n="lfPhone">شماره تماس *</label>
+          <input type="tel" id="lfPhone" required>
+        </div>
+        <div class="lf-field">
+          <label data-i18n="lfEmail">ایمیل</label>
+          <input type="email" id="lfEmail">
+        </div>
+      </div>
+      <div class="lf-field">
+        <label data-i18n="lfMessage">توضیحِ تکمیلی</label>
+        <textarea id="lfMessage"></textarea>
+      </div>
+
+      <div id="cf-turnstile-container"></div>
+
+      <button class="btn btn-primary lf-submit" type="submit" id="lfSubmitBtn">
+        <span data-i18n="lfSubmit">ارسالِ درخواست</span>
+      </button>
+      <div class="lf-msg" id="lfMsg"></div>
+    </form>
+
+    <div class="print-contact-block">
+      <strong data-i18n="printContactTitle">ثبتِ درخواست</strong>
+      <p style="font-size:12.5px; margin:8px 0 0" data-i18n="printContactBody">برایِ مشاهدهٔ دموی زنده یا ثبتِ درخواستِ مشاوره/همکاری/قیمت، به نسخهٔ آنلاینِ این پرپوزال به آدرسِ ihmsapp.ir/proposal/ مراجعه کنید، یا با شمارهٔ +۹۸ ۹۲۲ ۰۹۳ ۹۶۸۲ و آیدیِ تلگرامِ ihmsapp@ در تماس باشید.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site no-print">
+  <div class="wrap ftr-row">
+    <small data-i18n="ftrCopyright">© IHMS — سامانهٔ هوشمند مدیریت HSE</small>
+    <div class="ftr-links">
+      <a href="tel:+989220939682">+۹۸ ۹۲۲ ۰۹۳ ۹۶۸۲</a>
+      <a href="https://t.me/ihmsapp" target="_blank" rel="noopener">Telegram</a>
+      <a href="https://ihmsapp.ir/" target="_blank" rel="noopener" data-i18n="ftrMainSite">صفحهٔ اصلیِ IHMS</a>
+    </div>
+  </div>
+</footer>
+
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+<script src="./proposal.js"></script>
+</body>
+</html>
