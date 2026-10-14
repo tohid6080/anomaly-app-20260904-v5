@@ -18,7 +18,7 @@ create table if not exists public.proposal_leads (
   phone text not null,
   email text not null default '',
   audience_type text not null default '', -- employer | contractor | standalone | hse_expert | '' (مشخص نشده)
-  request_type text not null default '', -- demo | consultation | partnership | pricing
+  request_type text not null default '', -- consultation | partnership | pricing
   message text not null default '',
   status text not null default 'new' check (status in ('new', 'contacted', 'closed')),
   reviewed_by text not null default '',

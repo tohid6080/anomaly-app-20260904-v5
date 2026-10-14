@@ -15,7 +15,7 @@
 import { json, CORS_HEADERS, restFetch } from "../_shared/supabaseAdmin.ts";
 
 const AUDIENCE_TYPES = ["employer", "contractor", "standalone", "hse_expert", ""];
-const REQUEST_TYPES = ["demo", "consultation", "partnership", "pricing"];
+const REQUEST_TYPES = ["consultation", "partnership", "pricing"];
 
 function isValidEmailFormat(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
