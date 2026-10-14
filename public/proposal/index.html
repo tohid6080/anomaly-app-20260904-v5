@@ -161,7 +161,7 @@ iframe.demo-frame{width:100%; height:560px; border:none; display:block; backgrou
 }
 .lf-field input:focus, .lf-field select:focus, .lf-field textarea:focus{outline:none; border-color:var(--teal)}
 .lf-field textarea{resize:vertical; min-height:70px}
-.req-type-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:18px}
+.req-type-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:18px}
 .req-type-opt{border:1.5px solid var(--line); border-radius:10px; padding:10px 12px; font-size:12.5px; font-weight:600; color:var(--ink2); text-align:center; cursor:pointer}
 .req-type-opt.active{border-color:var(--teal); background:var(--teal-soft); color:var(--teal-deep)}
 .req-type-opt input{display:none}
@@ -423,7 +423,6 @@ footer.site{border-top:1px solid var(--line); padding:30px 0; background:var(--b
       <p style="font-size:12.5px; color:var(--ink3); margin:0 0 18px" data-i18n="lfSub">اطلاعاتِ شما فقط برایِ پیگیریِ همین درخواست استفاده می‌شود.</p>
 
       <div class="req-type-grid" id="reqTypeGrid">
-        <label class="req-type-opt" data-val="demo"><input type="radio" name="requestType" value="demo"><span data-i18n="rtDemo">مشاهدهٔ دمو</span></label>
         <label class="req-type-opt" data-val="consultation"><input type="radio" name="requestType" value="consultation"><span data-i18n="rtConsult">جلسهٔ معرفی</span></label>
         <label class="req-type-opt" data-val="partnership"><input type="radio" name="requestType" value="partnership"><span data-i18n="rtPartner">درخواستِ همکاری</span></label>
         <label class="req-type-opt" data-val="pricing"><input type="radio" name="requestType" value="pricing"><span data-i18n="rtPricing">پیشنهادِ قیمت</span></label>
