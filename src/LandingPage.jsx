@@ -60,17 +60,10 @@ function LinkedinIcon({ size }) {
     </svg>
   );
 }
-// تلگرام/بله/روبیکا: برخلافِ چهار آیکونِ دیگرِ این فایل، SVG دستی نیستند —
-// فایلِ تصویریِ واقعی‌ای هستند که کاربر مستقیم داد (public/icons/)، چون
-// نسخه‌ی SVG دستیِ قبلی برای بله/روبیکا فقط یک حدسِ عمومی بود.
+// تلگرام: برخلافِ چهار آیکونِ دیگرِ این فایل، SVG دستی نیست — فایلِ
+// تصویریِ واقعی‌ای است که کاربر مستقیم داد (public/icons/).
 function TelegramIcon({ size }) {
   return <img src="/icons/social-telegram.png" width={size} height={size} alt="Telegram" style={{ display: "block", objectFit: "contain" }} />;
-}
-function BaleIcon({ size }) {
-  return <img src="/icons/social-bale.jpg" width={size} height={size} alt="بله" style={{ display: "block", borderRadius: "50%", objectFit: "cover" }} />;
-}
-function RubikaIcon({ size }) {
-  return <img src="/icons/social-rubika.png" width={size} height={size} alt="روبیکا" style={{ display: "block", objectFit: "contain" }} />;
 }
 // آیکونِ تماس — با رنگِ برندِ خودِ IHMS (نه رنگِ شخصِ‌ثالث)، چون شماره‌ی
 // موبایل مالِ یک پلتفرمِ بیرونی نیست
@@ -89,8 +82,6 @@ const SOCIAL_LINKS = [
   { key: "instagram", href: "https://www.instagram.com/ihmsapp?stkn=ZGpmcmd1d3BhYWRn", Icon: InstagramIcon, label: "Instagram" },
   { key: "linkedin", href: "https://www.linkedin.com/in/integrated-hse-management-system-health-safety-environment-852870437", Icon: LinkedinIcon, label: "LinkedIn" },
   { key: "telegram", href: "https://t.me/ihmsapp", Icon: TelegramIcon, label: "Telegram" },
-  { key: "bale", href: "https://ble.ir/ihmsapp_h", Icon: BaleIcon, label: "بله" },
-  { key: "rubika", href: "https://rubika.ir/ihmsapp", Icon: RubikaIcon, label: "روبیکا" },
   { key: "phone", href: "tel:+989220939682", Icon: PhoneContactIcon, label: "+98 922 093 9682" },
 ];
 
