@@ -100,6 +100,10 @@ const SOCIAL_LINKS = [
 // «مدیریتِ صفحه اصلی سامانه» قابل‌ویرایش نیست، چون به‌ندرت تغییر می‌کند.
 const DEMO_URL = "https://ihmsapp.ir/demo/";
 
+// لینکِ پرپوزالِ تبلیغاتیِ IHMS — همان الگویِ DEMO_URL، یک فایلِ HTML
+// مستقلِ دیگر (public/proposal/index.html) رویِ همین دامنه.
+const PROPOSAL_URL = "https://ihmsapp.ir/proposal/";
+
 const LP_CSS = `
 .ihms-lp *{box-sizing:border-box}
 .ihms-lp{font-family:${FONT};color:${C.ink};line-height:1.75;-webkit-font-smoothing:antialiased;
@@ -339,6 +343,7 @@ const L = {
     heroLede: "IHMS یک سامانهٔ جامع و یکپارچه برای مدیریت ایمنی، بهداشت، محیط‌زیست و فرآیندهای HSE سازمان است؛ با استفاده از اطلاعات واقعی، فرآیندهای سازمان را یکپارچه کنید، ریسک‌ها را کنترل کنید و تصمیم‌های دقیق‌تری بگیرید.",
     ctaPrimary: "همین الان رایگان شروع کنید", ctaPlans: "مشاهده پلن‌ها برای خرید", ctaSecondary: "مشاهده امکانات", login: "ورود کاربران",
     demoBtn: "مشاهدهٔ دموی زنده سامانه", demoShareBtn: "اشتراک‌گذاری با دوستان", demoCopyTitle: "کپیِ لینکِ دمو برای اشتراک‌گذاری", demoCopiedTitle: "لینک کپی شد!",
+    proposalBtn: "پرپوزالِ معرفیِ IHMS",
     ticks: ["شروع سریع", "دسترسی تحت وب و موبایل", "مدیریت یکپارچه HSE"],
     whyEyebrow: "چرا IHMS؟", whyH2: "تمام فرآیندهای HSE را در یک محیط یکپارچه مدیریت کنید",
     whySub: "از ثبت اطلاعات میدانی تا تصمیم‌گیری مدیریتی، همه‌چیز در یک بستر منسجم و قابل‌اتکا.",
@@ -435,6 +440,7 @@ const L = {
     heroLede: "IHMS is a complete, integrated platform for managing your organisation's safety, health, environment and HSE processes. Use real data to unify your workflows, control risk and make sharper decisions.",
     ctaPrimary: "Start free now", ctaPlans: "View plans to buy", ctaSecondary: "See features", login: "Sign in",
     demoBtn: "See the live demo", demoShareBtn: "Share with friends", demoCopyTitle: "Copy demo link to share", demoCopiedTitle: "Link copied!",
+    proposalBtn: "IHMS Proposal",
     ticks: ["Quick setup", "Web & mobile access", "Unified HSE management"],
     whyEyebrow: "Why IHMS?", whyH2: "Manage every HSE process in one integrated place",
     whySub: "From field data entry to management decisions — everything on one coherent, dependable platform.",
@@ -531,6 +537,7 @@ const L = {
     heroLede: "IHMS ist eine vollständige, integrierte Plattform für das Management von Sicherheit, Gesundheit, Umwelt und HSE-Prozessen Ihrer Organisation. Nutzen Sie echte Daten, um Abläufe zu vereinheitlichen, Risiken zu steuern und fundiertere Entscheidungen zu treffen.",
     ctaPrimary: "Jetzt kostenlos starten", ctaPlans: "Tarife zum Kauf ansehen", ctaSecondary: "Funktionen ansehen", login: "Anmelden",
     demoBtn: "Live-Demo ansehen", demoShareBtn: "Mit Freunden teilen", demoCopyTitle: "Demo-Link zum Teilen kopieren", demoCopiedTitle: "Link kopiert!",
+    proposalBtn: "IHMS-Vorschlag",
     ticks: ["Schnelle Einrichtung", "Web- & Mobilzugriff", "Einheitliches HSE-Management"],
     whyEyebrow: "Warum IHMS?", whyH2: "Verwalten Sie jeden HSE-Prozess an einem integrierten Ort",
     whySub: "Von der Felddatenerfassung bis zur Managemententscheidung – alles auf einer kohärenten, zuverlässigen Plattform.",
@@ -637,7 +644,7 @@ export const LANDING_DEFAULTS = { fa: L.fa, en: L.en, de: L.de };
 // LoginScreen در App.jsx که واقعاً بینِ این دو انتخاب می‌کند).
 export const LANDING_DISPLAY_MODE_DEFAULT = "full";
 
-export const LANDING_BUTTON_KEYS = ["ctaPrimary", "ctaPlans", "ctaSecondary", "login", "scBtn", "loginTrialRequest"];
+export const LANDING_BUTTON_KEYS = ["ctaPrimary", "ctaPlans", "ctaSecondary", "login", "scBtn", "loginTrialRequest", "proposalBtn"];
 export const LANDING_BUTTONS_DEFAULT = Object.fromEntries(LANDING_BUTTON_KEYS.map((k) => [k, true]));
 // صادر می‌شود چون «دکمهٔ درخواست ارزیابی و پلن آزمایشی» داخلِ پنجرهٔ
 // ورود (App.jsx، نه این فایل) رندر می‌شود ولی باید همان buttons map را
@@ -935,6 +942,11 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, log
                 >
                   {demoCopied ? <Check size={16} /> : <Copy size={16} />} {demoCopied ? x.demoCopiedTitle : x.demoShareBtn}
                 </button>
+                {btn.proposalBtn && (
+                  <a href={PROPOSAL_URL} target="_blank" rel="noopener noreferrer" className="btn btn-ghost" onClick={() => trackLandingButtonClick("cta_proposal")}>
+                    <FileBarChart size={16} /> {x.proposalBtn}
+                  </a>
+                )}
               </div>
               <div className="hero-photo">
                 {heroImageUrl
