@@ -514,6 +514,25 @@ export const GATED_MODULE_SUBS = {
   scaffoldManagement: [{ key: "scaffoldDashboard", labelKey: "subScaffoldList" }],
   incidentManagement: [{ key: "incidentsList", labelKey: "subIncidentsList" }],
   pssrManagement: [{ key: "pssrList", labelKey: "subPssrList" }],
+  // زیرماژول‌هایِ «مدیریت سیستم» — دقیقاً همان لیستِ systemManagement.sub در
+  // planFeatureCatalog.js. قبلاً اینجا ثبت نشده بودند، پس «بخشِ شرکت‌ها» این
+  // ۹ کلید را مسطح/مستقل می‌دید (نه زیرِ یک ردیفِ والد) — همین باعث می‌شد
+  // ادمین تک‌تک‌شان را فعال کند بدونِ اینکه بفهمد خودِ systemManagementِ
+  // والد را هم باید جدا اعطا کند (که تا امروز حتی امکانِ اعطایش هم نبود،
+  // چون در کاتالوگِ module_prices ثبت نشده بود — ر.ک. Migrationِ
+  // 20261015023831). riskKnowledgeManagement و ppeManagement عمداً اینجا
+  // نیستند: اولی زیرِ riskAssessment است، دومی حالا ماژولِ اصلیِ مستقل است.
+  systemManagement: [
+    { key: "permissionManagement", labelKey: "pfPermissionManagement" },
+    { key: "jobPositionManagement", labelKey: "pfJobPositionManagement" },
+    { key: "scaffoldCodeManagement", labelKey: "pfScaffoldCodeManagement" },
+    { key: "trainingManagement", labelKey: "pfTrainingManagement" },
+    { key: "chatAccessManagement", labelKey: "pfChatAccessManagement" },
+    { key: "hcmsMatrixManagement", labelKey: "pfHcmsMatrixManagement" },
+    { key: "effectivenessThresholds", labelKey: "pfEffectivenessThresholds" },
+    { key: "anomalyCategoryManagement", labelKey: "pfAnomalyCategoryManagement" },
+    { key: "contractorEvalSettings", labelKey: "pfContractorEvalSettings" },
+  ],
   // زیرماژول‌هایِ آرشیو، برخلافِ بقیه، در HSE_MODULES تعریف نشده‌اند — آرشیو
   // اصلاً زیرمنو ندارد، دسته‌بندیِ ۶‌تایی‌اش (TABS) کاملاً داخلِ خودِ
   // ArchiveManager.jsx است. «BowTie»/«HCMS» عمداً labelKey ندارند، چون
