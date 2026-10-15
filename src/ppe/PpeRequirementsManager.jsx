@@ -10,10 +10,11 @@ import {
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 /**
- * «مدیریت PPE» — زیرِ مدیریت سیستم. دقیقاً همان الگویِ TrainingManager.jsx:
- * (۱) CRUD روی فهرستِ اقلامِ PPE، (۲) ماتریسِ قلم × عنوانِ شغلی — کلیک روی
- * هر خانه، نیازِ آن پست به آن قلم را toggle می‌کند. PersonnelDetail.jsx این
- * ماتریس را زنده می‌خواند تا اقلامِ موردنیازِ هر پرسنل را نشان دهد.
+ * «مدیریت PPE» — ماژولِ اصلیِ مستقل (نه زیرِ مدیریت سیستم). همان الگویِ
+ * TrainingManager.jsx: (۱) CRUD روی فهرستِ اقلامِ PPE، (۲) ماتریسِ قلم ×
+ * عنوانِ شغلی — کلیک روی هر خانه، نیازِ آن پست به آن قلم را toggle می‌کند.
+ * PersonnelDetail.jsx این ماتریس را زنده می‌خواند تا اقلامِ موردنیازِ هر
+ * پرسنل را نشان دهد.
  */
 export default function PpeRequirementsManager({ onBack, wide }) {
   const { t, dir } = useLanguage();
@@ -93,7 +94,7 @@ export default function PpeRequirementsManager({ onBack, wide }) {
 
   return (
     <div style={wide ? { direction: dir } : { maxWidth: 1000, margin: "0 auto", padding: 24, direction: dir }}>
-      {!wide && onBack && <BackLink onClick={onBack}>{t("commonBackToSystemManagement")}</BackLink>}
+      {!wide && onBack && <BackLink onClick={onBack}>{t("commonBackToHome")}</BackLink>}
       {!wide && (
         <>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
