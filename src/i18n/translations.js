@@ -228,6 +228,10 @@ export const translations = {
     "fa": "لیست تگ داربست",
     "en": "Scaffold Tag List"
   },
+  "modulePpeManagement": {
+    "fa": "مدیریت تجهیزات حفاظت فردی (PPE)",
+    "en": "PPE Management"
+  },
   "moduleManagementDashboard": {
     "fa": "داشبورد مدیریتی و گزارش‌های تحلیلی",
     "en": "Management Dashboard & Analytics"
