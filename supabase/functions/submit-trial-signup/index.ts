@@ -20,10 +20,17 @@
 // دستورِ زیر تنظیم کنید، وگرنه این تابع همیشه fail-closed رد می‌کند:
 //   supabase secrets set TURNSTILE_SECRET_KEY=your_secret_key_here
 //
+// اعلانِ تلگرام/ایمیلِ ثبت‌نامِ تازه — هر دو کاملاً اختیاری؛ همان secretهای
+// مشترکِ submit-proposal-lead (اگر از قبل تنظیم شده‌اند، همین‌جا هم کار
+// می‌کنند، کاری اضافه لازم نیست):
+//   supabase secrets set TELEGRAM_BOT_TOKEN=xxxx TELEGRAM_CHAT_ID=xxxx
+//   supabase secrets set RESEND_API_KEY=xxxx NOTIFY_EMAIL_TO=you@example.com
+//
 // Deploy:
 //   supabase functions deploy submit-trial-signup --no-verify-jwt
 
 import { json, CORS_HEADERS, restFetch, callRpc } from "../_shared/supabaseAdmin.ts";
+import { sendTelegramNotification, sendEmailNotification } from "../_shared/notify.ts";
 
 const TRIAL_DAYS = 30;
 const DEFAULT_STORAGE_QUOTA_MB = 500;
@@ -328,6 +335,24 @@ Deno.serve(async (req) => {
       }]),
       headers: { Prefer: "return=minimal" },
     }).catch(() => {});
+
+    // اعلانِ غیرمسدودکننده — شرکت/حساب از قبل با موفقیت ساخته شده، پس شکستِ
+    // اعلان نباید پاسخِ موفقِ کاربر را خراب کند (هر دو تابع خودشان خطا را
+    // فقط لاگ می‌کنند، هرگز throw نمی‌کنند).
+    const summary = [
+      "🆕 ثبت‌نامِ تازه (دوره‌ی آزمایشی) در IHMS",
+      `نام: ${fullName}`,
+      `شرکت: ${companyName}`,
+      `تلفن: ${phone}`,
+      email ? `ایمیل: ${email}` : null,
+      `نام‌کاربریِ کارفرما: ${username}`,
+      isEmployerContractor ? `نام‌کاربریِ پیمانکار: ${contractorUsername}` : null,
+      `پایانِ دوره‌ی آزمایشی: ${trialEndIso}`,
+    ].filter(Boolean).join("\n");
+    await Promise.allSettled([
+      sendTelegramNotification(summary),
+      sendEmailNotification("ثبت‌نامِ تازه در IHMS", summary),
+    ]);
 
     return json({
       ok: true,
