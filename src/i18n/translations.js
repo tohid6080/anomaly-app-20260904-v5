@@ -9338,7 +9338,7 @@ export const translations = {
   "pfPermissionManagement": { "fa": "مدیریت دسترسی‌ها", "en": "Permission Management" },
   "pfJobPositionManagement": { "fa": "مدیریت عناوین شغلی", "en": "Job Position Management" },
   "pfScaffoldCodeManagement": { "fa": "مدیریت کدهای داربست", "en": "Scaffold Code Management" },
-  "pfTrainingManagement": { "fa": "مدیریت آموزش", "en": "Training Management" },
+  "pfTrainingManagement": { "fa": "مدیریت آموزش‌های تخصصی", "en": "Specialized Training Management" },
   "pfPpeManagement": { "fa": "مدیریت تجهیزات حفاظت فردی (PPE)", "en": "PPE Management" },
   "pfJhaDashboard": { "fa": "JHA - تحلیل خطر شغلی", "en": "JHA - Job Hazard Analysis" },
   "pfFmeaDashboard": { "fa": "FMEA - تحلیل حالات خرابی و اثرات آن", "en": "FMEA - Failure Mode & Effects Analysis" },
