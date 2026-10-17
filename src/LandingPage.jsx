@@ -4,7 +4,7 @@ import {
   FileCheck, HardHat, MessagesSquare, FolderOpen, UserCog, LayoutDashboard,
   ArrowLeft, ArrowRight, Check, Menu, X, BarChart3, LineChart, Gauge, Smartphone,
   Zap, Database, FileBarChart, Recycle, Layers, TrendingUp, Globe, Tag,
-  Download, PlayCircle, Copy,
+  Download, PlayCircle, Copy, ChevronDown,
 } from "lucide-react";
 import { useLanguage } from "./i18n/LanguageContext.jsx";
 import { loadLatestPublishedRelease } from "./superadmin/appReleaseApi.js";
@@ -143,6 +143,18 @@ const LP_CSS = `
 .ihms-lp .nav{display:flex;align-items:center;gap:22px;font-size:13.5px;font-weight:700;color:${C.ink2}}
 .ihms-lp .nav a{position:relative;padding:6px 0;transition:color .15s ease}
 .ihms-lp .nav a:hover{color:${C.tealDeep}}
+.ihms-lp .nav-dd{position:relative}
+.ihms-lp .nav-dd-trigger{display:inline-flex;align-items:center;gap:4px;background:none;border:none;font:inherit;font-weight:700;color:${C.ink2};padding:6px 0;cursor:pointer;transition:color .15s ease}
+.ihms-lp .nav-dd-trigger:hover{color:${C.tealDeep}}
+.ihms-lp .nav-dd-menu{position:absolute;top:100%;inset-inline-start:-14px;margin-top:10px;min-width:250px;background:#fff;
+  border:1px solid ${C.line};border-radius:14px;box-shadow:0 20px 40px -20px rgba(12,34,51,.3);padding:8px;
+  opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .15s ease,transform .15s ease,visibility .15s ease;z-index:60}
+.ihms-lp .nav-dd:hover .nav-dd-menu,.ihms-lp .nav-dd:focus-within .nav-dd-menu{opacity:1;visibility:visible;transform:none}
+.ihms-lp .nav-dd-menu a{display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:10px;color:${C.ink2};font-weight:500}
+.ihms-lp .nav-dd-menu a:hover{background:${C.bgTint}}
+.ihms-lp .nav-dd-ico{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;background:${C.tealSoft};color:${C.tealDeep};flex-shrink:0}
+.ihms-lp .nav-dd-menu b{display:block;font-size:13px;color:${C.navy};font-weight:800}
+.ihms-lp .nav-dd-menu small{display:block;font-size:11.5px;color:${C.ink3};font-weight:500;margin-top:2px;line-height:1.6}
 .ihms-lp .hdr .spacer{flex:1}
 .ihms-lp .link-login{font-size:13px;font-weight:800;color:#fff;padding:9px 18px;border-radius:10px;border:1px solid ${C.good};background:${C.good};cursor:pointer;transition:filter .15s ease,box-shadow .15s ease;box-shadow:0 8px 20px -10px rgba(30,158,106,.55)}
 .ihms-lp .link-login:hover{filter:brightness(1.07);box-shadow:0 12px 26px -10px rgba(30,158,106,.65)}
@@ -167,6 +179,11 @@ const LP_CSS = `
   .ihms-lp .mnav.open{display:block;border-top:1px solid ${C.line};background:#fff}
   .ihms-lp .mnav .wrap{padding-top:12px;padding-bottom:16px;display:flex;flex-direction:column;gap:4px}
   .ihms-lp .mnav a{padding:11px 6px;font-weight:700;color:${C.ink2};border-radius:10px}
+  .ihms-lp .mnav-dd-trigger{display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;
+    font:inherit;font-weight:700;color:${C.ink2};padding:11px 6px;border-radius:10px;cursor:pointer;text-align:start}
+  .ihms-lp .mnav-dd-chevron{transition:transform .15s ease}
+  .ihms-lp .mnav-dd-chevron.open{transform:rotate(180deg)}
+  .ihms-lp .mnav-dd-item{display:flex;align-items:center;gap:8px;padding:10px 6px;padding-inline-start:30px;font-size:13px;font-weight:600;color:${C.ink2};border-radius:10px}
 }
 
 .ihms-lp .hero{padding-top:clamp(34px,6vw,64px)}
@@ -335,6 +352,7 @@ const L = {
     d1: "۱", d7: "۷", d3: "۳", d12: "۱۲", pct94: "۹۴٪", pct78: "۷۸٪",
     nav: ["صفحه اصلی", "امکانات", "ماژول‌ها", "مزایا", "درباره سامانه", "تماس با ما"],
     navOtherApps: "برنامه‌های دیگر",
+    navAppCraneliftDesc: "برنامه‌ریزی و تحلیل لیفت جرثقیل (سه‌بعدی)",
     heroEyebrow: "سامانه یکپارچه مدیریت HSE",
     heroH1a: "مدیریت هوشمند HSE", heroH1b: "از گزارش تا تصمیم‌گیری",
     heroLede: "IHMS یک سامانهٔ جامع و یکپارچه برای مدیریت ایمنی، بهداشت، محیط‌زیست و فرآیندهای HSE سازمان است؛ با استفاده از اطلاعات واقعی، فرآیندهای سازمان را یکپارچه کنید، ریسک‌ها را کنترل کنید و تصمیم‌های دقیق‌تری بگیرید.",
@@ -433,6 +451,7 @@ const L = {
     d1: "1", d7: "7", d3: "3", d12: "12", pct94: "94%", pct78: "78%",
     nav: ["Home", "Features", "Modules", "Benefits", "About", "Contact"],
     navOtherApps: "Other Apps",
+    navAppCraneliftDesc: "3D crane lift planning & analysis",
     heroEyebrow: "Integrated HSE Management System",
     heroH1a: "Smart HSE management", heroH1b: "from report to decision",
     heroLede: "IHMS is a complete, integrated platform for managing your organisation's safety, health, environment and HSE processes. Use real data to unify your workflows, control risk and make sharper decisions.",
@@ -531,6 +550,7 @@ const L = {
     d1: "1", d7: "7", d3: "3", d12: "12", pct94: "94 %", pct78: "78 %",
     nav: ["Start", "Funktionen", "Module", "Vorteile", "Über", "Kontakt"],
     navOtherApps: "Andere Apps",
+    navAppCraneliftDesc: "3D-Kranhub-Planung & Analyse",
     heroEyebrow: "Integriertes HSE-Managementsystem",
     heroH1a: "Intelligentes HSE-Management", heroH1b: "vom Bericht bis zur Entscheidung",
     heroLede: "IHMS ist eine vollständige, integrierte Plattform für das Management von Sicherheit, Gesundheit, Umwelt und HSE-Prozessen Ihrer Organisation. Nutzen Sie echte Daten, um Abläufe zu vereinheitlichen, Risiken zu steuern und fundiertere Entscheidungen zu treffen.",
@@ -745,6 +765,7 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, log
 
   const [scrolled, setScrolled] = useState(false);
   const [mNav, setMNav] = useState(false);
+  const [otherAppsOpen, setOtherAppsOpen] = useState(false);
   const [modCat, setModCat] = useState(0);
   const [demoCopied, setDemoCopied] = useState(false);
   const [qtExpanded, setQtExpanded] = useState(false);
@@ -879,9 +900,20 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, log
               {x.nav.map((label, i) => (
                 <a key={i} href={"#lp-" + NAV_IDS[i]} onClick={(e) => { e.preventDefault(); go(NAV_IDS[i]); }}>{label}</a>
               ))}
-              <a href={CRANELIFT_URL} target="_blank" rel="noopener noreferrer" title="IHMS CraneLift 3D" onClick={() => trackLandingButtonClick("nav_other_apps_cranelift")}>
-                {x.navOtherApps}
-              </a>
+              <div className="nav-dd">
+                <button type="button" className="nav-dd-trigger">
+                  {x.navOtherApps} <ChevronDown size={13} />
+                </button>
+                <div className="nav-dd-menu">
+                  <a href={CRANELIFT_URL} target="_blank" rel="noopener noreferrer" onClick={() => trackLandingButtonClick("nav_other_apps_cranelift")}>
+                    <span className="nav-dd-ico"><HardHat size={16} /></span>
+                    <span>
+                      <b>IHMS CraneLift 3D</b>
+                      <small>{x.navAppCraneliftDesc}</small>
+                    </span>
+                  </a>
+                </div>
+              </div>
             </nav>
             <span className="spacer" />
             {socialLinks}
@@ -906,9 +938,15 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, log
             {x.nav.map((label, i) => (
               <a key={i} href={"#lp-" + NAV_IDS[i]} onClick={(e) => { e.preventDefault(); go(NAV_IDS[i]); }}>{label}</a>
             ))}
-            <a href={CRANELIFT_URL} target="_blank" rel="noopener noreferrer" title="IHMS CraneLift 3D" onClick={() => { setMNav(false); trackLandingButtonClick("nav_other_apps_cranelift"); }}>
+            <button type="button" className="mnav-dd-trigger" onClick={() => setOtherAppsOpen((v) => !v)}>
               {x.navOtherApps}
-            </a>
+              <ChevronDown size={14} className={"mnav-dd-chevron" + (otherAppsOpen ? " open" : "")} />
+            </button>
+            {otherAppsOpen && (
+              <a className="mnav-dd-item" href={CRANELIFT_URL} target="_blank" rel="noopener noreferrer" onClick={() => { setMNav(false); trackLandingButtonClick("nav_other_apps_cranelift"); }}>
+                <HardHat size={15} /> IHMS CraneLift 3D
+              </a>
+            )}
             <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 12 }}>{langSwitch}{socialLinks}</div>
             {btn.ctaPlans && <button type="button" className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => { setMNav(false); handleViewPlans(); }}>{x.ctaPlans}</button>}
             {btn.login && <button type="button" className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => { setMNav(false); handleLogin(); }}>{x.login}</button>}
