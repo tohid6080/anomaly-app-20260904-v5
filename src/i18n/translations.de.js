@@ -3406,7 +3406,7 @@ export const de = {
   "pfPermissionManagement": "Berechtigungsverwaltung",
   "pfJobPositionManagement": "Positionsverwaltung",
   "pfScaffoldCodeManagement": "Verwaltung der Gerüstcodes",
-  "pfTrainingManagement": "Schulungsverwaltung",
+  "pfTrainingManagement": "Spezialisierte Schulungsverwaltung",
   "pfPpeManagement": "PSA-Verwaltung (persönliche Schutzausrüstung)",
   "pfChatAccessManagement": "Verwaltung der Chat-Zugriffe",
   "pfHcmsMatrixManagement": "Verwaltung der HCMS-Matrix",

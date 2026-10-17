@@ -281,6 +281,12 @@ export const HSE_MODULES = [
     ],
   },
   {
+    key: "ppeManagement",
+    label: "مدیریت تجهیزات حفاظت فردی (PPE)",
+    labelKey: "modulePpeManagement",
+    icon: true,
+  },
+  {
     key: "managementDashboard",
     label: "داشبورد مدیریتی و گزارش‌های تحلیلی",
     labelKey: "moduleManagementDashboard",
@@ -3661,7 +3667,7 @@ function AnomalyList({ onBack, role, currentUser, readOnly, initialStatusFilter,
 }
 
 // ---------- پنل ادمین ----------
-const MODULE_ICON = { profile: User, chat: MessageCircle, anomalyReport: AlertTriangle, personnelAccess: Users, managementDashboard: BarChart3, operationalDashboard: ClipboardList, proactiveIndicators: TrendingUp, incidentManagement: ShieldAlert, quickTools: Zap, hseSurvey: ClipboardList, permitToWork: FileSpreadsheet, contractorHseEvaluation: Award, safetySuggestionBox: Lightbulb, incidentHeatmap: Flame, siteDigitalTwin: Boxes, evacuationDrill: Siren };
+const MODULE_ICON = { profile: User, chat: MessageCircle, anomalyReport: AlertTriangle, personnelAccess: Users, managementDashboard: BarChart3, operationalDashboard: ClipboardList, proactiveIndicators: TrendingUp, incidentManagement: ShieldAlert, quickTools: Zap, hseSurvey: ClipboardList, permitToWork: FileSpreadsheet, contractorHseEvaluation: Award, safetySuggestionBox: Lightbulb, incidentHeatmap: Flame, siteDigitalTwin: Boxes, evacuationDrill: Siren, ppeManagement: HardHat };
 
 // اعمال «پیکربندی سامانه» (ترتیب + برچسب نمایشی، از پنل Super Admin) روی
 // لیست ماژول‌های از‌قبل فیلترشده‌ی هر داشبورد. آیکون/badge/muted/sub که از
@@ -5130,6 +5136,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
     if (mod.key === "proactiveIndicators") { setView("proactiveIndicators"); return; }
     if (mod.key === "hseSurvey") { setView("hseSurvey"); return; }
     if (mod.key === "permitToWork") { setView("permitToWork"); return; }
+    if (mod.key === "ppeManagement") { setView("ppeManagement"); return; }
     if (mod.sub) { setView(mod.key); return; }
     alert(t("moduleComingSoon", { name: mt(mod) }));
   };
@@ -5251,7 +5258,6 @@ function EmployerDashboard({ onLogout, currentUser }) {
       !isStandaloneCompany && isModuleInPlan(planFeatures, "contractorEvalSettings") && { key: "contractorEvalSettings", label: t("subContractorEvalSettings") },
       isModuleInPlan(planFeatures, "riskKnowledgeManagement") && { key: "riskKnowledgeManagement", label: t("subRiskKnowledge") },
       isModuleInPlan(planFeatures, "anomalyCategoryManagement") && { key: "anomalyCategoryManagement", label: t("subAnomalyCategories") },
-      isModuleInPlan(planFeatures, "ppeManagement") && { key: "ppeManagement", label: t("subPpeManagement") },
     ].filter(Boolean),
   } : null;
 
@@ -5343,7 +5349,6 @@ function EmployerDashboard({ onLogout, currentUser }) {
             {isModuleInPlan(planFeatures, "contractorEvalSettings") && <MenuRow icon={Award} label={t("subContractorEvalSettings")} onClick={() => setView("contractorEvalSettings")} />}
             {isModuleInPlan(planFeatures, "riskKnowledgeManagement") && <MenuRow icon={Database} label={t("subRiskKnowledge")} onClick={() => setView("riskKnowledgeManagement")} />}
             {isModuleInPlan(planFeatures, "anomalyCategoryManagement") && <MenuRow icon={Tag} label={t("subAnomalyCategories")} onClick={() => setView("anomalyCategoryManagement")} />}
-            {isModuleInPlan(planFeatures, "ppeManagement") && <MenuRow icon={HardHat} label={t("subPpeManagement")} onClick={() => setView("ppeManagement")} />}
           </div>
         </div>
       )}
@@ -5359,7 +5364,7 @@ function EmployerDashboard({ onLogout, currentUser }) {
       {isSupervisor && view === "effectivenessThresholds" && <EffectivenessThresholdsManager wide={isDesktop} onBack={() => setView("systemManagement")} currentUser={currentUser} />}
       {isSupervisor && view === "contractorEvalSettings" && <ContractorEvalSettingsManager wide={isDesktop} onBack={() => setView("systemManagement")} currentUser={currentUser} />}
       {isSupervisor && view === "anomalyCategoryManagement" && <AnomalyCategoryManager wide={isDesktop} currentUser={currentUser} onBack={() => setView("systemManagement")} />}
-      {isSupervisor && view === "ppeManagement" && <PpeRequirementsManager wide={isDesktop} onBack={() => setView("systemManagement")} />}
+      {view === "ppeManagement" && <PpeRequirementsManager wide={isDesktop} onBack={() => setView("menu")} />}
       {canManageProjects && view === "projects" && <ProjectsDashboard currentUser={currentUser} wide={isDesktop} onBack={() => setView("menu")} />}
 
       {isDesktop && (view === "anomalyReport" || view === "anomalyForm" || view === "anomalyList") && anomalyWebCombined}
@@ -5690,7 +5695,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
   // کارفرما قرار است ارزیابی‌اش کند.
   const contractorOrgStructureType = useOrgStructureType(currentUser?.companyId);
   const isStandaloneCompany = contractorOrgStructureType === "standalone_no_project" || contractorOrgStructureType === "standalone_multi_project";
-  const sidebarModules = applyModuleConfig(HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key) && !(mod.key === "contractorHseEvaluation" && isStandaloneCompany)).map((mod) => ({
+  const sidebarModules = applyModuleConfig(HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key) && !(mod.key === "contractorHseEvaluation" && isStandaloneCompany) && mod.key !== "ppeManagement").map((mod) => ({
     key: mod.key,
     icon: MODULE_ICON[mod.key] || LayoutGrid,
     label: mt(mod),
@@ -5728,7 +5733,7 @@ function ContractorDashboard({ onLogout, currentUser }) {
       {/* موبایل: تبِ «ماژول‌ها» — جست‌وجوشونده و گروه‌بندی‌شده، همان ترتیبِ Sidebarِ دسکتاپ. */}
       {view === "modules" && (
         <MobileModuleList
-          items={applyModuleConfig(HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key) && !(mod.key === "contractorHseEvaluation" && isStandaloneCompany)), moduleConfig).map((mod) => ({
+          items={applyModuleConfig(HSE_MODULES.filter((mod) => isModuleVisible(permMap, mod.key) && isModuleInPlan(planFeatures, mod.key) && !(mod.key === "contractorHseEvaluation" && isStandaloneCompany) && mod.key !== "ppeManagement"), moduleConfig).map((mod) => ({
             key: mod.key,
             icon: MODULE_ICON[mod.key] || LayoutGrid,
             label: mt(mod),

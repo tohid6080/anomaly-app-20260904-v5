@@ -66,6 +66,7 @@ export const PLAN_FEATURES = [
     key: "scaffoldManagement", labelKey: "pfScaffoldManagement",
     sub: [{ key: "scaffoldDashboard", labelKey: "pfScaffoldDashboard" }],
   },
+  { key: "ppeManagement", labelKey: "pfPpeManagement" },
   { key: "managementDashboard", labelKey: "pfManagementDashboard" },
   { key: "operationalDashboard", labelKey: "pfOperationalDashboard" },
   { key: "hseSurvey", labelKey: "pfHseSurvey" },
@@ -110,7 +111,6 @@ export const PLAN_FEATURES = [
       { key: "effectivenessThresholds", labelKey: "pfEffectivenessThresholds" },
       { key: "anomalyCategoryManagement", labelKey: "pfAnomalyCategoryManagement" },
       { key: "contractorEvalSettings", labelKey: "pfContractorEvalSettings" },
-      { key: "ppeManagement", labelKey: "pfPpeManagement" },
     ],
   },
 ];

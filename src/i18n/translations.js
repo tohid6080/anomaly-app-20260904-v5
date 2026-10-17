@@ -228,6 +228,10 @@ export const translations = {
     "fa": "لیست تگ داربست",
     "en": "Scaffold Tag List"
   },
+  "modulePpeManagement": {
+    "fa": "مدیریت تجهیزات حفاظت فردی (PPE)",
+    "en": "PPE Management"
+  },
   "moduleManagementDashboard": {
     "fa": "داشبورد مدیریتی و گزارش‌های تحلیلی",
     "en": "Management Dashboard & Analytics"
@@ -9334,7 +9338,7 @@ export const translations = {
   "pfPermissionManagement": { "fa": "مدیریت دسترسی‌ها", "en": "Permission Management" },
   "pfJobPositionManagement": { "fa": "مدیریت عناوین شغلی", "en": "Job Position Management" },
   "pfScaffoldCodeManagement": { "fa": "مدیریت کدهای داربست", "en": "Scaffold Code Management" },
-  "pfTrainingManagement": { "fa": "مدیریت آموزش", "en": "Training Management" },
+  "pfTrainingManagement": { "fa": "مدیریت آموزش‌های تخصصی", "en": "Specialized Training Management" },
   "pfPpeManagement": { "fa": "مدیریت تجهیزات حفاظت فردی (PPE)", "en": "PPE Management" },
   "pfJhaDashboard": { "fa": "JHA - تحلیل خطر شغلی", "en": "JHA - Job Hazard Analysis" },
   "pfFmeaDashboard": { "fa": "FMEA - تحلیل حالات خرابی و اثرات آن", "en": "FMEA - Failure Mode & Effects Analysis" },
@@ -11035,6 +11039,7 @@ export const translations = {
   "lpBtn_login": { "fa": "ورودِ کاربران (هدر + فوتر)", "en": "Sign In (header + footer)" },
   "lpBtn_scBtn": { "fa": "مشاهده‌ی محیطِ سامانه (بخشِ نمایشِ محیطِ سامانه)", "en": "See Product (product showcase section)" },
   "lpBtn_loginTrialRequest": { "fa": "درخواستِ ارزیابی و پلنِ آزمایشیِ رایگان (داخلِ پنجره‌ی ورود)", "en": "Request free assessment & trial plan (inside the sign-in dialog)" },
+  "lpBtn_proposalBtn": { "fa": "پرپوزالِ معرفیِ IHMS (بخشِ اصلی)", "en": "IHMS Proposal (hero)" },
   "scErrSaveLanding": { "fa": "خطا در ذخیره‌ی صفحه اصلی سامانه.", "en": "Error saving the system homepage." },
   "arNote": { "fa": "از این بخش نسخه‌های جدید اپ موبایل (APK) را ثبت و منتشر کنید. اپ موبایل کاربران، آخرین نسخه‌ی «منتشرشده» را با نسخه‌ی نصب‌شده مقایسه می‌کند و در صورت جدیدتر بودن، پیام «نسخه جدید موجود است» را نشان می‌دهد.", "en": "Register and publish new mobile app releases (APK) here. Each user's mobile app compares the latest published release with the installed one and shows a \"new version available\" message when it is newer." },
   "arCurrentBuildVersion": { "fa": "نسخه‌ی این بیلد", "en": "This build's version" },
@@ -11253,6 +11258,25 @@ export const translations = {
 
   // ---------- ماژولِ «مدیریتِ نظرسنجی‌ها» (platform surveys) ----------
   "saNavPlatformSurveys": { "fa": "نظرسنجی‌ها", "en": "Surveys" },
+
+  // ---------- پنلِ «لیفتینگ پلن» سوپرادمین (کاربرانِ آزمایشیِ IHMS CraneLift 3D) ----------
+  "saNavCraneliftTrials": { "fa": "لیفتینگ پلن", "en": "Lifting Plan" },
+  "ctNote": { "fa": "کاربرانی که از صفحه‌ی وبِ IHMS CraneLift 3D (نسخه‌ی تبلیغاتیِ سایت) دوره‌ی آزمایشیِ ۱ روزه را فعال کرده‌اند. این کاربران جدا از شرکت‌های IHMS‌اند؛ دادهٔ لیفت‌پلن‌شان فقط در مرورگرِ خودشان ذخیره می‌شود، نه این‌جا.", "en": "Visitors who activated the 1-day trial on the IHMS CraneLift 3D promotional web page. These are separate from IHMS companies; their lift-plan data is stored only in their own browser, not here." },
+  "ctEmpty": { "fa": "هنوز هیچ کاربرِ آزمایشی ثبت نشده است.", "en": "No trial users yet." },
+  "ctColName": { "fa": "نام و نام‌خانوادگی", "en": "Full name" },
+  "ctColMobile": { "fa": "شماره موبایل", "en": "Mobile" },
+  "ctColCompany": { "fa": "نام شرکت", "en": "Company" },
+  "ctColTrialStatus": { "fa": "وضعیتِ آزمایشی", "en": "Trial status" },
+  "ctColActions": { "fa": "عملیات", "en": "Actions" },
+  "ctStatusActive": { "fa": "فعال", "en": "Active" },
+  "ctStatusExpired": { "fa": "منقضی‌شده", "en": "Expired" },
+  "ctStatusDeactivated": { "fa": "غیرفعال‌شده", "en": "Deactivated" },
+  "ctBtnActivate": { "fa": "فعال‌سازی", "en": "Activate" },
+  "ctBtnDeactivate": { "fa": "غیرفعال‌سازی", "en": "Deactivate" },
+  "ctBtnDelete": { "fa": "حذف", "en": "Delete" },
+  "ctDeleteConfirm": { "fa": "کاربرِ «{name}» حذف شود؟ این عمل قابلِ بازگشت نیست.", "en": "Delete user \"{name}\"? This cannot be undone." },
+  "ctErrToggleActive": { "fa": "خطا در تغییرِ وضعیتِ فعال‌بودنِ کاربر", "en": "Error changing the user's active status" },
+  "ctErrDelete": { "fa": "خطا در حذفِ کاربر", "en": "Error deleting the user" },
   "psErrGeneric": { "fa": "خطایی رخ داد. لطفاً دوباره تلاش کنید.", "en": "Something went wrong. Please try again." },
   "psErrSave": { "fa": "خطا در ذخیره‌سازی نظرسنجی", "en": "Error saving the survey" },
   "psErrDelete": { "fa": "خطا در حذف نظرسنجی", "en": "Error deleting the survey" },

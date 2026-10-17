@@ -9,13 +9,20 @@
 // همان TURNSTILE_SECRET_KEY که قبلاً تنظیم شده (fail-closed اگر خالی باشد):
 //   supabase secrets set TURNSTILE_SECRET_KEY=your_secret_key_here
 //
+// اعلانِ تلگرام/ایمیلِ سرنخِ تازه — هر دو کاملاً اختیاری؛ اگر secret های
+// مربوطه تنظیم نشوند، همان کانال بی‌صدا رد می‌شود (ثبتِ سرنخ هرگز به این
+// بستگی ندارد):
+//   supabase secrets set TELEGRAM_BOT_TOKEN=xxxx TELEGRAM_CHAT_ID=xxxx
+//   supabase secrets set RESEND_API_KEY=xxxx NOTIFY_EMAIL_TO=you@example.com
+//
 // Deploy:
 //   supabase functions deploy submit-proposal-lead --no-verify-jwt
 
 import { json, CORS_HEADERS, restFetch } from "../_shared/supabaseAdmin.ts";
+import { sendTelegramNotification, sendEmailNotification } from "../_shared/notify.ts";
 
 const AUDIENCE_TYPES = ["employer", "contractor", "standalone", "hse_expert", ""];
-const REQUEST_TYPES = ["demo", "consultation", "partnership", "pricing"];
+const REQUEST_TYPES = ["consultation", "partnership", "pricing"];
 
 function isValidEmailFormat(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -101,6 +108,28 @@ Deno.serve(async (req) => {
     console.error("proposal_leads insert failed:", insertRes.error);
     return json({ error: "ثبتِ درخواست ناموفق بود — لطفاً دوباره تلاش کنید" }, 500);
   }
+
+  // اعلانِ غیرمسدودکننده — سرنخ از قبل با موفقیت ثبت شده، پس شکستِ اعلان
+  // نباید پاسخِ موفقِ کاربر را خراب کند (هر دو تابع خودشان خطا را فقط لاگ
+  // می‌کنند، هرگز throw نمی‌کنند).
+  const AUDIENCE_LABELS: Record<string, string> = { employer: "کارفرما", contractor: "پیمانکار", standalone: "شرکتِ مستقل", hse_expert: "کارشناسِ HSE", "": "نامشخص" };
+  const REQUEST_LABELS: Record<string, string> = { consultation: "جلسهٔ معرفی", partnership: "درخواستِ همکاری", pricing: "پیشنهادِ قیمت" };
+  const summary = [
+    "🆕 سرنخِ تازه از پرپوزالِ IHMS",
+    `نام: ${fullName}`,
+    `سازمان: ${companyName}`,
+    positionField ? `سمت: ${positionField}` : null,
+    `تلفن: ${phone}`,
+    email ? `ایمیل: ${email}` : null,
+    `نوعِ مخاطب: ${AUDIENCE_LABELS[audienceType] ?? audienceType}`,
+    `نوعِ درخواست: ${REQUEST_LABELS[requestType] ?? requestType}`,
+    message ? `توضیح: ${message}` : null,
+  ].filter(Boolean).join("\n");
+
+  await Promise.allSettled([
+    sendTelegramNotification(summary),
+    sendEmailNotification("سرنخِ تازه از پرپوزالِ IHMS", summary),
+  ]);
 
   return json({ ok: true });
 });

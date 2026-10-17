@@ -60,17 +60,10 @@ function LinkedinIcon({ size }) {
     </svg>
   );
 }
-// تلگرام/بله/روبیکا: برخلافِ چهار آیکونِ دیگرِ این فایل، SVG دستی نیستند —
-// فایلِ تصویریِ واقعی‌ای هستند که کاربر مستقیم داد (public/icons/)، چون
-// نسخه‌ی SVG دستیِ قبلی برای بله/روبیکا فقط یک حدسِ عمومی بود.
+// تلگرام: برخلافِ چهار آیکونِ دیگرِ این فایل، SVG دستی نیست — فایلِ
+// تصویریِ واقعی‌ای است که کاربر مستقیم داد (public/icons/).
 function TelegramIcon({ size }) {
   return <img src="/icons/social-telegram.png" width={size} height={size} alt="Telegram" style={{ display: "block", objectFit: "contain" }} />;
-}
-function BaleIcon({ size }) {
-  return <img src="/icons/social-bale.jpg" width={size} height={size} alt="بله" style={{ display: "block", borderRadius: "50%", objectFit: "cover" }} />;
-}
-function RubikaIcon({ size }) {
-  return <img src="/icons/social-rubika.png" width={size} height={size} alt="روبیکا" style={{ display: "block", objectFit: "contain" }} />;
 }
 // آیکونِ تماس — با رنگِ برندِ خودِ IHMS (نه رنگِ شخصِ‌ثالث)، چون شماره‌ی
 // موبایل مالِ یک پلتفرمِ بیرونی نیست
@@ -89,8 +82,6 @@ const SOCIAL_LINKS = [
   { key: "instagram", href: "https://www.instagram.com/ihmsapp?stkn=ZGpmcmd1d3BhYWRn", Icon: InstagramIcon, label: "Instagram" },
   { key: "linkedin", href: "https://www.linkedin.com/in/integrated-hse-management-system-health-safety-environment-852870437", Icon: LinkedinIcon, label: "LinkedIn" },
   { key: "telegram", href: "https://t.me/ihmsapp", Icon: TelegramIcon, label: "Telegram" },
-  { key: "bale", href: "https://bale.ai/ihmsapp", Icon: BaleIcon, label: "بله" },
-  { key: "rubika", href: "https://rubika.ir/ihmsapp", Icon: RubikaIcon, label: "روبیکا" },
   { key: "phone", href: "tel:+989220939682", Icon: PhoneContactIcon, label: "+98 922 093 9682" },
 ];
 
@@ -99,6 +90,15 @@ const SOCIAL_LINKS = [
 // DOWNLOAD_PAGE در appDownload.js. مثلِ SOCIAL_LINKS ثابت است و از طریقِ
 // «مدیریتِ صفحه اصلی سامانه» قابل‌ویرایش نیست، چون به‌ندرت تغییر می‌کند.
 const DEMO_URL = "https://ihmsapp.ir/demo/";
+
+// صفحه‌ی معرفیِ IHMS CraneLift 3D (برنامه‌ی جداگانه‌ی برنامه‌ریزیِ لیفتِ
+// جرثقیل) — همان الگویِ DEMO_URL/PROPOSAL_URL، یک صفحه‌ی مستقل زیرِ دامنه‌ی
+// خودِ IHMS (public/cranelift/index.html).
+const CRANELIFT_URL = "https://ihmsapp.ir/cranelift/";
+
+// لینکِ پرپوزالِ تبلیغاتیِ IHMS — همان الگویِ DEMO_URL، یک فایلِ HTML
+// مستقلِ دیگر (public/proposal/index.html) رویِ همین دامنه.
+const PROPOSAL_URL = "https://ihmsapp.ir/proposal/";
 
 const LP_CSS = `
 .ihms-lp *{box-sizing:border-box}
@@ -334,11 +334,13 @@ const L = {
   fa: {
     d1: "۱", d7: "۷", d3: "۳", d12: "۱۲", pct94: "۹۴٪", pct78: "۷۸٪",
     nav: ["صفحه اصلی", "امکانات", "ماژول‌ها", "مزایا", "درباره سامانه", "تماس با ما"],
+    navOtherApps: "برنامه‌های دیگر",
     heroEyebrow: "سامانه یکپارچه مدیریت HSE",
     heroH1a: "مدیریت هوشمند HSE", heroH1b: "از گزارش تا تصمیم‌گیری",
     heroLede: "IHMS یک سامانهٔ جامع و یکپارچه برای مدیریت ایمنی، بهداشت، محیط‌زیست و فرآیندهای HSE سازمان است؛ با استفاده از اطلاعات واقعی، فرآیندهای سازمان را یکپارچه کنید، ریسک‌ها را کنترل کنید و تصمیم‌های دقیق‌تری بگیرید.",
     ctaPrimary: "همین الان رایگان شروع کنید", ctaPlans: "مشاهده پلن‌ها برای خرید", ctaSecondary: "مشاهده امکانات", login: "ورود کاربران",
     demoBtn: "مشاهدهٔ دموی زنده سامانه", demoShareBtn: "اشتراک‌گذاری با دوستان", demoCopyTitle: "کپیِ لینکِ دمو برای اشتراک‌گذاری", demoCopiedTitle: "لینک کپی شد!",
+    proposalBtn: "پرپوزالِ معرفیِ IHMS",
     ticks: ["شروع سریع", "دسترسی تحت وب و موبایل", "مدیریت یکپارچه HSE"],
     whyEyebrow: "چرا IHMS؟", whyH2: "تمام فرآیندهای HSE را در یک محیط یکپارچه مدیریت کنید",
     whySub: "از ثبت اطلاعات میدانی تا تصمیم‌گیری مدیریتی، همه‌چیز در یک بستر منسجم و قابل‌اتکا.",
@@ -430,11 +432,13 @@ const L = {
   en: {
     d1: "1", d7: "7", d3: "3", d12: "12", pct94: "94%", pct78: "78%",
     nav: ["Home", "Features", "Modules", "Benefits", "About", "Contact"],
+    navOtherApps: "Other Apps",
     heroEyebrow: "Integrated HSE Management System",
     heroH1a: "Smart HSE management", heroH1b: "from report to decision",
     heroLede: "IHMS is a complete, integrated platform for managing your organisation's safety, health, environment and HSE processes. Use real data to unify your workflows, control risk and make sharper decisions.",
     ctaPrimary: "Start free now", ctaPlans: "View plans to buy", ctaSecondary: "See features", login: "Sign in",
     demoBtn: "See the live demo", demoShareBtn: "Share with friends", demoCopyTitle: "Copy demo link to share", demoCopiedTitle: "Link copied!",
+    proposalBtn: "IHMS Proposal",
     ticks: ["Quick setup", "Web & mobile access", "Unified HSE management"],
     whyEyebrow: "Why IHMS?", whyH2: "Manage every HSE process in one integrated place",
     whySub: "From field data entry to management decisions — everything on one coherent, dependable platform.",
@@ -526,11 +530,13 @@ const L = {
   de: {
     d1: "1", d7: "7", d3: "3", d12: "12", pct94: "94 %", pct78: "78 %",
     nav: ["Start", "Funktionen", "Module", "Vorteile", "Über", "Kontakt"],
+    navOtherApps: "Andere Apps",
     heroEyebrow: "Integriertes HSE-Managementsystem",
     heroH1a: "Intelligentes HSE-Management", heroH1b: "vom Bericht bis zur Entscheidung",
     heroLede: "IHMS ist eine vollständige, integrierte Plattform für das Management von Sicherheit, Gesundheit, Umwelt und HSE-Prozessen Ihrer Organisation. Nutzen Sie echte Daten, um Abläufe zu vereinheitlichen, Risiken zu steuern und fundiertere Entscheidungen zu treffen.",
     ctaPrimary: "Jetzt kostenlos starten", ctaPlans: "Tarife zum Kauf ansehen", ctaSecondary: "Funktionen ansehen", login: "Anmelden",
     demoBtn: "Live-Demo ansehen", demoShareBtn: "Mit Freunden teilen", demoCopyTitle: "Demo-Link zum Teilen kopieren", demoCopiedTitle: "Link kopiert!",
+    proposalBtn: "IHMS-Vorschlag",
     ticks: ["Schnelle Einrichtung", "Web- & Mobilzugriff", "Einheitliches HSE-Management"],
     whyEyebrow: "Warum IHMS?", whyH2: "Verwalten Sie jeden HSE-Prozess an einem integrierten Ort",
     whySub: "Von der Felddatenerfassung bis zur Managemententscheidung – alles auf einer kohärenten, zuverlässigen Plattform.",
@@ -637,7 +643,7 @@ export const LANDING_DEFAULTS = { fa: L.fa, en: L.en, de: L.de };
 // LoginScreen در App.jsx که واقعاً بینِ این دو انتخاب می‌کند).
 export const LANDING_DISPLAY_MODE_DEFAULT = "full";
 
-export const LANDING_BUTTON_KEYS = ["ctaPrimary", "ctaPlans", "ctaSecondary", "login", "scBtn", "loginTrialRequest"];
+export const LANDING_BUTTON_KEYS = ["ctaPrimary", "ctaPlans", "ctaSecondary", "login", "scBtn", "loginTrialRequest", "proposalBtn"];
 export const LANDING_BUTTONS_DEFAULT = Object.fromEntries(LANDING_BUTTON_KEYS.map((k) => [k, true]));
 // صادر می‌شود چون «دکمهٔ درخواست ارزیابی و پلن آزمایشی» داخلِ پنجرهٔ
 // ورود (App.jsx، نه این فایل) رندر می‌شود ولی باید همان buttons map را
@@ -873,6 +879,9 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, log
               {x.nav.map((label, i) => (
                 <a key={i} href={"#lp-" + NAV_IDS[i]} onClick={(e) => { e.preventDefault(); go(NAV_IDS[i]); }}>{label}</a>
               ))}
+              <a href={CRANELIFT_URL} target="_blank" rel="noopener noreferrer" title="IHMS CraneLift 3D" onClick={() => trackLandingButtonClick("nav_other_apps_cranelift")}>
+                {x.navOtherApps}
+              </a>
             </nav>
             <span className="spacer" />
             {socialLinks}
@@ -897,6 +906,9 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, log
             {x.nav.map((label, i) => (
               <a key={i} href={"#lp-" + NAV_IDS[i]} onClick={(e) => { e.preventDefault(); go(NAV_IDS[i]); }}>{label}</a>
             ))}
+            <a href={CRANELIFT_URL} target="_blank" rel="noopener noreferrer" title="IHMS CraneLift 3D" onClick={() => { setMNav(false); trackLandingButtonClick("nav_other_apps_cranelift"); }}>
+              {x.navOtherApps}
+            </a>
             <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 12 }}>{langSwitch}{socialLinks}</div>
             {btn.ctaPlans && <button type="button" className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => { setMNav(false); handleViewPlans(); }}>{x.ctaPlans}</button>}
             {btn.login && <button type="button" className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => { setMNav(false); handleLogin(); }}>{x.login}</button>}
@@ -935,6 +947,11 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, log
                 >
                   {demoCopied ? <Check size={16} /> : <Copy size={16} />} {demoCopied ? x.demoCopiedTitle : x.demoShareBtn}
                 </button>
+                {btn.proposalBtn && (
+                  <a href={PROPOSAL_URL} target="_blank" rel="noopener noreferrer" className="btn btn-ghost" onClick={() => trackLandingButtonClick("cta_proposal")}>
+                    <FileBarChart size={16} /> {x.proposalBtn}
+                  </a>
+                )}
               </div>
               <div className="hero-photo">
                 {heroImageUrl
