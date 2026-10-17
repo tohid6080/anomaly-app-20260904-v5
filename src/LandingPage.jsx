@@ -91,6 +91,11 @@ const SOCIAL_LINKS = [
 // «مدیریتِ صفحه اصلی سامانه» قابل‌ویرایش نیست، چون به‌ندرت تغییر می‌کند.
 const DEMO_URL = "https://ihmsapp.ir/demo/";
 
+// صفحه‌ی معرفیِ IHMS CraneLift 3D (برنامه‌ی جداگانه‌ی برنامه‌ریزیِ لیفتِ
+// جرثقیل) — همان الگویِ DEMO_URL/PROPOSAL_URL، یک صفحه‌ی مستقل زیرِ دامنه‌ی
+// خودِ IHMS (public/cranelift/index.html).
+const CRANELIFT_URL = "https://ihmsapp.ir/cranelift/";
+
 // لینکِ پرپوزالِ تبلیغاتیِ IHMS — همان الگویِ DEMO_URL، یک فایلِ HTML
 // مستقلِ دیگر (public/proposal/index.html) رویِ همین دامنه.
 const PROPOSAL_URL = "https://ihmsapp.ir/proposal/";
@@ -329,6 +334,7 @@ const L = {
   fa: {
     d1: "۱", d7: "۷", d3: "۳", d12: "۱۲", pct94: "۹۴٪", pct78: "۷۸٪",
     nav: ["صفحه اصلی", "امکانات", "ماژول‌ها", "مزایا", "درباره سامانه", "تماس با ما"],
+    navOtherApps: "برنامه‌های دیگر",
     heroEyebrow: "سامانه یکپارچه مدیریت HSE",
     heroH1a: "مدیریت هوشمند HSE", heroH1b: "از گزارش تا تصمیم‌گیری",
     heroLede: "IHMS یک سامانهٔ جامع و یکپارچه برای مدیریت ایمنی، بهداشت، محیط‌زیست و فرآیندهای HSE سازمان است؛ با استفاده از اطلاعات واقعی، فرآیندهای سازمان را یکپارچه کنید، ریسک‌ها را کنترل کنید و تصمیم‌های دقیق‌تری بگیرید.",
@@ -426,6 +432,7 @@ const L = {
   en: {
     d1: "1", d7: "7", d3: "3", d12: "12", pct94: "94%", pct78: "78%",
     nav: ["Home", "Features", "Modules", "Benefits", "About", "Contact"],
+    navOtherApps: "Other Apps",
     heroEyebrow: "Integrated HSE Management System",
     heroH1a: "Smart HSE management", heroH1b: "from report to decision",
     heroLede: "IHMS is a complete, integrated platform for managing your organisation's safety, health, environment and HSE processes. Use real data to unify your workflows, control risk and make sharper decisions.",
@@ -523,6 +530,7 @@ const L = {
   de: {
     d1: "1", d7: "7", d3: "3", d12: "12", pct94: "94 %", pct78: "78 %",
     nav: ["Start", "Funktionen", "Module", "Vorteile", "Über", "Kontakt"],
+    navOtherApps: "Andere Apps",
     heroEyebrow: "Integriertes HSE-Managementsystem",
     heroH1a: "Intelligentes HSE-Management", heroH1b: "vom Bericht bis zur Entscheidung",
     heroLede: "IHMS ist eine vollständige, integrierte Plattform für das Management von Sicherheit, Gesundheit, Umwelt und HSE-Prozessen Ihrer Organisation. Nutzen Sie echte Daten, um Abläufe zu vereinheitlichen, Risiken zu steuern und fundiertere Entscheidungen zu treffen.",
@@ -871,6 +879,9 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, log
               {x.nav.map((label, i) => (
                 <a key={i} href={"#lp-" + NAV_IDS[i]} onClick={(e) => { e.preventDefault(); go(NAV_IDS[i]); }}>{label}</a>
               ))}
+              <a href={CRANELIFT_URL} target="_blank" rel="noopener noreferrer" title="IHMS CraneLift 3D" onClick={() => trackLandingButtonClick("nav_other_apps_cranelift")}>
+                {x.navOtherApps}
+              </a>
             </nav>
             <span className="spacer" />
             {socialLinks}
@@ -895,6 +906,9 @@ export default function LandingPage({ onStartFree, onViewPlans, onUserLogin, log
             {x.nav.map((label, i) => (
               <a key={i} href={"#lp-" + NAV_IDS[i]} onClick={(e) => { e.preventDefault(); go(NAV_IDS[i]); }}>{label}</a>
             ))}
+            <a href={CRANELIFT_URL} target="_blank" rel="noopener noreferrer" title="IHMS CraneLift 3D" onClick={() => { setMNav(false); trackLandingButtonClick("nav_other_apps_cranelift"); }}>
+              {x.navOtherApps}
+            </a>
             <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 12 }}>{langSwitch}{socialLinks}</div>
             {btn.ctaPlans && <button type="button" className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => { setMNav(false); handleViewPlans(); }}>{x.ctaPlans}</button>}
             {btn.login && <button type="button" className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => { setMNav(false); handleLogin(); }}>{x.login}</button>}
