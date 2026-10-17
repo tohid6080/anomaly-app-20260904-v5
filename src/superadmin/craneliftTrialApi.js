@@ -43,3 +43,22 @@ export async function deleteCraneliftTrialUser(id) {
   if (!sbOk(rows)) return { __error: true, message: tr("ctErrDelete") };
   return { ok: true };
 }
+
+// تمدیدِ دستیِ دوره‌ی آزمایشی — مبدأِ محاسبه، جدیدترینِ (تاریخِ انقضایِ
+// فعلی، الان) است تا تمدیدِ یک کاربرِ هنوز-فعال رویِ باقیمانده‌اش اضافه
+// شود، نه اینکه از صفر حساب شود؛ برایِ کاربرِ منقضی‌شده هم از همین لحظه
+// شروع می‌شود (نه از تاریخِ قدیمیِ منقضی‌شده).
+export async function extendCraneliftTrialUser(id, currentExpiresAt, amount, unit) {
+  const n = Number(amount);
+  if (!Number.isFinite(n) || n <= 0) return { __error: true, message: tr("ctErrExtendInvalid") };
+  const base = new Date(Math.max(currentExpiresAt ? new Date(currentExpiresAt).getTime() : 0, Date.now()));
+  if (unit === "month") base.setMonth(base.getMonth() + n);
+  else base.setDate(base.getDate() + n);
+  const rows = await sb(
+    `cranelift_trial_users?id=eq.${id}`,
+    { method: "PATCH", body: JSON.stringify({ trial_expires_at: base.toISOString() }) },
+    "super_admin"
+  );
+  if (!sbOk(rows)) return { __error: true, message: tr("ctErrExtend") };
+  return { ok: true, trialExpiresAt: base.toISOString() };
+}
