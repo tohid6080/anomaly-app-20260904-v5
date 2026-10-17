@@ -11258,6 +11258,25 @@ export const translations = {
 
   // ---------- ماژولِ «مدیریتِ نظرسنجی‌ها» (platform surveys) ----------
   "saNavPlatformSurveys": { "fa": "نظرسنجی‌ها", "en": "Surveys" },
+
+  // ---------- پنلِ «لیفتینگ پلن» سوپرادمین (کاربرانِ آزمایشیِ IHMS CraneLift 3D) ----------
+  "saNavCraneliftTrials": { "fa": "لیفتینگ پلن", "en": "Lifting Plan" },
+  "ctNote": { "fa": "کاربرانی که از صفحه‌ی وبِ IHMS CraneLift 3D (نسخه‌ی تبلیغاتیِ سایت) دوره‌ی آزمایشیِ ۱ روزه را فعال کرده‌اند. این کاربران جدا از شرکت‌های IHMS‌اند؛ دادهٔ لیفت‌پلن‌شان فقط در مرورگرِ خودشان ذخیره می‌شود، نه این‌جا.", "en": "Visitors who activated the 1-day trial on the IHMS CraneLift 3D promotional web page. These are separate from IHMS companies; their lift-plan data is stored only in their own browser, not here." },
+  "ctEmpty": { "fa": "هنوز هیچ کاربرِ آزمایشی ثبت نشده است.", "en": "No trial users yet." },
+  "ctColName": { "fa": "نام و نام‌خانوادگی", "en": "Full name" },
+  "ctColMobile": { "fa": "شماره موبایل", "en": "Mobile" },
+  "ctColCompany": { "fa": "نام شرکت", "en": "Company" },
+  "ctColTrialStatus": { "fa": "وضعیتِ آزمایشی", "en": "Trial status" },
+  "ctColActions": { "fa": "عملیات", "en": "Actions" },
+  "ctStatusActive": { "fa": "فعال", "en": "Active" },
+  "ctStatusExpired": { "fa": "منقضی‌شده", "en": "Expired" },
+  "ctStatusDeactivated": { "fa": "غیرفعال‌شده", "en": "Deactivated" },
+  "ctBtnActivate": { "fa": "فعال‌سازی", "en": "Activate" },
+  "ctBtnDeactivate": { "fa": "غیرفعال‌سازی", "en": "Deactivate" },
+  "ctBtnDelete": { "fa": "حذف", "en": "Delete" },
+  "ctDeleteConfirm": { "fa": "کاربرِ «{name}» حذف شود؟ این عمل قابلِ بازگشت نیست.", "en": "Delete user \"{name}\"? This cannot be undone." },
+  "ctErrToggleActive": { "fa": "خطا در تغییرِ وضعیتِ فعال‌بودنِ کاربر", "en": "Error changing the user's active status" },
+  "ctErrDelete": { "fa": "خطا در حذفِ کاربر", "en": "Error deleting the user" },
   "psErrGeneric": { "fa": "خطایی رخ داد. لطفاً دوباره تلاش کنید.", "en": "Something went wrong. Please try again." },
   "psErrSave": { "fa": "خطا در ذخیره‌سازی نظرسنجی", "en": "Error saving the survey" },
   "psErrDelete": { "fa": "خطا در حذف نظرسنجی", "en": "Error deleting the survey" },

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IHMS CraneLift 3D — برنامه‌ریزی و تحلیل لیفت جرثقیل</title>
+<meta name="description" content="برنامه‌ی تخصصیِ برنامه‌ریزی و تحلیل لیفت جرثقیل IHMS — نسخه‌ی آزمایشیِ وب، به‌همراه نسخه‌ی کاملِ اندروید.">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a1620; --navy-deep:#07121a; --navy:#123a49;
+    --teal:#14b8a6; --teal-deep:#0f9488;
+    --text:#e8eef2; --text2:#9fb4c0;
+    --font:'Vazirmatn',Tahoma,Arial,sans-serif;
+    color-scheme: dark;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    font-family:var(--font); direction:rtl; background:var(--bg); color:var(--text);
+    display:flex; flex-direction:column; min-height:100dvh; overflow:hidden;
+  }
+  /* ── نوارِ بالا: آخرین نسخه‌ی اندروید برای دانلود (مثلِ نوارِ صفحه‌ی اصلیِ IHMS) ── */
+  #apkBar{
+    display:none;
+    flex-shrink:0;
+    background:linear-gradient(90deg, var(--navy-deep), var(--navy));
+    color:#fff; align-items:center; justify-content:center; flex-wrap:wrap; gap:10px;
+    padding:9px 16px; font-size:13px; font-weight:700; text-align:center;
+  }
+  #apkBar a.btn{
+    display:inline-flex; align-items:center; gap:6px; background:var(--teal); color:#06201c;
+    text-decoration:none; border-radius:999px; padding:6px 16px; font-size:12.5px; font-weight:800;
+  }
+  #apkBar a.btn:hover{ background:var(--teal-deep) }
+  #backLink{
+    position:absolute; inset-inline-start:14px; top:14px; z-index:5;
+    display:inline-flex; align-items:center; gap:5px; background:rgba(10,22,32,.72);
+    color:var(--text2); text-decoration:none; font-size:12px; font-weight:700;
+    padding:7px 13px; border-radius:999px; border:1px solid rgba(255,255,255,.12);
+    backdrop-filter: blur(6px);
+  }
+  #backLink:hover{ color:#fff; border-color:rgba(255,255,255,.3) }
+  /* ── محتوای اصلی: فریمِ برنامه ── */
+  #frameWrap{ position:relative; flex:1 1 auto; min-height:0; background:var(--navy-deep) }
+  #craneliftFrame{ position:absolute; inset:0; width:100%; height:100%; border:0; display:block }
+  #loading{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:14px; color:var(--text2); font-size:13px; transition:opacity .25s ease;
+  }
+  .spin{
+    width:30px; height:30px; border:3px solid #1e3d4d; border-top-color:var(--teal);
+    border-radius:50%; animation:s 1s linear infinite;
+  }
+  @keyframes s{ to{ transform:rotate(360deg) } }
+  @media (max-width:560px){
+    #apkBar{ font-size:12px; padding:8px 10px }
+    #backLink{ font-size:11px; padding:6px 11px }
+  }
+</style>
+</head>
+<body>
+
+  <div id="apkBar">
+    <span>📱</span>
+    <span id="apkBarText"></span>
+    <a class="btn" id="apkBarBtn" href="#" target="_blank" rel="noopener">⬇ دانلود نسخه اندروید</a>
+  </div>
+
+  <div id="frameWrap">
+    <a id="backLink" href="/">→ بازگشت به IHMS</a>
+    <div id="loading">
+      <div class="spin"></div>
+      <div>در حال بارگذاری IHMS CraneLift 3D…</div>
+    </div>
+    <iframe
+      id="craneliftFrame"
+      src="https://tohid6080.github.io/IHMS-CraneLift-3D/"
+      title="IHMS CraneLift 3D"
+      loading="eager"
+      allow="clipboard-write"
+      onload="document.getElementById('loading').style.display='none'"
+    ></iframe>
+  </div>
+
+<script>
+(function () {
+  // آخرین نسخه‌ی منتشرشده‌ی اندروید از GitHub Releases خودِ ریپویِ
+  // CraneLift (برخلافِ اپِ اصلیِ IHMS که از جدولِ app_releases در Supabase
+  // می‌خواند — CraneLift ریپوی مجزایی است و هنوز به آن جدول وصل نشده).
+  // توجه: این endpoint ممکن است چند دقیقه روی CDNِ گیت‌هاب کش بماند، پس
+  // بلافاصله پس از انتشارِ نسخه‌ی تازه، ممکن است هنوز نسخه‌ی قبلی را نشان دهد.
+  var RELEASES_API = "https://api.github.com/repos/tohid6080/IHMS-CraneLift-3D/releases/latest";
+
+  fetch(RELEASES_API, { headers: { Accept: "application/vnd.github+json" } })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (rel) {
+      if (!rel) return;
+      var apkAsset = (rel.assets || []).find(function (a) {
+        return /\.apk$/i.test(a.name || "") && !/debug/i.test(a.name || "");
+      }) || (rel.assets || []).find(function (a) { return /\.apk$/i.test(a.name || ""); });
+      if (!apkAsset) return;
+      var version = (rel.tag_name || "").replace(/^v/i, "");
+      document.getElementById("apkBarText").textContent =
+        "نسخه‌ی اندرویدِ IHMS CraneLift 3D (" + version + ") برای دانلود در دسترس است";
+      document.getElementById("apkBarBtn").href = apkAsset.browser_download_url;
+      document.getElementById("apkBar").style.display = "flex";
+    })
+    .catch(function () { /* نوار صرفاً نمایش داده نمی‌شود — ابزار بدون آن هم کار می‌کند */ });
+})();
+</script>
+</body>
+</html>
