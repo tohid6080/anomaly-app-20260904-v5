@@ -6,6 +6,17 @@ import { loadCraneliftTrialUsers, setCraneliftTrialUserActive, deleteCraneliftTr
 
 const DEFAULT_EXTEND = { amount: "1", unit: "day" };
 
+// کیبوردِ فارسی/عربی روی موبایل معمولاً اعدادِ ۰-۹ (یا ٠-٩) می‌فرستد که
+// input[type=number] آن‌ها را اصلاً نمی‌پذیرد (کاراکترهایِ غیرِASCII در
+// چنین اینپوتی رد می‌شوند) — عدد در کادر همیشه رویِ مقدارِ اولیه (۱)
+// می‌ماند، هرچه تایپ شود. به همین دلیل اینجا از input[type=text] با
+// نرمال‌سازیِ دستیِ ارقام استفاده می‌شود.
+function toAsciiDigits(s) {
+  return String(s)
+    .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06f0))
+    .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660));
+}
+
 /**
  * پنل «لیفتینگ پلن» سوپرادمین — فهرستِ کاربرانِ آزمایشیِ نسخه‌ی وبِ IHMS
  * CraneLift 3D (ثبت‌شده از طریقِ کادرِ ورود/ثبت‌نامِ داخلِ صفحه‌ی
@@ -128,10 +139,10 @@ export default function CraneliftTrialUsersTab() {
                         </div>
                         <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
                           <input
-                            type="number"
-                            min="1"
+                            type="text"
+                            inputMode="numeric"
                             value={getExtendDraft(u.id).amount}
-                            onChange={(e) => setExtendDraft(u.id, { amount: e.target.value })}
+                            onChange={(e) => setExtendDraft(u.id, { amount: toAsciiDigits(e.target.value).replace(/[^0-9]/g, "") })}
                             style={{ width: 44, padding: "5px 4px", borderRadius: 6, border: `1px solid ${THEME.border}`, fontSize: 11, textAlign: "center", fontFamily: THEME.font }}
                           />
                           <select
