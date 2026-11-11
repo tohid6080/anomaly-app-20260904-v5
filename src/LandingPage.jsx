@@ -97,7 +97,7 @@ const DEMO_URL = "https://ihmsapp.ir/demo/";
 const CRANELIFT_URL = "https://ihmsapp.ir/cranelift/";
 
 // سامانه‌ی مدیریت معاینات طب کار (IHMS-OHE) — برنامه‌ی جداگانه، لینک در منوی «برنامه‌های دیگر».
-const OHE_URL = "https://ohe.ihmsapp.ir/";
+const OHE_URL = "https://ihmsapp.ir/ohe/";
 
 // لینکِ پرپوزالِ تبلیغاتیِ IHMS — همان الگویِ DEMO_URL، یک فایلِ HTML
 // مستقلِ دیگر (public/proposal/index.html) رویِ همین دامنه.
